@@ -39,6 +39,7 @@ import { INITIAL_CUSTOM_HABITS } from '../../data/defaults';
 import * as gameEngine from '../../engine/gameEngine';
 import { useAppStore } from '../../store/useAppStore';
 import { useTaskStore } from '../../store/useTaskStore';
+import { usePlayerStore } from '../../store/usePlayerStore';
 import { soundFX } from '../../utils/audio';
 import { getHabitBaseId, computeHabitStreak } from '../../intelligence/masteryEngine';
 import { getTodayDateString } from '../../utils/date';
@@ -264,6 +265,7 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
   const habitMastery = useAppStore(s => s.habitMastery);
   const customHabits = useTaskStore(s => s.customHabits);
   const tasksByDate = useTaskStore(s => s.tasksByDate);
+  const playerLevel = usePlayerStore(s => s.stats.level || 1);
   const [isMilestonesModalOpen, setIsMilestonesModalOpen] = useState(false);
   const [activatedNotice, setActivatedNotice] = useState<string | null>(null);
 
@@ -342,13 +344,22 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
           <button
             type="button"
             onClick={() => {
+              if (playerLevel < 3) {
+                setActivatedNotice('Desbloqueado al Nivel 3');
+                setTimeout(() => setActivatedNotice(null), 3000);
+                return;
+              }
               soundFX.playClick();
               onOpenAddModal(true);
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cyan-950/90 hover:bg-cyan-900 border border-cyan-500/60 hover:border-cyan-400 text-cyan-300 hover:text-white text-xs font-black transition-all cursor-pointer min-h-[38px] active:scale-95 shadow-[0_0_10px_rgba(0,240,255,0.2)]"
-            title="Crear un nuevo hábito personalizado"
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer min-h-[38px] active:scale-95 shadow-[0_0_10px_rgba(0,240,255,0.2)] ${
+              playerLevel < 3 
+                ? 'bg-gray-900 border border-gray-700 text-gray-500 cursor-not-allowed opacity-80' 
+                : 'bg-cyan-950/90 hover:bg-cyan-900 border border-cyan-500/60 hover:border-cyan-400 text-cyan-300 hover:text-white'
+            }`}
+            title={playerLevel < 3 ? 'Desbloquea nuevos hábitos al Nivel 3' : 'Crear un nuevo hábito personalizado'}
           >
-            <Plus className="w-3.5 h-3.5 stroke-[3]" />
+            {playerLevel < 3 ? <Lock className="w-3.5 h-3.5 stroke-[3]" /> : <Plus className="w-3.5 h-3.5 stroke-[3]" />}
             <span>+ Hábito</span>
           </button>
 

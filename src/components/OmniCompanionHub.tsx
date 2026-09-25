@@ -160,23 +160,31 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
     },
     {
       id: 'shop',
-      title: 'Tienda de Recompensas',
-      subtitle: `${stats.coins || 0} monedas de oro acumuladas`,
-      icon: <ShoppingBag className="w-4 h-4 text-emerald-300" />,
-      accentColor: '#10b981',
-      glowColor: 'rgba(16, 185, 129, 0.55)',
-      action: () => setActiveTab('shop'),
+      title: (stats.level || 1) < 5 ? 'Tienda (Bloqueada)' : 'Tienda de Recompensas',
+      subtitle: (stats.level || 1) < 5 ? 'Se desbloquea al Nivel 5' : `${stats.coins || 0} monedas de oro acumuladas`,
+      icon: (stats.level || 1) < 5 ? <AlertTriangle className="w-4 h-4 text-gray-500" /> : <ShoppingBag className="w-4 h-4 text-emerald-300" />,
+      accentColor: (stats.level || 1) < 5 ? '#6b7280' : '#10b981',
+      glowColor: (stats.level || 1) < 5 ? 'rgba(107, 114, 128, 0.3)' : 'rgba(16, 185, 129, 0.55)',
+      action: () => {
+        if ((stats.level || 1) >= 5) {
+          setActiveTab('shop');
+        }
+      },
     },
 
     // --- ARO EXTERNO (5 glifos secundarios y místicos: 150°, 120°, 90°, 60°, 30°) ---
     {
       id: 'stats',
-      title: 'Estadísticas & XP',
-      subtitle: `Nivel ${stats.level || 1} • Racha de ${stats.streakDays || 1} días`,
-      icon: <BarChart3 className="w-4.5 h-4.5 text-teal-300" />,
-      accentColor: '#06b6d4',
-      glowColor: 'rgba(6, 182, 212, 0.55)',
-      action: () => setActiveTab('stats'),
+      title: (stats.level || 1) < 5 ? 'Estadísticas (Bloqueado)' : 'Estadísticas & XP',
+      subtitle: (stats.level || 1) < 5 ? 'Se desbloquea al Nivel 5' : `Nivel ${stats.level || 1} • Racha de ${stats.streakDays || 1} días`,
+      icon: (stats.level || 1) < 5 ? <AlertTriangle className="w-4.5 h-4.5 text-gray-500" /> : <BarChart3 className="w-4.5 h-4.5 text-teal-300" />,
+      accentColor: (stats.level || 1) < 5 ? '#6b7280' : '#06b6d4',
+      glowColor: (stats.level || 1) < 5 ? 'rgba(107, 114, 128, 0.3)' : 'rgba(6, 182, 212, 0.55)',
+      action: () => {
+        if ((stats.level || 1) >= 5) {
+          setActiveTab('stats');
+        }
+      },
     },
     {
       id: 'procrastination',
