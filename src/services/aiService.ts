@@ -6,18 +6,7 @@ export async function generateScheduleFrontend(
   existingHabits: any[],
   mode: 'master_blocks' | 'detailed' = 'master_blocks'
 ): Promise<any> {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-
   if (!prompt) throw new Error("Falta el prompt del usuario.");
-
-  if (!apiKey) {
-    console.warn("VITE_GEMINI_API_KEY no configurada. Usando Oráculo Local.");
-    return {
-      habits: generateProceduralSchedule(prompt, userContext, mode),
-      source: "emergency_fallback",
-      notice: "Clave de IA no detectada. Agenda estructurada exitosamente por el Núcleo Heurístico Local."
-    };
-  }
 
   const isMasterBlocks = mode === 'master_blocks';
 
@@ -101,13 +90,12 @@ export async function generateScheduleFrontend(
   for (let i = 0; i < candidateModels.length; i++) {
     const modelName = candidateModels[i];
     try {
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`, {
+      const res = await fetch('/.netlify/functions/oraculo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contents: [
-            { role: "user", parts: [{ text: systemInstruction + "\\n\\nSolicitud del usuario:\\n" + prompt }] }
-          ]
+          prompt: systemInstruction + "\n\nSolicitud del usuario:\n" + prompt,
+          model: modelName
         })
       });
 

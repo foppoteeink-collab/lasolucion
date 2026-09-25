@@ -65,7 +65,7 @@ export const loadCustomHabits = (): CustomHabit[] => {
   try {
     const raw = safeGetItem(STORAGE_KEYS.CUSTOM_HABITS);
     if (!raw) {
-      return [];
+      return INITIAL_CUSTOM_HABITS.filter(h => h.id === 'habit-water');
     }
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed)) {
