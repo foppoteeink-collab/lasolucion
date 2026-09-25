@@ -5,7 +5,7 @@ import {
   ShieldCheck, HardDrive, FileSpreadsheet, Cpu, CheckCircle2,
   Coins, Volume2, VolumeX, Target, Sun, Moon, Laptop, ArrowUpRight, CheckCheck,
   SlidersHorizontal, Smartphone, Share, PlusSquare, FlaskConical,
-  Compass, Eye, Layout
+  Compass, Eye, Layout, Bell
 } from 'lucide-react';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 import { GameSettings } from '../types';
@@ -14,6 +14,7 @@ import * as gameEngine from '../engine/gameEngine';
 import { soundFX } from '../utils/audio';
 import { exportUserData, exportJournalToCSV, exportScheduleToCSV, parseScheduleCSV } from '../utils/exportData';
 import { safeSetItem } from '../utils/storage';
+import { notificationService } from '../utils/notifications';
 import { OracleModal } from './OracleModal';
 import { ScenarioSimulatorPanel } from './ScenarioSimulatorPanel';
 import { GoogleDriveSyncCard } from './GoogleDriveSyncCard';
@@ -54,6 +55,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [currentCurrency, setCurrentCurrency] = useState<string>(getSavedCurrencySymbol);
   const [savingsTarget, setSavingsTarget] = useState<number>(getSavedSavingsTarget);
   const [audioTesting, setAudioTesting] = useState(false);
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(notificationService.getPermission());
   const [currencyChangedToast, setCurrencyChangedToast] = useState<string | null>(null);
 
   const [confirmReset, setConfirmReset] = useState(false);
@@ -96,6 +98,15 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     setAudioTesting(true);
     soundFX.playLevelUp();
     setTimeout(() => setAudioTesting(false), 900);
+  };
+
+  const handleRequestNotifications = async () => {
+    soundFX.playClick();
+    const granted = await notificationService.requestPermission();
+    setNotificationPermission(granted ? 'granted' : 'denied');
+    if (granted) {
+      notificationService.triggerNotification('¡Notificaciones Activadas!', 'KAI te recordará tus hábitos y misiones importantes.', '🔔');
+    }
   };
 
   const handleSetTheme = (mode: 'auto' | 'dark' | 'light') => {
@@ -372,6 +383,37 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     className={`w-12 h-6 rounded-full relative transition-colors flex-shrink-0 cursor-pointer ${soundEnabled ? 'bg-cyan-500' : 'bg-slate-700'}`}
                   >
                     <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-all ${soundEnabled ? 'left-6.5 translate-x-[24px]' : 'left-0.5'}`}></div>
+                  </button>
+                </div>
+              </div>
+
+              {/* NOTIFICACIONES PUSH */}
+              <div className="pt-4 border-t border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h4 className="text-sm font-black text-white flex items-center gap-2 mb-1">
+                    <Bell className="w-4 h-4 text-emerald-400" /> Notificaciones Push (Locales)
+                  </h4>
+                  <p className="text-xs text-slate-400">
+                    KAI enviará recordatorios del sistema usando las notificaciones de tu dispositivo.
+                  </p>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+                    Estado: {notificationPermission === 'granted' ? 'Activas' : notificationPermission === 'denied' ? 'Bloqueadas' : 'Pendientes'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleRequestNotifications}
+                    disabled={notificationPermission === 'granted' || !notificationService.isSupported()}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all border ${
+                      notificationPermission === 'granted'
+                        ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400 cursor-default'
+                        : !notificationService.isSupported()
+                        ? 'opacity-40 cursor-not-allowed border-slate-800 text-slate-500'
+                        : 'bg-[#002244] border-cyan-800 text-cyan-300 hover:bg-cyan-900/60 hover:text-white cursor-pointer'
+                    }`}
+                  >
+                    {notificationPermission === 'granted' ? 'Activadas' : 'Permitir'}
                   </button>
                 </div>
               </div>
