@@ -547,10 +547,23 @@ export const handleToggleTask = (taskId: string, e?: any) => {
   
   const rawXp = task.xpReward || 0;
   const rawCoin = task.coinReward || 0;
+
+  let xpRewardToAdd = Math.floor(rawXp * taxMultiplier);
+  let coinRewardToAdd = Math.floor(rawCoin * taxMultiplier);
   
-  // Use recorded values for untoggling (fallback to rawXp for legacy tasks before tax existed)
-  const xpRewardToAdd = Math.floor(rawXp * taxMultiplier);
-  const coinRewardToAdd = Math.floor(rawCoin * taxMultiplier);
+  // Phase 2: Random Chests (20% chance to convert coins into a chest between 1 and 20)
+  // Only applies if the task natively had coins, to prevent infinite farming on 0 coin tasks.
+  let wasChestFound = false;
+  if (rawCoin > 0 && Math.random() < 0.20) {
+    coinRewardToAdd = Math.floor(Math.random() * 20) + 1; // 1 to 20 coins
+    wasChestFound = true;
+  }
+
+  // Phase 2: Focus Potion Multiplier
+  if (statePlayer.stats?.focusPotionExpiresAt && statePlayer.stats.focusPotionExpiresAt > Date.now()) {
+    xpRewardToAdd = Math.floor(xpRewardToAdd * 1.5);
+    coinRewardToAdd = Math.floor(coinRewardToAdd * 1.5);
+  }
   
   const xpRewardToSubtract = task.awardedXp ?? rawXp;
   const coinRewardToSubtract = task.awardedCoins ?? rawCoin;
@@ -595,7 +608,11 @@ export const handleToggleTask = (taskId: string, e?: any) => {
       }
 
       setTimeout(() => {
-        stateUI.addFloatingEffect({ x: posX, y: posY - 40, text: `+${coinReward} Oro`, type: 'coins' });
+        if (wasChestFound) {
+          spawnJuiceParticle({ x: posX, y: posY - 30, text: '¡Cofre Sorpresa! 🎁', type: 'custom', colorClass: 'text-yellow-400 bg-yellow-950/90 border-yellow-500' });
+          soundFX.playLevelUp(); // Extra sound for chest
+        }
+        stateUI.addFloatingEffect({ x: posX, y: posY - 40, text: `+${coinReward} Oro${wasChestFound ? ' (Cofre)' : ''}`, type: 'coins' });
       }, 150);
     }
   } else {

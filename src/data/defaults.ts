@@ -257,6 +257,15 @@ export const INITIAL_SHOP_REWARDS: ShopReward[] = [
     unlockedCount: 0,
   },
   {
+    id: 'perk-reroll-dice',
+    title: 'Dado del Destino (Re-Roll) 🎲',
+    description: '¿No quieres hacer una de tus tareas de hoy? Tira el dado para reemplazarla por otra aleatoria sin penalización.',
+    cost: 40,
+    icon: '🎲',
+    category: 'perk',
+    unlockedCount: 0,
+  },
+  {
     id: 'shop-1',
     title: 'Capítulo de Serie / Anime 🍿',
     description: '45 minutos de relajación sin culpa tras completar tus bloques.',

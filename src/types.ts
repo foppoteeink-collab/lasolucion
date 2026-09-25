@@ -70,6 +70,8 @@ export interface PlayerStats {
   mantra?: string;
   lastBossDefeatedDate?: string; // YYYY-MM-DD
   streakShields?: number;
+  focusPotionExpiresAt?: number; // timestamp in ms
+  reRollDice?: number;
   hiddenBossTaskId?: string;
   hiddenBossDate?: string;
   hiddenBossDefeatedDate?: string;

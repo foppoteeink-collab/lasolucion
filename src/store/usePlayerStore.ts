@@ -70,7 +70,15 @@ export const usePlayerStore = create<PlayerState>()(
         return { stats: nextStats };
       }),
 
-      addXpAndCoins: (xp, coins) => set((state) => {
+      addXpAndCoins: (baseXp, baseCoins) => set((state) => {
+        let xp = baseXp;
+        let coins = baseCoins;
+        
+        if (state.stats.focusPotionExpiresAt && state.stats.focusPotionExpiresAt > Date.now()) {
+          xp = Math.ceil(xp * 1.5);
+          coins = Math.ceil(coins * 1.5);
+        }
+
         let nextXp = (state.stats.currentXp || 0) + xp;
         let nextLevel = state.stats.level || 1;
         let requiredXp = calculateRequiredXp(nextLevel);

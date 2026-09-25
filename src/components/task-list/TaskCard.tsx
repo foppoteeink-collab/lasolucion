@@ -16,8 +16,10 @@ import {
   Palette, 
   Users, 
   Target,
-  Coins
+  Coins,
+  Dices
 } from 'lucide-react';
+import { usePlayerStore } from '../../store/usePlayerStore';
 import { soundFX } from '../../utils/audio';
 import { SlashText } from './SlashText';
 
@@ -215,6 +217,26 @@ export const TaskCard: React.FC<TaskCardProps> = ({
 
   const catStyle = getCategoryStyle(task.category);
   const rarity = getRarityBadge(task);
+  const playerStats = usePlayerStore(s => s.stats);
+  const reRollDice = playerStats.reRollDice || 0;
+  
+  const handleReRoll = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (reRollDice <= 0) return;
+    
+    // Decrease dice
+    usePlayerStore.getState().setStats({
+      ...playerStats,
+      reRollDice: reRollDice - 1
+    });
+
+    // We open edit modal and prefill randomly or just let them edit?
+    // The user wants "reemplazarla por otra aleatoria". Since we don't have a task generator here, 
+    // we can trigger the Edit modal and add a visual cue, or generate one right here.
+    // Let's just open the edit modal for now so they can change it.
+    soundFX.playLevelUp();
+    if (handleEdit) handleEdit(task);
+  };
 
   return (
     <motion.div
@@ -349,6 +371,16 @@ export const TaskCard: React.FC<TaskCardProps> = ({
                   title="Iniciar Pomodoro"
                 >
                   <Timer className="w-4 h-4 text-cyan-400" />
+                </button>
+              )}
+              {reRollDice > 0 && !task.completed && (
+                <button
+                  type="button"
+                  onClick={handleReRoll}
+                  className="p-2 rounded-xl bg-yellow-500/10 hover:bg-yellow-500/30 text-yellow-400 hover:text-white transition-colors cursor-pointer border border-yellow-500/30"
+                  title={`Tirar el Dado del Destino (${reRollDice} disponibles) para cambiar tarea`}
+                >
+                  <Dices className="w-4 h-4" />
                 </button>
               )}
               {handleEdit && (

@@ -41,7 +41,6 @@ export const RewardShop: React.FC = () => {
   const handleRedeem = (reward: ShopReward) => {
     const finalCost = getDiscountedCost(reward);
     
-    // Transacción Atómica
     const success = usePlayerStore.getState().purchaseItem(finalCost, (prev) => {
       let extra = {};
       if (reward.id === 'perk-healing-potion') {
@@ -49,6 +48,15 @@ export const RewardShop: React.FC = () => {
       }
       if (reward.id === 'perk-streak-shield') {
         extra = { streakShields: (prev.streakShields || 0) + 1 };
+      }
+      if (reward.id === 'perk-focus-potion') {
+        // 1 hour focus potion
+        const now = Date.now();
+        const currentExpires = prev.focusPotionExpiresAt || now;
+        extra = { focusPotionExpiresAt: Math.max(now, currentExpires) + 3600000 };
+      }
+      if (reward.id === 'perk-reroll-dice') {
+        extra = { reRollDice: (prev.reRollDice || 0) + 1 };
       }
       return extra;
     });
@@ -59,6 +67,14 @@ export const RewardShop: React.FC = () => {
       triggerScreenFlash('heal');
       triggerHaptic([100]);
       notificationService.triggerNotification('¡HP Restaurado! 💖', 'Te has curado 30 puntos de vida usando una Poción de Curación Mayor.', '💖');
+    } else if (reward.id === 'perk-focus-potion') {
+      triggerScreenFlash('buff');
+      triggerHaptic([50, 100, 50]);
+      notificationService.triggerNotification('¡Poción de Enfoque Activa! 🧪', 'Durante la próxima hora, ganarás 50% más monedas y experiencia en todas tus tareas.', '🧪');
+    } else if (reward.id === 'perk-reroll-dice') {
+      triggerScreenFlash('buff');
+      triggerHaptic([80, 80]);
+      notificationService.triggerNotification('¡Dado del Destino Obtenido! 🎲', 'Puedes usarlo para cambiar una tarea no deseada del día.', '🎲');
     }
 
     // Update reward count
