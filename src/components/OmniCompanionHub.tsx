@@ -11,7 +11,8 @@ import {
   BrainCircuit,
   MessageSquareQuote,
   Settings,
-  X
+  X,
+  AlertTriangle
 } from 'lucide-react';
 import { HoloCompanion, CompanionAuraState } from './HoloCompanion';
 import { useUIStore } from '../store/useUIStore';
