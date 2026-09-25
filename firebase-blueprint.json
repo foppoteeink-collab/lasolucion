@@ -1,0 +1,31 @@
+{
+  "entities": {
+    "UserDocument": {
+      "title": "UserDocument",
+      "description": "Monolithic user data containing all app state",
+      "type": "object",
+      "properties": {
+        "stats": { "type": "object" },
+        "tasksByDate": { "type": "object" },
+        "reflections": { "type": "object" },
+        "customHabits": { "type": "array" },
+        "shopRewards": { "type": "array" },
+        "pomodoroSessions": { "type": "array" },
+        "notifications": { "type": "array" },
+        "habitMastery": { "type": "object" },
+        "gameSettings": { "type": "object" },
+        "skillTree": { "type": "array" },
+        "companion": { "type": "object" },
+        "expenses": { "type": "array" },
+        "lastUpdated": { "type": "string" }
+      },
+      "required": ["stats", "tasksByDate"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "UserDocument" },
+      "description": "User's complete state"
+    }
+  }
+}

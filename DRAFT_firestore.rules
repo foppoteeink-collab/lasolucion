@@ -1,0 +1,138 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Global Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    // Entities Validations
+    function isValidPlayerStats(data) {
+      return data.keys().hasAll(['level', 'xp', 'gold']) 
+        && data.level is number 
+        && data.xp is number 
+        && data.gold is number
+        && (!('totalFocusMinutes' in data) || data.totalFocusMinutes is number)
+        && (!('currentStreak' in data) || data.currentStreak is number)
+        && (!('highestStreak' in data) || data.highestStreak is number)
+        && (!('lastCompletedDate' in data) || (data.lastCompletedDate is string && data.lastCompletedDate.size() <= 50))
+        && (!('totalTasksCompleted' in data) || data.totalTasksCompleted is number)
+        && (!('theme' in data) || (data.theme is string && data.theme.size() <= 50));
+    }
+
+    function isValidTaskItem(data) {
+      return data.keys().hasAll(['id', 'title', 'status'])
+        && data.id is string && data.id.size() <= 100
+        && data.title is string && data.title.size() <= 300
+        && (!('description' in data) || (data.description is string && data.description.size() <= 1000))
+        && (data.status in ['todo', 'completed', 'failed', 'cancelled'])
+        && (!('date' in data) || (data.date is string && data.date.size() <= 50))
+        && (!('type' in data) || (data.type in ['daily', 'weekly', 'habit', 'one-time', 'monthly', 'yearly']))
+        && (!('category' in data) || (data.category is string && data.category.size() <= 50))
+        && (!('priority' in data) || (data.priority in ['low', 'medium', 'high', 'epic']))
+        && (!('xpReward' in data) || data.xpReward is number)
+        && (!('goldReward' in data) || data.goldReward is number)
+        && (!('estimatedMinutes' in data) || data.estimatedMinutes is number)
+        && (!('actualMinutes' in data) || data.actualMinutes is number)
+        && (!('tags' in data) || (data.tags is list && data.tags.size() <= 20));
+    }
+
+    function isValidPomodoroSession(data) {
+      return data.keys().hasAll(['id', 'duration', 'timestamp'])
+        && data.id is string && data.id.size() <= 100
+        && data.duration is number
+        && data.timestamp is number
+        && (!('taskName' in data) || (data.taskName is string && data.taskName.size() <= 300));
+    }
+
+    function isValidCustomHabit(data) {
+      return data.keys().hasAll(['id', 'title', 'category'])
+        && data.id is string && data.id.size() <= 100
+        && data.title is string && data.title.size() <= 300
+        && (!('description' in data) || (data.description is string && data.description.size() <= 1000))
+        && (!('frequency' in data) || (data.frequency is string && data.frequency.size() <= 100))
+        && data.category is string && data.category.size() <= 50
+        && (!('daysOfWeek' in data) || (data.daysOfWeek is list && data.daysOfWeek.size() <= 7))
+        && (!('xpReward' in data) || data.xpReward is number)
+        && (!('goldReward' in data) || data.goldReward is number);
+    }
+
+    function isValidShopReward(data) {
+      return data.keys().hasAll(['id', 'title', 'cost'])
+        && data.id is string && data.id.size() <= 100
+        && data.title is string && data.title.size() <= 300
+        && (!('description' in data) || (data.description is string && data.description.size() <= 1000))
+        && data.cost is number
+        && (!('icon' in data) || (data.icon is string && data.icon.size() <= 100))
+        && (!('isCustom' in data) || data.isCustom is bool)
+        && (!('isPurchased' in data) || data.isPurchased is bool);
+    }
+
+    function isValidUserSetting(data) {
+      return data.keys().hasAll(['data'])
+        && data.data is string && data.data.size() <= 20000;
+    }
+
+    // Rules
+    match /users/{userId} {
+      allow read: if isOwner(userId) && isValidId(userId);
+      allow create: if isOwner(userId) && isValidId(userId) && isValidPlayerStats(incoming());
+      allow update: if isOwner(userId) && isValidId(userId) && isValidPlayerStats(incoming());
+      allow delete: if isOwner(userId) && isValidId(userId);
+
+      match /tasks/{taskId} {
+        allow read: if isOwner(userId) && isValidId(userId);
+        allow create: if isOwner(userId) && isValidId(userId) && isValidId(taskId) && isValidTaskItem(incoming());
+        allow update: if isOwner(userId) && isValidId(userId) && isValidId(taskId) && isValidTaskItem(incoming());
+        allow delete: if isOwner(userId) && isValidId(userId) && isValidId(taskId);
+      }
+
+      match /pomodoro_history/{sessionId} {
+        allow read: if isOwner(userId) && isValidId(userId);
+        allow create: if isOwner(userId) && isValidId(userId) && isValidId(sessionId) && isValidPomodoroSession(incoming());
+        allow update: if isOwner(userId) && isValidId(userId) && isValidId(sessionId) && isValidPomodoroSession(incoming());
+        allow delete: if isOwner(userId) && isValidId(userId) && isValidId(sessionId);
+      }
+
+      match /custom_habits/{habitId} {
+        allow read: if isOwner(userId) && isValidId(userId);
+        allow create: if isOwner(userId) && isValidId(userId) && isValidId(habitId) && isValidCustomHabit(incoming());
+        allow update: if isOwner(userId) && isValidId(userId) && isValidId(habitId) && isValidCustomHabit(incoming());
+        allow delete: if isOwner(userId) && isValidId(userId) && isValidId(habitId);
+      }
+
+      match /shop_rewards/{rewardId} {
+        allow read: if isOwner(userId) && isValidId(userId);
+        allow create: if isOwner(userId) && isValidId(userId) && isValidId(rewardId) && isValidShopReward(incoming());
+        allow update: if isOwner(userId) && isValidId(userId) && isValidId(rewardId) && isValidShopReward(incoming());
+        allow delete: if isOwner(userId) && isValidId(userId) && isValidId(rewardId);
+      }
+
+      match /settings/{settingId} {
+        allow read: if isOwner(userId) && isValidId(userId);
+        allow create: if isOwner(userId) && isValidId(userId) && isValidId(settingId) && isValidUserSetting(incoming());
+        allow update: if isOwner(userId) && isValidId(userId) && isValidId(settingId) && isValidUserSetting(incoming());
+        allow delete: if isOwner(userId) && isValidId(userId) && isValidId(settingId);
+      }
+    }
+  }
+}
