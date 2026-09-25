@@ -164,3 +164,4 @@ export async function generateScheduleFrontend(
     source: "ai"
   };
 }
+// Trigger rebuild for Netlify env vars
