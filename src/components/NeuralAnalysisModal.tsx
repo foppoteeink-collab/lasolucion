@@ -7,6 +7,70 @@ import { soundFX } from '../utils/audio';
 import { generateProceduralAnalysis } from '../utils/proceduralHeuristics';
 import { generateNeuralAnalysisAI } from '../services/aiService';
 
+// Converts Gemini markdown to styled JSX elements
+function renderMarkdown(text: string): React.ReactNode[] {
+  const lines = text.split('\n');
+  return lines.map((line, i) => {
+    const key = i;
+    // H1/H2/H3 headings
+    if (/^###\s+/.test(line)) {
+      return <p key={key} className="text-purple-300 font-bold text-xs uppercase tracking-wider mt-3 mb-1">{renderInline(line.replace(/^###\s+/, ''))}</p>;
+    }
+    if (/^##\s+/.test(line)) {
+      return <p key={key} className="text-cyan-300 font-bold text-sm uppercase tracking-widest mt-4 mb-1 border-b border-cyan-800/40 pb-1">{renderInline(line.replace(/^##\s+/, ''))}</p>;
+    }
+    if (/^#\s+/.test(line)) {
+      return <p key={key} className="text-yellow-300 font-bold text-sm uppercase tracking-widest mt-4 mb-2">{renderInline(line.replace(/^#\s+/, ''))}</p>;
+    }
+    // Bold lines that start with **
+    if (/^\*\*[^*]/.test(line) && line.endsWith('**')) {
+      return <p key={key} className="text-emerald-300 font-bold text-xs mt-2">{renderInline(line)}</p>;
+    }
+    // Bullet points
+    if (/^[-*]\s+/.test(line)) {
+      return (
+        <div key={key} className="flex gap-2 mt-1">
+          <span className="text-purple-400 shrink-0">▸</span>
+          <span>{renderInline(line.replace(/^[-*]\s+/, ''))}</span>
+        </div>
+      );
+    }
+    // Numbered list
+    if (/^\d+\.\s+/.test(line)) {
+      const num = line.match(/^(\d+)/)![1];
+      return (
+        <div key={key} className="flex gap-2 mt-1">
+          <span className="text-cyan-400 font-bold shrink-0 w-4">{num}.</span>
+          <span>{renderInline(line.replace(/^\d+\.\s+/, ''))}</span>
+        </div>
+      );
+    }
+    // Empty lines
+    if (line.trim() === '') {
+      return <div key={key} className="h-2" />;
+    }
+    // Normal paragraph
+    return <p key={key} className="mt-1 leading-relaxed">{renderInline(line)}</p>;
+  });
+}
+
+function renderInline(text: string): React.ReactNode {
+  const parts: React.ReactNode[] = [];
+  // Match **bold**, *italic*, and `code`
+  const regex = /(\*\*([^*]+)\*\*|\*([^*]+)\*|`([^`]+)`)/g;
+  let last = 0;
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > last) parts.push(text.slice(last, match.index));
+    if (match[2]) parts.push(<strong key={match.index} className="text-white font-bold">{match[2]}</strong>);
+    else if (match[3]) parts.push(<em key={match.index} className="text-purple-200 not-italic font-medium">{match[3]}</em>);
+    else if (match[4]) parts.push(<code key={match.index} className="bg-purple-950/60 text-cyan-300 px-1 rounded text-[10px]">{match[4]}</code>);
+    last = match.index + match[0].length;
+  }
+  if (last < text.length) parts.push(text.slice(last));
+  return parts.length === 1 ? parts[0] : <>{parts}</>;
+}
+
 interface NeuralAnalysisModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -146,8 +210,8 @@ export const NeuralAnalysisModal: React.FC<NeuralAnalysisModalProps> = ({ isOpen
                   <span>Sintetizado por Gemini Neural Model en directo:</span>
                 </div>
               )}
-              <div className="p-4 rounded-xl bg-[#040914] border border-purple-950/80 text-xs text-slate-200 font-mono whitespace-pre-wrap leading-relaxed shadow-inner max-h-[400px] overflow-y-auto">
-                {analysisResult}
+              <div className="p-4 rounded-xl bg-[#040914] border border-purple-950/80 text-xs text-slate-200 font-mono leading-relaxed shadow-inner max-h-[400px] overflow-y-auto space-y-0.5">
+                {renderMarkdown(analysisResult)}
               </div>
             </div>
           ) : (
