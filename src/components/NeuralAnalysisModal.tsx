@@ -5,6 +5,7 @@ import { useTaskStore } from '../store/useTaskStore';
 import { useAppStore } from '../store/useAppStore';
 import { soundFX } from '../utils/audio';
 import { generateProceduralAnalysis } from '../utils/proceduralHeuristics';
+import { generateNeuralAnalysisAI } from '../services/aiService';
 
 interface NeuralAnalysisModalProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ interface NeuralAnalysisModalProps {
 
 export const NeuralAnalysisModal: React.FC<NeuralAnalysisModalProps> = ({ isOpen, onClose }) => {
   const [analysisResult, setAnalysisResult] = useState<string | null>(null);
+  const [analysisSource, setAnalysisSource] = useState<'ai' | 'heuristics' | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,29 +29,22 @@ export const NeuralAnalysisModal: React.FC<NeuralAnalysisModalProps> = ({ isOpen
       const reflections = useAppStore.getState().reflections || {};
       const currentTasks = useTaskStore.getState().tasksByDate[useTaskStore.getState().currentViewDate] || [];
 
-      const res = await fetch('/api/analyze-week', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          stats,
-          archetype: stats?.characterClass,
-          habitMastery,
-          currentTasks,
-          reflections
-        })
-      });
-      const data = await res.json();
-      if (data.analysis) {
-        setAnalysisResult(data.analysis);
-      } else {
-        setAnalysisResult("No se pudo compilar el diagnóstico neural.");
-      }
+      const res = await generateNeuralAnalysisAI(
+        stats,
+        stats?.characterClass || 'El Héroe',
+        habitMastery,
+        currentTasks,
+        reflections
+      );
+      setAnalysisResult(res.analysis);
+      setAnalysisSource(res.source);
     } catch (err: any) {
       console.warn("Neural analysis API call failed, falling back to procedural analysis:", err);
       const habitMastery = useAppStore.getState().habitMastery || {};
       const currentTasks = useTaskStore.getState().tasksByDate[useTaskStore.getState().currentViewDate] || [];
       const fallbackAnalysis = generateProceduralAnalysis(stats, stats?.characterClass, habitMastery, currentTasks);
       setAnalysisResult(fallbackAnalysis);
+      setAnalysisSource('heuristics');
     } finally {
       setIsAnalyzing(false);
     }
@@ -78,6 +73,18 @@ export const NeuralAnalysisModal: React.FC<NeuralAnalysisModalProps> = ({ isOpen
                 <span className="text-[10px] font-mono uppercase tracking-widest text-purple-300 font-bold bg-purple-900/40 px-2 py-0.5 rounded border border-purple-700/50">
                   Módulo de Telemetría Biológica
                 </span>
+                {analysisSource === 'ai' && (
+                  <span className="text-[10px] font-mono font-bold bg-emerald-950/90 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/50 shadow-[0_0_10px_rgba(16,185,129,0.3)] flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 text-emerald-400 animate-pulse" />
+                    <span>Gemini AI Activo</span>
+                  </span>
+                )}
+                {analysisSource === 'heuristics' && (
+                  <span className="text-[10px] font-mono font-bold bg-amber-950/90 text-amber-300 px-2 py-0.5 rounded border border-amber-500/50 flex items-center gap-1">
+                    <ShieldCheck className="w-3 h-3 text-amber-400" />
+                    <span>Heurístico Local</span>
+                  </span>
+                )}
               </div>
               <h3 className="text-base sm:text-lg font-anton tracking-wide text-white uppercase mt-0.5">
                 Diagnóstico Neural Integral
@@ -123,7 +130,7 @@ export const NeuralAnalysisModal: React.FC<NeuralAnalysisModalProps> = ({ isOpen
             <div className="p-12 bg-[#040914] border border-purple-900/40 rounded-xl flex flex-col items-center justify-center text-center space-y-3">
               <Loader2 className="w-8 h-8 text-purple-400 animate-spin" />
               <p className="text-xs font-mono text-purple-300">
-                El Núcleo Central está escrutando tus metas, tareas activas, racha de hábitos y notas de bitácora...
+                El Núcleo Central está escrutando tus metas, tareas activas, racha de hábitos y notas de bitácora mediante IA...
               </p>
             </div>
           ) : error ? (
@@ -132,8 +139,16 @@ export const NeuralAnalysisModal: React.FC<NeuralAnalysisModalProps> = ({ isOpen
               <span>{error}</span>
             </div>
           ) : analysisResult ? (
-            <div className="p-4 rounded-xl bg-[#040914] border border-purple-950/80 text-xs text-slate-200 font-mono whitespace-pre-wrap leading-relaxed shadow-inner max-h-[400px] overflow-y-auto">
-              {analysisResult}
+            <div className="space-y-2">
+              {analysisSource === 'ai' && (
+                <div className="text-[11px] font-mono text-emerald-400/90 flex items-center gap-1 px-1">
+                  <Sparkles className="w-3 h-3 text-emerald-400" />
+                  <span>Sintetizado por Gemini Neural Model en directo:</span>
+                </div>
+              )}
+              <div className="p-4 rounded-xl bg-[#040914] border border-purple-950/80 text-xs text-slate-200 font-mono whitespace-pre-wrap leading-relaxed shadow-inner max-h-[400px] overflow-y-auto">
+                {analysisResult}
+              </div>
             </div>
           ) : (
             <div className="text-center py-10 text-slate-400 text-xs font-mono border border-dashed border-purple-900/50 rounded-xl">

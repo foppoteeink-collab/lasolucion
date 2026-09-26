@@ -32,7 +32,7 @@ interface UIState {
   themeMode: ThemeMode;
   navigationMode: NavigationMode;
   soundEnabled: boolean;
-  screenFlash: 'damage' | 'heal' | null;
+  screenFlash: 'damage' | 'heal' | 'buff' | null;
   isFocusModeActive: boolean; // INMUNIZADOR DE FLUJO
   
   // Modales
@@ -65,7 +65,7 @@ interface UIState {
   dismissCurrentModal: (modalName?: ModalName) => void;
   clearModalQueue: () => void;
   setDeleteConfirmTask: (task: TaskItem | null) => void;
-  triggerScreenFlash: (type: 'damage' | 'heal') => void;
+  triggerScreenFlash: (type: 'damage' | 'heal' | 'buff') => void;
   addFloatingEffect: (effect: Omit<FloatingEffect, 'id'>) => void;
   removeFloatingEffect: (id: string) => void;
   addFloatingReward: (reward: Omit<FloatingReward, 'id'>) => void;

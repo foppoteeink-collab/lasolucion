@@ -25,7 +25,6 @@ interface TaskState {
   deleteTask: (date: string, taskId: string) => void;
   toggleTaskCompletion: (date: string, taskId: string) => void;
   uncheckAllTasksForDate: (date: string) => void;
-  uncheckAllTasksForDate: (date: string) => void;
   lockTasksForDate: (date: string) => void;
   startDay: (date: string) => void;
 }

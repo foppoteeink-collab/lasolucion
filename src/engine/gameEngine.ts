@@ -552,9 +552,9 @@ export const handleToggleTask = (taskId: string, e?: any) => {
   let coinRewardToAdd = Math.floor(rawCoin * taxMultiplier);
   
   // Phase 2: Random Chests (20% chance to convert coins into a chest between 1 and 20)
-  // Only applies if the task natively had coins, to prevent infinite farming on 0 coin tasks.
+  // Only applies if the task natively had coins and hasn't awarded a chest yet to prevent infinite farming.
   let wasChestFound = false;
-  if (rawCoin > 0 && Math.random() < 0.20) {
+  if (rawCoin > 0 && !task.chestAwarded && Math.random() < 0.20) {
     coinRewardToAdd = Math.floor(Math.random() * 20) + 1; // 1 to 20 coins
     wasChestFound = true;
   }
@@ -574,7 +574,11 @@ export const handleToggleTask = (taskId: string, e?: any) => {
 
   if (!wasCompleted) {
     soundFX.playTaskComplete();
-    stateTask.updateTask(date, taskId, { awardedXp: xpReward, awardedCoins: coinReward });
+    stateTask.updateTask(date, taskId, {
+      awardedXp: xpReward,
+      awardedCoins: coinReward,
+      chestAwarded: wasChestFound ? true : (task.chestAwarded || false)
+    });
     
     // Random Boss encounter (15% chance)
     const todayStr = getTodayDateString();

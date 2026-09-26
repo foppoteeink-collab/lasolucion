@@ -78,7 +78,7 @@ export class NotificationService {
               icon: '/icon.png',
               badge: '/icon.png',
               vibrate: [200, 100, 200]
-            });
+            } as any);
           }).catch(err => {
              new Notification(title, { body, icon: '/icon.png' });
           });

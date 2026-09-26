@@ -133,6 +133,13 @@ service cloud.firestore {
         allow update: if isOwner(userId) && isValidId(userId) && isValidId(settingId) && isValidUserSetting(incoming());
         allow delete: if isOwner(userId) && isValidId(userId) && isValidId(settingId);
       }
+
+      match /task_months/{monthId} {
+        allow read: if isOwner(userId) && isValidId(userId);
+        allow create: if isOwner(userId) && isValidId(userId) && isValidId(monthId);
+        allow update: if isOwner(userId) && isValidId(userId) && isValidId(monthId);
+        allow delete: if isOwner(userId) && isValidId(userId) && isValidId(monthId);
+      }
     }
   }
 }

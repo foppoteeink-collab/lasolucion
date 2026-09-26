@@ -85,13 +85,13 @@ export const PomodoroTimer: React.FC<PomodoroTimerProps> = React.memo(({
 
   const handleTogglePlay = () => {
     if (!isRunning && mode === 'work' && systemEntropy >= 100) {
-      soundFX.playDamageSound();
-      triggerHaptic([50, 60, 40]);
-      setEntropyWarning('⚠️ SOBRECARGA CRÍTICA POR ENTROPÍA (100%): Debes despejar la inercia (completar al menos 1 misión o vencer al Némesis) antes de iniciar el estado de flujo.');
-      setTimeout(() => setEntropyWarning(null), 6000);
-      return;
+      soundFX.playClick();
+      triggerHaptic([30, 40]);
+      setEntropyWarning('⚡ MODO RESCATE ACTIVADO: Se detectó 100% de entropía acumulada. Iniciarás un ciclo de enfoque para romper la inercia.');
+      setTimeout(() => setEntropyWarning(null), 8000);
+    } else {
+      setEntropyWarning(null);
     }
-    setEntropyWarning(null);
     togglePlay();
   };
 

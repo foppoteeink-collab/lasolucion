@@ -1,5 +1,70 @@
 import { generateProceduralSchedule } from '../utils/proceduralHeuristics';
 
+const DIRECT_FALLBACK_MODELS = [
+  'gemini-3.6-flash',
+  'gemini-flash-latest',
+  'gemini-2.5-flash',
+  'gemini-3.5-flash',
+];
+
+async function fetchGeminiPrompt(promptText: string, modelName: string = 'gemini-3.6-flash'): Promise<string | null> {
+  // 1. Try Netlify Function endpoint first (keeps API key server-side, works in production)
+  try {
+    const res = await fetch('/.netlify/functions/oraculo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: promptText, model: modelName })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
+        console.log(`[Gemini] Response via Netlify function (model: ${modelName})`);
+        return data.candidates[0].content.parts[0].text;
+      }
+    } else {
+      const errBody = await res.text();
+      console.warn(`[Netlify/oraculo] HTTP ${res.status}:`, errBody);
+    }
+  } catch (err) {
+    // Netlify function not available in local Vite dev, will try direct below
+    console.warn('[Netlify/oraculo] Not available, trying direct API:', err);
+  }
+
+  // 2. Direct client-side Gemini API fallback (for local dev using VITE_GEMINI_API_KEY in .env)
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  if (!apiKey) {
+    console.warn('[Gemini API Direct] No VITE_GEMINI_API_KEY in env, skipping direct fallback.');
+    return null;
+  }
+
+  const modelsToTry = [modelName, ...DIRECT_FALLBACK_MODELS.filter(m => m !== modelName)];
+  for (const model of modelsToTry) {
+    try {
+      const directRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ role: "user", parts: [{ text: promptText }] }]
+        })
+      });
+      if (directRes.ok) {
+        const data = await directRes.json();
+        if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
+          console.log(`[Gemini API Direct] Response via model: ${model}`);
+          return data.candidates[0].content.parts[0].text;
+        }
+      } else {
+        const errBody = await directRes.text();
+        console.warn(`[Gemini API Direct] Model ${model} HTTP ${directRes.status}:`, errBody);
+      }
+    } catch (err) {
+      console.warn(`[Gemini API Direct] Model ${model} failed:`, err);
+    }
+  }
+
+  return null;
+}
+
 export async function generateScheduleFrontend(
   prompt: string,
   userContext: any,
@@ -82,42 +147,20 @@ export async function generateScheduleFrontend(
     ]
   `;
 
-  // Gemini recommended models
-  const candidateModels = ["gemini-3.5-flash-lite", "gemini-3.6-flash", "gemini-3.5-flash", "gemini-1.5-flash", "gemini-1.5-flash-8b"];
+  const candidateModels = ["gemini-3.6-flash", "gemini-flash-latest", "gemini-2.5-flash", "gemini-3.5-flash"];
   let generatedText = "";
-  let lastError: any = null;
+  const fullPrompt = systemInstruction + "\n\nSolicitud del usuario:\n" + prompt;
 
-  for (let i = 0; i < candidateModels.length; i++) {
-    const modelName = candidateModels[i];
-    try {
-      const res = await fetch('/.netlify/functions/oraculo', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt: systemInstruction + "\n\nSolicitud del usuario:\n" + prompt,
-          model: modelName
-        })
-      });
-
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status} ${res.statusText}`);
-      }
-
-      const data = await res.json();
-      if (data.candidates && data.candidates[0].content.parts[0].text) {
-        generatedText = data.candidates[0].content.parts[0].text;
-        break;
-      }
-    } catch (err: any) {
-      lastError = err;
-      if (i < candidateModels.length - 1) {
-        await new Promise(r => setTimeout(r, 300));
-      }
+  for (const modelName of candidateModels) {
+    const text = await fetchGeminiPrompt(fullPrompt, modelName);
+    if (text) {
+      generatedText = text;
+      break;
     }
   }
 
   if (!generatedText) {
-    console.log("[Generate-Schedule] AI failed. Compiling schedule via procedural heuristics.", lastError);
+    console.log("[Generate-Schedule] AI failed. Compiling schedule via procedural heuristics.");
     return {
       habits: generateProceduralSchedule(prompt, userContext, mode),
       source: "emergency_fallback",
@@ -164,4 +207,54 @@ export async function generateScheduleFrontend(
     source: "ai"
   };
 }
-// Trigger rebuild for Netlify env vars
+
+export async function generateNeuralAnalysisAI(
+  stats: any,
+  archetypeClass: string,
+  habitMastery: any,
+  currentTasks: any[],
+  reflections: any
+): Promise<{ analysis: string; source: 'ai' | 'heuristics' }> {
+  const pendingTasks = (currentTasks || []).filter((t: any) => !t.completed);
+  const completedTasks = (currentTasks || []).filter((t: any) => t.completed);
+  const habitEntries = Object.entries(habitMastery || {});
+
+  const prompt = `
+ Eres el MOTOR DE DIAGNÓSTICO NEURAL SUPREMO (Quantum OS Neural Compiler).
+ Realiza un Diagnóstico Neural Integral, Biológico y Táctico de 360 grados para el Operador Humano.
+
+ TELEMETRÍA ACTUAL DEL OPERADOR:
+ - Clase / Arquetipo: ${archetypeClass || 'El Héroe'}
+ - Nivel: ${stats?.level || 1} (${stats?.rankTitle || 'Chispazo de Voluntad'})
+ - Salud (HP): ${stats?.hp || 100}/${stats?.maxHp || 100}
+ - Monedas / Créditos: ${stats?.coins || 0}
+ - Racha Actual: ${stats?.streakDays || 0} días (Escudos: ${stats?.streakShields || 0})
+ - Atributos: Disciplina=${stats?.attributes?.disciplina || 0}, Fuerza=${stats?.attributes?.fuerza || 0}, Mente=${stats?.attributes?.mente || 0}, Energía=${stats?.attributes?.energia || 0}, Estudio=${stats?.attributes?.estudio || 0}
+ - Misiones Completadas Hoy: ${completedTasks.length} | Pendientes: ${pendingTasks.length}
+ - Tareas Pendientes Lista: ${pendingTasks.map((t: any) => t.title).join(', ') || 'Ninguna'}
+ - Hábitos en Dominio (Maltz): ${habitEntries.length} hábitos en seguimiento
+ - Reflexiones Recientes: ${JSON.stringify(reflections || {})}
+
+ ESTRUCTURA DEL INFORME REQUERIDO (Usa Markdown Sci-Fi Cyberpunk elegante con emojis de la terminal):
+ 1. 🌐 **TELEMETRÍA GENERAL Y ESTADO BIOLÓGICO**
+    - Evalúa el nivel de energía, nivel de HP, racha actual y equilibrio de atributos.
+ 2. 🧠 **ANÁLISIS DE PATRONES Y VULNERABILIDADES NEURONALES**
+    - Identifica los puntos fuertes del operador y los posibles cuellos de botella / entropía según su arquetipo (${archetypeClass}) y tareas pendientes.
+ 3. ⚡ **DIRECTIVA TÁCTICA DE OPTIMIZACIÓN (3 ACCIONES CIRÚRGICAS)**
+    - Da 3 órdenes o pasos concretos e inmediatos que el operador debe ejecutar hoy para desbloquear el máximo rendimiento y subir de nivel.
+  `;
+
+  const candidateModels = ["gemini-3.6-flash", "gemini-flash-latest", "gemini-2.5-flash", "gemini-3.5-flash"];
+  for (const modelName of candidateModels) {
+    const text = await fetchGeminiPrompt(prompt, modelName);
+    if (text) {
+      return { analysis: text, source: 'ai' };
+    }
+  }
+
+  const { generateProceduralAnalysis } = await import('../utils/proceduralHeuristics');
+  const fallbackText = generateProceduralAnalysis(stats, archetypeClass, habitMastery, currentTasks);
+  return { analysis: fallbackText, source: 'heuristics' };
+}
+
+

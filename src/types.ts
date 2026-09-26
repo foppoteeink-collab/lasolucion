@@ -53,6 +53,7 @@ export interface TaskItem {
   isLocked?: boolean;
   lockedReason?: string;
   habitEnergyType?: HabitEnergyType;
+  chestAwarded?: boolean;
 }
 
 export interface PlayerStats {
