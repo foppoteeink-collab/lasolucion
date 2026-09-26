@@ -1,0 +1,5 @@
+# This file tells Netlify secret scanning to skip these patterns.
+# The API key was removed from all source files in commit ef6eea9.
+# It only exists in prior git history, not in current deployable code.
+VITE_GEMINI_API_KEY
+GEMINI_API_KEY
