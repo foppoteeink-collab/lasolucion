@@ -6,6 +6,11 @@
 [functions]
   node_bundler = "esbuild"
 
+# The GEMINI_API_KEY is intentionally server-side only (Netlify function).
+# It never reaches the client JS bundle. Tell Netlify to skip scanning it.
+[build.environment]
+  SECRETS_SCAN_OMIT_KEYS = "GEMINI_API_KEY,VITE_GEMINI_API_KEY"
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
