@@ -1,14 +1,11 @@
 import { generateProceduralSchedule } from '../utils/proceduralHeuristics';
 
-const DIRECT_FALLBACK_MODELS = [
-  'gemini-3.6-flash',
-  'gemini-flash-latest',
-  'gemini-2.5-flash',
-  'gemini-3.5-flash',
-];
+// SECURITY: NEVER add VITE_ prefixed keys here — Vite embeds them in the public JS bundle.
+// All Gemini calls go through the server-side Netlify function /.netlify/functions/oraculo
+// which reads GEMINI_API_KEY from the secure server environment.
 
 async function fetchGeminiPrompt(promptText: string, modelName: string = 'gemini-3.6-flash'): Promise<string | null> {
-  // 1. Try Netlify Function endpoint first (keeps API key server-side, works in production)
+  // Route ALL requests through the Netlify server function (API key stays server-side)
   try {
     const res = await fetch('/.netlify/functions/oraculo', {
       method: 'POST',
@@ -18,7 +15,7 @@ async function fetchGeminiPrompt(promptText: string, modelName: string = 'gemini
     if (res.ok) {
       const data = await res.json();
       if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
-        console.log(`[Gemini] Response via Netlify function (model: ${modelName})`);
+        console.log(`[Gemini] ✓ Response via Netlify function (model: ${modelName})`);
         return data.candidates[0].content.parts[0].text;
       }
     } else {
@@ -26,42 +23,11 @@ async function fetchGeminiPrompt(promptText: string, modelName: string = 'gemini
       console.warn(`[Netlify/oraculo] HTTP ${res.status}:`, errBody);
     }
   } catch (err) {
-    // Netlify function not available in local Vite dev, will try direct below
-    console.warn('[Netlify/oraculo] Not available, trying direct API:', err);
+    console.warn('[Netlify/oraculo] Function unavailable:', err);
   }
 
-  // 2. Direct client-side Gemini API fallback (for local dev using VITE_GEMINI_API_KEY in .env)
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-  if (!apiKey) {
-    console.warn('[Gemini API Direct] No VITE_GEMINI_API_KEY in env, skipping direct fallback.');
-    return null;
-  }
-
-  const modelsToTry = [modelName, ...DIRECT_FALLBACK_MODELS.filter(m => m !== modelName)];
-  for (const model of modelsToTry) {
-    try {
-      const directRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ role: "user", parts: [{ text: promptText }] }]
-        })
-      });
-      if (directRes.ok) {
-        const data = await directRes.json();
-        if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
-          console.log(`[Gemini API Direct] Response via model: ${model}`);
-          return data.candidates[0].content.parts[0].text;
-        }
-      } else {
-        const errBody = await directRes.text();
-        console.warn(`[Gemini API Direct] Model ${model} HTTP ${directRes.status}:`, errBody);
-      }
-    } catch (err) {
-      console.warn(`[Gemini API Direct] Model ${model} failed:`, err);
-    }
-  }
-
+  // No client-side API key fallback — would expose the key in the JS bundle.
+  // If running locally without Netlify CLI, use: netlify dev
   return null;
 }
 
