@@ -185,6 +185,12 @@ export async function generateNeuralAnalysisAI(
   const completedTasks = (currentTasks || []).filter((t: any) => t.completed);
   const habitEntries = Object.entries(habitMastery || {});
 
+  // Extract tasks that have notes — these give the AI rich context about what the user actually did
+  const tasksWithNotes = (currentTasks || []).filter((t: any) => t.notes && t.notes.trim());
+  const taskNotesContext = tasksWithNotes.length > 0
+    ? tasksWithNotes.map((t: any) => `  • [${t.completed ? '✓' : '⏳'}] ${t.title}: "${t.notes.trim()}"`).join('\n')
+    : 'Sin notas de misiones registradas hoy.';
+
   const prompt = `
  Eres el MOTOR DE DIAGNÓSTICO NEURAL SUPREMO (Quantum OS Neural Compiler).
  Realiza un Diagnóstico Neural Integral, Biológico y Táctico de 360 grados para el Operador Humano.
@@ -200,6 +206,10 @@ export async function generateNeuralAnalysisAI(
  - Tareas Pendientes Lista: ${pendingTasks.map((t: any) => t.title).join(', ') || 'Ninguna'}
  - Hábitos en Dominio (Maltz): ${habitEntries.length} hábitos en seguimiento
  - Reflexiones Recientes: ${JSON.stringify(reflections || {})}
+
+ BITÁCORA DE NOTAS POR MISIÓN (lo que el operador anotó en cada tarea):
+${taskNotesContext}
+
 
  ESTRUCTURA DEL INFORME REQUERIDO (Usa Markdown Sci-Fi Cyberpunk elegante con emojis de la terminal):
  1. 🌐 **TELEMETRÍA GENERAL Y ESTADO BIOLÓGICO**

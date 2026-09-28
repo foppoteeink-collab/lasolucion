@@ -17,7 +17,8 @@ import {
   Users, 
   Target,
   Coins,
-  Dices
+  Dices,
+  FileText
 } from 'lucide-react';
 import { usePlayerStore } from '../../store/usePlayerStore';
 import { soundFX } from '../../utils/audio';
@@ -208,6 +209,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   onDelete,
   onDeleteTask,
   onOpenPomodoro,
+  onOpenNoteModal,
   isDayEnded = false
 }) => {
   if (!task || !task.title) return null;
@@ -358,6 +360,25 @@ export const TaskCard: React.FC<TaskCardProps> = ({
 
         {/* Action Controls */}
         <div className="flex items-center gap-1.5 shrink-0 ml-2">
+          {/* Note button — always visible so user can add/view notes even on completed tasks */}
+          {onOpenNoteModal && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                soundFX.playClick();
+                onOpenNoteModal(task);
+              }}
+              className={`p-2 rounded-xl transition-colors cursor-pointer border ${
+                task.notes
+                  ? 'bg-cyan-500/20 border-cyan-400/60 text-cyan-300 shadow-[0_0_8px_rgba(0,240,255,0.3)]'
+                  : 'bg-white/5 hover:bg-white/10 text-slate-400 hover:text-cyan-300 border-white/10 hover:border-cyan-500/40'
+              }`}
+              title={task.notes ? 'Ver / Editar nota' : 'Agregar nota'}
+            >
+              <FileText className="w-4 h-4" />
+            </button>
+          )}
           {!isDayEnded && (
             <>
               {onOpenPomodoro && (
