@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { User, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider } from 'firebase/auth';
 import { auth, googleProvider } from '../firebase';
 
 interface AuthContextType {
@@ -17,6 +17,17 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 let cachedAccessToken: string | null = null;
+
+// Detect mobile / PWA environments where popups are typically blocked
+const isMobileOrPWA = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  const ua = navigator.userAgent || '';
+  const isMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(ua);
+  const isPWA =
+    window.matchMedia('(display-mode: standalone)').matches ||
+    (window.navigator as any).standalone === true;
+  return isMobile || isPWA;
+};
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -40,6 +51,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     try {
       if (auth) {
+        // Handle redirect result (user returning from Google sign-in redirect on mobile/PWA)
+        getRedirectResult(auth)
+          .then((result) => {
+            if (result?.user) {
+              const credential = GoogleAuthProvider.credentialFromResult(result);
+              const token = credential?.accessToken || null;
+              cachedAccessToken = token;
+              setAccessToken(token);
+              setUser(result.user);
+            }
+          })
+          .catch((err) => {
+            // Non-fatal: happens when there is no pending redirect
+            console.warn('[Auth] getRedirectResult:', err?.code);
+          });
+
         unsubscribe = auth.onAuthStateChanged(
           (u) => {
             clearTimeout(timer);
@@ -74,6 +101,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signInWithGoogle = async () => {
     setError(null);
     try {
+      if (isMobileOrPWA()) {
+        // Mobile / PWA: popups are blocked — use redirect flow instead
+        await signInWithRedirect(auth, googleProvider);
+        // Page will reload; result is handled above in getRedirectResult
+        return null;
+      }
+
+      // Desktop: popup works fine
       const result = await signInWithPopup(auth, googleProvider);
       const credential = GoogleAuthProvider.credentialFromResult(result);
       const token = credential?.accessToken || null;
@@ -81,12 +116,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setAccessToken(token);
       setUser(result.user);
       return { user: result.user, accessToken: token };
+
     } catch (err: any) {
       console.error('Error signing in with Google:', err);
+
       if (err?.code === 'auth/popup-blocked') {
-        setError('El navegador bloqueó la ventana emergente. Por favor, habilita las ventanas emergentes o abre la app en una nueva pestaña.');
+        // Desktop popup was blocked — fallback to redirect
+        try {
+          await signInWithRedirect(auth, googleProvider);
+          return null;
+        } catch {
+          setError('No se pudo abrir el inicio de sesión. Intenta en una pestaña nueva.');
+        }
       } else if (err?.code === 'auth/unauthorized-domain') {
-        setError('Dominio no autorizado en Firebase Console. Puedes seguir jugando en Modo Local sin problemas.');
+        setError('Dominio no autorizado en Firebase Console. Puedes seguir en Modo Local sin problemas.');
+      } else if (
+        err?.code === 'auth/cancelled-popup-request' ||
+        err?.code === 'auth/popup-closed-by-user'
+      ) {
+        // User closed the popup — not an error, just ignore
+        return null;
       } else {
         setError(err?.message || 'No se pudo iniciar sesión con Google.');
       }
@@ -106,7 +155,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const getAccessToken = async () => cachedAccessToken;
-
   const clearError = () => setError(null);
 
   return (
@@ -127,4 +175,3 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     </AuthContext.Provider>
   );
 };
-
