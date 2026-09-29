@@ -179,7 +179,8 @@ export async function generateNeuralAnalysisAI(
   archetypeClass: string,
   habitMastery: any,
   currentTasks: any[],
-  reflections: any
+  reflections: any,
+  tasksByDate: Record<string, any[]> = {}
 ): Promise<{ analysis: string; source: 'ai' | 'heuristics' }> {
   const pendingTasks = (currentTasks || []).filter((t: any) => !t.completed);
   const completedTasks = (currentTasks || []).filter((t: any) => t.completed);
@@ -190,6 +191,35 @@ export async function generateNeuralAnalysisAI(
   const taskNotesContext = tasksWithNotes.length > 0
     ? tasksWithNotes.map((t: any) => `  • [${t.completed ? '✓' : '⏳'}] ${t.title}: "${t.notes.trim()}"`).join('\n')
     : 'Sin notas de misiones registradas hoy.';
+
+  // Build a 14-day historical context
+  const todayStr = new Date().toISOString().split('T')[0];
+  const sortedDates = Object.keys(tasksByDate).sort().filter((d: string) => d <= todayStr);
+  const recentDates = sortedDates.slice(-14); // up to 14 days
+
+  let historyContext = '';
+  if (recentDates.length > 0) {
+    recentDates.forEach((date: string) => {
+      const dayTasks = tasksByDate[date] || [];
+      const completed = dayTasks.filter((t: any) => t.completed).length;
+      const pending = dayTasks.filter((t: any) => !t.completed).length;
+      const sleep = stats?.sleepLogs?.[date];
+      
+      let sleepStr = '';
+      if (sleep && sleep.bedtime && sleep.wakeTime) {
+        sleepStr = ` | Sueño: de ${sleep.bedtime} a ${sleep.wakeTime}`;
+      } else if (sleep && sleep.bedtime) {
+        sleepStr = ` | Sueño incompleto`;
+      }
+      
+      const notes = dayTasks.filter((t: any) => t.notes && t.notes.trim()).map((t: any) => `"${t.notes.trim()}"`).join(', ');
+      const notesStr = notes ? ` | Notas: ${notes}` : '';
+
+      historyContext += `  - ${date}: ${completed} completadas, ${pending} pendientes${sleepStr}${notesStr}\n`;
+    });
+  } else {
+    historyContext = '  - Sin datos históricos suficientes.\n';
+  }
 
   const prompt = `
  Eres el MOTOR DE DIAGNÓSTICO NEURAL SUPREMO (Quantum OS Neural Compiler).
@@ -207,15 +237,17 @@ export async function generateNeuralAnalysisAI(
  - Hábitos en Dominio (Maltz): ${habitEntries.length} hábitos en seguimiento
  - Reflexiones Recientes: ${JSON.stringify(reflections || {})}
 
- BITÁCORA DE NOTAS POR MISIÓN (lo que el operador anotó en cada tarea):
+ BITÁCORA DE NOTAS POR MISIÓN (HOY):
 ${taskNotesContext}
 
+ HISTORIAL RECIENTE (ÚLTIMOS 14 DÍAS):
+${historyContext}
 
  ESTRUCTURA DEL INFORME REQUERIDO (Usa Markdown Sci-Fi Cyberpunk elegante con emojis de la terminal):
  1. 🌐 **TELEMETRÍA GENERAL Y ESTADO BIOLÓGICO**
-    - Evalúa el nivel de energía, nivel de HP, racha actual y equilibrio de atributos.
+    - Evalúa el nivel de energía, nivel de HP, racha actual y equilibrio de atributos basándote en el día de hoy y el historial reciente. Detecta patrones si hay falta de sueño o inconsistencia.
  2. 🧠 **ANÁLISIS DE PATRONES Y VULNERABILIDADES NEURONALES**
-    - Identifica los puntos fuertes del operador y los posibles cuellos de botella / entropía según su arquetipo (${archetypeClass}) y tareas pendientes.
+    - Identifica los puntos fuertes del operador y los posibles cuellos de botella / entropía según su historial (patrones de los últimos 14 días) y tareas pendientes de hoy.
  3. ⚡ **DIRECTIVA TÁCTICA DE OPTIMIZACIÓN (3 ACCIONES CIRÚRGICAS)**
     - Da 3 órdenes o pasos concretos e inmediatos que el operador debe ejecutar hoy para desbloquear el máximo rendimiento y subir de nivel.
   `;

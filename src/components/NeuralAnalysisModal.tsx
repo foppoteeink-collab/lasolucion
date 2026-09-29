@@ -91,14 +91,16 @@ export const NeuralAnalysisModal: React.FC<NeuralAnalysisModalProps> = ({ isOpen
       soundFX.playClick();
       const habitMastery = useAppStore.getState().habitMastery || {};
       const reflections = useAppStore.getState().reflections || {};
-      const currentTasks = useTaskStore.getState().tasksByDate[useTaskStore.getState().currentViewDate] || [];
+      const tasksByDate = useTaskStore.getState().tasksByDate || {};
+      const currentTasks = tasksByDate[useTaskStore.getState().currentViewDate] || [];
 
       const res = await generateNeuralAnalysisAI(
         stats,
         stats?.characterClass || 'El Héroe',
         habitMastery,
         currentTasks,
-        reflections
+        reflections,
+        tasksByDate
       );
       setAnalysisResult(res.analysis);
       setAnalysisSource(res.source);
