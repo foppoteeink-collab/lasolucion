@@ -136,7 +136,8 @@ export const evaluateMasteryChange = (
 ): { 
   newMastery: Record<string, HabitMasteryRecord>, 
   bonusXp: number, 
-  notifications: AppNotification[] 
+  notifications: AppNotification[],
+  boxesEarned: number
 } => {
   // Strictly evaluate dedicated 21 & 66 day habits or custom habits
   const is2166Habit = Boolean(
@@ -146,7 +147,7 @@ export const evaluateMasteryChange = (
     task.id.includes('habit-water') || 
     task.id.includes('habit-teeth')
   );
-  if (!is2166Habit) return { newMastery: currentMastery, bonusXp: 0, notifications: [] };
+  if (!is2166Habit) return { newMastery: currentMastery, bonusXp: 0, notifications: [], boxesEarned: 0 };
   
   const baseId = getHabitBaseId(task);
   const record = currentMastery[baseId] || {
@@ -203,9 +204,24 @@ export const evaluateMasteryChange = (
     });
   }
 
+  let boxesEarned = 0;
+  const milestones = [7, 15, 21, 30, 45, 60, 66];
+  if (milestones.includes(currentStreak) && currentStreak > record.highestStreak) {
+    boxesEarned = 1;
+    notifications.push({
+      id: `lootbox-${Date.now()}`,
+      title: '¡Caja de Botín Obtenida!',
+      message: `Has alcanzado una racha de ${currentStreak} días en "${task.title}". ¡Abre tu caja en la Tienda!`,
+      timestamp: new Date().toISOString(),
+      type: 'streak',
+      read: false
+    });
+  }
+
   return {
     newMastery: { ...currentMastery, [baseId]: newRecord },
     bonusXp,
-    notifications
+    notifications,
+    boxesEarned
   };
 };

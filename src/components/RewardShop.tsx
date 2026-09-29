@@ -14,7 +14,9 @@ import { useUIStore } from '../store/useUIStore';
 import { triggerHaptic } from '../utils/haptics';
 
 export const RewardShop: React.FC = () => {
-  const { stats, setStats, heal } = usePlayerStore();
+  const { stats, setStats, heal, openLootBox, useInventoryItem } = usePlayerStore();
+  const inventory = stats.inventory || [];
+  const unopenedBoxes = stats.unopenedBoxes || 0;
   const coins = stats.coins;
   const energia = stats.attributes?.energia || 10;
   const streakShields = stats.streakShields ?? 0;
@@ -181,7 +183,88 @@ export const RewardShop: React.FC = () => {
             <Plus className="w-5 h-5 stroke-[3]" />
             <span className="hidden sm:inline">Nueva Recompensa</span>
           </button>
-        </div>
+      </div>
+
+      {/* Inventory & Loot Boxes */}
+      <div className="space-y-4">
+        <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 pl-1">
+          <Sparkles className="w-4 h-4 text-cyan-400" />
+          Tus Objetos y Botín
+        </h3>
+        
+        {/* Loot Boxes */}
+        {unopenedBoxes > 0 && (
+          <div className="p-5 rounded-2xl bg-[#04020e]/80 border-2 border-yellow-500/50 shadow-[0_0_20px_rgba(234,179,8,0.2)] flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-2xl bg-yellow-950 flex items-center justify-center text-4xl border border-yellow-500 animate-pulse">
+                🎁
+              </div>
+              <div>
+                <h4 className="text-lg font-black font-anton text-yellow-400 uppercase tracking-wide">
+                  Tienes {unopenedBoxes} Caja{unopenedBoxes !== 1 ? 's' : ''} de Botín
+                </h4>
+                <p className="text-xs text-yellow-300/80">
+                  Otorgada por cumplir objetivos o golpear rachas. ¡Ábrela para descubrir tu premio!
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                const { item, success } = openLootBox();
+                if (success) {
+                  soundFX.playLevelUp();
+                  triggerHaptic([100, 100]);
+                  try {
+                    confetti({ particleCount: 150, spread: 100, origin: { y: 0.6 }, colors: ['#fbbf24', '#f59e0b', '#fff'] });
+                  } catch(e) {}
+                  notificationService.triggerNotification(`¡Encontraste: ${item.name}!`, item.description, item.icon);
+                }
+              }}
+              className="px-6 py-3 rounded-xl bg-yellow-500 hover:bg-yellow-400 text-black font-black font-anton uppercase border border-yellow-300 shadow-[0_0_20px_rgba(234,179,8,0.5)] transition-all hover:scale-105 active:scale-95 cursor-pointer"
+            >
+              Abrir Caja
+            </button>
+          </div>
+        )}
+
+        {/* Inventory Items */}
+        {inventory.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            {inventory.map((item, idx) => (
+              <div key={item.id} className="p-4 rounded-xl bg-[#04020e] border border-cyan-500/30 flex flex-col items-center text-center gap-2 relative">
+                <span className="absolute top-2 right-2 text-[10px] font-black bg-cyan-950 text-cyan-300 px-2 py-0.5 rounded-full border border-cyan-500/50">
+                  x{item.quantity}
+                </span>
+                <div className="text-4xl">{item.icon}</div>
+                <h4 className="text-xs font-black font-anton text-white uppercase">{item.name}</h4>
+                <p className="text-[10px] text-slate-400 leading-tight">{item.description}</p>
+                <button
+                  onClick={() => {
+                    const success = useInventoryItem(item.id);
+                    if (success) {
+                      soundFX.playLevelUp();
+                      triggerHaptic([50, 100, 50]);
+                      triggerScreenFlash('buff');
+                      notificationService.triggerNotification(`¡Usaste ${item.name}!`, 'El efecto ha sido activado.', item.icon);
+                    }
+                  }}
+                  className="w-full mt-2 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/50 text-[10px] font-black uppercase tracking-wider transition-colors cursor-pointer"
+                >
+                  Usar Ahora
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          unopenedBoxes === 0 && (
+            <div className="p-6 rounded-2xl border border-slate-800 bg-black/40 text-center">
+              <p className="text-sm font-black text-slate-500 uppercase tracking-widest">
+                Tu mochila está vacía.
+              </p>
+              <p className="text-xs text-slate-600 mt-1">Completa días perfectos o rachas de hábitos para conseguir objetos.</p>
+            </div>
+          )
+        )}
       </div>
 
       {/* Featured Shield Item */}

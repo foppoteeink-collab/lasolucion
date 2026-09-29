@@ -121,6 +121,8 @@ export interface PlayerStats {
     energia: number;
     estudio: number;
   };
+  inventory?: InventoryItem[];
+  unopenedBoxes?: number;
 }
 
 export interface FloatingReward {
@@ -264,3 +266,19 @@ export interface FinancialTransaction {
   category?: string;
   createdAt?: string;
 }
+
+export type ItemRarity = 'comun' | 'raro' | 'epico' | 'legendario';
+
+export interface InventoryItem {
+  id: string;
+  baseId: string; // e.g. 'potion_focus', 'shield_mystic'
+  name: string;
+  description: string;
+  icon: string; // emoji or lucide icon name
+  rarity: ItemRarity;
+  quantity: number;
+  effectType: 'xp_boost' | 'coin_boost' | 'streak_shield' | 'revive_streak' | 'reveal_secret' | 'heal_hp';
+  effectValue?: number; // e.g. 2 for 2x multiplier
+  durationHours?: number; // if temporary buff
+}
+

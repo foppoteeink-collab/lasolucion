@@ -140,6 +140,21 @@ export function AppLayout() {
     const bedtime = manualBedtime || now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
     usePlayerStore.getState().finalizeDay(targetDate, bonusXp, bonusCoins, bedtime);
     useTaskStore.getState().lockTasksForDate(targetDate);
+    
+    const tasksForDay = useTaskStore.getState().tasksByDate[targetDate] || [];
+    const totalTasks = tasksForDay.length;
+    const completedTasks = tasksForDay.filter(t => t.completed).length;
+    const isPerfectDay = totalTasks > 0 && completedTasks === totalTasks;
+
+    if (isPerfectDay && Math.random() < 0.5) {
+      usePlayerStore.getState().addLootBoxes(1);
+      if (typeof window !== 'undefined') {
+        setTimeout(() => {
+          useUIStore.getState().addFloatingEffect({ x: window.innerWidth / 2, y: window.innerHeight / 2 - 60, text: '🎁 ¡Caja de Botín por Día Perfecto!', type: 'critical' });
+        }, 300);
+      }
+    }
+
     if (bonusXp > 0 || bonusCoins > 0) {
       if (typeof window !== 'undefined') {
         const stateUI = useUIStore.getState();

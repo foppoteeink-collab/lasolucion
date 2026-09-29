@@ -638,7 +638,7 @@ export const handleToggleTask = (taskId: string, e?: any) => {
   const updatedTask = (stateTask.tasksByDate[date] || []).find(t => t.id === taskId) || task;
   if (updatedTask.isHabit || updatedTask.isQuickHabit || updatedTask.isTracked2166 || updatedTask.id.includes('habit-')) {
     const appStore = useAppStore.getState();
-    const { newMastery, bonusXp, notifications } = evaluateMasteryChange(
+    const { newMastery, bonusXp, notifications, boxesEarned } = evaluateMasteryChange(
       updatedTask,
       stateTask.tasksByDate,
       appStore.habitMastery,
@@ -652,6 +652,9 @@ export const handleToggleTask = (taskId: string, e?: any) => {
     if (notifications.length > 0) {
       const currentNotifs = appStore.notifications || [];
       appStore.setNotifications([...notifications, ...currentNotifs]);
+    }
+    if (boxesEarned > 0) {
+      statePlayer.addLootBoxes(boxesEarned);
     }
   }
 };
@@ -746,7 +749,7 @@ export const handleIncrementHabit = (taskId: string, e?: any) => {
   // Evaluate habit mastery tracking
   const updatedTask = (stateTask.tasksByDate[date] || []).find(t => t.id === taskId) || task;
   const appStore = useAppStore.getState();
-  const { newMastery, bonusXp, notifications } = evaluateMasteryChange(
+  const { newMastery, bonusXp, notifications, boxesEarned } = evaluateMasteryChange(
     updatedTask,
     stateTask.tasksByDate,
     appStore.habitMastery,
@@ -760,6 +763,9 @@ export const handleIncrementHabit = (taskId: string, e?: any) => {
   if (notifications.length > 0) {
     const currentNotifs = appStore.notifications || [];
     appStore.setNotifications([...notifications, ...currentNotifs]);
+  }
+  if (boxesEarned > 0) {
+    statePlayer.addLootBoxes(boxesEarned);
   }
 };
 

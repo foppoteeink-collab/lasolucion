@@ -17,6 +17,9 @@ interface PlayerState {
   triggerLevelUp: () => void;
   reopenDay: (dateStr: string) => void;
   triggerSurpriseBoss: (data?: { archetypeName?: string; buffName?: string; buffDescription?: string }) => void;
+  addLootBoxes: (count: number) => void;
+  openLootBox: () => { item: any; success: boolean };
+  useInventoryItem: (itemId: string) => boolean;
 }
 
 // Economía Algorítmica: Curva de nivelación infinita
@@ -46,6 +49,8 @@ const INITIAL_PLAYER_STATS: PlayerStats = {
     energia: 0,
     estudio: 0,
   },
+  inventory: [],
+  unopenedBoxes: 0,
 };
 
 export const usePlayerStore = create<PlayerState>()(
@@ -306,6 +311,119 @@ export const usePlayerStore = create<PlayerState>()(
           buffDescription: data?.buffDescription || 'Se ha detectado una fluctuación de rendimiento. Neutraliza tus tareas pendientes para evitar penalizaciones de HP.'
         };
         useUIStore.getState().openSurpriseBoss(bossInfo);
+      },
+
+      addLootBoxes: (count) => set((state) => ({
+        stats: {
+          ...state.stats,
+          unopenedBoxes: (state.stats.unopenedBoxes || 0) + count
+        }
+      })),
+
+      openLootBox: () => {
+        const state = get();
+        if ((state.stats.unopenedBoxes || 0) <= 0) return { item: null, success: false };
+
+        const lootPool = [
+          { baseId: 'potion_focus', name: 'Poción de Foco', description: 'Duplica las monedas de tus Pomodoros por 24h.', icon: '🧪', rarity: 'raro', effectType: 'coin_boost', quantity: 1, durationHours: 24 },
+          { baseId: 'amulet_wisdom', name: 'Amuleto de Sabiduría', description: 'Triplica la XP de todas las tareas por 24h.', icon: '🔮', rarity: 'epico', effectType: 'xp_boost', quantity: 1, durationHours: 24 },
+          { baseId: 'shield_mystic', name: 'Escudo Místico', description: 'Protege tu racha si fallas un día.', icon: '🛡️', rarity: 'comun', effectType: 'streak_shield', quantity: 1 },
+          { baseId: 'potion_revive', name: 'Poción de Resurrección', description: 'Revive una racha perdida hace menos de 48h.', icon: '💖', rarity: 'legendario', effectType: 'revive_streak', quantity: 1 },
+          { baseId: 'potion_heal', name: 'Elixir de Vida', description: 'Restaura 50 HP al instante.', icon: '❤️', rarity: 'comun', effectType: 'heal_hp', effectValue: 50, quantity: 1 }
+        ];
+
+        // Random weight drop
+        const r = Math.random();
+        let dropIndex = 0;
+        if (r > 0.95) dropIndex = 3; // 5% legendario
+        else if (r > 0.80) dropIndex = 1; // 15% epico
+        else if (r > 0.50) dropIndex = 0; // 30% raro
+        else dropIndex = r > 0.25 ? 2 : 4; // 50% comun
+
+        const droppedBaseItem = lootPool[dropIndex];
+        
+        let newInventory = [...(state.stats.inventory || [])];
+        const existingItem = newInventory.find(i => i.baseId === droppedBaseItem.baseId);
+        
+        if (existingItem) {
+          existingItem.quantity += 1;
+        } else {
+          newInventory.push({ ...droppedBaseItem, id: Math.random().toString(36).substr(2, 9) } as any);
+        }
+
+        set({
+          stats: {
+            ...state.stats,
+            unopenedBoxes: (state.stats.unopenedBoxes || 1) - 1,
+            inventory: newInventory
+          }
+        });
+
+        return { item: droppedBaseItem, success: true };
+      },
+
+      useInventoryItem: (itemId) => {
+        const state = get();
+        const inventory = [...(state.stats.inventory || [])];
+        const itemIndex = inventory.findIndex(i => i.id === itemId);
+        
+        if (itemIndex === -1 || inventory[itemIndex].quantity <= 0) return false;
+        
+        const item = inventory[itemIndex];
+        let updates: Partial<PlayerStats> = {};
+        let success = false;
+
+        switch (item.effectType) {
+          case 'heal_hp':
+            updates.hp = Math.min(state.stats.maxHp || 100, (state.stats.hp || 0) + (item.effectValue || 50));
+            success = true;
+            break;
+          case 'streak_shield':
+            updates.streakShields = (state.stats.streakShields || 0) + 1;
+            success = true;
+            break;
+          case 'coin_boost':
+            updates.focusPotionExpiresAt = Date.now() + (item.durationHours || 24) * 60 * 60 * 1000;
+            success = true;
+            break;
+          case 'xp_boost':
+            // we will need a new field for xp boost expiration, let's reuse focusPotionExpiresAt or add activeDailyBuff
+            updates.activeDailyBuff = {
+              archetypeId: 'amulet_wisdom',
+              archetypeName: 'Amuleto Sabiduría',
+              buffName: 'Multiplicador XP',
+              description: 'XP x3 en todas las tareas por 24h.',
+              xpMultiplier: 3,
+              coinMultiplier: 1,
+              activatedAtDate: new Date().toISOString()
+            };
+            success = true;
+            break;
+          case 'revive_streak':
+            // Logic for revive streak. We just give them their max streak back or add some grace
+            updates.streakDays = Math.max(state.stats.streakDays || 0, 7); // Placeholder for reviving logic
+            updates.streakShields = (state.stats.streakShields || 0) + 1;
+            success = true;
+            break;
+        }
+
+        if (success) {
+          inventory[itemIndex].quantity -= 1;
+          if (inventory[itemIndex].quantity <= 0) {
+            inventory.splice(itemIndex, 1);
+          }
+          
+          set({
+            stats: {
+              ...state.stats,
+              ...updates,
+              inventory
+            }
+          });
+          return true;
+        }
+        
+        return false;
       }
     }),
     {
