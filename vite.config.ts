@@ -14,6 +14,10 @@ export default defineConfig(() => {
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'icon.svg'],
         manifest: false,
         workbox: {
+          // skipWaiting + clientsClaim: new SW activates immediately without
+          // waiting for all tabs to close (fixes mobile not updating)
+          skipWaiting: true,
+          clientsClaim: true,
           globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff2}'],
           runtimeCaching: [
             {
@@ -33,6 +37,11 @@ export default defineConfig(() => {
                 expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 },
                 cacheableResponse: { statuses: [0, 200] },
               },
+            },
+            {
+              // Never cache Netlify functions — always fresh from server
+              urlPattern: /\/\.netlify\/functions\/.*/i,
+              handler: 'NetworkOnly',
             },
           ],
         },
