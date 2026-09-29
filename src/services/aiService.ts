@@ -113,16 +113,12 @@ export async function generateScheduleFrontend(
     ]
   `;
 
-  const candidateModels = ["gemini-3.6-flash", "gemini-flash-latest", "gemini-2.5-flash", "gemini-3.5-flash"];
   let generatedText = "";
   const fullPrompt = systemInstruction + "\n\nSolicitud del usuario:\n" + prompt;
 
-  for (const modelName of candidateModels) {
-    const text = await fetchGeminiPrompt(fullPrompt, modelName);
-    if (text) {
-      generatedText = text;
-      break;
-    }
+  const text = await fetchGeminiPrompt(fullPrompt, 'gemini-1.5-flash');
+  if (text) {
+    generatedText = text;
   }
 
   if (!generatedText) {
@@ -253,12 +249,9 @@ ${historyContext}
     - Proporciona exactamente 3 acciones tácticas concretas y ejecutables que el cliente debe priorizar hoy para maximizar la productividad y mantener la trayectoria de crecimiento.
   `;
 
-  const candidateModels = ["gemini-3.6-flash", "gemini-flash-latest", "gemini-2.5-flash", "gemini-3.5-flash"];
-  for (const modelName of candidateModels) {
-    const text = await fetchGeminiPrompt(prompt, modelName);
-    if (text) {
-      return { analysis: text, source: 'ai' };
-    }
+  const text = await fetchGeminiPrompt(prompt, 'gemini-1.5-flash');
+  if (text) {
+    return { analysis: text, source: 'ai' };
   }
 
   const { generateProceduralAnalysis } = await import('../utils/proceduralHeuristics');

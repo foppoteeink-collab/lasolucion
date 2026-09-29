@@ -30,10 +30,9 @@ export const handler = async (event: any) => {
 
     // Try these models in order until one works
     const candidateModels = [
-      model || 'gemini-3.6-flash',
-      'gemini-flash-latest',
+      model || 'gemini-1.5-flash',
+      'gemini-1.5-flash',
       'gemini-2.5-flash',
-      'gemini-3.5-flash',
     ].filter((m, i, arr) => arr.indexOf(m) === i); // deduplicate
 
     for (const targetModel of candidateModels) {
