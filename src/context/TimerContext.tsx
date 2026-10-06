@@ -3,6 +3,7 @@ import { PomodoroSession, TaskCategory } from '../types';
 import { soundFX } from '../utils/audio';
 import { quantumSoundscape } from '../utils/quantumSoundscape';
 import { notificationService } from '../utils/notifications';
+import { getNotificationSettings } from '../utils/notificationScheduler';
 import { getTodayDateString } from '../utils/date';
 import { safeGetItem, safeSetItem } from '../utils/storage';
 import confetti from 'canvas-confetti';
@@ -223,11 +224,14 @@ const setFocusModeActive = useUIStore(s => s.setFocusModeActive);
       handlePomodoroComplete(completedSession);
       setQuoteIndex((prev) => (prev + 1) % FOCUS_QUOTES.length);
 
-      notificationService.triggerNotification(
-        '¡Pomodoro de 25m Completado! 🏆',
-        `Has ganado +25 XP y +8 Monedas por enfocarte en "${taskTitle}". ¡Tómate un merecido descanso!`,
-        '⏱️'
-      );
+      // Respetar el toggle de Pomodoro en la configuración de notificaciones
+      if (getNotificationSettings().pomodoroComplete) {
+        notificationService.triggerNotification(
+          '¡Pomodoro de 25m Completado! 🏆',
+          `Has ganado +25 XP y +8 Monedas por enfocarte en "${taskTitle}". ¡Tómate un merecido descanso!`,
+          '⏱️'
+        );
+      }
 
       setMode('short_break');
       setInitialTimeLeft(SHORT_BREAK);

@@ -50,7 +50,7 @@ export const useTaskStore = create<TaskState>()(
             generated = [
               {
                 id: `task-calib-os-${today}`,
-                title: 'Calibrar interfaz "Quantum OS" 🌐',
+                title: 'Calibrar interfaz "La Solución" 🌐',
                 category: 'rutina' as any,
                 description: 'Explora la terminal de control, el inventario holográfico y ajusta tu configuración.',
                 xpReward: 30,
@@ -199,7 +199,7 @@ export const useTaskStore = create<TaskState>()(
       })
     }),
     {
-      name: 'quantum-os-task-store',
+      name: 'la-solucion-task-store',
       storage: createJSONStorage(() => localStorage),
       onRehydrateStorage: () => (state) => {
         if (state && state.tasksByDate) {

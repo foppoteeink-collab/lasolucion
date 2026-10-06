@@ -244,7 +244,7 @@ export const DailyBossWidget: React.FC<DailyBossWidgetProps> = ({
           usePlayerStore.getState().triggerSurpriseBoss({
             archetypeName: 'NÉMESIS DE ENTROPÍA CRÍTICA 👾',
             buffName: 'SOBRECARGA DEL SISTEMA AL 100%',
-            buffDescription: 'La inercia acumulada de tus misiones sin completar y el paso de las horas del día real han sobrecargado el Quantum OS. ¡Despeja tu agenda para estabilizar el sistema y evitar daños vitales!'
+            buffDescription: 'La inercia acumulada de tus misiones sin completar y el paso de las horas del día real han sobrecargado La Solución. ¡Despeja tu agenda para estabilizar el sistema y evitar daños vitales!'
           });
         } catch (e) {
           console.error('Failed to trigger entropy boss:', e);

@@ -19,6 +19,10 @@ export default defineConfig(() => {
           skipWaiting: true,
           clientsClaim: true,
           globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff2}'],
+          // Importar el handler personalizado de notificationclick
+          importScripts: ['sw-notifications.js'],
+          // Inyectar código de manejo de notificationclick en el SW generado
+          // Cuando el usuario toca una notificación push, se enfoca o abre la app
           runtimeCaching: [
             {
               urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -49,6 +53,7 @@ export default defineConfig(() => {
           enabled: false,
         },
       })
+
     ],
     build: {
       outDir: 'dist',

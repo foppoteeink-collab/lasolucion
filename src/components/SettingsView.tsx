@@ -5,7 +5,7 @@ import {
   ShieldCheck, HardDrive, FileSpreadsheet, Cpu, CheckCircle2,
   Coins, Volume2, VolumeX, Target, Sun, Moon, Laptop, ArrowUpRight, CheckCheck,
   SlidersHorizontal, Smartphone, Share, PlusSquare, FlaskConical,
-  Compass, Eye, Layout, Bell
+  Compass, Eye, Layout, Bell, BellOff, BellRing, Zap, Flame, Timer
 } from 'lucide-react';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 import { GameSettings } from '../types';
@@ -15,6 +15,15 @@ import { soundFX } from '../utils/audio';
 import { exportUserData, exportJournalToCSV, exportScheduleToCSV, parseScheduleCSV } from '../utils/exportData';
 import { safeSetItem } from '../utils/storage';
 import { notificationService } from '../utils/notifications';
+import { 
+  getNotificationSettings, 
+  saveNotificationSettings, 
+  scheduleAll,
+  type NotificationSettings 
+} from '../utils/notificationScheduler';
+import { useTaskStore } from '../store/useTaskStore';
+import { usePlayerStore } from '../store/usePlayerStore';
+import { getTodayDateString } from '../utils/date';
 import { OracleModal } from './OracleModal';
 import { ScenarioSimulatorPanel } from './ScenarioSimulatorPanel';
 import { GoogleDriveSyncCard } from './GoogleDriveSyncCard';
@@ -26,7 +35,6 @@ import {
   setSavedSavingsTarget 
 } from '../utils/finance';
 import { useUIStore } from '../store/useUIStore';
-import { useTaskStore } from '../store/useTaskStore';
 import { CloudSyncResult } from '../hooks/useCloudSync';
 
 interface SettingsViewProps {
@@ -56,7 +64,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [savingsTarget, setSavingsTarget] = useState<number>(getSavedSavingsTarget);
   const [audioTesting, setAudioTesting] = useState(false);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(notificationService.getPermission());
+  const [notifSettings, setNotifSettings] = useState<NotificationSettings>(getNotificationSettings);
+  const [notifTestFeedback, setNotifTestFeedback] = useState<string | null>(null);
   const [currencyChangedToast, setCurrencyChangedToast] = useState<string | null>(null);
+
+  const todayTasks = useTaskStore(s => s.tasksByDate[getTodayDateString()] || []);
+  const streakDays = usePlayerStore(s => s.stats.streakDays);
 
   const [confirmReset, setConfirmReset] = useState(false);
   const [importStatus, setImportStatus] = useState<string | null>(null);
@@ -105,8 +118,44 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     const granted = await notificationService.requestPermission();
     setNotificationPermission(granted ? 'granted' : 'denied');
     if (granted) {
-      notificationService.triggerNotification('¡Notificaciones Activadas!', 'KAI te recordará tus hábitos y misiones importantes.', '🔔');
+      notificationService.triggerNotification('¡Notificaciones Activadas!', 'La Solución te recordará tus hábitos y misiones importantes.', '🔔');
+      // Re-programar ahora que tenemos permisos
+      scheduleAll({ tasks: todayTasks, streakDays });
     }
+  };
+
+  const handleToggleNotifSetting = (key: keyof NotificationSettings, value?: boolean | number) => {
+    soundFX.playClick();
+    const updated = {
+      ...notifSettings,
+      [key]: value !== undefined ? value : !notifSettings[key as keyof NotificationSettings],
+    };
+    setNotifSettings(updated);
+    saveNotificationSettings(updated);
+    // Re-programar con la nueva configuración
+    if (notificationPermission === 'granted') {
+      scheduleAll({ tasks: todayTasks, streakDays });
+    }
+  };
+
+  const handleTestNotification = async () => {
+    soundFX.playClick();
+    if (notificationPermission !== 'granted') {
+      setNotifTestFeedback('❌ Primero activa los permisos de notificación');
+      setTimeout(() => setNotifTestFeedback(null), 3000);
+      return;
+    }
+    const ok = await notificationService.pushToOS(
+      '🔔 La Solución - Notificaciones Activas',
+      'Las notificaciones de La Solución están funcionando correctamente.',
+      { tag: 'test-notif', renotify: true }
+    );
+    if (ok) {
+      setNotifTestFeedback('✓ Notificación enviada al sistema operativo');
+    } else {
+      setNotifTestFeedback('⚠️ No se pudo enviar — verifica los permisos del dispositivo');
+    }
+    setTimeout(() => setNotifTestFeedback(null), 4000);
   };
 
   const handleSetTheme = (mode: 'auto' | 'dark' | 'light') => {
@@ -387,35 +436,217 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 </div>
               </div>
 
-              {/* NOTIFICACIONES PUSH */}
-              <div className="pt-4 border-t border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <h4 className="text-sm font-black text-white flex items-center gap-2 mb-1">
-                    <Bell className="w-4 h-4 text-emerald-400" /> Notificaciones Push (Locales)
-                  </h4>
-                  <p className="text-xs text-slate-400">
-                    KAI enviará recordatorios del sistema usando las notificaciones de tu dispositivo.
-                  </p>
-                </div>
-                <div className="flex items-center gap-3 shrink-0">
-                  <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
-                    Estado: {notificationPermission === 'granted' ? 'Activas' : notificationPermission === 'denied' ? 'Bloqueadas' : 'Pendientes'}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={handleRequestNotifications}
-                    disabled={notificationPermission === 'granted' || !notificationService.isSupported()}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all border ${
+              {/* ═══ CENTRO DE NOTIFICACIONES KAI ═══ */}
+              <div className="pt-4 border-t border-slate-800/80 space-y-4">
+                {/* Cabecera con estado y botón de permiso */}
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                  <div>
+                    <h4 className="text-sm font-black text-white flex items-center gap-2 mb-1">
+                      <BellRing className="w-4 h-4 text-emerald-400" /> Centro de Notificaciones — La Solución
+                    </h4>
+                    <p className="text-xs text-slate-400">
+                      Recordatorios inteligentes basados en tu horario y estado del juego.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                    {/* Indicador de estado */}
+                    <span className={`text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded-lg border ${
                       notificationPermission === 'granted'
-                        ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400 cursor-default'
-                        : !notificationService.isSupported()
-                        ? 'opacity-40 cursor-not-allowed border-slate-800 text-slate-500'
-                        : 'bg-[#002244] border-cyan-800 text-cyan-300 hover:bg-cyan-900/60 hover:text-white cursor-pointer'
-                    }`}
-                  >
-                    {notificationPermission === 'granted' ? 'Activadas' : 'Permitir'}
-                  </button>
+                        ? 'text-emerald-400 border-emerald-500/40 bg-emerald-950/50'
+                        : notificationPermission === 'denied'
+                        ? 'text-red-400 border-red-500/40 bg-red-950/50'
+                        : 'text-amber-400 border-amber-500/40 bg-amber-950/50'
+                    }`}>
+                      {notificationPermission === 'granted' ? '● Activas' : notificationPermission === 'denied' ? '✕ Bloqueadas' : '○ Pendiente'}
+                    </span>
+                    {/* Botón activar permisos */}
+                    {notificationPermission !== 'granted' && (
+                      <button
+                        type="button"
+                        onClick={handleRequestNotifications}
+                        disabled={!notificationService.isSupported()}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all border ${
+                          !notificationService.isSupported()
+                            ? 'opacity-40 cursor-not-allowed border-slate-800 text-slate-500'
+                            : 'bg-emerald-950 border-emerald-500/60 text-emerald-300 hover:bg-emerald-900/60 hover:text-white cursor-pointer shadow-[0_0_12px_rgba(52,211,153,0.2)]'
+                        }`}
+                      >
+                        <Bell className="w-3 h-3 inline mr-1" /> Activar Permisos
+                      </button>
+                    )}
+                    {/* Botón probar notificación */}
+                    {notificationPermission === 'granted' && (
+                      <button
+                        type="button"
+                        onClick={handleTestNotification}
+                        className="px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all border bg-[#001830] border-cyan-800/60 text-cyan-400 hover:bg-cyan-950 cursor-pointer"
+                      >
+                        <BellRing className="w-3 h-3 inline mr-1" /> Probar
+                      </button>
+                    )}
+                  </div>
                 </div>
+
+                {/* Feedback de prueba */}
+                {notifTestFeedback && (
+                  <div className="text-xs font-mono text-emerald-400 bg-emerald-950/40 border border-emerald-500/30 rounded-xl px-3 py-2 animate-fade-in">
+                    {notifTestFeedback}
+                  </div>
+                )}
+
+                {/* Aviso si no hay soporte */}
+                {!notificationService.isSupported() && (
+                  <div className="text-xs text-amber-400 bg-amber-950/30 border border-amber-500/30 rounded-xl px-3 py-2 flex items-center gap-2">
+                    <BellOff className="w-3.5 h-3.5 shrink-0" />
+                    Tu navegador no soporta notificaciones push. Instala la app como PWA para activarlas.
+                  </div>
+                )}
+
+                {/* Toggles individuales — solo si hay permisos */}
+                {notificationPermission === 'granted' && (
+                  <div className="space-y-2 bg-[#000d1c] rounded-xl p-3 border border-slate-800/60">
+                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Tipos de Recordatorio</p>
+
+                    {/* Hábitos por timeBlock */}
+                    <div className="flex items-center justify-between gap-3 py-2 border-b border-slate-800/50">
+                      <div className="flex items-center gap-2">
+                        <Timer className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                        <div>
+                          <p className="text-xs font-bold text-white">Recordatorios por hora</p>
+                          <p className="text-[10px] text-slate-500">Avisa 2 min antes de cada tarea con timeBlock</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleToggleNotifSetting('habitReminders')}
+                        className={`w-10 h-5 rounded-full relative transition-colors flex-shrink-0 cursor-pointer ${
+                          notifSettings.habitReminders ? 'bg-cyan-500' : 'bg-slate-700'
+                        }`}
+                      >
+                        <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-all ${
+                          notifSettings.habitReminders ? 'left-5.5 translate-x-[22px]' : 'left-0.5'
+                        }`} />
+                      </button>
+                    </div>
+
+                    {/* Briefing matutino */}
+                    <div className="flex items-center justify-between gap-3 py-2 border-b border-slate-800/50">
+                      <div className="flex items-center gap-2">
+                        <Sun className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                        <div>
+                          <p className="text-xs font-bold text-white">Briefing matutino</p>
+                          <p className="text-[10px] text-slate-500">Resumen 15 min antes de tu primera tarea del día</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleToggleNotifSetting('morningBriefing')}
+                        className={`w-10 h-5 rounded-full relative transition-colors flex-shrink-0 cursor-pointer ${
+                          notifSettings.morningBriefing ? 'bg-amber-500' : 'bg-slate-700'
+                        }`}
+                      >
+                        <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-all ${
+                          notifSettings.morningBriefing ? 'left-5.5 translate-x-[22px]' : 'left-0.5'
+                        }`} />
+                      </button>
+                    </div>
+
+                    {/* Reflexión nocturna */}
+                    <div className="flex items-center justify-between gap-3 py-2 border-b border-slate-800/50">
+                      <div className="flex items-center gap-2">
+                        <Moon className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                        <div>
+                          <p className="text-xs font-bold text-white">Reflexión nocturna</p>
+                          <p className="text-[10px] text-slate-500">Recordatorio para cerrar el día</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {notifSettings.nightlyReflection && (
+                          <select
+                            value={notifSettings.nightlyHour}
+                            onChange={e => handleToggleNotifSetting('nightlyHour', parseInt(e.target.value))}
+                            className="bg-[#000f20] border border-slate-700 text-indigo-300 text-[10px] font-mono rounded-lg px-2 py-1 cursor-pointer"
+                          >
+                            {[19, 20, 21, 22, 23].map(h => (
+                              <option key={h} value={h}>{String(h).padStart(2, '0')}:00</option>
+                            ))}
+                          </select>
+                        )}
+                        <button
+                          onClick={() => handleToggleNotifSetting('nightlyReflection')}
+                          className={`w-10 h-5 rounded-full relative transition-colors flex-shrink-0 cursor-pointer ${
+                            notifSettings.nightlyReflection ? 'bg-indigo-500' : 'bg-slate-700'
+                          }`}
+                        >
+                          <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-all ${
+                            notifSettings.nightlyReflection ? 'left-5.5 translate-x-[22px]' : 'left-0.5'
+                          }`} />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Alerta de Boss */}
+                    <div className="flex items-center justify-between gap-3 py-2 border-b border-slate-800/50">
+                      <div className="flex items-center gap-2">
+                        <Zap className="w-3.5 h-3.5 text-red-400 shrink-0" />
+                        <div>
+                          <p className="text-xs font-bold text-white">Alerta de Boss</p>
+                          <p className="text-[10px] text-slate-500">Avisa a las 20:00 si el Boss del día sigue vivo</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleToggleNotifSetting('bossAlert')}
+                        className={`w-10 h-5 rounded-full relative transition-colors flex-shrink-0 cursor-pointer ${
+                          notifSettings.bossAlert ? 'bg-red-500' : 'bg-slate-700'
+                        }`}
+                      >
+                        <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-all ${
+                          notifSettings.bossAlert ? 'left-5.5 translate-x-[22px]' : 'left-0.5'
+                        }`} />
+                      </button>
+                    </div>
+
+                    {/* Racha en peligro */}
+                    <div className="flex items-center justify-between gap-3 py-2 border-b border-slate-800/50">
+                      <div className="flex items-center gap-2">
+                        <Flame className="w-3.5 h-3.5 text-orange-400 shrink-0" />
+                        <div>
+                          <p className="text-xs font-bold text-white">Racha en peligro</p>
+                          <p className="text-[10px] text-slate-500">Alerta si llevas horas sin completar ninguna misión</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleToggleNotifSetting('streakAlert')}
+                        className={`w-10 h-5 rounded-full relative transition-colors flex-shrink-0 cursor-pointer ${
+                          notifSettings.streakAlert ? 'bg-orange-500' : 'bg-slate-700'
+                        }`}
+                      >
+                        <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-all ${
+                          notifSettings.streakAlert ? 'left-5.5 translate-x-[22px]' : 'left-0.5'
+                        }`} />
+                      </button>
+                    </div>
+
+                    {/* Pomodoro completado */}
+                    <div className="flex items-center justify-between gap-3 py-2">
+                      <div className="flex items-center gap-2">
+                        <Timer className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                        <div>
+                          <p className="text-xs font-bold text-white">Pomodoro completado</p>
+                          <p className="text-[10px] text-slate-500">Notificación al finalizar cada sesión de foco</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleToggleNotifSetting('pomodoroComplete')}
+                        className={`w-10 h-5 rounded-full relative transition-colors flex-shrink-0 cursor-pointer ${
+                          notifSettings.pomodoroComplete ? 'bg-emerald-500' : 'bg-slate-700'
+                        }`}
+                      >
+                        <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-all ${
+                          notifSettings.pomodoroComplete ? 'left-5.5 translate-x-[22px]' : 'left-0.5'
+                        }`} />
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* TEMA VISUAL */}

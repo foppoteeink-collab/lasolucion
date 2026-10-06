@@ -1,4 +1,3 @@
-/* @jsxImportSource react */
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { ShopReward } from '../types';
@@ -183,6 +182,7 @@ export const RewardShop: React.FC = () => {
             <Plus className="w-5 h-5 stroke-[3]" />
             <span className="hidden sm:inline">Nueva Recompensa</span>
           </button>
+        </div>
       </div>
 
       {/* Inventory & Loot Boxes */}
@@ -457,8 +457,16 @@ export const RewardShop: React.FC = () => {
   );
 };
 
-// --- Reward Card Component ---
-const RewardCard = ({ reward, coins, onRedeem, onDelete, discountedCost, index = 0 }: { key?: string | number, reward: ShopReward, coins: number, onRedeem: (r: ShopReward) => void, onDelete?: (e: any, id: string) => void, discountedCost: number, index?: number }) => {
+interface RewardCardProps {
+  reward: ShopReward;
+  coins: number;
+  onRedeem: (r: ShopReward) => void;
+  onDelete?: (e: any, id: string) => void;
+  discountedCost: number;
+  index?: number;
+}
+
+const RewardCard: React.FC<RewardCardProps> = ({ reward, coins, onRedeem, onDelete, discountedCost, index = 0 }) => {
   const canAfford = coins >= discountedCost;
 
   return (
