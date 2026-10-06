@@ -332,7 +332,7 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
           </div>
           <div>
             <h3 className="text-xs sm:text-sm font-black font-anton text-cyan-300 uppercase tracking-wider flex items-center gap-1.5">
-              <span>Hábitos (21 / 66 Días)</span>
+              <span>Check Rápido de Hábitos</span>
               <span className="text-[10px] font-mono bg-cyan-950/90 px-2 py-0.5 rounded-md border border-cyan-500/60 text-cyan-200">
                 {quickHabits.length}
               </span>
@@ -351,7 +351,7 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
             title="Ver matriz de hitos de 21 y 66 días y gestionar hábitos"
           >
             <Trophy className="w-3.5 h-3.5 text-yellow-400 shrink-0" />
-            <span>Hitos (21 / 66d)</span>
+            <span>Matriz de Hitos (21/66d)</span>
           </button>
         </div>
       </div>
