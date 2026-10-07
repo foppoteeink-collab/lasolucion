@@ -23,5 +23,7 @@
     "allowImportingTsExtensions": true,
     "noEmit": true,
     "types": ["vite/client", "vite-plugin-pwa/client"]
-  }
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist", "la_solucion_codigo_fuente", "La solucion 2 despues de subido (Compilado para Netlify)"]
 }

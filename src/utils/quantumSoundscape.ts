@@ -93,14 +93,15 @@ class QuantumSoundscapeEngine {
   private droneFilter: BiquadFilterNode | null = null;
 
   // State
+  private stopTimeoutId: number | null = null;
   private state: SoundscapeState = {
     isPlaying: false,
-    masterVolume: 0.7,
-    channel1Volume: 0.6,
+    masterVolume: 0.75,
+    channel1Volume: 0.65,
     channel1Muted: false,
-    channel2Volume: 0.45,
+    channel2Volume: 0.55,
     channel2Muted: false,
-    channel3Volume: 0.5,
+    channel3Volume: 0.6,
     channel3Muted: false,
     noiseType: 'brown',
     binauralMode: 'beta',
@@ -184,7 +185,7 @@ class QuantumSoundscapeEngine {
 
     if (type === 'white') {
       for (let i = 0; i < bufferSize; i++) {
-        data[i] = (Math.random() * 2 - 1) * 0.4;
+        data[i] = (Math.random() * 2 - 1) * 0.45;
       }
     } else if (type === 'pink') {
       let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
@@ -196,7 +197,7 @@ class QuantumSoundscapeEngine {
         b3 = 0.86650 * b3 + white * 0.3104856;
         b4 = 0.55000 * b4 + white * 0.5329522;
         b5 = -0.7616 * b5 - white * 0.0168980;
-        data[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.06;
+        data[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.11;
         b6 = white * 0.115926;
       }
     } else {
@@ -205,7 +206,7 @@ class QuantumSoundscapeEngine {
       for (let i = 0; i < bufferSize; i++) {
         const white = Math.random() * 2 - 1;
         lastOut = (lastOut + 0.02 * white) / 1.02;
-        data[i] = lastOut * 2.5;
+        data[i] = lastOut * 3.2;
       }
     }
 
@@ -217,16 +218,16 @@ class QuantumSoundscapeEngine {
     this.stopChannel1();
 
     this.ch1Gain = this.ctx.createGain();
-    const targetVol = this.state.channel1Muted ? 0 : this.state.channel1Volume * 0.4;
+    const targetVol = this.state.channel1Muted ? 0 : this.state.channel1Volume * 0.65;
     this.ch1Gain.gain.setValueAtTime(targetVol, this.ctx.currentTime);
 
     this.noiseFilter = this.ctx.createBiquadFilter();
     if (this.state.noiseType === 'brown') {
       this.noiseFilter.type = 'lowpass';
-      this.noiseFilter.frequency.value = 600;
+      this.noiseFilter.frequency.value = 750;
     } else if (this.state.noiseType === 'pink') {
       this.noiseFilter.type = 'lowpass';
-      this.noiseFilter.frequency.value = 1800;
+      this.noiseFilter.frequency.value = 2000;
     } else {
       this.noiseFilter.type = 'lowpass';
       this.noiseFilter.frequency.value = 4500;
@@ -268,7 +269,7 @@ class QuantumSoundscapeEngine {
     this.stopChannel2();
 
     this.ch2Gain = this.ctx.createGain();
-    const targetVol = this.state.channel2Muted ? 0 : this.state.channel2Volume * 0.28;
+    const targetVol = this.state.channel2Muted ? 0 : this.state.channel2Volume * 0.45;
     this.ch2Gain.gain.setValueAtTime(targetVol, this.ctx.currentTime);
 
     const config = BINAURAL_CONFIGS[this.state.binauralMode];
@@ -338,48 +339,48 @@ class QuantumSoundscapeEngine {
     this.stopChannel3();
 
     this.ch3Gain = this.ctx.createGain();
-    const targetVol = this.state.channel3Muted ? 0 : this.state.channel3Volume * 0.35;
+    const targetVol = this.state.channel3Muted ? 0 : this.state.channel3Volume * 0.55;
     this.ch3Gain.gain.setValueAtTime(targetVol, this.ctx.currentTime);
 
-    // Base drone frequencies
-    let f1 = 55; // A1
-    let f2 = 82.5; // E2 (Perfect fifth harmonic)
-    let lfoRate = 0.08; // 12-second slow breath cycle
-    let lfoAmp = 0.35;
+    // Base drone frequencies (audibly rich on both speakers and headphones)
+    let f1 = 110; // A2
+    let f2 = 165; // E3 (Perfect fifth harmonic)
+    let lfoRate = 0.12;
+    let lfoAmp = 0.4;
 
     if (this.state.dronePreset === 'subtle') {
-      f1 = 65;
-      f2 = 97.5;
-      lfoRate = 0.04;
-      lfoAmp = 0.2;
+      f1 = 130.81; // C3
+      f2 = 196.0;  // G3
+      lfoRate = 0.06;
+      lfoAmp = 0.25;
     } else if (this.state.dronePreset === 'pulsing') {
-      f1 = 48;
-      f2 = 72;
-      lfoRate = 0.2;
-      lfoAmp = 0.5;
+      f1 = 98.0;   // G2
+      f2 = 146.83; // D3
+      lfoRate = 0.35;
+      lfoAmp = 0.65;
     }
 
     this.droneOsc1 = this.ctx.createOscillator();
-    this.droneOsc1.type = 'triangle';
+    this.droneOsc1.type = 'sawtooth';
     this.droneOsc1.frequency.setValueAtTime(f1, this.ctx.currentTime);
 
     this.droneOsc2 = this.ctx.createOscillator();
-    this.droneOsc2.type = 'sine';
+    this.droneOsc2.type = 'triangle';
     this.droneOsc2.frequency.setValueAtTime(f2, this.ctx.currentTime);
-    this.droneOsc2.detune.value = 3; // Warm analog chorus
+    this.droneOsc2.detune.value = 4; // Warm analog chorus
 
     // Drone Low-pass Filter
     this.droneFilter = this.ctx.createBiquadFilter();
     this.droneFilter.type = 'lowpass';
-    this.droneFilter.frequency.value = 180;
-    this.droneFilter.Q.value = 2.5;
+    this.droneFilter.frequency.value = 340;
+    this.droneFilter.Q.value = 3.0;
 
     // LFO to modulate filter cutoff for breathing spaceship cabin hum
     this.droneLfo = this.ctx.createOscillator();
     this.droneLfo.frequency.value = lfoRate;
 
     this.droneLfoGain = this.ctx.createGain();
-    this.droneLfoGain.gain.value = 60 * lfoAmp;
+    this.droneLfoGain.gain.value = 120 * lfoAmp;
 
     this.droneLfo.connect(this.droneLfoGain);
     this.droneLfoGain.connect(this.droneFilter.frequency);
@@ -428,7 +429,12 @@ class QuantumSoundscapeEngine {
   // PUBLIC CONTROLS & LIFECYCLE
   // ==========================================
 
-  public start(fadeDuration = 1.5) {
+  public start(fadeDuration = 0.5) {
+    if (this.stopTimeoutId !== null) {
+      window.clearTimeout(this.stopTimeoutId);
+      this.stopTimeoutId = null;
+    }
+
     this.initCtx();
     if (!this.ctx || !this.masterGain) return;
 
@@ -438,32 +444,42 @@ class QuantumSoundscapeEngine {
 
     const now = this.ctx.currentTime;
     this.masterGain.gain.cancelScheduledValues(now);
-    this.masterGain.gain.setValueAtTime(this.masterGain.gain.value, now);
+    this.masterGain.gain.setValueAtTime(Math.max(0.01, this.masterGain.gain.value), now);
     this.masterGain.gain.linearRampToValueAtTime(this.state.masterVolume, now + fadeDuration);
 
     this.state.isPlaying = true;
     this.notify();
   }
 
-  public stop(fadeDuration = 1.2) {
+  public stop(fadeDuration = 0.4) {
+    if (this.stopTimeoutId !== null) {
+      window.clearTimeout(this.stopTimeoutId);
+      this.stopTimeoutId = null;
+    }
+
     if (!this.ctx || !this.masterGain || !this.state.isPlaying) {
+      this.stopChannel1();
+      this.stopChannel2();
+      this.stopChannel3();
       this.state.isPlaying = false;
       this.notify();
       return;
     }
+
+    this.state.isPlaying = false;
+    this.notify();
 
     const now = this.ctx.currentTime;
     this.masterGain.gain.cancelScheduledValues(now);
     this.masterGain.gain.setValueAtTime(this.masterGain.gain.value, now);
     this.masterGain.gain.linearRampToValueAtTime(0.0001, now + fadeDuration);
 
-    setTimeout(() => {
+    this.stopTimeoutId = window.setTimeout(() => {
       this.stopChannel1();
       this.stopChannel2();
       this.stopChannel3();
-      this.state.isPlaying = false;
-      this.notify();
-    }, (fadeDuration + 0.1) * 1000);
+      this.stopTimeoutId = null;
+    }, (fadeDuration + 0.05) * 1000);
   }
 
   public togglePlay() {
@@ -478,6 +494,7 @@ class QuantumSoundscapeEngine {
     const v = Math.max(0, Math.min(1, vol));
     this.state.masterVolume = v;
     if (this.ctx && this.masterGain && this.state.isPlaying) {
+      this.masterGain.gain.cancelScheduledValues(this.ctx.currentTime);
       this.masterGain.gain.setValueAtTime(v, this.ctx.currentTime);
     }
     this.notify();
@@ -486,8 +503,11 @@ class QuantumSoundscapeEngine {
   public setChannel1Volume(vol: number) {
     const v = Math.max(0, Math.min(1, vol));
     this.state.channel1Volume = v;
+    if (v > 0 && this.state.channel1Muted) {
+      this.state.channel1Muted = false;
+    }
     if (this.ctx && this.ch1Gain && !this.state.channel1Muted) {
-      this.ch1Gain.gain.setValueAtTime(v * 0.4, this.ctx.currentTime);
+      this.ch1Gain.gain.setValueAtTime(v * 0.65, this.ctx.currentTime);
     }
     this.notify();
   }
@@ -495,7 +515,7 @@ class QuantumSoundscapeEngine {
   public toggleChannel1Mute() {
     this.state.channel1Muted = !this.state.channel1Muted;
     if (this.ctx && this.ch1Gain) {
-      const v = this.state.channel1Muted ? 0 : this.state.channel1Volume * 0.4;
+      const v = this.state.channel1Muted ? 0 : this.state.channel1Volume * 0.65;
       this.ch1Gain.gain.setValueAtTime(v, this.ctx.currentTime);
     }
     this.notify();
@@ -504,8 +524,11 @@ class QuantumSoundscapeEngine {
   public setChannel2Volume(vol: number) {
     const v = Math.max(0, Math.min(1, vol));
     this.state.channel2Volume = v;
+    if (v > 0 && this.state.channel2Muted) {
+      this.state.channel2Muted = false;
+    }
     if (this.ctx && this.ch2Gain && !this.state.channel2Muted) {
-      this.ch2Gain.gain.setValueAtTime(v * 0.28, this.ctx.currentTime);
+      this.ch2Gain.gain.setValueAtTime(v * 0.45, this.ctx.currentTime);
     }
     this.notify();
   }
@@ -513,7 +536,7 @@ class QuantumSoundscapeEngine {
   public toggleChannel2Mute() {
     this.state.channel2Muted = !this.state.channel2Muted;
     if (this.ctx && this.ch2Gain) {
-      const v = this.state.channel2Muted ? 0 : this.state.channel2Volume * 0.28;
+      const v = this.state.channel2Muted ? 0 : this.state.channel2Volume * 0.45;
       this.ch2Gain.gain.setValueAtTime(v, this.ctx.currentTime);
     }
     this.notify();
@@ -522,8 +545,11 @@ class QuantumSoundscapeEngine {
   public setChannel3Volume(vol: number) {
     const v = Math.max(0, Math.min(1, vol));
     this.state.channel3Volume = v;
+    if (v > 0 && this.state.channel3Muted) {
+      this.state.channel3Muted = false;
+    }
     if (this.ctx && this.ch3Gain && !this.state.channel3Muted) {
-      this.ch3Gain.gain.setValueAtTime(v * 0.35, this.ctx.currentTime);
+      this.ch3Gain.gain.setValueAtTime(v * 0.55, this.ctx.currentTime);
     }
     this.notify();
   }
@@ -531,7 +557,7 @@ class QuantumSoundscapeEngine {
   public toggleChannel3Mute() {
     this.state.channel3Muted = !this.state.channel3Muted;
     if (this.ctx && this.ch3Gain) {
-      const v = this.state.channel3Muted ? 0 : this.state.channel3Volume * 0.35;
+      const v = this.state.channel3Muted ? 0 : this.state.channel3Volume * 0.55;
       this.ch3Gain.gain.setValueAtTime(v, this.ctx.currentTime);
     }
     this.notify();
@@ -539,26 +565,35 @@ class QuantumSoundscapeEngine {
 
   public setNoiseType(type: NoiseType) {
     this.state.noiseType = type;
-    if (this.state.isPlaying) {
+    this.state.channel1Muted = false;
+    if (!this.state.isPlaying) {
+      this.start(0.3);
+    } else {
       this.startChannel1();
+      this.notify();
     }
-    this.notify();
   }
 
   public setBinauralMode(mode: BinauralMode) {
     this.state.binauralMode = mode;
-    if (this.state.isPlaying) {
+    this.state.channel2Muted = false;
+    if (!this.state.isPlaying) {
+      this.start(0.3);
+    } else {
       this.startChannel2();
+      this.notify();
     }
-    this.notify();
   }
 
   public setDronePreset(preset: DronePreset) {
     this.state.dronePreset = preset;
-    if (this.state.isPlaying) {
+    this.state.channel3Muted = false;
+    if (!this.state.isPlaying) {
+      this.start(0.3);
+    } else {
       this.startChannel3();
+      this.notify();
     }
-    this.notify();
   }
 
   public setAutoSyncPomodoro(enabled: boolean) {
@@ -574,8 +609,8 @@ class QuantumSoundscapeEngine {
         this.state.binauralMode = 'beta';
         this.state.dronePreset = 'deep';
         this.state.channel1Volume = 0.65;
-        this.state.channel2Volume = 0.55;
-        this.state.channel3Volume = 0.45;
+        this.state.channel2Volume = 0.6;
+        this.state.channel3Volume = 0.5;
         this.state.channel1Muted = false;
         this.state.channel2Muted = false;
         this.state.channel3Muted = false;
@@ -584,16 +619,16 @@ class QuantumSoundscapeEngine {
         this.state.noiseType = 'pink';
         this.state.binauralMode = 'alpha';
         this.state.dronePreset = 'subtle';
-        this.state.channel1Volume = 0.5;
-        this.state.channel2Volume = 0.4;
-        this.state.channel3Volume = 0.25;
+        this.state.channel1Volume = 0.55;
+        this.state.channel2Volume = 0.5;
+        this.state.channel3Volume = 0.35;
         this.state.channel1Muted = false;
         this.state.channel2Muted = false;
         this.state.channel3Muted = false;
         break;
       case 'void_mask':
         this.state.noiseType = 'brown';
-        this.state.channel1Volume = 0.8;
+        this.state.channel1Volume = 0.85;
         this.state.channel1Muted = false;
         this.state.channel2Muted = true;
         this.state.channel3Muted = true;
@@ -602,21 +637,17 @@ class QuantumSoundscapeEngine {
         this.state.noiseType = 'pink';
         this.state.binauralMode = 'gamma';
         this.state.dronePreset = 'pulsing';
-        this.state.channel1Volume = 0.4;
-        this.state.channel2Volume = 0.6;
-        this.state.channel3Volume = 0.65;
+        this.state.channel1Volume = 0.45;
+        this.state.channel2Volume = 0.65;
+        this.state.channel3Volume = 0.7;
         this.state.channel1Muted = false;
         this.state.channel2Muted = false;
         this.state.channel3Muted = false;
         break;
     }
 
-    if (this.state.isPlaying) {
-      this.startChannel1();
-      this.startChannel2();
-      this.startChannel3();
-    }
-    this.notify();
+    // Always start or refresh audio immediately when a formula is selected
+    this.start(0.35);
   }
 
   // Quantum Bell / Tibetan Chime harmonic completion chime

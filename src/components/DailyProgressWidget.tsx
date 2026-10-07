@@ -81,17 +81,6 @@ export const DailyProgressWidget: React.FC<DailyProgressWidgetProps> = ({
 
         {/* Right Side: Quick Action Pills */}
         <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap shrink-0 pt-1 md:pt-0 border-t md:border-t-0 border-cyan-500/20">
-          {/* Day Templates */}
-          <button
-            type="button"
-            onClick={() => { soundFX.playClick(); onOpenTemplates(); }}
-            className="flex-1 sm:flex-initial px-3 py-2 rounded-xl bg-[#000a14] hover:bg-cyan-950/40 text-cyan-300 hover:text-white border border-cyan-500/40 hover:border-cyan-400 text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer min-h-[40px] active:scale-95"
-            title="Abrir plantillas de día para cargar o guardar rutinas"
-          >
-            <Layers className="w-3.5 h-3.5 text-cyan-400" />
-            <span className="whitespace-nowrap">Plantillas</span>
-          </button>
-
           {/* Hero Journal */}
           <button
             type="button"
@@ -101,17 +90,6 @@ export const DailyProgressWidget: React.FC<DailyProgressWidgetProps> = ({
           >
             <BookOpen className="w-3.5 h-3.5 text-amber-400" />
             <span className="whitespace-nowrap">Bitácora ({notesCount})</span>
-          </button>
-
-          {/* Finish Day / Night disconnect */}
-          <button
-            type="button"
-            onClick={() => { soundFX.playClick(); onOpenFinishDay(); }}
-            className="flex-1 sm:flex-initial px-3 py-2 rounded-xl bg-[#000a14] hover:bg-indigo-950/60 text-indigo-300 hover:text-white border border-indigo-500/40 hover:border-indigo-400 text-xs font-black flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer min-h-[40px] active:scale-95"
-            title="Cierre nocturno y desconexión"
-          >
-            <Moon className="w-3.5 h-3.5 text-indigo-400" />
-            <span className="whitespace-nowrap">Cierre Nocturno</span>
           </button>
         </div>
 

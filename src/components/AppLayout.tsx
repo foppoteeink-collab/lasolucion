@@ -42,6 +42,7 @@ import { ScrollReveal } from './common/ScrollReveal';
 import { OracleModal } from './OracleModal';
 import { NeuralAnalysisModal } from './NeuralAnalysisModal';
 import { OfflineIndicator } from './OfflineIndicator';
+import { NotificationToastOverlay } from './NotificationToastOverlay';
 import { PWAInstallBanner } from './PWAInstallBanner';
 import { OmniCompanionHub } from './OmniCompanionHub';
 import { SimulationBanner } from './SimulationBanner';
@@ -262,6 +263,7 @@ export function AppLayout() {
         />
         <SciFiGridBackground />
         <FloatingGainEffect rewards={floatingRewards} />
+        <NotificationToastOverlay />
 
         {/* CAPA 3: CONTENIDO DE LA APP (GLASSMORPHISM) */}
         <main className={`relative z-10 min-h-screen flex flex-col p-3 sm:p-6 pointer-events-auto ${

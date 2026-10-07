@@ -16,6 +16,7 @@ export interface CustomHabit {
   frequencyType: 'daily' | 'weekly' | 'specific_days';
   specificDays?: number[]; // 0 = Domingo, 1 = Lunes, etc.
   timeBlock?: string;
+  reminderTime?: string; // e.g. "09:30"
   isQuickHabit?: boolean;
   isTracked2166?: boolean;
   quickIcon?: string;
@@ -39,6 +40,7 @@ export interface TaskItem {
   awardedXp?: number;
   awardedCoins?: number;
   timeBlock?: string; // e.g. "05:00 - 12:00"
+  reminderTime?: string; // e.g. "09:30"
   isHabit?: boolean;
   targetCount?: number;
   currentCount?: number;
@@ -176,8 +178,24 @@ export interface AppNotification {
   title: string;
   message: string;
   timestamp: string;
-  type: 'level_up' | 'daily_reward' | 'pomodoro' | 'streak' | 'info';
+  type: 'level_up' | 'daily_reward' | 'pomodoro' | 'streak' | 'info' | 'reminder' | 'task_alarm' | 'streak_warning' | 'nightly';
   read: boolean;
+  icon?: string;
+  actionUrl?: string;
+}
+
+export interface NotificationSettings {
+  enabled: boolean;
+  morningReminderEnabled: boolean;
+  morningReminderTime: string; // e.g. "08:00"
+  afternoonReminderEnabled: boolean;
+  afternoonReminderTime: string; // e.g. "14:00"
+  streakSafeguardEnabled: boolean;
+  streakSafeguardTime: string; // e.g. "20:00"
+  nightlyReflectionEnabled: boolean;
+  nightlyReflectionTime: string; // e.g. "21:30"
+  taskAlarmsEnabled: boolean;
+  soundEnabled: boolean;
 }
 
 export type ThemeMode = 'auto' | 'dark' | 'light';

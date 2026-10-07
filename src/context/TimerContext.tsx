@@ -54,9 +54,9 @@ export interface TimerContextType {
   completedPomodorosToday: number;
 
   // Ambient Sounds
-  ambientType: 'off' | 'rain' | 'fire' | 'forest';
+  ambientType: 'off' | 'rain' | 'fire' | 'forest' | 'heartbeat';
   ambientVolume: number;
-  handleAmbientChange: (type: 'off' | 'rain' | 'fire' | 'forest') => void;
+  handleAmbientChange: (type: 'off' | 'rain' | 'fire' | 'forest' | 'heartbeat', forceOn?: boolean) => void;
   handleVolumeChange: (vol: number) => void;
 
   // Timer Actions
@@ -103,8 +103,8 @@ const setFocusModeActive = useUIStore(s => s.setFocusModeActive);
   const [targetEndTime, setTargetEndTime] = useState<number | null>(null);
 
   const [completedPomodorosToday, setCompletedPomodorosToday] = useState(0);
-  const [ambientType, setAmbientType] = useState<'off' | 'rain' | 'fire' | 'forest'>('off');
-  const [ambientVolume, setAmbientVolume] = useState(0.3);
+  const [ambientType, setAmbientType] = useState<'off' | 'rain' | 'fire' | 'forest' | 'heartbeat'>('off');
+  const [ambientVolume, setAmbientVolume] = useState(0.6);
   const [isCockpitOpen, setIsCockpitOpen] = useState(false);
   const [isSubtleView, setIsSubtleView] = useState(true);
   const [quoteIndex, setQuoteIndex] = useState(0);
@@ -321,8 +321,8 @@ const setFocusModeActive = useUIStore(s => s.setFocusModeActive);
     
   };
 
-  const handleAmbientChange = (type: 'off' | 'rain' | 'fire' | 'forest') => {
-    const newType = ambientType === type && type !== 'off' ? 'off' : type;
+  const handleAmbientChange = (type: 'off' | 'rain' | 'fire' | 'forest' | 'heartbeat', forceOn = false) => {
+    const newType = !forceOn && ambientType === type && type !== 'off' ? 'off' : type;
     setAmbientType(newType);
     if (newType === 'off') {
       soundFX.stopAmbientSound();
@@ -348,10 +348,10 @@ const setFocusModeActive = useUIStore(s => s.setFocusModeActive);
       setIsRunning(true);
       setFocusModeActive(true);
 
-      // Auto-start Quantum Soundscape if enabled and in work mode
+      // Auto-start Quantum Soundscape ONLY if enabled, in work mode, and NO natural sound is playing
       try {
         const scState = quantumSoundscape.getState();
-        if (scState.autoSyncPomodoro && !scState.isPlaying && mode === 'work') {
+        if (scState.autoSyncPomodoro && !scState.isPlaying && mode === 'work' && ambientType === 'off') {
           quantumSoundscape.start(1.8);
         }
       } catch (e) {}

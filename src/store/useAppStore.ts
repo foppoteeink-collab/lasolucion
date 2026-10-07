@@ -1,10 +1,11 @@
 import { create } from 'zustand';
 import { 
-  AppNotification, PomodoroSession, ShopReward, TaskCategory, TaskItem, CustomHabit, HabitMasteryRecord, FinancialTransaction 
+  AppNotification, PomodoroSession, ShopReward, TaskCategory, TaskItem, CustomHabit, HabitMasteryRecord, FinancialTransaction, NotificationSettings 
 } from '../types';
 import { 
   loadHabitMastery, saveHabitMastery, loadGameSettings, saveGameSettings, loadSkillTree, saveSkillTree, loadCompanion, saveCompanion, 
-  loadSavedShopRewards, saveShopRewards, loadPomodoroHistory, savePomodoroHistory, loadNotifications, saveNotifications, loadDailyReflections, saveDailyReflections, safeSetItem 
+  loadSavedShopRewards, saveShopRewards, loadPomodoroHistory, savePomodoroHistory, loadNotifications, saveNotifications, loadDailyReflections, saveDailyReflections, safeSetItem,
+  loadNotificationSettings, saveNotificationSettings
 } from '../utils/storage';
 
 interface AppState {
@@ -31,6 +32,9 @@ interface AppState {
 
   notifications: AppNotification[];
   setNotifications: (val: any) => void;
+
+  notificationSettings: NotificationSettings;
+  setNotificationSettings: (val: NotificationSettings | ((prev: NotificationSettings) => NotificationSettings)) => void;
 
   comboCount: number;
   setComboCount: (val: number | ((prev: number) => number)) => void;
@@ -74,6 +78,13 @@ export const useAppStore = create<AppState>((set) => ({
 
   notifications: loadNotifications(),
   setNotifications: (val) => set((state) => { const n = typeof val === 'function' ? val(state.notifications) : val; saveNotifications(n); return { notifications: n }; }),
+
+  notificationSettings: loadNotificationSettings(),
+  setNotificationSettings: (val) => set((state) => {
+    const n = typeof val === 'function' ? val(state.notificationSettings) : val;
+    saveNotificationSettings(n);
+    return { notificationSettings: n };
+  }),
 
   comboCount: 0,
   setComboCount: (val) => set((state) => ({ comboCount: typeof val === 'function' ? val(state.comboCount) : val })),

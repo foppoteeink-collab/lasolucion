@@ -141,20 +141,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const handleTestNotification = async () => {
     soundFX.playClick();
     if (notificationPermission !== 'granted') {
-      setNotifTestFeedback('❌ Primero activa los permisos de notificación');
-      setTimeout(() => setNotifTestFeedback(null), 3000);
+      notificationService.sendTestNotification();
+      setNotifTestFeedback('⚠️ Notificación en pantalla emitida. Para recibir notificaciones del sistema operativo, activa los permisos.');
+      setTimeout(() => setNotifTestFeedback(null), 4000);
       return;
     }
-    const ok = await notificationService.pushToOS(
-      '🔔 La Solución - Notificaciones Activas',
-      'Las notificaciones de La Solución están funcionando correctamente.',
-      { tag: 'test-notif', renotify: true }
-    );
-    if (ok) {
-      setNotifTestFeedback('✓ Notificación enviada al sistema operativo');
-    } else {
-      setNotifTestFeedback('⚠️ No se pudo enviar — verifica los permisos del dispositivo');
-    }
+    notificationService.sendTestNotification();
+    setNotifTestFeedback('✓ Notificación de prueba enviada (Sistema Operativo y Toast En Pantalla)');
     setTimeout(() => setNotifTestFeedback(null), 4000);
   };
 

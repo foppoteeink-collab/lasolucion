@@ -171,7 +171,7 @@ export const HoloCompanion: React.FC<HoloCompanionProps> = ({
   // Estados para el seguimiento del cursor
   const [eyeOffset, setEyeOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isTrackingMouse, setIsTrackingMouse] = useState(false);
-  const mouseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const mouseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const baseConfig = useMemo(() => resolveArchetypeConfig(archetype), [archetype]);
 

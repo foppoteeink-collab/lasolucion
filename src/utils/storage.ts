@@ -1,4 +1,4 @@
-import { AppNotification, PlayerStats, PomodoroSession, ShopReward, TaskItem, HabitMasteryRecord, Companion, SkillNode, GameSettings, CustomHabit } from '../types';
+import { AppNotification, PlayerStats, PomodoroSession, ShopReward, TaskItem, HabitMasteryRecord, Companion, SkillNode, GameSettings, CustomHabit, NotificationSettings } from '../types';
 import { INITIAL_PLAYER_STATS, INITIAL_SHOP_REWARDS, DEFAULT_TASKS, getRequiredXpForLevel, getRankForLevel, generateDailyTasks, MIGRATION_HABITS, INITIAL_CUSTOM_HABITS, RANKS } from '../data/defaults';
 import { getTodayDateString } from './date';
 
@@ -463,4 +463,34 @@ export const initializeStore = () => {
       }
     }
   } catch(e) { console.warn(e) }
+};
+
+export const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
+  enabled: true,
+  morningReminderEnabled: true,
+  morningReminderTime: '08:00',
+  afternoonReminderEnabled: true,
+  afternoonReminderTime: '14:00',
+  streakSafeguardEnabled: true,
+  streakSafeguardTime: '20:00',
+  nightlyReflectionEnabled: true,
+  nightlyReflectionTime: '21:30',
+  taskAlarmsEnabled: true,
+  soundEnabled: true,
+};
+
+export const loadNotificationSettings = (): NotificationSettings => {
+  try {
+    const raw = safeGetItem('taskquest_notification_settings');
+    if (raw) {
+      return { ...DEFAULT_NOTIFICATION_SETTINGS, ...JSON.parse(raw) };
+    }
+  } catch (e) {
+    console.warn('Failed to load notification settings:', e);
+  }
+  return DEFAULT_NOTIFICATION_SETTINGS;
+};
+
+export const saveNotificationSettings = (settings: NotificationSettings): void => {
+  safeSetItem('taskquest_notification_settings', JSON.stringify(settings));
 };

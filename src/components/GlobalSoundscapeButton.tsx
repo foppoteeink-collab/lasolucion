@@ -16,6 +16,9 @@ export const GlobalSoundscapeButton: React.FC = () => {
   const handleToggleSound = (e: React.MouseEvent) => {
     e.stopPropagation();
     soundFX.playClick();
+    if (state.isPlaying) {
+      soundFX.stopAmbientSound();
+    }
     quantumSoundscape.togglePlay();
   };
 

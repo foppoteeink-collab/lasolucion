@@ -755,14 +755,14 @@ class SoundFX {
     this.playTaskComplete();
   }
 
-  // 11. AMBIENT NOISE GENERATOR (Rain, Fire, Forest with Birds)
+  // 11. AMBIENT NOISE GENERATOR (Rain, Ocean Waves, Forest, Natural Heartbeat)
   private activeAmbientSources: (AudioBufferSourceNode | OscillatorNode)[] = [];
   private activeAmbientNodes: AudioNode[] = [];
   private ambientIntervals: number[] = [];
   private ambientGainNode: GainNode | null = null;
-  private currentAmbientType: 'rain' | 'fire' | 'forest' | 'off' = 'off';
+  private currentAmbientType: 'rain' | 'fire' | 'forest' | 'heartbeat' | 'off' = 'off';
 
-  public startAmbientSound(type: 'rain' | 'fire' | 'forest', volume: number = 0.3) {
+  public startAmbientSound(type: 'rain' | 'fire' | 'forest' | 'heartbeat', volume: number = 0.6) {
     // 1. Immediately kill any current playing ambient sound
     this.stopAmbientSound();
     this.initCtx();
@@ -790,7 +790,7 @@ class SoundFX {
         b3 = 0.86650 * b3 + white * 0.3104856;
         b4 = 0.55000 * b4 + white * 0.5329522;
         b5 = -0.7616 * b5 - white * 0.0168980;
-        output[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.11;
+        output[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.28;
         b6 = white * 0.115926;
       }
 
@@ -800,11 +800,11 @@ class SoundFX {
 
       const lowpass = this.ctx.createBiquadFilter();
       lowpass.type = 'lowpass';
-      lowpass.frequency.value = 1150;
+      lowpass.frequency.value = 1400;
 
       const highpass = this.ctx.createBiquadFilter();
       highpass.type = 'highpass';
-      highpass.frequency.value = 160;
+      highpass.frequency.value = 180;
 
       noise.connect(highpass);
       highpass.connect(lowpass);
@@ -815,71 +815,105 @@ class SoundFX {
       this.activeAmbientNodes.push(highpass, lowpass);
 
     } else if (type === 'fire') {
-      // Warm low hum + authentic crackles & pops
-      const bufferSize = sampleRate * 3;
+      // OLAS DEL MAR (Realistic Multi-Layer Ocean Surf & Shore Wash)
+      const bufferSize = sampleRate * 4;
       const buffer = this.ctx.createBuffer(1, bufferSize, sampleRate);
       const output = buffer.getChannelData(0);
-      let lastOut = 0;
+      let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
       for (let i = 0; i < bufferSize; i++) {
         const white = Math.random() * 2 - 1;
-        output[i] = (lastOut + (0.02 * white)) / 1.02;
-        lastOut = output[i];
-        output[i] *= 1.4;
+        b0 = 0.99886 * b0 + white * 0.0555179;
+        b1 = 0.99332 * b1 + white * 0.0750759;
+        b2 = 0.96900 * b2 + white * 0.1538520;
+        b3 = 0.86650 * b3 + white * 0.3104856;
+        b4 = 0.55000 * b4 + white * 0.5329522;
+        b5 = -0.7616 * b5 - white * 0.0168980;
+        output[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.32;
+        b6 = white * 0.115926;
       }
 
-      const noise = this.ctx.createBufferSource();
-      noise.buffer = buffer;
-      noise.loop = true;
+      // Layer 1: Primary Rolling Ocean Swell (~9s wave cycle)
+      const wave1Noise = this.ctx.createBufferSource();
+      wave1Noise.buffer = buffer;
+      wave1Noise.loop = true;
 
-      const lowpass = this.ctx.createBiquadFilter();
-      lowpass.type = 'lowpass';
-      lowpass.frequency.value = 420;
+      const wave1Filter = this.ctx.createBiquadFilter();
+      wave1Filter.type = 'lowpass';
+      wave1Filter.frequency.setValueAtTime(520, now);
+      wave1Filter.Q.value = 0.9;
 
-      noise.connect(lowpass);
-      lowpass.connect(this.ambientGainNode);
-      noise.start(0);
+      const wave1Gain = this.ctx.createGain();
+      wave1Gain.gain.setValueAtTime(0.55, now);
 
-      this.activeAmbientSources.push(noise);
-      this.activeAmbientNodes.push(lowpass);
+      const wave1Lfo = this.ctx.createOscillator();
+      wave1Lfo.type = 'sine';
+      wave1Lfo.frequency.setValueAtTime(0.11, now); // ~9 sec per ocean wave
 
-      // Random crackles & snaps of burning wood
-      const crackleTimer = window.setInterval(() => {
-        if (!this.ctx || this.currentAmbientType !== 'fire' || !this.ambientGainNode) return;
-        if (Math.random() > 0.35) {
-          const nowTime = this.ctx.currentTime;
-          const osc = this.ctx.createOscillator();
-          const gain = this.ctx.createGain();
-          const filter = this.ctx.createBiquadFilter();
+      const wave1FilterLfoGain = this.ctx.createGain();
+      wave1FilterLfoGain.gain.setValueAtTime(380, now); // sweeps 140Hz -> 900Hz
 
-          osc.type = Math.random() > 0.5 ? 'triangle' : 'sawtooth';
-          osc.frequency.setValueAtTime(800 + Math.random() * 2200, nowTime);
+      const wave1AmpLfoGain = this.ctx.createGain();
+      wave1AmpLfoGain.gain.setValueAtTime(0.35, now); // swells volume 0.20 -> 0.90
 
-          filter.type = 'bandpass';
-          filter.frequency.setValueAtTime(1600 + Math.random() * 1200, nowTime);
-          filter.Q.value = 3;
+      wave1Lfo.connect(wave1FilterLfoGain);
+      wave1FilterLfoGain.connect(wave1Filter.frequency);
 
-          const dur = 0.015 + Math.random() * 0.035;
-          gain.gain.setValueAtTime(0.04 + Math.random() * 0.07, nowTime);
-          gain.gain.exponentialRampToValueAtTime(0.0001, nowTime + dur);
+      wave1Lfo.connect(wave1AmpLfoGain);
+      wave1AmpLfoGain.connect(wave1Gain.gain);
 
-          osc.connect(filter);
-          filter.connect(gain);
-          gain.connect(this.ambientGainNode);
+      wave1Noise.connect(wave1Filter);
+      wave1Filter.connect(wave1Gain);
+      wave1Gain.connect(this.ambientGainNode);
 
-          osc.start(nowTime);
-          osc.stop(nowTime + dur);
+      // Layer 2: Secondary Shore Foam & Gentle Wash (~6.5s offset cycle)
+      const wave2Noise = this.ctx.createBufferSource();
+      wave2Noise.buffer = buffer;
+      wave2Noise.loop = true;
 
-          this.activeAmbientSources.push(osc);
-          this.activeAmbientNodes.push(filter, gain);
+      const wave2Filter = this.ctx.createBiquadFilter();
+      wave2Filter.type = 'bandpass';
+      wave2Filter.frequency.setValueAtTime(850, now);
+      wave2Filter.Q.value = 0.65;
 
-          setTimeout(() => {
-            const idx = this.activeAmbientSources.indexOf(osc);
-            if (idx > -1) this.activeAmbientSources.splice(idx, 1);
-          }, (dur + 0.1) * 1000);
-        }
-      }, 130);
+      const wave2Gain = this.ctx.createGain();
+      wave2Gain.gain.setValueAtTime(0.24, now);
 
-      this.ambientIntervals.push(crackleTimer);
+      const wave2Lfo = this.ctx.createOscillator();
+      wave2Lfo.type = 'sine';
+      wave2Lfo.frequency.setValueAtTime(0.15, now);
+
+      const wave2FilterLfoGain = this.ctx.createGain();
+      wave2FilterLfoGain.gain.setValueAtTime(420, now);
+
+      const wave2AmpLfoGain = this.ctx.createGain();
+      wave2AmpLfoGain.gain.setValueAtTime(0.16, now);
+
+      wave2Lfo.connect(wave2FilterLfoGain);
+      wave2FilterLfoGain.connect(wave2Filter.frequency);
+
+      wave2Lfo.connect(wave2AmpLfoGain);
+      wave2AmpLfoGain.connect(wave2Gain.gain);
+
+      wave2Noise.connect(wave2Filter);
+      wave2Filter.connect(wave2Gain);
+      wave2Gain.connect(this.ambientGainNode);
+
+      wave1Noise.start(0);
+      wave1Lfo.start(0);
+      wave2Noise.start(0.8);
+      wave2Lfo.start(0);
+
+      this.activeAmbientSources.push(wave1Noise, wave1Lfo, wave2Noise, wave2Lfo);
+      this.activeAmbientNodes.push(
+        wave1Filter,
+        wave1Gain,
+        wave1FilterLfoGain,
+        wave1AmpLfoGain,
+        wave2Filter,
+        wave2Gain,
+        wave2FilterLfoGain,
+        wave2AmpLfoGain
+      );
 
     } else if (type === 'forest') {
       // 1. Soothing forest breeze & rustling trees
@@ -889,9 +923,9 @@ class SoundFX {
       let last = 0;
       for (let i = 0; i < bufferSize; i++) {
         const white = Math.random() * 2 - 1;
-        output[i] = (last + (0.025 * white)) / 1.025;
+        output[i] = (last + (0.03 * white)) / 1.03;
         last = output[i];
-        output[i] *= 1.25;
+        output[i] *= 2.2;
       }
 
       const windNoise = this.ctx.createBufferSource();
@@ -900,17 +934,17 @@ class SoundFX {
 
       const windFilter = this.ctx.createBiquadFilter();
       windFilter.type = 'bandpass';
-      windFilter.frequency.value = 750;
+      windFilter.frequency.value = 800;
       windFilter.Q.value = 0.6;
 
       const windGain = this.ctx.createGain();
-      windGain.gain.setValueAtTime(0.24, now);
+      windGain.gain.setValueAtTime(0.55, now);
 
       // Slow gentle LFO simulating swaying gusts of wind in the canopy
       const windLfo = this.ctx.createOscillator();
       const windLfoGain = this.ctx.createGain();
-      windLfo.frequency.value = 0.15;
-      windLfoGain.gain.value = 0.09;
+      windLfo.frequency.value = 0.18;
+      windLfoGain.gain.value = 0.2;
       windLfo.connect(windLfoGain);
       windLfoGain.connect(windGain.gain);
 
@@ -941,7 +975,7 @@ class SoundFX {
           osc.frequency.exponentialRampToValueAtTime(endFreq, startTime + noteDur);
 
           gain.gain.setValueAtTime(0.001, startTime);
-          gain.gain.linearRampToValueAtTime(0.12, startTime + 0.015);
+          gain.gain.linearRampToValueAtTime(0.28, startTime + 0.015);
           gain.gain.exponentialRampToValueAtTime(0.001, startTime + noteDur);
 
           osc.connect(gain);
@@ -974,10 +1008,10 @@ class SoundFX {
         }
       };
 
-      // Initial chirp shortly after selection
+      // Initial chirp right after selection so user hears immediate feedback
       const initialTimeout = window.setTimeout(() => {
         if (this.currentAmbientType === 'forest') playBirdCall();
-      }, 700);
+      }, 200);
       this.ambientIntervals.push(initialTimeout);
 
       // Periodic natural bird songs
@@ -985,8 +1019,120 @@ class SoundFX {
         if (this.currentAmbientType === 'forest') {
           playBirdCall();
         }
-      }, 2900);
+      }, 2600);
       this.ambientIntervals.push(birdInterval);
+
+    } else if (type === 'heartbeat') {
+      // LATIDO DEL CORAZÓN NATURAL (60 BPM Organic Resting Heartbeat "Lub-Dub")
+      // 1. Subtle warm acoustic body-floor so there is no sterile digital silence between beats
+      const bufferSize = sampleRate * 2;
+      const buffer = this.ctx.createBuffer(1, bufferSize, sampleRate);
+      const output = buffer.getChannelData(0);
+      let last = 0;
+      for (let i = 0; i < bufferSize; i++) {
+        const white = Math.random() * 2 - 1;
+        output[i] = (last + 0.02 * white) / 1.02;
+        last = output[i];
+      }
+
+      const warmthNoise = this.ctx.createBufferSource();
+      warmthNoise.buffer = buffer;
+      warmthNoise.loop = true;
+
+      const warmthFilter = this.ctx.createBiquadFilter();
+      warmthFilter.type = 'lowpass';
+      warmthFilter.frequency.setValueAtTime(95, now);
+
+      const warmthGain = this.ctx.createGain();
+      warmthGain.gain.setValueAtTime(0.06, now);
+
+      warmthNoise.connect(warmthFilter);
+      warmthFilter.connect(warmthGain);
+      warmthGain.connect(this.ambientGainNode);
+      warmthNoise.start(0);
+
+      this.activeAmbientSources.push(warmthNoise);
+      this.activeAmbientNodes.push(warmthFilter, warmthGain);
+
+      // 2. Helper to synthesize a single organic cardiac valve thump (S1 "Lub" or S2 "Dub")
+      const triggerHeartThump = (
+        startTime: number,
+        startFreq: number,
+        endFreq: number,
+        duration: number,
+        peakGain: number,
+        filterFreq: number
+      ) => {
+        if (!this.ctx || !this.ambientGainNode || this.currentAmbientType !== 'heartbeat') return;
+
+        // Primary sub-chest pulse
+        const osc1 = this.ctx.createOscillator();
+        // Warm secondary chest resonance harmonic
+        const osc2 = this.ctx.createOscillator();
+        const thumpFilter = this.ctx.createBiquadFilter();
+        const thumpGain = this.ctx.createGain();
+
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(startFreq, startTime);
+        osc1.frequency.exponentialRampToValueAtTime(endFreq, startTime + duration);
+
+        osc2.type = 'triangle';
+        osc2.frequency.setValueAtTime(startFreq * 1.4, startTime);
+        osc2.frequency.exponentialRampToValueAtTime(endFreq * 1.25, startTime + duration);
+
+        const osc2Gain = this.ctx.createGain();
+        osc2Gain.gain.setValueAtTime(0.25, startTime);
+
+        thumpFilter.type = 'lowpass';
+        thumpFilter.frequency.setValueAtTime(filterFreq, startTime);
+        thumpFilter.Q.setValueAtTime(1.6, startTime);
+
+        // Smooth attack & organic exponential decay (zero click)
+        thumpGain.gain.setValueAtTime(0.001, startTime);
+        thumpGain.gain.linearRampToValueAtTime(peakGain, startTime + 0.022);
+        thumpGain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+
+        osc1.connect(thumpFilter);
+        osc2.connect(osc2Gain);
+        osc2Gain.connect(thumpFilter);
+        thumpFilter.connect(thumpGain);
+        thumpGain.connect(this.ambientGainNode);
+
+        osc1.start(startTime);
+        osc2.start(startTime);
+        osc1.stop(startTime + duration + 0.02);
+        osc2.stop(startTime + duration + 0.02);
+
+        this.activeAmbientSources.push(osc1, osc2);
+        this.activeAmbientNodes.push(osc2Gain, thumpFilter, thumpGain);
+
+        window.setTimeout(() => {
+          const i1 = this.activeAmbientSources.indexOf(osc1);
+          if (i1 > -1) this.activeAmbientSources.splice(i1, 1);
+          const i2 = this.activeAmbientSources.indexOf(osc2);
+          if (i2 > -1) this.activeAmbientSources.splice(i2, 1);
+        }, (duration + 0.1) * 1000);
+      };
+
+      const playHeartbeatCycle = () => {
+        if (!this.ctx || this.currentAmbientType !== 'heartbeat' || !this.ambientGainNode) return;
+        const beatTime = this.ctx.currentTime + 0.02;
+        // S1 ("Lub"): deeper, longer mitral/tricuspid closure
+        triggerHeartThump(beatTime, 82, 36, 0.14, 0.85, 130);
+        // S2 ("Dub"): slightly firmer, shorter aortic/pulmonic closure ~290ms later
+        triggerHeartThump(beatTime + 0.29, 94, 42, 0.11, 0.62, 145);
+      };
+
+      // Play first heartbeat immediately on click
+      playHeartbeatCycle();
+
+      // Repeat at 60 BPM (1000ms per cardiac cycle) for resting vagal coherence
+      const heartInterval = window.setInterval(() => {
+        if (this.currentAmbientType === 'heartbeat') {
+          playHeartbeatCycle();
+        }
+      }, 1000);
+      this.ambientIntervals.push(heartInterval);
     }
   }
 
