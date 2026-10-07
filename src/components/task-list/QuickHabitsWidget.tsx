@@ -345,13 +345,26 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
             type="button"
             onClick={() => {
               soundFX.playClick();
+              onOpenAddModal(true);
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cyan-950/80 hover:bg-cyan-900/80 text-cyan-300 border border-cyan-500/60 hover:border-cyan-400 text-xs font-black transition-all cursor-pointer min-h-[38px] active:scale-95 shadow-[0_0_12px_rgba(0,240,255,0.2)]"
+            title="Crear un nuevo hábito de disciplina con contador"
+          >
+            <Plus className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+            <span>+ Hábito</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              soundFX.playClick();
               setIsMilestonesModalOpen(true);
             }}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-yellow-950/80 via-amber-900/60 to-yellow-950/80 text-yellow-300 border border-yellow-500/60 hover:border-yellow-400 text-xs font-black transition-all cursor-pointer min-h-[38px] active:scale-95 shadow-[0_0_12px_rgba(234,179,8,0.25)]"
-            title="Ver matriz de hitos de 21 y 66 días y gestionar hábitos"
+            title="Ver matriz de maestría neuroplástica (rachas 21 y 66 días)"
           >
             <Trophy className="w-3.5 h-3.5 text-yellow-400 shrink-0" />
-            <span>Matriz de Hitos (21/66d)</span>
+            <span>Maestría (21/66d)</span>
           </button>
         </div>
       </div>
@@ -521,7 +534,7 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                 </div>
                 <div>
                   <h3 className="text-base sm:text-lg font-black text-white flex items-center gap-2">
-                    <span>Hitos de Formación: 21 & 66 Días</span>
+                    <span>Maestría y Rachas: 21 & 66 Días</span>
                   </h3>
                   <p className="text-xs text-cyan-300/90 mt-0.5">
                     Consolidación neuroplástica y automatización de hábitos

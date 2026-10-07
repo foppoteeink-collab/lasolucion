@@ -327,9 +327,32 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
     const taskStore = useTaskStore.getState();
     const currentDateStr = taskStore.currentViewDate || getTodayDateString();
 
+    // 1. Persist AI-generated routines into customHabits so generateDailyTasks will create them infinitely for all future dates
+    const existingCustomHabits = taskStore.customHabits || [];
+    const newCustomHabits: CustomHabit[] = suggestedHabits.map((h, idx) => ({
+      id: h.id || `hab-ai-${Date.now()}-${idx}-${Math.random().toString(36).substring(2, 6)}`,
+      title: h.title,
+      category: (h.category === 'habito' ? 'rutina' : h.category) as any,
+      description: h.description || `Directiva del Oráculo para ${h.timeBlock || 'el día'}`,
+      xpReward: h.xpReward || 20,
+      coinReward: h.coinReward || 10,
+      frequencyType: (h.specificDays && h.specificDays.length > 0 && h.specificDays.length < 7) ? 'specific_days' : 'daily',
+      specificDays: h.specificDays,
+      timeBlock: normalizeTimeBlock(h.timeBlock) || h.timeBlock,
+      isQuickHabit: false,
+      isTracked2166: false,
+      quickIcon: h.quickIcon
+    }));
+
+    const habitMap = new Map<string, CustomHabit>();
+    existingCustomHabits.forEach(h => habitMap.set((h.title || '').toLowerCase().trim(), h));
+    newCustomHabits.forEach(h => habitMap.set((h.title || '').toLowerCase().trim(), h));
+    const mergedHabits = Array.from(habitMap.values());
+    taskStore.setCustomHabits(mergedHabits);
+
+    // 2. Inject into current view date and matching specific days of the active week for instant UI updates
     const updatedTasksByDate = { ...taskStore.tasksByDate };
 
-    // Inject into current view date and matching specific days of the active week if specified
     suggestedHabits.forEach((h, index) => {
       const parsedDays = h.specificDays !== undefined && h.specificDays !== null ? parseDays(h.specificDays) : [];
 
