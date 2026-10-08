@@ -9,6 +9,7 @@
 # The GEMINI_API_KEY is intentionally server-side only (Netlify function).
 # It never reaches the client JS bundle. Tell Netlify to skip scanning it.
 [build.environment]
+  NODE_VERSION = "20"
   SECRETS_SCAN_OMIT_KEYS = "GEMINI_API_KEY,VITE_GEMINI_API_KEY"
 
 [[redirects]]
@@ -21,6 +22,11 @@
   [headers.values]
     X-Frame-Options = "SAMEORIGIN"
     X-Content-Type-Options = "nosniff"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
 
 [[headers]]
   for = "/manifest.webmanifest"

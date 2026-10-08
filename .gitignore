@@ -7,3 +7,5 @@ coverage/
 
 # Build output - never commit
 dist/
+bun.lock
+la_solucion_codigo_fuente/
