@@ -21,12 +21,20 @@ if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
     }
   });
 
-  window.addEventListener('load', () => {
+  const checkSWUpdate = () => {
     navigator.serviceWorker.getRegistration().then((reg) => {
       if (reg) {
         reg.update().catch(() => {});
       }
     });
+  };
+
+  window.addEventListener('load', checkSWUpdate);
+  window.addEventListener('focus', checkSWUpdate);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      checkSWUpdate();
+    }
   });
 }
 

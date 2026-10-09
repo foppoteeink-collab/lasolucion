@@ -181,13 +181,16 @@ export const deduplicateTasksForDay = (tasks: TaskItem[], targetDateKey?: string
   for (const rawTask of tasks) {
     if (!rawTask || !rawTask.title) continue;
 
-    // A task is legitimately completed if completed === true AND completedAt timestamp is present
-    const isLegitimatelyCompleted = Boolean(rawTask.completed && rawTask.completedAt);
+    // A task is completed if marked completed OR if habit count reached target
+    const isLegitimatelyCompleted = Boolean(
+      rawTask.completed ||
+      (rawTask.targetCount !== undefined && rawTask.currentCount !== undefined && rawTask.currentCount >= rawTask.targetCount)
+    );
 
     const task: TaskItem = {
       ...rawTask,
       completed: isLegitimatelyCompleted,
-      completedAt: isLegitimatelyCompleted ? rawTask.completedAt : undefined,
+      completedAt: isLegitimatelyCompleted ? (rawTask.completedAt || new Date().toISOString()) : undefined,
     };
 
     const existingIdx = result.findIndex(existing => (existing.id && task.id && existing.id === task.id) || isDuplicateActivity(existing, task));
@@ -198,10 +201,16 @@ export const deduplicateTasksForDay = (tasks: TaskItem[], targetDateKey?: string
       const existing = result[existingIdx];
 
       // A completed task or progress must NEVER be wiped out by an uncompleted or default duplicate
-      const isExistingCompleted = Boolean(existing.completed && existing.completedAt);
-      const isTaskCompleted = Boolean(task.completed && task.completedAt);
+      const isExistingCompleted = Boolean(
+        existing.completed ||
+        (existing.targetCount !== undefined && existing.currentCount !== undefined && existing.currentCount >= existing.targetCount)
+      );
+      const isTaskCompleted = Boolean(
+        task.completed ||
+        (task.targetCount !== undefined && task.currentCount !== undefined && task.currentCount >= task.targetCount)
+      );
       const isCompleted = isExistingCompleted || isTaskCompleted;
-      const completedAt = isCompleted ? (isTaskCompleted ? task.completedAt : existing.completedAt) : undefined;
+      const completedAt = isCompleted ? (task.completedAt || existing.completedAt || new Date().toISOString()) : undefined;
 
       const betterTitle = task.title.length >= existing.title.length ? task.title : existing.title;
 
@@ -227,6 +236,9 @@ export const deduplicateTasksForDay = (tasks: TaskItem[], targetDateKey?: string
         category: task.category || existing.category,
         xpReward: Math.max(existing.xpReward || 0, task.xpReward || 0),
         coinReward: Math.max(existing.coinReward || 0, task.coinReward || 0),
+        awardedXp: Math.max(existing.awardedXp || 0, task.awardedXp || 0),
+        awardedCoins: Math.max(existing.awardedCoins || 0, task.awardedCoins || 0),
+        chestAwarded: Boolean(existing.chestAwarded || task.chestAwarded),
       };
 
       result[existingIdx] = merged;
@@ -247,7 +259,7 @@ export const deduplicateTasksForDay = (tasks: TaskItem[], targetDateKey?: string
 
 /**
  * Deduplicates all dates in tasksByDate map and ensures task IDs are unique per date.
- * Also purges phantom completions lacking explicit timestamps.
+ * Preserves completed status and backfills timestamp if missing.
  */
 export const sanitizeTasksByDate = (
   tasksByDate: Record<string, TaskItem[]>
@@ -267,22 +279,25 @@ export const sanitizeTasksByDate = (
         task = { ...task, id: `task-${dateKey}-${idx}-${Math.random().toString(36).substring(2, 6)}` };
       }
 
-      const isLegitimatelyCompleted = Boolean(task.completed && task.completedAt);
+      const isCompleted = Boolean(
+        task.completed ||
+        (task.targetCount !== undefined && task.currentCount !== undefined && task.currentCount >= task.targetCount)
+      );
 
-      // If this exact ID was already assigned to a task on this date, generate a unique ID
+      // If this exact ID was already assigned to a task on this date, generate a unique ID but preserve completion
       if (seenTaskIds.has(task.id)) {
         return {
           ...task,
           id: `${task.id}-${dateKey}-${idx}-${Math.random().toString(36).substring(2, 6)}`,
-          completed: false,
-          completedAt: undefined
+          completed: isCompleted,
+          completedAt: isCompleted ? (task.completedAt || new Date().toISOString()) : undefined
         };
       } else {
         seenTaskIds.add(task.id);
         return {
           ...task,
-          completed: isLegitimatelyCompleted,
-          completedAt: isLegitimatelyCompleted ? task.completedAt : undefined
+          completed: isCompleted,
+          completedAt: isCompleted ? (task.completedAt || new Date().toISOString()) : undefined
         };
       }
     });

@@ -16,7 +16,10 @@ import {
   RefreshCw,
   Sparkles,
   Zap,
-  Activity
+  Activity,
+  Upload,
+  Download,
+  CheckCircle2
 } from 'lucide-react';
 import { AppNotification } from '../types';
 import { soundFX } from '../utils/audio';
@@ -27,6 +30,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { AnimatedNumber } from './AnimatedNumber';
 import { useAuth } from '../context/AuthContext';
 import { usePlayerStore } from '../store/usePlayerStore';
+import { useTaskStore } from '../store/useTaskStore';
 import { useUIStore } from '../store/useUIStore';
 import { getRankForLevel } from '../data/defaults';
 import { CloudSyncResult } from '../hooks/useCloudSync';
@@ -68,6 +72,9 @@ export const Header: React.FC<HeaderProps> = ({
   
   const handleSignOut = authSignOut;
   const [showNotifMenu, setShowNotifMenu] = useState(false);
+  const [showSyncMenu, setShowSyncMenu] = useState(false);
+  const [syncMenuToast, setSyncMenuToast] = useState<string | null>(null);
+  const [isSyncBusy, setIsSyncBusy] = useState(false);
   const unreadCount = notifications.filter(n => !n.read).length;
 
   const currentRank = getRankForLevel(stats.level);
@@ -342,61 +349,125 @@ export const Header: React.FC<HeaderProps> = ({
               )}
             </div>
 
-            {/* Cloud Sync / Guest Status Chip */}
-            {user ? (
+            {/* Cloud Sync Direct Menu (Visible on Mobile, Tablet & Desktop) */}
+            <div className="relative">
               <button
-                onClick={async () => {
-                  if (cloudSync?.forceSyncNow) {
-                    soundFX.playClick();
-                    await cloudSync.forceSyncNow();
-                  }
+                type="button"
+                onClick={() => {
+                  soundFX.playClick();
+                  setShowSyncMenu((prev) => !prev);
+                  setShowNotifMenu(false);
                 }}
-                className={`hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl border text-[10px] font-mono font-bold tracking-wider transition cursor-pointer ${
-                  cloudSync?.syncStatus === 'saving'
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-[10px] font-mono font-bold tracking-wider transition cursor-pointer ${
+                  cloudSync?.syncStatus === 'saving' || isSyncBusy
                     ? 'bg-[#011420] border-cyan-400 text-cyan-300 shadow-[0_0_12px_rgba(0,240,255,0.3)]'
                     : cloudSync?.syncStatus === 'offline'
-                    ? 'bg-amber-950/40 border-amber-500 text-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.2)]'
-                    : cloudSync?.syncStatus === 'error'
-                    ? 'bg-red-950/40 border-red-500 text-red-300'
-                    : 'bg-[#011420]/80 hover:bg-cyan-950/50 border-cyan-500/40 text-cyan-300 shadow-[0_0_10px_rgba(0,240,255,0.1)]'
+                    ? 'bg-amber-950/40 border-amber-500 text-amber-300'
+                    : 'bg-[#011420]/90 hover:bg-cyan-950/50 border-cyan-500/50 text-cyan-300 shadow-[0_0_10px_rgba(0,240,255,0.15)]'
                 }`}
-                title={
-                  cloudSync?.syncStatus === 'saving'
-                    ? 'Sincronizando estado cuántico...'
-                    : cloudSync?.syncStatus === 'offline'
-                    ? 'Modo Offline: Datos resguardados localmente en memoria segura.'
-                    : `Enlace activo: ${user.email}. Toca para sincronizar ahora.`
-                }
+                title="Sincronizar datos entre Tablet y Teléfono"
               >
-                {cloudSync?.syncStatus === 'saving' ? (
-                  <>
-                    <RefreshCw className="w-3.5 h-3.5 text-cyan-400 animate-spin shrink-0" />
-                    <span className="truncate">SINCRONIZANDO...</span>
-                  </>
-                ) : cloudSync?.syncStatus === 'offline' ? (
-                  <>
-                    <CloudOff className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                    <span className="truncate max-w-[170px]">LOCAL ENCRIPTADO</span>
-                  </>
+                {cloudSync?.syncStatus === 'saving' || isSyncBusy ? (
+                  <RefreshCw className="w-3.5 h-3.5 text-cyan-400 animate-spin shrink-0" />
                 ) : (
-                  <>
-                    <Cloud className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                    <span className="truncate">NUBE VINCULADA</span>
-                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(0,240,255,0.9)] animate-pulse" />
-                  </>
+                  <Cloud className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
                 )}
+                <span className="hidden sm:inline truncate">SINCRONIZAR</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(0,240,255,0.9)] animate-pulse" />
               </button>
-            ) : (
-              <button
-                onClick={() => { soundFX.playClick(); signInWithGoogle(); }}
-                className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#011420]/80 hover:bg-cyan-950/50 border border-cyan-500/40 text-[10px] font-mono text-cyan-300 font-bold transition cursor-pointer shadow-[0_0_10px_rgba(0,240,255,0.15)]"
-                title="Modo Local activo. Haz clic para respaldar tu progreso en la nube."
-              >
-                <CloudOff className="w-3.5 h-3.5 text-cyan-400" />
-                <span>NODO LOCAL</span>
-                <span className="text-[9px] text-white underline ml-0.5 font-sans">Sincronizar</span>
-              </button>
-            )}
+
+              {showSyncMenu && (
+                <div className="absolute right-0 mt-2 w-72 sm:w-80 rounded-2xl bg-[#010e17]/98 backdrop-blur-xl border border-cyan-500/60 shadow-[0_0_30px_rgba(0,240,255,0.3)] p-3.5 z-50 space-y-2.5 animate-in fade-in slide-in-from-top-2">
+                  <div className="flex items-center justify-between pb-2 border-b border-cyan-500/30">
+                    <span className="text-xs font-anton tracking-wider text-white flex items-center gap-1.5">
+                      <Cloud className="w-3.5 h-3.5 text-cyan-400" />
+                      PUENTE TABLET ↔ TELÉFONO
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setShowSyncMenu(false)}
+                      className="text-[10px] font-mono text-slate-400 hover:text-white cursor-pointer"
+                    >
+                      Cerrar
+                    </button>
+                  </div>
+
+                  <p className="text-[11px] text-slate-300 leading-snug">
+                    1️⃣ En la <strong>Tablet</strong> toca <strong>Subir datos</strong>.<br />
+                    2️⃣ En el <strong>Teléfono</strong> toca <strong>Traer datos</strong>.
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      disabled={isSyncBusy}
+                      onClick={async () => {
+                        if (!cloudSync?.forceSyncNow) return;
+                        setIsSyncBusy(true);
+                        soundFX.playClick();
+                        try {
+                          const ok = await cloudSync.forceSyncNow();
+                          const st = useTaskStore.getState();
+                          const activeList = st.tasksByDate?.[st.currentViewDate] || [];
+                          const hCount = (st.customHabits || []).length;
+                          const tCount = activeList.length;
+                          const cCount = activeList.filter(t => t.completed).length;
+                          if (ok) {
+                            soundFX.playSuccess();
+                            setSyncMenuToast(`✓ Subido (${tCount} tareas, ${cCount} hechas, ${hCount} rutinas)`);
+                          } else {
+                            setSyncMenuToast('⚠️ Error al subir a la nube');
+                          }
+                        } finally {
+                          setIsSyncBusy(false);
+                        }
+                      }}
+                      className="flex items-center justify-center gap-1.5 px-3 py-2.5 bg-cyan-950 hover:bg-cyan-900 border border-cyan-400/70 text-cyan-200 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer disabled:opacity-50"
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>Subir datos</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={isSyncBusy}
+                      onClick={async () => {
+                        if (!cloudSync?.pullFromCloudNow) return;
+                        setIsSyncBusy(true);
+                        soundFX.playClick();
+                        try {
+                          const ok = await cloudSync.pullFromCloudNow();
+                          const st = useTaskStore.getState();
+                          const activeList = st.tasksByDate?.[st.currentViewDate] || [];
+                          const hCount = (st.customHabits || []).length;
+                          const tCount = activeList.length;
+                          const cCount = activeList.filter(t => t.completed).length;
+                          if (ok) {
+                            soundFX.playLevelUp();
+                            setSyncMenuToast(`✓ Sincronizado (${tCount} tareas, ${cCount} hechas, ${hCount} rutinas)`);
+                          } else {
+                            setSyncMenuToast('⚠️ Error al descargar');
+                          }
+                        } finally {
+                          setIsSyncBusy(false);
+                        }
+                      }}
+                      className="flex items-center justify-center gap-1.5 px-3 py-2.5 bg-emerald-950 hover:bg-emerald-900 border border-emerald-400/70 text-emerald-200 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer disabled:opacity-50"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Traer datos</span>
+                    </button>
+                  </div>
+
+                  {syncMenuToast && (
+                    <div className="p-2 rounded-xl bg-emerald-950/90 border border-emerald-500/50 text-emerald-300 text-[11px] font-bold flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <span>{syncMenuToast}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
 
             {/* Utility Buttons (Hidden on Mobile < md) */}
             <div className="hidden md:flex items-center gap-1.5 ml-1">

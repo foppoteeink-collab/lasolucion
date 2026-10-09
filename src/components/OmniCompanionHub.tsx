@@ -53,7 +53,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [hoveredActionId, setHoveredActionId] = useState<string | null>(null);
   const [hasRecentVictory, setHasRecentVictory] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
+  const isDraggingRef = useRef(false);
 
   // Detección de tareas de la fecha actual
   const todayStr = getTodayDateString();
@@ -108,8 +108,18 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
     };
   }, []);
 
+  const dragConstraints = useMemo(
+    () => ({
+      left: -Math.max(0, viewportDims.width - 110),
+      right: 12,
+      top: -Math.max(0, viewportDims.height - 130),
+      bottom: 12,
+    }),
+    [viewportDims.width, viewportDims.height]
+  );
+
   const handleCompanionClick = () => {
-    if (isDragging) return;
+    if (isDraggingRef.current) return;
     soundFX.playClick();
     setIsMenuOpen((prev) => !prev);
   };
@@ -254,18 +264,20 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
     <>
       {/* WIDGET FLOTANTE OMNIPRESENTE (EN TODAS LAS PANTALLAS) */}
       <motion.div
-        drag
+        drag={!isMenuOpen}
         dragMomentum={false}
-        dragConstraints={{ 
-          left: -Math.max(0, viewportDims.width - 100), 
-          right: 0, 
-          top: -Math.max(0, viewportDims.height - 120), 
-          bottom: 0 
+        dragConstraints={dragConstraints}
+        dragElastic={0.04}
+        whileDrag={{ scale: 1.05 }}
+        onDragStart={() => {
+          isDraggingRef.current = true;
         }}
-        dragElastic={0.08}
-        onDragStart={() => setIsDragging(true)}
-        onDragEnd={() => setTimeout(() => setIsDragging(false), 150)}
-        className={`fixed z-[60] flex flex-col items-end pointer-events-auto select-none transition-all duration-300 ${
+        onDragEnd={() => {
+          setTimeout(() => {
+            isDraggingRef.current = false;
+          }, 120);
+        }}
+        className={`fixed z-[60] flex flex-col items-end pointer-events-auto select-none touch-none will-change-transform ${
           navigationMode === 'classic'
             ? 'bottom-20 sm:bottom-6 right-3 sm:right-6'
             : 'bottom-4 sm:bottom-6 right-3 sm:right-6'
@@ -273,13 +285,14 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
         style={{
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
           paddingRight: 'env(safe-area-inset-right, 0px)',
+          touchAction: 'none',
         }}
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        transition={{ type: 'spring', damping: 20, stiffness: 260 }}
+        transition={{ type: 'spring', damping: 22, stiffness: 280 }}
       >
         {/* EL ORÁCULO FLOTANTE KAI (DISPARADOR DEL MENÚ) */}
-        <div className="relative flex flex-col items-center">
+        <div className="relative flex flex-col items-center touch-none">
           {/* Insignia de estado rápido en Pomodoro */}
           {(isPomodoroOpen || isTimerRunning) && (
             <motion.div
@@ -294,8 +307,8 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
 
           {/* Botón base del personaje flotante */}
           <div 
-            className="group relative cursor-pointer active:scale-95 transition-transform"
-            title="Toca a KAI para abrir sus glifos de navegación"
+            className="group relative cursor-grab active:cursor-grabbing touch-none"
+            title="Arrastra o toca a KAI para abrir sus glifos de navegación"
           >
             {/* CONTENEDOR DE ÍCONOS HOLOGRÁFICOS DESPLEGADOS EN ÓRBITA MULTICAPA ANCLADOS EXACTAMENTE AL CENTRO DE KAI */}
             <AnimatePresence>

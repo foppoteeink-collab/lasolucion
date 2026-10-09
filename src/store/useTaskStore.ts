@@ -202,8 +202,11 @@ export const useTaskStore = create<TaskState>()(
       name: 'la-solucion-task-store',
       storage: createJSONStorage(() => localStorage),
       onRehydrateStorage: () => (state) => {
-        if (state && state.tasksByDate) {
-          state.tasksByDate = sanitizeTasksByDate(state.tasksByDate);
+        if (state) {
+          state.currentViewDate = getTodayDateString();
+          if (state.tasksByDate) {
+            state.tasksByDate = sanitizeTasksByDate(state.tasksByDate);
+          }
         }
       },
     }

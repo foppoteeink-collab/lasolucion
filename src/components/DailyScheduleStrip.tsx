@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TaskItem, TaskCategory } from '../types';
-import { Clock, Play, Sparkles, ChevronDown, ChevronUp, Calendar, Timer, CheckCircle2 } from 'lucide-react';
+import { Clock, Sparkles, Calendar, Timer, CheckCircle2, X } from 'lucide-react';
 import { soundFX } from '../utils/audio';
 import { parseTimeToMinutes, parseEndTimeToMinutes, sortByChronologicalTime } from '../utils/timeUtils';
 
@@ -8,14 +8,15 @@ interface DailyScheduleStripProps {
   tasks: TaskItem[];
   onOpenPomodoroForTask: (taskTitle: string, category: TaskCategory) => void;
   onOpenFinishDay: () => void;
+  onClose?: () => void;
 }
 
 export const DailyScheduleStrip: React.FC<DailyScheduleStripProps> = ({
   tasks,
   onOpenPomodoroForTask,
+  onClose,
 }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [showAllBlocks, setShowAllBlocks] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -48,16 +49,16 @@ export const DailyScheduleStrip: React.FC<DailyScheduleStripProps> = ({
     };
   };
 
-  const scheduledTasks: TaskItem[] = sortByChronologicalTime<TaskItem>(tasks.filter((t) => Boolean(t.timeBlock) && !t.isHabit));
+  const scheduledTasks: TaskItem[] = sortByChronologicalTime<TaskItem>(
+    tasks.filter((t) => Boolean(t.timeBlock) && !t.isHabit && !t.isQuickHabit && !t.isTracked2166)
+  );
   const activeTask = scheduledTasks.find((t) => checkBlockStatus(t.timeBlock).isActive);
 
   return (
-    <div className="scifi-glass-panel rounded-2xl p-3.5 sm:p-4 font-sans transition-all text-white">
+    <div className="scifi-glass-panel rounded-2xl p-3.5 sm:p-4 font-sans transition-all text-white border border-cyan-500/40 shadow-[0_0_25px_rgba(0,240,255,0.18)]">
       
-      {/* Top Bar: Date + Live Time + Toggle Button */}
+      {/* Top Bar: Live Clock + Date + Close Button */}
       <div className="flex items-center justify-between gap-2">
-        
-        {/* Left: Day & Live Clock */}
         <div className="flex items-center gap-2 flex-wrap">
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#000a14] border border-cyan-400/60 text-xs font-black shadow-[0_0_10px_rgba(0,240,255,0.25)]">
             <Clock className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
@@ -69,18 +70,16 @@ export const DailyScheduleStrip: React.FC<DailyScheduleStripProps> = ({
           </span>
         </div>
 
-        {/* Right: Collapsible Timeline Toggle */}
-        <button
-          type="button"
-          onClick={() => {
-            soundFX.playClick();
-            setShowAllBlocks(!showAllBlocks);
-          }}
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#000a14] text-cyan-300 border border-cyan-500/40 text-xs font-bold hover:bg-cyan-950/40 hover:text-white transition-all cursor-pointer shadow-[0_0_8px_rgba(0,240,255,0.15)] shrink-0 active:scale-95"
-        >
-          <span>{showAllBlocks ? 'Ocultar' : 'Horarios'}</span>
-          {showAllBlocks ? <ChevronUp className="w-3.5 h-3.5 text-cyan-400" /> : <ChevronDown className="w-3.5 h-3.5 text-cyan-400" />}
-        </button>
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-cyan-500/20 transition-colors cursor-pointer"
+            title="Cerrar horarios"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
       {/* Middle Status Banner: Dedicated Active Task or Free Transition */}
@@ -116,14 +115,14 @@ export const DailyScheduleStrip: React.FC<DailyScheduleStripProps> = ({
         ) : (
           <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400 py-1 font-mono">
             <Sparkles className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-            <span>Tiempo libre o transición activa entre bloques</span>
+            <span>Tiempo libre o transición entre bloques de tu agenda</span>
           </div>
         )}
       </div>
 
-      {/* Expandable Compact Timeline Chips */}
-      {showAllBlocks && (
-        <div className="mt-3 pt-3 border-t-2 border-dashed border-cyan-500/30 animate-in fade-in slide-in-from-top-1">
+      {/* Timeline Chips of All Scheduled Blocks */}
+      {scheduledTasks.length > 0 && (
+        <div className="mt-3 pt-3 border-t border-dashed border-cyan-500/30">
           <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
             {scheduledTasks.filter(t => t && t.title).map((t, idx) => {
               const status = checkBlockStatus(t.timeBlock);
@@ -139,7 +138,7 @@ export const DailyScheduleStrip: React.FC<DailyScheduleStripProps> = ({
                   }`}
                 >
                   <span className="font-mono font-bold text-[11px] text-cyan-300">{t.timeBlock}</span>
-                  <span className="font-bold truncate max-w-[130px]">{t.title}</span>
+                  <span className="font-bold truncate max-w-[140px]">{t.title}</span>
                   {t.completed && <CheckCircle2 className="w-3 h-3 text-cyan-400" />}
                 </div>
               );
@@ -147,7 +146,6 @@ export const DailyScheduleStrip: React.FC<DailyScheduleStripProps> = ({
           </div>
         </div>
       )}
-
     </div>
   );
 };

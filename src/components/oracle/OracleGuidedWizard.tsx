@@ -85,49 +85,72 @@ export const OracleGuidedWizard: React.FC<OracleGuidedWizardProps> = ({ onComple
   const handleFinish = () => {
     soundFX.playSubBassConfirm();
 
-    // Compile into precise natural language prompt
+    // Compile into precise natural language lines (one block per line for 100% deterministic & AI accuracy)
     const parts: string[] = [];
+    const daysText = formatDaysText(workDays);
+    const trainDaysText = formatDaysText(trainingDays);
 
-    // Wake / sleep cycle
-    parts.push(`Despertar a las ${wakeTime} y desconexión/dormir a las ${sleepTime}.`);
+    // 1. Morning Activation
+    parts.push(`Activación matutina y preparación a las ${wakeTime} ${daysText}.`);
 
-    // Work / Primary
+    // 2. Work / Primary Activity
     if (workType === 'partida') {
-      parts.push(`${formatDaysText(workDays)} ${workTitle} en jornada partida: primer turno de ${shift1Start} a ${shift1End}, y segundo turno de ${shift2Start} a ${shift2End}.`);
+      parts.push(`${workTitle} (Turno Mañana) de ${shift1Start} a ${shift1End} ${daysText}.`);
+      parts.push(`${workTitle} (Turno Tarde) de ${shift2Start} a ${shift2End} ${daysText}.`);
     } else if (workType === 'continua') {
-      parts.push(`${formatDaysText(workDays)} ${workTitle} de ${continuousStart} a ${continuousEnd}.`);
+      parts.push(`${workTitle} de ${continuousStart} a ${continuousEnd} ${daysText}.`);
     } else if (workType === 'estudio') {
-      parts.push(`${formatDaysText(workDays)} sesión de estudio intensivo de ${continuousStart} a ${continuousEnd}.`);
+      parts.push(`Sesión de Estudio Intensivo (${workTitle}) de ${continuousStart} a ${continuousEnd} ${daysText}.`);
+    } else if (workType === 'libre') {
+      parts.push(`${workTitle} (Bloque Productivo Flexible) de ${continuousStart} a ${continuousEnd} ${daysText}.`);
     }
 
-    // Support habits
-    if (hasCleaning) {
-      parts.push(`Limpieza y orden del espacio de ${cleaningTime} ${formatDaysText(workDays)}.`);
-    }
+    // 3. Lunch
     if (hasLunch) {
-      parts.push(`Almuerzo y pausa de comida de ${lunchTime} ${formatDaysText(workDays)}.`);
+      parts.push(`Almuerzo y Pausa de Recarga de ${lunchTime} ${daysText}.`);
     }
 
-    // Training
+    // 4. Training
     if (hasTraining) {
       if (trainingSplit === 'por_musculo') {
-        parts.push(`Entrenamiento de fuerza y acondicionamiento de ${trainStart} a ${trainEnd} los ${trainingDays.map(d => dayLabels.find(l => l.num === d)?.name).join(', ')} con desglose por grupo muscular según el día.`);
+        const muscleGroups = [
+          'Tren Inferior & Pierna',
+          'Espalda, Bíceps & Core',
+          'Pecho, Hombro & Tríceps',
+          'Glúteo, Isquios & Potencia',
+          'Full Body & Acondicionamiento',
+          'Cardio HIIT & Movilidad',
+          'Recuperación Activa'
+        ];
+        const dayNamesFull = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+        trainingDays.forEach((dNum, idx) => {
+          const mg = muscleGroups[idx % muscleGroups.length];
+          parts.push(`Entrenamiento: ${mg} de ${trainStart} a ${trainEnd} los ${dayNamesFull[dNum]}.`);
+        });
       } else {
-        parts.push(`Entrenamiento físico de ${trainStart} a ${trainEnd} ${formatDaysText(trainingDays)}.`);
+        parts.push(`Entrenamiento Físico y Deporte de ${trainStart} a ${trainEnd} ${trainDaysText}.`);
       }
     }
 
-    // Creative / night
+    // 5. Cleaning
+    if (hasCleaning) {
+      parts.push(`Limpieza y Orden del Espacio de ${cleaningTime} ${daysText}.`);
+    }
+
+    // 6. Creative / Reading
     if (hasCreative) {
-      parts.push(`Bloque creativo / proyectos personales de ${creativeTime} ${formatDaysText(workDays)}.`);
+      parts.push(`Bloque Creativo y Proyectos Personales de ${creativeTime} ${daysText}.`);
     }
 
-    // Saturday special
+    // 7. Saturday special
     if (hasSaturdayClass) {
-      parts.push(`Sábado de ${saturdayClassTime} clase especial o sesión de alto impacto.`);
+      parts.push(`Clase Especial de Alto Impacto de ${saturdayClassTime} los sábados.`);
     }
 
-    onComplete(parts.join(' '));
+    // 8. Nightly wind-down
+    parts.push(`Desconexión nocturna y descanso a las ${sleepTime} ${daysText}.`);
+
+    onComplete(parts.join('\n'));
   };
 
   return (

@@ -657,6 +657,13 @@ export const handleToggleTask = (taskId: string, e?: any) => {
       statePlayer.addLootBoxes(boxesEarned);
     }
   }
+
+  // Instantly broadcast completion state to the cloud bridge
+  if (typeof window !== 'undefined') {
+    setTimeout(() => {
+      (window as any).__triggerCloudSyncNow?.();
+    }, 150);
+  }
 };
 
 export const handleIncrementHabit = (taskId: string, e?: any) => {
@@ -767,6 +774,13 @@ export const handleIncrementHabit = (taskId: string, e?: any) => {
   if (boxesEarned > 0) {
     statePlayer.addLootBoxes(boxesEarned);
   }
+
+  // Instantly broadcast habit completion / progress to cloud bridge
+  if (typeof window !== 'undefined') {
+    setTimeout(() => {
+      (window as any).__triggerCloudSyncNow?.();
+    }, 150);
+  }
 };
 
 export const handleResetHabit = (taskId: string, e?: any) => {
@@ -811,6 +825,12 @@ export const handleResetHabit = (taskId: string, e?: any) => {
     text: 'Contador reiniciado (0)',
     type: 'streak'
   });
+
+  if (typeof window !== 'undefined') {
+    setTimeout(() => {
+      (window as any).__triggerCloudSyncNow?.();
+    }, 150);
+  }
 };
 
 export const handleAddTask = (task: any) => {

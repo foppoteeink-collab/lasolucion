@@ -101,14 +101,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signInWithGoogle = async () => {
     setError(null);
     try {
-      if (isMobileOrPWA()) {
-        // Mobile / PWA: popups are blocked — use redirect flow instead
-        await signInWithRedirect(auth, googleProvider);
-        // Page will reload; result is handled above in getRedirectResult
-        return null;
-      }
-
-      // Desktop: popup works fine
+      // Always try signInWithPopup first (modern iOS Safari & Android Chrome block cross-domain signInWithRedirect cookies)
       const result = await signInWithPopup(auth, googleProvider);
       const credential = GoogleAuthProvider.credentialFromResult(result);
       const token = credential?.accessToken || null;
@@ -120,7 +113,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (err: any) {
       console.error('Error signing in with Google:', err);
 
-      if (err?.code === 'auth/popup-blocked') {
+      if (err?.code === 'auth/popup-blocked' || err?.code === 'auth/operation-not-supported-in-this-environment') {
         // Desktop popup was blocked — fallback to redirect
         try {
           await signInWithRedirect(auth, googleProvider);

@@ -39,6 +39,7 @@ interface TaskListViewProps {
   onOpenPomodoroForTask: (taskTitle: string, category: TaskCategory) => void;
   onOpenFinishDay: () => void;
   onOpenTemplates?: () => void;
+  onOpenOracle?: () => void;
   onOpenJournal?: () => void;
   onClearDay?: () => void;
   onResetDay?: () => void;
@@ -66,6 +67,7 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
   onOpenPomodoroForTask,
   onOpenFinishDay,
   onOpenTemplates,
+  onOpenOracle,
   onOpenJournal,
   onClearDay,
   onResetDay,
@@ -369,20 +371,19 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
 
   const safeRawTasks = (tasks || []).filter((t): t is TaskItem => Boolean(t && typeof t === 'object' && t.title));
 
-  const isQuickHabitTask = (t: TaskItem) =>
-    Boolean(
-      t &&
-        t.title &&
-        (t.isQuickHabit ||
-          t.isTracked2166 ||
-          t.category === 'habito' ||
-          (typeof t.id === 'string' && t.id.includes('habit-')) ||
-          t.title.toLowerCase().includes('agua') ||
-          t.title.toLowerCase().includes('dientes') ||
-          t.title.toLowerCase().includes('ejercicio') ||
-          t.title.toLowerCase().includes('lectura') ||
-          t.title.toLowerCase().includes('medita'))
+  const isQuickHabitTask = (t: TaskItem) => {
+    if (!t || !t.title) return false;
+    if (t.isQuickHabit || t.isTracked2166 || t.category === 'habito' || (typeof t.id === 'string' && t.id.includes('habit-'))) {
+      return true;
+    }
+    // If it has a scheduled timeBlock (and is not marked as a quick/2166 habit), it belongs in the Agenda Timeline!
+    if (t.timeBlock) return false;
+    const lower = t.title.toLowerCase();
+    return (
+      lower.includes('agua') ||
+      lower.includes('dientes')
     );
+  };
 
   const cleanTasks = deduplicateTasksForDay(safeRawTasks);
   const timelineTasks = cleanTasks.filter((t) => t && t.title && !isQuickHabitTask(t));
@@ -428,6 +429,7 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
         streakCount={streakCount}
         onOpenFinishDay={onOpenFinishDay}
         onOpenTemplates={onOpenTemplates}
+        onOpenOracle={onOpenOracle}
         onOpenJournal={onOpenJournal}
         onClearDay={onClearDay}
         onResetDay={onResetDay}
@@ -536,162 +538,97 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
             const pendingSleep = sleepLogs[pendingDate];
             return (
               <motion.div
-                initial={{ opacity: 0, y: 15 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mt-6 relative overflow-hidden rounded-2xl sm:rounded-3xl border-2 border-amber-500/50 bg-gradient-to-r from-[#1a0e00]/95 via-[#120900]/98 to-[#1a0800]/95 p-4 sm:p-5 shadow-[0_0_35px_rgba(251,191,36,0.25)] hover:shadow-[0_0_55px_rgba(251,191,36,0.45)] hover:border-amber-400/80 transition-all duration-300 group"
+                className="mt-4 rounded-2xl border border-amber-500/50 bg-[#140a00]/95 px-4 py-3 flex flex-wrap items-center justify-between gap-3"
               >
-                <div className="absolute -top-16 -right-16 w-44 h-44 bg-amber-500/15 rounded-full blur-3xl group-hover:bg-orange-400/20 transition-all pointer-events-none" />
-                <div className="absolute -bottom-16 -left-16 w-36 h-36 bg-orange-600/10 rounded-full blur-3xl pointer-events-none" />
-
-                <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <div className="flex items-center gap-3.5">
-                    <div className="p-3 rounded-2xl bg-gradient-to-br from-amber-950 to-orange-950 border border-amber-500/50 text-amber-300 group-hover:scale-110 transition-transform shrink-0 shadow-inner">
-                      <Sparkles className="w-6 h-6 animate-pulse" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                        <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-amber-950/80 text-amber-400 border border-amber-800">
-                          ☀️ NUEVA JORNADA
-                        </span>
-                        <span className="text-[10px] text-amber-500/80 font-mono font-bold">
-                          🌙 {pendingSleep.bedtime} → ⏳ pendiente
-                        </span>
-                      </div>
-                      <h3 className="text-base sm:text-lg font-black text-white tracking-wide group-hover:text-amber-300 transition-colors">
-                        ☀️ Despertar — Registrar Hora de Levantarse
-                      </h3>
-                      <div className="flex items-center gap-2 mt-2">
-                        <span className="text-xs text-amber-500/80 font-bold">Hora (Opcional editar):</span>
-                        <input
-                           type="time"
-                           value={customWakeTime}
-                           onChange={(e) => setCustomWakeTime(e.target.value)}
-                           onClick={(e) => e.stopPropagation()}
-                           className="bg-black/50 border border-amber-800/60 rounded px-2 py-1 text-white font-mono text-xs outline-none focus:border-amber-400 cursor-pointer"
-                           title="Editar si olvidaste registrar al despertar"
-                        />
-                      </div>
+                <div className="flex items-center gap-3">
+                  <Sparkles className="w-5 h-5 text-amber-400 animate-pulse shrink-0" />
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-white">Registrar Despertar</span>
+                      <span className="text-[11px] text-amber-400 font-mono">
+                        (Dormiste {pendingSleep.bedtime})
+                      </span>
                     </div>
                   </div>
-                  <div className="w-full sm:w-auto shrink-0">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        soundFX.playClick();
-                        onRegisterWakeUp?.(pendingDate, customWakeTime);
-                      }}
-                      className="w-full sm:w-auto px-5 py-3 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(251,191,36,0.4)] active:scale-[0.98] transition-all cursor-pointer"
-                    >
-                      <Sparkles className="w-4 h-4 text-white" />
-                      <span>Registrar Despertar</span>
-                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                    </button>
-                  </div>
+                  <input
+                    type="time"
+                    value={customWakeTime}
+                    onChange={(e) => setCustomWakeTime(e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                    className="bg-black/60 border border-amber-700/60 rounded-lg px-2 py-1 text-white font-mono text-xs outline-none focus:border-amber-400 cursor-pointer"
+                  />
                 </div>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    soundFX.playClick();
+                    onRegisterWakeUp?.(pendingDate, customWakeTime);
+                  }}
+                  className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-anton text-xs uppercase tracking-wider flex items-center gap-1.5 cursor-pointer"
+                >
+                  <span>Confirmar</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
               </motion.div>
             );
           }
 
-          // 2) REGULAR BEDTIME STATE (or completed state)
+          // 2) START DAY STATE
           if (!isDayStarted && !isDayEnded) {
             return (
               <motion.div
-                initial={{ opacity: 0, y: 15 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 onClick={() => {
                   soundFX.playClick();
                   startDay(currentDate);
                 }}
-                className="mt-6 relative overflow-hidden rounded-2xl sm:rounded-3xl border-2 border-emerald-500/40 bg-gradient-to-r from-[#001a14]/90 via-[#031207]/95 to-[#051d09]/90 p-4 sm:p-5 shadow-[0_0_35px_rgba(16,185,129,0.2)] hover:shadow-[0_0_50px_rgba(16,185,129,0.4)] hover:border-emerald-400/70 transition-all duration-300 cursor-pointer group"
+                className="mt-4 rounded-2xl border border-emerald-500/40 bg-[#02140e]/95 px-4 py-3 flex items-center justify-between gap-3 cursor-pointer hover:border-emerald-400 transition-all group"
               >
-                <div className="absolute -top-20 -right-20 w-44 h-44 bg-emerald-600/20 rounded-full blur-3xl group-hover:bg-emerald-500/30 transition-all pointer-events-none" />
-                <div className="absolute -bottom-20 -left-20 w-44 h-44 bg-teal-600/15 rounded-full blur-3xl group-hover:bg-teal-500/30 transition-all pointer-events-none" />
-
-                <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <div className="flex items-center gap-3.5">
-                    <div className="p-3 rounded-2xl bg-gradient-to-br from-emerald-950 to-slate-900 border border-emerald-500/50 shadow-inner text-amber-300 group-hover:scale-105 transition-transform shrink-0">
-                      <Sparkles className="w-6 h-6 animate-pulse text-emerald-400" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-emerald-950/80 text-emerald-400 border border-emerald-800">
-                          NUEVO DÍA
-                        </span>
-                      </div>
-                      <h3 className="text-base sm:text-lg font-black text-white tracking-wide group-hover:text-emerald-300 transition-colors">
-                        🌅 Empezar Día
-                      </h3>
-                      <p className="text-xs text-slate-400">
-                        Inicia tu jornada y habilita las misiones del día.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="w-full sm:w-auto shrink-0">
-                    <button
-                      type="button"
-                      className="w-full sm:w-auto px-5 py-3 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(16,185,129,0.4)] group-hover:shadow-[0_0_30px_rgba(16,185,129,0.6)] active:scale-[0.98] transition-all cursor-pointer"
-                    >
-                      <Sparkles className="w-4 h-4 text-emerald-100" />
-                      <span>Empezar Día Ahora</span>
-                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                    </button>
-                  </div>
+                <div className="flex items-center gap-2.5">
+                  <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span className="text-sm font-bold text-white group-hover:text-emerald-300 transition-colors">
+                    Iniciar Jornada
+                  </span>
                 </div>
+                <button
+                  type="button"
+                  className="px-4 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-anton text-xs uppercase tracking-wider flex items-center gap-1.5 cursor-pointer"
+                >
+                  <span>Activar</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
               </motion.div>
             );
           }
 
           return (
             <motion.div
-              initial={{ opacity: 0, y: 15 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               onClick={() => {
                 soundFX.playClick();
                 onOpenFinishDay();
               }}
-              className="mt-6 relative overflow-hidden rounded-2xl sm:rounded-3xl border-2 border-indigo-500/40 bg-gradient-to-r from-[#001224]/90 via-[#030712]/95 to-[#09051d]/90 p-4 sm:p-5 shadow-[0_0_35px_rgba(99,102,241,0.2)] hover:shadow-[0_0_50px_rgba(0,240,255,0.3)] hover:border-cyan-400/70 transition-all duration-300 cursor-pointer group"
+              className="mt-4 rounded-2xl border border-indigo-500/40 bg-[#040818]/95 px-4 py-3 flex items-center justify-between gap-3 cursor-pointer hover:border-cyan-400/60 transition-all group"
             >
-              <div className="absolute -top-20 -right-20 w-44 h-44 bg-indigo-600/20 rounded-full blur-3xl group-hover:bg-cyan-500/25 transition-all pointer-events-none" />
-              <div className="absolute -bottom-20 -left-20 w-44 h-44 bg-cyan-600/15 rounded-full blur-3xl group-hover:bg-indigo-500/25 transition-all pointer-events-none" />
-
-              <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-3.5">
-                  <div className="p-3 rounded-2xl bg-gradient-to-br from-indigo-950 to-slate-900 border border-indigo-500/50 shadow-inner text-amber-300 group-hover:scale-105 transition-transform shrink-0">
-                    <Moon className="w-6 h-6 animate-pulse" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-indigo-950/80 text-cyan-400 border border-cyan-800">
-                        RITUAL CIRCADIANO & RECOMPENSAS
-                      </span>
-                      {isDayFinalized && (
-                        <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-700">
-                          ✓ CONSOLIDADO
-                        </span>
-                      )}
-                    </div>
-                    <h3 className="text-base sm:text-lg font-black text-white tracking-wide group-hover:text-cyan-300 transition-colors">
-                      🌙 Finalizar Jornada & Registrar Sueño
-                    </h3>
-                    <p className="text-xs text-slate-400">
-                      Evaluación del rendimiento, bonus de XP/Oro y calibración de ciclos circadianos.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="w-full sm:w-auto shrink-0">
-                  <button
-                    type="button"
-                    className="w-full sm:w-auto px-5 py-3 rounded-xl bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(99,102,241,0.4)] group-hover:shadow-[0_0_30px_rgba(0,240,255,0.6)] active:scale-[0.98] transition-all cursor-pointer"
-                  >
-                    <Sparkles className="w-4 h-4 text-amber-300" />
-                    <span>{isDayFinalized ? 'Revisar Cierre Nocturno' : 'Cerrar Día y Registrar Sueño'}</span>
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </button>
-                </div>
+              <div className="flex items-center gap-2.5">
+                <Moon className="w-4 h-4 text-indigo-400 shrink-0" />
+                <span className="text-sm font-bold text-white group-hover:text-cyan-300 transition-colors">
+                  {isDayFinalized ? 'Jornada Consolidada' : 'Cerrar Día & Registrar Sueño'}
+                </span>
               </div>
+
+              <button
+                type="button"
+                className="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-anton text-xs uppercase tracking-wider flex items-center gap-1.5 cursor-pointer"
+              >
+                <span>{isDayFinalized ? 'Revisar' : 'Cerrar Día'}</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
             </motion.div>
           );
         })()}

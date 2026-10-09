@@ -179,78 +179,56 @@ export const DailyFinanceWidget: React.FC<DailyFinanceWidgetProps> = ({
       <div className="absolute -top-12 -right-12 w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-12 -left-12 w-40 h-40 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
 
-      {/* HEADER */}
-      <div className="p-3.5 sm:p-4 border-b border-cyan-500/30 flex items-center justify-between gap-2 flex-wrap">
+      {/* COMPACT 1-LINE HEADER & METRICS BAR */}
+      <div
+        onClick={toggleCollapse}
+        className={`px-3.5 py-2.5 sm:px-4 flex flex-wrap items-center justify-between gap-2 cursor-pointer hover:bg-white/[0.02] transition-colors ${
+          !isCollapsed ? 'border-b border-cyan-500/30' : ''
+        }`}
+      >
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-[#04020e] border border-emerald-400/80 flex items-center justify-center text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.35)]">
-            <Wallet className="w-4 h-4" />
+          <div className="w-7 h-7 rounded-lg bg-[#04020e] border border-emerald-400/70 flex items-center justify-center text-emerald-400">
+            <Wallet className="w-3.5 h-3.5" />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs sm:text-sm font-black font-anton text-white uppercase tracking-wider">
-                Tesorería Diaria
-              </span>
-              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-emerald-950/90 text-emerald-300 border border-emerald-500/60">
-                {currentDate}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-1.5">
-          {/* Expand / Collapse Button */}
-          <button
-            type="button"
-            onClick={toggleCollapse}
-            className="p-1.5 rounded-lg bg-[#04020e] border border-cyan-500/40 text-cyan-300 hover:text-white hover:bg-cyan-950/60 transition-colors cursor-pointer"
-            title={isCollapsed ? 'Expandir widget' : 'Minimizar widget'}
-          >
-            {isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
-          </button>
-        </div>
-      </div>
-
-      {/* METRICS STRIP (Always visible for quick glance) */}
-      <div className="px-3.5 py-2.5 sm:px-4 bg-[#04020e]/80 border-b border-cyan-500/20 grid grid-cols-3 gap-2">
-        {/* Ingresos */}
-        <div className="flex flex-col">
-          <span className="text-[10px] font-black uppercase tracking-wider text-emerald-400 flex items-center gap-1">
-            <TrendingUp className="w-3 h-3 text-emerald-400" />
-            <span>Ingresos</span>
+          <span className="text-xs font-black font-anton text-white uppercase tracking-wider">
+            Tesorería
           </span>
-          <span className="text-xs sm:text-sm font-mono font-black text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.4)]">
+        </div>
+
+        <div className="flex items-center gap-3 sm:gap-4 text-xs font-mono ml-auto">
+          <span className="text-emerald-400 font-bold flex items-center gap-1" title="Ingresos del día">
+            <TrendingUp className="w-3 h-3" />
             +{formatMoney(totals.income, currencySymbol)}
           </span>
-        </div>
-
-        {/* Gastos */}
-        <div className="flex flex-col">
-          <span className="text-[10px] font-black uppercase tracking-wider text-rose-400 flex items-center gap-1">
-            <TrendingDown className="w-3 h-3 text-rose-400" />
-            <span>Gastos</span>
-          </span>
-          <span className="text-xs sm:text-sm font-mono font-black text-rose-400 drop-shadow-[0_0_8px_rgba(244,63,94,0.4)]">
+          <span className="text-rose-400 font-bold flex items-center gap-1" title="Gastos del día">
+            <TrendingDown className="w-3 h-3" />
             -{formatMoney(totals.expense, currencySymbol)}
           </span>
-        </div>
-
-        {/* Balance Neto */}
-        <div className="flex flex-col items-end">
-          <span className="text-[10px] font-black uppercase tracking-wider text-cyan-300/80">
-            Flujo Neto
-          </span>
           <span
-            className={`text-xs sm:text-sm font-mono font-black ${
+            className={`font-black px-2 py-0.5 rounded-md border text-[11px] ${
               totals.balance > 0
-                ? 'text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.4)]'
+                ? 'bg-emerald-950/60 border-emerald-500/40 text-emerald-300'
                 : totals.balance < 0
-                ? 'text-rose-400 drop-shadow-[0_0_8px_rgba(244,63,94,0.4)]'
-                : 'text-white'
+                ? 'bg-rose-950/60 border-rose-500/40 text-rose-300'
+                : 'bg-black/40 border-white/10 text-slate-300'
             }`}
+            title="Flujo Neto"
           >
             {totals.balance >= 0 ? '+' : ''}
             {formatMoney(totals.balance, currencySymbol)}
           </span>
+
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleCollapse();
+            }}
+            className="p-1 rounded-lg bg-[#04020e] border border-cyan-500/40 text-cyan-300 hover:text-white transition-colors cursor-pointer"
+            title={isCollapsed ? 'Registrar ingreso o gasto' : 'Minimizar'}
+          >
+            {isCollapsed ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
+          </button>
         </div>
       </div>
 

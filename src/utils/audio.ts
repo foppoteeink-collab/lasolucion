@@ -755,23 +755,105 @@ class SoundFX {
     this.playTaskComplete();
   }
 
-  // 11. AMBIENT NOISE GENERATOR (Rain, Ocean Waves, Forest, Natural Heartbeat)
-  private activeAmbientSources: (AudioBufferSourceNode | OscillatorNode)[] = [];
-  private activeAmbientNodes: AudioNode[] = [];
-  private ambientIntervals: number[] = [];
+  // 11. MULTI-LAYER AMBIENT MIXER ENGINE (Rain, Ocean Waves, Forest, Natural Heartbeat)
+  private ambientLayers: Map<
+    'rain' | 'fire' | 'forest' | 'heartbeat',
+    {
+      sources: (AudioBufferSourceNode | OscillatorNode)[];
+      nodes: AudioNode[];
+      intervals: number[];
+      layerGain: GainNode;
+    }
+  > = new Map();
   private ambientGainNode: GainNode | null = null;
+  private ambientVolumeLevel: number = 0.6;
   private currentAmbientType: 'rain' | 'fire' | 'forest' | 'heartbeat' | 'off' = 'off';
 
-  public startAmbientSound(type: 'rain' | 'fire' | 'forest' | 'heartbeat', volume: number = 0.6) {
-    // 1. Immediately kill any current playing ambient sound
-    this.stopAmbientSound();
+  private ensureAmbientMasterBus() {
     this.initCtx();
     if (!this.ctx) return;
+    if (!this.ambientGainNode) {
+      this.ambientGainNode = this.ctx.createGain();
+      this.ambientGainNode.gain.setValueAtTime(
+        Math.max(0, Math.min(1, this.ambientVolumeLevel)),
+        this.ctx.currentTime
+      );
+      this.ambientGainNode.connect(this.getDestination()!);
+    }
+  }
 
-    this.currentAmbientType = type;
-    this.ambientGainNode = this.ctx.createGain();
-    this.ambientGainNode.gain.setValueAtTime(Math.max(0, Math.min(1, volume)), this.ctx.currentTime);
-    this.ambientGainNode.connect(this.getDestination()!);
+  private rebalanceAmbientLayers() {
+    if (!this.ctx) return;
+    const count = this.ambientLayers.size;
+    if (count === 0) {
+      this.currentAmbientType = 'off';
+      return;
+    }
+    const keys = Array.from(this.ambientLayers.keys());
+    this.currentAmbientType = keys[keys.length - 1];
+
+    // Harmonic auto-ducking so 2, 3, or 4 simultaneous layers sound lush without clipping
+    const baseScale = 1 / Math.pow(Math.max(1, count), 0.26);
+    const now = this.ctx.currentTime;
+    this.ambientLayers.forEach((track, key) => {
+      // Keep heartbeat tactile and clear even when mixed over rain/ocean/forest
+      const targetGain = key === 'heartbeat' ? Math.max(0.9, baseScale * 1.15) : baseScale;
+      try {
+        track.layerGain.gain.setTargetAtTime(targetGain, now, 0.08);
+      } catch (e) {}
+    });
+  }
+
+  public getActiveAmbientLayers(): ('rain' | 'fire' | 'forest' | 'heartbeat')[] {
+    return Array.from(this.ambientLayers.keys());
+  }
+
+  public isAmbientLayerActive(type: 'rain' | 'fire' | 'forest' | 'heartbeat'): boolean {
+    return this.ambientLayers.has(type);
+  }
+
+  public toggleAmbientLayer(
+    type: 'rain' | 'fire' | 'forest' | 'heartbeat',
+    volume?: number
+  ): boolean {
+    if (this.ambientLayers.has(type)) {
+      this.stopAmbientLayer(type);
+      return false;
+    } else {
+      this.startAmbientLayer(type, volume);
+      return true;
+    }
+  }
+
+  public startAmbientSound(type: 'rain' | 'fire' | 'forest' | 'heartbeat', volume: number = 0.6) {
+    this.stopAmbientSound();
+    this.startAmbientLayer(type, volume);
+  }
+
+  public startAmbientLayer(type: 'rain' | 'fire' | 'forest' | 'heartbeat', volume?: number) {
+    if (typeof volume === 'number') {
+      this.ambientVolumeLevel = Math.max(0, Math.min(1, volume));
+    }
+    if (this.ambientLayers.has(type)) {
+      this.setAmbientVolume(this.ambientVolumeLevel);
+      return;
+    }
+
+    this.ensureAmbientMasterBus();
+    if (!this.ctx || !this.ambientGainNode) return;
+
+    const layerGain = this.ctx.createGain();
+    layerGain.gain.setValueAtTime(1, this.ctx.currentTime);
+    layerGain.connect(this.ambientGainNode);
+
+    const track = {
+      sources: [] as (AudioBufferSourceNode | OscillatorNode)[],
+      nodes: [layerGain] as AudioNode[],
+      intervals: [] as number[],
+      layerGain,
+    };
+    this.ambientLayers.set(type, track);
+    this.rebalanceAmbientLayers();
 
     const sampleRate = this.ctx.sampleRate;
     const now = this.ctx.currentTime;
@@ -808,11 +890,11 @@ class SoundFX {
 
       noise.connect(highpass);
       highpass.connect(lowpass);
-      lowpass.connect(this.ambientGainNode);
+      lowpass.connect(layerGain);
 
       noise.start(0);
-      this.activeAmbientSources.push(noise);
-      this.activeAmbientNodes.push(highpass, lowpass);
+      track.sources.push(noise);
+      track.nodes.push(highpass, lowpass);
 
     } else if (type === 'fire') {
       // OLAS DEL MAR (Realistic Multi-Layer Ocean Surf & Shore Wash)
@@ -863,7 +945,7 @@ class SoundFX {
 
       wave1Noise.connect(wave1Filter);
       wave1Filter.connect(wave1Gain);
-      wave1Gain.connect(this.ambientGainNode);
+      wave1Gain.connect(layerGain);
 
       // Layer 2: Secondary Shore Foam & Gentle Wash (~6.5s offset cycle)
       const wave2Noise = this.ctx.createBufferSource();
@@ -896,15 +978,15 @@ class SoundFX {
 
       wave2Noise.connect(wave2Filter);
       wave2Filter.connect(wave2Gain);
-      wave2Gain.connect(this.ambientGainNode);
+      wave2Gain.connect(layerGain);
 
       wave1Noise.start(0);
       wave1Lfo.start(0);
       wave2Noise.start(0.8);
       wave2Lfo.start(0);
 
-      this.activeAmbientSources.push(wave1Noise, wave1Lfo, wave2Noise, wave2Lfo);
-      this.activeAmbientNodes.push(
+      track.sources.push(wave1Noise, wave1Lfo, wave2Noise, wave2Lfo);
+      track.nodes.push(
         wave1Filter,
         wave1Gain,
         wave1FilterLfoGain,
@@ -950,22 +1032,22 @@ class SoundFX {
 
       windNoise.connect(windFilter);
       windFilter.connect(windGain);
-      windGain.connect(this.ambientGainNode);
+      windGain.connect(layerGain);
 
       windNoise.start(0);
       windLfo.start(0);
 
-      this.activeAmbientSources.push(windNoise, windLfo);
-      this.activeAmbientNodes.push(windFilter, windGain, windLfoGain);
+      track.sources.push(windNoise, windLfo);
+      track.nodes.push(windFilter, windGain, windLfoGain);
 
       // 2. Procedural bird songs & cheerful chirps
       const playBirdCall = () => {
-        if (!this.ctx || this.currentAmbientType !== 'forest' || !this.ambientGainNode) return;
+        if (!this.ctx || !this.ambientLayers.has('forest')) return;
         const callTime = this.ctx.currentTime;
         const birdPattern = Math.floor(Math.random() * 3);
 
         const playNote = (startFreq: number, peakFreq: number, endFreq: number, startTime: number, noteDur: number) => {
-          if (!this.ctx || !this.ambientGainNode) return;
+          if (!this.ctx || !this.ambientLayers.has('forest')) return;
           const osc = this.ctx.createOscillator();
           const gain = this.ctx.createGain();
 
@@ -979,82 +1061,56 @@ class SoundFX {
           gain.gain.exponentialRampToValueAtTime(0.001, startTime + noteDur);
 
           osc.connect(gain);
-          gain.connect(this.ambientGainNode);
+          gain.connect(layerGain);
 
           osc.start(startTime);
           osc.stop(startTime + noteDur);
 
-          this.activeAmbientSources.push(osc);
-          this.activeAmbientNodes.push(gain);
+          track.sources.push(osc);
+          track.nodes.push(gain);
 
           setTimeout(() => {
-            const idx = this.activeAmbientSources.indexOf(osc);
-            if (idx > -1) this.activeAmbientSources.splice(idx, 1);
+            const idx = track.sources.indexOf(osc);
+            if (idx > -1) track.sources.splice(idx, 1);
           }, (noteDur + 0.1) * 1000);
         };
 
         if (birdPattern === 0) {
-          // Double chirp (Robin call)
           playNote(3400, 4800, 3900, callTime, 0.08);
           playNote(4100, 5400, 3600, callTime + 0.11, 0.11);
         } else if (birdPattern === 1) {
-          // Sweet 3-note trill (Songbird)
           playNote(2900, 4100, 3400, callTime, 0.06);
           playNote(3500, 4800, 3700, callTime + 0.08, 0.07);
           playNote(4000, 5500, 3200, callTime + 0.17, 0.13);
         } else {
-          // Melodic gentle whistle
           playNote(2800, 3700, 3000, callTime, 0.16);
         }
       };
 
-      // Initial chirp right after selection so user hears immediate feedback
       const initialTimeout = window.setTimeout(() => {
-        if (this.currentAmbientType === 'forest') playBirdCall();
+        if (this.ambientLayers.has('forest')) playBirdCall();
       }, 200);
-      this.ambientIntervals.push(initialTimeout);
+      track.intervals.push(initialTimeout);
 
-      // Periodic natural bird songs
       const birdInterval = window.setInterval(() => {
-        if (this.currentAmbientType === 'forest') {
+        if (this.ambientLayers.has('forest')) {
           playBirdCall();
         }
       }, 2600);
-      this.ambientIntervals.push(birdInterval);
+      track.intervals.push(birdInterval);
 
     } else if (type === 'heartbeat') {
       // LATIDO DEL CORAZÓN NATURAL (60 BPM Organic Resting Heartbeat "Lub-Dub")
-      // 1. Subtle warm acoustic body-floor so there is no sterile digital silence between beats
-      const bufferSize = sampleRate * 2;
-      const buffer = this.ctx.createBuffer(1, bufferSize, sampleRate);
-      const output = buffer.getChannelData(0);
-      let last = 0;
-      for (let i = 0; i < bufferSize; i++) {
+      const thudBufferSize = Math.floor(sampleRate * 0.2);
+      const thudBuffer = this.ctx.createBuffer(1, thudBufferSize, sampleRate);
+      const thudData = thudBuffer.getChannelData(0);
+      let lastVal = 0;
+      for (let i = 0; i < thudBufferSize; i++) {
         const white = Math.random() * 2 - 1;
-        output[i] = (last + 0.02 * white) / 1.02;
-        last = output[i];
+        thudData[i] = (lastVal + 0.08 * white) / 1.08;
+        lastVal = thudData[i];
       }
 
-      const warmthNoise = this.ctx.createBufferSource();
-      warmthNoise.buffer = buffer;
-      warmthNoise.loop = true;
-
-      const warmthFilter = this.ctx.createBiquadFilter();
-      warmthFilter.type = 'lowpass';
-      warmthFilter.frequency.setValueAtTime(95, now);
-
-      const warmthGain = this.ctx.createGain();
-      warmthGain.gain.setValueAtTime(0.06, now);
-
-      warmthNoise.connect(warmthFilter);
-      warmthFilter.connect(warmthGain);
-      warmthGain.connect(this.ambientGainNode);
-      warmthNoise.start(0);
-
-      this.activeAmbientSources.push(warmthNoise);
-      this.activeAmbientNodes.push(warmthFilter, warmthGain);
-
-      // 2. Helper to synthesize a single organic cardiac valve thump (S1 "Lub" or S2 "Dub")
       const triggerHeartThump = (
         startTime: number,
         startFreq: number,
@@ -1063,96 +1119,136 @@ class SoundFX {
         peakGain: number,
         filterFreq: number
       ) => {
-        if (!this.ctx || !this.ambientGainNode || this.currentAmbientType !== 'heartbeat') return;
+        if (!this.ctx || !this.ambientLayers.has('heartbeat')) return;
 
-        // Primary sub-chest pulse
         const osc1 = this.ctx.createOscillator();
-        // Warm secondary chest resonance harmonic
         const osc2 = this.ctx.createOscillator();
+        const valveNoise = this.ctx.createBufferSource();
+        valveNoise.buffer = thudBuffer;
+
         const thumpFilter = this.ctx.createBiquadFilter();
         const thumpGain = this.ctx.createGain();
+        const osc2Gain = this.ctx.createGain();
+        const noiseFilter = this.ctx.createBiquadFilter();
+        const noiseGain = this.ctx.createGain();
 
         osc1.type = 'sine';
         osc1.frequency.setValueAtTime(startFreq, startTime);
         osc1.frequency.exponentialRampToValueAtTime(endFreq, startTime + duration);
 
         osc2.type = 'triangle';
-        osc2.frequency.setValueAtTime(startFreq * 1.4, startTime);
-        osc2.frequency.exponentialRampToValueAtTime(endFreq * 1.25, startTime + duration);
+        osc2.frequency.setValueAtTime(startFreq * 1.65, startTime);
+        osc2.frequency.exponentialRampToValueAtTime(endFreq * 1.5, startTime + duration);
+        osc2Gain.gain.setValueAtTime(0.65, startTime);
 
-        const osc2Gain = this.ctx.createGain();
-        osc2Gain.gain.setValueAtTime(0.25, startTime);
+        noiseFilter.type = 'bandpass';
+        noiseFilter.frequency.setValueAtTime(165, startTime);
+        noiseFilter.Q.setValueAtTime(1.4, startTime);
+
+        noiseGain.gain.setValueAtTime(0.001, startTime);
+        noiseGain.gain.linearRampToValueAtTime(peakGain * 0.45, startTime + 0.015);
+        noiseGain.gain.exponentialRampToValueAtTime(0.001, startTime + duration * 0.75);
 
         thumpFilter.type = 'lowpass';
         thumpFilter.frequency.setValueAtTime(filterFreq, startTime);
-        thumpFilter.Q.setValueAtTime(1.6, startTime);
+        thumpFilter.Q.setValueAtTime(2.2, startTime);
 
-        // Smooth attack & organic exponential decay (zero click)
         thumpGain.gain.setValueAtTime(0.001, startTime);
-        thumpGain.gain.linearRampToValueAtTime(peakGain, startTime + 0.022);
+        thumpGain.gain.linearRampToValueAtTime(peakGain, startTime + 0.02);
         thumpGain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
 
         osc1.connect(thumpFilter);
         osc2.connect(osc2Gain);
         osc2Gain.connect(thumpFilter);
+
+        valveNoise.connect(noiseFilter);
+        noiseFilter.connect(noiseGain);
+        noiseGain.connect(thumpFilter);
+
         thumpFilter.connect(thumpGain);
-        thumpGain.connect(this.ambientGainNode);
+        thumpGain.connect(layerGain);
 
         osc1.start(startTime);
         osc2.start(startTime);
-        osc1.stop(startTime + duration + 0.02);
-        osc2.stop(startTime + duration + 0.02);
+        valveNoise.start(startTime);
 
-        this.activeAmbientSources.push(osc1, osc2);
-        this.activeAmbientNodes.push(osc2Gain, thumpFilter, thumpGain);
+        const stopAt = startTime + duration + 0.03;
+        osc1.stop(stopAt);
+        osc2.stop(stopAt);
+        valveNoise.stop(stopAt);
+
+        track.sources.push(osc1, osc2, valveNoise);
+        track.nodes.push(osc2Gain, noiseFilter, noiseGain, thumpFilter, thumpGain);
 
         window.setTimeout(() => {
-          const i1 = this.activeAmbientSources.indexOf(osc1);
-          if (i1 > -1) this.activeAmbientSources.splice(i1, 1);
-          const i2 = this.activeAmbientSources.indexOf(osc2);
-          if (i2 > -1) this.activeAmbientSources.splice(i2, 1);
+          [osc1, osc2, valveNoise].forEach((src) => {
+            const idx = track.sources.indexOf(src);
+            if (idx > -1) track.sources.splice(idx, 1);
+          });
         }, (duration + 0.1) * 1000);
       };
 
       const playHeartbeatCycle = () => {
-        if (!this.ctx || this.currentAmbientType !== 'heartbeat' || !this.ambientGainNode) return;
-        const beatTime = this.ctx.currentTime + 0.02;
-        // S1 ("Lub"): deeper, longer mitral/tricuspid closure
-        triggerHeartThump(beatTime, 82, 36, 0.14, 0.85, 130);
-        // S2 ("Dub"): slightly firmer, shorter aortic/pulmonic closure ~290ms later
-        triggerHeartThump(beatTime + 0.29, 94, 42, 0.11, 0.62, 145);
+        if (!this.ctx || !this.ambientLayers.has('heartbeat')) return;
+        if (this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+        const beatTime = this.ctx.currentTime + 0.015;
+        // S1 ("Lub"): deep, warm mitral/tricuspid closure
+        triggerHeartThump(beatTime, 138, 52, 0.17, 2.3, 270);
+        // S2 ("Dub"): firmer, slightly shorter aortic/pulmonic closure ~280ms later
+        triggerHeartThump(beatTime + 0.28, 156, 60, 0.13, 1.75, 295);
       };
 
-      // Play first heartbeat immediately on click
       playHeartbeatCycle();
 
-      // Repeat at 60 BPM (1000ms per cardiac cycle) for resting vagal coherence
       const heartInterval = window.setInterval(() => {
-        if (this.currentAmbientType === 'heartbeat') {
+        if (this.ambientLayers.has('heartbeat')) {
           playHeartbeatCycle();
         }
       }, 1000);
-      this.ambientIntervals.push(heartInterval);
+      track.intervals.push(heartInterval);
     }
   }
 
+  public stopAmbientLayer(type: 'rain' | 'fire' | 'forest' | 'heartbeat') {
+    const track = this.ambientLayers.get(type);
+    if (!track) return;
+
+    track.intervals.forEach((id) => {
+      clearInterval(id);
+      clearTimeout(id);
+    });
+    track.sources.forEach((src) => {
+      try {
+        src.stop();
+      } catch (e) {}
+      try {
+        src.disconnect();
+      } catch (e) {}
+    });
+    track.nodes.forEach((node) => {
+      try {
+        node.disconnect();
+      } catch (e) {}
+    });
+
+    this.ambientLayers.delete(type);
+    this.rebalanceAmbientLayers();
+  }
+
   public setAmbientVolume(vol: number) {
+    this.ambientVolumeLevel = Math.max(0, Math.min(1, vol));
     if (this.ambientGainNode && this.ctx) {
-      this.ambientGainNode.gain.setValueAtTime(Math.max(0, Math.min(1, vol)), this.ctx.currentTime);
+      this.ambientGainNode.gain.setValueAtTime(this.ambientVolumeLevel, this.ctx.currentTime);
     }
   }
 
   public stopAmbientSound() {
+    const activeKeys = Array.from(this.ambientLayers.keys());
+    activeKeys.forEach((k) => this.stopAmbientLayer(k));
     this.currentAmbientType = 'off';
 
-    // 1. Clear all intervals and scheduled timeouts immediately
-    this.ambientIntervals.forEach((id) => {
-      clearInterval(id);
-      clearTimeout(id);
-    });
-    this.ambientIntervals = [];
-
-    // 2. Immediately mute master gain and disconnect from output
     if (this.ambientGainNode && this.ctx) {
       try {
         const now = this.ctx.currentTime;
@@ -1162,25 +1258,6 @@ class SoundFX {
       } catch (e) {}
       this.ambientGainNode = null;
     }
-
-    // 3. Stop and disconnect every active audio source
-    this.activeAmbientSources.forEach((src) => {
-      try {
-        src.stop();
-      } catch (e) {}
-      try {
-        src.disconnect();
-      } catch (e) {}
-    });
-    this.activeAmbientSources = [];
-
-    // 4. Disconnect all intermediate filters, LFOs, and gains
-    this.activeAmbientNodes.forEach((node) => {
-      try {
-        node.disconnect();
-      } catch (e) {}
-    });
-    this.activeAmbientNodes = [];
   }
 
   public getCurrentAmbientType() {

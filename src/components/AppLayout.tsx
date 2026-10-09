@@ -429,9 +429,8 @@ export function AppLayout() {
                   <GlobalSoundscapeButton />
                 </div>
 
-                {/* Right: Progressive disclosure triggers for secondary widgets */}
+                {/* Right: Live Schedule Timeline Trigger */}
                 <div className="flex items-center gap-1.5 sm:gap-2">
-                  {/* Boss & Schedule Trigger */}
                   <button
                     type="button"
                     onClick={() => {
@@ -440,15 +439,14 @@ export function AppLayout() {
                     }}
                     className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all min-h-[44px] cursor-pointer border ${
                       showBossSchedule
-                        ? 'bg-[#fb5607]/20 text-[#fb5607] border-[#fb5607] shadow-[0_0_12px_rgba(251,86,7,0.5)]'
-                        : 'bg-[#03000a] text-slate-300 border-[#9600ff]/40 hover:text-white hover:border-[#fb5607]'
+                        ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400 shadow-[0_0_12px_rgba(0,240,255,0.4)]'
+                        : 'bg-[#03000a] text-slate-300 border-[#9600ff]/40 hover:text-white hover:border-cyan-400'
                     }`}
-                    title="Jefe del Día y Horarios"
+                    title="Ver línea de tiempo de horarios del día"
                   >
-                    <Swords className="w-3.5 h-3.5 text-[#fb5607]" />
-                    <span className="hidden sm:inline">Jefe & Horarios</span>
-                    <span className="sm:hidden text-[11px]">Jefe</span>
-                    {showBossSchedule ? <ChevronUp className="w-3.5 h-3.5 ml-0.5" /> : <ChevronDown className="w-3.5 h-3.5 ml-0.5 text-slate-400" />}
+                    <Timer className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>Horarios</span>
+                    {showBossSchedule ? <ChevronUp className="w-3.5 h-3.5 ml-0.5 text-cyan-300" /> : <ChevronDown className="w-3.5 h-3.5 ml-0.5 text-slate-400" />}
                   </button>
                 </div>
               </motion.div>
@@ -468,41 +466,22 @@ export function AppLayout() {
                 </motion.div>
               )}
 
-              {/* COLLAPSIBLE BOSS & SCHEDULE DRAWER (Progressive Disclosure) */}
+              {/* COLLAPSIBLE LIVE SCHEDULE TIMELINE */}
               {showBossSchedule && (
                 <motion.div 
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="rounded-2xl border border-[#fb5607]/60 bg-[#030712]/95 p-4 relative shadow-[0_0_35px_rgba(251,86,7,0.3)] space-y-4"
                 >
-                  <div className="flex items-center justify-between pb-3 border-b border-[#fb5607]/40">
-                    <div className="flex items-center gap-2">
-                      <Swords className="w-4 h-4 text-[#fb5607]" />
-                      <h3 className="text-xs font-anton text-[#fb5607] uppercase tracking-widest">
-                        Desafío del Día & Horarios
-                      </h3>
-                    </div>
-                    <button 
-                      type="button"
-                      onClick={() => setShowBossSchedule(false)}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#fb5607]/30 transition-colors"
-                      title="Cerrar panel"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    <DailyBossWidget tasks={tasks} hasClaimedToday={hasClaimedBossToday} onClaimBossBounty={handleClaimBossBounty} currentDate={currentViewDate} />
-                    <DailyScheduleStrip 
-                      tasks={tasks} 
-                      onOpenPomodoroForTask={handleOpenPomodoroForTask} 
-                      onOpenFinishDay={() => setIsFinishDayOpen(true)} 
-                    />
-                  </div>
+                  <DailyScheduleStrip 
+                    tasks={tasks} 
+                    onOpenPomodoroForTask={handleOpenPomodoroForTask} 
+                    onOpenFinishDay={() => setIsFinishDayOpen(true)}
+                    onClose={() => setShowBossSchedule(false)}
+                  />
                 </motion.div>
               )}
 
-              {/* MAIN FOCUSED VIEW: DAILY PROGRESS & PRIORITY MISSIONS */}
+              {/* MAIN FOCUSED VIEW: DAILY PROGRESS & LIVE ACTIVE MISSION */}
               <motion.div variants={itemVariant}>
                 <DailyProgressWidget 
                   tasks={tasks}
@@ -510,6 +489,9 @@ export function AppLayout() {
                   onOpenTemplates={() => setIsDayTemplatesOpen(true)}
                   onOpenJournal={() => setActiveTab('journal')}
                   onOpenFinishDay={() => setIsFinishDayOpen(true)}
+                  onOpenPomodoroForTask={handleOpenPomodoroForTask}
+                  hasClaimedToday={hasClaimedBossToday}
+                  onClaimDailyBonus={handleClaimBossBounty}
                 />
               </motion.div>
 
@@ -537,6 +519,7 @@ export function AppLayout() {
                   onOpenPomodoroForTask={handleOpenPomodoroForTask}
                   onOpenFinishDay={() => setIsFinishDayOpen(true)}
                   onOpenTemplates={() => setIsDayTemplatesOpen(true)}
+                  onOpenOracle={() => handleOpenOracleWithPrompt()}
                   onOpenJournal={() => setActiveTab('journal')}
                   habitMastery={habitMastery}
                   onClearDay={handleClearDay}

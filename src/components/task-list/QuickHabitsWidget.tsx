@@ -271,18 +271,15 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
 
   // Strictly select dedicated quick/discipline habits for 21/66 day tracking, deduplicated by title and ID
   const quickHabits = React.useMemo(() => {
-    const rawList = tasks.filter(
-      (t) =>
-        t.isQuickHabit ||
-        t.isTracked2166 ||
-        t.category === 'habito' ||
-        t.id.includes('habit-') ||
-        (t.title || "").toLowerCase().includes('agua') ||
-        (t.title || "").toLowerCase().includes('dientes') ||
-        (t.title || "").toLowerCase().includes('ejercicio') ||
-        (t.title || "").toLowerCase().includes('lectura') ||
-        (t.title || "").toLowerCase().includes('medita')
-    );
+    const rawList = tasks.filter((t) => {
+      if (!t || !t.title) return false;
+      if (t.isQuickHabit || t.isTracked2166 || t.category === 'habito' || String(t.id || '').includes('habit-')) {
+        return true;
+      }
+      if (t.timeBlock) return false;
+      const lower = (t.title || '').toLowerCase();
+      return lower.includes('agua') || lower.includes('dientes');
+    });
     const seenTitles = new Set<string>();
     const seenIds = new Set<string>();
     return rawList.filter((t) => {

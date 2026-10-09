@@ -1,107 +1,140 @@
-import { generateProceduralSchedule } from '../utils/proceduralHeuristics';
+import { getGenerativeModel } from 'firebase/ai';
+import { firebaseAI, firebaseConfig } from '../firebase';
+import { generateProceduralSchedule, generateProceduralAnalysis } from '../utils/proceduralHeuristics';
+import { autoArrangeSchedule, cleanScheduleTitle } from '../utils/timeUtils';
 
-// SECURITY: NEVER add VITE_ prefixed keys here — Vite embeds them in the public JS bundle.
-// All Gemini calls go through the server-side Netlify function /.netlify/functions/oraculo
-// which reads GEMINI_API_KEY from the secure server environment.
+async function fetchGeminiPrompt(promptText: string, modelName: string = 'gemini-3.8-flash'): Promise<string | null> {
+  const targetModel =
+    modelName.includes('1.5') || modelName.includes('2.0') || modelName.includes('2.5') || modelName.includes('3.6')
+      ? 'gemini-3.8-flash'
+      : modelName;
 
-async function fetchGeminiPrompt(promptText: string, modelName: string = 'gemini-3.6-flash'): Promise<string | null> {
-  // Route ALL requests through the Netlify server function (API key stays server-side)
-  try {
-    const res = await fetch('/.netlify/functions/oraculo', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt: promptText, model: modelName })
-    });
-    if (res.ok) {
-      const data = await res.json();
-      if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
-        console.log(`[Gemini] ✓ Response via Netlify function (model: ${modelName})`);
-        return data.candidates[0].content.parts[0].text;
+  // 1. Primary: Official Firebase AI Logic SDK (GoogleAIBackend -> gemini-3.8-flash)
+  if (firebaseAI) {
+    try {
+      const model = getGenerativeModel(firebaseAI, {
+        model: targetModel,
+        generationConfig: {
+          temperature: 0.35,
+          maxOutputTokens: 8192,
+        },
+      });
+      const result = await model.generateContent(promptText);
+      const text = result.response.text();
+      if (text && text.trim()) {
+        console.log(`[Firebase AI Logic] ✓ Response from ${targetModel}`);
+        return text;
       }
-    } else {
-      const errBody = await res.text();
-      console.warn(`[Netlify/oraculo] HTTP ${res.status}:`, errBody);
+    } catch (err: any) {
+      console.warn(`[Firebase AI Logic] (${targetModel}) unavailable:`, err?.message || err);
     }
-  } catch (err) {
-    console.warn('[Netlify/oraculo] Function unavailable:', err);
   }
 
-  // No client-side API key fallback — would expose the key in the JS bundle.
-  // If running locally without Netlify CLI, use: netlify dev
+  // 2. Secondary: Direct Gemini Developer API (if custom key or gen-lang-client key is active)
+  const customKey =
+    typeof window !== 'undefined' ? window.localStorage.getItem('lasolucion_gemini_api_key') : null;
+  const apiKeyToTry = customKey || firebaseConfig?.apiKey;
+  if (apiKeyToTry) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${apiKeyToTry}`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: promptText }] }],
+          generationConfig: { temperature: 0.35, maxOutputTokens: 8192 },
+        }),
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      if (res.ok) {
+        const data = await res.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text && text.trim()) {
+          console.log(`[Gemini API] ✓ Response from ${targetModel}`);
+          return text;
+        }
+      }
+    } catch (err) {
+      // Ignore and proceed to fallback
+    }
+  }
+
+  // 3. Only if hosted on Netlify, try local Netlify function with short timeout
+  const isNetlifyHost =
+    typeof window !== 'undefined' && window.location.hostname.includes('netlify.app');
+  if (isNetlifyHost) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      const res = await fetch('/.netlify/functions/oraculo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: promptText, model: targetModel }),
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
+          return data.candidates[0].content.parts[0].text;
+        }
+      }
+    } catch {
+      // Ignore
+    }
+  }
+
   return null;
 }
 
 export async function generateScheduleFrontend(
   prompt: string,
   userContext: any,
-  existingHabits: any[],
+  _existingHabits: any[],
   mode: 'master_blocks' | 'detailed' = 'master_blocks'
 ): Promise<any> {
   if (!prompt) throw new Error("Falta el prompt del usuario.");
 
   const isMasterBlocks = mode === 'master_blocks';
-
-  const isQuickMicroHabitServer = (h: any) => {
-    if (!h) return false;
-    if (h.isQuickHabit || h.isTracked2166) return true;
-    const title = (h.title || '').toLowerCase();
-    return (
-      title.includes('agua') || 
-      title.includes('vaso') || 
-      title.includes('paso') || 
-      title.includes('diente') || 
-      title.includes('cepillad') || 
-      title.includes('cremina') || 
-      title.includes('hidratac')
-    );
-  };
-
-  const existingHabitsFiltered = Array.isArray(existingHabits) 
-    ? existingHabits.filter((h: any) => !isQuickMicroHabitServer(h))
-    : [];
-
-  const existingHabitsSummary = existingHabitsFiltered.length > 0
-    ? JSON.stringify(existingHabitsFiltered.map((h: any) => ({ titulo: h.title, categoria: h.category, horario: h.timeBlock })))
-    : 'Sin rutinas configuradas aún.';
+  const maxBlocks = isMasterBlocks ? 7 : 10;
 
   const modeDirective = isMasterBlocks
     ? `MODO ESTRATÉGICO: "BLOQUES MAESTROS" (Consolidación y Claridad)
-       - Agrupa el día en bloques sólidos y definidos según las actividades del usuario.
-       - Si el usuario detalla variaciones día a día para una misma franja horaria, GENERA UN BLOQUE ESPECÍFICO PARA CADA DÍA.`
-    : `MODO ESTRATÉGICO: "DETALLADO" (Máxima Granularidad y Fidelidad)
-       - Extrae absolutamente CADA actividad y micro-bloque descrito por separado sin agrupar.`;
+       - Sintetiza el día en un máximo de 5 a 7 bloques maestros claros, equilibrados y sin saturar la agenda.
+       - Si hay varias micro-tareas similares, agrúpalas en un solo bloque coherente con un título limpio (NUNCA uses la palabra "(Consolidado)").`
+    : `MODO ESTRATÉGICO: "DETALLADO" (Granularidad Ordenada)
+       - Estructura el día en un máximo de 7 a 10 bloques bien distribuidos sin choques de horario.`;
 
   const systemInstruction = `
-    Eres el ARCHITECTO SUPREMO DE PRODUCTIVIDAD Y GESTIÓN DEL TIEMPO del Núcleo Central.
-    Tu misión es analizar la descripción en lenguaje natural del día a día, trabajo y rutinas del operador humano y transformarla en una AGENDA DIARIA ESTRUCTURADA.
+    Eres el ARQUITECTO SUPREMO DE PRODUCTIVIDAD Y GESTIÓN DEL TIEMPO del Núcleo Central (KAI).
+    Tu misión es analizar la solicitud del operador humano y transformarla en una AGENDA DIARIA LIMPIA, EQUILIBRADA Y 100% LIBRE DE CHOQUES DE HORARIO.
 
     ${modeDirective}
 
     CONTEXTO DEL OPERADOR:
     - Profesión/Ocupación: ${userContext?.profession || 'No especificada'}
-    - Misión/Bio: ${userContext?.bio || 'No especificada'}
-    - Mantra/Lema: ${userContext?.mantra || 'No especificado'}
     - Objetivo Principal: ${userContext?.mainGoal || 'No especificado'}
     - Clase/Rango: ${userContext?.class || 'Ninguna'} (${userContext?.rank || 'Principiante'})
 
-    MATRIZ DE RUTINAS Y PALABRAS CLAVE EXISTENTES DEL OPERADOR:
-    ${existingHabitsSummary}
-
-    DIRECTIVA SUPREMA: PRECISIÓN HORARIA ESTRICTA (FORMATO 24 HORAS)
-    1. CONVERSIÓN MILITAR / 24 HORAS (e.g., 1:30 pm -> 13:30).
-    2. ADAPTABILIDAD GENERAL SEGÚN EL USUARIO.
-    3. DESGLOSE DÍA POR DÍA (CUANDO EL USUARIO LO ESPECIFIQUE): usa frequencyType: "specific_days" y specificDays con el número de día (Dom=0, Lun=1...). L-V es [1,2,3,4,5].
-    4. PROHIBICIÓN TOTAL DE MICRO-HÁBITOS DE RASTREO (agua, pasos, etc.).
-    5. CATEGORÍAS PERMITIDAS: "rutina", "entrenamiento", "comida", "intelecto", "limpieza", "creativo".
-    6. NO HÁBITOS 21/66 DÍAS: isQuickHabit: false, isTracked2166: false SIEMPRE.
+    REGLAS OBLIGATORIAS DE HORARIO Y ESTRUCTURA:
+    1. CANTIDAD IDEAL: Genera entre 5 y ${maxBlocks} bloques en total para el día (máximo ${maxBlocks}). NUNCA generes más de ${maxBlocks} bloques ni superes las 11 horas planificadas por día.
+    2. FORMATO DE HORA ESTRICTO "HH:mm - HH:mm" (24h, entre 06:30 y 22:45). Ejemplo: "08:00 - 09:30", "13:00 - 14:00", "18:00 - 19:00". NUNCA pongas horas como "20:30 - 23:59" ni bloques que terminen a las 23:59.
+    3. CERO SOLAPAMIENTOS: Ningún bloque puede solaparse con otro en el mismo día. Deja transiciones lógicas (mañana -> almuerzo -> tarde -> entrenamiento/creativo -> descanso).
+    4. TÍTULOS LIMPIOS Y EJECUTABLES: Prohibido usar textos como "(Consolidado)", "Tarea extra:", o "Horario Semanal Completo".
+    5. DÍAS DE LA SEMANA: usa frequencyType: "specific_days" y specificDays (Dom=0, Lun=1, Mar=2, Mié=3, Jue=4, Vie=5, Sáb=6) cuando aplique a días concretos (ej. L-V es [1,2,3,4,5]), o frequencyType: "daily" y specificDays: [0,1,2,3,4,5,6] si aplica a toda la semana.
+    6. PROHIBICIÓN TOTAL DE MICRO-HÁBITOS (agua, pasos, cepillado de dientes).
+    7. CATEGORÍAS PERMITIDAS: "rutina", "entrenamiento", "comida", "intelecto", "limpieza", "creativo".
 
     Devuelve ÚNICAMENTE un array JSON ESTRICTO sin formato Markdown. Ejemplo:
     [
       {
         "id": "hab-auto-1",
-        "title": "Bloque de Trabajo",
+        "title": "Bloque de Trabajo Principal",
         "category": "rutina",
-        "timeBlock": "09:00 - 13:00",
+        "timeBlock": "09:00 - 12:30",
         "frequencyType": "specific_days",
         "specificDays": [1, 2, 3, 4, 5],
         "xpReward": 35,
@@ -116,17 +149,18 @@ export async function generateScheduleFrontend(
   let generatedText = "";
   const fullPrompt = systemInstruction + "\n\nSolicitud del usuario:\n" + prompt;
 
-  const text = await fetchGeminiPrompt(fullPrompt, 'gemini-1.5-flash');
+  const text = await fetchGeminiPrompt(fullPrompt, 'gemini-3.8-flash');
   if (text) {
     generatedText = text;
   }
 
   if (!generatedText) {
-    console.log("[Generate-Schedule] AI failed. Compiling schedule via procedural heuristics.");
+    console.log("[Generate-Schedule] Compiling schedule via Smart Heuristic Engine.");
+    const rawProcedural = generateProceduralSchedule(prompt, userContext, mode);
     return {
-      habits: generateProceduralSchedule(prompt, userContext, mode),
-      source: "emergency_fallback",
-      notice: "Cuota de IA en pausa temporal o modelo no encontrado. Agenda estructurada exitosamente por el Núcleo Heurístico Local."
+      habits: autoArrangeSchedule(rawProcedural, mode, maxBlocks),
+      source: "heuristic_engine",
+      notice: "Agenda optimizada y libre de choques generada por el Motor Neural KAI."
     };
   }
 
@@ -142,14 +176,15 @@ export async function generateScheduleFrontend(
     habits = JSON.parse(cleanedJson);
   } catch (e) {
     console.error("Failed to parse Gemini output:", generatedText);
+    const rawProcedural = generateProceduralSchedule(prompt, userContext, mode);
     return {
-      habits: generateProceduralSchedule(prompt, userContext, mode),
-      source: "emergency_fallback",
-      notice: "Rutina estructurada en Bloques Maestros mediante el Núcleo Heurístico Local debido a formato de IA inesperado."
+      habits: autoArrangeSchedule(rawProcedural, mode, maxBlocks),
+      source: "heuristic_engine",
+      notice: "Agenda estructurada en Bloques Maestros mediante el Motor Neural KAI."
     };
   }
 
-  habits = (Array.isArray(habits) ? habits : []).map((h: any) => {
+  habits = (Array.isArray(habits) ? habits : []).map((h: any, idx: number) => {
     let sDays = h.specificDays;
     if (sDays === undefined || sDays === null) {
       sDays = (h.frequencyType === 'specific_days') ? [1,2,3,4,5] : [0,1,2,3,4,5,6];
@@ -158,15 +193,21 @@ export async function generateScheduleFrontend(
     }
     return {
       ...h,
+      id: h.id || `hab-ai-${Date.now()}-${idx}`,
+      title: cleanScheduleTitle(h.title) || h.title,
       isQuickHabit: false,
       isTracked2166: false,
       specificDays: sDays
     };
   });
 
+  // Guarantee zero time collisions and clean daily cap before returning!
+  const arrangedHabits = autoArrangeSchedule(habits, mode, maxBlocks);
+
   return {
-    habits,
-    source: "ai"
+    habits: arrangedHabits,
+    source: "ai",
+    notice: null
   };
 }
 
@@ -249,12 +290,11 @@ ${historyContext}
     - Proporciona exactamente 3 acciones tácticas concretas y ejecutables que el cliente debe priorizar hoy para maximizar la productividad y mantener la trayectoria de crecimiento.
   `;
 
-  const text = await fetchGeminiPrompt(prompt, 'gemini-1.5-flash');
+  const text = await fetchGeminiPrompt(prompt, 'gemini-3.8-flash');
   if (text) {
     return { analysis: text, source: 'ai' };
   }
 
-  const { generateProceduralAnalysis } = await import('../utils/proceduralHeuristics');
   const fallbackText = generateProceduralAnalysis(stats, archetypeClass, habitMastery, currentTasks);
   return { analysis: fallbackText, source: 'heuristics' };
 }

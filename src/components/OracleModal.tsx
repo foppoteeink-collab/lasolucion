@@ -17,7 +17,8 @@ import { triggerHaptic } from '../utils/haptics';
 import { 
   normalizeTimeBlock, sortByChronologicalTime, detectTimeOverlap, 
   synthesizeHabitBlocks, diagnoseSchedule, resolveConflictQuickFix, 
-  nudgeTimeBlock, ScheduleConflict, ScheduleGap, isQuickMicroHabit 
+  nudgeTimeBlock, ScheduleConflict, ScheduleGap, isQuickMicroHabit,
+  autoArrangeSchedule, cleanScheduleTitle
 } from '../utils/timeUtils';
 import { TacticalDiagnosticPanel } from './TacticalDiagnosticPanel';
 import { OracleGuidedWizard } from './oracle/OracleGuidedWizard';
@@ -26,8 +27,9 @@ import { OracleTheatricalLoader } from './oracle/OracleTheatricalLoader';
 import { renderHabitIcon } from './task-list/QuickHabitsWidget';
 
 import { isDuplicateActivity, deduplicateHabits, deduplicateTasksForDay, sanitizeTasksByDate } from '../utils/taskDeduplication';
-import { generateProceduralSchedule } from '../utils/proceduralHeuristics';
+import { generateProceduralSchedule, organizeExistingDayTasks } from '../utils/proceduralHeuristics';
 import { generateScheduleFrontend } from '../services/aiService';
+import { useUIStore } from '../store/useUIStore';
 
 interface OracleModalProps {
   isOpen: boolean;
@@ -39,6 +41,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
   const [activeTab, setActiveTab] = useState<'wizard' | 'prompt' | 'templates'>('wizard');
   const [prompt, setPrompt] = useState('');
   const [scheduleMode, setScheduleMode] = useState<'master_blocks' | 'detailed'>('master_blocks');
+  const [injectMode, setInjectMode] = useState<'replace_pending' | 'merge'>('replace_pending');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -58,6 +61,13 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
   const [editDays, setEditDays] = useState<number[]>([1, 2, 3, 4, 5]);
 
   const stats = usePlayerStore(state => state.stats);
+  const currentViewDate = useTaskStore(state => state.currentViewDate);
+  const tasksByDate = useTaskStore(state => state.tasksByDate);
+
+  const currentDayAgendaTasks = useMemo(() => {
+    const list = tasksByDate[currentViewDate || getTodayDateString()] || [];
+    return list.filter(t => t && t.title && !t.isQuickHabit && !t.isTracked2166 && t.category !== 'habito' && !String(t.id || '').includes('habit-'));
+  }, [tasksByDate, currentViewDate]);
 
   useEffect(() => {
     if (isOpen) {
@@ -69,11 +79,106 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
     }
   }, [isOpen, initialPrompt]);
 
+  const handleAutoOrganizeCurrentDay = async () => {
+    soundFX.playClick();
+    soundFX.playGlitch();
+    triggerHaptic([30, 40, 20]);
+    setIsLoading(true);
+    setError(null);
+    setNotice(null);
+
+    try {
+      const taskStore = useTaskStore.getState();
+      const dateStr = taskStore.currentViewDate || getTodayDateString();
+      const dayTasks = (taskStore.tasksByDate[dateStr] || []).filter(
+        t => t && t.title && !t.isQuickHabit && !t.isTracked2166 && t.category !== 'habito' && !String(t.id || '').includes('habit-')
+      );
+
+      if (dayTasks.length > 0) {
+        const organized = organizeExistingDayTasks(dayTasks, scheduleMode);
+        // Send the already-cleaned & consolidated list to Gemini for intelligent scheduling
+        const tasksPrompt = organized
+          .map(t => `${cleanScheduleTitle(t.title)} [categoría: ${t.category || 'rutina'}]`)
+          .join('\n');
+        const userContextObj = {
+          profession: stats?.profession,
+          mantra: stats?.mantra,
+          bio: stats?.bio,
+          age: stats?.age,
+          mainGoal: stats?.mainGoal,
+          class: stats?.characterClass,
+          rank: stats?.rankTitle,
+          name: stats?.fullName
+        };
+        try {
+          const aiData = await generateScheduleFrontend(
+            `Reorganiza y acomoda de forma óptima y sin choques de horario mis siguientes misiones del día en entre 5 y ${scheduleMode === 'master_blocks' ? 7 : 9} bloques:\n${tasksPrompt}`,
+            userContextObj,
+            [],
+            scheduleMode
+          );
+          if (aiData?.source === 'ai' && Array.isArray(aiData.habits) && aiData.habits.length > 0) {
+            const arranged = autoArrangeSchedule(aiData.habits, scheduleMode, scheduleMode === 'master_blocks' ? 7 : 10);
+            setSuggestedHabits(sortByChronologicalTime(arranged));
+            setNotice(null);
+            setAddedHabitIds(new Set());
+            soundFX.playSubBassConfirm();
+            return;
+          }
+        } catch {
+          // Use local organized result
+        }
+
+        setSuggestedHabits(sortByChronologicalTime(organized));
+        setNotice(null);
+        setAddedHabitIds(new Set());
+        soundFX.playSubBassConfirm();
+      } else {
+        // No tasks yet: ask Gemini 3.8 Flash for a complete balanced day, with heuristic fallback
+        const userContextObj = {
+          profession: stats?.profession,
+          mantra: stats?.mantra,
+          bio: stats?.bio,
+          age: stats?.age,
+          mainGoal: stats?.mainGoal,
+          class: stats?.characterClass,
+          rank: stats?.rankTitle,
+          name: stats?.fullName
+        };
+        try {
+          const aiData = await generateScheduleFrontend(
+            'Diseña una agenda diaria equilibrada de alto rendimiento con 6 bloques horarios claros (mañana, mediodía, tarde y noche) sin choques para hoy.',
+            userContextObj,
+            [],
+            scheduleMode
+          );
+          if (Array.isArray(aiData?.habits) && aiData.habits.length > 0) {
+            const arranged = autoArrangeSchedule(aiData.habits, scheduleMode, scheduleMode === 'master_blocks' ? 7 : 10);
+            setSuggestedHabits(sortByChronologicalTime(arranged));
+            setNotice(aiData.notice || null);
+            setAddedHabitIds(new Set());
+            soundFX.playSubBassConfirm();
+            return;
+          }
+        } catch {
+          // Fallback below
+        }
+        const fallback = generateProceduralSchedule('', { profession: stats?.profession }, scheduleMode);
+        setSuggestedHabits(sortByChronologicalTime(fallback));
+        setNotice(null);
+        setAddedHabitIds(new Set());
+        soundFX.playSubBassConfirm();
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleGenerate = async (overridePrompt?: unknown) => {
     const rawPrompt = typeof overridePrompt === 'string' ? overridePrompt : prompt;
     const textToUse = String(rawPrompt || '').trim();
     if (!textToUse) {
-      setError('Telemetría vacía. Proporciona tus bloques de horario al Núcleo Central.');
+      await handleAutoOrganizeCurrentDay();
       return;
     }
     if (typeof overridePrompt === 'string' && overridePrompt.trim()) {
@@ -88,8 +193,6 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
       soundFX.playGlitch();
       triggerHaptic([30, 40, 20]);
 
-      const currentHabits = useTaskStore.getState().customHabits || [];
-
       const userContextObj = { 
         profession: stats?.profession, 
         mantra: stats?.mantra, 
@@ -101,50 +204,19 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
         name: stats?.fullName 
       };
 
-      const mappedHabits = currentHabits.map(h => ({
-        title: h.title,
-        category: h.category,
-        timeBlock: h.timeBlock,
-        frequencyType: h.frequencyType,
-        specificDays: h.specificDays
-      }));
-
-      const data = await generateScheduleFrontend(textToUse, userContextObj, mappedHabits, scheduleMode);
+      const data = await generateScheduleFrontend(textToUse, userContextObj, [], scheduleMode);
 
       if (data.notice) {
         setNotice(data.notice);
       }
 
       const rawHabits: CustomHabit[] = data.habits || [];
-      const seenTitles = new Set<string>();
-      const seenIds = new Set<string>();
-      const processedHabits = rawHabits
-        .map((h, idx) => {
-          let uniqueId = h.id;
-          if (!uniqueId || seenIds.has(uniqueId)) {
-            uniqueId = `hab-sugg-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 7)}`;
-          }
-          seenIds.add(uniqueId);
-          return {
-            ...h,
-            id: uniqueId,
-            timeBlock: normalizeTimeBlock(h.timeBlock) || h.timeBlock
-          };
-        })
-        .filter(h => {
-          if (isQuickMicroHabit(h)) return false; // Micro-habits (water, teeth, steps) belong exclusively in the top widget
-          const key = (h.title || '').trim().toLowerCase();
-          if (!key || seenTitles.has(key)) return false;
-          seenTitles.add(key);
-          return true;
-        });
-      const sortedHabits = sortByChronologicalTime(processedHabits);
-      setSuggestedHabits(sortedHabits);
+      const arranged = autoArrangeSchedule(rawHabits, scheduleMode, scheduleMode === 'master_blocks' ? 7 : 10);
+      setSuggestedHabits(sortByChronologicalTime(arranged));
       setAddedHabitIds(new Set());
       soundFX.playSubBassConfirm();
     } catch (err: any) {
       console.warn("API request failed, falling back to local procedural heuristics:", err);
-      // Fallback directly to procedural heuristics so it works seamlessly on Netlify / offline
       try {
         const fallbackHabits = generateProceduralSchedule(
           textToUse, 
@@ -160,16 +232,9 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
           }, 
           scheduleMode
         );
-        setNotice("Agenda estructurada exitosamente por el Núcleo Heurístico Autónomo.");
-        const seenTitles = new Set<string>();
-        const processed = fallbackHabits.filter(h => {
-          if (isQuickMicroHabit(h)) return false;
-          const key = (h.title || '').trim().toLowerCase();
-          if (!key || seenTitles.has(key)) return false;
-          seenTitles.add(key);
-          return true;
-        });
-        setSuggestedHabits(sortByChronologicalTime(processed));
+        setNotice("Agenda optimizada y libre de choques generada por el Motor Neural KAI.");
+        const arranged = autoArrangeSchedule(fallbackHabits, scheduleMode, scheduleMode === 'master_blocks' ? 7 : 10);
+        setSuggestedHabits(sortByChronologicalTime(arranged));
         setAddedHabitIds(new Set());
         soundFX.playSubBassConfirm();
         setError(null);
@@ -345,13 +410,43 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
     }));
 
     const habitMap = new Map<string, CustomHabit>();
-    existingCustomHabits.forEach(h => habitMap.set((h.title || '').toLowerCase().trim(), h));
+    existingCustomHabits.forEach(h => {
+      // If replacing pending routines, keep 21/66d quick habits and replace old routine blocks
+      if (injectMode === 'merge' || h.isQuickHabit || h.isTracked2166) {
+        habitMap.set((h.title || '').toLowerCase().trim(), h);
+      }
+    });
     newCustomHabits.forEach(h => habitMap.set((h.title || '').toLowerCase().trim(), h));
     const mergedHabits = Array.from(habitMap.values());
     taskStore.setCustomHabits(mergedHabits);
 
+    // Helper to check if a task is a protected 21/66d quick habit
+    const quickHabitTitles = new Set(
+      existingCustomHabits
+        .filter(h => h.isQuickHabit || h.isTracked2166)
+        .map(h => (h.title || '').toLowerCase().trim())
+    );
+    const isProtectedQuickHabit = (t: TaskItem): boolean => {
+      if (t.isHabit) return true;
+      const norm = (t.title || '').toLowerCase().trim();
+      if (quickHabitTitles.has(norm)) return true;
+      if (!t.timeBlock && (norm.includes('agua') || norm.includes('hidrat') || norm.includes('vitamina'))) return true;
+      return false;
+    };
+
     // 2. Inject into current view date and matching specific days of the active week for instant UI updates
     const updatedTasksByDate = { ...taskStore.tasksByDate };
+
+    if (injectMode === 'replace_pending') {
+      // Cleanly remove uncompleted non-habit tasks in the active window so old Day-1 or unorganized tasks don't clutter the new schedule
+      for (let i = -2; i <= 7; i++) {
+        const dStr = addDaysToDateString(currentDateStr, i);
+        const existingList = updatedTasksByDate[dStr] || [];
+        updatedTasksByDate[dStr] = existingList.filter(t => t.completed || isProtectedQuickHabit(t));
+      }
+    }
+
+    let currentDayInsertedCount = 0;
 
     suggestedHabits.forEach((h, index) => {
       const parsedDays = h.specificDays !== undefined && h.specificDays !== null ? parseDays(h.specificDays) : [];
@@ -376,6 +471,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
           const dStr = addDaysToDateString(currentDateStr, i);
           const dObj = parseLocalDate(dStr);
           if (parsedDays.includes(dObj.getDay())) {
+            if (dStr === currentDateStr) currentDayInsertedCount++;
             const dayExisting = (updatedTasksByDate[dStr] || []).filter(
               t => !isDuplicateActivity(t, { title: h.title, timeBlock: h.timeBlock })
             );
@@ -389,6 +485,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
         // Hydrate all days in current 7-day window with date-isolated pending tasks
         for (let i = -2; i <= 7; i++) {
           const dStr = addDaysToDateString(currentDateStr, i);
+          if (dStr === currentDateStr) currentDayInsertedCount++;
           const dayExisting = (updatedTasksByDate[dStr] || []).filter(
             t => !isDuplicateActivity(t, { title: h.title, timeBlock: h.timeBlock })
           );
@@ -399,6 +496,32 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
         }
       }
     });
+
+    // Fallback: if all habits were for specific days that don't include currentDateStr (e.g. Mon-Fri schedule created on Sunday),
+    // still inject them into currentDateStr so the user sees their organized schedule immediately on the active screen!
+    if (currentDayInsertedCount === 0 && suggestedHabits.length > 0) {
+      suggestedHabits.forEach((h, index) => {
+        const dayExisting = (updatedTasksByDate[currentDateStr] || []).filter(
+          t => !isDuplicateActivity(t, { title: h.title, timeBlock: h.timeBlock })
+        );
+        const freshTask: TaskItem = {
+          id: `oracle-task-${currentDateStr}-${index}-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+          title: h.title,
+          category: (h.category === 'habito' ? 'rutina' : h.category) as any,
+          description: h.description || `Directiva del Oráculo para ${h.timeBlock || 'el día'}`,
+          xpReward: h.xpReward || 20,
+          coinReward: h.coinReward || 10,
+          completed: false,
+          completedAt: undefined,
+          timeBlock: normalizeTimeBlock(h.timeBlock) || h.timeBlock,
+          isHabit: false,
+          quickIcon: h.quickIcon
+        };
+        updatedTasksByDate[currentDateStr] = gameEngine.sortTasksChronologically(
+          deduplicateTasksForDay([...dayExisting, freshTask])
+        );
+      });
+    }
 
     taskStore.setTasksByDate(sanitizeTasksByDate(updatedTasksByDate));
 
@@ -485,11 +608,17 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
           exit={{ scale: 0.9, y: 20 }}
         >
           {/* Header */}
-          <div className="bg-[#000000] p-4 border-b border-[#9600ff]/50 flex justify-between items-center">
-            <h3 className="text-base sm:text-lg font-black text-white flex items-center gap-2 uppercase tracking-widest font-mono">
-              <Cpu className="w-5 h-5 text-[#d6f421] animate-pulse" />
-              Núcleo Central // Oráculo Neural
-            </h3>
+          <div className="bg-[#000000] p-4 border-b border-[#9600ff]/50 flex justify-between items-center gap-2">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <h3 className="text-base sm:text-lg font-black text-white flex items-center gap-2 uppercase tracking-widest font-mono">
+                <Cpu className="w-5 h-5 text-[#d6f421] animate-pulse" />
+                Núcleo Central // Oráculo Neural
+              </h3>
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-950/90 border border-emerald-500/60 text-emerald-300 text-[10px] font-mono font-bold shadow-[0_0_10px_rgba(16,185,129,0.25)]">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                <span>Gemini 3.8 AI Conectado</span>
+              </span>
+            </div>
             <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors text-slate-400 hover:text-white cursor-pointer">
               <X className="w-5 h-5" />
             </button>
@@ -499,23 +628,33 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
           <div className="p-5 overflow-y-auto custom-scrollbar">
             {!suggestedHabits ? (
               <div className="space-y-4">
-                <div className="bg-[#09001a] border border-[#9600ff]/40 rounded-xl p-4 flex gap-4 items-start shadow-[0_0_15px_rgba(150,0,255,0.15)]">
-                  <div className="w-10 h-10 rounded-lg bg-[#000000] border border-[#9600ff] flex items-center justify-center shrink-0 shadow-[0_0_10px_rgba(150,0,255,0.3)]">
-                    <Terminal className="w-5 h-5 text-[#d6f421]" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-[11px] font-mono uppercase tracking-widest text-[#d6f421] font-bold bg-[#9600ff]/30 px-2 py-0.5 rounded border border-[#9600ff]/50">
-                        Protocolo de Agenda v5.0
-                      </span>
-                      <span className="text-[10px] text-slate-400 font-mono">
-                        Time-Blocking Inteligente // Desligado de Hábitos 21/66d
-                      </span>
+                <div className="bg-[#09001a] border border-[#9600ff]/40 rounded-xl p-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between shadow-[0_0_15px_rgba(150,0,255,0.15)]">
+                  <div className="flex gap-3.5 items-start">
+                    <div className="w-10 h-10 rounded-lg bg-[#000000] border border-[#9600ff] flex items-center justify-center shrink-0 shadow-[0_0_10px_rgba(150,0,255,0.3)]">
+                      <Terminal className="w-5 h-5 text-[#d6f421]" />
                     </div>
-                    <p className="text-slate-200 text-xs sm:text-sm leading-relaxed font-sans">
-                      "CONEXIÓN ESTABLECIDA. Estructuro tu día a día en bloques limpios y coherentes. Ahora puedes elegir entre el modo Bloques Maestros (Time-Blocking) para evitar saturar tu agenda o el modo Detallado."
-                    </p>
+                    <div>
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <span className="text-[11px] font-mono uppercase tracking-widest text-[#d6f421] font-bold bg-[#9600ff]/30 px-2 py-0.5 rounded border border-[#9600ff]/50">
+                          Protocolo de Agenda v5.0
+                        </span>
+                        <span className="text-[10px] text-emerald-400 font-mono font-bold">
+                          Firebase AI Logic Activo
+                        </span>
+                      </div>
+                      <p className="text-slate-200 text-xs leading-relaxed font-sans">
+                        Organiza tus misiones de hoy con horarios inteligentes sin choques, o diseña tu semana completa paso a paso.
+                      </p>
+                    </div>
                   </div>
+                  <button
+                    type="button"
+                    onClick={handleAutoOrganizeCurrentDay}
+                    className="w-full sm:w-auto shrink-0 px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-[#d6f421] to-emerald-400 hover:from-[#e2ff44] hover:to-emerald-300 text-slate-950 font-black text-xs uppercase tracking-wider font-mono shadow-[0_0_20px_rgba(214,244,33,0.35)] flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-95"
+                  >
+                    <Sparkles className="w-4 h-4 text-slate-950" />
+                    <span>Auto-Acomodar Hoy</span>
+                  </button>
                 </div>
 
                 {/* Mode Tabs: Guided Assistant vs Free Prompt vs Presets vs Neural Analysis */}
@@ -699,7 +838,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
               </div>
             ) : (
               <div className="space-y-4">
-                {notice && (
+                {notice ? (
                   <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 flex items-start justify-between gap-3">
                     <div className="flex items-start gap-3">
                       <Sparkles className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
@@ -718,6 +857,18 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                       <RefreshCw className={`w-3 h-3 ${isLoading ? 'animate-spin' : ''}`} />
                       <span>Reintentar con IA</span>
                     </button>
+                  </div>
+                ) : (
+                  <div className="bg-emerald-950/40 border border-emerald-500/40 rounded-xl p-3 flex items-center justify-between gap-3 shadow-[0_0_15px_rgba(16,185,129,0.15)]">
+                    <div className="flex items-center gap-2.5">
+                      <Sparkles className="w-4 h-4 text-emerald-400 shrink-0 animate-pulse" />
+                      <p className="text-xs font-mono font-bold text-emerald-300">
+                        Agenda sintetizada en directo por Gemini 3.8 Flash (Firebase AI Logic)
+                      </p>
+                    </div>
+                    <span className="text-[10px] font-mono text-emerald-400/80 uppercase tracking-wider shrink-0 hidden sm:inline">
+                      Conexión Activa
+                    </span>
                   </div>
                 )}
 
@@ -1141,24 +1292,62 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                   </div>
                 </div>
 
-                <div className="pt-4 flex gap-3">
-                  <button
-                    onClick={() => {
-                      setSuggestedHabits(null);
-                      setAddedHabitIds(new Set());
-                      setEditingId(null);
-                    }}
-                    className="flex-1 py-3 bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold uppercase tracking-wider text-xs rounded-xl transition-colors font-mono cursor-pointer"
-                  >
-                    Reconfigurar
-                  </button>
-                  <button
-                    onClick={handleAcceptSchedule}
-                    disabled={suggestedHabits.length === 0}
-                    className="flex-1 py-3 bg-cyan-500 hover:bg-cyan-400 disabled:bg-slate-800 disabled:text-slate-500 text-slate-950 font-black uppercase tracking-wider text-xs rounded-xl transition-colors shadow-[0_0_20px_rgba(6,182,212,0.4)] flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    Inyectar Todas a la Agenda <ChevronRight className="w-4 h-4" />
-                  </button>
+                <div className="pt-3 border-t border-cyan-950/60 space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-[#03070d] border border-cyan-900/40 rounded-xl p-2.5">
+                    <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider font-bold">
+                      Modo de Inyección:
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          soundFX.playClick();
+                          setInjectMode('replace_pending');
+                        }}
+                        className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold transition-all cursor-pointer ${
+                          injectMode === 'replace_pending'
+                            ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/60 shadow-[0_0_10px_rgba(6,182,212,0.2)]'
+                            : 'text-slate-400 hover:text-slate-200 bg-black/40 border border-slate-800'
+                        }`}
+                      >
+                        Reemplazar Pendientes (Limpio)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          soundFX.playClick();
+                          setInjectMode('merge');
+                        }}
+                        className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold transition-all cursor-pointer ${
+                          injectMode === 'merge'
+                            ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/60 shadow-[0_0_10px_rgba(6,182,212,0.2)]'
+                            : 'text-slate-400 hover:text-slate-200 bg-black/40 border border-slate-800'
+                        }`}
+                      >
+                        Combinar con Actuales
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => {
+                        setSuggestedHabits(null);
+                        setAddedHabitIds(new Set());
+                        setEditingId(null);
+                      }}
+                      className="flex-1 py-3 bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold uppercase tracking-wider text-xs rounded-xl transition-colors font-mono cursor-pointer"
+                    >
+                      Reconfigurar
+                    </button>
+                    <button
+                      onClick={handleAcceptSchedule}
+                      disabled={suggestedHabits.length === 0}
+                      className="flex-1 py-3 bg-cyan-500 hover:bg-cyan-400 disabled:bg-slate-800 disabled:text-slate-500 text-slate-950 font-black uppercase tracking-wider text-xs rounded-xl transition-colors shadow-[0_0_20px_rgba(6,182,212,0.4)] flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      Aplicar a mi Agenda <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
             )}

@@ -53,10 +53,12 @@ export interface TimerContextType {
   targetEndTime: number | null;
   completedPomodorosToday: number;
 
-  // Ambient Sounds
+  // Ambient Sounds (Multi-Layer Mixer)
   ambientType: 'off' | 'rain' | 'fire' | 'forest' | 'heartbeat';
+  activeAmbientLayers: ('rain' | 'fire' | 'forest' | 'heartbeat')[];
   ambientVolume: number;
   handleAmbientChange: (type: 'off' | 'rain' | 'fire' | 'forest' | 'heartbeat', forceOn?: boolean) => void;
+  toggleAmbientLayer: (type: 'rain' | 'fire' | 'forest' | 'heartbeat') => void;
   handleVolumeChange: (vol: number) => void;
 
   // Timer Actions
@@ -104,6 +106,7 @@ const setFocusModeActive = useUIStore(s => s.setFocusModeActive);
 
   const [completedPomodorosToday, setCompletedPomodorosToday] = useState(0);
   const [ambientType, setAmbientType] = useState<'off' | 'rain' | 'fire' | 'forest' | 'heartbeat'>('off');
+  const [activeAmbientLayers, setActiveAmbientLayers] = useState<('rain' | 'fire' | 'forest' | 'heartbeat')[]>([]);
   const [ambientVolume, setAmbientVolume] = useState(0.6);
   const [isCockpitOpen, setIsCockpitOpen] = useState(false);
   const [isSubtleView, setIsSubtleView] = useState(true);
@@ -321,14 +324,30 @@ const setFocusModeActive = useUIStore(s => s.setFocusModeActive);
     
   };
 
+  const syncAmbientState = () => {
+    const layers = soundFX.getActiveAmbientLayers();
+    setActiveAmbientLayers(layers);
+    setAmbientType(layers.length > 0 ? layers[layers.length - 1] : 'off');
+  };
+
+  const toggleAmbientLayer = (type: 'rain' | 'fire' | 'forest' | 'heartbeat') => {
+    soundFX.toggleAmbientLayer(type, ambientVolume);
+    syncAmbientState();
+  };
+
   const handleAmbientChange = (type: 'off' | 'rain' | 'fire' | 'forest' | 'heartbeat', forceOn = false) => {
-    const newType = !forceOn && ambientType === type && type !== 'off' ? 'off' : type;
-    setAmbientType(newType);
-    if (newType === 'off') {
+    if (type === 'off') {
       soundFX.stopAmbientSound();
-    } else {
-      soundFX.startAmbientSound(newType, ambientVolume);
+      setActiveAmbientLayers([]);
+      setAmbientType('off');
+      return;
     }
+    if (forceOn) {
+      soundFX.startAmbientLayer(type, ambientVolume);
+    } else {
+      soundFX.toggleAmbientLayer(type, ambientVolume);
+    }
+    syncAmbientState();
   };
 
   const handleVolumeChange = (vol: number) => {
@@ -351,7 +370,7 @@ const setFocusModeActive = useUIStore(s => s.setFocusModeActive);
       // Auto-start Quantum Soundscape ONLY if enabled, in work mode, and NO natural sound is playing
       try {
         const scState = quantumSoundscape.getState();
-        if (scState.autoSyncPomodoro && !scState.isPlaying && mode === 'work' && ambientType === 'off') {
+        if (scState.autoSyncPomodoro && !scState.isPlaying && mode === 'work' && activeAmbientLayers.length === 0) {
           quantumSoundscape.start(1.8);
         }
       } catch (e) {}
@@ -457,8 +476,10 @@ const setFocusModeActive = useUIStore(s => s.setFocusModeActive);
         completedPomodorosToday,
 
         ambientType,
+        activeAmbientLayers,
         ambientVolume,
         handleAmbientChange,
+        toggleAmbientLayer,
         handleVolumeChange,
 
         togglePlay,

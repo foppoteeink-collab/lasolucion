@@ -1,4 +1,5 @@
 // Heuristic engine for offline, client-side, and procedural fallbacks
+import { autoArrangeSchedule, cleanScheduleTitle } from './timeUtils';
 
 export const JUNG_ARCHETYPE_PROFILES: Record<string, {
   title: string;
@@ -216,21 +217,195 @@ export function parseTimeStartInMins(tb?: string): number {
   return 9999;
 }
 
+function formatMinsToHHMM(totalMins: number): string {
+  const clamped = Math.max(0, Math.min(1439, Math.round(totalMins)));
+  const h = Math.floor(clamped / 60);
+  const m = clamped % 60;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+
+function parseRangeToMins(tb?: string): { start: number; end: number } | null {
+  if (!tb) return null;
+  const parts = tb.split(/[-–—]/).map(s => s.trim());
+  const startStr = normalizeTimeString(parts[0] || '');
+  if (!startStr) return null;
+  const [sh, sm] = startStr.split(':').map(Number);
+  const start = sh * 60 + sm;
+
+  if (parts[1]) {
+    const endStr = normalizeTimeString(parts[1]);
+    if (endStr) {
+      const [eh, em] = endStr.split(':').map(Number);
+      let end = eh * 60 + em;
+      if (end <= start) end = Math.min(1439, start + 60);
+      return { start, end };
+    }
+  }
+  return { start, end: Math.min(1439, start + 60) };
+}
+
+function findNonOverlappingSlot(
+  preferredStartMins: number,
+  durationMins: number,
+  occupied: Array<{ start: number; end: number }>,
+  minStartMins: number = 6 * 60,
+  maxEndMins: number = 23 * 60
+): { start: number; end: number } {
+  const step = 15;
+  let candidateStart = Math.max(minStartMins, Math.round(preferredStartMins / 15) * 15);
+
+  const isFree = (s: number, e: number) =>
+    !occupied.some(o => s < o.end && o.start < e);
+
+  // 1. Try forward from preferredStartMins
+  for (let s = candidateStart; s + durationMins <= maxEndMins; s += step) {
+    if (isFree(s, s + durationMins)) {
+      return { start: s, end: s + durationMins };
+    }
+  }
+
+  // 2. Try backward from preferredStartMins
+  for (let s = candidateStart - step; s >= minStartMins; s -= step) {
+    if (isFree(s, s + durationMins)) {
+      return { start: s, end: s + durationMins };
+    }
+  }
+
+  // 3. Fallback: place right after the last occupied block
+  const latestEnd = occupied.reduce((max, o) => Math.max(max, o.end), preferredStartMins);
+  const start = Math.min(1439 - durationMins, Math.max(minStartMins, latestEnd));
+  return { start, end: Math.min(1439, start + durationMins) };
+}
+
+export function organizeExistingDayTasks(existingTasks: any[], mode: 'master_blocks' | 'detailed' = 'master_blocks'): any[] {
+  const valid = (existingTasks || []).filter(t => {
+    if (!t || !t.title) return false;
+    if (t.isQuickHabit || t.isTracked2166 || t.category === 'habito' || String(t.id || '').includes('habit-')) return false;
+    return true;
+  });
+
+  if (valid.length === 0) return [];
+
+  const mapped = valid.map((t, idx) => ({
+    id: t.id || `hab-org-${Date.now()}-${idx}`,
+    title: cleanScheduleTitle(t.title),
+    category: t.category === 'habito' ? 'rutina' : (t.category || 'rutina'),
+    description: t.description || `Bloque táctico optimizado por KAI`,
+    timeBlock: t.timeBlock,
+    frequencyType: t.frequencyType || 'daily',
+    specificDays: Array.isArray(t.specificDays) && t.specificDays.length > 0 ? t.specificDays : [0, 1, 2, 3, 4, 5, 6],
+    xpReward: t.xpReward || 25,
+    coinReward: t.coinReward || 10,
+    quickIcon: t.quickIcon || '⚡',
+    isQuickHabit: false,
+    isTracked2166: false,
+  }));
+
+  return autoArrangeSchedule(mapped as any, mode, mode === 'master_blocks' ? 7 : 10);
+}
+
 export function generateProceduralSchedule(userPrompt: string, userContext: any, mode: 'master_blocks' | 'detailed' = 'master_blocks'): any[] {
-  const normalizedInput = (userPrompt || '')
+  const rawInput = (userPrompt || '').trim();
+  const lowerInput = rawInput.toLowerCase();
+
+  // Special case: Procrastination / 2-minute unlock boost prompt from KAI Orb
+  if (lowerInput.includes('procrastinando') || lowerInput.includes('micro-estrategia') || lowerInput.includes('desbloquearme')) {
+    const now = new Date();
+    const curMins = Math.min(21 * 60, Math.max(7 * 60, Math.ceil((now.getHours() * 60 + now.getMinutes()) / 15) * 15));
+    const b1 = `${formatMinsToHHMM(curMins)} - ${formatMinsToHHMM(curMins + 15)}`;
+    const b2 = `${formatMinsToHHMM(curMins + 15)} - ${formatMinsToHHMM(curMins + 45)}`;
+    const b3 = `${formatMinsToHHMM(curMins + 45)} - ${formatMinsToHHMM(curMins + 60)}`;
+    const b4 = `${formatMinsToHHMM(curMins + 60)} - ${formatMinsToHHMM(curMins + 120)}`;
+    const ts = Date.now();
+    return [
+      {
+        id: `hab-boost-1-${ts}`,
+        title: 'Regla de los 2 Minutos: Abrir y Empezar la Tarea #1',
+        category: 'rutina',
+        timeBlock: b1,
+        frequencyType: 'daily',
+        xpReward: 30,
+        coinReward: 15,
+        quickIcon: '⚡',
+        isQuickHabit: false,
+        isTracked2166: false,
+      },
+      {
+        id: `hab-boost-2-${ts}`,
+        title: 'Sprint Pomodoro de Enfoque Puro (Cero Distracciones)',
+        category: 'intelecto',
+        timeBlock: b2,
+        frequencyType: 'daily',
+        xpReward: 40,
+        coinReward: 20,
+        quickIcon: '💻',
+        isQuickHabit: false,
+        isTracked2166: false,
+      },
+      {
+        id: `hab-boost-3-${ts}`,
+        title: 'Pausa Activa: Hidratación y Estiramiento',
+        category: 'entrenamiento',
+        timeBlock: b3,
+        frequencyType: 'daily',
+        xpReward: 20,
+        coinReward: 10,
+        quickIcon: '🏋️',
+        isQuickHabit: false,
+        isTracked2166: false,
+      },
+      {
+        id: `hab-boost-4-${ts}`,
+        title: 'Bloque de Ejecución Profunda & Cierre de Prioridad',
+        category: 'rutina',
+        timeBlock: b4,
+        frequencyType: 'daily',
+        xpReward: 45,
+        coinReward: 20,
+        quickIcon: '💼',
+        isQuickHabit: false,
+        isTracked2166: false,
+      },
+    ];
+  }
+
+  // Pre-split compound structures from Wizard, Templates, and natural Spanish
+  const normalizedInput = rawInput
     .replace(/;\s*/g, '\n')
-    .replace(/(?:,\s*|\.\s*)(?=(?:lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)\b)/gi, '\n')
+    // Split "Despertar a las X y desconexión/dormir a las Y"
+    .replace(/\s+y\s+(?=(?:desconexi[oó]n|dormir|acostarse|cena|almuerzo|entrenamiento|gimnasio|segundo\s+turno|bloque|estudio|lectura|limpieza)\b)/gi, '\n')
+    // Split ", y segundo turno..." or ": primer turno..."
+    .replace(/,?\s*y\s+segundo\s+turno/gi, '\nSegundo turno laboral')
+    .replace(/en\s+jornada\s+partida:\s*primer\s+turno/gi, ' - Primer turno')
+    // Split "con almuerzo de 13:00 a 14:00" into its own block
+    .replace(/\s+con\s+(?=almuerzo\s+de\s+\d)/gi, '\n')
+    // Split commas before day names or time expressions
+    .replace(/(?:,\s*|\.\s*)(?=(?:de\s+lunes|lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)\b)/gi, '\n')
     .replace(/\s+(?:y\s+de\s+|\by\s+(?=\d{1,2}(?::\d{2})?\s*(?:am|pm|a\b|-|–|—|de\s+la\s+tarde)))/gi, '\n')
+    // Split comma-separated lists if there are no newlines or if comma is followed by action/time
+    .replace(/,\s+(?=(?:a\s+las\s+\d|de\s+\d|\d{1,2}(?::\d{2})?\s*(?:am|pm|h)|ir\s+a|trabajar|estudiar|entrenar|hacer|limpiar|cocinar|almorzar|cenar|desayunar|leer|meditar))/gi, '\n')
     .replace(/(?<=[.!?])\s+(?=[a-záéíóúA-Z0-9ÁÉÍÓÚ])/g, '\n');
 
-  const rawLines = normalizedInput
+  let rawLines = normalizedInput
     .split(/\r?\n+/)
     .map(l => l.trim())
     .filter(l => l.length > 1);
 
+  // If user wrote a single line separated by commas (e.g. "trabajar, ir al gym, estudiar, limpiar"), split by commas
+  if (rawLines.length === 1 && rawLines[0].includes(',')) {
+    const commaParts = rawLines[0].split(',').map(s => s.trim()).filter(s => s.length > 2);
+    if (commaParts.length >= 2) {
+      rawLines = commaParts;
+    }
+  }
+
   const parsedHabits: any[] = [];
-  const timeRangeRegex = /(?:de\s+)?(\d{1,2}(?::\d{2})?\s*(?:am|pm|h|hrs)?)\s*(?:a|-|–|—|hasta|to)\s*(\d{1,2}(?::\d{2})?\s*(?:am|pm|h|hrs)?)/i;
-  const explicitSingleTimeRegex = /\b(?:a\s+las?|alas?|hora:?|inicio:?)\s*(\d{1,2}(?::\d{2})?\s*(?:am|pm|h|hrs)?)/i;
+  const timeRangeRegex = /(?:de\s+|horario\s+flexible\s*\(aprox\.\s*)?(\d{1,2}(?::\d{2})?\s*(?:am|pm|h|hrs)?)\s*(?:a|-|–|—|hasta|to)\s*(\d{1,2}(?::\d{2})?\s*(?:am|pm|h|hrs)?)\)?/i;
+  const explicitSingleTimeRegex = /\b(?:a\s+las?|alas?|hora:?|inicio:?|desde\s+las?)\s*(\d{1,2}(?::\d{2})?\s*(?:am|pm|h|hrs)?)/i;
+
+  // Inherit default weekday frequency if the prompt starts with "De lunes a viernes"
+  const globalLv = /de\s+lunes\s+a\s+viernes|l-v/i.test(rawInput);
+  const globalLs = /de\s+lunes\s+a\s+s[aá]bado|l-s/i.test(rawInput);
 
   rawLines.forEach((line, lineIdx) => {
     let cleanLine = line
@@ -257,6 +432,73 @@ export function generateProceduralSchedule(userPrompt: string, userContext: any,
       return;
     }
 
+    let category = 'rutina';
+    let icon = '⚡';
+    let xp = 25;
+    let coins = 10;
+    let defaultDurationMins = 60;
+    let preferredStartMins = 9 * 60 + lineIdx * 60;
+
+    const isWorkRelated = lower.includes('cliente') || lower.includes('trabaj') || lower.includes('oficina') || lower.includes('laboral') || lower.includes('reunion') || lower.includes('llamada') || lower.includes('turno') || lower.includes('deep work') || lower.includes('proyecto');
+
+    if (lower.includes('despertar') || lower.includes('levantar') || lower.includes('desayun')) {
+      category = 'rutina';
+      icon = '☀️';
+      xp = 20;
+      coins = 8;
+      defaultDurationMins = 30;
+      preferredStartMins = 7 * 60;
+    } else if (lower.includes('dormir') || lower.includes('desconexi') || lower.includes('acostar')) {
+      category = 'rutina';
+      icon = '🌙';
+      xp = 20;
+      coins = 8;
+      defaultDurationMins = 30;
+      preferredStartMins = 23 * 60;
+    } else if (lower.includes('gym') || lower.includes('gimnasio') || lower.includes('entren') || lower.includes('correr') || lower.includes('pesas') || lower.includes('deporte') || lower.includes('crossfit') || lower.includes('cardio') || lower.includes('funcional') || lower.includes('ejercicio') || lower.includes('físic') || lower.includes('fisic')) {
+      category = 'entrenamiento';
+      icon = '🏋️';
+      xp = 35;
+      coins = 15;
+      defaultDurationMins = 60;
+      preferredStartMins = 18 * 60;
+    } else if (lower.includes('estud') || lower.includes('leer') || lower.includes('lectura') || lower.includes('curso') || lower.includes('program') || lower.includes('codigo') || lower.includes('aprender') || lower.includes('clase') || lower.includes('simulacro') || lower.includes('repaso')) {
+      category = 'intelecto';
+      icon = '💻';
+      xp = 30;
+      coins = 12;
+      defaultDurationMins = 90;
+      preferredStartMins = 10 * 60;
+    } else if (isWorkRelated) {
+      category = 'rutina';
+      icon = '💼';
+      xp = 35;
+      coins = 15;
+      defaultDurationMins = 180;
+      preferredStartMins = 9 * 60;
+    } else if (lower.includes('comida') || lower.includes('comer') || lower.includes('almuerzo') || lower.includes('almorzar') || lower.includes('cena') || lower.includes('cocinar')) {
+      category = 'comida';
+      icon = '🥗';
+      xp = 15;
+      coins = 6;
+      defaultDurationMins = 60;
+      preferredStartMins = lower.includes('cena') ? 20 * 60 + 30 : 13 * 60;
+    } else if (lower.includes('limp') || lower.includes('orden') || lower.includes('casa') || lower.includes('hogar') || lower.includes('lavar')) {
+      category = 'limpieza';
+      icon = '🧹';
+      xp = 20;
+      coins = 8;
+      defaultDurationMins = 45;
+      preferredStartMins = 19 * 60 + 30;
+    } else if (lower.includes('dibuj') || lower.includes('creativ') || lower.includes('escrib') || lower.includes('video') || lower.includes('musica') || lower.includes('diseñ') || lower.includes('contenido') || lower.includes('edición')) {
+      category = 'creativo';
+      icon = '🎨';
+      xp = 25;
+      coins = 12;
+      defaultDurationMins = 60;
+      preferredStartMins = 20 * 60 + 30;
+    }
+
     let timeBlock: string | undefined = undefined;
     const rangeMatch = cleanLine.match(timeRangeRegex);
     if (rangeMatch) {
@@ -268,8 +510,15 @@ export function generateProceduralSchedule(userPrompt: string, userContext: any,
       const singleMatch = cleanLine.match(explicitSingleTimeRegex);
       if (singleMatch) {
         const rawSingle = singleMatch[1].trim();
-        const norm = normalizeTimeString(rawSingle);
-        timeBlock = norm || rawSingle;
+        const normStart = normalizeTimeString(rawSingle);
+        if (normStart) {
+          const [sh, sm] = normStart.split(':').map(Number);
+          const startMins = sh * 60 + sm;
+          const endMins = Math.min(1439, startMins + defaultDurationMins);
+          timeBlock = `${normStart} - ${formatMinsToHHMM(endMins)}`;
+        } else {
+          timeBlock = rawSingle;
+        }
       }
     }
 
@@ -298,10 +547,15 @@ export function generateProceduralSchedule(userPrompt: string, userContext: any,
       if (dayArr.length > 0 && dayArr.length < 7) {
         freq = 'specific_days';
         specificDays = Array.from(new Set(dayArr)).sort((a, b) => a - b);
+      } else if (globalLv) {
+        freq = 'specific_days';
+        specificDays = [1, 2, 3, 4, 5];
+      } else if (globalLs) {
+        freq = 'specific_days';
+        specificDays = [1, 2, 3, 4, 5, 6];
       }
     }
 
-    const isWorkRelated = lower.includes('cliente') || lower.includes('trabaj') || lower.includes('oficina') || lower.includes('laboral') || lower.includes('reunion') || lower.includes('llamada');
     if (isWorkRelated && freq === 'daily' && !lower.includes('todos los dias') && !lower.includes('a diario') && !lower.includes('toda la semana') && !lower.includes('fin de semana')) {
       freq = 'specific_days';
       specificDays = [1, 2, 3, 4, 5];
@@ -310,57 +564,25 @@ export function generateProceduralSchedule(userPrompt: string, userContext: any,
     let cleanTitle = cleanLine
       .replace(timeRangeRegex, '')
       .replace(explicitSingleTimeRegex, '')
-      .replace(/(?:los\s+)?(?:lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bados?|domingos?)(?:\s+a\s+(?:lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bados?|domingos?))?/gi, '')
-      .replace(/(?:l-v|lunes a viernes|fines de semana|fin de semana|laborables|todos los d[ií]as|diario)/gi, '')
-      .replace(/^[-\s*•\d.:|#\[\]()]+/g, '')
+      .replace(/(?:los\s+d[ií]as\s+|los\s+|el\s+|de\s+)?(?:lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bados?|domingos?|lun|mar|mi[eé]|jue|vie|s[aá]b|dom)(?:[\s,y]+(?:a\s+)?(?:lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bados?|domingos?|lun|mar|mi[eé]|jue|vie|s[aá]b|dom))*/gi, '')
+      .replace(/(?:l-v|lunes a viernes|fines de semana|fin de semana|laborables|todos los d[ií]as|a diario|diario)/gi, '')
+      .replace(/con\s+desglose\s+por\s+grupo\s+muscular\s+seg[uú]n\s+el\s+d[ií]a/gi, '(Rutina por Grupo Muscular)')
+      .replace(/\s+/g, ' ')
+      .replace(/^[-\s*•\d.:|#\[\](),;]+/g, '')
+      .replace(/[\s,.;:-]+$/g, '')
+      .replace(/\b(?:de|a|en|por|para|los|las|el|la|y|con|días|dias)\s*$/i, '')
+      .replace(/[\s,.;:-]+$/g, '')
       .trim();
 
     if (!cleanTitle || cleanTitle.length < 3) {
       if (isWorkRelated) cleanTitle = 'Bloque Laboral / Productivo';
-      else if (lower.includes('gym') || lower.includes('gimnasio') || lower.includes('entren') || lower.includes('pesas') || lower.includes('funcional')) cleanTitle = 'Bloque de Entrenamiento Físico';
-      else if (lower.includes('comida') || lower.includes('almuerzo') || lower.includes('cena')) cleanTitle = 'Almuerzo & Recarga';
-      else if (lower.includes('limp') || lower.includes('orden')) cleanTitle = 'Limpieza & Orden del Espacio';
+      else if (category === 'entrenamiento') cleanTitle = 'Entrenamiento Físico';
+      else if (category === 'comida') cleanTitle = 'Almuerzo & Recarga';
+      else if (category === 'limpieza') cleanTitle = 'Limpieza & Orden del Espacio';
       else cleanTitle = 'Bloque Operativo';
     }
 
     cleanTitle = cleanTitle.charAt(0).toUpperCase() + cleanTitle.slice(1);
-
-    let category = 'rutina';
-    let icon = '⚡';
-    let xp = 25;
-    let coins = 10;
-
-    if (lower.includes('gym') || lower.includes('gimnasio') || lower.includes('entren') || lower.includes('correr') || lower.includes('pesas') || lower.includes('deporte') || lower.includes('crossfit') || lower.includes('cardio') || lower.includes('funcional')) {
-      category = 'entrenamiento';
-      icon = '🏋️';
-      xp = 30;
-      coins = 15;
-    } else if (lower.includes('estud') || lower.includes('leer') || lower.includes('lectura') || lower.includes('curso') || lower.includes('program') || lower.includes('codigo') || lower.includes('aprender') || lower.includes('clase')) {
-      category = 'intelecto';
-      icon = '💻';
-      xp = 25;
-      coins = 12;
-    } else if (isWorkRelated) {
-      category = 'rutina';
-      icon = '💼';
-      xp = 25;
-      coins = 10;
-    } else if (lower.includes('comida') || lower.includes('comer') || lower.includes('almuerzo') || lower.includes('cena') || lower.includes('desayuno') || lower.includes('cocinar')) {
-      category = 'comida';
-      icon = '🥗';
-      xp = 15;
-      coins = 6;
-    } else if (lower.includes('limp') || lower.includes('orden') || lower.includes('casa') || lower.includes('hogar') || lower.includes('lavar')) {
-      category = 'limpieza';
-      icon = '🧹';
-      xp = 20;
-      coins = 8;
-    } else if (lower.includes('dibuj') || lower.includes('creativ') || lower.includes('escrib') || lower.includes('video') || lower.includes('musica') || lower.includes('diseñ')) {
-      category = 'creativo';
-      icon = '🎨';
-      xp = 25;
-      coins = 12;
-    }
 
     const id = `hab-proc-${Date.now()}-${lineIdx}-${Math.random().toString(36).slice(2, 7)}`;
 
@@ -369,6 +591,8 @@ export function generateProceduralSchedule(userPrompt: string, userContext: any,
       title: cleanTitle,
       category,
       timeBlock: timeBlock || undefined,
+      _prefStart: preferredStartMins,
+      _prefDur: defaultDurationMins,
       frequencyType: freq,
       specificDays: freq === 'specific_days' ? specificDays : undefined,
       xpReward: xp,
@@ -379,36 +603,38 @@ export function generateProceduralSchedule(userPrompt: string, userContext: any,
     });
   });
 
-  for (let i = 0; i < parsedHabits.length; i++) {
-    for (let j = i + 1; j < parsedHabits.length; j++) {
-      const a = parsedHabits[i];
-      const b = parsedHabits[j];
-      if (!a.timeBlock || !b.timeBlock) continue;
-
-      const startA = parseTimeStartInMins(a.timeBlock);
-      const startB = parseTimeStartInMins(b.timeBlock);
-
-      if (Math.abs(startA - startB) <= 45) {
-        if (a.frequencyType === 'specific_days' && a.specificDays && (!b.specificDays || b.frequencyType === 'daily')) {
-          const excludedDays = new Set(a.specificDays);
-          const baseDays = b.specificDays || [0, 1, 2, 3, 4, 5, 6];
-          const remaining = baseDays.filter((d: number) => !excludedDays.has(d));
-          if (remaining.length > 0 && remaining.length < 7) {
-            b.frequencyType = 'specific_days';
-            b.specificDays = remaining;
-          }
-        } else if (b.frequencyType === 'specific_days' && b.specificDays && (!a.specificDays || a.frequencyType === 'daily')) {
-          const excludedDays = new Set(b.specificDays);
-          const baseDays = a.specificDays || [0, 1, 2, 3, 4, 5, 6];
-          const remaining = baseDays.filter((d: number) => !excludedDays.has(d));
-          if (remaining.length > 0 && remaining.length < 7) {
-            a.frequencyType = 'specific_days';
-            a.specificDays = remaining;
-          }
+  // Assign smart non-overlapping time blocks to any items that lacked an explicit timeBlock,
+  // and resolve overlaps among items that share days!
+  const occupiedSlots: Array<{ start: number; end: number }> = [];
+  parsedHabits.forEach(h => {
+    if (h.timeBlock) {
+      const r = parseRangeToMins(h.timeBlock);
+      if (r) {
+        // Check if this explicit slot conflicts with an already registered slot on overlapping days
+        const overlaps = occupiedSlots.some(o => r.start < o.end && o.start < r.end);
+        if (!overlaps) {
+          occupiedSlots.push(r);
+          h.timeBlock = `${formatMinsToHHMM(r.start)} - ${formatMinsToHHMM(r.end)}`;
+        } else {
+          // Shift slightly or keep if distinct
+          const dur = Math.max(30, r.end - r.start);
+          const adjusted = findNonOverlappingSlot(r.start, dur, occupiedSlots, 5 * 60, 23 * 60 + 45);
+          occupiedSlots.push(adjusted);
+          h.timeBlock = `${formatMinsToHHMM(adjusted.start)} - ${formatMinsToHHMM(adjusted.end)}`;
         }
       }
     }
-  }
+  });
+
+  parsedHabits.forEach(h => {
+    if (!h.timeBlock) {
+      const slot = findNonOverlappingSlot(h._prefStart || 9 * 60, h._prefDur || 60, occupiedSlots, 6 * 60, 23 * 60);
+      occupiedSlots.push(slot);
+      h.timeBlock = `${formatMinsToHHMM(slot.start)} - ${formatMinsToHHMM(slot.end)}`;
+    }
+    delete h._prefStart;
+    delete h._prefDur;
+  });
 
   const seen = new Set<string>();
   let filtered = parsedHabits.filter((h) => {
@@ -426,26 +652,65 @@ export function generateProceduralSchedule(userPrompt: string, userContext: any,
     const now = Date.now();
     return [
       {
-        id: `hab-proc-work-${now}-${Math.random().toString(36).slice(2, 7)}`,
-        title: `Bloque Principal: ${prof}`,
+        id: `hab-proc-wake-${now}-1`,
+        title: 'Activación Matutina & Planificación',
         category: 'rutina',
-        timeBlock: '09:00 - 17:00',
+        timeBlock: '07:30 - 08:30',
         frequencyType: 'specific_days',
         specificDays: [1, 2, 3, 4, 5],
-        xpReward: 25,
-        coinReward: 10,
+        xpReward: 20,
+        coinReward: 8,
+        quickIcon: '☀️',
+        isQuickHabit: false,
+        isTracked2166: false,
+      },
+      {
+        id: `hab-proc-work1-${now}-2`,
+        title: `Bloque Productivo Principal (${prof})`,
+        category: 'rutina',
+        timeBlock: '09:00 - 13:00',
+        frequencyType: 'specific_days',
+        specificDays: [1, 2, 3, 4, 5],
+        xpReward: 35,
+        coinReward: 15,
         quickIcon: '💼',
         isQuickHabit: false,
         isTracked2166: false,
       },
       {
-        id: `hab-proc-training-${now}-${Math.random().toString(36).slice(2, 7)}`,
-        title: 'Bloque de Entrenamiento Físico',
+        id: `hab-proc-lunch-${now}-3`,
+        title: 'Almuerzo & Pausa de Recarga',
+        category: 'comida',
+        timeBlock: '13:00 - 14:00',
+        frequencyType: 'specific_days',
+        specificDays: [1, 2, 3, 4, 5],
+        xpReward: 15,
+        coinReward: 6,
+        quickIcon: '🥗',
+        isQuickHabit: false,
+        isTracked2166: false,
+      },
+      {
+        id: `hab-proc-work2-${now}-4`,
+        title: 'Segundo Bloque de Ejecución & Cierre',
+        category: 'intelecto',
+        timeBlock: '14:30 - 17:30',
+        frequencyType: 'specific_days',
+        specificDays: [1, 2, 3, 4, 5],
+        xpReward: 30,
+        coinReward: 12,
+        quickIcon: '💻',
+        isQuickHabit: false,
+        isTracked2166: false,
+      },
+      {
+        id: `hab-proc-training-${now}-5`,
+        title: 'Entrenamiento Físico & Energía',
         category: 'entrenamiento',
-        timeBlock: '18:00 - 19:30',
+        timeBlock: '18:00 - 19:15',
         frequencyType: 'specific_days',
         specificDays: [1, 3, 5],
-        xpReward: 30,
+        xpReward: 35,
         coinReward: 15,
         quickIcon: '🏋️',
         isQuickHabit: false,
@@ -464,7 +729,7 @@ export function generateProceduralSchedule(userPrompt: string, userContext: any,
     return { ...h, id: uId };
   });
 
-  return filtered.sort((a, b) => parseTimeStartInMins(a.timeBlock) - parseTimeStartInMins(b.timeBlock));
+  return autoArrangeSchedule(filtered as any, mode, mode === 'master_blocks' ? 7 : 10);
 }
 
 export function generateProceduralAnalysis(stats: any, archetypeData: any, habitMastery: any, currentTasks: any[]): string {

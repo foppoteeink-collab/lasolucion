@@ -156,14 +156,58 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     useUIStore.getState().setThemeMode(mode);
   };
 
+  const [isPullingCloud, setIsPullingCloud] = useState(false);
+  const [cloudActionToast, setCloudActionToast] = useState<string | null>(null);
+
   const handleForceSync = async () => {
     if (!cloudSync?.forceSyncNow) return;
     setIsForceSyncing(true);
     soundFX.playClick();
     try {
-      await cloudSync.forceSyncNow();
+      const ok = await cloudSync.forceSyncNow();
+      if (ok) {
+        const st = useTaskStore.getState();
+        const activeList = st.tasksByDate?.[st.currentViewDate] || [];
+        const habitsCount = (st.customHabits || []).length;
+        const todayCount = activeList.length;
+        const completedCount = activeList.filter(t => t.completed).length;
+        soundFX.playSuccess();
+        setCloudActionToast(
+          `✓ Subido a la nube con éxito (${todayCount} tareas, ${completedCount} hechas, ${habitsCount} rutinas listas para tu otro equipo).`
+        );
+        setTimeout(() => setCloudActionToast(null), 6000);
+      } else {
+        setCloudActionToast('⚠️ No se pudo conectar con la nube. Verifica tu conexión a internet.');
+        setTimeout(() => setCloudActionToast(null), 5000);
+      }
     } finally {
       setTimeout(() => setIsForceSyncing(false), 600);
+    }
+  };
+
+  const handlePullFromCloud = async () => {
+    if (!cloudSync?.pullFromCloudNow) return;
+    setIsPullingCloud(true);
+    soundFX.playClick();
+    try {
+      const ok = await cloudSync.pullFromCloudNow();
+      if (ok) {
+        const st = useTaskStore.getState();
+        const activeList = st.tasksByDate?.[st.currentViewDate] || [];
+        const habitsCount = (st.customHabits || []).length;
+        const todayCount = activeList.length;
+        const completedCount = activeList.filter(t => t.completed).length;
+        soundFX.playLevelUp();
+        setCloudActionToast(
+          `✓ ¡Sincronización completada! Se cargaron ${todayCount} tareas (${completedCount} ya realizadas) y ${habitsCount} rutinas en tu agenda.`
+        );
+        setTimeout(() => setCloudActionToast(null), 6000);
+      } else {
+        setCloudActionToast('⚠️ No se encontraron datos en la nube o falló la conexión.');
+        setTimeout(() => setCloudActionToast(null), 5000);
+      }
+    } finally {
+      setTimeout(() => setIsPullingCloud(false), 600);
     }
   };
 
@@ -369,6 +413,49 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             );
           })}
         </div>
+
+        {/* BARRA RÁPIDA DE SINCRONIZACIÓN ENTRE DISPOSITIVOS */}
+        <div className="bg-[#000d1c] border border-cyan-500/30 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <Cloud className="w-4 h-4 text-cyan-400 shrink-0" />
+            <div className="min-w-0">
+              <p className="text-xs font-black text-white uppercase tracking-wider truncate">
+                {user ? `Sincronización Nube (${user.email})` : 'Puente Directo Tablet ↔ Teléfono'}
+              </p>
+              <p className="text-[11px] text-slate-400 truncate">
+                1️⃣ En tu Tablet toca &quot;Subir datos&quot; · 2️⃣ En tu Teléfono toca &quot;Traer datos&quot;
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={handleForceSync}
+              disabled={isForceSyncing || isPullingCloud}
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 bg-cyan-950/90 hover:bg-cyan-900 border border-cyan-400/60 text-cyan-200 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer disabled:opacity-50"
+            >
+              <Upload className={`w-3.5 h-3.5 ${isForceSyncing ? 'animate-bounce' : ''}`} />
+              <span>{isForceSyncing ? 'Subiendo...' : 'Subir datos'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={handlePullFromCloud}
+              disabled={isPullingCloud || isForceSyncing}
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 bg-emerald-950/90 hover:bg-emerald-900 border border-emerald-400/60 text-emerald-200 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer disabled:opacity-50"
+            >
+              <Download className={`w-3.5 h-3.5 ${isPullingCloud ? 'animate-bounce' : ''}`} />
+              <span>{isPullingCloud ? 'Cargando...' : 'Traer datos'}</span>
+            </button>
+          </div>
+        </div>
+
+        {cloudActionToast && (
+          <div className="p-2.5 rounded-xl bg-emerald-950/90 border border-emerald-500/60 text-emerald-300 text-xs font-bold flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span>{cloudActionToast}</span>
+          </div>
+        )}
       </div>
 
       {/* NOTIFICACIÓN REACTIVA GLOBAL */}
@@ -1037,35 +1124,51 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   </div>
                 </div>
 
-                {user ? (
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button 
-                      onClick={handleForceSync}
-                      disabled={isForceSyncing}
-                      className="flex items-center justify-center gap-2 px-3.5 py-2 bg-blue-950/80 hover:bg-blue-900/80 border border-blue-500/50 text-cyan-300 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer disabled:opacity-50"
-                      title="Forzar guardado inmediato"
-                    >
-                      <RefreshCw className={`w-3.5 h-3.5 ${isForceSyncing ? 'animate-spin' : ''}`} />
-                      {isForceSyncing ? 'Guardando...' : 'Sincronizar'}
-                    </button>
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
+                  <button 
+                    onClick={handleForceSync}
+                    disabled={isForceSyncing || isPullingCloud}
+                    className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-cyan-950/90 hover:bg-cyan-900 border border-cyan-400/60 text-cyan-200 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer disabled:opacity-50"
+                    title="Subir los datos de este dispositivo a la nube"
+                  >
+                    <Upload className={`w-3.5 h-3.5 ${isForceSyncing ? 'animate-bounce' : ''}`} />
+                    <span>{isForceSyncing ? 'Subiendo...' : 'Subir datos'}</span>
+                  </button>
+                  <button 
+                    onClick={handlePullFromCloud}
+                    disabled={isPullingCloud || isForceSyncing}
+                    className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-emerald-950/90 hover:bg-emerald-900 border border-emerald-400/60 text-emerald-200 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer disabled:opacity-50"
+                    title="Descargar los datos de la nube a este dispositivo"
+                  >
+                    <Download className={`w-3.5 h-3.5 ${isPullingCloud ? 'animate-bounce' : ''}`} />
+                    <span>{isPullingCloud ? 'Cargando...' : 'Traer datos'}</span>
+                  </button>
+                  {user ? (
                     <button 
                       onClick={() => signOut()}
-                      className="flex items-center justify-center gap-2 px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-black uppercase tracking-wider transition-colors cursor-pointer"
+                      className="flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-black uppercase tracking-wider transition-colors cursor-pointer"
                     >
                       <LogOut className="w-3.5 h-3.5" />
-                      Salir
+                      <span>Salir</span>
                     </button>
-                  </div>
-                ) : (
-                  <button 
-                    onClick={() => signInWithGoogle()}
-                    className="flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-[0_0_15px_rgba(59,130,246,0.4)] transition-all cursor-pointer"
-                  >
-                    <LogIn className="w-4 h-4" />
-                    Acceder con Google
-                  </button>
-                )}
+                  ) : (
+                    <button 
+                      onClick={() => signInWithGoogle()}
+                      className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer"
+                    >
+                      <LogIn className="w-3.5 h-3.5" />
+                      <span>Google</span>
+                    </button>
+                  )}
+                </div>
               </div>
+
+              {cloudActionToast && (
+                <div className="p-3 rounded-xl bg-emerald-950/90 border border-emerald-500/60 text-emerald-300 text-xs font-bold flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>{cloudActionToast}</span>
+                </div>
+              )}
 
               {/* RESUMEN CONCISO DE PROTECCIÓN */}
               <div className="p-3.5 rounded-xl bg-[#001224] border border-blue-900/40 text-xs text-slate-300 flex items-center justify-between gap-3">

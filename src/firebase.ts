@@ -1,5 +1,6 @@
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, Auth } from 'firebase/auth';
+import { getAI, GoogleAIBackend, AI } from 'firebase/ai';
 import {
   getFirestore,
   initializeFirestore,
@@ -18,6 +19,19 @@ try {
 } catch (e) {
   console.warn('Firebase initializeApp failed:', e);
 }
+
+export { app, firebaseConfig };
+
+let aiInstance: AI | null = null;
+try {
+  if (app) {
+    aiInstance = getAI(app, { backend: new GoogleAIBackend() });
+  }
+} catch (e) {
+  console.warn('Firebase getAI failed:', e);
+}
+
+export const firebaseAI = aiInstance;
 
 let authInstance: Auth | null = null;
 try {

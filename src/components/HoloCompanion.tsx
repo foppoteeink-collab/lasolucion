@@ -192,6 +192,10 @@ export const HoloCompanion: React.FC<HoloCompanionProps> = ({
   useEffect(() => {
     if (triggerVictoryWave) {
       setInternalVictoryCount((c) => c + 1);
+      const timer = setTimeout(() => {
+        setInternalVictoryCount(0);
+      }, 950);
+      return () => clearTimeout(timer);
     }
   }, [triggerVictoryWave]);
 
@@ -212,9 +216,14 @@ export const HoloCompanion: React.FC<HoloCompanionProps> = ({
     }
   }, [size]);
 
-  // Detector global del cursor para el seguimiento del ojo
+  const svgWidth = Math.round(160 * scaleMultiplier);
+  const svgHeight = Math.round(170 * scaleMultiplier);
+
+  // Detector global del cursor para el seguimiento del ojo (solo en pantallas con ratón/trackpad para no trabar el touch en móvil/tablet)
   useEffect(() => {
-    if (!interactive) return;
+    if (!interactive || typeof window === 'undefined') return;
+    const hasFinePointer = window.matchMedia && window.matchMedia('(pointer: fine)').matches;
+    if (!hasFinePointer) return;
 
     const handleMouseMove = (e: MouseEvent) => {
       if (!containerRef.current) return;
@@ -247,7 +256,7 @@ export const HoloCompanion: React.FC<HoloCompanionProps> = ({
       }
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       if (mouseTimeoutRef.current) clearTimeout(mouseTimeoutRef.current);
@@ -266,40 +275,42 @@ export const HoloCompanion: React.FC<HoloCompanionProps> = ({
   return (
     <div
       ref={containerRef}
-      className={`relative inline-flex flex-col items-center select-none ${className}`}
+      className={`relative inline-flex flex-col items-center select-none touch-none ${className}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={interactive ? handleClick : undefined}
-      style={{ cursor: interactive ? 'pointer' : 'default' }}
+      style={{
+        cursor: interactive ? 'pointer' : 'default',
+        width: `${svgWidth}px`,
+        height: `${svgHeight}px`,
+      }}
     >
       {/* CONTENEDOR FLOTANTE CON LEVITACIÓN CUÁNTICA */}
       <motion.div
-        className="relative flex flex-col items-center justify-center"
+        className="relative flex flex-col items-center justify-center will-change-transform"
         style={{
-          scale: scaleMultiplier,
           transformOrigin: '50% 50%',
         }}
         animate={
           justClicked || internalVictoryCount > 0
             ? {
-                y: [0, -18, 4, -8, 0],
-                rotateY: [0, -15, 15, -6, 0],
-                scale: [scaleMultiplier, scaleMultiplier * 1.14, scaleMultiplier * 0.98, scaleMultiplier],
+                y: [0, -12, 3, -5, 0],
+                scale: [1, 1.12, 0.98, 1],
               }
             : isProjecting
             ? {
                 y: 0,
                 rotateZ: 0,
-                scale: scaleMultiplier,
+                scale: 1,
               }
             : auraState === 'focus_trance'
             ? {
-                y: [0, -4, 0],
+                y: [0, -3, 0],
                 rotateZ: [-0.3, 0.3, -0.3],
               }
             : {
-                y: [0, -7, 0],
-                rotateZ: [-0.6, 0.6, -0.6],
+                y: [0, -5, 0],
+                rotateZ: [-0.5, 0.5, -0.5],
               }
         }
         transition={
@@ -313,19 +324,10 @@ export const HoloCompanion: React.FC<HoloCompanionProps> = ({
         }
       >
         {/* RESPLANDOR DIFUSO AMBIENTAL DEL PRISMA */}
-        <motion.div
-          className="absolute w-44 h-44 rounded-full blur-2xl pointer-events-none -z-10"
+        <div
+          className="absolute w-28 h-28 rounded-full blur-xl pointer-events-none -z-10 opacity-60"
           style={{
             backgroundColor: `${activeColor}35`,
-          }}
-          animate={{
-            scale: auraState === 'focus_trance' ? [0.9, 1.25, 0.9] : [0.95, 1.2, 0.95],
-            opacity: justClicked ? [0.4, 0.9, 0.4] : [0.4, 0.75, 0.4],
-          }}
-          transition={{
-            duration: auraState === 'focus_trance' ? 4.0 : 4.0,
-            repeat: Infinity,
-            ease: 'easeInOut',
           }}
         />
 
@@ -336,10 +338,10 @@ export const HoloCompanion: React.FC<HoloCompanionProps> = ({
               <motion.div
                 key={`wave-1-${internalVictoryCount}`}
                 initial={{ scale: 0.6, opacity: 0.95 }}
-                animate={{ scale: 2.4, opacity: 0 }}
+                animate={{ scale: 2.2, opacity: 0 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.8, ease: 'easeOut' }}
-                className="absolute w-28 h-28 rounded-full border-2 pointer-events-none"
+                className="absolute w-24 h-24 rounded-full border-2 pointer-events-none"
                 style={{
                   borderColor: activeColor,
                   boxShadow: `0 0 25px ${activeColor}, inset 0 0 15px ${activeColor}`,
@@ -348,10 +350,10 @@ export const HoloCompanion: React.FC<HoloCompanionProps> = ({
               <motion.div
                 key={`wave-2-${internalVictoryCount}`}
                 initial={{ scale: 0.4, opacity: 0.8 }}
-                animate={{ scale: 2.8, opacity: 0 }}
+                animate={{ scale: 2.5, opacity: 0 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 1.1, delay: 0.15, ease: 'easeOut' }}
-                className="absolute w-24 h-24 rounded-full border pointer-events-none"
+                className="absolute w-20 h-20 rounded-full border pointer-events-none"
                 style={{
                   borderColor: activeColor,
                   boxShadow: `0 0 20px ${activeColor}`,
@@ -363,20 +365,18 @@ export const HoloCompanion: React.FC<HoloCompanionProps> = ({
 
         {/* ILUSTRACIÓN VECTORIAL SVG DE LA PIRÁMIDE CON EL OJO QUE TODO LO VE */}
         <svg
-          width="160"
-          height="170"
+          width={svgWidth}
+          height={svgHeight}
           viewBox="0 0 160 170"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           className="relative z-10 overflow-visible"
         >
           <defs>
-            {/* Filtro Bloom / Resplandor Neón */}
-            <filter id={`${gradientId}-neon-glow`} x="-30%" y="-30%" width="160%" height="160%">
-              <feGaussianBlur stdDeviation="3.2" result="blur1" />
-              <feGaussianBlur stdDeviation="6.5" result="blur2" />
+            {/* Filtro Bloom / Resplandor Neón Optimizado para GPU Móvil */}
+            <filter id={`${gradientId}-neon-glow`} x="-25%" y="-25%" width="150%" height="150%">
+              <feGaussianBlur stdDeviation="2.4" result="blur1" />
               <feMerge>
-                <feMergeNode in="blur2" />
                 <feMergeNode in="blur1" />
                 <feMergeNode in="SourceGraphic" />
               </feMerge>
