@@ -573,10 +573,11 @@ export const handleToggleTask = (taskId: string, e?: any) => {
       if (isRetroactive) {
         spawnJuiceParticle({ x: posX, y: posY, text: '¡Completado (Gracia 0.8x)!', type: 'custom', colorClass: 'text-amber-400 bg-amber-950/90 border-amber-500' });
         stateUI.addFloatingEffect({ x: posX, y: posY - 20, text: `+${xpReward} XP (-20% Impuesto)`, type: 'xp' });
+        triggerShockwave({ color: 'gold', intensity: 'medium', origin: { x: posX, y: posY } });
       } else {
         spawnJuiceParticle({ x: posX, y: posY, text: '¡Completado!', type: 'custom', colorClass: 'text-emerald-400 bg-emerald-950/90 border-emerald-500' });
         stateUI.addFloatingEffect({ x: posX, y: posY - 20, text: `+${xpReward} XP`, type: 'xp' });
-        triggerShockwave({ color: 'emerald', intensity: 'subtle' });
+        triggerShockwave({ color: 'cyan', intensity: 'medium', origin: { x: posX, y: posY } });
       }
 
       setTimeout(() => {

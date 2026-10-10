@@ -6,30 +6,35 @@ export type ShockwaveIntensity = 'subtle' | 'medium' | 'epic';
 export interface ShockwaveOptions {
   color?: ShockwaveColor;
   intensity?: ShockwaveIntensity;
+  origin?: { x: number; y: number };
 }
 
 /**
- * Triggers an elegant, non-invasive edge shockwave & energy ring pulse.
- * Replaces generic confetti with a high-end, Apple/Linear style celebration.
+ * Triggers a cinematic anamorphic lens flare & prismatic crystal fracture.
+ * Mature, epic, and high-impact visual celebration.
  */
 export const triggerShockwave = (options?: ShockwaveOptions) => {
   if (typeof window === 'undefined') return;
 
-  const color = options?.color || 'emerald';
+  const color = options?.color || 'cyan';
   const intensity = options?.intensity || 'medium';
+  const origin = options?.origin || {
+    x: window.innerWidth / 2,
+    y: window.innerHeight / 2,
+  };
 
-  // Haptic micro-pulse
+  // Crisp dual-pulse tactile feedback (like glass fracturing)
   try {
     if (intensity === 'epic') {
-      triggerHaptic([50, 40, 70]);
+      triggerHaptic([40, 30, 60, 30, 80]);
     } else {
-      triggerHaptic([35, 40]);
+      triggerHaptic([25, 30, 45]);
     }
   } catch {}
 
   window.dispatchEvent(
     new CustomEvent('celebration-shockwave', {
-      detail: { color, intensity },
+      detail: { color, intensity, origin },
     })
   );
 };
