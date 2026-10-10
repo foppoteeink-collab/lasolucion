@@ -4,6 +4,7 @@ import { PlayerStats } from '../types';
 import { getArchetypeByName, JUNG_ARCHETYPES } from '../data/archetypes';
 import { getRankForLevel } from '../data/defaults';
 import { HoloCompanion } from './HoloCompanion';
+import { ArchetypesModal } from './ArchetypesModal';
 
 interface HeroProfileModalProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ interface HeroProfileModalProps {
 }
 
 export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({ isOpen, onClose, stats, onUpdateStats }) => {
+  const [showArchetypesGuide, setShowArchetypesGuide] = useState(false);
   const [editForm, setEditForm] = useState({
     avatarIcon: "",
     characterClass: "",
@@ -154,7 +156,13 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({ isOpen, onCl
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="block text-xs font-anton text-cyan-300 uppercase tracking-wider">Holograma & Arquetipo Base</label>
-                  <span className="text-[10px] font-mono text-cyan-400">12 Matrices Activas</span>
+                  <button
+                    type="button"
+                    onClick={() => setShowArchetypesGuide(true)}
+                    className="text-[10px] font-mono text-cyan-300 hover:text-white px-2.5 py-0.5 rounded-lg bg-cyan-950/80 border border-cyan-500/40 hover:border-cyan-300 cursor-pointer transition-all shadow-xs flex items-center gap-1 active:scale-95"
+                  >
+                    <span>Ver Fichas Detalladas</span>
+                  </button>
                 </div>
 
                 {/* Holographic Preview & Full Archetype Explanation */}
@@ -269,6 +277,19 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({ isOpen, onCl
               </button>
             </div>
           </div>
+
+          <ArchetypesModal
+            isOpen={showArchetypesGuide}
+            onClose={() => setShowArchetypesGuide(false)}
+            currentArchetype={editForm.characterClass || 'El Héroe'}
+            onSelectArchetype={(arch) => {
+              setEditForm(prev => ({
+                ...prev,
+                characterClass: arch.name,
+                avatarIcon: arch.avatar
+              }));
+            }}
+          />
         </div>
   );
 };

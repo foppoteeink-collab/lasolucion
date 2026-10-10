@@ -1,6 +1,7 @@
 import { FinanceDashboard } from "./FinanceDashboard";
 import { HeroProfileModal } from './HeroProfileModal';
 import { RanksModal } from './RanksModal';
+import { ArchetypesModal } from './ArchetypesModal';
 import { HoloCompanion } from './HoloCompanion';
 import { ScrollReveal } from './common/ScrollReveal';
 import React, { useState, useMemo, useEffect } from 'react';
@@ -167,6 +168,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
 }) => {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isRanksModalOpen, setIsRanksModalOpen] = useState(false);
+  const [isArchetypesModalOpen, setIsArchetypesModalOpen] = useState(false);
 
   // --- CALCULATE RECORDS ---
   
@@ -523,6 +525,21 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
         currentLevel={stats.level || 1}
       />
 
+      <ArchetypesModal
+        isOpen={isArchetypesModalOpen}
+        onClose={() => setIsArchetypesModalOpen(false)}
+        currentArchetype={stats.characterClass || 'El Héroe'}
+        onSelectArchetype={(arch) => {
+          if (onUpdateStats) {
+            onUpdateStats(prev => ({
+              ...prev,
+              characterClass: arch.name,
+              avatarIcon: arch.avatar,
+            }));
+          }
+        }}
+      />
+
       {/* ---------------- HERO RPG STATUS WINDOW (SOLO LEVELING SCI-FI) ---------------- */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-8">
         {/* Full Width Hero RPG Character Card */}
@@ -585,10 +602,23 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
                       Ver 100 Rangos
                     </button>
                   </div>
-                  <p className="text-[11px] text-amber-300 font-bold mt-0.5 flex items-center gap-1">
-                    <Sparkles className="w-3 h-3 text-amber-400" />
-                    {selectedClassOption.statBonus}
-                  </p>
+                  <div className="flex flex-wrap items-center gap-2 mt-1">
+                    <p className="text-[11px] text-amber-300 font-bold flex items-center gap-1">
+                      <Sparkles className="w-3 h-3 text-amber-400" />
+                      {selectedClassOption.statBonus}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        soundFX.playClick();
+                        setIsArchetypesModalOpen(true);
+                      }}
+                      className="px-2 py-0.5 rounded-lg bg-indigo-950/80 hover:bg-indigo-900 border border-indigo-500/50 hover:border-indigo-300 text-[10px] font-mono font-bold text-indigo-300 hover:text-white transition-all cursor-pointer shadow-[0_0_8px_rgba(99,102,241,0.2)] active:scale-95"
+                      title="Explorar las explicaciones y bonos de los 12 Arquetipos"
+                    >
+                      Ver 12 Arquetipos
+                    </button>
+                  </div>
                   
                   {/* Quick Currency Stats */}
                   <div className="flex items-center gap-2 mt-2">
@@ -606,9 +636,12 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
 
               {/* Linked Holo Companion Display */}
               <div 
-                onClick={() => setIsEditingProfile(true)}
+                onClick={() => {
+                  soundFX.playClick();
+                  setIsArchetypesModalOpen(true);
+                }}
                 className="p-3 rounded-2xl bg-[#04020e] border border-cyan-500/50 hover:border-cyan-300 transition-all cursor-pointer flex items-center gap-3 shrink-0 shadow-[0_0_15px_rgba(0,240,255,0.15)] group"
-                title="Haz clic para cambiar tu arquetipo y compañero en Editar Perfil"
+                title="Haz clic para ver las explicaciones de los 12 Arquetipos y Compañeros KAI"
               >
                 <div className="shrink-0">
                   <HoloCompanion archetype={stats.characterClass || 'El Héroe'} size="sm" showHUD={false} />
@@ -619,7 +652,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
                     KAI • Nv. {stats.level || 1}
                   </div>
                   <div className="text-[10px] text-cyan-300/80 flex items-center gap-1 mt-0.5">
-                    <span>Espíritu Bioluminiscente</span>
+                    <span>{stats.characterClass || 'El Héroe'}</span>
                     <Sparkles className="w-3 h-3 text-amber-300" />
                   </div>
                 </div>
