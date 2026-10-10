@@ -6,6 +6,7 @@ export interface MainLogoProps {
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'massive';
   className?: string;
   forceColor?: string;
+  speed?: 'normal' | 'fast';
 }
 
 export const MainLogo: React.FC<MainLogoProps> = ({
@@ -13,6 +14,7 @@ export const MainLogo: React.FC<MainLogoProps> = ({
   size = 'massive',
   className = '',
   forceColor,
+  speed = 'normal',
 }) => {
   const characters = Array.from(text);
   const elementsCount = characters.length;
@@ -57,7 +59,7 @@ export const MainLogo: React.FC<MainLogoProps> = ({
   return (
     <h1
       id="main-logo-text-flow"
-      className={`font-['Anton'] uppercase select-none flex flex-wrap justify-center items-center font-black leading-tight focus-in-contract ${sizeClasses[size]} ${className}`}
+      className={`font-['Anton'] uppercase select-none flex flex-wrap justify-center items-center font-black leading-tight ${speed === 'fast' ? 'focus-in-contract-fast' : 'focus-in-contract'} ${sizeClasses[size]} ${className}`}
       style={{ fontFamily: "'Anton', sans-serif" }}
     >
       {characters.map((char, index) => {

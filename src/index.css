@@ -264,3 +264,9 @@
   -webkit-animation: focus-in-contract 0.8s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
           animation: focus-in-contract 0.8s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
 }
+
+.focus-in-contract-fast,
+.animate-focus-in-contract-fast {
+  -webkit-animation: focus-in-contract 0.28s cubic-bezier(0.215, 0.610, 0.355, 1.000) both;
+          animation: focus-in-contract 0.28s cubic-bezier(0.215, 0.610, 0.355, 1.000) both;
+}
