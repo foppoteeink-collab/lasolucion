@@ -2,7 +2,7 @@ import React from 'react';
 import { DAILY_REWARDS } from '../data/defaults';
 import { PlayerStats } from '../types';
 import { Gift, Check, Flame, X, Lock } from 'lucide-react';
-import confetti from 'canvas-confetti';
+import { triggerShockwave } from '../utils/celebration';
 import { soundFX } from '../utils/audio';
 import { getTodayDateString } from '../utils/date';
 import { DoodleSparkle, DoodleStar } from './DoodleIcons';
@@ -30,16 +30,7 @@ export const DailyRewardsModal: React.FC<DailyRewardsModalProps> = ({
 
   const handleClaim = (day: number, xp: number, coins: number, bonusItem?: string) => {
     soundFX.playLevelUp();
-    try {
-      confetti({
-        particleCount: 80,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: ['#f59e0b', '#6366f1', '#10b981', '#ec4899'],
-      });
-    } catch {
-      // ignore
-    }
+    triggerShockwave({ color: 'gold', intensity: 'epic' });
     onClaimReward(day, xp, coins, bonusItem);
   };
 

@@ -25,7 +25,7 @@ import {
   saveRecallItems
 } from '../utils/recall';
 import { soundFX } from '../utils/audio';
-import confetti from 'canvas-confetti';
+import { triggerShockwave } from '../utils/celebration';
 
 interface SmartRecallModalProps {
   isOpen: boolean;
@@ -103,11 +103,7 @@ export const SmartRecallModal: React.FC<SmartRecallModalProps> = ({
     setIsFlipped(false);
     if (currentIndex + 1 >= dueItems.length) {
       soundFX.playLevelUp();
-      confetti({
-        particleCount: 60,
-        spread: 70,
-        origin: { y: 0.6 },
-      });
+      triggerShockwave({ color: 'cyan', intensity: 'medium' });
     } else {
       setCurrentIndex((prev) => prev + 1);
     }

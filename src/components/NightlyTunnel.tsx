@@ -5,7 +5,7 @@ import {
   Clock, Flame, Star, Check, Gift, Lock, ChevronRight,
   Sun, ArrowRight
 } from 'lucide-react';
-import confetti from 'canvas-confetti';
+import { triggerShockwave } from '../utils/celebration';
 import { soundFX } from '../utils/audio';
 import { getTodayDateString, formatDateFullSpanish } from '../utils/date';
 import { DAILY_REWARDS } from '../data/defaults';
@@ -129,9 +129,7 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
     }
 
     soundFX.playLevelUp();
-    try {
-      confetti({ particleCount: 60, spread: 80, origin: { y: 0.6 }, colors: ['#00f0ff', '#d946ef', '#39ff14', '#facc15'] });
-    } catch {}
+    triggerShockwave({ color: 'cyan', intensity: 'epic' });
 
     if (reflectionText.trim() && onAddJournalEntry) {
       onAddJournalEntry(`🌙 Cierre de Jornada (${archetype.name}): ${reflectionText.trim()}`);
@@ -147,9 +145,7 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
   const handleClaimReward = (reward: typeof DAILY_REWARDS[number]) => {
     if (rewardClaimed || isAlreadyClaimedToday) return;
     soundFX.playLevelUp();
-    try {
-      confetti({ particleCount: 90, spread: 75, origin: { y: 0.5 }, colors: ['#f59e0b', '#6366f1', '#10b981', '#ec4899'] });
-    } catch {}
+    triggerShockwave({ color: 'gold', intensity: 'epic' });
     onClaimDailyReward(reward.day, reward.xp, reward.coins, reward.bonusItem);
     setRewardClaimed(true);
     setTimeout(() => setStep('seal'), 1000);

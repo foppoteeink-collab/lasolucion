@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { ShopReward } from '../types';
 import { Coins, Plus, X, Trash2, Shield, Flame, Star, Sparkles } from 'lucide-react';
 import { soundFX } from '../utils/audio';
-import confetti from 'canvas-confetti';
+import { triggerShockwave } from '../utils/celebration';
 import { ScrollReveal } from './common/ScrollReveal';
 
 import { useAppStore } from '../store/useAppStore';
@@ -85,16 +85,7 @@ export const RewardShop: React.FC = () => {
 
     soundFX.playCoin();
     soundFX.playSubBassConfirm();
-    try {
-      confetti({
-        particleCount: 60,
-        spread: 60,
-        origin: { y: 0.7 },
-        colors: ['#FBBF24', '#34D399', '#60A5FA']
-      });
-    } catch {
-      // ignore
-    }
+    triggerShockwave({ color: 'violet', intensity: 'medium' });
   };
 
   const buyStreakShield = () => {
@@ -105,9 +96,7 @@ export const RewardShop: React.FC = () => {
     if (!success) return;
 
     soundFX.playLevelUp();
-    try {
-      confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-    } catch (e) {}
+    triggerShockwave({ color: 'cyan', intensity: 'medium' });
   };
 
   const handleCreate = (e: React.FormEvent) => {
@@ -214,9 +203,7 @@ export const RewardShop: React.FC = () => {
                 if (success) {
                   soundFX.playLevelUp();
                   triggerHaptic([100, 100]);
-                  try {
-                    confetti({ particleCount: 150, spread: 100, origin: { y: 0.6 }, colors: ['#fbbf24', '#f59e0b', '#fff'] });
-                  } catch(e) {}
+                  triggerShockwave({ color: 'gold', intensity: 'epic' });
                   notificationService.triggerNotification(`¡Encontraste: ${item.name}!`, item.description, item.icon);
                 }
               }}

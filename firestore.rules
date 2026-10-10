@@ -92,7 +92,24 @@ service cloud.firestore {
         && data.data is string && data.data.size() <= 20000;
     }
 
+    function isValidSyncCode(syncCode) {
+      return syncCode is string && syncCode.size() >= 4 && syncCode.size() <= 32 && syncCode.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidSyncTransfer(data) {
+      return data.keys().hasAll(['lastUpdated'])
+        && data.lastUpdated is string
+        && data.lastUpdated.size() <= 64;
+    }
+
     // Rules
+    match /sync_transfers/{syncCode} {
+      allow get: if isValidSyncCode(syncCode);
+      allow list: if false;
+      allow create, update: if isValidSyncCode(syncCode) && isValidSyncTransfer(incoming());
+      allow delete: if false;
+    }
+
     match /users/{userId} {
       allow read: if isOwner(userId) && isValidId(userId);
       allow create: if isOwner(userId) && isValidId(userId) && isValidPlayerStats(incoming());

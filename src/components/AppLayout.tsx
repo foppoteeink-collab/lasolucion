@@ -34,6 +34,7 @@ import { MonthlyCalendar } from './MonthlyCalendar';
 import { SciFiGridBackground } from './SciFiGridBackground';
 import { TransitionOverlay } from './TransitionOverlay';
 import { DamageOverlay } from './DamageOverlay';
+import { ShockwaveOverlay } from './ShockwaveOverlay';
 import { JournalView } from './JournalView';
 import { DayTemplatesModal } from './DayTemplatesModal';
 import { DailyProgressWidget } from './DailyProgressWidget';
@@ -221,6 +222,7 @@ export function AppLayout() {
     <>
       <TransitionOverlay isVisible={isTransitioning} />
       <DamageOverlay />
+      <ShockwaveOverlay />
       {/* Real-time Dynamic Floating Combat Numbers & Combos */}
       <FloatingEffectsOverlay effects={floatingEffects as any} />
       <FloatingJuiceOverlay />

@@ -159,14 +159,14 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
             <div>
               <h3 className="text-xl font-bold text-white font-display">
                 {editingTaskId 
-                  ? (isEditingHabitMode ? 'Editar Hábito Personalizado' : 'Editar Operación')
-                  : (isEditingHabitMode ? 'Nuevo Hábito // Ley 21/66' : 'Nueva Operación Táctica')
+                  ? (isEditingHabitMode ? 'Editar Hábito' : 'Editar Tarea')
+                  : (isEditingHabitMode ? 'Nuevo Hábito (21/66 Días)' : 'Nueva Tarea')
                 }
               </h3>
               <p className="text-xs text-gray-400">
                 {isEditingHabitMode 
-                  ? 'Define tu rutina para evolucionar las auras y habilidades de Kai en 21/66 días'
-                  : 'Define los parámetros de tu tarea o misión del día'
+                  ? 'Define tu rutina diaria para fortalecer hábitos en 21/66 días'
+                  : 'Organiza tu día agregando una nueva tarea o actividad'
                 }
               </p>
             </div>
@@ -472,7 +472,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                       value={newNotes}
                       onChange={(e) => setNewNotes(e.target.value)}
                       rows={2}
-                      placeholder="Añade instrucciones o contexto estratégico..."
+                      placeholder="Añade instrucciones o notas adicionales..."
                       className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-white text-xs placeholder-gray-500 focus:outline-none focus:border-purple-500"
                     />
                   </div>
@@ -499,7 +499,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
               >
                 {editingTaskId 
                   ? 'Guardar Cambios' 
-                  : (isEditingHabitMode ? 'Guardar Hábito // 21-66' : 'Desplegar Operación')
+                  : (isEditingHabitMode ? 'Guardar Hábito' : 'Guardar Tarea')
                 }
               </button>
             </div>

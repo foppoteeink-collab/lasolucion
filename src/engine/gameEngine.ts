@@ -24,51 +24,17 @@ import { notificationService } from '../utils/notifications';
 import { hapticPresets } from '../utils/haptics';
 import { spawnJuiceParticle, spawnBossEmojiExplosion } from '../components/FloatingJuiceOverlay';
 import { getRequiredXpForLevel } from '../data/defaults';
-import confetti from 'canvas-confetti';
+import { triggerShockwave } from '../utils/celebration';
 import { safeSetItem, safeRemoveItem } from '../utils/storage';
 import { TaskItem, TaskCategory } from '../types';
 import { parseTimeToMinutes } from '../utils/timeUtils';
 
 const triggerBossEmojiConfetti = () => {
   try {
-    const emojis = ['😈', '👿', '😎', '🥳', '👑', '💀', '🔥', '⚡', '🏆'];
-    const confettiFunc = confetti as any;
-    if (typeof confettiFunc.shapeFromText === 'function') {
-      const scalar = 3;
-      const shapes = emojis.map((text: string) => confettiFunc.shapeFromText({ text, scalar }));
-      confettiFunc({
-        particleCount: 65,
-        spread: 120,
-        origin: { y: 0.5 },
-        shapes: shapes,
-        scalar: 3,
-      });
-      setTimeout(() => {
-        confettiFunc({
-          particleCount: 45,
-          angle: 60,
-          spread: 80,
-          origin: { x: 0.1, y: 0.6 },
-          shapes: shapes,
-          scalar: 3.5,
-        });
-        confettiFunc({
-          particleCount: 45,
-          angle: 120,
-          spread: 80,
-          origin: { x: 0.9, y: 0.6 },
-          shapes: shapes,
-          scalar: 3.5,
-        });
-      }, 180);
-    } else {
-      confetti({
-        particleCount: 150,
-        spread: 120,
-        origin: { y: 0.5 },
-        colors: ['#a855f7', '#ec4899', '#3b82f6', '#fbbf24', '#22c35e'],
-      });
-    }
+    triggerShockwave({ color: 'gold', intensity: 'epic' });
+    setTimeout(() => {
+      triggerShockwave({ color: 'violet', intensity: 'epic' });
+    }, 300);
   } catch (err) {
     console.error('Error in triggerBossEmojiConfetti:', err);
   }
@@ -470,6 +436,7 @@ export const checkLevelUp = (prevStats: any, xpAdded: number, coinsAdded: number
         type: 'xp'
       });
       soundFX.playLevelUp();
+      triggerShockwave({ color: 'gold', intensity: 'epic' });
     }
 
     const updatedPhaseHistory = {
@@ -609,6 +576,7 @@ export const handleToggleTask = (taskId: string, e?: any) => {
       } else {
         spawnJuiceParticle({ x: posX, y: posY, text: '¡Completado!', type: 'custom', colorClass: 'text-emerald-400 bg-emerald-950/90 border-emerald-500' });
         stateUI.addFloatingEffect({ x: posX, y: posY - 20, text: `+${xpReward} XP`, type: 'xp' });
+        triggerShockwave({ color: 'emerald', intensity: 'subtle' });
       }
 
       setTimeout(() => {

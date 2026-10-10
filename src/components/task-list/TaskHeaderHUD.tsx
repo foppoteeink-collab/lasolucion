@@ -89,7 +89,7 @@ export const TaskHeaderHUD: React.FC<TaskHeaderHUDProps> = ({
             className="px-3.5 py-1.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-black font-anton tracking-wider text-xs uppercase transition-all shadow-[0_0_12px_rgba(0,240,255,0.3)] flex items-center gap-1.5 cursor-pointer active:scale-95"
           >
             <Plus className="w-4 h-4 stroke-[2.5]" />
-            <span>Nueva Misión</span>
+            <span>Nueva Tarea</span>
           </button>
         </div>
       </div>

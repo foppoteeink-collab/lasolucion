@@ -7,6 +7,7 @@ coverage/
 
 # Build output - never commit
 dist/
+.firebase/
 la_solucion_codigo_fuente/
 La solucion 2 despues de subido (Compilado para Netlify)/
 

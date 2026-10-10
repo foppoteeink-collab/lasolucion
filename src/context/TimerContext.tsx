@@ -5,8 +5,7 @@ import { quantumSoundscape } from '../utils/quantumSoundscape';
 import { notificationService } from '../utils/notifications';
 import { getNotificationSettings } from '../utils/notificationScheduler';
 import { getTodayDateString } from '../utils/date';
-import { safeGetItem, safeSetItem } from '../utils/storage';
-import confetti from 'canvas-confetti';
+import { triggerShockwave } from '../utils/celebration';
 import * as gameEngine from '../engine/gameEngine';
 import { useUIStore } from '../store/useUIStore';
 import { useAppStore } from '../store/useAppStore';
@@ -208,9 +207,7 @@ const setFocusModeActive = useUIStore(s => s.setFocusModeActive);
           quantumSoundscape.stop(1.5);
         }
       } catch (e) {}
-      try {
-        confetti({ particleCount: 85, spread: 70, origin: { y: 0.6 } });
-      } catch (e) {}
+      triggerShockwave({ color: 'cyan', intensity: 'medium' });
 
       const completedSession: PomodoroSession = {
         id: `pomo-${Date.now()}`,

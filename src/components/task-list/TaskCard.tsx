@@ -138,35 +138,17 @@ const getCategoryStyle = (category?: string): CategoryStyle => {
 };
 
 const getRarityBadge = (task: TaskItem) => {
-  const xp = task.xpReward || 10;
-  const coins = task.coinReward || 0;
-  const isLegendary = task.isTracked2166 || task.isLegendaryBounty || xp >= 40;
-  const isEpic = !isLegendary && (xp >= 25 || coins >= 15);
-  const isRare = !isLegendary && !isEpic && xp >= 15;
+  const isLegendary = task.isTracked2166 || task.isLegendaryBounty;
 
   if (isLegendary) {
     return {
-      badgeStyle: 'bg-[#1c1200] border-amber-400/90 text-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.6)] font-extrabold',
-      label: '👑 LEGENDARIA',
+      badgeStyle: 'bg-[#1c1200] border-amber-400/90 text-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.5)] font-bold',
+      label: '👑 21/66',
       icon: <Sparkles className="w-2.5 h-2.5 text-amber-300 animate-spin" />
     };
   }
-  if (isEpic) {
-    return {
-      badgeStyle: 'bg-[#160228] border-purple-400/80 text-purple-300 shadow-[0_0_10px_rgba(168,85,247,0.5)] font-bold',
-      label: '🔮 ÉPICA',
-      icon: <Zap className="w-2.5 h-2.5 text-purple-300" />
-    };
-  }
-  if (isRare) {
-    return {
-      badgeStyle: 'bg-[#02132b] border-blue-400/70 text-blue-300 shadow-[0_0_8px_rgba(59,130,246,0.4)] font-bold',
-      label: '⚔️ RARA',
-      icon: <Zap className="w-2.5 h-2.5 text-blue-300" />
-    };
-  }
   return {
-    badgeStyle: 'bg-[#010a12] border-cyan-500/40 text-cyan-300 shadow-[0_0_6px_rgba(0,240,255,0.2)] font-semibold',
+    badgeStyle: 'bg-[#010a12]/80 border-cyan-500/30 text-cyan-300 shadow-[0_0_6px_rgba(0,240,255,0.15)] font-medium',
     label: '',
     icon: <Zap className="w-2.5 h-2.5 text-cyan-400" />
   };
@@ -311,7 +293,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
             )}
             <span className={`px-2 py-0.5 rounded-md border text-[10px] font-mono uppercase tracking-wider flex items-center gap-1 ${catStyle.bgBadge}`}>
               {getCategoryIcon(task.category)}
-              <span>{task.category || 'Misión'}</span>
+              <span>{task.category || 'Tarea'}</span>
             </span>
           </div>
 
@@ -324,7 +306,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
             />
           </h3>
 
-          {task.notes && (
+          {task.notes && !task.notes.includes('Directiva del Oráculo') && (
             <p className="text-xs text-slate-400 mt-1 line-clamp-2 font-mono">
               {task.notes}
             </p>
@@ -399,7 +381,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
                   type="button"
                   onClick={handleReRoll}
                   className="p-2 rounded-xl bg-yellow-500/10 hover:bg-yellow-500/30 text-yellow-400 hover:text-white transition-colors cursor-pointer border border-yellow-500/30"
-                  title={`Tirar el Dado del Destino (${reRollDice} disponibles) para cambiar tarea`}
+                  title={`Cambiar tarea (${reRollDice} disponibles)`}
                 >
                   <Dices className="w-4 h-4" />
                 </button>
@@ -412,7 +394,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
                     handleEdit(task);
                   }}
                   className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition-colors cursor-pointer border border-white/10"
-                  title="Editar Misión"
+                  title="Editar tarea"
                 >
                   <Edit3 className="w-4 h-4" />
                 </button>
@@ -425,7 +407,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
                     handleDelete(task.id);
                   }}
                   className="p-2 rounded-xl bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 hover:text-rose-200 transition-colors cursor-pointer border border-rose-500/30"
-                  title="Eliminar Misión"
+                  title="Eliminar tarea"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>

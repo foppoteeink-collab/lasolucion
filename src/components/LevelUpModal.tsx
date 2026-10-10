@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { PlayerStats } from '../types';
 import { Sparkles, Zap, Shield, Brain, Heart, Crown, ChevronRight } from 'lucide-react';
 import { soundFX } from '../utils/audio';
-import confetti from 'canvas-confetti';
+import { triggerShockwave } from '../utils/celebration';
 import { triggerHaptic, isHapticsSupported } from '../utils/haptics';
 import { useUIStore } from '../store/useUIStore';
 
@@ -38,29 +38,13 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({
         navigator.vibrate([100, 50, 100, 50, 300]);
       }
 
-      // Game Feel 4: Sci-Fi Neon Confetti Burst (Lime #d6f421, Purple #9600ff, Orange #fb5607)
-      const duration = 3200;
-      const end = Date.now() + duration;
-      const frame = () => {
-        confetti({
-          particleCount: 8,
-          angle: 60,
-          spread: 65,
-          origin: { x: 0 },
-          colors: ['#d6f421', '#9600ff', '#fb5607', '#00f0ff']
-        });
-        confetti({
-          particleCount: 8,
-          angle: 120,
-          spread: 65,
-          origin: { x: 1 },
-          colors: ['#d6f421', '#9600ff', '#fb5607', '#00f0ff']
-        });
-        if (Date.now() < end) {
-          requestAnimationFrame(frame);
-        }
-      };
-      frame();
+      // Game Feel 4: Epic Gold & Violet Shockwave Energy Pulses
+      triggerShockwave({ color: 'gold', intensity: 'epic' });
+      const timer = setTimeout(() => {
+        triggerShockwave({ color: 'violet', intensity: 'epic' });
+      }, 450);
+
+      return () => clearTimeout(timer);
     }
   }, [isOpen]);
 

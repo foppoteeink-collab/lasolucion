@@ -47,8 +47,7 @@ import { formatMoney, getSavedCurrencySymbol, setSavedCurrencySymbol, SUPPORTED_
 import { getHabitBaseId } from '../intelligence/masteryEngine';
 import { CHARACTER_CLASSES, CharacterClassOption, getRankForLevel } from '../data/defaults';
 import { soundFX } from '../utils/audio';
-import { HABIT_ENERGY_DETAILS, detectHabitEnergy } from '../utils/habitEnergyDetector';
-import confetti from 'canvas-confetti';
+import { triggerShockwave } from '../utils/celebration';
 import {
   ResponsiveContainer,
   BarChart,
@@ -177,14 +176,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
         avatarIcon: charClass.avatar,
       });
     }
-    try {
-      confetti({
-        particleCount: 35,
-        spread: 50,
-        origin: { y: 0.6 },
-        colors: ['#00f0ff', '#d946ef', '#39ff14', '#facc15'],
-      });
-    } catch (e) {}
+    triggerShockwave({ color: 'violet', intensity: 'medium' });
   };
 
   const xpPercent = Math.min(100, Math.max(0, Math.floor((stats.currentXp / Math.max(1, stats.requiredXp)) * 100)));

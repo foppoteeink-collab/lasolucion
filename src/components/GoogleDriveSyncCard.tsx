@@ -352,7 +352,7 @@ export const GoogleDriveSyncCard: React.FC = () => {
                 Se aplicarán los datos guardados en la nube de tu Google Drive. Esto sincronizará:
               </p>
               <ul className="list-disc list-inside text-[11px] text-slate-400 space-y-1 font-mono">
-                <li>Nivel {pendingDownloadData.stats?.level || 1} • {pendingDownloadData.stats?.rankTitle || 'Operador'}</li>
+                <li>Nivel {pendingDownloadData.stats?.level || 1} • {pendingDownloadData.stats?.rankTitle || 'Aventurero'}</li>
                 <li>Monedas: {pendingDownloadData.stats?.coins || 0} • XP: {pendingDownloadData.stats?.xp || 0}</li>
                 <li>Hábitos: {pendingDownloadData.customHabits?.length || 0} registrados</li>
                 <li>Fecha del respaldo: {pendingDownloadData.exportedAt ? new Date(pendingDownloadData.exportedAt).toLocaleString() : 'N/A'}</li>

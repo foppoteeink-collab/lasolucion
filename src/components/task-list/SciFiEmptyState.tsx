@@ -50,29 +50,29 @@ export const SciFiEmptyState: React.FC<SciFiEmptyStateProps> = ({
           <span className="absolute -inset-1.5 rounded-3xl border border-cyan-400/30 animate-ping pointer-events-none" />
         </div>
 
-        {/* Sci-Fi Headline */}
-        <h3 className="text-base sm:text-xl font-black text-white uppercase tracking-wider mb-1.5 drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">
+        {/* Headline */}
+        <h3 className="text-base sm:text-xl font-bold text-white tracking-wide mb-1.5 drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">
           {searchTerm
-            ? 'Sin Señal en Radar'
+            ? 'Sin resultados'
             : selectedCategory !== 'todos'
-            ? `Sector Despejado: ${selectedCategory.toUpperCase()}`
+            ? `Sin tareas en: ${selectedCategory}`
             : activeFilter !== 'todos'
-            ? `Filtro Vacío: ${activeFilter.toUpperCase()}`
-            : 'Sector Despejado — Sin Misiones Activas'}
+            ? `Sin tareas en este filtro`
+            : 'Todo al día — Sin tareas pendientes'}
         </h3>
 
         {/* Descriptive Body Copy */}
         <p className="text-xs sm:text-sm text-slate-300 font-sans leading-relaxed mb-6">
           {searchTerm ? (
-            <>No se encontraron misiones registradas que coincidan con la búsqueda <span className="text-cyan-300 font-bold">"{searchTerm}"</span>.</>
+            <>No encontramos tareas que coincidan con la búsqueda <span className="text-cyan-300 font-bold">"{searchTerm}"</span>.</>
           ) : isFiltered ? (
-            'No hay misiones asignadas dentro del filtro o categoría seleccionada. Puedes ajustar los filtros o desplegar una nueva misión.'
+            'No hay tareas asignadas dentro del filtro o categoría seleccionada. Puedes ajustar los filtros o agregar una nueva tarea.'
           ) : (
-            'Excelente trabajo, Operador. Todas las amenazas de esta jornada han sido neutralizadas o aún no has desplegado tu rutina para hoy.'
+            '¡Excelente trabajo! Has completado todas tus actividades o aún no has programado tareas para hoy.'
           )}
         </p>
 
-        {/* Sci-Fi Interactive Buttons (Strict min-h-[44px] min-w-[44px] touch targets) */}
+        {/* Interactive Buttons */}
         <div className="flex items-center justify-center gap-3 flex-wrap w-full">
           {/* Primary Create Task Button */}
           <button
@@ -81,10 +81,10 @@ export const SciFiEmptyState: React.FC<SciFiEmptyStateProps> = ({
               soundFX.playClick();
               onAddTask();
             }}
-            className="min-h-[44px] px-5 py-2.5 rounded-xl sm:rounded-2xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-black text-xs sm:text-sm shadow-[0_0_15px_rgba(0,240,255,0.5)] active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer border border-cyan-200"
+            className="min-h-[44px] px-5 py-2.5 rounded-xl sm:rounded-2xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold text-xs sm:text-sm shadow-[0_0_15px_rgba(0,240,255,0.4)] active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer border border-cyan-200"
           >
             <Plus className="w-4 h-4 stroke-[3]" />
-            <span>Desplegar Nueva Misión</span>
+            <span>Agregar Tarea</span>
           </button>
 
           {/* Reset Routine Button */}

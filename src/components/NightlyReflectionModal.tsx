@@ -18,7 +18,7 @@ import {
   Star,
   Check
 } from 'lucide-react';
-import confetti from 'canvas-confetti';
+import { triggerShockwave } from '../utils/celebration';
 import { soundFX } from '../utils/audio';
 import { getTodayDateString, formatDateFullSpanish } from '../utils/date';
 
@@ -134,14 +134,7 @@ export const NightlyReflectionModal: React.FC<NightlyReflectionModalProps> = ({
     }
 
     soundFX.playLevelUp();
-    try {
-      confetti({
-        particleCount: 60,
-        spread: 80,
-        origin: { y: 0.6 },
-        colors: ['#00f0ff', '#d946ef', '#39ff14', '#facc15'],
-      });
-    } catch (e) {}
+    triggerShockwave({ color: 'cyan', intensity: 'epic' });
 
     if (reflectionText.trim() && onAddJournalEntry) {
       onAddJournalEntry(`🌙 Cierre de Jornada (${archetype.name}): ${reflectionText.trim()}`);
