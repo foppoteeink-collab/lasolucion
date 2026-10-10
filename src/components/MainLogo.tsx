@@ -49,18 +49,18 @@ export const MainLogo: React.FC<MainLogoProps> = ({
   ];
 
   const sizeClasses = {
-    sm: 'text-lg tracking-[0.3em]',
-    md: 'text-2xl tracking-[0.3em]',
-    lg: 'text-4xl tracking-[0.25em]',
-    xl: 'text-5xl sm:text-6xl tracking-[0.2em]',
-    massive: 'text-4xl sm:text-6xl md:text-7xl lg:text-8xl tracking-[0.2em]',
+    sm: 'text-base sm:text-lg tracking-[0.14em]',
+    md: 'text-xl sm:text-2xl tracking-[0.12em]',
+    lg: 'text-3xl sm:text-4xl tracking-[0.1em]',
+    xl: 'text-4xl sm:text-5xl md:text-6xl tracking-[0.08em]',
+    massive: 'text-3xl sm:text-5xl md:text-6xl lg:text-7xl tracking-[0.08em]',
   };
 
   return (
     <h1
       id="main-logo-text-flow"
-      className={`font-['Anton'] uppercase select-none flex flex-wrap justify-center items-center font-black leading-tight ${speed === 'fast' ? 'focus-in-contract-fast' : 'focus-in-contract'} ${sizeClasses[size]} ${className}`}
-      style={{ fontFamily: "'Anton', sans-serif" }}
+      className={`font-['Russo_One'] font-russo uppercase select-none flex flex-wrap justify-center items-center font-black leading-tight ${speed === 'fast' ? 'focus-in-contract-fast' : 'focus-in-contract'} ${sizeClasses[size]} ${className}`}
+      style={{ fontFamily: "'Russo One', sans-serif" }}
     >
       {characters.map((char, index) => {
         if (char === ' ') {

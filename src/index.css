@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Anton&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Russo+One&display=swap');
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -15,9 +15,9 @@
     min-height: 100%;
   }
   
-  h1, h2, h3, h4, h5, h6, .font-display, .font-anton {
-    font-family: 'Anton', 'Outfit', system-ui, sans-serif !important;
-    letter-spacing: 0.04em;
+  h1, h2, h3, h4, h5, h6, .font-display, .font-anton, .font-russo {
+    font-family: 'Russo One', 'Plus Jakarta Sans', system-ui, sans-serif !important;
+    letter-spacing: 0.03em;
   }
 }
 
@@ -36,8 +36,8 @@
   --color-magia: #9600ff;
 }
 
-.font-anton {
-  font-family: 'Anton', 'Outfit', system-ui, sans-serif !important;
+.font-anton, .font-russo {
+  font-family: 'Russo One', sans-serif !important;
 }
 
 .accent-energy, .text-energy {
