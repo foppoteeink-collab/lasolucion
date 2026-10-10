@@ -43,6 +43,7 @@ import { usePlayerStore } from '../../store/usePlayerStore';
 import { soundFX } from '../../utils/audio';
 import { getHabitBaseId, computeHabitStreak } from '../../intelligence/masteryEngine';
 import { getTodayDateString } from '../../utils/date';
+import { HABIT_ENERGY_DETAILS, detectHabitEnergy } from '../../utils/habitEnergyDetector';
 
 /**
  * Robust cybernetic habit icon renderer:
@@ -266,7 +267,7 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
   const customHabits = useTaskStore(s => s.customHabits);
   const tasksByDate = useTaskStore(s => s.tasksByDate);
   const playerLevel = usePlayerStore(s => s.stats.level || 1);
-  const [isMilestonesModalOpen, setIsMilestonesModalOpen] = useState(false);
+  const [selectedHabitForProtocol, setSelectedHabitForProtocol] = useState<TaskItem | null>(null);
   const [activatedNotice, setActivatedNotice] = useState<string | null>(null);
 
   // Strictly select dedicated quick/discipline habits for 21/66 day tracking, deduplicated by title and ID
@@ -329,7 +330,7 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
           </div>
           <div>
             <h3 className="text-xs sm:text-sm font-black font-anton text-cyan-300 uppercase tracking-wider flex items-center gap-1.5">
-              <span>Check Rápido de Hábitos</span>
+              <span>Hábitos (Protocolo Ley 21/66)</span>
               <span className="text-[10px] font-mono bg-cyan-950/90 px-2 py-0.5 rounded-md border border-cyan-500/60 text-cyan-200">
                 {quickHabits.length}
               </span>
@@ -345,23 +346,10 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
               onOpenAddModal(true);
             }}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cyan-950/80 hover:bg-cyan-900/80 text-cyan-300 border border-cyan-500/60 hover:border-cyan-400 text-xs font-black transition-all cursor-pointer min-h-[38px] active:scale-95 shadow-[0_0_12px_rgba(0,240,255,0.2)]"
-            title="Crear un nuevo hábito de disciplina con contador"
+            title="Crear un nuevo hábito con Protocolo Ley 21/66 y Auras para Kai"
           >
             <Plus className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
             <span>+ Hábito</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              soundFX.playClick();
-              setIsMilestonesModalOpen(true);
-            }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-yellow-950/80 via-amber-900/60 to-yellow-950/80 text-yellow-300 border border-yellow-500/60 hover:border-yellow-400 text-xs font-black transition-all cursor-pointer min-h-[38px] active:scale-95 shadow-[0_0_12px_rgba(234,179,8,0.25)]"
-            title="Ver matriz de maestría neuroplástica (rachas 21 y 66 días)"
-          >
-            <Trophy className="w-3.5 h-3.5 text-yellow-400 shrink-0" />
-            <span>Maestría (21/66d)</span>
           </button>
         </div>
       </div>
@@ -385,7 +373,7 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
       <div className="flex flex-wrap gap-2 items-center">
         {quickHabits.length === 0 ? (
           <div className="w-full text-center py-3 text-xs text-slate-500 dark:text-cyan-300/70 italic">
-            No tienes hábitos de Check Rápido activos. Abre "Hitos 21 / 66d" para gestionarlos.
+            No tienes hábitos activos aún. Toca "+ Hábito" para registrar tu primer hábito con Protocolo Ley 21/66.
           </div>
         ) : (
           quickHabits.map((qh, idx) => {
@@ -456,15 +444,21 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                     {current}/{target}
                   </span>
 
-                  {/* Micro Streak Flame Badge */}
+                  {/* Micro Streak Flame Badge — Toca para ver Protocolo Ley 21/66 y Auras para Kai */}
                   {currentStreak > 0 && !isLocked && (
-                    <span
-                      className="text-[10px] font-mono font-bold text-amber-300 bg-amber-950/70 px-1 py-0.5 rounded border border-amber-500/50 flex items-center gap-0.5 shrink-0"
-                      title={`Racha de ${currentStreak} días`}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        soundFX.playClick();
+                        setSelectedHabitForProtocol(qh);
+                      }}
+                      className="text-[10px] font-mono font-bold text-amber-300 bg-amber-950/70 hover:bg-amber-900/90 px-1 py-0.5 rounded border border-amber-500/50 hover:border-amber-400 flex items-center gap-0.5 shrink-0 cursor-pointer transition-all active:scale-95"
+                      title={`Ver progreso de Protocolo Ley 21/66 y Auras de Kai para "${qh.title}"`}
                     >
                       <Flame className="w-2.5 h-2.5 text-amber-400 fill-amber-400/30" />
                       <span>{currentStreak}d</span>
-                    </span>
+                    </button>
                   )}
 
                   {/* Micro Lock icon if locked */}
@@ -513,288 +507,172 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
         )}
       </div>
 
-      {/* 21 & 66 DAYS MILESTONE MODAL */}
-      {isMilestonesModalOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in"
-          onClick={() => setIsMilestonesModalOpen(false)}
-        >
+      {/* PROTOCOLO LEY 21/66 & AURAS DE KAI MODAL (ENFOCADO EN EL HÁBITO SELECCIONADO) */}
+      {selectedHabitForProtocol && (() => {
+        const qh = selectedHabitForProtocol;
+        const baseId = getHabitBaseId(qh);
+        const mastery = habitMastery?.[baseId] || habitMastery?.[qh.id];
+        const { currentStreak: streak } = computeHabitStreak(
+          qh,
+          tasksByDate,
+          currentDate,
+          mastery
+        );
+        const energyKey = (qh.habitEnergyType as any) || detectHabitEnergy(qh.title, qh.category as any);
+        const energyDetail = HABIT_ENERGY_DETAILS[energyKey] || HABIT_ENERGY_DETAILS.discipline;
+
+        const p21 = Math.min(100, Math.round((streak / 21) * 100));
+        const p66 = Math.min(100, Math.round((streak / 66) * 100));
+        const has21 = streak >= 21 || mastery?.isMaltzReached;
+        const has66 = streak >= 66 || mastery?.isMastered;
+
+        return (
           <div
-            className="w-full max-w-xl rounded-2xl bg-[#001830] border border-cyan-400 p-4 sm:p-6 shadow-[0_0_35px_rgba(0,240,255,0.4)] text-white max-h-[88dvh] sm:max-h-[85vh] flex flex-col overflow-hidden font-sans"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in"
+            onClick={() => setSelectedHabitForProtocol(null)}
           >
-            {/* Modal Header */}
-            <div className="flex items-start justify-between border-b border-cyan-900/80 pb-3 shrink-0">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-gradient-to-br from-amber-500 to-yellow-600 text-slate-950 font-black shadow-[0_0_12px_rgba(234,179,8,0.5)]">
-                  <Trophy className="w-5 h-5" />
+            <div
+              className="w-full max-w-lg rounded-2xl bg-[#001426] border border-cyan-500/50 p-5 sm:p-6 shadow-[0_0_40px_rgba(0,240,255,0.25)] text-white max-h-[90vh] flex flex-col overflow-hidden font-sans"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-start justify-between border-b border-cyan-900/60 pb-3 shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-cyan-950 border border-cyan-500/60 flex items-center justify-center shrink-0">
+                    {renderHabitIcon(qh.quickIcon, qh.title, 'w-6 h-6')}
+                  </div>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                      <span>{qh.title}</span>
+                    </h3>
+                    <p className="text-xs text-cyan-300 font-mono flex items-center gap-1.5 mt-0.5">
+                      <Flame className="w-3.5 h-3.5 text-amber-400 fill-amber-400/30" />
+                      <span>Racha actual: <strong className="text-white">{streak} días</strong></span>
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-base sm:text-lg font-black text-white flex items-center gap-2">
-                    <span>Maestría y Rachas: 21 & 66 Días</span>
-                  </h3>
-                  <p className="text-xs text-cyan-300/90 mt-0.5">
-                    Consolidación neuroplástica y automatización de hábitos
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedHabitForProtocol(null)}
+                  className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="flex-1 overflow-y-auto py-4 space-y-4 pr-1 scrollbar-thin scrollbar-thumb-cyan-800">
+                {/* Science Note */}
+                <div className="p-3 rounded-xl bg-[#000a14] border border-white/10 text-xs text-slate-300 space-y-1">
+                  <span className="font-bold text-cyan-300 flex items-center gap-1">
+                    <Sparkles className="w-3.5 h-3.5 text-cyan-400" /> Protocolo Ley 21/66 (Neuroplasticidad)
+                  </span>
+                  <p className="text-[11px] text-slate-400 leading-relaxed">
+                    Mantén tu racha diaria en este hábito para ganar y desbloquear el Aura y la Forma Maestra para Kai.
                   </p>
                 </div>
-              </div>
 
-              <button
-                type="button"
-                onClick={() => setIsMilestonesModalOpen(false)}
-                className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-cyan-950/60 border border-transparent hover:border-cyan-700/60 transition-colors cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+                {/* 21 Days — Aura for Kai */}
+                <div className={`p-4 rounded-xl border space-y-2.5 transition-all ${
+                  has21 
+                    ? 'bg-purple-950/40 border-purple-500/60 shadow-[0_0_15px_rgba(168,85,247,0.2)]'
+                    : 'bg-black/40 border-white/10'
+                }`}>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-purple-300 flex items-center gap-1.5">
+                      <Zap className="w-4 h-4 text-purple-400" />
+                      <span>Meta 21 Días: ${energyDetail.auraName21}</span>
+                    </span>
+                    <span className="font-mono font-bold text-purple-200">
+                      ${streak}/21d (${p21}%)
+                    </span>
+                  </div>
 
-            {/* Modal Scrollable Body */}
-            <div className="flex-1 overflow-y-auto py-4 pr-1 space-y-5 scrollbar-thin scrollbar-thumb-cyan-700 scrollbar-track-transparent">
-              {activatedNotice && (
-                <div className="p-3 rounded-xl bg-emerald-950/90 border border-emerald-500 text-emerald-200 text-xs font-bold flex items-center gap-2 animate-in fade-in">
-                  <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>{activatedNotice}</span>
-                </div>
-              )}
-
-              {/* Science Card */}
-              <div className="p-3.5 sm:p-4 rounded-xl bg-[#001020] border border-cyan-800/80 text-xs space-y-2">
-                <div className="flex items-center gap-2 text-yellow-400 font-bold">
-                  <Sparkles className="w-4 h-4" />
-                  <span>¿Por qué 21 y 66 Días?</span>
-                </div>
-                <p className="text-slate-300 leading-relaxed">
-                  • <strong className="text-cyan-300">21 Días (Regla de Maltz):</strong> Mínimo requerido para romper viejos patrones e instalar un nuevo circuito neuroquímico.
-                </p>
-                <p className="text-slate-300 leading-relaxed">
-                  • <strong className="text-amber-300">66 Días (Estudio de Phillippa Lally / Cialdini):</strong> Tiempo promedio en que un comportamiento se convierte en <strong className="text-white">automatización pura</strong> e inconsciente.
-                </p>
-              </div>
-
-              {/* SECTION 1: Active Tracked Discipline Habits */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <h4 className="text-xs font-black text-cyan-300 uppercase tracking-widest flex items-center gap-1.5">
-                    <ShieldCheck className="w-4 h-4 text-cyan-400" />
-                    <span>Tus Hábitos de Disciplina Activos</span>
-                  </h4>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundFX.playClick();
-                      setIsMilestonesModalOpen(false);
-                      onOpenAddModal(true);
-                    }}
-                    className="px-2.5 py-1.5 rounded-xl text-xs font-black bg-cyan-500 hover:bg-cyan-400 text-slate-950 flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 shadow-sm"
-                    title="Crear un hábito propio con seguimiento de 21 y 66 días"
-                  >
-                    <Plus className="w-3.5 h-3.5 stroke-[3]" />
-                    <span>+ Crear Hábito (21/66d)</span>
-                  </button>
-                </div>
-
-                {quickHabits.length === 0 ? (
-                  <p className="text-xs text-slate-400 italic py-2">
-                    Aún no tienes hábitos de disciplina activados. Selecciona uno del catálogo inferior.
+                  <p className="text-[11px] text-slate-300 leading-relaxed">
+                    ${energyDetail.auraDesc21}
                   </p>
-                ) : (
-                  quickHabits.map((qh, idx) => {
-                    const baseId = getHabitBaseId(qh);
-                    const mastery = habitMastery?.[baseId] || habitMastery?.[qh.id];
-                    const { currentStreak: streak, highestStreak } = computeHabitStreak(
-                      qh,
-                      tasksByDate,
-                      currentDate,
-                      mastery
-                    );
 
-                    const p21 = Math.min(100, Math.round((streak / 21) * 100));
-                    const p66 = Math.min(100, Math.round((streak / 66) * 100));
+                  <div className="w-full h-2 bg-black/60 rounded-full border border-purple-900/60 overflow-hidden">
+                    <div 
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        has21 ? 'bg-purple-400 shadow-[0_0_8px_rgba(168,85,247,0.8)]' : 'bg-purple-600/70'
+                      }`}
+                      style={{ width: `${p21}%` }}
+                    />
+                  </div>
 
-                    const has21 = streak >= 21 || mastery?.isMaltzReached;
-                    const has66 = streak >= 66 || mastery?.isMastered;
+                  <div className="text-[11px] font-mono flex items-center justify-between">
+                    <span className={has21 ? 'text-emerald-400 font-bold' : 'text-slate-400'}>
+                      {has21 ? '✓ ¡Aura desbloqueada para Kai!' : `Faltan ${Math.max(0, 21 - streak)} días para desbloquear el aura`}
+                    </span>
+                  </div>
+                </div>
 
-                    return (
-                      <div
-                        key={qh.id ? `qh-modal-${qh.id}-${idx}` : `qh-modal-${idx}`}
-                        className="p-3.5 rounded-xl bg-[#002244] border border-cyan-700/60 space-y-2.5"
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 flex items-center justify-center shrink-0">
-                              {renderHabitIcon(qh.quickIcon, qh.title, 'w-6 h-6')}
-                            </div>
-                            <div>
-                              <h5 className="text-xs sm:text-sm font-black text-white">{qh.title}</h5>
-                              <p className="text-[11px] text-slate-300">{qh.description || 'Hábito de disciplina diaria'}</p>
-                            </div>
-                          </div>
+                {/* 66 Days — Master Form */}
+                <div className={`p-4 rounded-xl border space-y-2.5 transition-all ${
+                  has66 
+                    ? 'bg-amber-950/40 border-amber-500/60 shadow-[0_0_15px_rgba(245,158,11,0.2)]'
+                    : 'bg-black/40 border-white/10'
+                }`}>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-amber-300 flex items-center gap-1.5">
+                      <Trophy className="w-4 h-4 text-amber-400" />
+                      <span>Meta 66 Días: ${energyDetail.masterForm66}</span>
+                    </span>
+                    <span className="font-mono font-bold text-amber-200">
+                      ${streak}/66d (${p66}%)
+                    </span>
+                  </div>
 
-                          <div className="flex items-center gap-3 shrink-0">
-                            <div className="text-right">
-                              <div className="flex items-center gap-1 text-xs font-black text-amber-300">
-                                <Flame className="w-4 h-4 text-amber-400 fill-amber-400/20" />
-                                <span>{streak} Días</span>
-                              </div>
-                              <span className="text-[10px] text-slate-400 font-mono">racha actual</span>
-                            </div>
+                  <p className="text-[11px] text-slate-300 leading-relaxed">
+                    ${energyDetail.masterDesc66}
+                  </p>
 
-                            <div className="flex items-center gap-1.5">
-                              {/* Edit Habit Button */}
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  soundFX.playClick();
-                                  setIsMilestonesModalOpen(false);
-                                  onOpenEditModal(qh);
-                                }}
-                                className="px-2.5 py-1.5 rounded-xl text-cyan-300 hover:text-white bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-600/80 hover:border-cyan-400 transition-all cursor-pointer flex items-center gap-1.5 text-xs font-bold active:scale-95 shadow-sm"
-                                title={`Editar hábito "${qh.title}" (metas, días y 21/66d)`}
-                              >
-                                <Edit3 className="w-3.5 h-3.5 text-cyan-400" />
-                                <span>Editar</span>
-                              </button>
+                  <div className="w-full h-2 bg-black/60 rounded-full border border-amber-900/60 overflow-hidden">
+                    <div 
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        has66 ? 'bg-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.8)]' : 'bg-amber-600/70'
+                      }`}
+                      style={{ width: `${p66}%` }}
+                    />
+                  </div>
 
-                              {/* Delete Habit Button */}
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  onDeleteTask(qh.id);
-                                }}
-                                className="px-2.5 py-1.5 rounded-xl text-red-400 hover:text-red-200 bg-red-950/60 hover:bg-red-900/80 border border-red-700/80 transition-all cursor-pointer flex items-center gap-1 text-xs font-bold active:scale-95 shadow-sm"
-                                title={`Eliminar el hábito "${qh.title}"`}
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                                <span>Borrar</span>
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Progress Bar 21 Days */}
-                        <div>
-                          <div className="flex items-center justify-between text-[11px] mb-1">
-                            <span className="font-bold text-cyan-300 flex items-center gap-1">
-                              <Award className="w-3.5 h-3.5 text-cyan-400" /> Hito 21 Días (Formación):
-                            </span>
-                            <span className="font-mono text-cyan-200">
-                              {streak}/21d ({p21}%) {has21 && '✓ ¡LOGRADO!'}
-                            </span>
-                          </div>
-                          <div className="w-full h-2 bg-black/60 rounded-full border border-cyan-800 p-0.5 overflow-hidden">
-                            <div
-                              className={`h-full rounded-full transition-all duration-500 ${
-                                has21 ? 'bg-cyan-400 shadow-[0_0_8px_rgba(0,240,255,0.8)]' : 'bg-cyan-600'
-                              }`}
-                              style={{ width: `${p21}%` }}
-                            />
-                          </div>
-                        </div>
-
-                        {/* Progress Bar 66 Days */}
-                        <div>
-                          <div className="flex items-center justify-between text-[11px] mb-1">
-                            <span className="font-bold text-amber-300 flex items-center gap-1">
-                              <Trophy className="w-3.5 h-3.5 text-amber-400" /> Hito 66 Días (Automatización):
-                            </span>
-                            <span className="font-mono text-amber-200">
-                              {streak}/66d ({p66}%) {has66 && '★ ¡AUTOMATIZADO!'}
-                            </span>
-                          </div>
-                          <div className="w-full h-2 bg-black/60 rounded-full border border-amber-900 p-0.5 overflow-hidden">
-                            <div
-                              className={`h-full rounded-full transition-all duration-500 ${
-                                has66 ? 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]' : 'bg-amber-600'
-                              }`}
-                              style={{ width: `${p66}%` }}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-
-              {/* SECTION 2: Preset Habits Catalog */}
-              <div className="space-y-3 pt-2 border-t border-cyan-900/80">
-                <h4 className="text-xs font-black text-amber-300 uppercase tracking-widest flex items-center gap-1.5">
-                  <Sparkles className="w-4 h-4 text-amber-400" />
-                  <span>Catálogo de Hábitos Recomendados (21 / 66 Días)</span>
-                </h4>
-                <p className="text-[11px] text-slate-300">
-                  Activa hábitos clave de superación y disciplina personal en tu Check Rápido:
-                </p>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  {PRESET_2166_HABITS.map((preset, idx) => {
-                    const isAlreadyActive = tasks.some(
-                      (t) => (t.title || "").toLowerCase() === (preset.title || "").toLowerCase()
-                    );
-
-                    return (
-                      <div
-                        key={idx}
-                        className="p-3 rounded-xl bg-[#001428] border border-cyan-800/60 hover:border-cyan-500 transition-all flex flex-col justify-between gap-2"
-                      >
-                        <div className="flex items-start gap-2">
-                          <div className="w-8 h-8 flex items-center justify-center shrink-0 mt-0.5">
-                            {renderHabitIcon(preset.quickIcon, preset.title, 'w-6 h-6')}
-                          </div>
-                          <div>
-                            <h5 className="text-xs font-bold text-white leading-snug">{preset.title}</h5>
-                            <p className="text-[10px] text-slate-400 mt-0.5 leading-tight">{preset.description}</p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center justify-between pt-1 border-t border-cyan-950">
-                          <span className="text-[10px] font-mono text-cyan-300 font-bold">
-                            Objetivo: {preset.targetCount} {preset.unit}/día
-                          </span>
-
-                          <button
-                            type="button"
-                            onClick={() => handleActivatePreset(preset)}
-                            disabled={isAlreadyActive}
-                            className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
-                              isAlreadyActive
-                                ? 'bg-cyan-950 text-cyan-400/60 border border-cyan-800/40 cursor-default'
-                                : 'bg-cyan-500 hover:bg-cyan-400 text-slate-950 border border-cyan-300 shadow-[0_0_8px_rgba(0,240,255,0.4)] active:scale-95'
-                            }`}
-                          >
-                            {isAlreadyActive ? (
-                              <>
-                                <Check className="w-3 h-3 text-cyan-400" />
-                                <span>Activo</span>
-                              </>
-                            ) : (
-                              <>
-                                <Plus className="w-3 h-3" />
-                                <span>+ Activar</span>
-                              </>
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
+                  <div className="text-[11px] font-mono flex items-center justify-between">
+                    <span className={has66 ? 'text-emerald-400 font-bold' : 'text-slate-400'}>
+                      {has66 ? '★ ¡Automatización total & Forma Maestra!' : `Faltan ${Math.max(0, 66 - streak)} días para la maestría`}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Modal Footer */}
-            <div className="pt-3 border-t border-cyan-900/80 flex justify-end shrink-0">
-              <button
-                type="button"
-                onClick={() => setIsMilestonesModalOpen(false)}
-                className="px-4 py-2 rounded-xl text-xs font-black text-slate-950 bg-cyan-400 hover:bg-cyan-300 transition-colors cursor-pointer shadow-[0_0_10px_rgba(0,240,255,0.4)]"
-              >
-                Cerrar Ventana
-              </button>
+              {/* Footer Actions */}
+              <div className="pt-3 border-t border-cyan-900/60 flex items-center justify-between gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const target = selectedHabitForProtocol;
+                    setSelectedHabitForProtocol(null);
+                    onOpenEditModal(target);
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-600/60 hover:border-cyan-400 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
+                >
+                  <Edit3 className="w-3.5 h-3.5" />
+                  <span>Configurar Hábito</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedHabitForProtocol(null)}
+                  className="px-4 py-1.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-black text-xs font-bold transition-all cursor-pointer"
+                >
+                  Cerrar
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 };

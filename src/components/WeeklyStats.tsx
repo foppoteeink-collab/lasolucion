@@ -610,7 +610,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
             <div className="mb-4 p-3 rounded-2xl bg-[#04020e] border border-cyan-500/30 shadow-[0_0_15px_rgba(0,240,255,0.1)]">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[10px] font-anton text-cyan-300 uppercase tracking-wider flex items-center gap-1">
-                  <Trophy className="w-3.5 h-3.5 text-amber-400" /> Insignias de Hitos y Maestría (21d / 66d)
+                  <Trophy className="w-3.5 h-3.5 text-amber-400" /> Insignias de Maestría y Auras (21d / 66d)
                 </span>
                 <span className="text-[10px] text-slate-400 font-mono">
                   {trackedHabits.filter(h => h.currentStreak >= 21).length} Desbloqueadas
