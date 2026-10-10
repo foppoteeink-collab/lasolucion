@@ -78,9 +78,7 @@ export const Header: React.FC<HeaderProps> = ({
   const unreadCount = notifications.filter(n => !n.read).length;
 
   const currentRank = getRankForLevel(stats.level);
-  const displayRankTitle = stats.rankTitle && (stats.level === 1 || stats.rankTitle !== 'Chispazo de Voluntad')
-    ? (stats.rankTitle === 'Aventurero' ? currentRank.title : stats.rankTitle)
-    : currentRank.title;
+  const displayRankTitle = currentRank.title;
 
   const xpPercent = Math.min(100, Math.max(0, (stats.currentXp / stats.requiredXp) * 100));
   const hpPercent = Math.min(100, Math.max(0, ((stats.hp || 100) / (stats.maxHp || 100)) * 100));

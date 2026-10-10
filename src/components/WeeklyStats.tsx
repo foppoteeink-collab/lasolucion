@@ -1,5 +1,6 @@
 import { FinanceDashboard } from "./FinanceDashboard";
 import { HeroProfileModal } from './HeroProfileModal';
+import { RanksModal } from './RanksModal';
 import { HoloCompanion } from './HoloCompanion';
 import { ScrollReveal } from './common/ScrollReveal';
 import React, { useState, useMemo, useEffect } from 'react';
@@ -165,6 +166,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
   setExpenses
 }) => {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [isRanksModalOpen, setIsRanksModalOpen] = useState(false);
 
   // --- CALCULATE RECORDS ---
   
@@ -183,9 +185,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
   const xpPercent = Math.min(100, Math.max(0, Math.floor((stats.currentXp / Math.max(1, stats.requiredXp)) * 100)));
   const selectedClassOption = CHARACTER_CLASSES.find(c => c.name === stats.characterClass) || CHARACTER_CLASSES[0];
   const activeRank = getRankForLevel(stats.level);
-  const displayRankTitle = stats.rankTitle && (stats.level === 1 || stats.rankTitle !== 'Chispazo de Voluntad')
-    ? (stats.rankTitle === 'Aventurero' ? activeRank.title : stats.rankTitle)
-    : activeRank.title;
+  const displayRankTitle = activeRank.title;
 
   const { maxDailyXp, maxPomodoro, maxHabitStreak, totalTasksDone } = useMemo(() => {
     let maxDailyXp = 0;
@@ -517,6 +517,12 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
         onUpdateStats={onUpdateStats} 
       />
 
+      <RanksModal
+        isOpen={isRanksModalOpen}
+        onClose={() => setIsRanksModalOpen(false)}
+        currentLevel={stats.level || 1}
+      />
+
       {/* ---------------- HERO RPG STATUS WINDOW (SOLO LEVELING SCI-FI) ---------------- */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-8">
         {/* Full Width Hero RPG Character Card */}
@@ -562,10 +568,23 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
                   <h2 className="text-base sm:text-lg font-anton uppercase text-white tracking-wide truncate">
                     {stats.characterClass || 'Héroe del Sistema'}
                   </h2>
-                  <p className="text-xs text-cyan-300/90 font-bold mt-0.5 flex items-center gap-1">
-                    <Award className="w-3.5 h-3.5 text-cyan-400" />
-                    {displayRankTitle}
-                  </p>
+                  <div className="flex flex-wrap items-center gap-2 mt-0.5">
+                    <p className="text-xs text-cyan-300/90 font-bold flex items-center gap-1">
+                      <Award className="w-3.5 h-3.5 text-cyan-400" />
+                      {displayRankTitle}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        soundFX.playClick();
+                        setIsRanksModalOpen(true);
+                      }}
+                      className="px-2 py-0.5 rounded-lg bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-500/50 hover:border-cyan-300 text-[10px] font-mono font-bold text-cyan-300 hover:text-white transition-all cursor-pointer shadow-[0_0_8px_rgba(0,240,255,0.2)] active:scale-95"
+                      title="Explorar los 100 Rangos y 10 Fases del Sistema"
+                    >
+                      Ver 100 Rangos
+                    </button>
+                  </div>
                   <p className="text-[11px] text-amber-300 font-bold mt-0.5 flex items-center gap-1">
                     <Sparkles className="w-3 h-3 text-amber-400" />
                     {selectedClassOption.statBonus}
@@ -1055,7 +1074,14 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
             <span className="text-[10px] text-white mt-1 block font-semibold">CONSECUTIVOS</span>
           </div>
 
-          <div className="p-4 rounded-2xl bg-gradient-to-br from-[#0c072b] to-[#050a18] border border-purple-800/50 shadow-[0_8px_20px_rgba(168,85,247,0.1)] text-white relative overflow-hidden group">
+          <div 
+            onClick={() => {
+              soundFX.playClick();
+              setIsRanksModalOpen(true);
+            }}
+            className="p-4 rounded-2xl bg-gradient-to-br from-[#0c072b] to-[#050a18] border border-purple-800/50 shadow-[0_8px_20px_rgba(168,85,247,0.1)] text-white relative overflow-hidden group cursor-pointer hover:border-purple-400/70 transition-all"
+            title="Haz clic para ver los 100 Niveles y Rangos"
+          >
             <div className="absolute top-0 right-0 -mr-4 -mt-4 w-20 h-20 bg-purple-500/10 rounded-full blur-xl group-hover:bg-purple-500/20 transition-all"></div>
             <div className="flex items-center gap-2 text-purple-300 text-[11px] uppercase tracking-wider font-black mb-1">
               <Zap className="w-3.5 h-3.5 text-white" />

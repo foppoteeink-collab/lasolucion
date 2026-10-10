@@ -62,14 +62,11 @@ export const usePlayerStore = create<PlayerState>()(
         const raw = typeof updater === 'function' ? updater(state.stats) : updater;
         const lvl = typeof raw.level === 'number' && raw.level > 0 ? raw.level : 1;
         const expectedRank = getRankForLevel(lvl).title;
-        const rankTitle = raw.rankTitle && (lvl === 1 || raw.rankTitle !== 'Chispazo de Voluntad')
-          ? (raw.rankTitle === 'Aventurero' ? expectedRank : raw.rankTitle)
-          : expectedRank;
 
         const nextStats: PlayerStats = {
           ...raw,
           level: lvl,
-          rankTitle,
+          rankTitle: expectedRank,
           requiredXp: calculateRequiredXp(lvl)
         };
         return { stats: nextStats };
@@ -429,6 +426,15 @@ export const usePlayerStore = create<PlayerState>()(
     {
       name: 'quantum-os-player-stats',
       storage: createJSONStorage(() => localStorage),
+      onRehydrateStorage: () => (state) => {
+        if (state?.stats) {
+          const lvl = typeof state.stats.level === 'number' && state.stats.level > 0 ? state.stats.level : 1;
+          const canonicalRank = getRankForLevel(lvl).title;
+          if (state.stats.rankTitle !== canonicalRank) {
+            state.stats.rankTitle = canonicalRank;
+          }
+        }
+      },
     }
   )
 );

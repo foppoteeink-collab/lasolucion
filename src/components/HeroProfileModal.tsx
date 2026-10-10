@@ -157,31 +157,66 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({ isOpen, onCl
                   <span className="text-[10px] font-mono text-cyan-400">12 Matrices Activas</span>
                 </div>
 
-                {/* Holographic Preview */}
-                <div className="mb-3 p-3 rounded-2xl bg-[#04020e] border border-cyan-500/50 flex items-center justify-center gap-4 shadow-[0_0_15px_rgba(0,240,255,0.15)]">
-                  <HoloCompanion archetype={editForm.characterClass || 'El Héroe'} size="sm" showHUD={false} />
-                  <div className="min-w-0 flex-1">
-                    <div className="text-[10px] font-mono text-cyan-300 uppercase font-bold tracking-wider">Compañero Guía: KAI</div>
-                    <div className="text-xs font-bold text-white truncate">Sintonía: {editForm.characterClass || 'El Héroe'}</div>
-                    <p className="text-[10px] text-cyan-300/80 italic leading-snug mt-0.5">
-                      KAI te acompaña siempre y sintoniza su aura bioluminiscente con tu energía y arquetipo.
-                    </p>
-                  </div>
-                </div>
+                {/* Holographic Preview & Full Archetype Explanation */}
+                {(() => {
+                  const selectedArch = getArchetypeByName(editForm.characterClass || 'El Héroe');
+                  return (
+                    <div className="mb-3 p-3.5 rounded-2xl bg-[#04020e] border border-cyan-500/50 shadow-[0_0_20px_rgba(0,240,255,0.18)]">
+                      <div className="flex items-center gap-3">
+                        <div className="shrink-0">
+                          <HoloCompanion archetype={selectedArch.name} size="sm" showHUD={false} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-1 flex-wrap">
+                            <span className="text-[10px] font-mono text-cyan-300 uppercase font-bold tracking-wider">
+                              Compañero: {selectedArch.companion?.title || 'KAI'} {selectedArch.companion?.icon}
+                            </span>
+                            <span className="text-[10px] font-mono text-amber-300 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-md font-bold shrink-0">
+                              {selectedArch.statBonus}
+                            </span>
+                          </div>
+                          <div className="text-sm font-anton text-white truncate mt-1 flex items-center gap-1.5">
+                            <span className="text-base">{selectedArch.avatar}</span>
+                            <span>{selectedArch.name}</span>
+                          </div>
+                        </div>
+                      </div>
 
-                <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-cyan-500">
+                      {/* Archetype Deep Explanation */}
+                      <div className="mt-3 pt-2.5 border-t border-cyan-500/30 space-y-2">
+                        <p className="text-xs text-slate-200 leading-relaxed bg-[#020b14]/80 p-2.5 rounded-xl border border-cyan-500/20 font-sans">
+                          {selectedArch.description}
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px] font-mono">
+                          <div className="bg-[#020b14]/60 p-2 rounded-lg border border-cyan-500/20 text-cyan-300">
+                            <span className="font-bold text-white">🎯 Deseo: </span>
+                            <span>{selectedArch.desire}</span>
+                          </div>
+                          <div className="bg-[#020b14]/60 p-2 rounded-lg border border-rose-500/20 text-rose-300">
+                            <span className="font-bold text-white">⚠️ Miedo: </span>
+                            <span>{selectedArch.fear}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* 12 Archetypes Grid */}
+                <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-cyan-500">
                   {JUNG_ARCHETYPES.map(arch => (
                     <div 
                       key={arch.id}
                       onClick={() => setEditForm({ ...editForm, characterClass: arch.name, avatarIcon: arch.avatar })}
-                      className={`p-2 rounded-xl border flex flex-col items-center justify-center text-center cursor-pointer transition-all ${
+                      className={`p-2.5 rounded-xl border flex flex-col items-center justify-center text-center cursor-pointer transition-all ${
                         editForm.characterClass === arch.name 
-                          ? 'bg-cyan-950/80 border-cyan-300 text-white shadow-[0_0_12px_rgba(0,240,255,0.4)]' 
+                          ? 'bg-cyan-950/90 border-cyan-300 text-white shadow-[0_0_15px_rgba(0,240,255,0.5)] ring-1 ring-cyan-400' 
                           : 'bg-[#04020e] border-cyan-500/30 text-slate-300 hover:bg-cyan-950/40 hover:border-cyan-400'
                       }`}
                     >
                       <span className="text-2xl mb-1">{arch.avatar}</span>
-                      <span className="text-[10px] font-anton text-white tracking-wide">{arch.name}</span>
+                      <span className="text-[11px] font-anton text-white tracking-wide">{arch.name}</span>
+                      <span className="text-[9px] font-mono text-cyan-300/80 mt-0.5">{arch.statBonus}</span>
                     </div>
                   ))}
                 </div>

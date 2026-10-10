@@ -91,10 +91,8 @@ export const loadSavedStats = (): PlayerStats => {
     const rank = getRankForLevel(lvl);
     const correctRankTitle = rank?.title || 'Chispazo de Voluntad';
 
-    // If rankTitle was missing, or if it was stuck on the level 1 title while level > 1, update to correct rank
-    const rankTitle = parsed.rankTitle && (lvl === 1 || parsed.rankTitle !== 'Chispazo de Voluntad')
-      ? (parsed.rankTitle === 'Aventurero' ? correctRankTitle : parsed.rankTitle)
-      : correctRankTitle;
+    // Ensure rankTitle always strictly reflects the player's canonical level
+    const rankTitle = correctRankTitle;
 
     return {
       ...INITIAL_PLAYER_STATS,
@@ -445,7 +443,7 @@ export const initializeStore = () => {
       const currentPhase = matchedRank?.phase || 1;
       
       let nextStats = { ...stats };
-      if (stats.rankTitle !== correctRank && (stats.rankTitle === 'Chispazo de Voluntad' || stats.rankTitle === 'Aventurero' || !stats.rankTitle)) {
+      if (stats.rankTitle !== correctRank) {
         nextStats.rankTitle = correctRank;
         changedStats = true;
       }

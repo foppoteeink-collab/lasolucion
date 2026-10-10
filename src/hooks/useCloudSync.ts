@@ -145,14 +145,7 @@ export function mergePlayerStats(local: PlayerStats, remote: PlayerStats): Playe
     attributes,
     rankTitle: (() => {
       const finalLevel = Math.max(local.level || 1, remote.level || 1);
-      const expectedRank = getRankForLevel(finalLevel).title;
-      const candidate = (local.level || 1) >= (remote.level || 1)
-        ? (local.rankTitle || remote.rankTitle)
-        : (remote.rankTitle || local.rankTitle);
-      if (!candidate || candidate === 'Aventurero' || (finalLevel > 1 && candidate === 'Chispazo de Voluntad')) {
-        return expectedRank;
-      }
-      return candidate;
+      return getRankForLevel(finalLevel).title;
     })(),
   };
 }

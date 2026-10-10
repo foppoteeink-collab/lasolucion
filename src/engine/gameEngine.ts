@@ -461,9 +461,7 @@ export const checkLevelUp = (prevStats: any, xpAdded: number, coinsAdded: number
     currentXp: nextXp,
     level: nextLevel,
     requiredXp: requiredXp,
-    rankTitle: prevStats.rankTitle && prevStats.level === nextLevel && prevStats.rankTitle !== 'Chispazo de Voluntad'
-      ? prevStats.rankTitle
-      : currentRankTitle,
+    rankTitle: currentRankTitle,
     totalXpEarned: (prevStats.totalXpEarned || 0) + xpAdded,
     coins: (prevStats.coins || 0) + coinsAdded
   };
