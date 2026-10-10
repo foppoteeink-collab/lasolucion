@@ -221,11 +221,7 @@ export function AppLayout() {
   return (
     <>
       <TransitionOverlay isVisible={isTransitioning} />
-      <DamageOverlay />
-      <ShockwaveOverlay />
-      {/* Real-time Dynamic Floating Combat Numbers & Combos */}
-      <FloatingEffectsOverlay effects={floatingEffects as any} />
-      <FloatingJuiceOverlay />
+      {/* Clean UI: Overlays disabled to prevent screen clutter */}
       <div id="main-layout-wrapper" className="relative min-h-screen bg-[#000000] overflow-hidden text-white font-sans selection:bg-[#d6f421] selection:text-black">
         
         {/* CAPA 1: ORBES DE ENERGÍA */}

@@ -567,26 +567,14 @@ export const handleToggleTask = (taskId: string, e?: any) => {
       const newStats = checkLevelUp(currentStats, xpReward, coinReward);
       statePlayer.setStats(newStats);
       
-      const posX = e?.clientX || (typeof window !== 'undefined' ? window.innerWidth / 2 : 200);
-      const posY = e?.clientY || (typeof window !== 'undefined' ? window.innerHeight / 2 : 200);
+      // Crisp, tactile feedback on task complete without screen pollution
+      try {
+        hapticPresets.light();
+      } catch {}
 
-      if (isRetroactive) {
-        spawnJuiceParticle({ x: posX, y: posY, text: '¡Completado (Gracia 0.8x)!', type: 'custom', colorClass: 'text-amber-400 bg-amber-950/90 border-amber-500' });
-        stateUI.addFloatingEffect({ x: posX, y: posY - 20, text: `+${xpReward} XP (-20% Impuesto)`, type: 'xp' });
-        triggerShockwave({ color: 'gold', intensity: 'medium', origin: { x: posX, y: posY } });
-      } else {
-        spawnJuiceParticle({ x: posX, y: posY, text: '¡Completado!', type: 'custom', colorClass: 'text-emerald-400 bg-emerald-950/90 border-emerald-500' });
-        stateUI.addFloatingEffect({ x: posX, y: posY - 20, text: `+${xpReward} XP`, type: 'xp' });
-        triggerShockwave({ color: 'cyan', intensity: 'medium', origin: { x: posX, y: posY } });
+      if (wasChestFound) {
+        soundFX.playLevelUp(); // Extra sound for chest
       }
-
-      setTimeout(() => {
-        if (wasChestFound) {
-          spawnJuiceParticle({ x: posX, y: posY - 30, text: '¡Cofre Sorpresa! 🎁', type: 'custom', colorClass: 'text-yellow-400 bg-yellow-950/90 border-yellow-500' });
-          soundFX.playLevelUp(); // Extra sound for chest
-        }
-        stateUI.addFloatingEffect({ x: posX, y: posY - 40, text: `+${coinReward} Oro${wasChestFound ? ' (Cofre)' : ''}`, type: 'coins' });
-      }, 150);
     }
   } else {
     // Task was uncompleted, subtract points
@@ -650,21 +638,6 @@ export const handleIncrementHabit = (taskId: string, e?: any) => {
 
   if (isDayEnded && !task.completed) {
     soundFX.playClick();
-    if (typeof window !== 'undefined') {
-      spawnJuiceParticle({
-          x: e?.clientX || window.innerWidth / 2,
-          y: (e?.clientY || window.innerHeight / 2) - 20,
-          text: '🔒 Hábito bloqueado: Día concluido',
-          type: 'custom',
-          colorClass: 'text-rose-400 bg-rose-950/95 border-rose-500'
-      });
-    }
-    useUIStore.getState().addFloatingEffect({
-      x: e?.clientX || (typeof window !== 'undefined' ? window.innerWidth / 2 : 200),
-      y: (e?.clientY || 200) - 20,
-      text: '🔒 Hábito no realizado (Bloqueado)',
-      type: 'streak'
-    });
     return;
   }
 
@@ -687,22 +660,17 @@ export const handleIncrementHabit = (taskId: string, e?: any) => {
   });
 
   soundFX.playTaskComplete();
+  try {
+    hapticPresets.light();
+  } catch {}
   
   // Dar recompensas por cada incremento
   const xpReward = task.xpReward || 0;
   const coinReward = task.coinReward || 0;
-  const stateUI = useUIStore.getState();
 
   if (xpReward > 0 || coinReward > 0) {
     const newStats = checkLevelUp(statePlayer.stats, xpReward, coinReward);
     statePlayer.setStats(newStats);
-    
-    if (e && e.clientX && e.clientY) {
-       stateUI.addFloatingEffect({ x: e.clientX, y: e.clientY - 20, text: `+${xpReward} XP`, type: 'xp' });
-       setTimeout(() => {
-         stateUI.addFloatingEffect({ x: e.clientX, y: e.clientY - 40, text: `+${coinReward} Oro`, type: 'coins' });
-       }, 150);
-    }
   }
 
   if (isNowCompleted) {
