@@ -57,7 +57,7 @@ export const MainLogo: React.FC<MainLogoProps> = ({
   return (
     <h1
       id="main-logo-text-flow"
-      className={`font-['Anton'] uppercase select-none flex flex-wrap justify-center items-center font-black leading-tight ${sizeClasses[size]} ${className}`}
+      className={`font-['Anton'] uppercase select-none flex flex-wrap justify-center items-center font-black leading-tight focus-in-contract ${sizeClasses[size]} ${className}`}
       style={{ fontFamily: "'Anton', sans-serif" }}
     >
       {characters.map((char, index) => {

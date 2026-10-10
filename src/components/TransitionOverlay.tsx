@@ -36,7 +36,7 @@ export const TransitionOverlay: React.FC<TransitionOverlayProps> = ({ isVisible 
             <l-helix size="90" speed="2.5" color="#00f0ff"></l-helix>
           </div>
         </div>
-        <MainLogo size="lg" forceColor="#00f0ff" />
+        <MainLogo key={isVisible ? 'visible' : 'hidden'} size="lg" forceColor="#00f0ff" />
       </div>
     </div>
   );
