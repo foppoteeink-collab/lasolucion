@@ -417,27 +417,7 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
       {/* Calendar Bar */}
       <CalendarView currentDate={currentDate} onChangeDate={onChangeDate} />
 
-      {/* Main Control Header & HUD */}
-      <TaskHeaderHUD
-        currentDate={currentDate}
-        onChangeDate={onChangeDate}
-        todayDateStr={todayDateStr}
-        isPastDay={isPastDay}
-        isDayFinalized={isDayFinalized}
-        isDayEnded={isDayEnded}
-        finalizedInfo={finalizedInfo}
-        streakCount={streakCount}
-        onOpenFinishDay={onOpenFinishDay}
-        onOpenTemplates={onOpenTemplates}
-        onOpenOracle={onOpenOracle}
-        onOpenJournal={onOpenJournal}
-        onClearDay={onClearDay}
-        onResetDay={onResetDay}
-        onReopenDay={onReopenDay}
-        onOpenAddModal={openAddModal}
-        onOpenHabitManager={() => setIsHabitManagerOpen(true)}
-        activeBuff={activeDailyBuff}
-      />
+
 
       {/* Quick Habits Strip */}
       <div className="mb-4">
@@ -488,6 +468,18 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
 
       {/* Task List Timeline */}
       <div className="space-y-3">
+        {/* Minimal Add Task Row */}
+        {!isDayEnded && (
+          <button
+            type="button"
+            onClick={() => openAddModal(false)}
+            className="w-full flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-dashed border-white/10 hover:border-white/25 text-slate-500 hover:text-slate-300 text-sm transition-all cursor-pointer group"
+          >
+            <span className="w-5 h-5 rounded-md border border-white/10 group-hover:border-white/25 flex items-center justify-center text-slate-400 group-hover:text-white transition-colors text-base leading-none">+</span>
+            <span className="text-xs font-medium">Nueva tarea</span>
+          </button>
+        )}
+
         {filteredTasks.length === 0 ? (
           <SciFiEmptyState
             totalTasksInDay={tasks.length}
