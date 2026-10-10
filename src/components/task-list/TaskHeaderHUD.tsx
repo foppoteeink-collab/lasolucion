@@ -59,17 +59,6 @@ export const TaskHeaderHUD: React.FC<TaskHeaderHUDProps> = ({
         </span>
 
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          {onOpenOracle && (
-            <button
-              type="button"
-              onClick={onOpenOracle}
-              className="px-2.5 py-1.5 rounded-xl bg-[#14052b] hover:bg-[#230a4a] text-[#d6f421] border border-[#9600ff]/60 hover:border-[#d6f421]/60 transition-all text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer shadow-[0_0_12px_rgba(150,0,255,0.3)] active:scale-95"
-              title="Acomodar agenda con IA"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-[#d6f421]" />
-              <span>IA Agenda</span>
-            </button>
-          )}
 
           {onOpenTemplates && (
             <button
