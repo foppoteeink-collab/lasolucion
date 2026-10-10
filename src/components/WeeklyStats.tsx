@@ -6,6 +6,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { IntelligenceOverlay } from '../intelligence/IntelligenceOverlay';
 import { PlayerStats, PomodoroSession, TaskItem, HabitMasteryRecord } from '../types';
 import { getTodayDateString, addDaysToDateString } from '../utils/date';
+import { HABIT_ENERGY_DETAILS, detectHabitEnergy } from '../utils/habitEnergyDetector';
 import {
   Plus,
   Trash2,

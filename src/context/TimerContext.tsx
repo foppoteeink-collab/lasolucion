@@ -10,6 +10,7 @@ import * as gameEngine from '../engine/gameEngine';
 import { useUIStore } from '../store/useUIStore';
 import { useAppStore } from '../store/useAppStore';
 import { usePlayerStore } from '../store/usePlayerStore';
+import { safeGetItem, safeSetItem } from '../utils/storage';
 
 export type PomodoroMode = 'work' | 'short_break' | 'long_break';
 

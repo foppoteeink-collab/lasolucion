@@ -569,7 +569,7 @@ export const handleToggleTask = (taskId: string, e?: any) => {
       
       // Crisp, tactile feedback on task complete without screen pollution
       try {
-        hapticPresets.light();
+        hapticPresets.click();
       } catch {}
 
       if (wasChestFound) {
@@ -661,7 +661,7 @@ export const handleIncrementHabit = (taskId: string, e?: any) => {
 
   soundFX.playTaskComplete();
   try {
-    hapticPresets.light();
+    hapticPresets.click();
   } catch {}
   
   // Dar recompensas por cada incremento
@@ -682,7 +682,7 @@ export const handleIncrementHabit = (taskId: string, e?: any) => {
     if (currentStats.lastEncounterDate !== today && Math.random() < 0.20) {
        currentStats = { ...currentStats, lastEncounterDate: today };
        statePlayer.setStats(currentStats);
-       stateUI.openSurpriseBoss({
+       useUIStore.getState().openSurpriseBoss({
           archetypeName: 'Comandante de la Procrastinación',
           buffName: 'Jefe Aleatorio Derrotado',
           buffDescription: 'Reclama 50 XP y 20 Oro extra.'
