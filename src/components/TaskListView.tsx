@@ -24,7 +24,6 @@ import { SleepScheduleModal } from './task-list/SleepScheduleModal';
 import { TaskFormModal } from './task-list/TaskFormModal';
 import { HabitManagerModal } from './task-list/HabitManagerModal';
 import { TaskHeaderHUD } from './task-list/TaskHeaderHUD';
-import { DungeonGatesModal } from './DungeonGatesModal';
 
 interface TaskListViewProps {
   currentDate: string;
@@ -112,7 +111,6 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
   const [isClearModalOpen, setIsClearModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isHabitManagerOpen, setIsHabitManagerOpen] = useState(false);
-  const [isDungeonGatesOpen, setIsDungeonGatesOpen] = useState(false);
 
   // Task Form State
   const [newTitle, setNewTitle] = useState('');
@@ -419,41 +417,6 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
       {/* Calendar Bar */}
       <CalendarView currentDate={currentDate} onChangeDate={onChangeDate} />
 
-      {/* Solo Leveling Dungeon Gates 3D Deck Trigger */}
-      <div className="mb-4">
-        <button
-          type="button"
-          onClick={() => {
-            soundFX.playClick();
-            setIsDungeonGatesOpen(true);
-          }}
-          className="w-full p-3 sm:p-3.5 rounded-2xl bg-gradient-to-r from-[#18040a] via-[#0c0514] to-[#040e1e] border-2 border-red-500/50 hover:border-red-400 transition-all flex items-center justify-between shadow-[0_0_20px_rgba(239,68,68,0.25)] group cursor-pointer active:scale-[0.99]"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-red-950/80 border border-red-500 flex items-center justify-center text-xl shadow-[0_0_12px_rgba(239,68,68,0.4)] group-hover:scale-105 transition-transform shrink-0">
-              ⚔️
-            </div>
-            <div className="text-left">
-              <div className="flex items-center gap-2">
-                <span className="font-anton text-white text-xs sm:text-sm uppercase tracking-wide group-hover:text-red-300 transition-colors">
-                  Portales de Mazmorra & Jefes del Sistema
-                </span>
-                <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-red-500/20 text-red-300 border border-red-500/40 font-bold shrink-0">
-                  Mazo 3D
-                </span>
-              </div>
-              <p className="text-[10px] text-slate-400 font-mono mt-0.5">
-                Inspecciona las Puertas de Rango E a S, debilidades y botines
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5 text-red-400 font-mono text-xs font-bold shrink-0 ml-2">
-            <span className="hidden sm:inline">Explorar</span>
-            <span className="text-base group-hover:translate-x-1 transition-transform">➔</span>
-          </div>
-        </button>
-      </div>
-
       {/* Quick Habits Strip */}
       <div className="mb-4">
         <QuickHabitsWidget
@@ -756,11 +719,6 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
           habitMastery={habitMastery}
         />
       )}
-
-      <DungeonGatesModal
-        isOpen={isDungeonGatesOpen}
-        onClose={() => setIsDungeonGatesOpen(false)}
-      />
     </div>
   );
 };

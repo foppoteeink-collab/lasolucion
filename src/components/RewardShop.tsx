@@ -1,11 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { ShopReward } from '../types';
 import { Coins, Plus, X, Trash2, Shield, Flame, Star, Sparkles } from 'lucide-react';
 import { soundFX } from '../utils/audio';
 import { triggerShockwave } from '../utils/celebration';
 import { ScrollReveal } from './common/ScrollReveal';
-import { OrbitCardStack, OrbitStackItem } from './ui/orbit-card-stack';
 
 import { useAppStore } from '../store/useAppStore';
 import { usePlayerStore } from '../store/usePlayerStore';
@@ -131,38 +130,6 @@ export const RewardShop: React.FC = () => {
 
   const customRewards = rewards.filter(r => r.id.startsWith('custom-'));
   const baseRewards = rewards.filter(r => !r.id.startsWith('custom-'));
-
-  const relicOrbitItems: OrbitStackItem[] = useMemo(() => {
-    return baseRewards.map((reward) => {
-      const finalCost = getDiscountedCost(reward);
-      const canAfford = coins >= finalCost;
-      const accent = reward.id.includes('healing')
-        ? '#ec4899'
-        : reward.id.includes('focus')
-        ? '#a855f7'
-        : reward.id.includes('shield')
-        ? '#00f0ff'
-        : reward.id.includes('dice')
-        ? '#facc15'
-        : '#38bdf8';
-
-      return {
-        id: reward.id,
-        name: reward.title,
-        role: `CATEGORÍA: ${reward.category.toUpperCase()}`,
-        description: reward.description,
-        avatarIcon: reward.icon,
-        accent,
-        badge: `${finalCost} ORO`,
-        stat: `Canjeados: ${reward.unlockedCount || 0}`,
-        desire: `Costo: ${finalCost} Monedas de Oro`,
-        fear: canAfford ? 'Oro disponible en bolsa' : `Requiere ${finalCost} Oro (tienes ${coins})`,
-        actionLabel: canAfford ? `Canjear (${finalCost} Oro)` : `Falta Oro (${coins}/${finalCost})`,
-        actionDisabled: !canAfford,
-        onAction: () => handleRedeem(reward),
-      };
-    });
-  }, [baseRewards, coins, energia]);
 
   return (
     <div className="space-y-6 font-sans tracking-wide pb-10">
@@ -350,43 +317,11 @@ export const RewardShop: React.FC = () => {
         </ScrollReveal>
       )}
 
-      {/* 3D Holographic Relics Deck Showcase */}
-      {relicOrbitItems.length > 0 && (
-        <div className="rounded-2xl scifi-glass-panel border-2 border-amber-400/60 p-4 sm:p-5 shadow-[0_0_25px_rgba(245,158,11,0.2)]">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-amber-950/80 border border-amber-400 flex items-center justify-center text-base shadow-[0_0_10px_rgba(245,158,11,0.4)] shrink-0">
-                🔮
-              </div>
-              <div>
-                <h3 className="font-anton text-sm sm:text-base text-amber-300 uppercase tracking-wide">
-                  Mazo Holográfico de Reliquias Épicas
-                </h3>
-                <p className="text-[10px] sm:text-[11px] text-slate-300 font-mono">
-                  Gira el mazo 3D para examinar y canjear tus perks legendarios
-                </p>
-              </div>
-            </div>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold shrink-0">
-              ORBIT 3D
-            </span>
-          </div>
-
-          <OrbitCardStack
-            items={relicOrbitItems}
-            defaultActiveIndex={0}
-            spread={135}
-            lift={32}
-            showControls={true}
-          />
-        </div>
-      )}
-
       {/* Rewards Grid - Base */}
       <ScrollReveal className="space-y-4">
         <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 pl-1 pt-4">
           <Sparkles className="w-4 h-4 text-cyan-400" />
-          Mercancía del Gremio (Catálogo Completo)
+          Mercancía del Gremio
         </h3>
         <motion.div 
           variants={{
