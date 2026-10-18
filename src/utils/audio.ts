@@ -1,14 +1,43 @@
 // Web Audio API Sound Effects Synthesizer for La Solución RPG
 // Redesigned for premium, pleasant, and highly polished RPG gamified audio
 
+import { useUIStore } from '../store/useUIStore';
+
+const isPomodoroFocusActive = (): boolean => {
+  try {
+    return useUIStore.getState().isFocusModeActive;
+  } catch (_) {
+    return false;
+  }
+};
+
 class SoundFX {
   private ctx: AudioContext | null = null;
   private soundEnabled: boolean = true;
   private masterGain: GainNode | null = null;
   private masterFilter: BiquadFilterNode | null = null;
+  private suspendedForBackground = false;
 
   constructor() {
     // AudioContext will be initialized on first user interaction to comply with browser autoplay policies
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', () => {
+        if (!this.ctx) return;
+        if (document.hidden) {
+          // Respect Pomodoro: if Pomodoro focus is running, do NOT suspend audio
+          if (!isPomodoroFocusActive() && this.ctx.state === 'running') {
+            this.suspendedForBackground = true;
+            this.ctx.suspend().catch(() => {});
+          }
+        } else {
+          // Returning to foreground
+          if (this.suspendedForBackground && this.ctx.state === 'suspended') {
+            this.suspendedForBackground = false;
+            this.ctx.resume().catch(() => {});
+          }
+        }
+      });
+    }
   }
 
   private initCtx() {
@@ -47,6 +76,22 @@ class SoundFX {
     return this.masterGain || this.ctx?.destination;
   }
 
+  // Helper to safely clean up Web Audio nodes after playback
+  private safeDisconnectOnEnd(source: AudioScheduledSourceNode, nodesToDisconnect: (AudioNode | null | undefined)[], maxDurationMs: number) {
+    let cleaned = false;
+    const cleanup = () => {
+      if (cleaned) return;
+      cleaned = true;
+      try { source.disconnect(); } catch (_) {}
+      nodesToDisconnect.forEach(n => {
+        try { n?.disconnect(); } catch (_) {}
+      });
+    };
+
+    source.onended = cleanup;
+    setTimeout(cleanup, Math.max(100, maxDurationMs));
+  }
+
   // Helper to create an envelope and oscillator
   private playTone(
     type: OscillatorType,
@@ -78,6 +123,8 @@ class SoundFX {
     osc.connect(gain);
     gain.connect(this.getDestination()!);
     
+    this.safeDisconnectOnEnd(osc, [gain], ((stopTime + 0.15) - this.ctx.currentTime) * 1000);
+
     osc.start(time);
     osc.stop(stopTime + 0.1);
   }
@@ -103,6 +150,7 @@ class SoundFX {
     
     osc.connect(gain);
     gain.connect(this.getDestination()!);
+    this.safeDisconnectOnEnd(osc, [gain], 80);
     osc.start(now);
     osc.stop(now + 0.04);
 
@@ -127,6 +175,7 @@ class SoundFX {
       noise.connect(noiseFilter);
       noiseFilter.connect(noiseGain);
       noiseGain.connect(this.getDestination()!);
+      this.safeDisconnectOnEnd(noise, [noiseFilter, noiseGain], 25);
       noise.start(now);
     } catch (e) {}
   }
@@ -750,9 +799,16 @@ class SoundFX {
     });
   }
 
-  // 10. SUCCESS CHIME
+  // 10. SUCCESS CHIME & FANFARE
   public playSuccess() {
     this.playTaskComplete();
+  }
+
+  public playFanfare() {
+    this.playLevelUp();
+    setTimeout(() => {
+      this.playBossDefeated();
+    }, 280);
   }
 
   // 11. MULTI-LAYER AMBIENT MIXER ENGINE (Rain, Ocean Waves, Forest, Natural Heartbeat)

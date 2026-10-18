@@ -197,9 +197,25 @@ export const loadSavedShopRewards = (): ShopReward[] => {
     const raw = safeGetItem(STORAGE_KEYS.SHOP);
     if (!raw) return INITIAL_SHOP_REWARDS;
     const parsed = JSON.parse(raw) as ShopReward[];
-    const existingIds = new Set(parsed.map((r) => r.id));
+    const defaultMap = new Map(INITIAL_SHOP_REWARDS.map((r) => [r.id, r]));
+    // Sincronizar precios base rebalanceados contra inflación preservando personalizaciones
+    const updated = parsed.map((r) => {
+      const def = defaultMap.get(r.id);
+      if (def) {
+        return {
+          ...r,
+          cost: def.cost,
+          title: def.title,
+          description: def.description,
+          icon: def.icon,
+          category: def.category,
+        };
+      }
+      return r;
+    });
+    const existingIds = new Set(updated.map((r) => r.id));
     const missingDefaults = INITIAL_SHOP_REWARDS.filter((r) => !existingIds.has(r.id));
-    return [...parsed, ...missingDefaults];
+    return [...updated, ...missingDefaults];
   } catch {
     return INITIAL_SHOP_REWARDS;
   }

@@ -119,7 +119,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
           );
           if (aiData?.source === 'ai' && Array.isArray(aiData.habits) && aiData.habits.length > 0) {
             const arranged = autoArrangeSchedule(aiData.habits, scheduleMode, scheduleMode === 'master_blocks' ? 7 : 10);
-            setSuggestedHabits(sortByChronologicalTime(arranged));
+            setSuggestedHabits(sortByChronologicalTime(arranged) as CustomHabit[]);
             setNotice(null);
             setAddedHabitIds(new Set());
             soundFX.playSubBassConfirm();
@@ -154,7 +154,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
           );
           if (Array.isArray(aiData?.habits) && aiData.habits.length > 0) {
             const arranged = autoArrangeSchedule(aiData.habits, scheduleMode, scheduleMode === 'master_blocks' ? 7 : 10);
-            setSuggestedHabits(sortByChronologicalTime(arranged));
+            setSuggestedHabits(sortByChronologicalTime(arranged) as CustomHabit[]);
             setNotice(aiData.notice || null);
             setAddedHabitIds(new Set());
             soundFX.playSubBassConfirm();

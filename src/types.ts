@@ -125,6 +125,7 @@ export interface PlayerStats {
   };
   inventory?: InventoryItem[];
   unopenedBoxes?: number;
+  hasCompletedAwakening?: boolean;
 }
 
 export interface FloatingReward {

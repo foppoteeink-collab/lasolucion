@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { TaskItem, CustomHabit } from '../types';
 import { loadCustomHabits } from '../utils/storage';
-import { getTodayDateString } from '../utils/date';
+import { getTodayDateString, addDaysToDateString } from '../utils/date';
 import { sanitizeTasksByDate, deduplicateHabits, deduplicateTasksForDay } from '../utils/taskDeduplication';
 import { generateDailyTasks } from '../data/defaults';
 import { useUIStore } from './useUIStore';
@@ -132,6 +132,12 @@ export const useTaskStore = create<TaskState>()(
       }),
 
       lockTasksForDate: (date) => set((state) => {
+        const today = getTodayDateString();
+        const reconciliationLimit = addDaysToDateString(today, -2);
+        // Conciliación Retrospectiva Honesta: no bloquear rígidamente dentro de las últimas 48 horas
+        if (date >= reconciliationLimit) {
+          return state;
+        }
         const list = state.tasksByDate[date] || [];
         const updated = list.map(t => {
           const isFinished = t.isHabit ? ((t.currentCount || 0) >= (t.targetCount || 1) || t.completed) : t.completed;
@@ -169,7 +175,12 @@ export const useTaskStore = create<TaskState>()(
 
         const playerStats = usePlayerStore.getState().stats;
         const isFinalized = Boolean(playerStats?.finalizedDays?.[date]);
-        if (isFinalized && !targetTask.completed) {
+        const today = getTodayDateString();
+        const reconciliationLimit = addDaysToDateString(today, -2);
+        const isPast48h = date < reconciliationLimit;
+
+        // Solo se bloquea rígidamente si el día fue finalizado Y han pasado más de 48 horas
+        if (isFinalized && isPast48h && !targetTask.completed) {
           return state;
         }
 
@@ -183,19 +194,7 @@ export const useTaskStore = create<TaskState>()(
         });
 
         const n = { ...state.tasksByDate, [date]: updatedTasks }; 
-
-        if (wasCompleted) {
-          const completedToday = updatedTasks.filter(t => t.completed).length;
-          if (completedToday === 3) {
-            const hasTriggeredBoss = typeof window !== 'undefined' && sessionStorage.getItem('bossTriggeredToday') === 'true';
-            if (!hasTriggeredBoss) {
-               if (typeof window !== 'undefined') sessionStorage.setItem('bossTriggeredToday', 'true');
-               useUIStore.getState().setModalState('isSurpriseBossOpen', true);
-            }
-          }
-        }
-
-        return { tasksByDate: n }; 
+        return { tasksByDate: n };
       })
     }),
     {

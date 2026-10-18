@@ -7,6 +7,7 @@ import { ScrollReveal } from './common/ScrollReveal';
 import React, { useState, useMemo, useEffect } from 'react';
 import { IntelligenceOverlay } from '../intelligence/IntelligenceOverlay';
 import { PlayerStats, PomodoroSession, TaskItem, HabitMasteryRecord } from '../types';
+import { CloudSyncResult } from '../hooks/useCloudSync';
 import { getTodayDateString, addDaysToDateString } from '../utils/date';
 import { HABIT_ENERGY_DETAILS, detectHabitEnergy } from '../utils/habitEnergyDetector';
 import {
@@ -79,6 +80,8 @@ interface WeeklyStatsProps {
   tasksByDate: Record<string, TaskItem[]>;
   pomodoroSessions: PomodoroSession[];
   habitMastery?: Record<string, HabitMasteryRecord>;
+  cloudSync?: CloudSyncResult;
+  onOpenAwakening?: () => void;
 }
 
 type TimeRange = 'semanal' | 'mensual' | 'anual';
@@ -164,7 +167,9 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
   pomodoroSessions,
   habitMastery = {},
   expenses,
-  setExpenses
+  setExpenses,
+  cloudSync,
+  onOpenAwakening
 }) => {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isRanksModalOpen, setIsRanksModalOpen] = useState(false);
@@ -175,11 +180,10 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
   const handleClassPick = (charClass: CharacterClassOption) => {
     soundFX.playItemEquip();
     if (onUpdateStats) {
-      onUpdateStats({
-        ...stats,
+      onUpdateStats(prev => ({
+        ...prev,
         characterClass: charClass.name,
-        avatarIcon: charClass.avatar,
-      });
+      }));
     }
     triggerShockwave({ color: 'violet', intensity: 'medium' });
   };
@@ -512,11 +516,14 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
   return (
     <div className="space-y-5 pb-6">
 
-            <HeroProfileModal 
+      <HeroProfileModal 
         isOpen={isEditingProfile} 
         onClose={() => setIsEditingProfile(false)} 
         stats={stats} 
         onUpdateStats={onUpdateStats} 
+        cloudSync={cloudSync}
+        onOpenAwakening={onOpenAwakening}
+        onOpenArchetypes={() => setIsArchetypesModalOpen(true)}
       />
 
       <RanksModal
@@ -534,7 +541,6 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
             onUpdateStats(prev => ({
               ...prev,
               characterClass: arch.name,
-              avatarIcon: arch.avatar,
             }));
           }
         }}

@@ -1,5 +1,12 @@
-// Quantum Soundscape Procedural Audio Engine (Hybrid Multi-Layer Synthesis)
-// Web Audio API implementation: 100% Procedural, 0 KB Network Footprint, Offline Capable.
+import { useUIStore } from '../store/useUIStore';
+
+const isPomodoroFocusActive = (): boolean => {
+  try {
+    return useUIStore.getState().isFocusModeActive;
+  } catch (_) {
+    return false;
+  }
+};
 
 export type BinauralMode = 'gamma' | 'beta' | 'alpha' | 'theta';
 export type NoiseType = 'brown' | 'pink' | 'white';
@@ -110,9 +117,28 @@ class QuantumSoundscapeEngine {
   };
 
   private listeners: Set<(state: SoundscapeState) => void> = new Set();
+  private suspendedForBackground = false;
 
   constructor() {
     this.loadState();
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', () => {
+        if (!this.ctx) return;
+        if (document.hidden) {
+          // If Pomodoro is active, preserve soundscape and alarms in background.
+          // If Pomodoro is NOT active, suspend AudioContext to prevent battery drain.
+          if (!isPomodoroFocusActive() && this.ctx.state === 'running') {
+            this.suspendedForBackground = true;
+            this.ctx.suspend().catch(() => {});
+          }
+        } else {
+          if (this.suspendedForBackground && this.ctx.state === 'suspended') {
+            this.suspendedForBackground = false;
+            this.ctx.resume().catch(() => {});
+          }
+        }
+      });
+    }
   }
 
   private loadState() {

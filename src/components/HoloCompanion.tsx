@@ -129,7 +129,7 @@ export function resolveArchetypeConfig(archetypeProp?: string): CompanionConfig 
 
 export interface HoloCompanionProps {
   archetype?: ArchetypeKey;
-  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | number;
+  size?: 'nano' | 'xs' | 'sm' | 'md' | 'lg' | 'xl' | number;
   className?: string;
   showHUD?: boolean;
   showQuote?: boolean;
@@ -202,6 +202,8 @@ export const HoloCompanion: React.FC<HoloCompanionProps> = ({
   const scaleMultiplier = useMemo(() => {
     if (typeof size === 'number') return size / 100;
     switch (size) {
+      case 'nano':
+        return 0.26;
       case 'xs':
         return 0.55;
       case 'sm':
@@ -325,9 +327,13 @@ export const HoloCompanion: React.FC<HoloCompanionProps> = ({
       >
         {/* RESPLANDOR DIFUSO AMBIENTAL DEL PRISMA */}
         <div
-          className="absolute w-28 h-28 rounded-full blur-xl pointer-events-none -z-10 opacity-60"
+          className="absolute rounded-full pointer-events-none -z-10"
           style={{
-            backgroundColor: `${activeColor}35`,
+            width: `${Math.round(80 * scaleMultiplier)}px`,
+            height: `${Math.round(80 * scaleMultiplier)}px`,
+            filter: `blur(${Math.max(4, Math.round(14 * scaleMultiplier))}px)`,
+            backgroundColor: `${activeColor}30`,
+            opacity: isHovered || isProjecting ? 0.8 : 0.45,
           }}
         />
 

@@ -5,7 +5,7 @@ import { useTaskStore } from '../store/useTaskStore';
 import { usePlayerStore } from '../store/usePlayerStore';
 import { TaskItem, TaskCategory, HabitMasteryRecord, PlayerStats, CustomHabit, HabitEnergyType } from '../types';
 import { soundFX } from '../utils/audio';
-import { getTodayDateString, getYesterdayDateString } from '../utils/date';
+import { getTodayDateString, getYesterdayDateString, addDaysToDateString } from '../utils/date';
 import { parseTimeToMinutes, parseEndTimeToMinutes } from '../utils/timeUtils';
 import { deduplicateTasksForDay } from '../utils/taskDeduplication';
 import { getHabitBaseId } from '../intelligence/masteryEngine';
@@ -92,9 +92,12 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
   const [customWakeTime, setCustomWakeTime] = useState(currentLocalTime);
 
   const todayDateStr = getTodayDateString();
+  const reconciliationLimit = addDaysToDateString(todayDateStr, -2);
   const isPastDay = Boolean(currentDate && currentDate < todayDateStr);
   const isDayFinalized = Boolean(stats?.finalizedDays?.[currentDate]);
-  const isDayEnded = isDayFinalized || isPastDay;
+  // Conciliación Retrospectiva Honesta: el bloqueo estricto sólo aplica a días anteriores a 48h
+  const isStrictlyLockedPast = Boolean(currentDate && currentDate < reconciliationLimit);
+  const isDayEnded = (isDayFinalized || isPastDay) && isStrictlyLockedPast;
   const finalizedInfo = stats?.finalizedDays?.[currentDate];
 
   // Sleep Modal State

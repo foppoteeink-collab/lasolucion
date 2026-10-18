@@ -3,7 +3,59 @@ import { firebaseAI, firebaseConfig } from '../firebase';
 import { generateProceduralSchedule, generateProceduralAnalysis } from '../utils/proceduralHeuristics';
 import { autoArrangeSchedule, cleanScheduleTitle } from '../utils/timeUtils';
 
+interface RateLimitState {
+  lastCallTimestamp: number;
+  countToday: number;
+  dateKey: string;
+}
+
+const RATE_LIMIT_STORAGE_KEY = 'lasolucion_ai_ratelimit_v1';
+const MIN_COOLDOWN_MS = 8000; // 8 seconds minimum between calls
+const MAX_CALLS_PER_DAY = 20;
+
+function checkAndConsumeRateLimit(): { allowed: boolean; reason?: string } {
+  if (typeof window === 'undefined') return { allowed: true };
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    const raw = window.localStorage.getItem(RATE_LIMIT_STORAGE_KEY);
+    let state: RateLimitState = raw ? JSON.parse(raw) : { lastCallTimestamp: 0, countToday: 0, dateKey: today };
+
+    if (state.dateKey !== today) {
+      state = { lastCallTimestamp: 0, countToday: 0, dateKey: today };
+    }
+
+    const now = Date.now();
+    const timeSinceLast = now - (state.lastCallTimestamp || 0);
+    if (timeSinceLast < MIN_COOLDOWN_MS) {
+      const waitSec = Math.ceil((MIN_COOLDOWN_MS - timeSinceLast) / 1000);
+      return { allowed: false, reason: `Cooldown activo: Espera ${waitSec}s antes de otra consulta.` };
+    }
+
+    if (state.countToday >= MAX_CALLS_PER_DAY) {
+      return { allowed: false, reason: 'Límite diario alcanzado (20 consultas/día).' };
+    }
+
+    state.lastCallTimestamp = now;
+    state.countToday += 1;
+    window.localStorage.setItem(RATE_LIMIT_STORAGE_KEY, JSON.stringify(state));
+    return { allowed: true };
+  } catch {
+    return { allowed: true };
+  }
+}
+
 async function fetchGeminiPrompt(promptText: string, modelName: string = 'gemini-3.8-flash'): Promise<string | null> {
+  if (!promptText || typeof promptText !== 'string' || !promptText.trim()) {
+    return null;
+  }
+
+  const rateCheck = checkAndConsumeRateLimit();
+  if (!rateCheck.allowed) {
+    console.warn(`[AI Protection] ${rateCheck.reason}. Usando heurísticas locales.`);
+    return null;
+  }
+
+  const sanitizedPrompt = promptText.trim().slice(0, 4000);
   const targetModel =
     modelName.includes('1.5') || modelName.includes('2.0') || modelName.includes('2.5') || modelName.includes('3.6')
       ? 'gemini-3.8-flash'
@@ -19,7 +71,7 @@ async function fetchGeminiPrompt(promptText: string, modelName: string = 'gemini
           maxOutputTokens: 8192,
         },
       });
-      const result = await model.generateContent(promptText);
+      const result = await model.generateContent(sanitizedPrompt);
       const text = result.response.text();
       if (text && text.trim()) {
         console.log(`[Firebase AI Logic] ✓ Response from ${targetModel}`);
@@ -43,7 +95,7 @@ async function fetchGeminiPrompt(promptText: string, modelName: string = 'gemini
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: promptText }] }],
+          contents: [{ parts: [{ text: sanitizedPrompt }] }],
           generationConfig: { temperature: 0.35, maxOutputTokens: 8192 },
         }),
         signal: controller.signal,

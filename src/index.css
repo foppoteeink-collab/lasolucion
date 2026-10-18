@@ -270,3 +270,16 @@
   -webkit-animation: focus-in-contract 0.28s cubic-bezier(0.215, 0.610, 0.355, 1.000) both;
           animation: focus-in-contract 0.28s cubic-bezier(0.215, 0.610, 0.355, 1.000) both;
 }
+
+/* WCAG 2.1 Success Criterion 2.3.3: Reduced Motion Optimization (GPU & Battery preservation) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+

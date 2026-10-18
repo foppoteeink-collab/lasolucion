@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { PlayerStats } from '../types';
-import { getRankForLevel } from '../data/defaults';
+import { getRankForLevel, calculateRequiredXp } from '../data/defaults';
 import { useUIStore } from './useUIStore';
 import { getTodayDateString, getYesterdayDateString, calcSleepDuration, getSleepQuality } from '../utils/date';
 
@@ -20,12 +20,14 @@ interface PlayerState {
   addLootBoxes: (count: number) => void;
   openLootBox: () => { item: any; success: boolean };
   useInventoryItem: (itemId: string) => boolean;
+  completeAwakening: (data: {
+    username: string;
+    fullName?: string;
+    avatarIcon?: string;
+    characterClass: string;
+    mantra?: string;
+  }) => void;
 }
-
-// Economía Algorítmica: Curva de nivelación infinita
-const calculateRequiredXp = (level: number): number => {
-  return Math.round(100 * Math.pow(level, 1.5));
-};
 
 const INITIAL_PLAYER_STATS: PlayerStats = {
   level: 1,
@@ -51,6 +53,7 @@ const INITIAL_PLAYER_STATS: PlayerStats = {
   },
   inventory: [],
   unopenedBoxes: 0,
+  hasCompletedAwakening: false,
 };
 
 export const usePlayerStore = create<PlayerState>()(
@@ -107,7 +110,8 @@ export const usePlayerStore = create<PlayerState>()(
         if (didLevelUp) {
           setTimeout(() => {
             try {
-              if (nextLevel > 10) {
+              const isMilestoneLevel = nextLevel === 2 || nextLevel % 5 === 0;
+              if (isMilestoneLevel) {
                 useUIStore.getState().setModalState('isLevelUpOpen', true);
               } else {
                 useUIStore.getState().addFloatingEffect({
@@ -225,7 +229,17 @@ export const usePlayerStore = create<PlayerState>()(
           if (didLevelUp) {
             setTimeout(() => {
               try {
-                useUIStore.getState().setModalState('isLevelUpOpen', true);
+                const isMilestoneLevel = nextLevel === 2 || nextLevel % 5 === 0;
+                if (isMilestoneLevel) {
+                  useUIStore.getState().setModalState('isLevelUpOpen', true);
+                } else {
+                  useUIStore.getState().addFloatingEffect({
+                    x: typeof window !== 'undefined' ? window.innerWidth / 2 : 200,
+                    y: 120,
+                    text: `⚡ ¡Nivel ${nextLevel} Alcanzado!`,
+                    type: 'xp'
+                  });
+                }
               } catch (e) {}
             }, 100);
           }
@@ -421,7 +435,27 @@ export const usePlayerStore = create<PlayerState>()(
         }
         
         return false;
-      }
+      },
+
+      completeAwakening: (data) => set((state) => {
+        const currentLvl = state.stats.level || 1;
+        const canonicalRank = getRankForLevel(currentLvl).title;
+        return {
+          stats: {
+            ...state.stats,
+            username: data.username.trim(),
+            fullName: data.fullName?.trim() || state.stats.fullName,
+            avatarIcon: data.avatarIcon || state.stats.avatarIcon || '🛡️',
+            characterClass: data.characterClass || state.stats.characterClass || 'El Héroe',
+            mantra: data.mantra?.trim() || state.stats.mantra,
+            hasCompletedAwakening: true,
+            currentXp: (state.stats.currentXp || 0) + 50,
+            totalXpEarned: (state.stats.totalXpEarned || 0) + 50,
+            coins: (state.stats.coins || 0) + 25,
+            rankTitle: canonicalRank,
+          }
+        };
+      })
     }),
     {
       name: 'quantum-os-player-stats',
@@ -432,6 +466,12 @@ export const usePlayerStore = create<PlayerState>()(
           const canonicalRank = getRankForLevel(lvl).title;
           if (state.stats.rankTitle !== canonicalRank) {
             state.stats.rankTitle = canonicalRank;
+          }
+          if (state.stats.hasCompletedAwakening === undefined) {
+            const hasPriorProgress = (lvl > 1) || 
+                                     ((state.stats.totalXpEarned || 0) > 0) || 
+                                     (Boolean(state.stats.username) && state.stats.username !== 'CazadorDelSistema');
+            state.stats.hasCompletedAwakening = hasPriorProgress;
           }
         }
       },

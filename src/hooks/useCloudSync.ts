@@ -465,12 +465,10 @@ export const useCloudSync = (
     };
   }, [user]);
 
-  const DEFAULT_SYNC_BRIDGE = 'la_solucion_bridge';
-
   const hasMeaningfulLocalData = useCallback(
     (s?: PlayerStats, tByDate?: Record<string, TaskItem[]>, habits?: CustomHabit[]): boolean => {
       if (Array.isArray(habits) && habits.length > 0) return true;
-      if (s && ((s.totalTasksCompleted || 0) > 0 || (s.level || 1) > 1 || (s.totalXp || 0) > 0)) return true;
+      if (s && ((s.level || 1) > 1 || (s.totalXpEarned || 0) > 0)) return true;
       if (tByDate && typeof tByDate === 'object') {
         for (const list of Object.values(tByDate)) {
           if (Array.isArray(list) && list.some((t) => t && !isDefaultDayOnePlaceholder(t))) {
@@ -489,6 +487,12 @@ export const useCloudSync = (
       const isSimActive = (typeof window !== 'undefined' && ((window as any).__isSimulationActive || localStorage.getItem('taskquest_simulation_active') === 'true'));
       if (!db || (window as any).__isResettingAccount || isSimActive) return false;
 
+      // STRICT LOCAL-FIRST: If no authenticated user, operate 100% in local storage
+      if (!user) {
+        setSyncStatus('local');
+        return true;
+      }
+
       // NETWORK CHECK: If offline, transition syncStatus gracefully without network error
       if (typeof navigator !== 'undefined' && !navigator.onLine) {
         setSyncStatus('offline');
@@ -499,12 +503,6 @@ export const useCloudSync = (
       const liveTaskState = useTaskStore.getState();
       const rawTasksData = overrideData?.tasksByDate || liveTaskState.tasksByDate || tasksByDate;
       const habitsData = overrideData?.customHabits || liveTaskState.customHabits || customHabits;
-      const canWriteBridge = isManualForce || hasMeaningfulLocalData(liveStats, rawTasksData, habitsData);
-
-      // Don't let a brand-new uncalibrated device overwrite the shared bridge on background auto-save
-      if (!user && !canWriteBridge) {
-        return false;
-      }
 
       try {
         isSavingRef.current = true;
@@ -513,28 +511,7 @@ export const useCloudSync = (
         const todayKey = getTodayDateString();
         const activeViewDate = liveTaskState.currentViewDate || todayKey;
         const tasksData = propagateTodayCompletions(rawTasksData || {}, todayKey, activeViewDate);
-
-        let finalBridgeTasks = tasksData;
-        const bridgeRef = doc(db, 'sync_transfers', DEFAULT_SYNC_BRIDGE);
-
-        // On background auto-saves, merge with existing bridge tasks so a secondary device never overwrites completed tasks
-        if (canWriteBridge && !isManualForce) {
-          try {
-            const existingBridgeSnap = await getDoc(bridgeRef);
-            if (existingBridgeSnap.exists()) {
-              const existingData = existingBridgeSnap.data();
-              if (existingData?.tasksByDate) {
-                finalBridgeTasks = propagateTodayCompletions(
-                  mergeTasksByDate(tasksData, existingData.tasksByDate),
-                  todayKey,
-                  existingData.activeViewDate || activeViewDate
-                );
-              }
-            }
-          } catch {
-            // Proceed with local tasksData if bridge read fails
-          }
-        }
+        const finalBridgeTasks = tasksData;
 
         const dataToSave = overrideData || {
           stats: liveStats,
@@ -559,15 +536,9 @@ export const useCloudSync = (
           lastUpdated: dataToSave.lastUpdated || new Date().toISOString(),
         });
 
-        // 1. Always write to universal cross-device bridge when this device has real data or user clicked "Subir datos"
-        if (canWriteBridge) {
-          await setDoc(bridgeRef, payload);
-        }
-
-        // 2. If signed in with Google, also save primary user document and monthly shards
-        if (user) {
-          const userRef = doc(db, 'users', user.uid);
-          await setDoc(userRef, payload);
+        // Save primary user document and monthly shards securely under user.uid
+        const userRef = doc(db, 'users', user.uid);
+        await setDoc(userRef, payload);
 
           if (finalBridgeTasks) {
             try {
@@ -590,7 +561,6 @@ export const useCloudSync = (
               console.warn('[CloudSync] task_months write note:', monthErr);
             }
           }
-        }
 
         setLastSyncTime(new Date());
         setSyncStatus('synced');
@@ -656,14 +626,14 @@ export const useCloudSync = (
 
   // 1. Real-time Firestore Listener (Cloud -> Client) with Conflict Resolution
   useEffect(() => {
-    if (!db) {
+    if (!db || !user) {
       setSyncStatus('local');
       initialLoadDoneRef.current = false;
       return;
     }
 
-    setSyncStatus(navigator.onLine ? 'saving' : 'offline');
-    const primaryRef = user ? doc(db, 'users', user.uid) : doc(db, 'sync_transfers', DEFAULT_SYNC_BRIDGE);
+    setSyncStatus(navigator.onLine ? 'synced' : 'offline');
+    const primaryRef = doc(db, 'users', user.uid);
 
     const unsubscribe = onSnapshot(
       primaryRef,
@@ -845,53 +815,6 @@ export const useCloudSync = (
       }
     );
 
-    // If user is signed in, ALSO listen to the universal bridge so devices with/without Google Auth stay in sync
-    let unsubscribeBridge = () => {};
-    if (user) {
-      const bridgeRef = doc(db, 'sync_transfers', DEFAULT_SYNC_BRIDGE);
-      unsubscribeBridge = onSnapshot(
-        bridgeRef,
-        { includeMetadataChanges: true },
-        (snapshot) => {
-          if (snapshot.metadata.hasPendingWrites || isSavingRef.current || !snapshot.exists()) return;
-          const bData = snapshot.data();
-          if (!bData) return;
-          isApplyingRemoteRef.current = true;
-          if (bData.stats) {
-            setStats((prev) => mergePlayerStats(prev, bData.stats));
-          }
-          let bridgeHabits: CustomHabit[] = [];
-          if (bData.customHabits && Array.isArray(bData.customHabits)) {
-            bridgeHabits = deduplicateHabits(bData.customHabits);
-            setCustomHabits((prev) => {
-              const map = new Map<string, CustomHabit>();
-              for (const h of bridgeHabits) if (h && h.id) map.set(h.id, h);
-              for (const h of prev) if (h && h.id && !map.has(h.id)) map.set(h.id, h);
-              return deduplicateHabits(Array.from(map.values()));
-            });
-          }
-          if ((bData.tasksByDate && typeof bData.tasksByDate === 'object') || bridgeHabits.length > 0) {
-            setTasksByDate((prev) => {
-              const merged = mergeTasksByDate(prev, bData.tasksByDate || {});
-              const todayKey = getTodayDateString();
-              if (bridgeHabits.length > 0) {
-                const todayList = (merged[todayKey] || []).filter((t) => !isDefaultDayOnePlaceholder(t));
-                const hasRealAgenda = todayList.some((t) => !t.isQuickHabit && !t.isTracked2166);
-                merged[todayKey] = hasRealAgenda
-                  ? todayList
-                  : deduplicateTasksForDay([...todayList, ...generateDailyTasks(todayKey, bridgeHabits)], todayKey);
-              }
-              return propagateTodayCompletions(merged, todayKey, bData.activeViewDate);
-            });
-          }
-          setTimeout(() => {
-            isApplyingRemoteRef.current = false;
-          }, 600);
-        },
-        () => {}
-      );
-    }
-
     let unsubscribeTasks = () => {};
     if (user) {
       const taskMonthsRef = collection(db, 'users', user.uid, 'task_months');
@@ -927,7 +850,6 @@ export const useCloudSync = (
 
     return () => {
       unsubscribe();
-      unsubscribeBridge();
       unsubscribeTasks();
     };
   }, [user, hasMeaningfulLocalData, performSave]);
@@ -969,7 +891,10 @@ export const useCloudSync = (
   }, [performSave]);
 
   const pullFromCloudNow = useCallback(async (): Promise<boolean> => {
-    if (!db) return false;
+    if (!db || !user) {
+      setSyncStatus('local');
+      return true;
+    }
     try {
       isApplyingRemoteRef.current = true;
       setSyncStatus('saving');
@@ -1083,16 +1008,7 @@ export const useCloudSync = (
         }
       }
 
-      // 2. Always also read universal cross-device bridge from server (works even without Google Sign-In on mobile PWAs)
-      try {
-        const bridgeRef = doc(db, 'sync_transfers', DEFAULT_SYNC_BRIDGE);
-        const bridgeSnap = await getDocFromServer(bridgeRef).catch(() => getDoc(bridgeRef));
-        if (bridgeSnap.exists()) {
-          applyDocData(bridgeSnap.data());
-        }
-      } catch (bErr) {
-        console.warn('[CloudSync] bridge read fallback:', bErr);
-      }
+
 
       const hasAnyRealRemoteData =
         remoteCustomHabits.length > 0 ||

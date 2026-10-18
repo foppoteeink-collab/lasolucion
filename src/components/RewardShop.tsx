@@ -27,7 +27,7 @@ export const RewardShop: React.FC = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [cost, setCost] = useState(50);
+  const [cost, setCost] = useState(150);
   const [icon, setIcon] = useState('🎁');
   const [category, setCategory] = useState<'ocio' | 'comida' | 'descanso' | 'perk'>('ocio');
 
@@ -56,9 +56,6 @@ export const RewardShop: React.FC = () => {
         const currentExpires = prev.focusPotionExpiresAt || now;
         extra = { focusPotionExpiresAt: Math.max(now, currentExpires) + 3600000 };
       }
-      if (reward.id === 'perk-reroll-dice') {
-        extra = { reRollDice: (prev.reRollDice || 0) + 1 };
-      }
       return extra;
     });
 
@@ -72,10 +69,6 @@ export const RewardShop: React.FC = () => {
       triggerScreenFlash('buff');
       triggerHaptic([50, 100, 50]);
       notificationService.triggerNotification('¡Poción de Enfoque Activa! 🧪', 'Durante la próxima hora, ganarás 50% más monedas y experiencia en todas tus tareas.', '🧪');
-    } else if (reward.id === 'perk-reroll-dice') {
-      triggerScreenFlash('buff');
-      triggerHaptic([80, 80]);
-      notificationService.triggerNotification('¡Dado del Destino Obtenido! 🎲', 'Puedes usarlo para cambiar una tarea no deseada del día.', '🎲');
     }
 
     // Update reward count

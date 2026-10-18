@@ -7,9 +7,12 @@ import { getTodayDateString, parseLocalDate } from '../utils/date';
  * Scaling XP requirement with quadratic & exponential growth,
  * making each higher level significantly harder to obtain through real daily discipline.
  */
-export const getRequiredXpForLevel = (level: number): number => {
-  return Math.round(120 + 35 * level + 25 * Math.pow(level, 1.55));
+export const calculateRequiredXp = (level: number): number => {
+  const lvl = typeof level === 'number' && level > 0 ? level : 1;
+  return Math.round(120 + 35 * lvl + 25 * Math.pow(lvl, 1.55));
 };
+
+export const getRequiredXpForLevel = calculateRequiredXp;
 
 export const INITIAL_PLAYER_STATS: PlayerStats = {
   level: 1,
@@ -215,7 +218,7 @@ export const INITIAL_SHOP_REWARDS: ShopReward[] = [
     id: 'perk-healing-potion',
     title: 'Poción de Curación Mayor 💖',
     description: 'Restaura inmediatamente 30 puntos de HP (Vitalidad). Ideal para recuperarte tras fallar misiones o pomodoros.',
-    cost: 35,
+    cost: 120,
     icon: '💖',
     category: 'perk',
     unlockedCount: 0,
@@ -224,7 +227,7 @@ export const INITIAL_SHOP_REWARDS: ShopReward[] = [
     id: 'perk-streak-shield',
     title: 'Escudo de Racha 🛡️',
     description: 'Protege tu racha acumulada si un día no puedes completar tareas.',
-    cost: 100,
+    cost: 250,
     icon: '🛡️',
     category: 'perk',
     unlockedCount: 0,
@@ -233,7 +236,7 @@ export const INITIAL_SHOP_REWARDS: ShopReward[] = [
     id: 'perk-focus-potion',
     title: 'Poción de Enfoque (+50% XP/Monedas) 🧪',
     description: 'Bebida alquímica que potencia un 50% las ganancias de XP y oro durante tus próximas misiones.',
-    cost: 75,
+    cost: 180,
     icon: '🧪',
     category: 'perk',
     unlockedCount: 0,
@@ -242,7 +245,7 @@ export const INITIAL_SHOP_REWARDS: ShopReward[] = [
     id: 'perk-resurrection-potion',
     title: 'Poción de Resurrección 💖',
     description: 'Comodín supremo para reanimar una racha caída y proteger tus días de mayor esfuerzo (+2 Escudos).',
-    cost: 150,
+    cost: 450,
     icon: '💖',
     category: 'perk',
     unlockedCount: 0,
@@ -251,17 +254,8 @@ export const INITIAL_SHOP_REWARDS: ShopReward[] = [
     id: 'perk-epic-title',
     title: 'Título Épico / Monarca 👑',
     description: 'Desbloquea el prestigioso título de "Monarca de las Sombras" y +10 en todos tus atributos.',
-    cost: 200,
+    cost: 700,
     icon: '👑',
-    category: 'perk',
-    unlockedCount: 0,
-  },
-  {
-    id: 'perk-reroll-dice',
-    title: 'Dado del Destino (Re-Roll) 🎲',
-    description: '¿No quieres hacer una de tus tareas de hoy? Tira el dado para reemplazarla por otra aleatoria sin penalización.',
-    cost: 40,
-    icon: '🎲',
     category: 'perk',
     unlockedCount: 0,
   },
@@ -269,7 +263,7 @@ export const INITIAL_SHOP_REWARDS: ShopReward[] = [
     id: 'shop-1',
     title: 'Capítulo de Serie / Anime 🍿',
     description: '45 minutos de relajación sin culpa tras completar tus bloques.',
-    cost: 25,
+    cost: 120,
     icon: '🎬',
     category: 'ocio',
     unlockedCount: 0,
@@ -278,7 +272,7 @@ export const INITIAL_SHOP_REWARDS: ShopReward[] = [
     id: 'shop-2',
     title: 'Snack / Café Especial ☕',
     description: 'Tu café favorito o un postre fit bien merecido.',
-    cost: 35,
+    cost: 140,
     icon: '☕',
     category: 'comida',
     unlockedCount: 0,
@@ -287,7 +281,7 @@ export const INITIAL_SHOP_REWARDS: ShopReward[] = [
     id: 'shop-3',
     title: 'Sesión de Videojuegos (1 Hora) 🎮',
     description: 'Juega a tu juego favorito con la mente despejada.',
-    cost: 50,
+    cost: 250,
     icon: '🎮',
     category: 'ocio',
     unlockedCount: 0,
@@ -296,7 +290,7 @@ export const INITIAL_SHOP_REWARDS: ShopReward[] = [
     id: 'shop-4',
     title: 'Día de Descanso / Cheat Meal 🍕',
     description: 'Una comida libre total o tarde libre de domingo.',
-    cost: 120,
+    cost: 450,
     icon: '🍕',
     category: 'comida',
     unlockedCount: 0,
@@ -305,7 +299,7 @@ export const INITIAL_SHOP_REWARDS: ShopReward[] = [
     id: 'shop-5',
     title: 'Comprar Accesorio o Ropa Gym 👟',
     description: 'Premio tangible: ahorra monedas para renovar tu equipamiento.',
-    cost: 300,
+    cost: 850,
     icon: '👕',
     category: 'perk',
     unlockedCount: 0,

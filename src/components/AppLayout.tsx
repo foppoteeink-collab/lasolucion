@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { soundFX } from '../utils/audio';
 import * as gameEngine from '../engine/gameEngine';
@@ -17,6 +17,7 @@ import { FloatingEffectsOverlay } from './FloatingEffectsOverlay';
 import { FloatingJuiceOverlay } from './FloatingJuiceOverlay';
 import { DailyRewardsModal } from './DailyRewardsModal';
 import { LevelUpModal } from './LevelUpModal';
+import { HunterAwakeningModal } from './HunterAwakeningModal';
 import { NightlyReflectionModal } from './NightlyReflectionModal';
 import { NightlyTunnel } from './NightlyTunnel';
 import { SurpriseBossModal } from './SurpriseBossModal';
@@ -134,6 +135,19 @@ export function AppLayout() {
   const setIsFinishDayOpen = (v: boolean) => setModalState('isFinishDayOpen', v);
   const setIsDayTemplatesOpen = (v: boolean) => setModalState('isDayTemplatesOpen', v);
   const setIsNightlyReflectionOpen = (v: boolean) => setModalState('isNightlyReflectionOpen', v);
+
+  const [isAwakeningOpen, setIsAwakeningOpen] = useState(false);
+
+  useEffect(() => {
+    // Check if user has already completed awakening or has established historical progress
+    const hasPriorProgress = (stats?.level && stats.level > 1) || 
+                             ((stats?.totalXpEarned || 0) > 0) || 
+                             (Boolean(stats?.username) && stats.username !== 'CazadorDelSistema');
+    
+    if (stats?.hasCompletedAwakening === false && !hasPriorProgress) {
+      setIsAwakeningOpen(true);
+    }
+  }, [stats?.hasCompletedAwakening, stats?.level, stats?.totalXpEarned, stats?.username]);
 
   const handleConfirmFinishDayLocal = (bonusXp: number, bonusCoins: number, manualBedtime?: string) => {
     const targetDate = useTaskStore.getState().currentViewDate || getTodayDateString();
@@ -564,7 +578,17 @@ export function AppLayout() {
 
           {activeTab === 'stats' && (
             <motion.div variants={itemVariant} className="w-full">
-              <WeeklyStats stats={stats} onUpdateStats={setStats} tasksByDate={tasksByDate} pomodoroSessions={pomodoroSessions} habitMastery={habitMastery} expenses={expenses} setExpenses={setExpenses} />
+              <WeeklyStats 
+                stats={stats} 
+                onUpdateStats={setStats} 
+                tasksByDate={tasksByDate} 
+                pomodoroSessions={pomodoroSessions} 
+                habitMastery={habitMastery} 
+                expenses={expenses} 
+                setExpenses={setExpenses} 
+                cloudSync={cloudSync}
+                onOpenAwakening={() => setIsAwakeningOpen(true)}
+              />
             </motion.div>
           )}
           
@@ -739,6 +763,21 @@ export function AppLayout() {
           }
           handleSaveReflection(today, note);
         }}
+      />
+
+      {/* Hunter Awakening Ceremony Onboarding Modal */}
+      <HunterAwakeningModal
+        isOpen={isAwakeningOpen}
+        onClose={() => setIsAwakeningOpen(false)}
+        stats={stats}
+        onCompleteAwakening={(data) => {
+          setIsAwakeningOpen(false);
+          usePlayerStore.getState().completeAwakening(data);
+          if (cloudSync?.forceSyncNow) {
+            cloudSync.forceSyncNow();
+          }
+        }}
+        cloudSync={cloudSync}
       />
 
       {/* OMNIPRESENT COMPANION & HOLOGRAPHIC COMMAND HUB (VISIBLE ON ALL SCREENS) */}

@@ -3,12 +3,10 @@ import {
   Timer, 
   FileText, 
   Edit3, 
-  Trash2,
-  Dices
+  Trash2
 } from 'lucide-react';
 import { TaskItem } from '../types';
 import { soundFX } from '../utils/audio';
-import { usePlayerStore } from '../store/usePlayerStore';
 
 interface TaskActionsDropdownProps {
   task: TaskItem;
@@ -27,12 +25,9 @@ export const TaskActionsDropdown: React.FC<TaskActionsDropdownProps> = ({
   onOpenPomodoro,
   onOpenEdit,
   onDelete,
-  onReRoll,
   variant = 'card',
   isDayEnded = false,
 }) => {
-  const reRollDice = usePlayerStore(s => s.stats.reRollDice || 0);
-
   return (
     <div 
       className="relative shrink-0 flex items-center gap-1 sm:gap-1.5"
@@ -52,6 +47,7 @@ export const TaskActionsDropdown: React.FC<TaskActionsDropdownProps> = ({
             : 'bg-[#03000a] text-slate-400 hover:text-[#d6f421] border-[#9600ff]/60 hover:border-[#d6f421]'
         }`}
         title={task.notes ? "Ver / Editar nota de repaso" : "Añadir nota de repaso"}
+        aria-label={task.notes ? `Ver o editar nota de la tarea: ${task.title}` : `Añadir nota a la tarea: ${task.title}`}
       >
         <FileText className="w-4 h-4" />
       </button>
@@ -66,26 +62,11 @@ export const TaskActionsDropdown: React.FC<TaskActionsDropdownProps> = ({
         }}
         className="w-9 h-9 sm:w-auto sm:px-2.5 sm:py-1.5 sm:h-8 rounded-xl bg-[#03000a] hover:bg-[#9600ff]/30 text-[#d6f421] hover:text-white border border-[#9600ff]/60 flex items-center justify-center gap-1 transition-all cursor-pointer active:scale-95 shadow-xs text-xs font-bold"
         title="Iniciar temporizador Pomodoro"
+        aria-label={`Iniciar temporizador Pomodoro para: ${task.title}`}
       >
         <Timer className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-[#d6f421]" />
         <span className="hidden sm:inline">Foco</span>
       </button>
-
-      {/* Re-Roll Button (Only if Dice > 0 and provided) */}
-      {reRollDice > 0 && onReRoll && !isDayEnded && !task.completed && (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            soundFX.playLevelUp(); // Cool sound for re-roll
-            onReRoll();
-          }}
-          className="w-9 h-9 sm:w-8 sm:h-8 rounded-xl bg-[#03000a] hover:bg-yellow-500/30 text-yellow-400 hover:text-white border border-yellow-500/60 hover:border-yellow-400 flex items-center justify-center transition-all cursor-pointer active:scale-95 shadow-xs"
-          title={`Tirar el Dado del Destino (${reRollDice} disponibles) para cambiar tarea`}
-        >
-          <Dices className="w-4 h-4" />
-        </button>
-      )}
 
       {/* Edit Button (Always Directly Visible) */}
       <button
@@ -97,6 +78,7 @@ export const TaskActionsDropdown: React.FC<TaskActionsDropdownProps> = ({
         }}
         className="w-9 h-9 sm:w-8 sm:h-8 rounded-xl bg-[#03000a] hover:bg-[#9600ff]/30 text-white hover:text-[#d6f421] border border-[#9600ff]/60 hover:border-[#9600ff] flex items-center justify-center transition-all cursor-pointer active:scale-95 shadow-xs"
         title="Editar Misión"
+        aria-label={`Editar tarea: ${task.title}`}
       >
         <Edit3 className="w-4 h-4" />
       </button>
@@ -111,6 +93,7 @@ export const TaskActionsDropdown: React.FC<TaskActionsDropdownProps> = ({
         }}
         className="w-9 h-9 sm:w-8 sm:h-8 rounded-xl bg-[#03000a] hover:bg-[#fb5607]/30 text-[#fb5607] hover:text-white border border-[#fb5607]/60 hover:border-[#fb5607] flex items-center justify-center transition-all cursor-pointer active:scale-95 shadow-xs"
         title="Eliminar Misión"
+        aria-label={`Eliminar tarea: ${task.title}`}
       >
         <Trash2 className="w-4 h-4" />
       </button>

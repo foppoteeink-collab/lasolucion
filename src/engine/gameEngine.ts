@@ -40,74 +40,84 @@ const triggerBossEmojiConfetti = () => {
   }
 };
 
+/**
+ * Contexto unificado de stores para el motor de juego.
+ * Extrae y centraliza las referencias de los 4 stores globales (Player, Task, App, UI)
+ * erradicando la duplicación de código en cada función exportada.
+ */
+export const getEngineContext = () => {
+  const player = usePlayerStore.getState();
+  const task = useTaskStore.getState();
+  const app = useAppStore.getState();
+  const ui = useUIStore.getState();
+
+  return {
+    player,
+    task,
+    app,
+    ui,
+    // Atajos de conveniencia
+    stats: player.stats,
+    setStats: player.setStats,
+    tasksByDate: task.tasksByDate,
+    setTasksByDate: task.setTasksByDate,
+    customHabits: task.customHabits,
+    setCustomHabits: task.setCustomHabits,
+    currentViewDate: task.currentViewDate,
+    setCurrentViewDate: task.setCurrentViewDate,
+    habitMastery: app.habitMastery,
+    setHabitMastery: app.setHabitMastery,
+    gameSettings: app.gameSettings,
+    setGameSettings: app.setGameSettings,
+    skillTree: app.skillTree,
+    setSkillTree: app.setSkillTree,
+    companion: app.companion,
+    setCompanion: app.setCompanion,
+    expenses: app.expenses,
+    setExpenses: app.setExpenses,
+    shopRewards: app.shopRewards,
+    setShopRewards: app.setShopRewards,
+    pomodoroSessions: app.pomodoroSessions,
+    setPomodoroSessions: app.setPomodoroSessions,
+    notifications: app.notifications,
+    setNotifications: app.setNotifications,
+    comboCount: app.comboCount,
+    setComboCount: app.setComboCount,
+    reflections: app.reflections,
+    setReflections: app.setReflections,
+    levelUpData: app.levelUpData,
+    setLevelUpData: app.setLevelUpData,
+    pomodoroPreFill: app.pomodoroPreFill,
+    setPomodoroPreFill: app.setPomodoroPreFill,
+    activeTab: ui.activeTab,
+    setActiveTab: ui.setActiveTab,
+    isTransitioning: ui.isTransitioning,
+    themeMode: ui.themeMode,
+    setThemeMode: ui.setThemeMode,
+    soundEnabled: ui.soundEnabled,
+    isPomodoroOpen: ui.isPomodoroOpen,
+    isDailyRewardsOpen: ui.isDailyRewardsOpen,
+    isLevelUpOpen: ui.isLevelUpOpen,
+    isFinishDayOpen: ui.isFinishDayOpen,
+    isNightlyReflectionOpen: ui.isNightlyReflectionOpen,
+    isDayTemplatesOpen: ui.isDayTemplatesOpen,
+    isSurpriseBossOpen: ui.isSurpriseBossOpen,
+    deleteConfirmTask: ui.deleteConfirmTask,
+    setDeleteConfirmTask: ui.setDeleteConfirmTask,
+    floatingEffects: ui.floatingEffects,
+    addFloatingEffect: ui.addFloatingEffect,
+    removeFloatingEffect: ui.removeFloatingEffect,
+    floatingRewards: ui.floatingRewards,
+    addFloatingReward: ui.addFloatingReward,
+    removeFloatingReward: ui.removeFloatingReward,
+    setModalState: ui.setModalState,
+  };
+};
+
 export const handleResetAccount = async () => {
-
-  const statePlayer = usePlayerStore.getState();
-  const stats = statePlayer.stats;
-  const setStats = statePlayer.setStats;
-
-  const stateTask = useTaskStore.getState();
-  const tasksByDate = stateTask.tasksByDate;
-  const setTasksByDate = stateTask.setTasksByDate;
-  const customHabits = stateTask.customHabits;
-  const setCustomHabits = stateTask.setCustomHabits;
-  const currentViewDate = stateTask.currentViewDate;
-  const setCurrentViewDate = stateTask.setCurrentViewDate;
-
-  const stateApp = useAppStore.getState();
-  const habitMastery = stateApp.habitMastery;
-  const setHabitMastery = stateApp.setHabitMastery;
-  const gameSettings = stateApp.gameSettings;
-  const setGameSettings = stateApp.setGameSettings;
-  const skillTree = stateApp.skillTree;
-  const setSkillTree = stateApp.setSkillTree;
-  const companion = stateApp.companion;
-  const setCompanion = stateApp.setCompanion;
-  const expenses = stateApp.expenses;
-  const setExpenses = stateApp.setExpenses;
-  const shopRewards = stateApp.shopRewards;
-  const setShopRewards = stateApp.setShopRewards;
-  const pomodoroSessions = stateApp.pomodoroSessions;
-  const setPomodoroSessions = stateApp.setPomodoroSessions;
-  const notifications = stateApp.notifications;
-  const setNotifications = stateApp.setNotifications;
-  const comboCount = stateApp.comboCount;
-  const setComboCount = stateApp.setComboCount;
-  const reflections = stateApp.reflections;
-  const setReflections = stateApp.setReflections;
-  const levelUpData = stateApp.levelUpData;
-  const setLevelUpData = stateApp.setLevelUpData;
-  const pomodoroPreFill = stateApp.pomodoroPreFill;
-  const setPomodoroPreFill = stateApp.setPomodoroPreFill;
-
-  const stateUI = useUIStore.getState();
-  const activeTab = stateUI.activeTab;
-  const setActiveTab = stateUI.setActiveTab;
-  const isTransitioning = stateUI.isTransitioning;
-  const themeMode = stateUI.themeMode;
-  const setThemeMode = stateUI.setThemeMode;
-  const soundEnabled = stateUI.soundEnabled;
-  const isPomodoroOpen = stateUI.isPomodoroOpen;
-  const isDailyRewardsOpen = stateUI.isDailyRewardsOpen;
-  const isLevelUpOpen = stateUI.isLevelUpOpen;
-  const isFinishDayOpen = stateUI.isFinishDayOpen;
-  const isNightlyReflectionOpen = stateUI.isNightlyReflectionOpen;
-  const isDayTemplatesOpen = stateUI.isDayTemplatesOpen;
-  const isSurpriseBossOpen = stateUI.isSurpriseBossOpen;
-  const deleteConfirmTask = stateUI.deleteConfirmTask;
-  const setDeleteConfirmTask = stateUI.setDeleteConfirmTask;
-  const floatingEffects = stateUI.floatingEffects;
-  const addFloatingEffect = stateUI.addFloatingEffect;
-  const removeFloatingEffect = stateUI.removeFloatingEffect;
-  const floatingRewards = stateUI.floatingRewards;
-  const addFloatingReward = stateUI.addFloatingReward;
-  const removeFloatingReward = stateUI.removeFloatingReward;
-  const setModalState = stateUI.setModalState;
-  
   // @ts-ignore
   const user = auth?.currentUser;
-  const tasks = tasksByDate[currentViewDate] || [];
-        (window as any).__isResettingAccount = true;
+  (window as any).__isResettingAccount = true;
     if (user && db) {
       try {
         await deleteDoc(doc(db, 'users', user.uid));
@@ -147,72 +157,7 @@ export const handleResetAccount = async () => {
   
 
   export const handleSetCurrentViewDate = (newDateStr: string) => {
-
-  const statePlayer = usePlayerStore.getState();
-  const stats = statePlayer.stats;
-  const setStats = statePlayer.setStats;
-
-  const stateTask = useTaskStore.getState();
-  const tasksByDate = stateTask.tasksByDate;
-  const setTasksByDate = stateTask.setTasksByDate;
-  const customHabits = stateTask.customHabits;
-  const setCustomHabits = stateTask.setCustomHabits;
-  const currentViewDate = stateTask.currentViewDate;
-  const setCurrentViewDate = stateTask.setCurrentViewDate;
-
-  const stateApp = useAppStore.getState();
-  const habitMastery = stateApp.habitMastery;
-  const setHabitMastery = stateApp.setHabitMastery;
-  const gameSettings = stateApp.gameSettings;
-  const setGameSettings = stateApp.setGameSettings;
-  const skillTree = stateApp.skillTree;
-  const setSkillTree = stateApp.setSkillTree;
-  const companion = stateApp.companion;
-  const setCompanion = stateApp.setCompanion;
-  const expenses = stateApp.expenses;
-  const setExpenses = stateApp.setExpenses;
-  const shopRewards = stateApp.shopRewards;
-  const setShopRewards = stateApp.setShopRewards;
-  const pomodoroSessions = stateApp.pomodoroSessions;
-  const setPomodoroSessions = stateApp.setPomodoroSessions;
-  const notifications = stateApp.notifications;
-  const setNotifications = stateApp.setNotifications;
-  const comboCount = stateApp.comboCount;
-  const setComboCount = stateApp.setComboCount;
-  const reflections = stateApp.reflections;
-  const setReflections = stateApp.setReflections;
-  const levelUpData = stateApp.levelUpData;
-  const setLevelUpData = stateApp.setLevelUpData;
-  const pomodoroPreFill = stateApp.pomodoroPreFill;
-  const setPomodoroPreFill = stateApp.setPomodoroPreFill;
-
-  const stateUI = useUIStore.getState();
-  const activeTab = stateUI.activeTab;
-  const setActiveTab = stateUI.setActiveTab;
-  const isTransitioning = stateUI.isTransitioning;
-  const themeMode = stateUI.themeMode;
-  const setThemeMode = stateUI.setThemeMode;
-  const soundEnabled = stateUI.soundEnabled;
-  const isPomodoroOpen = stateUI.isPomodoroOpen;
-  const isDailyRewardsOpen = stateUI.isDailyRewardsOpen;
-  const isLevelUpOpen = stateUI.isLevelUpOpen;
-  const isFinishDayOpen = stateUI.isFinishDayOpen;
-  const isNightlyReflectionOpen = stateUI.isNightlyReflectionOpen;
-  const isDayTemplatesOpen = stateUI.isDayTemplatesOpen;
-  const isSurpriseBossOpen = stateUI.isSurpriseBossOpen;
-  const deleteConfirmTask = stateUI.deleteConfirmTask;
-  const setDeleteConfirmTask = stateUI.setDeleteConfirmTask;
-  const floatingEffects = stateUI.floatingEffects;
-  const addFloatingEffect = stateUI.addFloatingEffect;
-  const removeFloatingEffect = stateUI.removeFloatingEffect;
-  const floatingRewards = stateUI.floatingRewards;
-  const addFloatingReward = stateUI.addFloatingReward;
-  const removeFloatingReward = stateUI.removeFloatingReward;
-  const setModalState = stateUI.setModalState;
-  
-  // @ts-ignore
-  const user = auth?.currentUser;
-  const tasks = tasksByDate[currentViewDate] || [];
+  const { setCurrentViewDate, setTasksByDate, customHabits } = getEngineContext();
   setCurrentViewDate(newDateStr);
   setTasksByDate((prev) => {
     const rawExisting = prev[newDateStr] || [];
@@ -244,148 +189,16 @@ export const handleResetAccount = async () => {
 };
 
   export const updateCurrentTasks = (updater: (prev: TaskItem[]) => TaskItem[]) => {
-
-  const statePlayer = usePlayerStore.getState();
-  const stats = statePlayer.stats;
-  const setStats = statePlayer.setStats;
-
-  const stateTask = useTaskStore.getState();
-  const tasksByDate = stateTask.tasksByDate;
-  const setTasksByDate = stateTask.setTasksByDate;
-  const customHabits = stateTask.customHabits;
-  const setCustomHabits = stateTask.setCustomHabits;
-  const currentViewDate = stateTask.currentViewDate;
-  const setCurrentViewDate = stateTask.setCurrentViewDate;
-
-  const stateApp = useAppStore.getState();
-  const habitMastery = stateApp.habitMastery;
-  const setHabitMastery = stateApp.setHabitMastery;
-  const gameSettings = stateApp.gameSettings;
-  const setGameSettings = stateApp.setGameSettings;
-  const skillTree = stateApp.skillTree;
-  const setSkillTree = stateApp.setSkillTree;
-  const companion = stateApp.companion;
-  const setCompanion = stateApp.setCompanion;
-  const expenses = stateApp.expenses;
-  const setExpenses = stateApp.setExpenses;
-  const shopRewards = stateApp.shopRewards;
-  const setShopRewards = stateApp.setShopRewards;
-  const pomodoroSessions = stateApp.pomodoroSessions;
-  const setPomodoroSessions = stateApp.setPomodoroSessions;
-  const notifications = stateApp.notifications;
-  const setNotifications = stateApp.setNotifications;
-  const comboCount = stateApp.comboCount;
-  const setComboCount = stateApp.setComboCount;
-  const reflections = stateApp.reflections;
-  const setReflections = stateApp.setReflections;
-  const levelUpData = stateApp.levelUpData;
-  const setLevelUpData = stateApp.setLevelUpData;
-  const pomodoroPreFill = stateApp.pomodoroPreFill;
-  const setPomodoroPreFill = stateApp.setPomodoroPreFill;
-
-  const stateUI = useUIStore.getState();
-  const activeTab = stateUI.activeTab;
-  const setActiveTab = stateUI.setActiveTab;
-  const isTransitioning = stateUI.isTransitioning;
-  const themeMode = stateUI.themeMode;
-  const setThemeMode = stateUI.setThemeMode;
-  const soundEnabled = stateUI.soundEnabled;
-  const isPomodoroOpen = stateUI.isPomodoroOpen;
-  const isDailyRewardsOpen = stateUI.isDailyRewardsOpen;
-  const isLevelUpOpen = stateUI.isLevelUpOpen;
-  const isFinishDayOpen = stateUI.isFinishDayOpen;
-  const isNightlyReflectionOpen = stateUI.isNightlyReflectionOpen;
-  const isDayTemplatesOpen = stateUI.isDayTemplatesOpen;
-  const isSurpriseBossOpen = stateUI.isSurpriseBossOpen;
-  const deleteConfirmTask = stateUI.deleteConfirmTask;
-  const setDeleteConfirmTask = stateUI.setDeleteConfirmTask;
-  const floatingEffects = stateUI.floatingEffects;
-  const addFloatingEffect = stateUI.addFloatingEffect;
-  const removeFloatingEffect = stateUI.removeFloatingEffect;
-  const floatingRewards = stateUI.floatingRewards;
-  const addFloatingReward = stateUI.addFloatingReward;
-  const removeFloatingReward = stateUI.removeFloatingReward;
-  const setModalState = stateUI.setModalState;
-  
-  // @ts-ignore
-  const user = auth?.currentUser;
-  const tasks = tasksByDate[currentViewDate] || [];
-        setTasksByDate((prev) => {
+    const { setTasksByDate, currentViewDate } = getEngineContext();
+    setTasksByDate((prev) => {
       const current = prev[currentViewDate] || [];
       return { ...prev, [currentViewDate]: updater(current) };
     });
   };
 
-        
-  
   export const handleSaveReflection = (date: string, text: string) => {
-
-  const statePlayer = usePlayerStore.getState();
-  const stats = statePlayer.stats;
-  const setStats = statePlayer.setStats;
-
-  const stateTask = useTaskStore.getState();
-  const tasksByDate = stateTask.tasksByDate;
-  const setTasksByDate = stateTask.setTasksByDate;
-  const customHabits = stateTask.customHabits;
-  const setCustomHabits = stateTask.setCustomHabits;
-  const currentViewDate = stateTask.currentViewDate;
-  const setCurrentViewDate = stateTask.setCurrentViewDate;
-
-  const stateApp = useAppStore.getState();
-  const habitMastery = stateApp.habitMastery;
-  const setHabitMastery = stateApp.setHabitMastery;
-  const gameSettings = stateApp.gameSettings;
-  const setGameSettings = stateApp.setGameSettings;
-  const skillTree = stateApp.skillTree;
-  const setSkillTree = stateApp.setSkillTree;
-  const companion = stateApp.companion;
-  const setCompanion = stateApp.setCompanion;
-  const expenses = stateApp.expenses;
-  const setExpenses = stateApp.setExpenses;
-  const shopRewards = stateApp.shopRewards;
-  const setShopRewards = stateApp.setShopRewards;
-  const pomodoroSessions = stateApp.pomodoroSessions;
-  const setPomodoroSessions = stateApp.setPomodoroSessions;
-  const notifications = stateApp.notifications;
-  const setNotifications = stateApp.setNotifications;
-  const comboCount = stateApp.comboCount;
-  const setComboCount = stateApp.setComboCount;
-  const reflections = stateApp.reflections;
-  const setReflections = stateApp.setReflections;
-  const levelUpData = stateApp.levelUpData;
-  const setLevelUpData = stateApp.setLevelUpData;
-  const pomodoroPreFill = stateApp.pomodoroPreFill;
-  const setPomodoroPreFill = stateApp.setPomodoroPreFill;
-
-  const stateUI = useUIStore.getState();
-  const activeTab = stateUI.activeTab;
-  const setActiveTab = stateUI.setActiveTab;
-  const isTransitioning = stateUI.isTransitioning;
-  const themeMode = stateUI.themeMode;
-  const setThemeMode = stateUI.setThemeMode;
-  const soundEnabled = stateUI.soundEnabled;
-  const isPomodoroOpen = stateUI.isPomodoroOpen;
-  const isDailyRewardsOpen = stateUI.isDailyRewardsOpen;
-  const isLevelUpOpen = stateUI.isLevelUpOpen;
-  const isFinishDayOpen = stateUI.isFinishDayOpen;
-  const isNightlyReflectionOpen = stateUI.isNightlyReflectionOpen;
-  const isDayTemplatesOpen = stateUI.isDayTemplatesOpen;
-  const isSurpriseBossOpen = stateUI.isSurpriseBossOpen;
-  const deleteConfirmTask = stateUI.deleteConfirmTask;
-  const setDeleteConfirmTask = stateUI.setDeleteConfirmTask;
-  const floatingEffects = stateUI.floatingEffects;
-  const addFloatingEffect = stateUI.addFloatingEffect;
-  const removeFloatingEffect = stateUI.removeFloatingEffect;
-  const floatingRewards = stateUI.floatingRewards;
-  const addFloatingReward = stateUI.addFloatingReward;
-  const removeFloatingReward = stateUI.removeFloatingReward;
-  const setModalState = stateUI.setModalState;
-  
-  // @ts-ignore
-  const user = auth?.currentUser;
-  const tasks = tasksByDate[currentViewDate] || [];
-        setReflections((prev) => {
+    const { setReflections } = getEngineContext();
+    setReflections((prev) => {
       const next = { ...prev };
       if (text.trim()) {
         next[date] = text.trim();
@@ -401,8 +214,19 @@ export const handleResetAccount = async () => {
 
 
 
-export const triggerFloatingHit = (x: number, y: number, text: string, type: 'xp' | 'coins' | 'critical' | 'streak' | 'combo') => {};
-export const triggerRewardPopup = (xp: number, coins: number, text?: string) => {};
+export const triggerFloatingHit = (x: number, y: number, text: string, type: 'xp' | 'coins' | 'critical' | 'streak' | 'combo') => {
+  const stateUI = useUIStore.getState();
+  stateUI.addFloatingEffect({ x, y, text, type });
+};
+
+export const triggerRewardPopup = (xp: number, coins: number, text?: string) => {
+  const stateUI = useUIStore.getState();
+  stateUI.addFloatingReward({
+    xp,
+    coins,
+    text
+  });
+};
 export const checkLevelUp = (prevStats: any, xpAdded: number, coinsAdded: number) => {
   let nextXp = (prevStats.currentXp || 0) + xpAdded;
   let nextLevel = typeof prevStats.level === 'number' && prevStats.level > 0 ? prevStats.level : 1;
@@ -425,8 +249,9 @@ export const checkLevelUp = (prevStats: any, xpAdded: number, coinsAdded: number
     stateApp.setLevelUpData({ level: nextLevel, rank: currentRankTitle });
     const stateUI = useUIStore.getState();
     
-    // Suppress invasive full-screen level up modal for levels 1-10 to maintain logging flow
-    if (nextLevel > 10) {
+    // Descongestión modal: Solo activar modal a pantalla completa en niveles de hito (Nivel 2 y múltiplos de 5)
+    const isMilestoneLevel = nextLevel === 2 || nextLevel % 5 === 0;
+    if (isMilestoneLevel) {
       stateUI.setModalState('isLevelUpOpen', true);
     } else {
       stateUI.addFloatingEffect({
@@ -466,7 +291,15 @@ export const checkLevelUp = (prevStats: any, xpAdded: number, coinsAdded: number
     coins: (prevStats.coins || 0) + coinsAdded
   };
 };
-export const handleSelectClass = (charClass: CharacterClassOption) => {};
+export const handleSelectClass = (charClass: CharacterClassOption) => {
+  if (!charClass) return;
+  const statePlayer = usePlayerStore.getState();
+  statePlayer.setStats(prev => ({
+    ...prev,
+    characterClass: charClass.name
+  }));
+  soundFX.playClick();
+};
 export const handleToggleTask = (taskId: string, e?: any) => {
   const stateTask = useTaskStore.getState();
   const date = stateTask.currentViewDate;
@@ -476,16 +309,18 @@ export const handleToggleTask = (taskId: string, e?: any) => {
 
   const statePlayer = usePlayerStore.getState();
   const today = getTodayDateString();
+  const reconciliationLimit = addDaysToDateString(today, -2);
   const isFinalized = Boolean(statePlayer.stats?.finalizedDays?.[date]);
+  const isStrictlyLocked = isFinalized && date < reconciliationLimit;
 
-  if (isFinalized) {
+  if (isStrictlyLocked) {
     soundFX.playClick();
     if (!task.completed) {
       if (typeof window !== 'undefined') {
         spawnJuiceParticle({
             x: e?.clientX || window.innerWidth / 2,
             y: (e?.clientY || window.innerHeight / 2) - 20,
-            text: '🔒 Bloqueado: Día concluido',
+            text: '🔒 Bloqueado: Más de 48h transcurridas',
             type: 'custom',
             colorClass: 'text-rose-400 bg-rose-950/95 border-rose-500'
         });
@@ -493,12 +328,12 @@ export const handleToggleTask = (taskId: string, e?: any) => {
       useUIStore.getState().addFloatingEffect({
         x: e?.clientX || (typeof window !== 'undefined' ? window.innerWidth / 2 : 200),
         y: (e?.clientY || 200) - 20,
-        text: '🔒 Tarea en día finalizado (Bloqueada)',
+        text: '🔒 Tarea en día archivado (+48h)',
         type: 'streak'
       });
       return;
     } else {
-      alert('Esta jornada ya está finalizada y asegurada 🔒. Las actividades de días cerrados no se pueden modificar.');
+      alert('Esta jornada ya está archivada (+48h) 🔒. Las actividades pasadas antiguas no se pueden modificar.');
       return;
     }
   }
@@ -506,7 +341,7 @@ export const handleToggleTask = (taskId: string, e?: any) => {
   const wasCompleted = task.completed;
   stateTask.toggleTaskCompletion(date, taskId);
   
-  // Calculate Retroactive Impuesto de Memoria (Soft Tax 0.8x) if task date is before today
+  // Conciliación Retrospectiva Honesta (Multiplicador de 0.8x si la fecha es anterior a hoy)
   const isRetroactive = date < today;
   const taxMultiplier = isRetroactive ? 0.8 : 1.0;
   
@@ -516,11 +351,14 @@ export const handleToggleTask = (taskId: string, e?: any) => {
   let xpRewardToAdd = Math.floor(rawXp * taxMultiplier);
   let coinRewardToAdd = Math.floor(rawCoin * taxMultiplier);
   
-  // Phase 2: Random Chests (20% chance to convert coins into a chest between 1 and 20)
-  // Only applies if the task natively had coins and hasn't awarded a chest yet to prevent infinite farming.
+  // Hito Determinista: Cofre de Maestría cada 5 tareas completadas en el día
   let wasChestFound = false;
-  if (rawCoin > 0 && !task.chestAwarded && Math.random() < 0.20) {
-    coinRewardToAdd = Math.floor(Math.random() * 20) + 1; // 1 to 20 coins
+  const currentDayTasks = stateTask.tasksByDate[date] || [];
+  const completedTodayCount = currentDayTasks.filter(t => t.id === taskId ? !wasCompleted : t.completed).length;
+  const isChestMilestone = !wasCompleted && completedTodayCount > 0 && completedTodayCount % 5 === 0;
+
+  if (rawCoin > 0 && !task.chestAwarded && isChestMilestone) {
+    coinRewardToAdd += 15; // Bonificación determinista de 15 monedas
     wasChestFound = true;
   }
 
@@ -544,17 +382,46 @@ export const handleToggleTask = (taskId: string, e?: any) => {
       awardedCoins: coinReward,
       chestAwarded: wasChestFound ? true : (task.chestAwarded || false)
     });
+
+    // Mensaje empático y no punitivo para registro retrospectivo
+    if (isRetroactive) {
+      if (typeof window !== 'undefined') {
+        spawnJuiceParticle({
+          x: e?.clientX || window.innerWidth / 2,
+          y: (e?.clientY || window.innerHeight / 2) - 30,
+          text: '⏳ Registro retrospectivo aplicado (80% XP)',
+          type: 'custom',
+          colorClass: 'text-amber-300 bg-amber-950/90 border-amber-500'
+        });
+      }
+      stateUI.addFloatingEffect({
+        x: e?.clientX || (typeof window !== 'undefined' ? window.innerWidth / 2 : 200),
+        y: (e?.clientY || 200) - 30,
+        text: '⏳ Registro retrospectivo aplicado (80% XP)',
+        type: 'xp'
+      });
+    }
     
-    // Random Boss encounter (15% chance)
+    // Encuentro Determinista con Jefe Diario (Umbral: 3 hábitos o tareas de alta prioridad completadas hoy)
     const todayStr = getTodayDateString();
     let currentStats = statePlayer.stats;
-    if (currentStats.lastEncounterDate !== todayStr && Math.random() < 0.15) {
-       currentStats = { ...currentStats, lastEncounterDate: todayStr };
-       stateUI.openSurpriseBoss({
+    const isBossEligible = !hasClaimedBossToday() && currentStats.lastEncounterDate !== todayStr;
+    if (isBossEligible) {
+      const allDayTasks = stateTask.tasksByDate[date] || [];
+      const completedHabitsOrPriority = allDayTasks.filter(t => {
+        const isHabitOrPriority = t.isHabit || t.priority === 'alta' || t.category === 'habito' || t.isQuickHabit || Boolean(t.id && t.id.includes('habit-'));
+        const isDone = (t.id === taskId) ? true : (t.completed || (t.currentCount || 0) >= (t.targetCount || 1));
+        return isHabitOrPriority && isDone;
+      }).length;
+
+      if (completedHabitsOrPriority >= 3) {
+        currentStats = { ...currentStats, lastEncounterDate: todayStr };
+        stateUI.openSurpriseBoss({
           archetypeName: 'Comandante de la Procrastinación',
-          buffName: 'Jefe Aleatorio Derrotado',
-          buffDescription: 'Reclama 50 XP y 20 Oro extra.'
-       });
+          buffName: 'Jefe Diario Enfrentado',
+          buffDescription: '¡Alcanzaste 3 hábitos/prioridades clave hoy! Reclama 50 XP y 20 Oro.'
+        });
+      }
     }
 
     if (currentStats.lastEncounterDate === todayStr && xpReward === 0 && coinReward === 0) {
@@ -572,6 +439,12 @@ export const handleToggleTask = (taskId: string, e?: any) => {
 
       if (wasChestFound) {
         soundFX.playLevelUp(); // Extra sound for chest
+        stateUI.addFloatingEffect({
+          x: e?.clientX || (typeof window !== 'undefined' ? window.innerWidth / 2 : 200),
+          y: (e?.clientY || 200) - 45,
+          text: '🎁 ¡Cofre de Hito (5 tareas)! +15 Oro',
+          type: 'critical'
+        });
       }
     }
   } else {
@@ -622,7 +495,7 @@ export const handleToggleTask = (taskId: string, e?: any) => {
 };
 
 export const handleIncrementHabit = (taskId: string, e?: any) => {
-  const stateTask = useTaskStore.getState();
+  const { player: statePlayer, task: stateTask, ui: stateUI, app: stateApp } = getEngineContext();
   const date = stateTask.currentViewDate;
   const tasks = stateTask.tasksByDate[date] || [];
   const task = tasks.find(t => t.id === taskId);
@@ -631,10 +504,12 @@ export const handleIncrementHabit = (taskId: string, e?: any) => {
   const isHabitLike = task.isHabit || task.isQuickHabit || task.category === 'habito' || task.isTracked2166 || Boolean(task.id && task.id.includes('habit-')) || task.targetCount !== undefined;
   if (!isHabitLike) return;
 
-  const statePlayer = usePlayerStore.getState();
+  const today = getTodayDateString();
+  const reconciliationLimit = addDaysToDateString(today, -2);
   const isDayEnded = Boolean(statePlayer.stats?.finalizedDays?.[date]);
+  const isStrictlyLocked = isDayEnded && date < reconciliationLimit;
 
-  if (isDayEnded && !task.completed) {
+  if (isStrictlyLocked && !task.completed) {
     soundFX.playClick();
     return;
   }
@@ -662,49 +537,77 @@ export const handleIncrementHabit = (taskId: string, e?: any) => {
     hapticPresets.click();
   } catch {}
   
-  // Dar recompensas por cada incremento
-  const xpReward = task.xpReward || 0;
-  const coinReward = task.coinReward || 0;
+  // Conciliación Retrospectiva Honesta (0.8x si la fecha es anterior a hoy)
+  const isRetroactive = date < today;
+  const taxMultiplier = isRetroactive ? 0.8 : 1.0;
+  const xpReward = Math.floor((task.xpReward || 0) * taxMultiplier);
+  const coinReward = Math.floor((task.coinReward || 0) * taxMultiplier);
 
   if (xpReward > 0 || coinReward > 0) {
     const newStats = checkLevelUp(statePlayer.stats, xpReward, coinReward);
     statePlayer.setStats(newStats);
   }
 
+  if (isRetroactive && !isNowCompleted) {
+    stateUI.addFloatingEffect({
+      x: e?.clientX || (typeof window !== 'undefined' ? window.innerWidth / 2 : 200),
+      y: (e?.clientY || 200) - 25,
+      text: '⏳ Registro retrospectivo (80% XP)',
+      type: 'xp'
+    });
+  }
+
   if (isNowCompleted) {
     soundFX.playLevelUp(); // Extra sound for finishing habit
 
-    // Random Boss encounter (20% chance on completing a habit)
-    const today = new Date().toISOString().split('T')[0];
+    if (isRetroactive) {
+      stateUI.addFloatingEffect({
+        x: e?.clientX || (typeof window !== 'undefined' ? window.innerWidth / 2 : 200),
+        y: (e?.clientY || 200) - 35,
+        text: '⏳ Registro retrospectivo completado (80% XP)',
+        type: 'xp'
+      });
+    }
+
+    // Encuentro Determinista con Jefe Diario (Umbral: 3 hábitos o tareas de alta prioridad completadas hoy)
     let currentStats = statePlayer.stats;
-    if (currentStats.lastEncounterDate !== today && Math.random() < 0.20) {
-       currentStats = { ...currentStats, lastEncounterDate: today };
-       statePlayer.setStats(currentStats);
-       useUIStore.getState().openSurpriseBoss({
+    const isBossEligible = !hasClaimedBossToday() && currentStats.lastEncounterDate !== today;
+    if (isBossEligible) {
+      const allDayTasks = stateTask.tasksByDate[date] || [];
+      const completedHabitsOrPriority = allDayTasks.filter(t => {
+        const isHabitOrPriority = t.isHabit || t.priority === 'alta' || t.category === 'habito' || t.isQuickHabit || Boolean(t.id && t.id.includes('habit-'));
+        const isDone = (t.id === taskId) ? true : (t.completed || (t.currentCount || 0) >= (t.targetCount || 1));
+        return isHabitOrPriority && isDone;
+      }).length;
+
+      if (completedHabitsOrPriority >= 3) {
+        currentStats = { ...currentStats, lastEncounterDate: today };
+        statePlayer.setStats(currentStats);
+        stateUI.openSurpriseBoss({
           archetypeName: 'Comandante de la Procrastinación',
-          buffName: 'Jefe Aleatorio Derrotado',
-          buffDescription: 'Reclama 50 XP y 20 Oro extra.'
-       });
+          buffName: 'Jefe Diario Enfrentado',
+          buffDescription: '¡Alcanzaste 3 hábitos/prioridades clave hoy! Reclama 50 XP y 20 Oro.'
+        });
+      }
     }
   }
 
   // Evaluate habit mastery tracking
   const updatedTask = (stateTask.tasksByDate[date] || []).find(t => t.id === taskId) || task;
-  const appStore = useAppStore.getState();
   const { newMastery, bonusXp, notifications, boxesEarned } = evaluateMasteryChange(
     updatedTask,
     stateTask.tasksByDate,
-    appStore.habitMastery,
+    stateApp.habitMastery,
     date
   );
-  appStore.setHabitMastery(newMastery);
+  stateApp.setHabitMastery(newMastery);
   if (bonusXp > 0) {
     const stats = statePlayer.stats;
     statePlayer.setStats(checkLevelUp(stats, bonusXp, 0));
   }
   if (notifications.length > 0) {
-    const currentNotifs = appStore.notifications || [];
-    appStore.setNotifications([...notifications, ...currentNotifs]);
+    const currentNotifs = stateApp.notifications || [];
+    stateApp.setNotifications([...notifications, ...currentNotifs]);
   }
   if (boxesEarned > 0) {
     statePlayer.addLootBoxes(boxesEarned);
@@ -719,16 +622,17 @@ export const handleIncrementHabit = (taskId: string, e?: any) => {
 };
 
 export const handleResetHabit = (taskId: string, e?: any) => {
-  const stateTask = useTaskStore.getState();
+  const { player: statePlayer, task: stateTask } = getEngineContext();
   const date = stateTask.currentViewDate;
   const tasks = stateTask.tasksByDate[date] || [];
   const task = tasks.find(t => t.id === taskId);
   if (!task) return;
 
-  const statePlayer = usePlayerStore.getState();
   const today = getTodayDateString();
-  const isDayEnded = Boolean(statePlayer.stats?.finalizedDays?.[date]) || date < today;
-  if (isDayEnded) {
+  const reconciliationLimit = addDaysToDateString(today, -2);
+  const isFinalized = Boolean(statePlayer.stats?.finalizedDays?.[date]);
+  const isStrictlyLocked = (isFinalized || date < today) && date < reconciliationLimit;
+  if (isStrictlyLocked) {
     soundFX.playClick();
     return;
   }
@@ -828,8 +732,7 @@ export const executeDeleteTask = (deleteEverywhere = false) => {
   soundFX.playClick();
 };
 export const handleClaimDailyReward = (day: number, xp: number, coins: number, bonusItem?: string) => {
-  const statePlayer = usePlayerStore.getState();
-  const stateUI = useUIStore.getState();
+  const { player: statePlayer, ui: stateUI } = getEngineContext();
   
   if (xp > 0 || coins > 0) {
     const newStats = checkLevelUp(statePlayer.stats, xp, coins);
@@ -846,9 +749,7 @@ export const handleClaimDailyReward = (day: number, xp: number, coins: number, b
   soundFX.playTaskComplete();
 };
 export const handleConfirmFinishDay = (bonusXp: number, bonusCoins: number) => {
-  const statePlayer = usePlayerStore.getState();
-  const stateTask = useTaskStore.getState();
-  const stateUI = useUIStore.getState();
+  const { player: statePlayer, task: stateTask, ui: stateUI } = getEngineContext();
   
   const currentDate = stateTask.currentViewDate;
   const now = new Date();
@@ -883,19 +784,22 @@ export const handleConfirmFinishDay = (bonusXp: number, bonusCoins: number) => {
 
   statePlayer.setStats(nextStats);
 
-  // Marcar tareas incompletas como bloqueadas en la fecha finalizada
-  const currentTasks = stateTask.tasksByDate[currentDate] || [];
-  const updatedTasks = currentTasks.map(t => {
-    const isFinished = t.isHabit ? ((t.currentCount || 0) >= (t.targetCount || 1) || t.completed) : t.completed;
-    if (!isFinished) {
-      return { ...t, isLocked: true, lockedReason: 'day_finalized' };
-    }
-    return t;
-  });
-  stateTask.setTasksByDate(prev => ({
-    ...prev,
-    [currentDate]: updatedTasks
-  }));
+  // Conciliación Retrospectiva Honesta: Marcar tareas incompletas como bloqueadas en la fecha finalizada SOLO si está fuera del rango de 48h
+  const reconciliationLimit = addDaysToDateString(getTodayDateString(), -2);
+  if (currentDate < reconciliationLimit) {
+    const currentTasks = stateTask.tasksByDate[currentDate] || [];
+    const updatedTasks = currentTasks.map(t => {
+      const isFinished = t.isHabit ? ((t.currentCount || 0) >= (t.targetCount || 1) || t.completed) : t.completed;
+      if (!isFinished) {
+        return { ...t, isLocked: true, lockedReason: 'day_finalized' };
+      }
+      return t;
+    });
+    stateTask.setTasksByDate(prev => ({
+      ...prev,
+      [currentDate]: updatedTasks
+    }));
+  }
 
   if (bonusXp > 0 || bonusCoins > 0) {
     if (typeof window !== 'undefined') {
@@ -909,8 +813,7 @@ export const handleConfirmFinishDay = (bonusXp: number, bonusCoins: number) => {
   soundFX.playTaskComplete();
 };
 export const handleReopenDay = (dateStr?: string) => {
-  const statePlayer = usePlayerStore.getState();
-  const stateTask = useTaskStore.getState();
+  const { player: statePlayer, task: stateTask } = getEngineContext();
   const targetDate = dateStr || stateTask.currentViewDate;
   
   const stats = statePlayer.stats;
@@ -995,8 +898,7 @@ export const handleClaimBossBounty = () => {
   const coinReward = 20;
   const hpReward = 50;
   
-  const statePlayer = usePlayerStore.getState();
-  const stateUI = useUIStore.getState();
+  const { player: statePlayer, ui: stateUI } = getEngineContext();
   
   statePlayer.heal(hpReward);
   const newStats = checkLevelUp(statePlayer.stats, xpReward, coinReward);
@@ -1018,9 +920,13 @@ export const handleClaimBossBounty = () => {
      }, 300);
   }
 };
-export const hasClaimedBossToday = () => false;
+export const hasClaimedBossToday = (): boolean => {
+  const { stats } = getEngineContext();
+  const today = getTodayDateString();
+  return stats?.lastBossDefeatedDate === today;
+};
 export const handleApplyTemplate = (template: any, mode: 'replace' | 'merge') => {
-  const store = useTaskStore.getState();
+  const { task: store } = getEngineContext();
   const currentTasks = store.tasksByDate[store.currentViewDate] || [];
   
   const newTasks = template.tasks.map((t: any) => ({
@@ -1043,23 +949,34 @@ export const handleApplyTemplate = (template: any, mode: 'replace' | 'merge') =>
   soundFX.playClick();
 };
 
-export const handleAddRecallAsTask = () => {};
+export const handleAddRecallAsTask = (recallItem?: RecallItem) => {
+  if (!recallItem || !recallItem.title) return;
+  const { task: taskStore } = getEngineContext();
+  const date = taskStore.currentViewDate || getTodayDateString();
+  const newTask: TaskItem = {
+    id: `task-recall-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    title: `Repaso: ${recallItem.title}`,
+    category: recallItem.category || 'estudio',
+    xpReward: 15,
+    coinReward: 5,
+    completed: false,
+    description: recallItem.notes || 'Sesión de repaso activo'
+  };
+  taskStore.addTask(date, newTask);
+  soundFX.playClick();
+};
 export const handleOpenPomodoroForTask = (task: any) => {
-  const store = useAppStore.getState();
+  const { app: store, ui: uiStore } = getEngineContext();
   store.setPomodoroPreFill({ title: task.title, category: task.category });
-  const uiStore = useUIStore.getState();
   uiStore.setModalState('isPomodoroOpen', true);
 };
 
 export const handlePomodoroComplete = (session: any) => {
-  const stateApp = useAppStore.getState();
+  const { app: stateApp, player: statePlayer, ui: stateUI } = getEngineContext();
   stateApp.setPomodoroSessions([...stateApp.pomodoroSessions, session]);
   
   const xpReward = session.xpEarned || 0;
   const coinReward = session.coinsEarned || 0;
-  
-  const statePlayer = usePlayerStore.getState();
-  const stateUI = useUIStore.getState();
   
   if (xpReward > 0 || coinReward > 0) {
     const newStats = checkLevelUp(statePlayer.stats, xpReward, coinReward);
@@ -1074,12 +991,33 @@ export const handlePomodoroComplete = (session: any) => {
   }
 };
 
-export const handleRedeemReward = () => {};
-export const handleAddCustomReward = () => {};
-export const handleRestoreBackup = () => {};
+export const handleRedeemReward = (reward?: ShopReward) => {
+  if (!reward) return;
+  const { player: statePlayer, app: stateApp } = getEngineContext();
+  const success = statePlayer.purchaseItem(reward.cost);
+  if (success) {
+    stateApp.setShopRewards(prev =>
+      prev.map(r => (r.id === reward.id ? { ...r, unlockedCount: (r.unlockedCount || 0) + 1 } : r))
+    );
+    soundFX.playCoin();
+  }
+};
+
+export const handleAddCustomReward = (newReward?: ShopReward) => {
+  if (!newReward) return;
+  const { app } = getEngineContext();
+  app.setShopRewards(prev => [...prev, newReward]);
+  soundFX.playClick();
+};
+
+export const handleRestoreBackup = (backupData?: any) => {
+  if (!backupData) return;
+  const { player, task } = getEngineContext();
+  if (backupData.stats) player.setStats(backupData.stats);
+  if (backupData.tasksByDate) task.setTasksByDate(backupData.tasksByDate);
+};
 export const handleRegisterWakeUp = (dateStr?: string, customWakeTime?: string) => {
-  const statePlayer = usePlayerStore.getState();
-  const stateTask = useTaskStore.getState();
+  const { player: statePlayer, task: stateTask, ui: stateUI } = getEngineContext();
   const stats = statePlayer.stats;
   const sleepLogs = stats.sleepLogs || {};
 
@@ -1109,8 +1047,7 @@ export const handleRegisterWakeUp = (dateStr?: string, customWakeTime?: string) 
 
   // 6. Trigger floating visual notification feedback
   if (typeof window !== 'undefined') {
-    const stateUI = useUIStore.getState();
-    const updatedStats = usePlayerStore.getState().stats;
+    const updatedStats = statePlayer.stats;
     const log = updatedStats.sleepLogs?.[pendingDate];
     const hours = log?.sleepDurationHours ? `${log.sleepDurationHours}h` : '';
     stateUI.addFloatingEffect({

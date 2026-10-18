@@ -42,7 +42,7 @@ import { useTaskStore } from '../../store/useTaskStore';
 import { usePlayerStore } from '../../store/usePlayerStore';
 import { soundFX } from '../../utils/audio';
 import { getHabitBaseId, computeHabitStreak } from '../../intelligence/masteryEngine';
-import { getTodayDateString } from '../../utils/date';
+import { getTodayDateString, addDaysToDateString } from '../../utils/date';
 import { HABIT_ENERGY_DETAILS, detectHabitEnergy } from '../../utils/habitEnergyDetector';
 
 /**
@@ -391,7 +391,10 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
               mastery
             );
             const todayStr = getTodayDateString();
-            const isDayEnded = Boolean(isDayFinalized) || Boolean(currentDate && currentDate < todayStr);
+            const reconciliationLimit = addDaysToDateString(todayStr, -2);
+            // Conciliación Retrospectiva Honesta: el bloqueo estricto sólo aplica si han pasado más de 48h
+            const isStrictlyLockedPast = Boolean(currentDate && currentDate < reconciliationLimit);
+            const isDayEnded = (Boolean(isDayFinalized) || Boolean(currentDate && currentDate < todayStr)) && isStrictlyLockedPast;
             const isLocked = isDayEnded && !isFinished;
 
             return (

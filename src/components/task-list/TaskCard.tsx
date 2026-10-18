@@ -17,10 +17,8 @@ import {
   Users, 
   Target,
   Coins,
-  Dices,
   FileText
 } from 'lucide-react';
-import { usePlayerStore } from '../../store/usePlayerStore';
 import { soundFX } from '../../utils/audio';
 import { SlashText } from './SlashText';
 
@@ -191,21 +189,6 @@ export const TaskCard: React.FC<TaskCardProps> = ({
 
   const catStyle = getCategoryStyle(task.category);
   const rarity = getRarityBadge(task);
-  const playerStats = usePlayerStore(s => s.stats);
-  const reRollDice = playerStats.reRollDice || 0;
-  
-  const handleReRoll = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (reRollDice <= 0) return;
-    
-    usePlayerStore.getState().setStats({
-      ...playerStats,
-      reRollDice: reRollDice - 1
-    });
-
-    soundFX.playClick();
-    if (handleEdit) handleEdit(task);
-  };
 
   return (
     <motion.div
@@ -240,6 +223,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
               : 'bg-white/[0.03] border-white/20 hover:border-white/40 hover:bg-white/[0.06]'
           }`}
           title={isCompleted ? 'Desmarcar' : 'Marcar como completada'}
+          aria-label={isCompleted ? `Desmarcar tarea: ${task.title}` : `Completar tarea: ${task.title}`}
         >
           {isCompleted && (
             <motion.div
@@ -325,6 +309,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
                     onIncrementHabit(task.id, e);
                   }}
                   className={`px-2 py-0.5 rounded text-black text-xs font-bold uppercase transition-all cursor-pointer active:scale-95 ${catStyle.checkboxBorder.split(' ')[0]}`}
+                  aria-label={`Incrementar progreso de hábito: ${task.title}`}
                 >
                   +1
                 </button>
@@ -350,6 +335,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
                   : 'bg-white/[0.03] hover:bg-white/[0.08] text-slate-400 hover:text-white border-white/5'
               }`}
               title={task.notes ? 'Ver / Editar nota' : 'Agregar nota'}
+              aria-label={task.notes ? `Ver o editar nota de la tarea: ${task.title}` : `Agregar nota a la tarea: ${task.title}`}
             >
               <FileText className="w-3.5 h-3.5" />
             </button>
@@ -365,18 +351,9 @@ export const TaskCard: React.FC<TaskCardProps> = ({
                   }}
                   className="p-1.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.08] text-slate-400 hover:text-white transition-colors cursor-pointer border border-white/5"
                   title="Iniciar Pomodoro"
+                  aria-label={`Iniciar temporizador Pomodoro para: ${task.title}`}
                 >
                   <Timer className="w-3.5 h-3.5 text-cyan-400" />
-                </button>
-              )}
-              {reRollDice > 0 && !task.completed && (
-                <button
-                  type="button"
-                  onClick={handleReRoll}
-                  className="p-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 hover:text-white transition-colors cursor-pointer border border-amber-500/20"
-                  title={`Cambiar tarea (${reRollDice} disponibles)`}
-                >
-                  <Dices className="w-3.5 h-3.5" />
                 </button>
               )}
               {handleEdit && (
@@ -388,6 +365,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
                   }}
                   className="p-1.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.08] text-slate-400 hover:text-white transition-colors cursor-pointer border border-white/5"
                   title="Editar tarea"
+                  aria-label={`Editar tarea: ${task.title}`}
                 >
                   <Edit3 className="w-3.5 h-3.5" />
                 </button>
@@ -401,6 +379,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
                   }}
                   className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 transition-colors cursor-pointer border border-rose-500/20"
                   title="Eliminar tarea"
+                  aria-label={`Eliminar tarea: ${task.title}`}
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
