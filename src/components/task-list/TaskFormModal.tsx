@@ -58,6 +58,14 @@ const habitPresets = [
   { label: '🥗 Saludable', title: 'Alimentación Limpia', icon: '🥗', category: 'comida' as TaskCategory, target: 3, unit: 'comidas', energy: 'purification' as HabitEnergyType, hasCounter: true },
 ];
 
+const ENERGY_DEFAULT_ICONS: Record<HabitEnergyType, string> = {
+  strength: '⚡',
+  purification: '💧',
+  mind: '🧠',
+  discipline: '🧘',
+  creativity: '🎨',
+};
+
 export const TaskFormModal: React.FC<TaskFormModalProps> = ({
   isOpen,
   onClose,
@@ -99,8 +107,15 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
   onSubmit,
 }) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [isIconManuallyChosen, setIsIconManuallyChosen] = useState(Boolean(editingTaskId));
 
-  // Mapeo automático de Categoría según Aura de Kai
+  useEffect(() => {
+    if (isOpen) {
+      setIsIconManuallyChosen(Boolean(editingTaskId));
+    }
+  }, [isOpen, editingTaskId]);
+
+  // Mapeo automático de Categoría y sincronización de Icono según Aura de Kai
   const handleSelectEnergy = (energyKey: HabitEnergyType) => {
     setHabitEnergyType(energyKey);
     const categoryMap: Record<HabitEnergyType, TaskCategory> = {
@@ -113,6 +128,11 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
     if (categoryMap[energyKey]) {
       setNewCategory(categoryMap[energyKey]);
     }
+    // Sincronizar el icono si el usuario no ha escogido manualmente un icono personalizado
+    const isCurrentIconAuraDefault = Object.values(ENERGY_DEFAULT_ICONS).includes(quickIcon || '');
+    if (!isIconManuallyChosen || isCurrentIconAuraDefault) {
+      setQuickIcon(ENERGY_DEFAULT_ICONS[energyKey]);
+    }
   };
 
   // Auto detect energy when user types title if not manually selected
@@ -120,6 +140,10 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
     if (newTitle.trim()) {
       const autoEnergy = detectHabitEnergy(newTitle, newCategory);
       setHabitEnergyType(autoEnergy);
+      const isCurrentIconAuraDefault = Object.values(ENERGY_DEFAULT_ICONS).includes(quickIcon || '');
+      if (!isIconManuallyChosen || isCurrentIconAuraDefault) {
+        setQuickIcon(ENERGY_DEFAULT_ICONS[autoEnergy]);
+      }
     }
   }, [newTitle, newCategory]);
 
@@ -137,6 +161,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
     setIsHabitType(preset.hasCounter);
     setIsTracked2166(true);
     setIsQuickHabit(true);
+    setIsIconManuallyChosen(false);
     if (formFrequency === 'once') {
       setFormFrequency('daily');
     }
@@ -188,19 +213,19 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
           </div>
 
           <form onSubmit={onSubmit} className="space-y-4">
-            {/* Presets Rápidos de 1-Clic para Hábitos */}
+            {/* Presets Rápidos de 1-Clic para Hábitos (1 sola fila horizontal armónica) */}
             {isEditingHabitMode && (
-              <div className="p-3 rounded-xl bg-purple-950/30 border border-purple-500/20">
-                <span className="block text-[11px] font-mono font-bold text-purple-300 uppercase tracking-wider mb-2">
+              <div className="p-2.5 rounded-xl bg-purple-950/30 border border-purple-500/20">
+                <span className="block text-[10.5px] font-mono font-bold text-purple-300 uppercase tracking-wider mb-1.5">
                   ⚡ Sugerencias Rápidas de 1-Clic (Opcional):
                 </span>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar py-0.5">
                   {habitPresets.map((preset, idx) => (
                     <button
                       key={idx}
                       type="button"
                       onClick={() => applyPreset(preset)}
-                      className="px-2.5 py-1 rounded-lg bg-purple-900/40 hover:bg-purple-800/60 border border-purple-500/30 text-xs font-semibold text-purple-200 transition-all hover:scale-105"
+                      className="px-2 sm:px-2.5 py-1 rounded-lg bg-purple-900/40 hover:bg-purple-800/60 border border-purple-500/30 text-[11px] sm:text-xs font-semibold text-purple-200 transition-all hover:scale-105 shrink-0 whitespace-nowrap"
                     >
                       {preset.label}
                     </button>
@@ -209,49 +234,55 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
               </div>
             )}
 
-            {/* Selector de Icono/Emoji para Hábito */}
-            {isEditingHabitMode && (
-              <div>
-                <label className="block text-xs font-semibold text-gray-300 mb-1.5 flex items-center gap-1.5">
-                  <Smile className="w-3.5 h-3.5 text-purple-400" />
-                  Icono del Hábito
-                </label>
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  {quickEmojis.map((emoji) => {
-                    const isSelected = (quickIcon || '⚡') === emoji;
-                    return (
-                      <button
-                        key={emoji}
-                        type="button"
-                        onClick={() => setQuickIcon(emoji)}
-                        className={`w-8 h-8 rounded-xl text-base transition-all flex items-center justify-center cursor-pointer ${
-                          isSelected
-                            ? 'bg-purple-500/30 border border-purple-400 scale-110 shadow-[0_0_10px_rgba(168,85,247,0.4)]'
-                            : 'bg-gray-900/80 border border-gray-800 hover:bg-gray-800 hover:border-gray-700 opacity-80 hover:opacity-100'
-                        }`}
-                        title={`Seleccionar icono ${emoji}`}
-                      >
-                        {emoji}
-                      </button>
-                    );
-                  })}
+            {/* Bloque Atómico de Identidad: Icono + Nombre del Hábito */}
+            <div className="space-y-2">
+              {/* Selector de Icono/Emoji para Hábito */}
+              {isEditingHabitMode && (
+                <div>
+                  <label className="block text-xs font-semibold text-gray-300 mb-1 flex items-center gap-1.5">
+                    <Smile className="w-3.5 h-3.5 text-purple-400" />
+                    Icono del Hábito
+                  </label>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {quickEmojis.map((emoji) => {
+                      const isSelected = (quickIcon || '⚡') === emoji;
+                      return (
+                        <button
+                          key={emoji}
+                          type="button"
+                          onClick={() => {
+                            setQuickIcon(emoji);
+                            setIsIconManuallyChosen(true);
+                          }}
+                          className={`w-8 h-8 rounded-xl text-base transition-all flex items-center justify-center cursor-pointer ${
+                            isSelected
+                              ? 'bg-purple-500/30 border border-purple-400 scale-110 shadow-[0_0_10px_rgba(168,85,247,0.4)]'
+                              : 'bg-gray-900/80 border border-gray-800 hover:bg-gray-800 hover:border-gray-700 opacity-80 hover:opacity-100'
+                          }`}
+                          title={`Seleccionar icono ${emoji}`}
+                        >
+                          {emoji}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Título (Campo Libre 100% Personalizado) */}
-            <div>
-              <label className="block text-xs font-semibold text-gray-300 mb-1.5">
-                {isEditingHabitMode ? 'Nombre de tu Hábito (100% Personalizable)' : 'Título de la tarea'}
-              </label>
-              <input
-                type="text"
-                required
-                value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
-                placeholder={isEditingHabitMode ? 'Ej. Dejar de fumar, Tomar agua, Gimnasio, Estudiar...' : 'Ej. Sesión de código profundo...'}
-                className="w-full bg-gray-900 border border-gray-700 focus:border-purple-500 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none transition-colors"
-              />
+              {/* Título (Campo Libre 100% Personalizado) */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-300 mb-1">
+                  {isEditingHabitMode ? 'Nombre de tu Hábito (100% Personalizable)' : 'Título de la tarea'}
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                  placeholder={isEditingHabitMode ? 'Ej. Dejar de fumar, Tomar agua, Gimnasio, Estudiar...' : 'Ej. Sesión de código profundo...'}
+                  className="w-full bg-gray-900 border border-gray-700 focus:border-purple-500 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none transition-colors"
+                />
+              </div>
             </div>
 
             {/* Selector de Energía de Recompensa para Kai (30% más compacto y auto-mapeo de categoría) */}
@@ -267,19 +298,22 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                   {(['purification', 'strength', 'mind', 'discipline', 'creativity'] as HabitEnergyType[]).map((energyKey) => {
                     const detail = HABIT_ENERGY_DETAILS[energyKey];
                     const isSelected = habitEnergyType === energyKey;
+                    const isFifthCard = energyKey === 'creativity';
                     return (
                       <button
                         key={energyKey}
                         type="button"
                         onClick={() => handleSelectEnergy(energyKey)}
                         className={`py-1.5 px-2.5 rounded-xl border text-left flex items-center gap-2 transition-all cursor-pointer min-h-[40px] ${
+                          isFifthCard ? 'sm:col-span-2 sm:justify-center' : ''
+                        } ${
                           isSelected
                             ? `${detail.badgeColor} scale-[1.01] ring-1 ring-purple-400`
                             : 'bg-gray-900/60 border-gray-800 text-gray-400 hover:bg-gray-800/80 hover:text-white'
                         }`}
                       >
                         <span className="text-base shrink-0">{detail.icon}</span>
-                        <div className="min-w-0 flex-1">
+                        <div className={`min-w-0 ${isFifthCard ? 'sm:flex-initial' : 'flex-1'}`}>
                           <span className="block text-xs font-bold leading-tight truncate">{detail.label}</span>
                           <span className="block text-[9.5px] opacity-75 truncate font-mono">
                             ⚡ {detail.auraName21}

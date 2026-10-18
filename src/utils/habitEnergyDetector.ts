@@ -16,7 +16,7 @@ export interface HabitEnergyDetail {
 export const HABIT_ENERGY_DETAILS: Record<HabitEnergyType, HabitEnergyDetail> = {
   purification: {
     type: 'purification',
-    label: 'Purificación & Desintoxicación',
+    label: 'Purificación & Vitalidad',
     icon: '💧',
     badgeColor: 'bg-cyan-950/80 border-cyan-400/80 text-cyan-300 shadow-[0_0_10px_rgba(6,182,212,0.4)]',
     auraName21: 'Aura de Luz Cristalina',

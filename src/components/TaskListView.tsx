@@ -9,6 +9,7 @@ import { getTodayDateString, getYesterdayDateString, addDaysToDateString } from 
 import { parseTimeToMinutes, parseEndTimeToMinutes } from '../utils/timeUtils';
 import { deduplicateTasksForDay } from '../utils/taskDeduplication';
 import { getHabitBaseId } from '../intelligence/masteryEngine';
+import { detectHabitEnergy } from '../utils/habitEnergyDetector';
 
 // Subcomponents
 import { DailyBossWidget } from './DailyBossWidget';
@@ -238,6 +239,7 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
     setIsTracked2166(is2166);
     setIsQuickHabit(task.isQuickHabit || (customHabit && customHabit.isQuickHabit) || is2166);
     setQuickIcon(task.quickIcon || (customHabit && customHabit.quickIcon) || (is2166 ? '⚡' : ''));
+    setHabitEnergyType(task.habitEnergyType || customHabit?.habitEnergyType || detectHabitEnergy(task.title, task.category));
     setNewIncomeAmount(task.incomeAmount || 0);
     setNewNotes(task.notes || '');
 
@@ -271,6 +273,7 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
     setIsTracked2166(false);
     setIsQuickHabit(false);
     setQuickIcon('');
+    setHabitEnergyType('strength');
     setFormFrequency('once');
     setFormSpecificDays([]);
     setNewIncomeAmount(0);
@@ -280,7 +283,7 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
   const openAddModal = (isQuick = false) => {
     setEditingTaskId(null);
     setNewTitle('');
-    setNewCategory(isQuick ? 'habito' : 'rutina');
+    setNewCategory(isQuick ? 'entrenamiento' : 'rutina');
     setNewStartTime('');
     setNewEndTime('');
     setNewXp(isQuick ? 5 : 10);
@@ -292,6 +295,7 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
     setIsTracked2166(isQuick);
     setIsQuickHabit(isQuick);
     setQuickIcon(isQuick ? '⚡' : '');
+    setHabitEnergyType('strength');
     setFormFrequency(isQuick ? 'daily' : 'once');
     setFormSpecificDays([]);
     setNewNotes('');
@@ -314,6 +318,7 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
     setIsTracked2166(habit.isTracked2166 ?? true);
     setIsQuickHabit(habit.isQuickHabit ?? true);
     setQuickIcon(habit.quickIcon || '⚡');
+    setHabitEnergyType(habit.habitEnergyType || detectHabitEnergy(habit.title, habit.category));
     setFormFrequency((habit.frequencyType as any) === 'specific_days' ? 'specific_days' : (habit.frequencyType as any) === 'once' ? 'once' : 'daily');
     setFormSpecificDays(habit.specificDays || []);
     setIsAddModalOpen(true);
@@ -344,6 +349,7 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
         isQuickHabit: finalIsQuickHabit,
         quickIcon: finalIcon,
         isTracked2166: finalIsTracked2166,
+        habitEnergyType: isHabitMode ? habitEnergyType : undefined,
         incomeAmount: newCategory === 'trabajo' ? Number(newIncomeAmount) || 0 : undefined,
         notes: newNotes.trim() || undefined,
       });
@@ -367,6 +373,7 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
       isQuickHabit: finalIsQuickHabit,
       quickIcon: finalIcon,
       isTracked2166: finalIsTracked2166,
+      habitEnergyType: isHabitMode ? habitEnergyType : undefined,
       incomeAmount: newCategory === 'trabajo' ? Number(newIncomeAmount) || 0 : undefined,
       notes: newNotes.trim() || undefined,
     });
