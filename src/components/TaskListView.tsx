@@ -230,8 +230,9 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
     }
     setNewXp(task.xpReward);
     setNewCoins(task.coinReward);
-    setIsHabitType(shouldBeHabit || is2166);
-    setHabitTarget(task.targetCount || (shouldBeHabit ? 1 : 5));
+    const hasNumericCounter = Boolean(task.targetCount && task.targetCount > 1);
+    setIsHabitType(hasNumericCounter);
+    setHabitTarget(task.targetCount || 1);
     setHabitUnit(task.unit || 'veces');
     setIsLegendary(task.isLegendaryBounty || false);
     setIsTracked2166(is2166);
@@ -284,7 +285,7 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
     setNewEndTime('');
     setNewXp(isQuick ? 5 : 10);
     setNewCoins(isQuick ? 2 : 4);
-    setIsHabitType(isQuick ? true : false);
+    setIsHabitType(false); // Contador numérico colapsado por defecto
     setHabitTarget(isQuick ? 1 : 5);
     setHabitUnit('veces');
     setIsLegendary(false);
@@ -305,7 +306,8 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
     setNewEndTime('');
     setNewXp(habit.xpReward || 15);
     setNewCoins(habit.coinReward || 5);
-    setIsHabitType(true);
+    const hasNumericCounter = Boolean(habit.targetCount && habit.targetCount > 1);
+    setIsHabitType(hasNumericCounter);
     setHabitTarget(habit.targetCount || 1);
     setHabitUnit(habit.unit || 'veces');
     setIsLegendary(habit.isLegendaryBounty || false);
@@ -325,7 +327,7 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
     const finalIsTracked2166 = Boolean(isTracked2166 || isQuickHabit);
     const finalIsQuickHabit = Boolean(isQuickHabit || isTracked2166);
     const finalIcon = quickIcon.trim() || (finalIsTracked2166 || finalIsQuickHabit ? '⚡' : '');
-    const isHabitMode = Boolean(isHabitType || finalIsTracked2166);
+    const isHabitMode = Boolean(isHabitType || finalIsTracked2166 || finalIsQuickHabit);
 
     if (editingTaskId && onEditTask) {
       onEditTask(editingTaskId, {
@@ -336,8 +338,8 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
         timeBlock: newStartTime ? (newEndTime ? `${newStartTime} - ${newEndTime}` : newStartTime) : undefined,
         reminderTime: newStartTime ? newStartTime.trim() : undefined,
         isHabit: isHabitMode,
-        targetCount: isHabitType ? Number(habitTarget) || 1 : finalIsTracked2166 ? 1 : undefined,
-        unit: isHabitType ? habitUnit.trim() : finalIsTracked2166 ? 'vez' : undefined,
+        targetCount: isHabitType ? (Number(habitTarget) || 1) : finalIsTracked2166 ? 1 : undefined,
+        unit: isHabitType ? (habitUnit.trim() || 'veces') : finalIsTracked2166 ? 'vez' : undefined,
         isLegendaryBounty: isLegendary,
         isQuickHabit: finalIsQuickHabit,
         quickIcon: finalIcon,
@@ -357,9 +359,9 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
       timeBlock: newStartTime ? (newEndTime ? `${newStartTime} - ${newEndTime}` : newStartTime) : undefined,
       reminderTime: newStartTime ? newStartTime.trim() : undefined,
       isHabit: isHabitMode,
-      targetCount: isHabitType ? Number(habitTarget) || 1 : finalIsTracked2166 ? 1 : undefined,
+      targetCount: isHabitType ? (Number(habitTarget) || 1) : finalIsTracked2166 ? 1 : undefined,
       currentCount: isHabitMode ? 0 : undefined,
-      unit: isHabitType ? habitUnit : finalIsTracked2166 ? 'vez' : undefined,
+      unit: isHabitType ? (habitUnit.trim() || 'veces') : finalIsTracked2166 ? 'vez' : undefined,
       isCustom: true,
       isLegendaryBounty: isLegendary,
       isQuickHabit: finalIsQuickHabit,

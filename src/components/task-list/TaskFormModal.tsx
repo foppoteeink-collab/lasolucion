@@ -51,11 +51,11 @@ const daysOfWeek = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
 const quickEmojis = ['⚡', '💧', '🏋️', '📖', '🧘', '🥗', '🧠', '🎨', '💼', '🏃', '💊', '☕'];
 
 const habitPresets = [
-  { label: '💧 Agua 2L', title: 'Tomar 2 Litros de Agua', icon: '💧', category: 'energia' as TaskCategory, target: 2, unit: 'litros', energy: 'purification' as HabitEnergyType },
-  { label: '🏋️ Gimnasio', title: 'Entrenamiento de Gimnasio', icon: '🏋️', category: 'entrenamiento' as TaskCategory, target: 1, unit: 'sesión', energy: 'strength' as HabitEnergyType },
-  { label: '📖 Lectura', title: 'Lectura de Desarrollo', icon: '📖', category: 'mente' as TaskCategory, target: 20, unit: 'mins', energy: 'mind' as HabitEnergyType },
-  { label: '🧘 Meditación', title: 'Meditación & Enfoque', icon: '🧘', category: 'disciplina' as TaskCategory, target: 10, unit: 'mins', energy: 'discipline' as HabitEnergyType },
-  { label: '🥗 Saludable', title: 'Alimentación Limpia', icon: '🥗', category: 'energia' as TaskCategory, target: 3, unit: 'comidas', energy: 'purification' as HabitEnergyType },
+  { label: '💧 Agua 2L', title: 'Tomar 2 Litros de Agua', icon: '💧', category: 'habito' as TaskCategory, target: 8, unit: 'vasos', energy: 'purification' as HabitEnergyType, hasCounter: true },
+  { label: '🏋️ Gimnasio', title: 'Entrenamiento de Gimnasio', icon: '🏋️', category: 'entrenamiento' as TaskCategory, target: 1, unit: 'sesión', energy: 'strength' as HabitEnergyType, hasCounter: false },
+  { label: '📖 Lectura', title: 'Lectura de Desarrollo', icon: '📖', category: 'estudio' as TaskCategory, target: 20, unit: 'mins', energy: 'mind' as HabitEnergyType, hasCounter: true },
+  { label: '🧘 Meditación', title: 'Meditación & Enfoque', icon: '🧘', category: 'habito' as TaskCategory, target: 10, unit: 'mins', energy: 'discipline' as HabitEnergyType, hasCounter: true },
+  { label: '🥗 Saludable', title: 'Alimentación Limpia', icon: '🥗', category: 'comida' as TaskCategory, target: 3, unit: 'comidas', energy: 'purification' as HabitEnergyType, hasCounter: true },
 ];
 
 export const TaskFormModal: React.FC<TaskFormModalProps> = ({
@@ -100,6 +100,21 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
 }) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
 
+  // Mapeo automático de Categoría según Aura de Kai
+  const handleSelectEnergy = (energyKey: HabitEnergyType) => {
+    setHabitEnergyType(energyKey);
+    const categoryMap: Record<HabitEnergyType, TaskCategory> = {
+      strength: 'entrenamiento',
+      mind: 'estudio',
+      discipline: 'habito',
+      purification: 'comida',
+      creativity: 'creativo',
+    };
+    if (categoryMap[energyKey]) {
+      setNewCategory(categoryMap[energyKey]);
+    }
+  };
+
   // Auto detect energy when user types title if not manually selected
   useEffect(() => {
     if (newTitle.trim()) {
@@ -119,7 +134,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
     setHabitTarget(preset.target);
     setHabitUnit(preset.unit);
     setHabitEnergyType(preset.energy);
-    setIsHabitType(true);
+    setIsHabitType(preset.hasCounter);
     setIsTracked2166(true);
     setIsQuickHabit(true);
     if (formFrequency === 'once') {
@@ -201,28 +216,25 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                   <Smile className="w-3.5 h-3.5 text-purple-400" />
                   Icono del Hábito
                 </label>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <input
-                    type="text"
-                    value={quickIcon || '⚡'}
-                    onChange={(e) => setQuickIcon(e.target.value)}
-                    maxLength={3}
-                    className="w-12 h-10 text-center bg-gray-900 border border-purple-500/40 rounded-xl text-lg text-white focus:outline-none focus:border-purple-400"
-                  />
-                  <div className="flex gap-1 flex-wrap">
-                    {quickEmojis.map((emoji) => (
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {quickEmojis.map((emoji) => {
+                    const isSelected = (quickIcon || '⚡') === emoji;
+                    return (
                       <button
                         key={emoji}
                         type="button"
                         onClick={() => setQuickIcon(emoji)}
-                        className={`w-8 h-8 rounded-lg text-sm transition-transform ${
-                          quickIcon === emoji ? 'bg-purple-500/30 border border-purple-400 scale-110' : 'bg-gray-900 hover:bg-gray-800'
+                        className={`w-8 h-8 rounded-xl text-base transition-all flex items-center justify-center cursor-pointer ${
+                          isSelected
+                            ? 'bg-purple-500/30 border border-purple-400 scale-110 shadow-[0_0_10px_rgba(168,85,247,0.4)]'
+                            : 'bg-gray-900/80 border border-gray-800 hover:bg-gray-800 hover:border-gray-700 opacity-80 hover:opacity-100'
                         }`}
+                        title={`Seleccionar icono ${emoji}`}
                       >
                         {emoji}
                       </button>
-                    ))}
-                  </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -242,16 +254,16 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
               />
             </div>
 
-            {/* Selector de Energía de Recompensa para Kai */}
+            {/* Selector de Energía de Recompensa para Kai (30% más compacto y auto-mapeo de categoría) */}
             {isEditingHabitMode && (
-              <div className="p-3.5 rounded-xl bg-purple-950/40 border border-purple-500/30 space-y-2">
+              <div className="p-2.5 rounded-xl bg-purple-950/40 border border-purple-500/30 space-y-1.5">
                 <label className="block text-xs font-bold text-purple-200 flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
-                    <Sparkles className="w-4 h-4 text-purple-400" />
+                    <Sparkles className="w-3.5 h-3.5 text-purple-400" />
                     ✨ Recompensa de Energía para Kai (Aura a 21 y 66 días)
                   </span>
                 </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-0.5">
                   {(['purification', 'strength', 'mind', 'discipline', 'creativity'] as HabitEnergyType[]).map((energyKey) => {
                     const detail = HABIT_ENERGY_DETAILS[energyKey];
                     const isSelected = habitEnergyType === energyKey;
@@ -259,18 +271,18 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                       <button
                         key={energyKey}
                         type="button"
-                        onClick={() => setHabitEnergyType(energyKey)}
-                        className={`p-2.5 rounded-xl border text-left flex items-start gap-2.5 transition-all cursor-pointer ${
+                        onClick={() => handleSelectEnergy(energyKey)}
+                        className={`py-1.5 px-2.5 rounded-xl border text-left flex items-center gap-2 transition-all cursor-pointer min-h-[40px] ${
                           isSelected
-                            ? `${detail.badgeColor} scale-[1.02] ring-1 ring-purple-400`
+                            ? `${detail.badgeColor} scale-[1.01] ring-1 ring-purple-400`
                             : 'bg-gray-900/60 border-gray-800 text-gray-400 hover:bg-gray-800/80 hover:text-white'
                         }`}
                       >
-                        <span className="text-xl shrink-0 mt-0.5">{detail.icon}</span>
+                        <span className="text-base shrink-0">{detail.icon}</span>
                         <div className="min-w-0 flex-1">
-                          <span className="block text-xs font-bold leading-snug">{detail.label}</span>
-                          <span className="block text-[10px] opacity-80 line-clamp-1 font-mono mt-0.5">
-                            ⚡ 21d: {detail.auraName21}
+                          <span className="block text-xs font-bold leading-tight truncate">{detail.label}</span>
+                          <span className="block text-[9.5px] opacity-75 truncate font-mono">
+                            ⚡ {detail.auraName21}
                           </span>
                         </div>
                       </button>
@@ -280,38 +292,54 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
               </div>
             )}
 
-            {/* Categoría y Frecuencia */}
-            <div className="grid grid-cols-2 gap-3">
+            {/* Frecuencia (para hábitos ocupa ancho completo; para tareas mantiene Categoría y Frecuencia) */}
+            {isEditingHabitMode ? (
               <div>
-                <label className="block text-xs font-semibold text-gray-300 mb-1.5">Categoría</label>
-                <select
-                  value={newCategory}
-                  onChange={(e) => setNewCategory(e.target.value as TaskCategory)}
-                  className="w-full bg-gray-900 border border-gray-700 focus:border-purple-500 rounded-xl px-3 py-2.5 text-white focus:outline-none text-xs"
-                >
-                  <option value="rutina">Rutina / Hábitos</option>
-                  <option value="mente">Mente & Estudio</option>
-                  <option value="disciplina">Disciplina & Foco</option>
-                  <option value="energia">Energía & Salud</option>
-                  <option value="entrenamiento">Entrenamiento</option>
-                  <option value="trabajo">Trabajo / Negocios</option>
-                  <option value="finanzas">Finanzas</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-gray-300 mb-1.5">Frecuencia</label>
+                <label className="block text-xs font-semibold text-gray-300 mb-1.5">Frecuencia del Hábito</label>
                 <select
                   value={formFrequency}
                   onChange={(e) => setFormFrequency(e.target.value as any)}
-                  className="w-full bg-gray-900 border border-gray-700 focus:border-purple-500 rounded-xl px-3 py-2.5 text-white focus:outline-none text-xs"
+                  className="w-full bg-gray-900 border border-gray-700 focus:border-purple-500 rounded-xl px-3 py-2 text-white focus:outline-none text-xs"
                 >
-                  {!isEditingHabitMode && <option value="once">Una sola vez (Hoy)</option>}
                   <option value="daily">Todos los días</option>
                   <option value="specific_days">Días específicos</option>
                 </select>
               </div>
-            </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-300 mb-1.5">Categoría</label>
+                  <select
+                    value={newCategory}
+                    onChange={(e) => setNewCategory(e.target.value as TaskCategory)}
+                    className="w-full bg-gray-900 border border-gray-700 focus:border-purple-500 rounded-xl px-3 py-2.5 text-white focus:outline-none text-xs"
+                  >
+                    <option value="rutina">Rutina</option>
+                    <option value="habito">Hábito / Disciplina</option>
+                    <option value="estudio">Estudio & Mente</option>
+                    <option value="entrenamiento">Entrenamiento</option>
+                    <option value="comida">Alimentación & Salud</option>
+                    <option value="creativo">Creatividad & Flujo</option>
+                    <option value="trabajo">Trabajo / Negocios</option>
+                    <option value="limpieza">Limpieza / Orden</option>
+                    <option value="clientes">Clientes / Mensajes</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-300 mb-1.5">Frecuencia</label>
+                  <select
+                    value={formFrequency}
+                    onChange={(e) => setFormFrequency(e.target.value as any)}
+                    className="w-full bg-gray-900 border border-gray-700 focus:border-purple-500 rounded-xl px-3 py-2.5 text-white focus:outline-none text-xs"
+                  >
+                    <option value="once">Una sola vez (Hoy)</option>
+                    <option value="daily">Todos los días</option>
+                    <option value="specific_days">Días específicos</option>
+                  </select>
+                </div>
+              </div>
+            )}
 
             {formFrequency === 'specific_days' && (
               <div className="p-3 rounded-xl bg-gray-900/60 border border-gray-800">
@@ -338,39 +366,17 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
               </div>
             )}
 
-            {/* Badge Ley 21/66 Días */}
-            {isEditingHabitMode && (
-              <label className="p-3 rounded-xl bg-purple-950/40 border border-purple-500/40 flex items-center justify-between cursor-pointer transition-all hover:border-purple-400">
-                <div className="flex items-center gap-2.5">
-                  <Zap className="w-4 h-4 text-purple-400" />
-                  <div>
-                    <span className="block text-xs font-bold text-purple-200">Protocolo Ley 21/66 Activo</span>
-                    <span className="block text-[10px] text-purple-400/80 font-mono">Monitorea neuroplasticidad (21 días aura / 66 días evolución)</span>
-                  </div>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={isTracked2166}
-                  onChange={(e) => {
-                    setIsTracked2166(e.target.checked);
-                    setIsQuickHabit(e.target.checked);
-                  }}
-                  className="w-4 h-4 rounded border-purple-700 text-purple-500 focus:ring-purple-500"
-                />
-              </label>
-            )}
-
-            {/* Sección Contador / Meta */}
-            <div className="p-3.5 rounded-xl bg-gray-900/50 border border-gray-800 space-y-3">
-              <div className="flex items-center justify-between">
+            {/* Sección Contador / Meta (Colapsada por defecto para máxima fluidez) */}
+            <div className="p-3 rounded-xl bg-gray-900/50 border border-gray-800 space-y-2.5">
+              <label className="flex items-center justify-between cursor-pointer select-none">
                 <span className="text-xs font-semibold text-gray-300">¿Es un hábito con contador de meta?</span>
                 <input
                   type="checkbox"
                   checked={isHabitType}
                   onChange={(e) => setIsHabitType(e.target.checked)}
-                  className="w-4 h-4 rounded border-gray-700 text-purple-500 focus:ring-purple-500"
+                  className="w-4 h-4 rounded border-gray-700 text-purple-500 focus:ring-purple-500 cursor-pointer"
                 />
-              </div>
+              </label>
 
               {isHabitType && (
                 <div className="grid grid-cols-2 gap-3 pt-1">
@@ -390,7 +396,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                       type="text"
                       value={habitUnit}
                       onChange={(e) => setHabitUnit(e.target.value)}
-                      placeholder="veces, mins, L, mins..."
+                      placeholder="veces, mins, L..."
                       className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-1.5 text-white text-sm focus:border-purple-400"
                     />
                   </div>
@@ -445,6 +451,29 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                       />
                     </div>
                   </div>
+
+                  {isEditingHabitMode && (
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-300 mb-1">
+                        Categoría Manual (auto-asignada por Aura de Kai)
+                      </label>
+                      <select
+                        value={newCategory}
+                        onChange={(e) => setNewCategory(e.target.value as TaskCategory)}
+                        className="w-full bg-gray-900 border border-gray-700 focus:border-purple-500 rounded-xl px-3 py-2 text-white focus:outline-none text-xs"
+                      >
+                        <option value="rutina">Rutina</option>
+                        <option value="habito">Hábito / Disciplina</option>
+                        <option value="estudio">Estudio & Mente</option>
+                        <option value="entrenamiento">Entrenamiento</option>
+                        <option value="comida">Alimentación & Salud</option>
+                        <option value="creativo">Creatividad & Flujo</option>
+                        <option value="trabajo">Trabajo / Negocios</option>
+                        <option value="limpieza">Limpieza / Orden</option>
+                        <option value="clientes">Clientes / Mensajes</option>
+                      </select>
+                    </div>
+                  )}
 
                   {!isEditingHabitMode && (
                     <div className="grid grid-cols-2 gap-3">
