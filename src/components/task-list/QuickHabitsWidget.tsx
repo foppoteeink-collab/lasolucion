@@ -33,6 +33,8 @@ import {
   Ban,
   Apple,
   ShieldAlert,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { TaskItem, CustomHabit, HabitEnergyType } from '../../types';
 import { INITIAL_CUSTOM_HABITS } from '../../data/defaults';
@@ -400,6 +402,28 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
   const [selectedHabitForProtocol, setSelectedHabitForProtocol] = useState<TaskItem | null>(null);
   const [activatedNotice, setActivatedNotice] = useState<string | null>(null);
 
+  // Persistent collapsible state (same pattern as DailyFinanceWidget)
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('taskquest_quick_habits_collapsed');
+      return saved === null ? false : saved === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleCollapse = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    soundFX.playClick();
+    setIsCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('taskquest_quick_habits_collapsed', String(next));
+      } catch {}
+      return next;
+    });
+  };
+
   // Strictly select dedicated quick/discipline habits for 21/66 day tracking, deduplicated by title and ID
   const quickHabits = React.useMemo(() => {
     const rawList = tasks.filter((t) => {
@@ -450,10 +474,21 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
     setTimeout(() => setActivatedNotice(null), 3000);
   };
 
+  const completedHabitsCount = quickHabits.filter(
+    (qh) => qh.completed || (qh.currentCount || 0) >= (qh.targetCount || 1)
+  ).length;
+
   return (
-    <div className="scifi-glass-panel rounded-2xl p-3.5 sm:p-4 space-y-3 font-sans text-white">
-      {/* Header with Title and Action Buttons (Single Row, No Wrap) */}
-      <div className="flex items-center justify-between gap-2 border-b border-cyan-500/30 pb-2.5">
+    <div className={`scifi-glass-panel rounded-2xl transition-all duration-300 font-sans text-white ${
+      isCollapsed ? 'p-3' : 'p-3 sm:p-3.5 space-y-2.5'
+    }`}>
+      {/* Header with Title, Preview when collapsed, and Action Buttons */}
+      <div 
+        onClick={toggleCollapse}
+        className={`flex items-center justify-between gap-2 cursor-pointer transition-colors ${
+          !isCollapsed ? 'border-b border-cyan-500/30 pb-2.5' : ''
+        }`}
+      >
         <div className="flex items-center gap-2 min-w-0">
           <div className="p-1.5 rounded-xl bg-[#04020e] border border-cyan-500/60 text-cyan-400 shadow-[0_0_12px_rgba(0,240,255,0.3)] shrink-0">
             <Zap className="w-4 h-4 fill-cyan-400" />
@@ -466,22 +501,60 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
           </h3>
         </div>
 
-        <button
-          type="button"
-          onClick={() => {
-            soundFX.playClick();
-            onOpenAddModal(true);
-          }}
-          className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-cyan-950/80 hover:bg-cyan-900/80 text-cyan-300 border border-cyan-500/60 hover:border-cyan-400 text-xs font-black transition-all cursor-pointer shrink-0 whitespace-nowrap active:scale-95 shadow-[0_0_12px_rgba(0,240,255,0.2)]"
-          title="Crear un nuevo hábito con Protocolo Ley 21/66 y Auras para Kai"
-        >
-          <Plus className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-          <span>Hábito</span>
-        </button>
+        {/* Preview de hábitos cuando está colapsado (Emoji chips + Ratio X/Y ✓) */}
+        {isCollapsed && quickHabits.length > 0 && (
+          <div className="flex items-center gap-2 text-xs font-mono text-slate-300 ml-auto mr-1 truncate">
+            <div className="flex items-center gap-1 text-sm shrink-0">
+              {quickHabits.slice(0, 4).map((h, i) => (
+                <span key={i} className="select-none leading-none">
+                  {renderDisplayIcon(h.quickIcon, h.title, 'text-xs')}
+                </span>
+              ))}
+              {quickHabits.length > 4 && (
+                <span className="text-[10px] text-gray-400 font-mono">+{quickHabits.length - 4}</span>
+              )}
+            </div>
+            <span
+              className={`px-1.5 py-0.5 rounded text-[11px] font-bold shrink-0 border ${
+                completedHabitsCount === quickHabits.length
+                  ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500/50 shadow-[0_0_8px_rgba(52,211,153,0.3)]'
+                  : 'bg-black/60 text-cyan-300 border-white/10'
+              }`}
+            >
+              {completedHabitsCount}/{quickHabits.length} ✓
+            </span>
+          </div>
+        )}
+
+        {/* Controles de la derecha: + Hábito y Flecha Colapso */}
+        <div className="flex items-center gap-1.5 shrink-0 ml-auto">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              soundFX.playClick();
+              onOpenAddModal(true);
+            }}
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-cyan-950/80 hover:bg-cyan-900/80 text-cyan-300 border border-cyan-500/60 hover:border-cyan-400 text-xs font-black transition-all cursor-pointer shrink-0 whitespace-nowrap active:scale-95 shadow-[0_0_12px_rgba(0,240,255,0.2)]"
+            title="Crear un nuevo hábito con Protocolo Ley 21/66 y Auras para Kai"
+          >
+            <Plus className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+            <span>Hábito</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={toggleCollapse}
+            className="p-1.5 rounded-xl bg-black/40 hover:bg-cyan-950/60 border border-white/10 hover:border-cyan-500/40 text-slate-400 hover:text-white transition-colors cursor-pointer shrink-0"
+            title={isCollapsed ? 'Desplegar hábitos' : 'Colapsar hábitos'}
+          >
+            {isCollapsed ? <ChevronDown className="w-3.5 h-3.5 text-cyan-400" /> : <ChevronUp className="w-3.5 h-3.5 text-slate-400" />}
+          </button>
+        </div>
       </div>
 
-      {activatedNotice && (
-        <div className="p-2.5 rounded-xl bg-cyan-950/90 border border-cyan-400 text-cyan-200 text-xs font-bold flex items-center justify-between animate-in fade-in slide-in-from-top-1 shadow-[0_0_15px_rgba(0,240,255,0.3)]">
+      {activatedNotice && !isCollapsed && (
+        <div className="p-2 rounded-xl bg-cyan-950/90 border border-cyan-400 text-cyan-200 text-xs font-bold flex items-center justify-between animate-in fade-in slide-in-from-top-1 shadow-[0_0_15px_rgba(0,240,255,0.3)]">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-cyan-300" />
             <span>{activatedNotice}</span>
@@ -495,110 +568,56 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
         </div>
       )}
 
-      {/* Grid of Habit Cards (Ultra-delgada 1 sola línea: flex-col en móvil, 2 cols en desktop) */}
-      <div className="flex flex-col gap-1.5 sm:grid sm:grid-cols-2 sm:gap-2">
-        {quickHabits.length === 0 ? (
-          <div className="col-span-1 sm:col-span-2 text-center py-4 text-xs text-slate-500 dark:text-cyan-300/70 italic bg-black/20 rounded-xl border border-white/5">
-            No tienes hábitos activos aún. Toca "+ Hábito" para registrar tu primer hábito con Protocolo Ley 21/66.
-          </div>
-        ) : (
-          quickHabits.map((qh, idx) => {
-            const current = qh.currentCount || 0;
-            const target = qh.targetCount || 1;
-            const isCounterHabit = target > 1;
-            const isFinished = qh.completed || current >= target;
-            const progressPct = Math.min(100, Math.round((current / target) * 100));
+      {/* Chips Compactos de Hábitos en 1 Sola Fila (flex flex-wrap items-center gap-1.5) */}
+      {!isCollapsed && (
+        <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+          {quickHabits.length === 0 ? (
+            <div className="w-full text-center py-3 text-xs text-slate-500 dark:text-cyan-300/70 italic bg-black/20 rounded-xl border border-white/5">
+              No tienes hábitos activos aún. Toca "+ Hábito" para registrar tu primer hábito con Protocolo Ley 21/66.
+            </div>
+          ) : (
+            quickHabits.map((qh, idx) => {
+              const current = qh.currentCount || 0;
+              const target = qh.targetCount || 1;
+              const isCounterHabit = target > 1;
+              const isFinished = qh.completed || current >= target;
+              const progressPct = Math.min(100, Math.round((current / target) * 100));
 
-            // Dynamic consecutive days streak computed from history
-            const baseId = getHabitBaseId(qh);
-            const mastery = habitMastery?.[baseId] || habitMastery?.[qh.id];
-            const { currentStreak } = computeHabitStreak(
-              qh,
-              tasksByDate,
-              currentDate,
-              mastery
-            );
-            const streakGoal = currentStreak >= 21 ? '66' : '21';
+              // Dynamic consecutive days streak computed from history
+              const baseId = getHabitBaseId(qh);
+              const mastery = habitMastery?.[baseId] || habitMastery?.[qh.id];
+              const { currentStreak } = computeHabitStreak(
+                qh,
+                tasksByDate,
+                currentDate,
+                mastery
+              );
+              const streakGoal = currentStreak >= 21 ? '66' : '21';
 
-            // Aura de Kai detection and theming
-            const energyKey: HabitEnergyType = (qh.habitEnergyType as any) || detectHabitEnergy(qh.title, qh.category as any);
-            const auraTheme = AURA_THEMES[energyKey] || AURA_THEMES.purification;
+              // Aura de Kai detection and theming
+              const energyKey: HabitEnergyType = (qh.habitEnergyType as any) || detectHabitEnergy(qh.title, qh.category as any);
+              const auraTheme = AURA_THEMES[energyKey] || AURA_THEMES.purification;
 
-            const todayStr = getTodayDateString();
-            const reconciliationLimit = addDaysToDateString(todayStr, -2);
-            const isStrictlyLockedPast = Boolean(currentDate && currentDate < reconciliationLimit);
-            const isDayEnded = (Boolean(isDayFinalized) || Boolean(currentDate && currentDate < todayStr)) && isStrictlyLockedPast;
-            const isLocked = isDayEnded && !isFinished;
-            const isSingleHabit = quickHabits.length === 1;
+              const todayStr = getTodayDateString();
+              const reconciliationLimit = addDaysToDateString(todayStr, -2);
+              const isStrictlyLockedPast = Boolean(currentDate && currentDate < reconciliationLimit);
+              const isDayEnded = (Boolean(isDayFinalized) || Boolean(currentDate && currentDate < todayStr)) && isStrictlyLockedPast;
+              const isLocked = isDayEnded && !isFinished;
 
-            const displayTitle = cleanHabitTitle(qh.title, qh.quickIcon);
+              const displayTitle = cleanHabitTitle(qh.title, qh.quickIcon);
 
-            return (
-              <div
-                key={qh.id ? `qh-card-${qh.id}-${idx}` : `qh-card-${idx}`}
-                onClick={(e) => {
-                  if (isLocked) return;
-                  onIncrementHabit(qh.id, e);
-                }}
-                className={`group relative flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl border transition-all select-none overflow-hidden cursor-pointer active:scale-[0.99] ${
-                  isSingleHabit ? 'sm:col-span-2' : ''
-                } ${
-                  isLocked
-                    ? 'bg-rose-950/20 border-rose-900/40 opacity-70 cursor-not-allowed'
-                    : isFinished
-                    ? `${auraTheme.bgGlow} ${auraTheme.activeBorder} bg-opacity-40`
-                    : `bg-[#070b16]/95 ${auraTheme.border} hover:bg-[#0c1222]`
-                }`}
-                title={
-                  isLocked
-                    ? 'Bloqueado por fin de jornada'
-                    : isFinished
-                    ? `${qh.title} - Completado hoy (Toca para deshacer)`
-                    : `${qh.title} - Toca para registrar`
-                }
-              >
-                {/* Lado Izquierdo: Icono w-7 h-7 + Título del Hábito */}
-                <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <div
-                    className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border transition-transform duration-200 group-hover:scale-105 ${
-                      isFinished
-                        ? `${auraTheme.activeBorder} ${auraTheme.badge}`
-                        : `bg-black/50 ${auraTheme.border}`
-                    }`}
-                  >
-                    {renderDisplayIcon(qh.quickIcon, qh.title, 'text-sm')}
-                  </div>
-
-                  <span
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onOpenEditModal(qh);
-                    }}
-                    className={`text-xs sm:text-sm font-semibold truncate cursor-pointer hover:underline hover:text-cyan-300 transition-colors ${
-                      isFinished ? 'text-gray-300 line-through decoration-cyan-400/60' : 'text-white'
-                    }`}
-                    title={`Editar "${qh.title}"`}
-                  >
-                    {displayTitle}
-                  </span>
-
-                  {!isLocked && current > 0 && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        gameEngine.handleResetHabit(qh.id, e);
-                      }}
-                      className="opacity-0 group-hover:opacity-60 hover:!opacity-100 p-0.5 rounded text-amber-400 transition-opacity cursor-pointer shrink-0"
-                      title="Reiniciar a 0"
-                    >
-                      <RotateCcw className="w-2.5 h-2.5" />
-                    </button>
-                  )}
-                </div>
-
-                {/* Lado Derecho: Micro-Badge Racha (🔥 X/21) + Botón de Acción */}
-                <div className="flex items-center gap-1.5 shrink-0">
+              return (
+                <div
+                  key={qh.id ? `qh-chip-${qh.id}-${idx}` : `qh-chip-${idx}`}
+                  className={`group relative inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl border transition-all select-none overflow-hidden max-w-full ${
+                    isLocked
+                      ? 'bg-rose-950/20 border-rose-900/40 opacity-70 cursor-not-allowed'
+                      : isFinished
+                      ? `${auraTheme.bgGlow} ${auraTheme.activeBorder} bg-opacity-40`
+                      : `bg-[#070b16]/95 ${auraTheme.border} hover:bg-[#0c1222]`
+                  }`}
+                >
+                  {/* Lado Izquierdo: Emoji + Título Corto (Tocar abre el modal de Ley 21/66 / Edición) */}
                   <button
                     type="button"
                     onClick={(e) => {
@@ -606,54 +625,83 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                       soundFX.playClick();
                       setSelectedHabitForProtocol(qh);
                     }}
-                    className="text-[10px] font-mono font-medium opacity-75 hover:opacity-100 text-amber-300 hover:text-amber-200 flex items-center gap-0.5 shrink-0 px-1 py-0.5 rounded cursor-pointer transition-all"
-                    title={`Ver protocolo Ley 21/66: ${currentStreak}/${streakGoal}`}
+                    className="flex items-center gap-1.5 min-w-0 cursor-pointer text-left focus:outline-none"
+                    title={`Ver racha de "${qh.title}" (${currentStreak}/${streakGoal}d) - Toca para configurar`}
                   >
-                    <Flame className="w-2.5 h-2.5 text-amber-400 fill-amber-400/40 shrink-0" />
-                    <span>{currentStreak}/{streakGoal}</span>
+                    <span className="text-sm select-none leading-none shrink-0">
+                      {renderDisplayIcon(qh.quickIcon, qh.title, 'text-sm')}
+                    </span>
+                    <span
+                      className={`text-xs font-semibold max-w-[85px] sm:max-w-[120px] truncate block hover:text-cyan-300 transition-colors ${
+                        isFinished ? 'text-gray-300 line-through decoration-cyan-400/60' : 'text-white'
+                      }`}
+                    >
+                      {displayTitle}
+                    </span>
                   </button>
 
-                  {isCounterHabit ? (
-                    <div
-                      className={`h-7 px-2 rounded-lg border text-xs font-mono font-bold flex items-center gap-1 shrink-0 transition-all shadow-sm ${
-                        isFinished
-                          ? `${auraTheme.badge} border-emerald-400 font-black`
-                          : 'bg-black/60 border-cyan-500/40 text-white shadow-[0_0_8px_rgba(0,240,255,0.15)] group-hover:border-cyan-300'
-                      }`}
-                    >
-                      <span>{current}/{target}</span>
-                      {isFinished ? (
-                        <Check className="w-3.5 h-3.5 text-emerald-400 stroke-[3]" />
-                      ) : (
-                        <span className="text-cyan-400 text-sm font-black leading-none ml-0.5">+</span>
-                      )}
-                    </div>
-                  ) : (
-                    <div
-                      className={`w-8 h-7 rounded-lg flex items-center justify-center shrink-0 border transition-all ${
-                        isFinished
-                          ? 'bg-emerald-950/80 border-emerald-400 text-emerald-300 shadow-[0_0_8px_rgba(52,211,153,0.3)]'
-                          : 'bg-black/60 border-white/20 text-gray-400 group-hover:border-cyan-400 group-hover:text-cyan-300'
-                      }`}
-                      title={isFinished ? 'Completado' : 'Marcar como completado'}
-                    >
-                      <Check className={`w-3.5 h-3.5 ${isFinished ? 'text-emerald-400 stroke-[3]' : 'text-gray-400'}`} />
-                    </div>
-                  )}
-                </div>
+                  {/* Lado Derecho: Botón táctil de Progreso / Check */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (isLocked) return;
+                      onIncrementHabit(qh.id, e);
+                    }}
+                    className={`shrink-0 ml-0.5 cursor-pointer focus:outline-none active:scale-90 transition-transform ${
+                      isLocked ? 'cursor-not-allowed opacity-60' : ''
+                    }`}
+                    title={
+                      isLocked
+                        ? 'Bloqueado por fin de jornada'
+                        : isCounterHabit
+                        ? `Toca para sumar (+1) a "${qh.title}"`
+                        : isFinished
+                        ? `Completado hoy (Toca para deshacer)`
+                        : `Marcar como completado`
+                    }
+                  >
+                    {isCounterHabit ? (
+                      <div
+                        className={`h-6 px-1.5 rounded-lg border text-[11px] font-mono font-bold flex items-center gap-1 shrink-0 transition-all ${
+                          isFinished
+                            ? `${auraTheme.badge} border-emerald-400 font-black`
+                            : 'bg-black/70 border-cyan-500/40 text-cyan-200 group-hover:border-cyan-300'
+                        }`}
+                      >
+                        <span>{current}/{target}</span>
+                        {isFinished ? (
+                          <Check className="w-3 h-3 text-emerald-400 stroke-[3]" />
+                        ) : (
+                          <span className="text-cyan-400 font-black leading-none">+</span>
+                        )}
+                      </div>
+                    ) : (
+                      <div
+                        className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 border transition-all ${
+                          isFinished
+                            ? 'bg-emerald-950/80 border-emerald-400 text-emerald-300 shadow-[0_0_8px_rgba(52,211,153,0.3)]'
+                            : 'bg-black/70 border-white/20 text-gray-400 group-hover:border-cyan-400 group-hover:text-cyan-300'
+                        }`}
+                      >
+                        <Check className={`w-3.5 h-3.5 ${isFinished ? 'text-emerald-400 stroke-[3]' : 'text-gray-400'}`} />
+                      </div>
+                    )}
+                  </button>
 
-                {/* Micro-Barra de Progreso Absoluta en el Borde Inferior (h-[2px]) */}
-                <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-black/40 overflow-hidden">
-                  <div
-                    className={`h-full transition-all duration-300 ${auraTheme.bar}`}
-                    style={{ width: `${progressPct}%` }}
-                  />
+                  {/* Micro-Barra de Progreso Absoluta Pegada al Borde Inferior (h-[2px]) */}
+                  <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-black/40 overflow-hidden">
+                    <div
+                      className={`h-full transition-all duration-300 ${auraTheme.bar}`}
+                      style={{ width: `${progressPct}%` }}
+                    />
+                  </div>
                 </div>
-              </div>
-            );
-          })
-        )}
-      </div>
+              );
+            })
+          )}
+        </div>
+      )}
 
       {/* PROTOCOLO LEY 21/66 & AURAS DE KAI MODAL (ENFOCADO EN EL HÁBITO SELECCIONADO) */}
       {selectedHabitForProtocol && (() => {
