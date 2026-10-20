@@ -283,7 +283,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
         onDragEnd={() => { setTimeout(() => { isDraggingRef.current = false; }, 120); }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        className={`fixed z-[60] pointer-events-auto select-none touch-none will-change-transform ${
+        className={`fixed z-[60] pointer-events-auto select-none touch-none will-change-transform omni-companion-hub-root ${
           navigationMode === 'classic'
             ? 'bottom-20 sm:bottom-6 right-2.5 sm:right-5'
             : 'bottom-4 sm:bottom-6 right-2.5 sm:right-5'

@@ -112,6 +112,10 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       setIsIconManuallyChosen(Boolean(editingTaskId));
+      document.body.classList.add('modal-open-hide-floating');
+      return () => {
+        document.body.classList.remove('modal-open-hide-floating');
+      };
     }
   }, [isOpen, editingTaskId]);
 
@@ -169,162 +173,165 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-2.5 sm:p-4 bg-black/85 backdrop-blur-md overflow-hidden">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
-          className={`relative w-full max-w-lg my-8 p-6 rounded-2xl bg-gray-950/95 border shadow-2xl transition-all ${
+          className={`relative w-full max-w-lg max-h-[92vh] sm:max-h-[90vh] flex flex-col rounded-2xl bg-gray-950/95 border shadow-2xl overflow-hidden transition-all ${
             isEditingHabitMode
               ? 'border-purple-500/40 shadow-purple-950/50'
               : 'border-cyan-500/30 shadow-cyan-950/40'
           }`}
         >
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white rounded-lg hover:bg-gray-800/60 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-
-          {/* Header */}
-          <div className="flex items-center gap-3 mb-5">
-            <div className={`p-3 rounded-xl border ${
-              isEditingHabitMode 
-                ? 'bg-purple-500/10 border-purple-500/30 text-purple-400' 
-                : 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400'
-            }`}>
-              {isEditingHabitMode ? <Flame className="w-6 h-6" /> : <Sparkles className="w-6 h-6" />}
+          {/* Header Fijo */}
+          <div className="shrink-0 flex items-center justify-between p-3.5 sm:p-5 pb-3 border-b border-white/5 bg-gray-950/95 relative">
+            <div className="flex items-center gap-2.5 sm:gap-3">
+              <div className={`p-2 sm:p-2.5 rounded-xl border ${
+                isEditingHabitMode 
+                  ? 'bg-purple-500/10 border-purple-500/30 text-purple-400' 
+                  : 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400'
+              }`}>
+                {isEditingHabitMode ? <Flame className="w-5 h-5" /> : <Sparkles className="w-5 h-5" />}
+              </div>
+              <div>
+                <h3 className="text-base sm:text-lg font-bold text-white font-display">
+                  {editingTaskId 
+                    ? (isEditingHabitMode ? 'Editar Hábito' : 'Editar Tarea')
+                    : (isEditingHabitMode ? 'Nuevo Hábito (21/66 Días)' : 'Nueva Tarea')
+                  }
+                </h3>
+                <p className="text-[10.5px] sm:text-xs text-gray-400">
+                  {isEditingHabitMode 
+                    ? 'Define tu rutina diaria para fortalecer hábitos en 21/66 días'
+                    : 'Organiza tu día agregando una nueva tarea o actividad'
+                  }
+                </p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-xl font-bold text-white font-display">
-                {editingTaskId 
-                  ? (isEditingHabitMode ? 'Editar Hábito' : 'Editar Tarea')
-                  : (isEditingHabitMode ? 'Nuevo Hábito (21/66 Días)' : 'Nueva Tarea')
-                }
-              </h3>
-              <p className="text-xs text-gray-400">
-                {isEditingHabitMode 
-                  ? 'Define tu rutina diaria para fortalecer hábitos en 21/66 días'
-                  : 'Organiza tu día agregando una nueva tarea o actividad'
-                }
-              </p>
-            </div>
+            <button
+              onClick={onClose}
+              className="p-1.5 text-gray-400 hover:text-white rounded-lg hover:bg-gray-800/60 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
 
-          <form onSubmit={onSubmit} className="space-y-4">
-            {/* Presets Rápidos de 1-Clic para Hábitos (1 sola fila horizontal armónica) */}
-            {isEditingHabitMode && (
-              <div className="p-2.5 rounded-xl bg-purple-950/30 border border-purple-500/20">
-                <span className="block text-[10.5px] font-mono font-bold text-purple-300 uppercase tracking-wider mb-1.5">
-                  ⚡ Sugerencias Rápidas de 1-Clic (Opcional):
-                </span>
-                <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar py-0.5">
-                  {habitPresets.map((preset, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => applyPreset(preset)}
-                      className="px-2 sm:px-2.5 py-1 rounded-lg bg-purple-900/40 hover:bg-purple-800/60 border border-purple-500/30 text-[11px] sm:text-xs font-semibold text-purple-200 transition-all hover:scale-105 shrink-0 whitespace-nowrap"
-                    >
-                      {preset.label}
-                    </button>
-                  ))}
+          <form onSubmit={onSubmit} className="flex-1 flex flex-col min-h-0 overflow-hidden">
+            {/* Cuerpo del Formulario Scrolleable */}
+            <div className="flex-1 overflow-y-auto p-3.5 sm:p-5 space-y-3 custom-scrollbar">
+              {/* Presets Rápidos de 1-Clic para Hábitos (Sin scrollbar visible) */}
+              {isEditingHabitMode && (
+                <div className="p-2 sm:p-2.5 rounded-xl bg-purple-950/30 border border-purple-500/20">
+                  <span className="block text-[10px] sm:text-[10.5px] font-mono font-bold text-purple-300 uppercase tracking-wider mb-1">
+                    ⚡ Sugerencias Rápidas de 1-Clic (Opcional):
+                  </span>
+                  <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] py-0.5">
+                    {habitPresets.map((preset, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => applyPreset(preset)}
+                        className="px-2 sm:px-2.5 py-1 rounded-lg bg-purple-900/40 hover:bg-purple-800/60 border border-purple-500/30 text-[11px] sm:text-xs font-semibold text-purple-200 transition-all hover:scale-105 shrink-0 whitespace-nowrap cursor-pointer"
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Bloque Atómico de Identidad: Icono + Nombre del Hábito */}
+              <div className="space-y-2">
+                {/* Selector de Icono/Emoji para Hábito (grid-cols-6 en móvil, grid-cols-12 en desktop) */}
+                {isEditingHabitMode && (
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-300 mb-1 flex items-center gap-1.5">
+                      <Smile className="w-3.5 h-3.5 text-purple-400" />
+                      Icono del Hábito
+                    </label>
+                    <div className="grid grid-cols-6 sm:grid-cols-12 gap-1.5">
+                      {quickEmojis.map((emoji) => {
+                        const isSelected = (quickIcon || '⚡') === emoji;
+                        return (
+                          <button
+                            key={emoji}
+                            type="button"
+                            onClick={() => {
+                              setQuickIcon(emoji);
+                              setIsIconManuallyChosen(true);
+                            }}
+                            className={`h-8 rounded-xl text-base transition-all flex items-center justify-center cursor-pointer ${
+                              isSelected
+                                ? 'bg-purple-500/30 border border-purple-400 scale-105 shadow-[0_0_10px_rgba(168,85,247,0.4)]'
+                                : 'bg-gray-900/80 border border-gray-800 hover:bg-gray-800 hover:border-gray-700 opacity-80 hover:opacity-100'
+                            }`}
+                            title={`Seleccionar icono ${emoji}`}
+                          >
+                            {emoji}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Título (Campo Libre 100% Personalizado) */}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-300 mb-1">
+                    {isEditingHabitMode ? 'Nombre de tu Hábito (100% Personalizable)' : 'Título de la tarea'}
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                    placeholder={isEditingHabitMode ? 'Ej. Dejar de fumar, Tomar agua, Gimnasio, Estudiar...' : 'Ej. Sesión de código profundo...'}
+                    className="w-full bg-gray-900 border border-gray-700 focus:border-purple-500 rounded-xl px-3.5 py-2 sm:py-2.5 text-white text-xs sm:text-sm placeholder-gray-500 focus:outline-none transition-colors"
+                  />
                 </div>
               </div>
-            )}
 
-            {/* Bloque Atómico de Identidad: Icono + Nombre del Hábito */}
-            <div className="space-y-2">
-              {/* Selector de Icono/Emoji para Hábito */}
+              {/* Selector de Energía de Recompensa para Kai (2 columnas forzadas en móvil) */}
               {isEditingHabitMode && (
-                <div>
-                  <label className="block text-xs font-semibold text-gray-300 mb-1 flex items-center gap-1.5">
-                    <Smile className="w-3.5 h-3.5 text-purple-400" />
-                    Icono del Hábito
+                <div className="p-2 sm:p-2.5 rounded-xl bg-purple-950/40 border border-purple-500/30 space-y-1.5">
+                  <label className="block text-xs font-bold text-purple-200 flex items-center justify-between">
+                    <span className="flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                      ✨ Recompensa de Energía para Kai (Aura a 21 y 66 días)
+                    </span>
                   </label>
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    {quickEmojis.map((emoji) => {
-                      const isSelected = (quickIcon || '⚡') === emoji;
+                  <div className="grid grid-cols-2 gap-1.5 pt-0.5">
+                    {(['purification', 'strength', 'mind', 'discipline', 'creativity'] as HabitEnergyType[]).map((energyKey) => {
+                      const detail = HABIT_ENERGY_DETAILS[energyKey];
+                      const isSelected = habitEnergyType === energyKey;
+                      const isFifthCard = energyKey === 'creativity';
                       return (
                         <button
-                          key={emoji}
+                          key={energyKey}
                           type="button"
-                          onClick={() => {
-                            setQuickIcon(emoji);
-                            setIsIconManuallyChosen(true);
-                          }}
-                          className={`w-8 h-8 rounded-xl text-base transition-all flex items-center justify-center cursor-pointer ${
+                          onClick={() => handleSelectEnergy(energyKey)}
+                          className={`py-1 px-2 rounded-xl border text-left flex items-center gap-1.5 transition-all cursor-pointer min-h-[38px] ${
+                            isFifthCard ? 'col-span-2 justify-center' : ''
+                          } ${
                             isSelected
-                              ? 'bg-purple-500/30 border border-purple-400 scale-110 shadow-[0_0_10px_rgba(168,85,247,0.4)]'
-                              : 'bg-gray-900/80 border border-gray-800 hover:bg-gray-800 hover:border-gray-700 opacity-80 hover:opacity-100'
+                              ? `${detail.badgeColor} scale-[1.01] ring-1 ring-purple-400`
+                              : 'bg-gray-900/60 border-gray-800 text-gray-400 hover:bg-gray-800/80 hover:text-white'
                           }`}
-                          title={`Seleccionar icono ${emoji}`}
                         >
-                          {emoji}
+                          <span className="text-sm shrink-0">{detail.icon}</span>
+                          <div className={`min-w-0 ${isFifthCard ? 'flex-initial text-center sm:text-left' : 'flex-1'}`}>
+                            <span className="block text-[11px] font-bold leading-tight truncate">{detail.label}</span>
+                            <span className="block text-[9px] opacity-75 truncate font-mono">
+                              ⚡ {detail.auraName21}
+                            </span>
+                          </div>
                         </button>
                       );
                     })}
                   </div>
                 </div>
               )}
-
-              {/* Título (Campo Libre 100% Personalizado) */}
-              <div>
-                <label className="block text-xs font-semibold text-gray-300 mb-1">
-                  {isEditingHabitMode ? 'Nombre de tu Hábito (100% Personalizable)' : 'Título de la tarea'}
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                  placeholder={isEditingHabitMode ? 'Ej. Dejar de fumar, Tomar agua, Gimnasio, Estudiar...' : 'Ej. Sesión de código profundo...'}
-                  className="w-full bg-gray-900 border border-gray-700 focus:border-purple-500 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none transition-colors"
-                />
-              </div>
-            </div>
-
-            {/* Selector de Energía de Recompensa para Kai (30% más compacto y auto-mapeo de categoría) */}
-            {isEditingHabitMode && (
-              <div className="p-2.5 rounded-xl bg-purple-950/40 border border-purple-500/30 space-y-1.5">
-                <label className="block text-xs font-bold text-purple-200 flex items-center justify-between">
-                  <span className="flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-                    ✨ Recompensa de Energía para Kai (Aura a 21 y 66 días)
-                  </span>
-                </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-0.5">
-                  {(['purification', 'strength', 'mind', 'discipline', 'creativity'] as HabitEnergyType[]).map((energyKey) => {
-                    const detail = HABIT_ENERGY_DETAILS[energyKey];
-                    const isSelected = habitEnergyType === energyKey;
-                    const isFifthCard = energyKey === 'creativity';
-                    return (
-                      <button
-                        key={energyKey}
-                        type="button"
-                        onClick={() => handleSelectEnergy(energyKey)}
-                        className={`py-1.5 px-2.5 rounded-xl border text-left flex items-center gap-2 transition-all cursor-pointer min-h-[40px] ${
-                          isFifthCard ? 'sm:col-span-2 sm:justify-center' : ''
-                        } ${
-                          isSelected
-                            ? `${detail.badgeColor} scale-[1.01] ring-1 ring-purple-400`
-                            : 'bg-gray-900/60 border-gray-800 text-gray-400 hover:bg-gray-800/80 hover:text-white'
-                        }`}
-                      >
-                        <span className="text-base shrink-0">{detail.icon}</span>
-                        <div className={`min-w-0 ${isFifthCard ? 'sm:flex-initial' : 'flex-1'}`}>
-                          <span className="block text-xs font-bold leading-tight truncate">{detail.label}</span>
-                          <span className="block text-[9.5px] opacity-75 truncate font-mono">
-                            ⚡ {detail.auraName21}
-                          </span>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
 
             {/* Frecuencia (para hábitos ocupa ancho completo; para tareas mantiene Categoría y Frecuencia) */}
             {isEditingHabitMode ? (
@@ -542,19 +549,20 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                 </motion.div>
               )}
             </div>
+          </div>
 
-            {/* Actions */}
-            <div className="flex gap-3 pt-3">
+          {/* Sticky Actions Footer (Siempre Visible) */}
+          <div className="shrink-0 p-3 sm:p-4 bg-[#070510]/95 backdrop-blur-md border-t border-white/10 flex gap-2.5">
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 py-2.5 px-4 rounded-xl bg-gray-900 hover:bg-gray-800 text-gray-300 font-medium text-sm transition-colors border border-gray-800"
+                className="flex-1 py-2.5 px-4 rounded-xl bg-gray-900 hover:bg-gray-800 text-gray-300 font-medium text-xs sm:text-sm transition-colors border border-gray-800 cursor-pointer"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
-                className={`flex-1 py-2.5 px-4 rounded-xl font-bold text-sm transition-all shadow-lg ${
+                className={`flex-1 py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-lg cursor-pointer ${
                   isEditingHabitMode
                     ? 'bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-400 hover:to-indigo-500 text-white shadow-purple-950/50'
                     : 'bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black shadow-cyan-500/25'
