@@ -150,6 +150,29 @@ export const renderDisplayIcon = (rawIcon?: string, title: string = '', classNam
 };
 
 /**
+ * Strips duplicate trailing emojis from habit title matching the icon or general emojis.
+ */
+export const cleanHabitTitle = (title: string, icon?: string): string => {
+  let cleaned = (title || '').trim();
+  if (!cleaned) return '';
+
+  const rawIcon = (icon || '').trim();
+  if (rawIcon) {
+    if (cleaned.endsWith(rawIcon)) {
+      cleaned = cleaned.slice(0, -rawIcon.length).trim();
+    }
+    const mapped = EMOJI_KEYWORD_MAP[rawIcon];
+    if (mapped && cleaned.endsWith(mapped)) {
+      cleaned = cleaned.slice(0, -mapped.length).trim();
+    }
+  }
+
+  // Remove any trailing unicode emoji characters
+  cleaned = cleaned.replace(/[\s]*[\u{1F300}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]+$/u, '').trim();
+  return cleaned || title;
+};
+
+/**
  * Robust cybernetic habit icon renderer (backwards-compatible with OracleModal)
  */
 export const renderHabitIcon = (rawIcon?: string, title: string = '', sizeClass: string = 'w-5 h-5') => {
@@ -472,8 +495,8 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
         </div>
       )}
 
-      {/* Grid of Habit Cards (1 col in mobile, 2 cols in desktop; full-width if only 1 habit) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+      {/* Grid of Habit Cards (Ultra-delgada 1 sola línea: flex-col en móvil, 2 cols en desktop) */}
+      <div className="flex flex-col gap-1.5 sm:grid sm:grid-cols-2 sm:gap-2">
         {quickHabits.length === 0 ? (
           <div className="col-span-1 sm:col-span-2 text-center py-4 text-xs text-slate-500 dark:text-cyan-300/70 italic bg-black/20 rounded-xl border border-white/5">
             No tienes hábitos activos aún. Toca "+ Hábito" para registrar tu primer hábito con Protocolo Ley 21/66.
@@ -495,7 +518,7 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
               currentDate,
               mastery
             );
-            const streakGoal = currentStreak >= 21 ? '66d' : '21d';
+            const streakGoal = currentStreak >= 21 ? '66' : '21';
 
             // Aura de Kai detection and theming
             const energyKey: HabitEnergyType = (qh.habitEnergyType as any) || detectHabitEnergy(qh.title, qh.category as any);
@@ -508,6 +531,8 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
             const isLocked = isDayEnded && !isFinished;
             const isSingleHabit = quickHabits.length === 1;
 
+            const displayTitle = cleanHabitTitle(qh.title, qh.quickIcon);
+
             return (
               <div
                 key={qh.id ? `qh-card-${qh.id}-${idx}` : `qh-card-${idx}`}
@@ -515,7 +540,7 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                   if (isLocked) return;
                   onIncrementHabit(qh.id, e);
                 }}
-                className={`group relative flex flex-col justify-between p-3 rounded-2xl border transition-all select-none overflow-hidden cursor-pointer active:scale-[0.99] ${
+                className={`group relative flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl border transition-all select-none overflow-hidden cursor-pointer active:scale-[0.99] ${
                   isSingleHabit ? 'sm:col-span-2' : ''
                 } ${
                   isLocked
@@ -532,116 +557,95 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                     : `${qh.title} - Toca para registrar`
                 }
               >
-                {/* Fila Principal Horizontal */}
-                <div className="flex items-center justify-between gap-2.5 min-w-0">
-                  {/* Lado Izquierdo: Avatar de Aura/Emoji + Textos */}
-                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                    {/* Caja del Emoji con brillo del Aura */}
-                    <div
-                      className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 border transition-transform duration-200 group-hover:scale-105 ${
-                        isFinished
-                          ? `${auraTheme.activeBorder} ${auraTheme.badge}`
-                          : `bg-black/50 ${auraTheme.border}`
-                      }`}
+                {/* Lado Izquierdo: Icono w-7 h-7 + Título del Hábito */}
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <div
+                    className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border transition-transform duration-200 group-hover:scale-105 ${
+                      isFinished
+                        ? `${auraTheme.activeBorder} ${auraTheme.badge}`
+                        : `bg-black/50 ${auraTheme.border}`
+                    }`}
+                  >
+                    {renderDisplayIcon(qh.quickIcon, qh.title, 'text-sm')}
+                  </div>
+
+                  <span
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpenEditModal(qh);
+                    }}
+                    className={`text-xs sm:text-sm font-semibold truncate cursor-pointer hover:underline hover:text-cyan-300 transition-colors ${
+                      isFinished ? 'text-gray-300 line-through decoration-cyan-400/60' : 'text-white'
+                    }`}
+                    title={`Editar "${qh.title}"`}
+                  >
+                    {displayTitle}
+                  </span>
+
+                  {!isLocked && current > 0 && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        gameEngine.handleResetHabit(qh.id, e);
+                      }}
+                      className="opacity-0 group-hover:opacity-60 hover:!opacity-100 p-0.5 rounded text-amber-400 transition-opacity cursor-pointer shrink-0"
+                      title="Reiniciar a 0"
                     >
-                      {renderDisplayIcon(qh.quickIcon, qh.title, 'text-lg sm:text-xl')}
-                    </div>
-
-                    {/* Columna de Texto: Título y Subtítulo de Neuroplasticidad */}
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <span
-                          className={`text-xs sm:text-sm font-semibold truncate block ${
-                            isFinished ? 'text-gray-300 line-through decoration-cyan-400/60' : 'text-white'
-                          }`}
-                          title={qh.title}
-                        >
-                          {qh.title}
-                        </span>
-
-                        {!isLocked && (
-                          <div className="flex items-center gap-0.5 shrink-0 opacity-40 group-hover:opacity-100 transition-opacity">
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onOpenEditModal(qh);
-                              }}
-                              className="p-1 rounded-md text-gray-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
-                              title={`Editar "${qh.title}"`}
-                            >
-                              <Edit3 className="w-3 h-3" />
-                            </button>
-                            {current > 0 && (
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  gameEngine.handleResetHabit(qh.id, e);
-                                }}
-                                className="p-1 rounded-md text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 transition-colors cursor-pointer"
-                                title="Reiniciar a 0"
-                              >
-                                <RotateCcw className="w-3 h-3" />
-                              </button>
-                            )}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Subtítulo Ley 21/66: 🔥 Día X de 21d */}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          soundFX.playClick();
-                          setSelectedHabitForProtocol(qh);
-                        }}
-                        className="mt-0.5 text-[10.5px] font-mono text-amber-300/90 hover:text-amber-200 flex items-center gap-1 cursor-pointer transition-colors"
-                        title={`Ver protocolo Ley 21/66 de "${qh.title}"`}
-                      >
-                        <Flame className="w-3 h-3 text-amber-400 fill-amber-400/40 shrink-0" />
-                        <span>Día {currentStreak} de {streakGoal}</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Lado Derecho: Botón de Acción Táctil Prominente */}
-                  <div className="shrink-0 ml-1">
-                    {isCounterHabit ? (
-                      <div
-                        className={`px-3 py-1.5 rounded-xl border text-xs font-mono font-bold flex items-center gap-1.5 transition-all shadow-sm ${
-                          isFinished
-                            ? `${auraTheme.badge} border-emerald-400 font-black`
-                            : 'bg-black/60 border-cyan-500/40 text-white shadow-[0_0_10px_rgba(0,240,255,0.15)] group-hover:border-cyan-300'
-                        }`}
-                      >
-                        <span>{current} / {target}</span>
-                        {isFinished ? (
-                          <Check className="w-3.5 h-3.5 text-emerald-400 stroke-[3]" />
-                        ) : (
-                          <span className="text-cyan-400 text-sm font-black leading-none ml-0.5">+</span>
-                        )}
-                      </div>
-                    ) : (
-                      <div
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 border transition-all ${
-                          isFinished
-                            ? 'bg-emerald-950/80 border-emerald-400 text-emerald-300 shadow-[0_0_10px_rgba(52,211,153,0.3)]'
-                            : 'bg-black/60 border-white/20 text-gray-300 group-hover:border-cyan-400 group-hover:text-white'
-                        }`}
-                      >
-                        <Check className={`w-3.5 h-3.5 ${isFinished ? 'text-emerald-400 stroke-[3]' : 'text-gray-400'}`} />
-                        <span className="text-[11px] font-medium">{isFinished ? 'Hecho' : 'Completar'}</span>
-                      </div>
-                    )}
-                  </div>
+                      <RotateCcw className="w-2.5 h-2.5" />
+                    </button>
+                  )}
                 </div>
 
-                {/* Micro-Barra de Progreso con el color del Aura */}
-                <div className="w-full h-1 bg-black/70 rounded-full mt-2.5 overflow-hidden border border-white/5">
+                {/* Lado Derecho: Micro-Badge Racha (🔥 X/21) + Botón de Acción */}
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      soundFX.playClick();
+                      setSelectedHabitForProtocol(qh);
+                    }}
+                    className="text-[10px] font-mono font-medium opacity-75 hover:opacity-100 text-amber-300 hover:text-amber-200 flex items-center gap-0.5 shrink-0 px-1 py-0.5 rounded cursor-pointer transition-all"
+                    title={`Ver protocolo Ley 21/66: ${currentStreak}/${streakGoal}`}
+                  >
+                    <Flame className="w-2.5 h-2.5 text-amber-400 fill-amber-400/40 shrink-0" />
+                    <span>{currentStreak}/{streakGoal}</span>
+                  </button>
+
+                  {isCounterHabit ? (
+                    <div
+                      className={`h-7 px-2 rounded-lg border text-xs font-mono font-bold flex items-center gap-1 shrink-0 transition-all shadow-sm ${
+                        isFinished
+                          ? `${auraTheme.badge} border-emerald-400 font-black`
+                          : 'bg-black/60 border-cyan-500/40 text-white shadow-[0_0_8px_rgba(0,240,255,0.15)] group-hover:border-cyan-300'
+                      }`}
+                    >
+                      <span>{current}/{target}</span>
+                      {isFinished ? (
+                        <Check className="w-3.5 h-3.5 text-emerald-400 stroke-[3]" />
+                      ) : (
+                        <span className="text-cyan-400 text-sm font-black leading-none ml-0.5">+</span>
+                      )}
+                    </div>
+                  ) : (
+                    <div
+                      className={`w-8 h-7 rounded-lg flex items-center justify-center shrink-0 border transition-all ${
+                        isFinished
+                          ? 'bg-emerald-950/80 border-emerald-400 text-emerald-300 shadow-[0_0_8px_rgba(52,211,153,0.3)]'
+                          : 'bg-black/60 border-white/20 text-gray-400 group-hover:border-cyan-400 group-hover:text-cyan-300'
+                      }`}
+                      title={isFinished ? 'Completado' : 'Marcar como completado'}
+                    >
+                      <Check className={`w-3.5 h-3.5 ${isFinished ? 'text-emerald-400 stroke-[3]' : 'text-gray-400'}`} />
+                    </div>
+                  )}
+                </div>
+
+                {/* Micro-Barra de Progreso Absoluta en el Borde Inferior (h-[2px]) */}
+                <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-black/40 overflow-hidden">
                   <div
-                    className={`h-full rounded-full transition-all duration-300 ${auraTheme.bar}`}
+                    className={`h-full transition-all duration-300 ${auraTheme.bar}`}
                     style={{ width: `${progressPct}%` }}
                   />
                 </div>
