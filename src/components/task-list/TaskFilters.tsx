@@ -70,7 +70,7 @@ export const TaskFilters: React.FC<TaskFiltersProps> = ({
       {/* Unified Single-Row Filter & Search Bar */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         {/* Status Filter Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] no-scrollbar">
           {[
             { id: 'todos', label: 'Todas', count: counts.total, icon: Layers },
             { id: 'rutina', label: 'Horarios', count: counts.routine, icon: Clock },
@@ -151,7 +151,7 @@ export const TaskFilters: React.FC<TaskFiltersProps> = ({
 
       {/* Collapsible Category Pills */}
       {(showCategories || selectedCategory !== 'todos') && (
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-[11px]">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] no-scrollbar text-[11px]">
           {CATEGORIES.map((cat) => {
             const isSelected = selectedCategory === cat.id;
             const IconComp = cat.icon;

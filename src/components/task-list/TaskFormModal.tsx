@@ -321,7 +321,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                         >
                           <span className="text-sm shrink-0">{detail.icon}</span>
                           <div className={`min-w-0 ${isFifthCard ? 'flex-initial text-center sm:text-left' : 'flex-1'}`}>
-                            <span className="block text-[11px] font-bold leading-tight truncate">{detail.label}</span>
+                            <span className="block text-[10.5px] sm:text-[11px] font-bold leading-tight">{detail.label}</span>
                             <span className="block text-[9px] opacity-75 truncate font-mono">
                               ⚡ {detail.auraName21}
                             </span>
