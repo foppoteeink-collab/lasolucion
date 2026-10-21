@@ -26,16 +26,7 @@ export const GlobalSoundscapeButton: React.FC = () => {
   const handleOpenConsole = () => {
     soundFX.playClick();
     const store = useUIStore.getState();
-    if (store.activeTab !== 'dashboard') {
-      store.setActiveTab('dashboard');
-    }
     store.setModalState('isPomodoroOpen', true);
-    setTimeout(() => {
-      const el = document.getElementById('pomodoro-audio-hub') || document.getElementById('pomodoro-timer-container');
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }, 150);
   };
 
   // If Pomodoro panel is already open and no audio is playing, hide redundant second button

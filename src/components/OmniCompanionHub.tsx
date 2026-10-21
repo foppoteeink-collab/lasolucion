@@ -318,14 +318,23 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
         <div className="relative flex flex-col items-center touch-none">
           {/* Badge de pomodoro si está corriendo */}
           {(isPomodoroOpen || isTimerRunning) && !isMenuOpen && (
-            <motion.div
+            <motion.button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                soundFX.playClick();
+                setModalState('isPomodoroOpen', !isPomodoroOpen);
+              }}
               initial={{ opacity: 0, y: 3 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-1 px-2 py-0.5 rounded-full bg-cyan-950/95 border border-cyan-400 text-[9px] font-mono font-bold text-cyan-300 shadow-[0_0_8px_rgba(0,240,255,0.4)] flex items-center gap-1 shrink-0"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="mb-1 px-2.5 py-1 rounded-full bg-cyan-950/95 border border-cyan-400 text-[9px] font-mono font-bold text-cyan-300 shadow-[0_0_10px_rgba(0,240,255,0.4)] hover:bg-cyan-900/90 hover:border-cyan-300 hover:text-white flex items-center gap-1.5 shrink-0 cursor-pointer transition"
+              title={isPomodoroOpen ? 'Minimizar temporizador' : 'Abrir temporizador de foco'}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping shrink-0" />
               <span>FOCO: {formattedTime}</span>
-            </motion.div>
+            </motion.button>
           )}
 
           {/* KAI CON ANILLO ORBITAL 360° */}

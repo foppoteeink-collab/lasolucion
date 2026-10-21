@@ -12,20 +12,7 @@ export const GlobalTimerButton: React.FC = () => {
   const handleClick = () => {
     soundFX.playClick();
     const store = useUIStore.getState();
-    if (store.activeTab !== 'dashboard') {
-      store.setActiveTab('dashboard');
-    }
-    const nextState = !isPomodoroOpen;
-    store.setModalState('isPomodoroOpen', nextState);
-
-    if (nextState) {
-      setTimeout(() => {
-        const el = document.getElementById('pomodoro-timer-container');
-        if (el) {
-          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      }, 150);
-    }
+    store.setModalState('isPomodoroOpen', !isPomodoroOpen);
   };
 
   return (

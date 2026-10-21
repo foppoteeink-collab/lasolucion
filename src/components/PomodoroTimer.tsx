@@ -22,6 +22,8 @@ import {
   Cpu,
   Heart,
   Shield,
+  Headphones,
+  ChevronDown,
 } from 'lucide-react';
 import { soundFX } from '../utils/audio';
 import { triggerHaptic } from '../utils/haptics';
@@ -37,11 +39,13 @@ interface PomodoroTimerProps {
   initialTaskTitle?: string;
   initialCategory?: TaskCategory;
   onSessionComplete?: (session: PomodoroSession) => void;
+  onClose?: () => void;
 }
 
 export const PomodoroTimer: React.FC<PomodoroTimerProps> = React.memo(({
   initialTaskTitle,
   initialCategory,
+  onClose,
 }) => {
   const {
     mode,
@@ -68,6 +72,7 @@ export const PomodoroTimer: React.FC<PomodoroTimerProps> = React.memo(({
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [scState, setScState] = useState<SoundscapeState>(quantumSoundscape.getState());
   const [showAdvancedEq, setShowAdvancedEq] = useState(false);
+  const [showSoundscape, setShowSoundscape] = useState(false);
   const [entropyWarning, setEntropyWarning] = useState<string | null>(null);
   const [lastToggledInfo, setLastToggledInfo] = useState<string | null>(null);
 
@@ -107,7 +112,11 @@ export const PomodoroTimer: React.FC<PomodoroTimerProps> = React.memo(({
 
   const handleClosePomodoro = () => {
     soundFX.playClick();
-    useUIStore.getState().setModalState('isPomodoroOpen', false);
+    if (onClose) {
+      onClose();
+    } else {
+      useUIStore.getState().setModalState('isPomodoroOpen', false);
+    }
   };
 
   // Quantum Layer Helpers (Allow mixing individual Quantum channels alongside Nature layers)
@@ -253,7 +262,7 @@ export const PomodoroTimer: React.FC<PomodoroTimerProps> = React.memo(({
   return (
     <div
       id="pomodoro-timer-container"
-      className="w-full max-w-4xl mx-auto rounded-2xl bg-[#01101a]/95 border border-cyan-500/30 p-3 sm:p-4 shadow-[0_0_25px_rgba(0,240,255,0.12)] backdrop-blur-md text-white my-1.5 relative"
+      className="w-full rounded-2xl sm:rounded-3xl bg-[#01101a]/95 border border-cyan-500/40 p-3.5 sm:p-5 shadow-[0_0_35px_rgba(0,240,255,0.22)] backdrop-blur-xl text-white relative"
     >
       {/* ROW 1: Mode Switcher + Editable Objective + Close */}
       <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-white/10">
@@ -406,205 +415,230 @@ export const PomodoroTimer: React.FC<PomodoroTimerProps> = React.memo(({
         />
       </div>
 
-      {/* ROW 3: MULTI-LAYER AUDIO MIXER (Combine any sounds freely with zero clutter) */}
-      <div id="pomodoro-audio-hub" className="pt-2 border-t border-white/10 space-y-2">
-        <div className="flex flex-wrap items-center justify-between gap-2">
+      {/* ROW 3: SUBTLE AUDIO TOOL TRIGGER (COLLAPSIBLE BY DEFAULT) */}
+      <div id="pomodoro-audio-hub" className="pt-2.5 border-t border-white/10">
+        <button
+          type="button"
+          onClick={() => {
+            soundFX.playClick();
+            setShowSoundscape(!showSoundscape);
+          }}
+          className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-black/40 border border-white/10 hover:border-cyan-400/40 text-xs transition cursor-pointer group"
+        >
           <div className="flex items-center gap-2 min-w-0">
-            <Waves className={`w-3.5 h-3.5 shrink-0 ${isAnyAudioPlaying ? 'text-cyan-400 animate-pulse' : 'text-slate-500'}`} />
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-300">
-              Mezclador
+            <Headphones className={`w-3.5 h-3.5 shrink-0 ${isAnyAudioPlaying ? 'text-cyan-400 animate-pulse' : 'text-slate-400 group-hover:text-cyan-300'}`} />
+            <span className="font-anton uppercase tracking-wider text-slate-300 group-hover:text-white transition">
+              Paisaje Sonoro & Frecuencias
             </span>
-            {activeMixNames.length > 0 ? (
-              <span className="text-[10px] font-mono text-cyan-300 bg-cyan-950/80 border border-cyan-500/40 px-2 py-0.5 rounded-full truncate max-w-[220px] sm:max-w-xs">
-                {activeMixNames.join(' + ')}
+            {isAnyAudioPlaying ? (
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-950/90 text-cyan-300 border border-cyan-500/50 flex items-center gap-1 truncate max-w-[140px] sm:max-w-xs shadow-[0_0_8px_rgba(0,240,255,0.3)]">
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping shrink-0" />
+                <span className="truncate">{activeMixNames.join(' + ')}</span>
               </span>
             ) : (
               <span className="text-[10px] font-mono text-slate-500 hidden sm:inline">
-                Toca varios para combinarlos
+                • Opcional
               </span>
             )}
           </div>
 
-          <div className="flex items-center gap-1.5 ml-auto">
-            {isAnyAudioPlaying && (
-              <>
-                <div className="flex items-center gap-1.5 bg-black/50 px-2 py-1 rounded-lg border border-white/10">
-                  <Volume2 className="w-3 h-3 text-cyan-400" />
-                  <input
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.05"
-                    value={ambientVolume}
-                    onChange={(e) => handleUnifiedVolume(parseFloat(e.target.value))}
-                    className="w-16 sm:w-20 accent-cyan-400 cursor-pointer"
-                    title="Volumen general de la mezcla"
-                  />
-                </div>
+          <div className="flex items-center gap-1 text-slate-400 group-hover:text-cyan-300 transition">
+            <span className="text-[10px] font-mono">{showSoundscape ? 'Ocultar' : (isAnyAudioPlaying ? 'Ajustar' : 'Elegir')}</span>
+            <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 ${showSoundscape ? 'rotate-180 text-cyan-400' : ''}`} />
+          </div>
+        </button>
+
+        {/* EXPANDABLE SOUND CONSOLE */}
+        {showSoundscape && (
+          <div className="mt-2.5 p-3 rounded-2xl bg-black/60 border border-cyan-500/30 space-y-2.5 animate-fadeIn">
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-white/5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                <Waves className={`w-3 h-3 ${isAnyAudioPlaying ? 'text-cyan-400' : 'text-slate-500'}`} />
+                Mezclador Acústico
+              </span>
+
+              <div className="flex items-center gap-1.5 ml-auto">
+                {isAnyAudioPlaying && (
+                  <>
+                    <div className="flex items-center gap-1.5 bg-black/50 px-2 py-1 rounded-lg border border-white/10">
+                      <Volume2 className="w-3 h-3 text-cyan-400" />
+                      <input
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.05"
+                        value={ambientVolume}
+                        onChange={(e) => handleUnifiedVolume(parseFloat(e.target.value))}
+                        className="w-16 accent-cyan-400 cursor-pointer"
+                        title="Volumen general de la mezcla"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleMuteAll}
+                      className="p-1 rounded-lg bg-rose-950/50 hover:bg-rose-900/70 text-rose-300 border border-rose-500/40 transition cursor-pointer"
+                      title="Silenciar todo"
+                    >
+                      <VolumeX className="w-3 h-3" />
+                    </button>
+                  </>
+                )}
+
                 <button
                   type="button"
-                  onClick={handleMuteAll}
-                  className="p-1.5 rounded-lg bg-rose-950/50 hover:bg-rose-900/70 text-rose-300 border border-rose-500/40 transition cursor-pointer"
-                  title="Silenciar todo"
+                  onClick={() => {
+                    soundFX.playClick();
+                    setShowAdvancedEq(!showAdvancedEq);
+                  }}
+                  className={`px-2 py-1 rounded-lg border transition cursor-pointer flex items-center gap-1 text-[10px] font-mono ${
+                    showAdvancedEq
+                      ? 'bg-purple-950/80 border-purple-400 text-purple-200 shadow-[0_0_8px_rgba(168,85,247,0.3)]'
+                      : 'bg-black/40 border-white/10 text-slate-400 hover:text-white'
+                  }`}
+                  title="Ecualizador avanzado de 3 canales"
                 >
-                  <VolumeX className="w-3.5 h-3.5" />
+                  <Sliders className="w-3 h-3" />
+                  <span>3CH</span>
                 </button>
-              </>
+              </div>
+            </div>
+
+            {/* 8 Sound Layer Chips */}
+            <div className="grid grid-cols-4 sm:grid-cols-8 gap-1.5 font-mono text-[11px]">
+              {/* 1. Lluvia */}
+              <button
+                type="button"
+                onClick={() => handleToggleNature('rain', '🌧️ Lluvia: Aísla ruidos externos y relaja la corteza auditiva')}
+                title="Lluvia Suave"
+                className={`px-2 py-1.5 rounded-xl border transition cursor-pointer flex flex-col sm:flex-row items-center justify-center gap-1 ${
+                  activeAmbientLayers.includes('rain')
+                    ? 'bg-cyan-950/90 border-cyan-400 text-cyan-200 shadow-[0_0_10px_rgba(0,240,255,0.25)] font-bold'
+                    : 'bg-black/40 border-white/10 text-slate-400 hover:text-white hover:border-cyan-500/40'
+                }`}
+              >
+                <CloudRain className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                <span className="truncate">Lluvia</span>
+              </button>
+
+              {/* 2. Olas */}
+              <button
+                type="button"
+                onClick={() => handleToggleNature('fire', '🌊 Olas del Mar: Ritmo cadencioso anti-estrés')}
+                title="Olas del Mar"
+                className={`px-2 py-1.5 rounded-xl border transition cursor-pointer flex flex-col sm:flex-row items-center justify-center gap-1 ${
+                  activeAmbientLayers.includes('fire')
+                    ? 'bg-sky-950/90 border-sky-400 text-sky-200 shadow-[0_0_10px_rgba(56,189,248,0.25)] font-bold'
+                    : 'bg-black/40 border-white/10 text-slate-400 hover:text-white hover:border-sky-500/40'
+                }`}
+              >
+                <Waves className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+                <span className="truncate">Olas</span>
+              </button>
+
+              {/* 3. Bosque */}
+              <button
+                type="button"
+                onClick={() => handleToggleNature('forest', '🌲 Bosque: Brisa y aves naturales')}
+                title="Bosque Zen"
+                className={`px-2 py-1.5 rounded-xl border transition cursor-pointer flex flex-col sm:flex-row items-center justify-center gap-1 ${
+                  activeAmbientLayers.includes('forest')
+                    ? 'bg-emerald-950/90 border-emerald-400 text-emerald-200 shadow-[0_0_10px_rgba(52,211,153,0.25)] font-bold'
+                    : 'bg-black/40 border-white/10 text-slate-400 hover:text-white hover:border-emerald-500/40'
+                }`}
+              >
+                <Trees className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span className="truncate">Bosque</span>
+              </button>
+
+              {/* 4. Latido */}
+              <button
+                type="button"
+                onClick={() => handleToggleNature('heartbeat', '💓 Latido 60 BPM: Coherencia cardíaca')}
+                title="Latido del Corazón"
+                className={`px-2 py-1.5 rounded-xl border transition cursor-pointer flex flex-col sm:flex-row items-center justify-center gap-1 ${
+                  activeAmbientLayers.includes('heartbeat')
+                    ? 'bg-rose-950/90 border-rose-400 text-rose-200 shadow-[0_0_10px_rgba(251,113,133,0.25)] font-bold'
+                    : 'bg-black/40 border-white/10 text-slate-400 hover:text-white hover:border-rose-500/40'
+                }`}
+              >
+                <Heart className={`w-3.5 h-3.5 text-rose-400 shrink-0 ${activeAmbientLayers.includes('heartbeat') ? 'animate-pulse' : ''}`} />
+                <span className="truncate">Latido</span>
+              </button>
+
+              {/* 5. Alpha */}
+              <button
+                type="button"
+                onClick={() => handleToggleBinaural('alpha', '🧘 Alpha 10Hz: Estudio y calma')}
+                title="Ondas Alpha (10Hz)"
+                className={`px-2 py-1.5 rounded-xl border transition cursor-pointer flex flex-col sm:flex-row items-center justify-center gap-1 ${
+                  isAlphaActive
+                    ? 'bg-teal-950/90 border-teal-400 text-teal-200 shadow-[0_0_10px_rgba(45,212,191,0.25)] font-bold'
+                    : 'bg-black/40 border-white/10 text-slate-400 hover:text-white hover:border-teal-500/40'
+                }`}
+              >
+                <Radio className="w-3.5 h-3.5 text-teal-400 shrink-0" />
+                <span className="truncate">Alpha</span>
+              </button>
+
+              {/* 6. Beta */}
+              <button
+                type="button"
+                onClick={() => handleToggleBinaural('beta', '⚡ Beta 15Hz: Hiperenfoque activo')}
+                title="Ondas Beta (15Hz)"
+                className={`px-2 py-1.5 rounded-xl border transition cursor-pointer flex flex-col sm:flex-row items-center justify-center gap-1 ${
+                  isBetaActive
+                    ? 'bg-[#1f2600]/90 border-[#d6f421] text-[#d6f421] shadow-[0_0_10px_rgba(214,244,33,0.25)] font-bold'
+                    : 'bg-black/40 border-white/10 text-slate-400 hover:text-white hover:border-[#d6f421]/40'
+                }`}
+              >
+                <Zap className="w-3.5 h-3.5 text-[#d6f421] shrink-0" />
+                <span className="truncate">Beta</span>
+              </button>
+
+              {/* 7. Drone 432Hz */}
+              <button
+                type="button"
+                onClick={() => handleToggleDrone('✨ Drone 432Hz: Inmersión armónica')}
+                title="Drone 432Hz"
+                className={`px-2 py-1.5 rounded-xl border transition cursor-pointer flex flex-col sm:flex-row items-center justify-center gap-1 ${
+                  isDroneActive
+                    ? 'bg-purple-950/90 border-purple-400 text-purple-200 shadow-[0_0_10px_rgba(168,85,247,0.25)] font-bold'
+                    : 'bg-black/40 border-white/10 text-slate-400 hover:text-white hover:border-purple-500/40'
+                }`}
+              >
+                <Cpu className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                <span className="truncate">432Hz</span>
+              </button>
+
+              {/* 8. Marrón */}
+              <button
+                type="button"
+                onClick={() => handleToggleBrownNoise('🛡️ Ruido Marrón: Bloqueo acústico')}
+                title="Ruido Marrón"
+                className={`px-2 py-1.5 rounded-xl border transition cursor-pointer flex flex-col sm:flex-row items-center justify-center gap-1 ${
+                  isBrownActive
+                    ? 'bg-amber-950/90 border-amber-400 text-amber-200 shadow-[0_0_10px_rgba(251,191,36,0.25)] font-bold'
+                    : 'bg-black/40 border-white/10 text-slate-400 hover:text-white hover:border-amber-500/40'
+                }`}
+              >
+                <Shield className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span className="truncate">Marrón</span>
+              </button>
+            </div>
+
+            {/* Sound info hint */}
+            {isAnyAudioPlaying && lastToggledInfo && (
+              <div className="text-[10px] font-mono text-slate-400 flex items-center justify-between px-1">
+                <span className="truncate">{lastToggledInfo}</span>
+              </div>
             )}
 
-            <button
-              type="button"
-              onClick={() => {
-                soundFX.playClick();
-                setShowAdvancedEq(!showAdvancedEq);
-              }}
-              className={`p-1.5 rounded-lg border transition cursor-pointer flex items-center gap-1 text-[10px] font-mono ${
-                showAdvancedEq
-                  ? 'bg-purple-950/80 border-purple-400 text-purple-200'
-                  : 'bg-black/40 border-white/10 text-slate-400 hover:text-white'
-              }`}
-              title="Ecualizador avanzado de 3 canales"
-            >
-              <Sliders className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">3CH</span>
-            </button>
-          </div>
-        </div>
-
-        {/* 8 COMBINABLE SOUND LAYER CHIPS */}
-        <div className="grid grid-cols-4 sm:grid-cols-8 gap-1.5 font-mono text-[11px]">
-          {/* 1. Lluvia */}
-          <button
-            type="button"
-            onClick={() => handleToggleNature('rain', '🌧️ Lluvia: Aísla ruidos externos y relaja la corteza auditiva')}
-            title="Lluvia Suave — Aísla ruidos del entorno"
-            className={`px-2 py-1.5 rounded-xl border transition cursor-pointer flex flex-col sm:flex-row items-center justify-center gap-1 ${
-              activeAmbientLayers.includes('rain')
-                ? 'bg-cyan-950/90 border-cyan-400 text-cyan-200 shadow-[0_0_10px_rgba(0,240,255,0.25)] font-bold'
-                : 'bg-black/40 border-white/10 text-slate-400 hover:text-white hover:border-cyan-500/40'
-            }`}
-          >
-            <CloudRain className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-            <span className="truncate">Lluvia</span>
-          </button>
-
-          {/* 2. Olas del Mar */}
-          <button
-            type="button"
-            onClick={() => handleToggleNature('fire', '🌊 Olas del Mar: Ritmo oceánico cadencioso que reduce la fatiga')}
-            title="Olas del Mar — Ritmo marino anti-estrés"
-            className={`px-2 py-1.5 rounded-xl border transition cursor-pointer flex flex-col sm:flex-row items-center justify-center gap-1 ${
-              activeAmbientLayers.includes('fire')
-                ? 'bg-sky-950/90 border-sky-400 text-sky-200 shadow-[0_0_10px_rgba(56,189,248,0.25)] font-bold'
-                : 'bg-black/40 border-white/10 text-slate-400 hover:text-white hover:border-sky-500/40'
-            }`}
-          >
-            <Waves className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-            <span className="truncate">Olas</span>
-          </button>
-
-          {/* 3. Bosque */}
-          <button
-            type="button"
-            onClick={() => handleToggleNature('forest', '🌲 Bosque: Brisa natural y aves para fluidez creativa')}
-            title="Bosque Zen — Brisa y aves naturales"
-            className={`px-2 py-1.5 rounded-xl border transition cursor-pointer flex flex-col sm:flex-row items-center justify-center gap-1 ${
-              activeAmbientLayers.includes('forest')
-                ? 'bg-emerald-950/90 border-emerald-400 text-emerald-200 shadow-[0_0_10px_rgba(52,211,153,0.25)] font-bold'
-                : 'bg-black/40 border-white/10 text-slate-400 hover:text-white hover:border-emerald-500/40'
-            }`}
-          >
-            <Trees className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-            <span className="truncate">Bosque</span>
-          </button>
-
-          {/* 4. Latido Natural */}
-          <button
-            type="button"
-            onClick={() => handleToggleNature('heartbeat', '💓 Latido 60 BPM: Pulso orgánico para coherencia cardíaca y calma')}
-            title="Latido del Corazón (60 BPM) — Coherencia cardíaca"
-            className={`px-2 py-1.5 rounded-xl border transition cursor-pointer flex flex-col sm:flex-row items-center justify-center gap-1 ${
-              activeAmbientLayers.includes('heartbeat')
-                ? 'bg-rose-950/90 border-rose-400 text-rose-200 shadow-[0_0_10px_rgba(251,113,133,0.25)] font-bold'
-                : 'bg-black/40 border-white/10 text-slate-400 hover:text-white hover:border-rose-500/40'
-            }`}
-          >
-            <Heart className={`w-3.5 h-3.5 text-rose-400 shrink-0 ${activeAmbientLayers.includes('heartbeat') ? 'animate-pulse' : ''}`} />
-            <span className="truncate">Latido</span>
-          </button>
-
-          {/* 5. Ondas Alpha (10Hz) */}
-          <button
-            type="button"
-            onClick={() => handleToggleBinaural('alpha', '🧘 Alpha 10Hz: Sincronización cerebral para lectura y estudio sereno')}
-            title="Ondas Alpha (10Hz) — Estudio y calma mental"
-            className={`px-2 py-1.5 rounded-xl border transition cursor-pointer flex flex-col sm:flex-row items-center justify-center gap-1 ${
-              isAlphaActive
-                ? 'bg-teal-950/90 border-teal-400 text-teal-200 shadow-[0_0_10px_rgba(45,212,191,0.25)] font-bold'
-                : 'bg-black/40 border-white/10 text-slate-400 hover:text-white hover:border-teal-500/40'
-            }`}
-          >
-            <Radio className="w-3.5 h-3.5 text-teal-400 shrink-0" />
-            <span className="truncate">Alpha</span>
-          </button>
-
-          {/* 6. Ondas Beta (15Hz) */}
-          <button
-            type="button"
-            onClick={() => handleToggleBinaural('beta', '⚡ Beta 15Hz: Hiperenfoque activo y ejecución rápida')}
-            title="Ondas Beta (15Hz) — Hiperenfoque y ejecución"
-            className={`px-2 py-1.5 rounded-xl border transition cursor-pointer flex flex-col sm:flex-row items-center justify-center gap-1 ${
-              isBetaActive
-                ? 'bg-[#1f2600]/90 border-[#d6f421] text-[#d6f421] shadow-[0_0_10px_rgba(214,244,33,0.25)] font-bold'
-                : 'bg-black/40 border-white/10 text-slate-400 hover:text-white hover:border-[#d6f421]/40'
-            }`}
-          >
-            <Zap className="w-3.5 h-3.5 text-[#d6f421] shrink-0" />
-            <span className="truncate">Beta</span>
-          </button>
-
-          {/* 7. Drone 432Hz */}
-          <button
-            type="button"
-            onClick={() => handleToggleDrone('✨ Drone 432Hz: Atmósfera armónica espacial para inmersión profunda')}
-            title="Drone 432Hz — Inmersión armónica"
-            className={`px-2 py-1.5 rounded-xl border transition cursor-pointer flex flex-col sm:flex-row items-center justify-center gap-1 ${
-              isDroneActive
-                ? 'bg-purple-950/90 border-purple-400 text-purple-200 shadow-[0_0_10px_rgba(168,85,247,0.25)] font-bold'
-                : 'bg-black/40 border-white/10 text-slate-400 hover:text-white hover:border-purple-500/40'
-            }`}
-          >
-            <Cpu className="w-3.5 h-3.5 text-purple-400 shrink-0" />
-            <span className="truncate">432Hz</span>
-          </button>
-
-          {/* 8. Ruido Marrón */}
-          <button
-            type="button"
-            onClick={() => handleToggleBrownNoise('🛡️ Ruido Marrón: Bloqueo acústico profundo contra distracciones')}
-            title="Ruido Marrón — Bloqueo acústico de baja frecuencia"
-            className={`px-2 py-1.5 rounded-xl border transition cursor-pointer flex flex-col sm:flex-row items-center justify-center gap-1 ${
-              isBrownActive
-                ? 'bg-amber-950/90 border-amber-400 text-amber-200 shadow-[0_0_10px_rgba(251,191,36,0.25)] font-bold'
-                : 'bg-black/40 border-white/10 text-slate-400 hover:text-white hover:border-amber-500/40'
-            }`}
-          >
-            <Shield className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-            <span className="truncate">Marrón</span>
-          </button>
-        </div>
-
-        {/* Single-line subtle hint ONLY when a sound is active */}
-        {isAnyAudioPlaying && lastToggledInfo && (
-          <div className="text-[10px] font-mono text-slate-400 flex items-center justify-between px-1">
-            <span className="truncate">{lastToggledInfo}</span>
-          </div>
-        )}
-
-        {/* Optional Collapsible 3-Channel Fine Equalizer */}
-        {showAdvancedEq && (
-          <div className="pt-1">
-            <QuantumSoundscapeConsole compact={true} />
+            {/* Optional 3-Channel Equalizer */}
+            {showAdvancedEq && (
+              <div className="pt-2 border-t border-white/10">
+                <QuantumSoundscapeConsole compact={true} />
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, lazy, Suspense } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { soundFX } from '../utils/audio';
 import * as gameEngine from '../engine/gameEngine';
 import { useAuth } from '../context/AuthContext';
@@ -428,20 +428,6 @@ export function AppLayout() {
 
               {activeTab === 'dashboard' && (
                 <>
-              {/* COLLAPSIBLE POMODORO TIMER */}
-              {isPomodoroOpen && (
-                <motion.div 
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="w-full"
-                >
-                  <PomodoroTimer 
-                    onSessionComplete={handlePomodoroComplete} 
-                    initialTaskTitle={pomodoroPreFill.title}
-                    initialCategory={pomodoroPreFill.category}
-                  />
-                </motion.div>
-              )}
 
               {/* COLLAPSIBLE LIVE SCHEDULE TIMELINE */}
               {showBossSchedule && (
@@ -748,6 +734,40 @@ export function AppLayout() {
         }}
         cloudSync={cloudSync}
       />
+
+      {/* Cyberpunk Floating Pomodoro Pop-up Modal */}
+      <AnimatePresence>
+        {isPomodoroOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md overflow-y-auto"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                soundFX.playClick();
+                setModalState('isPomodoroOpen', false);
+              }
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.92, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.92, opacity: 0, y: 20 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+              className="w-full max-w-lg my-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <PomodoroTimer 
+                onSessionComplete={handlePomodoroComplete} 
+                initialTaskTitle={pomodoroPreFill.title}
+                initialCategory={pomodoroPreFill.category}
+                onClose={() => setModalState('isPomodoroOpen', false)}
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* OMNIPRESENT COMPANION & HOLOGRAPHIC COMMAND HUB (VISIBLE ON ALL SCREENS) */}
       <OmniCompanionHub
