@@ -33,7 +33,8 @@ import {
   Target,
   Edit2,
   ArrowRight,
-  Activity
+  Activity,
+  Layers
 } from 'lucide-react';
 import { getHabitBaseId } from '../intelligence/masteryEngine';
 import { CHARACTER_CLASSES, CharacterClassOption, getRankForLevel } from '../data/defaults';
@@ -72,7 +73,7 @@ export interface WeeklyStatsProps {
 }
 
 type TimeRange = 'semanal' | 'mensual' | 'anual';
-type StatsSubTab = 'hero' | 'neuro' | 'finance';
+type StatsSubTab = 'hero' | 'neuro' | 'time' | 'finance';
 
 // Colores RPG con Gradientes
 const ATTRIBUTE_COLORS = {
@@ -500,7 +501,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
   const CustomTooltipPie = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-[#001830]/90 backdrop-blur-sm border border-fuchsia-500/50 p-2.5 rounded-xl shadow-[0_0_20px_rgba(217,70,239,0.25)]">
+        <div className="bg-[#001830]/95 backdrop-blur-sm border border-fuchsia-500/50 p-2.5 rounded-xl shadow-[0_0_20px_rgba(217,70,239,0.25)] z-30">
           <p className="text-fuchsia-300 text-[10px] uppercase tracking-wider font-bold mb-1">{payload[0].name}</p>
           <p className="text-white text-sm font-mono font-black flex items-center gap-1.5">
             <CheckCircle2 className="w-3.5 h-3.5 text-fuchsia-400" />
@@ -611,14 +612,14 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
             soundFX.playClick();
             setActiveSubTab('hero');
           }}
-          className={`flex-1 min-w-[125px] py-2.5 px-3 rounded-xl font-anton text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer ${
+          className={`flex-1 min-w-[110px] py-2 px-2.5 rounded-xl font-anton text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
             activeSubTab === 'hero'
               ? 'bg-gradient-to-r from-cyan-400 to-blue-600 text-black shadow-[0_0_15px_rgba(0,240,255,0.5)] font-black'
               : 'text-slate-300 hover:text-cyan-300 hover:bg-white/5 border border-transparent'
           }`}
         >
-          <Shield className="w-4 h-4" />
-          <span>Héroe & Auras</span>
+          <Shield className="w-3.5 h-3.5" />
+          <span>Héroe</span>
         </button>
 
         <button
@@ -627,16 +628,16 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
             soundFX.playClick();
             setActiveSubTab('neuro');
           }}
-          className={`flex-1 min-w-[155px] py-2.5 px-3 rounded-xl font-anton text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer ${
+          className={`flex-1 min-w-[145px] py-2 px-2.5 rounded-xl font-anton text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
             activeSubTab === 'neuro'
               ? 'bg-gradient-to-r from-purple-500 to-fuchsia-600 text-white shadow-[0_0_15px_rgba(168,85,247,0.5)] font-black'
               : 'text-slate-300 hover:text-purple-300 hover:bg-white/5 border border-transparent'
           }`}
         >
-          <Brain className="w-4 h-4" />
-          <span>Neuroplasticidad 21/66</span>
+          <Brain className="w-3.5 h-3.5" />
+          <span>Hábitos 21/66</span>
           {trackedHabits.length > 0 && (
-            <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+            <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold ${
               activeSubTab === 'neuro' ? 'bg-black/50 text-purple-200' : 'bg-purple-900/60 text-purple-300'
             }`}>
               {trackedHabits.length}
@@ -648,16 +649,32 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
           type="button"
           onClick={() => {
             soundFX.playClick();
+            setActiveSubTab('time');
+          }}
+          className={`flex-1 min-w-[130px] py-2 px-2.5 rounded-xl font-anton text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+            activeSubTab === 'time'
+              ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-black shadow-[0_0_15px_rgba(0,240,255,0.5)] font-black'
+              : 'text-slate-300 hover:text-cyan-300 hover:bg-white/5 border border-transparent'
+          }`}
+        >
+          <Clock className="w-3.5 h-3.5" />
+          <span>Tiempo & Foco</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            soundFX.playClick();
             setActiveSubTab('finance');
           }}
-          className={`flex-1 min-w-[135px] py-2.5 px-3 rounded-xl font-anton text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer ${
+          className={`flex-1 min-w-[110px] py-2 px-2.5 rounded-xl font-anton text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
             activeSubTab === 'finance'
               ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-black shadow-[0_0_15px_rgba(245,158,11,0.5)] font-black'
               : 'text-slate-300 hover:text-amber-300 hover:bg-white/5 border border-transparent'
           }`}
         >
-          <Coins className="w-4 h-4" />
-          <span>Tiempo & Finanzas</span>
+          <Coins className="w-3.5 h-3.5" />
+          <span>Finanzas</span>
         </button>
       </div>
 
@@ -797,7 +814,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
                     }}
                     className="text-[10px] text-cyan-400 hover:text-cyan-300 font-mono flex items-center gap-1 cursor-pointer"
                   >
-                    <span>Ver Neuroplasticidad</span>
+                    <span>Ver Hábitos</span>
                     <ArrowRight className="w-3 h-3" />
                   </button>
                 </div>
@@ -888,7 +905,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
             {/* RPG Character Attributes Matrix (Radar) */}
             <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-b from-[#0a0f25] to-[#030612] border border-purple-900/50 shadow-[0_10px_30px_rgba(168,85,247,0.08)] flex flex-col relative overflow-hidden">
               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-32 bg-purple-500/10 blur-3xl rounded-full pointer-events-none"></div>
-              <div className="flex items-center justify-between mb-6 relative z-10">
+              <div className="flex items-center justify-between mb-4 relative z-10">
                 <h3 className="text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-300 to-fuchsia-400 flex items-center gap-2 uppercase tracking-widest">
                   <Award className="w-4 h-4 text-white" />
                   Matriz de Poder
@@ -898,8 +915,8 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
                 </span>
               </div>
               
-              <div className="flex-1 w-full min-h-[260px] relative z-10">
-                <ResponsiveContainer width="100%" height="100%">
+              <div className="w-full h-[260px] relative z-10">
+                <ResponsiveContainer width="100%" height={260}>
                   <RadarChart cx="50%" cy="50%" outerRadius="75%" data={attributesData}>
                     <defs>
                       <linearGradient id="radarGradient" x1="0" y1="0" x2="1" y2="1">
@@ -1111,7 +1128,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
               </div>
             ) : (
               <div className="w-full h-[320px] relative z-10">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height={320}>
                   <BarChart data={neuroChartData} margin={{ top: 25, right: 30, left: 0, bottom: 25 }}>
                     <defs>
                       <linearGradient id="streakGrad" x1="0" y1="0" x2="0" y2="1">
@@ -1137,7 +1154,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
                     />
                     <YAxis 
                       stroke="#64748b" 
-                      domain={[0, (dataMax: number) => Math.max(70, Math.ceil((dataMax + 10) / 10) * 10)]}
+                      domain={[0, (dataMax: number) => Math.max(80, Math.ceil((dataMax + 10) / 10) * 10)]}
                       tick={{ fill: '#64748b', fontSize: 10 }}
                     />
                     <RechartsTooltip content={<CustomTooltipNeuro />} cursor={{ fill: 'rgba(168, 85, 247, 0.08)' }} />
@@ -1160,6 +1177,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
                       name="Racha Actual" 
                       radius={[8, 8, 0, 0]} 
                       barSize={36}
+                      minPointSize={4}
                       animationDuration={1500}
                     >
                       {neuroChartData.map((entry, index) => {
@@ -1303,9 +1321,9 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
       )}
 
       {/* ========================================================================= */}
-      {/* SUB-TAB 3: [💰 TIEMPO & FINANZAS] */}
+      {/* SUB-TAB 3: [⏱️ TIEMPO & FOCO] */}
       {/* ========================================================================= */}
-      {activeSubTab === 'finance' && (
+      {activeSubTab === 'time' && (
         <div className="space-y-6 animate-fadeIn">
           {/* Time Toggle Control */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-gradient-to-r from-[#0a0f25] to-[#050a18] p-3 rounded-2xl border border-cyan-900/50 shadow-[0_4px_20px_rgba(0,240,255,0.05)] gap-3">
@@ -1419,14 +1437,14 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
             </div>
           </ScrollReveal>
 
-          {/* Main Charts */}
+          {/* Main Focus Charts */}
           <ScrollReveal>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Focus Bar Chart */}
               <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-b from-[#0a0f25] to-[#030612] border border-cyan-900/50 shadow-[0_10px_30px_rgba(0,240,255,0.08)] flex flex-col relative overflow-hidden">
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-32 bg-cyan-500/10 blur-3xl rounded-full pointer-events-none"></div>
                 
-                <div className="flex items-center justify-between mb-6 relative z-10">
+                <div className="flex items-center justify-between mb-4 relative z-10">
                   <h3 className="text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-400 flex items-center gap-2 uppercase tracking-widest">
                     <TrendingUp className="w-4 h-4 text-cyan-400" />
                     Flujo de Foco
@@ -1435,9 +1453,17 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
                     {timeRange === 'semanal' ? '7 Días' : timeRange === 'mensual' ? '30 Días' : '12 Meses'}
                   </span>
                 </div>
-                <div className="flex-1 w-full min-h-[260px] relative z-10">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={chartData} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
+
+                {totalFocusMinutes === 0 && (
+                  <div className="mb-3 px-3 py-1.5 rounded-xl bg-cyan-950/40 border border-cyan-500/20 text-[11px] text-cyan-300 flex items-center gap-2 relative z-10">
+                    <Clock className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                    <span>Sin sesiones de Pomodoro registradas aún. ¡Inicia un bloque de foco para iluminar tus barras!</span>
+                  </div>
+                )}
+
+                <div className="w-full h-[260px] relative z-10">
+                  <ResponsiveContainer width="100%" height={260}>
+                    <BarChart data={chartData} margin={{ top: 15, right: 0, left: 0, bottom: 0 }}>
                       <defs>
                         <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="0%" stopColor="#00f0ff" stopOpacity={1} />
@@ -1469,6 +1495,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
                         dataKey="focusMinutes" 
                         radius={[6, 6, 6, 6]} 
                         barSize={timeRange === 'semanal' ? 32 : (timeRange === 'mensual' ? 12 : 24)}
+                        minPointSize={2}
                         animationDuration={1500}
                       >
                         {chartData.map((entry, index) => (
@@ -1485,16 +1512,19 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
                 <div className="col-span-1 p-5 sm:p-6 rounded-3xl bg-gradient-to-b from-[#0a0f25] to-[#030612] border border-emerald-900/40 shadow-[0_10px_30px_rgba(16,185,129,0.08)] flex flex-col relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 blur-3xl rounded-full pointer-events-none"></div>
                   
-                  <div className="flex items-center justify-between mb-6 relative z-10">
+                  <div className="flex items-center justify-between mb-4 relative z-10">
                     <h3 className="text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-500 flex items-center gap-2 uppercase tracking-widest">
                       <TrendingUp className="w-4 h-4 text-emerald-400" />
                       Diario de Fases
                     </h3>
+                    <span className="text-[10px] font-mono text-emerald-300 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/30">
+                      Fase Actual: {activeRank.phase || 1}
+                    </span>
                   </div>
                   
-                  <div className="flex-1 w-full min-h-[260px] relative z-10">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={phaseProgressionData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                  <div className="w-full h-[260px] relative z-10">
+                    <ResponsiveContainer width="100%" height={260}>
+                      <LineChart data={phaseProgressionData} margin={{ top: 15, right: 30, left: 0, bottom: 0 }}>
                         <defs>
                           <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
                             <stop offset="0%" stopColor="#10b981" />
@@ -1509,7 +1539,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
                           axisLine={false}
                           tickLine={false}
                         />
-                        <YAxis hide domain={['dataMin - 10', 'dataMax + 10']} />
+                        <YAxis domain={[0, 100]} hide />
                         <RechartsTooltip 
                           content={({ active, payload }) => {
                             if (active && payload && payload.length) {
@@ -1542,42 +1572,42 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
             </div>
           </ScrollReveal>
 
-          {/* Task Distribution Pie Chart */}
+          {/* Task Distribution Pie Chart (Fixed Mobile Responsive Container) */}
           {pieData.length > 0 && (
-            <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-b from-[#0a0f25] to-[#030612] border border-pink-900/40 shadow-[0_10px_30px_rgba(236,72,153,0.08)] flex flex-col md:flex-row items-center gap-8 relative overflow-hidden">
+            <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-b from-[#0a0f25] to-[#030612] border border-pink-900/40 shadow-[0_10px_30px_rgba(236,72,153,0.08)] flex flex-col md:flex-row items-center gap-6 relative overflow-hidden">
               <div className="absolute bottom-0 right-0 w-64 h-64 bg-pink-500/10 blur-3xl rounded-full pointer-events-none"></div>
               
-              <div className="w-full md:w-1/3 text-left">
+              <div className="w-full md:w-1/2 text-left">
                 <h3 className="text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-rose-500 flex items-center gap-2 uppercase tracking-widest mb-2">
                   <PieChartIcon className="w-4 h-4 text-pink-400" />
                   Distribución de Productividad
                 </h3>
-                <p className="text-xs font-semibold text-white mb-6">
-                  Métricas basadas en las categorías de tareas completadas durante el periodo {timeRange}.
+                <p className="text-xs font-semibold text-slate-300 mb-4">
+                  Categorías de misiones completadas durante el periodo {timeRange}.
                 </p>
                 
                 {/* Custom Legend */}
-                <div className="flex flex-col gap-3 relative z-10">
+                <div className="flex flex-col gap-2 relative z-10 max-h-[220px] overflow-y-auto custom-scrollbar pr-1">
                   {pieData.map((entry, index) => {
                     const grad = PIE_GRADIENTS[index % PIE_GRADIENTS.length];
                     return (
                       <div key={entry.name} className="flex items-center justify-between p-2 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
                         <div className="flex items-center gap-2.5">
                           <div 
-                            className="w-3 h-3 rounded-full shadow-lg" 
+                            className="w-3 h-3 rounded-full shadow-lg shrink-0" 
                             style={{ background: `linear-gradient(135deg, ${grad.start}, ${grad.end})`, boxShadow: `0 0 8px ${grad.start}80` }} 
                           />
                           <span className="text-xs font-bold text-white">{entry.name}</span>
                         </div>
-                        <span className="font-mono font-black text-white text-sm">{entry.value}</span>
+                        <span className="font-mono font-black text-white text-xs px-2 py-0.5 rounded-md bg-black/40 border border-white/5">{entry.value}</span>
                       </div>
                     );
                   })}
                 </div>
               </div>
               
-              <div className="w-full md:w-2/3 min-h-[300px] relative z-10 flex items-center justify-center">
-                <ResponsiveContainer width="100%" height="100%">
+              <div className="w-full md:w-1/2 h-[260px] relative z-10 flex items-center justify-center">
+                <ResponsiveContainer width="100%" height={260}>
                   <PieChart>
                     <defs>
                       {pieData.map((_, index) => {
@@ -1594,14 +1624,14 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
                       data={pieData}
                       cx="50%"
                       cy="50%"
-                      innerRadius={80}
-                      outerRadius={110}
-                      paddingAngle={6}
+                      innerRadius={55}
+                      outerRadius={85}
+                      paddingAngle={5}
                       dataKey="value"
                       animationDuration={1500}
                       stroke="rgba(0,0,0,0.5)"
                       strokeWidth={2}
-                      cornerRadius={8}
+                      cornerRadius={6}
                     >
                       {pieData.map((entry, index) => (
                         <Cell 
@@ -1618,11 +1648,8 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
             </div>
           )}
 
-          {/* Finance Dashboard */}
-          <FinanceDashboard expenses={expenses} setExpenses={setExpenses} tasksByDate={tasksByDate} />
-          
           {/* Auditoría de Tiempo Pomodoro */}
-          <div className="mt-8 mb-8">
+          <div className="mt-6 mb-6">
             <div className="flex items-center gap-2 mb-4 text-cyan-400">
               <PieChartIcon className="w-5 h-5" />
               <h3 className="text-sm font-black uppercase tracking-widest">Auditoría de Tiempo (Deep Work)</h3>
@@ -1675,6 +1702,16 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* SUB-TAB 4: [💰 FINANZAS & ORÁCULO] */}
+      {/* ========================================================================= */}
+      {activeSubTab === 'finance' && (
+        <div className="space-y-6 animate-fadeIn">
+          {/* Finance Dashboard */}
+          <FinanceDashboard expenses={expenses} setExpenses={setExpenses} tasksByDate={tasksByDate} />
 
           {/* Advanced Intelligence Layer */}
           <ScrollReveal>

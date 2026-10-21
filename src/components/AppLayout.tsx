@@ -772,6 +772,7 @@ function WeeklyStatsSkeleton() {
         <div className="h-10 flex-1 bg-cyan-950/40 rounded-xl border border-cyan-500/20" />
         <div className="h-10 flex-1 bg-cyan-950/20 rounded-xl" />
         <div className="h-10 flex-1 bg-cyan-950/20 rounded-xl" />
+        <div className="h-10 flex-1 bg-cyan-950/20 rounded-xl" />
       </div>
 
       {/* Hero card skeleton */}
