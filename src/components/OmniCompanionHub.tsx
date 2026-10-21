@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'motion/react';
 import {
   CheckCircle2,
+  Calendar,
   Timer,
   BookOpen,
   ShoppingBag,
@@ -117,6 +118,16 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
         action: () => setActiveTab('dashboard'),
       },
       {
+        id: 'calendar',
+        label: 'Calendario',
+        categoryBadge: 'AGENDA',
+        icon: <Calendar className="w-5 h-5" />,
+        accentColor: '#38bdf8',
+        glowColor: 'rgba(56, 189, 248, 0.45)',
+        liveStat: 'Vista mensual',
+        action: () => setActiveTab('planner'),
+      },
+      {
         id: 'pomodoro',
         label: 'Hiperenfoque',
         categoryBadge: 'POMODORO',
@@ -174,12 +185,12 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
       },
       {
         id: 'oracle',
-        label: 'Planificador IA',
-        categoryBadge: 'ORÁCULO',
+        label: 'Oráculo IA',
+        categoryBadge: 'SYNAPSE',
         icon: <Sparkles className="w-5 h-5 animate-pulse" />,
         accentColor: '#eab308',
         glowColor: 'rgba(234, 179, 8, 0.5)',
-        liveStat: 'Tríada & IA',
+        liveStat: 'Guía & Tríada',
         action: () => {
           setActiveTab('dashboard');
           openTaskForm('oracle');

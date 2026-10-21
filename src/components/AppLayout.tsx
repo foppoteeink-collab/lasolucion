@@ -419,6 +419,7 @@ export function AppLayout() {
                     tasksByDate={tasksByDate}
                     onChangeDate={handleSetCurrentViewDate}
                     onNavigateToDay={(date) => {
+                       handleSetCurrentViewDate(date);
                        setActiveTab('dashboard');
                     }}
                   />
