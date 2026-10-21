@@ -137,6 +137,7 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [newNotes, setNewNotes] = useState('');
   const [habitEnergyType, setHabitEnergyType] = useState<HabitEnergyType>('purification');
+  const [targetStreak, setTargetStreak] = useState<21 | 66>(21);
 
   // Quick Note Modal State
   const [noteTargetTask, setNoteTargetTask] = useState<TaskItem | null>(null);
@@ -240,6 +241,7 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
     setIsQuickHabit(task.isQuickHabit || (customHabit && customHabit.isQuickHabit) || is2166);
     setQuickIcon(task.quickIcon || (customHabit && customHabit.quickIcon) || (is2166 ? '⚡' : ''));
     setHabitEnergyType(task.habitEnergyType || customHabit?.habitEnergyType || detectHabitEnergy(task.title, task.category));
+    setTargetStreak(task.targetStreak || customHabit?.targetStreak || 21);
     setNewIncomeAmount(task.incomeAmount || 0);
     setNewNotes(task.notes || '');
 
@@ -274,6 +276,7 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
     setIsQuickHabit(false);
     setQuickIcon('');
     setHabitEnergyType('strength');
+    setTargetStreak(21);
     setFormFrequency('once');
     setFormSpecificDays([]);
     setNewIncomeAmount(0);
@@ -296,6 +299,7 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
     setIsQuickHabit(isQuick);
     setQuickIcon(isQuick ? '⚡' : '');
     setHabitEnergyType('strength');
+    setTargetStreak(21);
     setFormFrequency(isQuick ? 'daily' : 'once');
     setFormSpecificDays([]);
     setNewNotes('');
@@ -319,6 +323,7 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
     setIsQuickHabit(habit.isQuickHabit ?? true);
     setQuickIcon(habit.quickIcon || '⚡');
     setHabitEnergyType(habit.habitEnergyType || detectHabitEnergy(habit.title, habit.category));
+    setTargetStreak(habit.targetStreak || 21);
     setFormFrequency((habit.frequencyType as any) === 'specific_days' ? 'specific_days' : (habit.frequencyType as any) === 'once' ? 'once' : 'daily');
     setFormSpecificDays(habit.specificDays || []);
     setIsAddModalOpen(true);
@@ -332,7 +337,51 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
     const finalIsTracked2166 = Boolean(isTracked2166 || isQuickHabit);
     const finalIsQuickHabit = Boolean(isQuickHabit || isTracked2166);
     const finalIcon = quickIcon.trim() || (finalIsTracked2166 || finalIsQuickHabit ? '⚡' : '');
-    const isHabitMode = Boolean(isHabitType || finalIsTracked2166 || finalIsQuickHabit);
+    const isHabitMode = Boolean(isHabitType || finalIsTracked2166 || finalIsQuickHabit || newCategory === 'habito');
+    const isRecurring = Boolean(isHabitMode || formFrequency === 'daily' || formFrequency === 'specific_days');
+
+    // 1. Si es un hábito recurrente, persistir en customHabits y propagar automáticamente a todos los días
+    if (isRecurring && onSaveHabits) {
+      const normTitle = newTitle.trim().toLowerCase();
+      const existingIndex = (customHabits || []).findIndex(
+        (h) =>
+          (editingTaskId && (h.id === editingTaskId || h.id === getHabitBaseId({ id: editingTaskId, title: newTitle.trim() } as any))) ||
+          (h.title && h.title.toLowerCase().trim() === normTitle)
+      );
+
+      const habitId = existingIndex >= 0
+        ? customHabits[existingIndex].id
+        : (editingTaskId ? editingTaskId : `custom-habit-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`);
+
+      const updatedCustomHabit: CustomHabit = {
+        id: habitId,
+        title: newTitle.trim(),
+        category: newCategory,
+        xpReward: (Number(newXp) || 10) * (isLegendary ? 2 : 1),
+        coinReward: (Number(newCoins) || 4) * (isLegendary ? 2 : 1),
+        frequencyType: (formFrequency === 'specific_days' ? 'specific_days' : 'daily') as any,
+        specificDays: formFrequency === 'specific_days' ? formSpecificDays : undefined,
+        targetCount: isHabitType ? (Number(habitTarget) || 1) : 1,
+        unit: isHabitType ? (habitUnit.trim() || 'veces') : 'vez',
+        isQuickHabit: finalIsQuickHabit,
+        isTracked2166: finalIsTracked2166,
+        quickIcon: finalIcon,
+        habitEnergyType: isHabitMode ? habitEnergyType : undefined,
+        targetStreak: targetStreak,
+        isLegendaryBounty: isLegendary,
+        timeBlock: newStartTime ? (newEndTime ? `${newStartTime} - ${newEndTime}` : newStartTime) : undefined,
+        reminderTime: newStartTime ? newStartTime.trim() : undefined,
+      };
+
+      let nextCustomHabits = [...(customHabits || [])];
+      if (existingIndex >= 0) {
+        nextCustomHabits[existingIndex] = { ...nextCustomHabits[existingIndex], ...updatedCustomHabit };
+      } else {
+        nextCustomHabits.push(updatedCustomHabit);
+      }
+
+      onSaveHabits(nextCustomHabits);
+    }
 
     if (editingTaskId && onEditTask) {
       onEditTask(editingTaskId, {
@@ -352,31 +401,36 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
         habitEnergyType: isHabitMode ? habitEnergyType : undefined,
         incomeAmount: newCategory === 'trabajo' ? Number(newIncomeAmount) || 0 : undefined,
         notes: newNotes.trim() || undefined,
+        targetStreak: targetStreak,
       });
       closeAndResetModal();
       return;
     }
 
-    onAddTask({
-      title: newTitle.trim(),
-      category: newCategory,
-      xpReward: (Number(newXp) || 10) * (isLegendary ? 2 : 1),
-      coinReward: (Number(newCoins) || 4) * (isLegendary ? 2 : 1),
-      timeBlock: newStartTime ? (newEndTime ? `${newStartTime} - ${newEndTime}` : newStartTime) : undefined,
-      reminderTime: newStartTime ? newStartTime.trim() : undefined,
-      isHabit: isHabitMode,
-      targetCount: isHabitType ? (Number(habitTarget) || 1) : finalIsTracked2166 ? 1 : undefined,
-      currentCount: isHabitMode ? 0 : undefined,
-      unit: isHabitType ? (habitUnit.trim() || 'veces') : finalIsTracked2166 ? 'vez' : undefined,
-      isCustom: true,
-      isLegendaryBounty: isLegendary,
-      isQuickHabit: finalIsQuickHabit,
-      quickIcon: finalIcon,
-      isTracked2166: finalIsTracked2166,
-      habitEnergyType: isHabitMode ? habitEnergyType : undefined,
-      incomeAmount: newCategory === 'trabajo' ? Number(newIncomeAmount) || 0 : undefined,
-      notes: newNotes.trim() || undefined,
-    });
+    // Si es una tarea aislada de una sola vez, agregarla normalmente a la fecha actual
+    if (!isRecurring) {
+      onAddTask({
+        title: newTitle.trim(),
+        category: newCategory,
+        xpReward: (Number(newXp) || 10) * (isLegendary ? 2 : 1),
+        coinReward: (Number(newCoins) || 4) * (isLegendary ? 2 : 1),
+        timeBlock: newStartTime ? (newEndTime ? `${newStartTime} - ${newEndTime}` : newStartTime) : undefined,
+        reminderTime: newStartTime ? newStartTime.trim() : undefined,
+        isHabit: isHabitMode,
+        targetCount: isHabitType ? (Number(habitTarget) || 1) : finalIsTracked2166 ? 1 : undefined,
+        currentCount: isHabitMode ? 0 : undefined,
+        unit: isHabitType ? (habitUnit.trim() || 'veces') : finalIsTracked2166 ? 'vez' : undefined,
+        isCustom: true,
+        isLegendaryBounty: isLegendary,
+        isQuickHabit: finalIsQuickHabit,
+        quickIcon: finalIcon,
+        isTracked2166: finalIsTracked2166,
+        habitEnergyType: isHabitMode ? habitEnergyType : undefined,
+        incomeAmount: newCategory === 'trabajo' ? Number(newIncomeAmount) || 0 : undefined,
+        notes: newNotes.trim() || undefined,
+        targetStreak: targetStreak,
+      });
+    }
 
     closeAndResetModal();
   };
@@ -689,6 +743,8 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
         setNewNotes={setNewNotes}
         habitEnergyType={habitEnergyType}
         setHabitEnergyType={setHabitEnergyType}
+        targetStreak={targetStreak}
+        setTargetStreak={setTargetStreak}
         onSubmit={handleCreateTask}
       />
 

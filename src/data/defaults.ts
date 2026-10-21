@@ -541,7 +541,9 @@ export const generateDailyTasks = (
           unit: isHabit2166 ? habit.unit : undefined,
           isQuickHabit: Boolean(habit.isQuickHabit),
           quickIcon: habit.quickIcon,
-          isLegendaryBounty: habit.isLegendaryBounty
+          isLegendaryBounty: habit.isLegendaryBounty,
+          habitEnergyType: habit.habitEnergyType,
+          targetStreak: habit.targetStreak || 21,
         }
       );
     }

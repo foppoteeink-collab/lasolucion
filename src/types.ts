@@ -24,6 +24,7 @@ export interface CustomHabit {
   isLegendaryBounty?: boolean;
   unit?: string;
   habitEnergyType?: HabitEnergyType;
+  targetStreak?: 21 | 66;
 }
 
 export interface TaskItem {
@@ -56,6 +57,7 @@ export interface TaskItem {
   lockedReason?: string;
   habitEnergyType?: HabitEnergyType;
   chestAwarded?: boolean;
+  targetStreak?: 21 | 66;
 }
 
 export interface PlayerStats {

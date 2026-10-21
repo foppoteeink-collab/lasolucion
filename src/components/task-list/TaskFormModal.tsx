@@ -44,6 +44,8 @@ interface TaskFormModalProps {
   setNewNotes: (val: string) => void;
   habitEnergyType: HabitEnergyType;
   setHabitEnergyType: (val: HabitEnergyType) => void;
+  targetStreak?: 21 | 66;
+  setTargetStreak?: (val: 21 | 66) => void;
   onSubmit: (e: React.FormEvent) => void;
 }
 
@@ -51,11 +53,11 @@ const daysOfWeek = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
 const quickEmojis = ['⚡', '💧', '🏋️', '📖', '🧘', '🥗', '🧠', '🎨', '💼', '🏃', '💊', '☕'];
 
 const habitPresets = [
-  { label: '💧 Agua 2L', title: 'Tomar 2 Litros de Agua', icon: '💧', category: 'habito' as TaskCategory, target: 8, unit: 'vasos', energy: 'purification' as HabitEnergyType, hasCounter: true },
-  { label: '🏋️ Gimnasio', title: 'Entrenamiento de Gimnasio', icon: '🏋️', category: 'entrenamiento' as TaskCategory, target: 1, unit: 'sesión', energy: 'strength' as HabitEnergyType, hasCounter: false },
-  { label: '📖 Lectura', title: 'Lectura de Desarrollo', icon: '📖', category: 'estudio' as TaskCategory, target: 20, unit: 'mins', energy: 'mind' as HabitEnergyType, hasCounter: true },
-  { label: '🧘 Meditación', title: 'Meditación & Enfoque', icon: '🧘', category: 'habito' as TaskCategory, target: 10, unit: 'mins', energy: 'discipline' as HabitEnergyType, hasCounter: true },
-  { label: '🥗 Saludable', title: 'Alimentación Limpia', icon: '🥗', category: 'comida' as TaskCategory, target: 3, unit: 'comidas', energy: 'purification' as HabitEnergyType, hasCounter: true },
+  { label: '💧 Agua 2L', title: 'Tomar 2 Litros de Agua', icon: '💧', category: 'habito' as TaskCategory, target: 8, unit: 'vasos', energy: 'purification' as HabitEnergyType, hasCounter: true, targetStreak: 21 as const },
+  { label: '🏋️ Gimnasio', title: 'Entrenamiento de Gimnasio', icon: '🏋️', category: 'entrenamiento' as TaskCategory, target: 1, unit: 'sesión', energy: 'strength' as HabitEnergyType, hasCounter: false, targetStreak: 21 as const },
+  { label: '📖 Lectura', title: 'Lectura de Desarrollo', icon: '📖', category: 'estudio' as TaskCategory, target: 20, unit: 'mins', energy: 'mind' as HabitEnergyType, hasCounter: true, targetStreak: 21 as const },
+  { label: '🧘 Meditación', title: 'Meditación & Enfoque', icon: '🧘', category: 'habito' as TaskCategory, target: 10, unit: 'mins', energy: 'discipline' as HabitEnergyType, hasCounter: true, targetStreak: 21 as const },
+  { label: '🥗 Saludable', title: 'Alimentación Limpia', icon: '🥗', category: 'comida' as TaskCategory, target: 3, unit: 'comidas', energy: 'purification' as HabitEnergyType, hasCounter: true, targetStreak: 21 as const },
 ];
 
 const ENERGY_DEFAULT_ICONS: Record<HabitEnergyType, string> = {
@@ -104,6 +106,8 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
   setNewNotes,
   habitEnergyType,
   setHabitEnergyType,
+  targetStreak = 21,
+  setTargetStreak,
   onSubmit,
 }) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -168,6 +172,9 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
     setIsIconManuallyChosen(false);
     if (formFrequency === 'once') {
       setFormFrequency('daily');
+    }
+    if (setTargetStreak) {
+      setTargetStreak(preset.targetStreak || 21);
     }
   };
 
@@ -333,18 +340,52 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                 </div>
               )}
 
-            {/* Frecuencia (para hábitos ocupa ancho completo; para tareas mantiene Categoría y Frecuencia) */}
+            {/* Frecuencia & Meta de Racha (2 columnas compactas de 34px - 0 espacio extra) */}
             {isEditingHabitMode ? (
-              <div>
-                <label className="block text-xs font-semibold text-gray-300 mb-1.5">Frecuencia del Hábito</label>
-                <select
-                  value={formFrequency}
-                  onChange={(e) => setFormFrequency(e.target.value as any)}
-                  className="w-full bg-gray-900 border border-gray-700 focus:border-purple-500 rounded-xl px-3 py-2 text-white focus:outline-none text-xs"
-                >
-                  <option value="daily">Todos los días</option>
-                  <option value="specific_days">Días específicos</option>
-                </select>
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label className="block text-[11px] font-semibold text-gray-300 mb-1">Frecuencia</label>
+                  <select
+                    value={formFrequency}
+                    onChange={(e) => setFormFrequency(e.target.value as any)}
+                    className="w-full bg-gray-900 border border-gray-700 focus:border-purple-500 rounded-xl px-2.5 py-1.5 text-white focus:outline-none text-xs h-[34px]"
+                  >
+                    <option value="daily">Todos los días</option>
+                    <option value="specific_days">Días específicos</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-gray-300 mb-1">
+                    Meta Protocolo
+                  </label>
+                  <div className="grid grid-cols-2 gap-1 p-0.5 bg-gray-950/80 border border-gray-800 rounded-xl h-[34px] items-center">
+                    <button
+                      type="button"
+                      onClick={() => setTargetStreak && setTargetStreak(21)}
+                      className={`h-full rounded-lg text-[11px] font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                        (targetStreak || 21) === 21
+                          ? 'bg-purple-600/80 text-white shadow-sm ring-1 ring-purple-400'
+                          : 'text-gray-400 hover:text-white'
+                      }`}
+                      title="Meta de 21 días (Fase Neuroplasticidad / Desbloqueo de Aura para Kai)"
+                    >
+                      <span>🔥 21d</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTargetStreak && setTargetStreak(66)}
+                      className={`h-full rounded-lg text-[11px] font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                        targetStreak === 66
+                          ? 'bg-amber-600/80 text-white shadow-sm ring-1 ring-amber-400'
+                          : 'text-gray-400 hover:text-white'
+                      }`}
+                      title="Meta de 66 días (Fase Maestría / Automatización total & Forma Maestra)"
+                    >
+                      <span>🏆 66d</span>
+                    </button>
+                  </div>
+                </div>
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-3">

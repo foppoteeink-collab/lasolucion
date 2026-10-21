@@ -625,7 +625,7 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
             currentDate,
             mastery
           );
-          const streakGoal = currentStreak >= 21 ? '66' : '21';
+          const streakGoal = qh.targetStreak ? String(qh.targetStreak) : (currentStreak >= 21 ? '66' : '21');
 
           // Aura de Kai detection and theming
           const energyKey: HabitEnergyType = (qh.habitEnergyType as any) || detectHabitEnergy(qh.title, qh.category as any);
@@ -915,6 +915,11 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                     <span className="font-bold text-purple-300 flex items-center gap-1.5">
                       <Zap className="w-4 h-4 text-purple-400" />
                       <span>Meta 21 Días: {energyDetail.auraName21}</span>
+                      {qh.targetStreak === 21 && (
+                        <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-purple-900/80 border border-purple-400/60 text-purple-200">
+                          Tu Meta
+                        </span>
+                      )}
                     </span>
                     <span className="font-mono font-bold text-purple-200">
                       {streak}/21d ({p21}%)
@@ -951,6 +956,11 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                     <span className="font-bold text-amber-300 flex items-center gap-1.5">
                       <Trophy className="w-4 h-4 text-amber-400" />
                       <span>Meta 66 Días: {energyDetail.masterForm66}</span>
+                      {qh.targetStreak === 66 && (
+                        <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-amber-900/80 border border-amber-400/60 text-amber-200">
+                          Tu Meta
+                        </span>
+                      )}
                     </span>
                     <span className="font-mono font-bold text-amber-200">
                       {streak}/66d ({p66}%)
