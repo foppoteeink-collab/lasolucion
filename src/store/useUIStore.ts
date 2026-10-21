@@ -43,6 +43,8 @@ interface UIState {
   isPomodoroOpen: boolean;
   isNightlyReflectionOpen: boolean;
   isSurpriseBossOpen: boolean;
+  isTaskFormOpen: boolean;
+  taskFormInitialTab: 'task' | 'habit' | 'oracle';
   surpriseBossData: { archetypeName: string; buffName: string; buffDescription: string } | null;
   deleteConfirmTask: TaskItem | null;
 
@@ -60,6 +62,8 @@ interface UIState {
   toggleTheme: () => void;
   setThemeMode: (mode: ThemeMode) => void;
   toggleSound: () => void;
+  openTaskForm: (tab?: 'task' | 'habit' | 'oracle') => void;
+  closeTaskForm: () => void;
   openSurpriseBoss: (data: { archetypeName: string; buffName: string; buffDescription: string }) => void;
   setModalState: (modalName: ModalName, isOpen: boolean, data?: any) => void;
   dismissCurrentModal: (modalName?: ModalName) => void;
@@ -119,8 +123,13 @@ export const useUIStore = create<UIState>((set, get) => ({
   isPomodoroOpen: false,
   isNightlyReflectionOpen: false,
   isSurpriseBossOpen: false,
+  isTaskFormOpen: false,
+  taskFormInitialTab: 'task',
   surpriseBossData: null,
   deleteConfirmTask: null,
+
+  openTaskForm: (tab = 'task') => set({ isTaskFormOpen: true, taskFormInitialTab: tab }),
+  closeTaskForm: () => set({ isTaskFormOpen: false }),
 
   // FIFO Modal Queue State
   activeModal: null,

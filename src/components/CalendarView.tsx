@@ -1,14 +1,15 @@
 import React, { useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Plus } from 'lucide-react';
 import { soundFX } from '../utils/audio';
 import { addDaysToDateString, getTodayDateString, parseLocalDate } from '../utils/date';
 
 interface CalendarViewProps {
   currentDate: string;
   onChangeDate: (date: string) => void;
+  onOpenAddModal?: () => void;
 }
 
-export const CalendarView: React.FC<CalendarViewProps> = ({ currentDate, onChangeDate }) => {
+export const CalendarView: React.FC<CalendarViewProps> = ({ currentDate, onChangeDate, onOpenAddModal }) => {
   const weekDays = useMemo(() => {
     const days = [];
     // -3 to +3 keeps currentDate exactly in the center of 7 days
@@ -98,6 +99,19 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ currentDate, onChang
           >
             <ChevronRight className="w-5 h-5 text-cyan-300" />
           </button>
+          {onOpenAddModal && (
+            <button
+              type="button"
+              onClick={() => {
+                soundFX.playClick();
+                onOpenAddModal();
+              }}
+              className="w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center rounded-xl bg-cyan-400 hover:bg-cyan-300 text-black border border-cyan-300 shadow-[0_0_15px_rgba(0,240,255,0.4)] transition-all cursor-pointer active:scale-95 min-w-[40px] min-h-[40px]"
+              title="Nueva Tarea, Hábito o Planificación"
+            >
+              <Plus className="w-5 h-5 stroke-[2.5]" />
+            </button>
+          )}
         </div>
       </div>
       

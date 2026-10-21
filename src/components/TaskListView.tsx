@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { Moon, Sparkles, ArrowRight } from 'lucide-react';
 import { useTaskStore } from '../store/useTaskStore';
 import { usePlayerStore } from '../store/usePlayerStore';
+import { useUIStore } from '../store/useUIStore';
 import { TaskItem, TaskCategory, HabitMasteryRecord, PlayerStats, CustomHabit, HabitEnergyType } from '../types';
 import { soundFX } from '../utils/audio';
 import { getTodayDateString, getYesterdayDateString, addDaysToDateString } from '../utils/date';
@@ -113,7 +114,15 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('todos');
   const [isClearModalOpen, setIsClearModalOpen] = useState(false);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const isTaskFormOpen = useUIStore((state) => state.isTaskFormOpen);
+  const taskFormInitialTab = useUIStore((state) => state.taskFormInitialTab);
+  const openTaskFormStore = useUIStore((state) => state.openTaskForm);
+  const closeTaskFormStore = useUIStore((state) => state.closeTaskForm);
+
+  const [isLocalAddModalOpen, setIsLocalAddModalOpen] = useState(false);
+  const [initialModalTab, setInitialModalTab] = useState<'task' | 'habit' | 'oracle'>('task');
+  const isModalOpen = isLocalAddModalOpen || isTaskFormOpen;
+  const currentInitialTab = isLocalAddModalOpen ? initialModalTab : taskFormInitialTab;
   const [isHabitManagerOpen, setIsHabitManagerOpen] = useState(false);
 
   // Task Form State
@@ -257,11 +266,14 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
       setFormSpecificDays([]);
     }
 
-    setIsAddModalOpen(true);
+    setInitialModalTab(is2166 ? 'habit' : 'task');
+    setIsLocalAddModalOpen(true);
+    openTaskFormStore(is2166 ? 'habit' : 'task');
   };
 
   const closeAndResetModal = () => {
-    setIsAddModalOpen(false);
+    setIsLocalAddModalOpen(false);
+    closeTaskFormStore();
     setEditingTaskId(null);
     setNewTitle('');
     setNewCategory('rutina');
@@ -284,27 +296,32 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
     setNewNotes('');
   };
 
-  const openAddModal = (isQuick = false) => {
+  const openAddModal = (mode: 'task' | 'habit' | 'oracle' | boolean = 'task') => {
+    const targetTab: 'task' | 'habit' | 'oracle' = 
+      mode === true || mode === 'habit' ? 'habit' : mode === 'oracle' ? 'oracle' : 'task';
+    const isHabit = targetTab === 'habit';
+    setInitialModalTab(targetTab);
     setEditingTaskId(null);
     setNewTitle('');
-    setNewCategory(isQuick ? 'entrenamiento' : 'rutina');
+    setNewCategory(isHabit ? 'entrenamiento' : 'rutina');
     setNewStartTime('');
     setNewEndTime('');
-    setNewXp(isQuick ? 5 : 10);
-    setNewCoins(isQuick ? 2 : 4);
+    setNewXp(isHabit ? 5 : 10);
+    setNewCoins(isHabit ? 2 : 4);
     setIsHabitType(false); // Contador numérico colapsado por defecto
-    setHabitTarget(isQuick ? 1 : 5);
+    setHabitTarget(isHabit ? 1 : 5);
     setHabitUnit('veces');
     setIsLegendary(false);
-    setIsTracked2166(isQuick);
-    setIsQuickHabit(isQuick);
-    setQuickIcon(isQuick ? '⚡' : '');
+    setIsTracked2166(isHabit);
+    setIsQuickHabit(isHabit);
+    setQuickIcon(isHabit ? '⚡' : '');
     setHabitEnergyType('strength');
     setTargetStreak(21);
-    setFormFrequency(isQuick ? 'daily' : 'once');
+    setFormFrequency(isHabit ? 'daily' : 'once');
     setFormSpecificDays([]);
     setNewNotes('');
-    setIsAddModalOpen(true);
+    setIsLocalAddModalOpen(true);
+    openTaskFormStore(targetTab);
   };
 
   const handleEditHabit = (habit: CustomHabit) => {
@@ -327,7 +344,9 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
     setTargetStreak(habit.targetStreak || 21);
     setFormFrequency((habit.frequencyType as any) === 'specific_days' ? 'specific_days' : (habit.frequencyType as any) === 'once' ? 'once' : 'daily');
     setFormSpecificDays(habit.specificDays || []);
-    setIsAddModalOpen(true);
+    setInitialModalTab('habit');
+    setIsLocalAddModalOpen(true);
+    openTaskFormStore('habit');
   };
 
   const handleCreateTask = async (e: React.FormEvent) => {
@@ -482,14 +501,14 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
   return (
     <div className="space-y-4 font-sans tracking-wide pb-28 sm:pb-32">
       {/* Calendar Bar */}
-      <CalendarView currentDate={currentDate} onChangeDate={onChangeDate} />
+      <CalendarView currentDate={currentDate} onChangeDate={onChangeDate} onOpenAddModal={() => openAddModal('task')} />
 
       {/* Quick Habits Strip */}
       <div className="mb-4">
         <QuickHabitsWidget
           tasks={tasks}
           onIncrementHabit={onIncrementHabit}
-          onOpenAddModal={openAddModal}
+          onOpenAddModal={() => openAddModal('habit')}
           onOpenEditModal={openEditModal}
           onOpenHabitManager={() => setIsHabitManagerOpen(true)}
           onDeleteTask={onDeleteTask}
@@ -696,8 +715,11 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
       />
 
       <TaskFormModal
-        isOpen={isAddModalOpen}
+        isOpen={isModalOpen}
         onClose={closeAndResetModal}
+        initialTab={currentInitialTab}
+        onOpenOracle={onOpenOracle}
+        onOpenTemplates={onOpenTemplates}
         editingTaskId={editingTaskId}
         newTitle={newTitle}
         setNewTitle={setNewTitle}

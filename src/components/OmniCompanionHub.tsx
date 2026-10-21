@@ -31,7 +31,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
   onOpenNeuralAnalysis,
   archetype = 'sabio',
 }) => {
-  const { setActiveTab, setModalState, isPomodoroOpen, navigationMode } = useUIStore();
+  const { setActiveTab, setModalState, isPomodoroOpen, navigationMode, openTaskForm } = useUIStore();
   const { stats } = usePlayerStore();
   const { tasksByDate } = useTaskStore();
   const { isRunning: isTimerRunning, formattedTime } = useTimer();
@@ -174,14 +174,15 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
       },
       {
         id: 'oracle',
-        label: 'Oráculo IA',
-        categoryBadge: 'SYNAPSE',
+        label: 'Planificador IA',
+        categoryBadge: 'ORÁCULO',
         icon: <Sparkles className="w-5 h-5 animate-pulse" />,
         accentColor: '#eab308',
         glowColor: 'rgba(234, 179, 8, 0.5)',
-        liveStat: 'Guía y sabiduría',
+        liveStat: 'Tríada & IA',
         action: () => {
-          if (onOpenOracleWithPrompt) onOpenOracleWithPrompt();
+          setActiveTab('dashboard');
+          openTaskForm('oracle');
         },
       },
       {

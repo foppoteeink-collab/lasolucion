@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Sparkles, Clock, Crown, Zap, Flame, ChevronDown, ChevronUp, FileText, Smile } from 'lucide-react';
+import { X, Sparkles, Clock, Crown, Zap, Flame, ChevronDown, ChevronUp, FileText, Smile, Layers } from 'lucide-react';
 import { TaskCategory, HabitEnergyType } from '../../types';
 import { HABIT_ENERGY_DETAILS, detectHabitEnergy } from '../../utils/habitEnergyDetector';
 
 interface TaskFormModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialTab?: 'task' | 'habit' | 'oracle';
+  onOpenOracle?: () => void;
+  onOpenTemplates?: () => void;
   editingTaskId: string | null;
   newTitle: string;
   setNewTitle: (val: string) => void;
@@ -71,6 +74,9 @@ const ENERGY_DEFAULT_ICONS: Record<HabitEnergyType, string> = {
 export const TaskFormModal: React.FC<TaskFormModalProps> = ({
   isOpen,
   onClose,
+  initialTab,
+  onOpenOracle,
+  onOpenTemplates,
   editingTaskId,
   newTitle,
   setNewTitle,
@@ -110,18 +116,41 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
   setTargetStreak,
   onSubmit,
 }) => {
+  const [activeTab, setActiveTab] = useState<'task' | 'habit' | 'oracle'>(initialTab || 'task');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [isIconManuallyChosen, setIsIconManuallyChosen] = useState(Boolean(editingTaskId));
 
+  const isEditingHabitMode = activeTab === 'habit' || isHabitType || isTracked2166 || isQuickHabit;
+
   useEffect(() => {
     if (isOpen) {
+      if (editingTaskId) {
+        setActiveTab((isHabitType || isTracked2166 || isQuickHabit) ? 'habit' : 'task');
+      } else if (initialTab) {
+        setActiveTab(initialTab);
+      }
       setIsIconManuallyChosen(Boolean(editingTaskId));
       document.body.classList.add('modal-open-hide-floating');
       return () => {
         document.body.classList.remove('modal-open-hide-floating');
       };
     }
-  }, [isOpen, editingTaskId]);
+  }, [isOpen, editingTaskId, initialTab]);
+
+  const handleTabChange = (tab: 'task' | 'habit' | 'oracle') => {
+    setActiveTab(tab);
+    if (tab === 'task') {
+      setIsHabitType(false);
+      setIsTracked2166(false);
+      setIsQuickHabit(false);
+      setFormFrequency('once');
+    } else if (tab === 'habit') {
+      setIsTracked2166(true);
+      setIsQuickHabit(true);
+      if (!quickIcon) setQuickIcon('⚡');
+      setFormFrequency('daily');
+    }
+  };
 
   // Mapeo automático de Categoría y sincronización de Icono según Aura de Kai
   const handleSelectEnergy = (energyKey: HabitEnergyType) => {
@@ -157,8 +186,6 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
 
   if (!isOpen) return null;
 
-  const isEditingHabitMode = isHabitType || isTracked2166 || isQuickHabit;
-
   const applyPreset = (preset: typeof habitPresets[0]) => {
     setNewTitle(preset.title);
     setQuickIcon(preset.icon);
@@ -186,32 +213,49 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
           className={`relative w-full max-w-lg max-h-[92vh] sm:max-h-[90vh] flex flex-col rounded-2xl bg-gray-950/95 border shadow-2xl overflow-hidden transition-all ${
-            isEditingHabitMode
-              ? 'border-purple-500/40 shadow-purple-950/50'
-              : 'border-cyan-500/30 shadow-cyan-950/40'
+            activeTab === 'oracle'
+              ? 'border-amber-500/40 shadow-amber-950/50'
+              : isEditingHabitMode
+                ? 'border-purple-500/40 shadow-purple-950/50'
+                : 'border-cyan-500/30 shadow-cyan-950/40'
           }`}
         >
           {/* Header Fijo */}
           <div className="shrink-0 flex items-center justify-between p-3.5 sm:p-5 pb-3 border-b border-white/5 bg-gray-950/95 relative">
             <div className="flex items-center gap-2.5 sm:gap-3">
               <div className={`p-2 sm:p-2.5 rounded-xl border ${
-                isEditingHabitMode 
-                  ? 'bg-purple-500/10 border-purple-500/30 text-purple-400' 
-                  : 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400'
+                activeTab === 'oracle'
+                  ? 'bg-amber-500/10 border-amber-500/30 text-amber-400'
+                  : isEditingHabitMode 
+                    ? 'bg-purple-500/10 border-purple-500/30 text-purple-400' 
+                    : 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400'
               }`}>
-                {isEditingHabitMode ? <Flame className="w-5 h-5" /> : <Sparkles className="w-5 h-5" />}
+                {activeTab === 'oracle' ? (
+                  <Sparkles className="w-5 h-5 animate-pulse" />
+                ) : isEditingHabitMode ? (
+                  <Flame className="w-5 h-5" />
+                ) : (
+                  <Zap className="w-5 h-5" />
+                )}
               </div>
               <div>
                 <h3 className="text-base sm:text-lg font-bold text-white font-display">
                   {editingTaskId 
                     ? (isEditingHabitMode ? 'Editar Hábito' : 'Editar Tarea')
-                    : (isEditingHabitMode ? 'Nuevo Hábito (21/66 Días)' : 'Nueva Tarea')
+                    : (activeTab === 'oracle'
+                        ? 'Oráculo & Plantillas'
+                        : activeTab === 'habit'
+                          ? 'Nuevo Hábito (21/66 Días)'
+                          : 'Nueva Tarea'
+                      )
                   }
                 </h3>
                 <p className="text-[10.5px] sm:text-xs text-gray-400">
-                  {isEditingHabitMode 
-                    ? 'Define tu rutina diaria para fortalecer hábitos en 21/66 días'
-                    : 'Organiza tu día agregando una nueva tarea o actividad'
+                  {activeTab === 'oracle'
+                    ? 'Planificador inteligente con IA de Gemini y plantillas de rutina'
+                    : isEditingHabitMode 
+                      ? 'Define tu rutina diaria para fortalecer hábitos en 21/66 días'
+                      : 'Organiza tu día agregando una nueva tarea o actividad'
                   }
                 </p>
               </div>
@@ -227,8 +271,112 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
           <form onSubmit={onSubmit} className="flex-1 flex flex-col min-h-0 overflow-hidden">
             {/* Cuerpo del Formulario Scrolleable */}
             <div className="flex-1 overflow-y-auto p-3.5 sm:p-5 space-y-3 custom-scrollbar">
-              {/* Presets Rápidos de 1-Clic para Hábitos (Sin scrollbar visible) */}
-              {isEditingHabitMode && (
+              {/* Selector de Pestañas de la Tríada Unificada */}
+              {!editingTaskId && (
+                <div className="flex items-center gap-1.5 p-1 rounded-xl bg-black/60 border border-white/10 mb-2">
+                  <button
+                    type="button"
+                    onClick={() => handleTabChange('task')}
+                    className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-anton tracking-wide transition-all flex items-center justify-center gap-1.5 cursor-pointer uppercase ${
+                      activeTab === 'task'
+                        ? 'bg-cyan-400 text-black shadow-[0_0_12px_rgba(0,240,255,0.4)]'
+                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    <Zap className="w-3.5 h-3.5" />
+                    <span>Tarea Hoy</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleTabChange('habit')}
+                    className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-anton tracking-wide transition-all flex items-center justify-center gap-1.5 cursor-pointer uppercase ${
+                      activeTab === 'habit'
+                        ? 'bg-purple-500 text-white shadow-[0_0_12px_rgba(168,85,247,0.4)]'
+                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    <Flame className="w-3.5 h-3.5" />
+                    <span>Hábito 21/66</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleTabChange('oracle')}
+                    className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-anton tracking-wide transition-all flex items-center justify-center gap-1.5 cursor-pointer uppercase ${
+                      activeTab === 'oracle'
+                        ? 'bg-amber-400 text-black shadow-[0_0_12px_rgba(251,191,36,0.4)]'
+                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Oráculo & IA</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Vista 3: Oráculo KAI & Plantillas de Rutina */}
+              {activeTab === 'oracle' && (
+                <div className="space-y-3 py-1">
+                  <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-500/15 via-[#0b0716] to-purple-950/30 border border-amber-500/30 space-y-3 shadow-lg">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2.5 rounded-xl bg-amber-500/20 border border-amber-400/40 text-amber-300 shrink-0">
+                        <Sparkles className="w-6 h-6 animate-pulse" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="text-sm font-bold text-white font-anton tracking-wide uppercase flex items-center gap-2">
+                          Oráculo KAI (Gemini IA)
+                        </h4>
+                        <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                          Pide a Kai que divida una meta compleja en pasos diarios, organice tu jornada o te dé un micro-plan contra la procrastinación.
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onClose();
+                        if (onOpenOracle) onOpenOracle();
+                      }}
+                      className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-black font-anton tracking-wider text-xs uppercase flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(251,191,36,0.35)] transition-all cursor-pointer active:scale-95"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      <span>Consultar al Oráculo</span>
+                    </button>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-gradient-to-br from-cyan-500/15 via-[#040818] to-indigo-950/30 border border-cyan-500/30 space-y-3 shadow-lg">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2.5 rounded-xl bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 shrink-0">
+                        <Layers className="w-6 h-6" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="text-sm font-bold text-white font-anton tracking-wide uppercase flex items-center gap-2">
+                          Plantillas de Rutina
+                        </h4>
+                        <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                          Carga un bloque preconfigurado de hábitos y tareas para Mañanas de Alto Rendimiento, Gimnasio & Enfoque o Reset Mental.
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onClose();
+                        if (onOpenTemplates) onOpenTemplates();
+                      }}
+                      className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-black font-anton tracking-wider text-xs uppercase flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(0,240,255,0.35)] transition-all cursor-pointer active:scale-95"
+                    >
+                      <Layers className="w-4 h-4" />
+                      <span>Cargar Plantilla de Rutina</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Vistas 1 y 2: Formulario de Tarea u Hábito */}
+              {activeTab !== 'oracle' && (
+                <>
+                  {/* Presets Rápidos de 1-Clic para Hábitos (Sin scrollbar visible) */}
+                  {isEditingHabitMode && (
                 <div className="p-2 sm:p-2.5 rounded-xl bg-purple-950/30 border border-purple-500/20">
                   <span className="block text-[10px] sm:text-[10.5px] font-mono font-bold text-purple-300 uppercase tracking-wider mb-1">
                     ⚡ Sugerencias Rápidas de 1-Clic (Opcional):
@@ -297,6 +445,16 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                     className="w-full bg-gray-900 border border-gray-700 focus:border-purple-500 rounded-xl px-3.5 py-2 sm:py-2.5 text-white text-xs sm:text-sm placeholder-gray-500 focus:outline-none transition-colors"
                   />
                 </div>
+
+                {/* Badge de Recompensa Estimada (Modo Tarea) */}
+                {!isEditingHabitMode && (
+                  <div className="px-3 py-1.5 rounded-xl bg-cyan-950/30 border border-cyan-500/20 flex items-center justify-between text-xs">
+                    <span className="text-gray-400 font-mono text-[11px]">Recompensa estimada:</span>
+                    <span className="font-bold text-cyan-300 font-mono text-xs">
+                      ⚡ +{isLegendary ? (newXp || 10) * 2 : (newXp || 10)} XP • 🪙 +{isLegendary ? (newCoins || 4) * 2 : (newCoins || 4)} Oro
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Selector de Energía de Recompensa para Kai (2 columnas forzadas en móvil) */}
@@ -590,31 +748,45 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                 </motion.div>
               )}
             </div>
-          </div>
+          </>
+        )}
+      </div>
 
-          {/* Sticky Actions Footer (Siempre Visible) */}
-          <div className="shrink-0 p-3 sm:p-4 bg-[#070510]/95 backdrop-blur-md border-t border-white/10 flex gap-2.5">
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex-1 py-2.5 px-4 rounded-xl bg-gray-900 hover:bg-gray-800 text-gray-300 font-medium text-xs sm:text-sm transition-colors border border-gray-800 cursor-pointer"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                className={`flex-1 py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-lg cursor-pointer ${
-                  isEditingHabitMode
-                    ? 'bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-400 hover:to-indigo-500 text-white shadow-purple-950/50'
-                    : 'bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black shadow-cyan-500/25'
-                }`}
-              >
-                {editingTaskId 
-                  ? 'Guardar Cambios' 
-                  : (isEditingHabitMode ? 'Guardar Hábito' : 'Guardar Tarea')
-                }
-              </button>
-            </div>
+      {/* Sticky Actions Footer (Siempre Visible) */}
+      <div className="shrink-0 p-3 sm:p-4 bg-[#070510]/95 backdrop-blur-md border-t border-white/10 flex gap-2.5">
+        {activeTab === 'oracle' ? (
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full py-2.5 px-4 rounded-xl bg-gray-900 hover:bg-gray-800 text-gray-300 font-medium text-xs sm:text-sm transition-colors border border-gray-800 cursor-pointer"
+          >
+            Cerrar
+          </button>
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 py-2.5 px-4 rounded-xl bg-gray-900 hover:bg-gray-800 text-gray-300 font-medium text-xs sm:text-sm transition-colors border border-gray-800 cursor-pointer"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className={`flex-1 py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-lg cursor-pointer ${
+                isEditingHabitMode
+                  ? 'bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-400 hover:to-indigo-500 text-white shadow-purple-950/50'
+                  : 'bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black shadow-cyan-500/25'
+              }`}
+            >
+              {editingTaskId 
+                ? 'Guardar Cambios' 
+                : (isEditingHabitMode ? 'Guardar Hábito' : 'Guardar Tarea')
+              }
+            </button>
+          </>
+        )}
+      </div>
           </form>
         </motion.div>
       </div>

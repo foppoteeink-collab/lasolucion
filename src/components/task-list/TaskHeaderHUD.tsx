@@ -24,7 +24,7 @@ interface TaskHeaderHUDProps {
   onClearDay?: () => void;
   onResetDay?: () => void;
   onReopenDay?: (dateStr?: string) => void;
-  onOpenAddModal: (isQuick?: boolean) => void;
+  onOpenAddModal: (mode?: 'task' | 'habit' | 'oracle' | boolean) => void;
   onOpenHabitManager: () => void;
   activeBuff?: any;
 }
@@ -52,33 +52,20 @@ export const TaskHeaderHUD: React.FC<TaskHeaderHUDProps> = ({
         </div>
       )}
 
-      {/* Compact Single-Row Action Bar (No duplicate date arrows or duplicate streak/journal buttons) */}
-      <div className="px-3.5 py-2.5 rounded-2xl bg-[#040814]/90 border border-cyan-500/25 flex items-center justify-between gap-2">
+      {/* Zen Date Header & Single Minimalist Action Button */}
+      <div className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-[#030814]/85 border border-cyan-500/20 flex items-center justify-between gap-2 shadow-[0_2px_12px_rgba(0,0,0,0.5)]">
         <span className="text-xs sm:text-sm font-bold text-slate-200 font-mono uppercase tracking-wide truncate">
           {formatDateForDisplay(currentDate)}
         </span>
 
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-
-          {onOpenTemplates && (
-            <button
-              type="button"
-              onClick={onOpenTemplates}
-              className="px-2.5 py-1.5 rounded-xl bg-black/50 hover:bg-cyan-950/50 text-slate-300 hover:text-cyan-300 border border-white/10 hover:border-cyan-500/40 transition-colors text-xs font-mono flex items-center gap-1.5 cursor-pointer"
-              title="Cargar plantilla de rutina"
-            >
-              <Layers className="w-3.5 h-3.5 text-cyan-400" />
-              <span className="hidden sm:inline">Plantillas</span>
-            </button>
-          )}
-
+        <div className="flex items-center gap-1.5 shrink-0">
           <button
             type="button"
-            onClick={() => onOpenAddModal(false)}
-            className="px-3.5 py-1.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-black font-anton tracking-wider text-xs uppercase transition-all shadow-[0_0_12px_rgba(0,240,255,0.3)] flex items-center gap-1.5 cursor-pointer active:scale-95"
+            onClick={() => onOpenAddModal('task')}
+            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-cyan-400/50 bg-[#001020] hover:bg-cyan-400 hover:text-black text-cyan-300 shadow-[0_0_12px_rgba(0,240,255,0.25)] flex items-center justify-center transition-all cursor-pointer active:scale-90"
+            title="Centro de Misiones: Añadir Tarea, Hábito u Oráculo"
           >
-            <Plus className="w-4 h-4 stroke-[2.5]" />
-            <span>Nueva Tarea</span>
+            <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5]" />
           </button>
         </div>
       </div>
