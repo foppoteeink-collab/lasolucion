@@ -461,6 +461,7 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
   const playerLevel = usePlayerStore(s => s.stats.level || 1);
   const [selectedHabitForProtocol, setSelectedHabitForProtocol] = useState<TaskItem | null>(null);
   const [activatedNotice, setActivatedNotice] = useState<string | null>(null);
+  const lastBinaryToggleRef = React.useRef<Record<string, number>>({});
 
   // Strictly select dedicated quick/discipline habits for 21/66 day tracking, deduplicated by title and ID
   const quickHabits = React.useMemo(() => {
@@ -512,23 +513,75 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
     setTimeout(() => setActivatedNotice(null), 3000);
   };
 
+  // Manual Decrement helper (-1) for today
+  const handleDecrementHabit = (qh: TaskItem) => {
+    soundFX.playClick();
+    const current = qh.currentCount || 0;
+    if (current <= 0 && !qh.completed) return;
+    const newCount = Math.max(0, current - 1);
+    const target = qh.targetCount || 1;
+    const wasCompleted = qh.completed || current >= target;
+    const isNowCompleted = newCount >= target;
+    const date = currentDate || useTaskStore.getState().currentViewDate || getTodayDateString();
+
+    useTaskStore.getState().updateTask(date, qh.id, {
+      currentCount: newCount,
+      completed: isNowCompleted,
+      completedAt: isNowCompleted ? qh.completedAt : undefined,
+    });
+
+    if (wasCompleted && !isNowCompleted) {
+      const xpReward = qh.awardedXp || qh.xpReward || 0;
+      const coinReward = qh.awardedCoins || qh.coinReward || 0;
+      if (xpReward > 0 || coinReward > 0) {
+        const stats = usePlayerStore.getState().stats;
+        usePlayerStore.getState().setStats({
+          ...stats,
+          currentXp: Math.max(0, stats.currentXp - xpReward),
+          totalXpEarned: Math.max(0, stats.totalXpEarned - xpReward),
+          coins: Math.max(0, stats.coins - coinReward),
+        });
+      }
+    }
+
+    setSelectedHabitForProtocol(prev => prev ? {
+      ...prev,
+      currentCount: newCount,
+      completed: isNowCompleted
+    } : null);
+
+    if (typeof window !== 'undefined') {
+      setTimeout(() => {
+        (window as any).__triggerCloudSyncNow?.();
+      }, 150);
+    }
+  };
+
+  // Manual Reset to 0 helper for today
+  const handleResetHabitToday = (qh: TaskItem, e: React.MouseEvent) => {
+    soundFX.playClick();
+    gameEngine.handleResetHabit(qh.id, e);
+    setSelectedHabitForProtocol(prev => prev ? {
+      ...prev,
+      currentCount: 0,
+      completed: false
+    } : null);
+  };
+
   const completedHabitsCount = quickHabits.filter(
     (qh) => qh.completed || (qh.currentCount || 0) >= (qh.targetCount || 1)
   ).length;
 
   return (
     <div className="scifi-glass-panel rounded-2xl p-3 sm:p-3.5 space-y-2.5 font-sans text-white">
-      {/* Header with Title and Ratio Summary (Ultra-Clean) */}
+      {/* Header with Title and Ratio Summary (Ultra-Clean, Sin contador duplicado) */}
       <div className="flex items-center justify-between gap-2 px-0.5">
         <div className="flex items-center gap-2 min-w-0">
           <div className="p-1 rounded-lg bg-[#04020e] border border-cyan-500/60 text-cyan-400 shadow-[0_0_10px_rgba(0,240,255,0.3)] shrink-0">
             <Zap className="w-3.5 h-3.5 fill-cyan-400" />
           </div>
-          <h3 className="text-xs font-bold font-anton text-cyan-300 uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap">
-            <span>Hábitos (Ley 21/66)</span>
-            <span className="text-[10px] font-mono bg-cyan-950/90 px-1.5 py-0.2 rounded-md border border-cyan-500/60 text-cyan-200">
-              {quickHabits.length}
-            </span>
+          <h3 className="text-xs font-bold font-anton text-cyan-300 uppercase tracking-wider whitespace-nowrap">
+            Hábitos (Ley 21/66)
           </h3>
         </div>
 
@@ -554,7 +607,7 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
         </div>
       )}
 
-      {/* Fila Horizontal de Orbes Circulares (Estilo Historias de Instagram) */}
+      {/* Fila Horizontal de Orbes Circulares (Estilo Historias de Instagram - Fine-Line 48px) */}
       <div className="flex items-center gap-3.5 overflow-x-auto no-scrollbar py-1 px-0.5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {quickHabits.map((qh, idx) => {
           const current = qh.currentCount || 0;
@@ -586,30 +639,49 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
 
           const shortLabel = getShortHabitLabel(qh.title, qh.quickIcon);
 
-          // SVG Ring calculation: circumference = 2 * PI * 24 ≈ 150.8
-          const strokeDashoffset = isFinished ? 0 : 150.8 - (progressPct / 100) * 150.8;
+          // SVG Ring calculation: circumference = 2 * PI * 21 ≈ 132
+          const strokeDashoffset = isFinished ? 0 : 132 - (progressPct / 100) * 132;
 
           return (
             <div
               key={qh.id ? `qh-orb-${qh.id}-${idx}` : `qh-orb-${idx}`}
-              className="flex flex-col items-center w-16 shrink-0 select-none group"
+              className="flex flex-col items-center w-14 shrink-0 select-none group"
             >
-              {/* Círculo Principal de 56x56 con Anillo SVG y Emoji */}
+              {/* Círculo Principal de 48x48 con Anillo SVG Fino y Emoji */}
               <div
                 onClick={(e) => {
                   if (isLocked) return;
+
+                  // 1. Protección Anti-Reinicio Accidental para hábitos con contador (target > 1)
+                  if (isCounterHabit && isFinished) {
+                    soundFX.playClick();
+                    return;
+                  }
+
+                  // 2. Cooldown de 400ms para hábitos binarios (target === 1) para evitar desmarcado accidental
+                  if (!isCounterHabit) {
+                    const now = Date.now();
+                    const lastTime = lastBinaryToggleRef.current[qh.id] || 0;
+                    if (now - lastTime < 400) {
+                      return;
+                    }
+                    lastBinaryToggleRef.current[qh.id] = now;
+                  }
+
                   onIncrementHabit(qh.id, e);
                 }}
-                className={`w-14 h-14 relative flex items-center justify-center cursor-pointer transition-transform duration-150 active:scale-90 ${
+                className={`w-12 h-12 relative flex items-center justify-center cursor-pointer transition-transform duration-150 active:scale-95 ${
                   isLocked ? 'cursor-not-allowed opacity-60' : ''
                 }`}
                 title={
                   isLocked
                     ? 'Bloqueado por fin de jornada'
                     : isCounterHabit
-                    ? `${qh.title} (${current}/${target}) - Toca para sumar +1`
+                    ? isFinished
+                      ? `${qh.title} (${current}/${target}) - ¡Meta cumplida hoy!`
+                      : `${qh.title} (${current}/${target}) - Toca para sumar +1`
                     : isFinished
-                    ? `${qh.title} - Completado hoy (Toca para deshacer)`
+                    ? `${qh.title} - Completado hoy (Toca para desmarcar)`
                     : `${qh.title} - Toca para completar`
                 }
               >
@@ -621,64 +693,60 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                       soundFX.playClick();
                       setSelectedHabitForProtocol(qh);
                     }}
-                    className="absolute -top-1 left-1/2 -translate-x-1/2 bg-black/95 border border-amber-500/70 px-1 py-0 rounded-full flex items-center gap-0.5 z-20 shadow-sm cursor-pointer hover:scale-105 transition-transform"
+                    className="absolute -top-1 left-1/2 -translate-x-1/2 bg-black/95 border border-amber-500/70 px-1 py-0 rounded-full flex items-center gap-0.5 z-20 shadow-sm cursor-pointer hover:scale-105 transition-transform ring-2 ring-[#070510]"
                     title={`Racha: ${currentStreak} días (Meta: ${streakGoal}d)`}
                   >
                     <Flame className="w-2 h-2 text-amber-400 fill-amber-400" />
-                    <span className="text-[8.5px] font-mono font-black text-amber-300 leading-none">{currentStreak}</span>
+                    <span className="text-[8px] font-mono font-black text-amber-300 leading-tight">{currentStreak}</span>
                   </div>
                 )}
 
-                {/* Anillo Circular SVG */}
-                <svg className="w-14 h-14 absolute inset-0 -rotate-90 pointer-events-none" viewBox="0 0 56 56">
+                {/* Anillo Circular SVG Fino (48x48, r=21, strokeWidth=2) */}
+                <svg className="w-12 h-12 absolute inset-0 -rotate-90 pointer-events-none" viewBox="0 0 48 48">
                   {/* Track de fondo tenue */}
                   <circle
-                    cx="28"
-                    cy="28"
-                    r="24"
+                    cx="24"
+                    cy="24"
+                    r="21"
                     stroke="currentColor"
                     className="text-white/10"
-                    strokeWidth="2.5"
+                    strokeWidth="2"
                     fill="none"
                   />
-                  {/* Trazo activo de progreso */}
+                  {/* Trazo activo de progreso - Conserva siempre el color del Aura de Kai */}
                   <circle
-                    cx="28"
-                    cy="28"
-                    r="24"
-                    stroke={isFinished ? '#10b981' : auraTheme.strokeColor}
-                    strokeWidth={isFinished ? 3 : 2.5}
+                    cx="24"
+                    cy="24"
+                    r="21"
+                    stroke={auraTheme.strokeColor}
+                    strokeWidth="2"
                     strokeLinecap="round"
                     fill="none"
                     style={{
-                      strokeDasharray: 150.8,
+                      strokeDasharray: 132,
                       strokeDashoffset: strokeDashoffset,
-                      filter: isFinished
-                        ? 'drop-shadow(0 0 5px rgba(16, 185, 129, 0.8))'
-                        : progressPct > 0
-                        ? `drop-shadow(0 0 3px ${auraTheme.strokeColor})`
+                      filter: progressPct > 0
+                        ? `drop-shadow(0 0 2px ${auraTheme.strokeColor})`
                         : 'none',
                       transition: 'stroke-dashoffset 0.4s ease, stroke 0.3s ease',
                     }}
                   />
                 </svg>
 
-                {/* Núcleo Central del Círculo (Fondo y Emoji) */}
+                {/* Núcleo Central del Círculo (Fondo Oscuro Limpio y Emoji en 38x38) */}
                 <div
-                  className={`w-11 h-11 rounded-full flex items-center justify-center transition-all ${
-                    isFinished
-                      ? 'bg-emerald-950/80 border border-emerald-400/70 shadow-[0_0_12px_rgba(16,185,129,0.35)]'
-                      : `bg-[#040814] border ${auraTheme.border} group-hover:border-white/30`
-                  }`}
+                  className={`w-[38px] h-[38px] rounded-full flex items-center justify-center transition-all bg-[#040814] border ${
+                    isFinished ? auraTheme.activeBorder : auraTheme.border
+                  } group-hover:border-white/30`}
                 >
-                  <span className="text-xl sm:text-2xl select-none leading-none">
-                    {renderDisplayIcon(qh.quickIcon, qh.title, 'text-xl sm:text-2xl')}
+                  <span className="text-base select-none leading-none">
+                    {renderDisplayIcon(qh.quickIcon, qh.title, 'text-base')}
                   </span>
                 </div>
 
-                {/* Micro-Badge Inferior Derecho: [0/8] o [✓] */}
+                {/* Micro-Badge Inferior Derecho: [0/8] o [✓] (Único elemento con acento verde al completar) */}
                 <div
-                  className={`absolute -bottom-0.5 -right-0.5 px-1 py-0.5 rounded-full border text-[8px] font-mono font-bold leading-none flex items-center justify-center shadow-md z-10 ${
+                  className={`absolute -bottom-0.5 -right-0.5 px-1 py-0 rounded-full border text-[8px] font-mono font-bold leading-tight flex items-center justify-center shadow-md z-10 ring-2 ring-[#070510] ${
                     isFinished
                       ? 'bg-emerald-950 border-emerald-400 text-emerald-300 shadow-[0_0_6px_rgba(16,185,129,0.7)]'
                       : isCounterHabit
@@ -687,7 +755,7 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                   }`}
                 >
                   {isFinished ? (
-                    <Check className="w-2.5 h-2.5 text-emerald-400 stroke-[3]" />
+                    <Check className="w-2 h-2 text-emerald-400 stroke-[3]" />
                   ) : isCounterHabit ? (
                     `${current}/${target}`
                   ) : (
@@ -696,18 +764,14 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                 </div>
               </div>
 
-              {/* Etiqueta Corta Inferior (Estilo Instagram - Tocar abre modal) */}
+              {/* Etiqueta Corta Inferior (Tono neutral slate-300 - Tocar abre modal) */}
               <span
                 onClick={(e) => {
                   e.stopPropagation();
                   soundFX.playClick();
                   setSelectedHabitForProtocol(qh);
                 }}
-                className={`text-[10px] font-medium max-w-[64px] truncate text-center mt-1 transition-colors block cursor-pointer select-none leading-tight ${
-                  isFinished
-                    ? 'text-emerald-400/90 hover:text-emerald-300'
-                    : 'text-white/80 hover:text-cyan-300'
-                }`}
+                className="text-[10px] text-slate-300 hover:text-white font-medium max-w-[56px] truncate text-center mt-1 transition-colors block cursor-pointer select-none leading-tight"
                 title={`${qh.title} - Toca para configurar`}
               >
                 {shortLabel}
@@ -716,20 +780,20 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
           );
         })}
 
-        {/* Círculo Final: (+) Nuevo Hábito Integrado en la Misma Fila */}
-        <div className="flex flex-col items-center w-16 shrink-0 select-none group">
+        {/* Círculo Final: (+) Nuevo Hábito Integrado en la Misma Fila (48x48) */}
+        <div className="flex flex-col items-center w-14 shrink-0 select-none group">
           <button
             type="button"
             onClick={() => {
               soundFX.playClick();
               onOpenAddModal(true);
             }}
-            className="w-14 h-14 rounded-full border-2 border-dashed border-cyan-500/40 hover:border-cyan-400 bg-white/[0.02] hover:bg-cyan-950/40 flex items-center justify-center transition-all cursor-pointer group active:scale-95 shadow-[0_0_10px_rgba(0,240,255,0.1)]"
+            className="w-12 h-12 rounded-full border border-dashed border-cyan-500/40 hover:border-cyan-400 bg-white/[0.02] hover:bg-cyan-950/40 flex items-center justify-center transition-all cursor-pointer group active:scale-95 shadow-[0_0_8px_rgba(0,240,255,0.1)]"
             title="Crear un nuevo hábito (Ley 21/66)"
           >
-            <Plus className="w-5 h-5 text-cyan-400 group-hover:scale-110 transition-transform" />
+            <Plus className="w-4 h-4 text-cyan-400 group-hover:scale-110 transition-transform" />
           </button>
-          <span className="text-[10px] text-cyan-300/80 group-hover:text-cyan-200 font-medium text-center mt-1 select-none leading-tight">
+          <span className="text-[10px] text-slate-400 group-hover:text-cyan-200 font-medium text-center mt-1 select-none leading-tight">
             Nuevo
           </span>
         </div>
@@ -737,7 +801,7 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
 
       {/* PROTOCOLO LEY 21/66 & AURAS DE KAI MODAL (ENFOCADO EN EL HÁBITO SELECCIONADO) */}
       {selectedHabitForProtocol && (() => {
-        const qh = selectedHabitForProtocol;
+        const qh = quickHabits.find(h => h.id === selectedHabitForProtocol.id) || selectedHabitForProtocol;
         const baseId = getHabitBaseId(qh);
         const mastery = habitMastery?.[baseId] || habitMastery?.[qh.id];
         const { currentStreak: streak } = computeHabitStreak(
@@ -791,6 +855,46 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
 
               {/* Body */}
               <div className="flex-1 overflow-y-auto py-4 space-y-4 pr-1 scrollbar-thin scrollbar-thumb-cyan-800">
+                {/* Control Manual para Hoy (Ajuste rápido -1 y Reiniciar) */}
+                <div className="p-3 rounded-xl bg-[#000d1a] border border-cyan-500/30 flex items-center justify-between gap-3">
+                  <div>
+                    <span className="text-[11px] font-bold text-slate-300 block">Progreso de hoy</span>
+                    <div className="text-xs font-mono text-cyan-300 flex items-center gap-1.5 mt-0.5">
+                      <span>
+                        {qh.currentCount || 0} / {qh.targetCount || 1} {qh.unit || 'veces'}
+                      </span>
+                      {(qh.completed || (qh.currentCount || 0) >= (qh.targetCount || 1)) && (
+                        <span className="text-[10px] text-emerald-400 font-bold bg-emerald-950/70 border border-emerald-500/40 px-1.5 py-0.2 rounded">
+                          ✓ Completado
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => handleDecrementHabit(qh)}
+                      disabled={(qh.currentCount || 0) <= 0 && !qh.completed}
+                      className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/20 text-slate-200 text-xs font-mono font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer active:scale-95"
+                      title="Restar 1 al contador de hoy"
+                    >
+                      -1
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={(e) => handleResetHabitToday(qh, e)}
+                      disabled={(qh.currentCount || 0) === 0 && !qh.completed}
+                      className="px-2.5 py-1 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 border border-rose-500/40 text-rose-300 text-xs font-bold transition-all flex items-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer active:scale-95"
+                      title="Reiniciar contador a 0 para hoy"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      <span>Reiniciar hoy</span>
+                    </button>
+                  </div>
+                </div>
+
                 {/* Science Note */}
                 <div className="p-3 rounded-xl bg-[#000a14] border border-white/10 text-xs text-slate-300 space-y-1">
                   <span className="font-bold text-cyan-300 flex items-center gap-1">
@@ -810,15 +914,15 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-bold text-purple-300 flex items-center gap-1.5">
                       <Zap className="w-4 h-4 text-purple-400" />
-                      <span>Meta 21 Días: ${energyDetail.auraName21}</span>
+                      <span>Meta 21 Días: {energyDetail.auraName21}</span>
                     </span>
                     <span className="font-mono font-bold text-purple-200">
-                      ${streak}/21d (${p21}%)
+                      {streak}/21d ({p21}%)
                     </span>
                   </div>
 
                   <p className="text-[11px] text-slate-300 leading-relaxed">
-                    ${energyDetail.auraDesc21}
+                    {energyDetail.auraDesc21}
                   </p>
 
                   <div className="w-full h-2 bg-black/60 rounded-full border border-purple-900/60 overflow-hidden">
@@ -846,15 +950,15 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-bold text-amber-300 flex items-center gap-1.5">
                       <Trophy className="w-4 h-4 text-amber-400" />
-                      <span>Meta 66 Días: ${energyDetail.masterForm66}</span>
+                      <span>Meta 66 Días: {energyDetail.masterForm66}</span>
                     </span>
                     <span className="font-mono font-bold text-amber-200">
-                      ${streak}/66d (${p66}%)
+                      {streak}/66d ({p66}%)
                     </span>
                   </div>
 
                   <p className="text-[11px] text-slate-300 leading-relaxed">
-                    ${energyDetail.masterDesc66}
+                    {energyDetail.masterDesc66}
                   </p>
 
                   <div className="w-full h-2 bg-black/60 rounded-full border border-amber-900/60 overflow-hidden">
