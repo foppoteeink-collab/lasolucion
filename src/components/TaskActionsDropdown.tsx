@@ -1,5 +1,4 @@
-import React, { useState, useMemo } from 'react';
-import { createPortal } from 'react-dom';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Timer, 
@@ -7,12 +6,10 @@ import {
   Edit3, 
   Trash2, 
   Sparkles,
-  X,
-  Clock
+  X 
 } from 'lucide-react';
 import { TaskItem } from '../types';
 import { soundFX } from '../utils/audio';
-import { SatelliteKaiHub, SatelliteHubItem } from './SatelliteKaiHub';
 
 interface TaskActionsDropdownProps {
   task: TaskItem;
@@ -60,86 +57,140 @@ export const TaskActionsDropdown: React.FC<TaskActionsDropdownProps> = ({
     if (onClose) onClose();
   };
 
-  const handleSelectItem = (item: SatelliteHubItem) => {
-    soundFX.playClick();
-    handleClose();
-    item.action();
-  };
-
-  // The 4 Orbital Satellite Actions matching Kai's orbital mechanics
-  const wheelItems: SatelliteHubItem[] = useMemo(
-    () => [
-      {
-        id: 'pomodoro',
-        label: 'FOCO',
-        categoryBadge: 'POMODORO',
-        icon: <Timer className="w-5 h-5" />,
-        accentColor: '#00f0ff',
-        glowColor: 'rgba(0, 240, 255, 0.55)',
-        liveStat: 'Iniciar sesión de foco',
-        action: () => {
-          soundFX.playPomodoroChime();
-          onOpenPomodoro();
-        },
+  const actions = [
+    {
+      id: 'pomodoro',
+      label: 'Foco / Pomodoro',
+      icon: <Timer className="w-3.5 h-3.5 sm:w-4 sm:h-4" />,
+      color: '#00f0ff',
+      glow: 'shadow-[0_0_12px_rgba(0,240,255,0.55)]',
+      border: 'border-cyan-400/80 hover:border-cyan-300',
+      bg: 'bg-[#031522] hover:bg-[#062438]',
+      text: 'text-cyan-300 hover:text-cyan-100',
+      action: () => {
+        soundFX.playPomodoroChime();
+        handleClose();
+        onOpenPomodoro();
       },
-      {
-        id: 'note',
-        label: 'NOTA',
-        categoryBadge: task.notes ? 'CON NOTAS' : 'SIN NOTAS',
-        icon: <FileText className="w-5 h-5" />,
-        accentColor: '#c084fc',
-        glowColor: 'rgba(192, 132, 252, 0.55)',
-        liveStat: task.notes ? 'Ver notas guardadas' : 'Escribir notas',
-        hasBadge: Boolean(task.notes),
-        action: () => {
-          soundFX.playClick();
-          onOpenNote();
-        },
+    },
+    {
+      id: 'note',
+      label: task.notes ? 'Ver notas guardadas' : 'Escribir nota',
+      icon: <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4" />,
+      color: '#c084fc',
+      glow: 'shadow-[0_0_12px_rgba(192,132,252,0.55)]',
+      border: 'border-purple-400/80 hover:border-purple-300',
+      bg: 'bg-[#150726] hover:bg-[#230c3d]',
+      text: 'text-purple-300 hover:text-purple-100',
+      hasBadge: Boolean(task.notes),
+      action: () => {
+        soundFX.playClick();
+        handleClose();
+        onOpenNote();
       },
-      {
-        id: 'edit',
-        label: 'EDITAR',
-        categoryBadge: 'CONFIGURAR',
-        icon: <Edit3 className="w-5 h-5" />,
-        accentColor: '#fbbf24',
-        glowColor: 'rgba(251, 191, 36, 0.55)',
-        liveStat: 'Editar título, horario y XP',
-        action: () => {
-          soundFX.playClick();
-          onOpenEdit();
-        },
+    },
+    {
+      id: 'edit',
+      label: 'Editar tarea',
+      icon: <Edit3 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />,
+      color: '#fbbf24',
+      glow: 'shadow-[0_0_12px_rgba(251,191,36,0.55)]',
+      border: 'border-amber-400/80 hover:border-amber-300',
+      bg: 'bg-[#1e1103] hover:bg-[#2d1b06]',
+      text: 'text-amber-300 hover:text-amber-100',
+      action: () => {
+        soundFX.playClick();
+        handleClose();
+        onOpenEdit();
       },
-      {
-        id: 'delete',
-        label: 'BORRAR',
-        categoryBadge: 'ELIMINAR',
-        icon: <Trash2 className="w-5 h-5" />,
-        accentColor: '#f43f5e',
-        glowColor: 'rgba(244, 63, 94, 0.55)',
-        liveStat: 'Eliminar esta tarea',
-        action: () => {
-          soundFX.playClick();
-          onDelete();
-        },
+    },
+    {
+      id: 'delete',
+      label: 'Eliminar tarea',
+      icon: <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />,
+      color: '#f43f5e',
+      glow: 'shadow-[0_0_12px_rgba(244,63,94,0.55)]',
+      border: 'border-rose-400/80 hover:border-rose-300',
+      bg: 'bg-[#20050c] hover:bg-[#340813]',
+      text: 'text-rose-300 hover:text-rose-100',
+      action: () => {
+        soundFX.playClick();
+        handleClose();
+        onDelete();
       },
-    ],
-    [task.notes, onOpenPomodoro, onOpenNote, onOpenEdit, onDelete]
-  );
+    },
+  ];
 
   return (
-    <div className="relative flex items-center justify-center shrink-0 select-none">
-      {/* Botón Disparador Orbital en la Tarjeta */}
+    <div className="relative flex items-center justify-end shrink-0 select-none">
+      {/* Click-outside Backdrop invisible */}
+      {isMenuOpen && (
+        <div
+          className="fixed inset-0 z-30 cursor-default"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleClose();
+          }}
+        />
+      )}
+
+      {/* Cápsula de Acciones Desplegada "A la Pura Par" a la izquierda del botón */}
+      <AnimatePresence>
+        {isMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, x: 20, scale: 0.9 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: 20, scale: 0.9 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 380 }}
+            className="absolute right-9 top-1/2 -translate-y-1/2 z-40 flex items-center gap-1.5 px-2 py-1 rounded-full bg-[#070514]/95 border border-cyan-500/40 backdrop-blur-xl shadow-[0_0_22px_rgba(0,0,0,0.9),0_0_14px_rgba(0,240,255,0.25)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {actions.map((act, idx) => (
+              <motion.button
+                key={act.id}
+                type="button"
+                initial={{ opacity: 0, scale: 0.5, x: 10 }}
+                animate={{ opacity: 1, scale: 1, x: 0 }}
+                transition={{
+                  type: 'spring',
+                  stiffness: 450,
+                  damping: 24,
+                  delay: idx * 0.025,
+                }}
+                whileHover={{ scale: 1.15 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  act.action();
+                }}
+                className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border flex items-center justify-center transition-all cursor-pointer relative ${act.bg} ${act.border} ${act.text} ${act.glow}`}
+                title={act.label}
+                aria-label={act.label}
+              >
+                {act.icon}
+
+                {/* Badge indicador si tiene notas */}
+                {act.hasBadge && (
+                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-cyan-400 ring-2 ring-black shadow-[0_0_6px_rgba(0,240,255,0.9)]" />
+                )}
+              </motion.button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Botón Disparador Central / Cerrar */}
       <motion.button
         type="button"
         whileTap={{ scale: 0.88 }}
         onClick={handleToggle}
-        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all cursor-pointer relative z-30 ${
+        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all cursor-pointer relative z-40 ${
           isMenuOpen
             ? 'bg-cyan-950 border border-cyan-400 text-cyan-300 shadow-[0_0_15px_rgba(0,240,255,0.4)] rotate-90'
             : 'bg-[#080515] border border-cyan-500/30 text-cyan-400 hover:border-cyan-400 hover:text-cyan-200 hover:bg-[#0c0a20] shadow-[0_0_8px_rgba(0,240,255,0.1)]'
         }`}
-        title={isMenuOpen ? 'Cerrar menú' : 'Acciones de Kai para tarea'}
-        aria-label={`Acciones orbitales para: ${task.title}`}
+        title={isMenuOpen ? 'Cerrar acciones' : 'Acciones de tarea'}
+        aria-label={isMenuOpen ? 'Cerrar acciones' : `Acciones para: ${task.title}`}
       >
         {isMenuOpen ? (
           <X className="w-3.5 h-3.5 text-cyan-300 stroke-[2.5]" />
@@ -147,95 +198,8 @@ export const TaskActionsDropdown: React.FC<TaskActionsDropdownProps> = ({
           <Sparkles className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
         )}
       </motion.button>
-
-      {/* Menú Desplegable Orbital Estilo Kai (Portal Global) */}
-      {typeof document !== 'undefined' && createPortal(
-        <AnimatePresence>
-          {isMenuOpen && (
-            <>
-              {/* Telón de cierre global con desenfoque */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="fixed inset-0 z-[75] bg-black/75 backdrop-blur-[3px] pointer-events-auto cursor-pointer"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleClose();
-                }}
-              />
-
-              {/* Contenedor Holográfico Orbital Centrado en Pantalla */}
-              <div 
-                className="fixed inset-0 z-[80] pointer-events-none flex items-center justify-center select-none"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="relative flex flex-col items-center justify-center">
-                  {/* Encabezado Holográfico HUD sobre la rueda */}
-                  <motion.div
-                    initial={{ opacity: 0, y: -20, scale: 0.9 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -16, scale: 0.9 }}
-                    transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                    className="absolute -top-32 pointer-events-auto flex flex-col items-center text-center max-w-[280px] sm:max-w-sm px-4"
-                  >
-                    <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-500/30 text-[9px] font-mono text-cyan-300 tracking-wider uppercase shadow-[0_0_10px_rgba(0,240,255,0.2)] mb-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
-                      <span>{task.category || 'TAREA'}</span>
-                      {task.timeBlock && (
-                        <>
-                          <span className="text-cyan-500/60">•</span>
-                          <span className="flex items-center gap-0.5">
-                            <Clock className="w-2.5 h-2.5" />
-                            {task.timeBlock}
-                          </span>
-                        </>
-                      )}
-                    </div>
-                    <h4 className="text-sm sm:text-base font-bold text-white tracking-wide truncate max-w-full drop-shadow-[0_0_12px_rgba(255,255,255,0.4)]">
-                      {task.title}
-                    </h4>
-                  </motion.div>
-
-                  {/* Núcleo Central y Órbita Satelital de Kai */}
-                  <div className="relative pointer-events-auto flex items-center justify-center">
-                    {/* Botón Central de Núcleo (Tocar para cerrar) */}
-                    <motion.div
-                      initial={{ scale: 0.5, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      exit={{ scale: 0.5, opacity: 0 }}
-                      whileHover={{ scale: 1.08 }}
-                      whileTap={{ scale: 0.92 }}
-                      className="w-13 h-13 sm:w-14 sm:h-14 rounded-full border border-cyan-400/50 bg-[#070514]/90 backdrop-blur-md flex items-center justify-center shadow-[0_0_20px_rgba(0,240,255,0.35)] relative group cursor-pointer z-50"
-                      onClick={() => {
-                        soundFX.playClick();
-                        handleClose();
-                      }}
-                      title="Toca para cerrar"
-                    >
-                      <div className="absolute inset-1 rounded-full bg-gradient-to-tr from-cyan-500/20 to-purple-500/20 animate-pulse pointer-events-none" />
-                      <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-cyan-300 group-hover:rotate-45 transition-transform duration-300" />
-                      <span className="absolute -bottom-5 text-[8px] font-mono text-slate-400 tracking-widest uppercase opacity-75">
-                        CERRAR
-                      </span>
-                    </motion.div>
-
-                    {/* El Menú Satelital de Kai con las 4 acciones orbitales */}
-                    <SatelliteKaiHub
-                      items={wheelItems}
-                      onClose={handleClose}
-                      onSelect={handleSelectItem}
-                      minOpacity={0.45}
-                    />
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-        </AnimatePresence>,
-        document.body
-      )}
     </div>
   );
 };
+
+export default TaskActionsDropdown;

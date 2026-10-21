@@ -212,6 +212,8 @@ export const TaskCard: React.FC<TaskCardProps> = ({
         delay: Math.min((index % 5) * 0.02, 0.1) 
       }}
       className={`relative p-2.5 sm:p-3 rounded-xl border transition-all duration-200 ${
+        isMenuOpen ? 'z-30 ring-1 ring-cyan-500/40 shadow-[0_0_15px_rgba(0,240,255,0.15)]' : 'z-0'
+      } ${
         isCompleted 
           ? 'bg-[#060a10]/50 border-white/5 text-slate-400 opacity-60' 
           : `bg-[#0b121e]/80 ${catStyle.border} text-white shadow-sm hover:border-white/20`
