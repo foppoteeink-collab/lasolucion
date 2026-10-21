@@ -174,7 +174,11 @@ export const DailyFinanceWidget: React.FC<DailyFinanceWidgetProps> = ({
   };
 
   return (
-    <div className="scifi-glass-panel rounded-2xl relative overflow-hidden transition-all duration-300 text-white">
+    <div className={`rounded-xl relative overflow-hidden transition-all duration-300 text-white ${
+      isCollapsed 
+        ? 'bg-[#020b14]/85 border border-emerald-500/30 backdrop-blur-md shadow-[0_0_15px_rgba(16,185,129,0.06)]' 
+        : 'scifi-glass-panel rounded-2xl'
+    }`}>
       {/* Background Neon Accent Glow */}
       <div className="absolute -top-12 -right-12 w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-12 -left-12 w-40 h-40 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -182,15 +186,15 @@ export const DailyFinanceWidget: React.FC<DailyFinanceWidgetProps> = ({
       {/* COMPACT 1-LINE HEADER & METRICS BAR */}
       <div
         onClick={toggleCollapse}
-        className={`px-3.5 py-2.5 sm:px-4 flex flex-wrap items-center justify-between gap-2 cursor-pointer hover:bg-white/[0.02] transition-colors ${
+        className={`px-3 py-1.5 sm:px-3.5 sm:py-2 flex flex-wrap items-center justify-between gap-2 cursor-pointer hover:bg-white/[0.03] transition-colors ${
           !isCollapsed ? 'border-b border-cyan-500/30' : ''
         }`}
       >
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-[#04020e] border border-emerald-400/70 flex items-center justify-center text-emerald-400">
-            <Wallet className="w-3.5 h-3.5" />
+        <div className="flex items-center gap-1.5">
+          <div className="w-5 h-5 rounded-md bg-[#04020e] border border-emerald-400/70 flex items-center justify-center text-emerald-400">
+            <Wallet className="w-3 h-3" />
           </div>
-          <span className="text-xs font-black font-anton text-white uppercase tracking-wider">
+          <span className="text-[11px] font-black font-anton text-white uppercase tracking-wider">
             Tesorería
           </span>
         </div>

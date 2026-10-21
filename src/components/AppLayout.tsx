@@ -50,9 +50,6 @@ import { OmniCompanionHub } from './OmniCompanionHub';
 import { SimulationBanner } from './SimulationBanner';
 import { getTodayDateString } from '../utils/date';
 
-import { GlobalTimerButton } from './GlobalTimerButton';
-import { GlobalSoundscapeButton } from './GlobalSoundscapeButton';
-
 export function AppLayout() {
           const {
     activeTab,
@@ -413,7 +410,7 @@ export function AppLayout() {
           }}
           initial="hidden"
           animate="show"
-          className="w-full space-y-4 sm:space-y-6"
+          className="w-full space-y-2.5 sm:space-y-4"
         >
           {activeTab === 'planner' && (
             <motion.div variants={itemVariant} className="w-full">
@@ -430,39 +427,6 @@ export function AppLayout() {
 
               {activeTab === 'dashboard' && (
                 <>
-                  {/* FOCUS & PROGRESSIVE DISCLOSURE CONTROL BAR */}
-                  <motion.div 
-                    variants={itemVariant}
-                    className="flex items-center justify-between gap-2 p-2 sm:p-2.5 rounded-2xl bg-[#030712]/95 border border-[#9600ff]/50 shadow-[0_4px_25px_rgba(0,0,0,0.8)]"
-                  >
-                {/* Left: Pomodoro Focus Toggle & Quantum Soundscape Launcher */}
-                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                  <GlobalTimerButton />
-                  <GlobalSoundscapeButton />
-                </div>
-
-                {/* Right: Live Schedule Timeline Trigger */}
-                <div className="flex items-center gap-1.5 sm:gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundFX.playClick();
-                      setShowBossSchedule(!showBossSchedule);
-                    }}
-                    className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all min-h-[44px] cursor-pointer border ${
-                      showBossSchedule
-                        ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400 shadow-[0_0_12px_rgba(0,240,255,0.4)]'
-                        : 'bg-[#03000a] text-slate-300 border-[#9600ff]/40 hover:text-white hover:border-cyan-400'
-                    }`}
-                    title="Ver línea de tiempo de horarios del día"
-                  >
-                    <Timer className="w-3.5 h-3.5 text-cyan-400" />
-                    <span>Horarios</span>
-                    {showBossSchedule ? <ChevronUp className="w-3.5 h-3.5 ml-0.5 text-cyan-300" /> : <ChevronDown className="w-3.5 h-3.5 ml-0.5 text-slate-400" />}
-                  </button>
-                </div>
-              </motion.div>
-
               {/* COLLAPSIBLE POMODORO TIMER */}
               {isPomodoroOpen && (
                 <motion.div 
@@ -504,6 +468,8 @@ export function AppLayout() {
                   onOpenPomodoroForTask={handleOpenPomodoroForTask}
                   hasClaimedToday={hasClaimedBossToday}
                   onClaimDailyBonus={handleClaimBossBounty}
+                  showSchedule={showBossSchedule}
+                  onToggleSchedule={() => setShowBossSchedule(prev => !prev)}
                 />
               </motion.div>
 

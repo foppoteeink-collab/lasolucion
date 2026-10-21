@@ -5,6 +5,8 @@ import {
   Sparkles,
   Timer,
   Trophy,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { TaskItem, TaskCategory } from '../types';
 import { soundFX } from '../utils/audio';
@@ -20,6 +22,8 @@ interface DailyProgressWidgetProps {
   onOpenPomodoroForTask?: (taskTitle: string, category: TaskCategory) => void;
   hasClaimedToday?: boolean;
   onClaimDailyBonus?: (xp: number, coins: number) => void;
+  showSchedule?: boolean;
+  onToggleSchedule?: () => void;
 }
 
 export const DailyProgressWidget: React.FC<DailyProgressWidgetProps> = ({
@@ -29,6 +33,8 @@ export const DailyProgressWidget: React.FC<DailyProgressWidgetProps> = ({
   onOpenPomodoroForTask,
   hasClaimedToday,
   onClaimDailyBonus,
+  showSchedule,
+  onToggleSchedule,
 }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -99,9 +105,29 @@ export const DailyProgressWidget: React.FC<DailyProgressWidgetProps> = ({
           </div>
         </div>
 
-        {/* Right: XP + Journal */}
-        <div className="flex items-center gap-2 shrink-0 ml-auto">
-          <div className="px-2 py-1 rounded-lg bg-[#000a14] border border-cyan-400/30 text-cyan-300 text-[11px] font-mono font-bold flex items-center gap-1">
+        {/* Right: Horarios + XP + Journal */}
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 ml-auto">
+          {onToggleSchedule && (
+            <button
+              type="button"
+              onClick={() => {
+                soundFX.playClick();
+                onToggleSchedule();
+              }}
+              className={`px-2.5 py-1 rounded-lg border text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 ${
+                showSchedule
+                  ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400 shadow-[0_0_10px_rgba(0,240,255,0.3)]'
+                  : 'bg-[#000a14] hover:bg-cyan-950/40 text-slate-300 hover:text-white border-white/10 hover:border-cyan-500/40'
+              }`}
+              title="Ver línea de tiempo de horarios del día"
+            >
+              <Timer className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Horarios</span>
+              {showSchedule ? <ChevronUp className="w-3 h-3 text-cyan-300" /> : <ChevronDown className="w-3 h-3 text-slate-400" />}
+            </button>
+          )}
+
+          <div className="hidden sm:flex px-2 py-1 rounded-lg bg-[#000a14] border border-cyan-400/30 text-cyan-300 text-[11px] font-mono font-bold items-center gap-1">
             <Sparkles className="w-3 h-3 text-cyan-400" />
             <span>+{xpEarned}/{xpTotal} XP</span>
           </div>
