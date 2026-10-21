@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { motion } from 'motion/react';
 import { soundFX } from '../utils/audio';
 import * as gameEngine from '../engine/gameEngine';
@@ -24,7 +24,7 @@ import { SurpriseBossModal } from './SurpriseBossModal';
 import { DeleteConfirmModal } from './DeleteConfirmModal';
 import { TaskListView } from './TaskListView';
 import { PomodoroTimer } from './PomodoroTimer';
-import { WeeklyStats } from './WeeklyStats';
+const WeeklyStats = lazy(() => import('./WeeklyStats').then(m => ({ default: m.WeeklyStats })));
 import { SkillTreeAndSettings } from './SkillTreeAndSettings';
 import { SettingsView } from './SettingsView';
 import { RewardShop } from './RewardShop';
@@ -545,17 +545,19 @@ export function AppLayout() {
 
           {activeTab === 'stats' && (
             <motion.div variants={itemVariant} className="w-full">
-              <WeeklyStats 
-                stats={stats} 
-                onUpdateStats={setStats} 
-                tasksByDate={tasksByDate} 
-                pomodoroSessions={pomodoroSessions} 
-                habitMastery={habitMastery} 
-                expenses={expenses} 
-                setExpenses={setExpenses} 
-                cloudSync={cloudSync}
-                onOpenAwakening={() => setIsAwakeningOpen(true)}
-              />
+              <Suspense fallback={<WeeklyStatsSkeleton />}>
+                <WeeklyStats 
+                  stats={stats} 
+                  onUpdateStats={setStats} 
+                  tasksByDate={tasksByDate} 
+                  pomodoroSessions={pomodoroSessions} 
+                  habitMastery={habitMastery} 
+                  expenses={expenses} 
+                  setExpenses={setExpenses} 
+                  cloudSync={cloudSync}
+                  onOpenAwakening={() => setIsAwakeningOpen(true)}
+                />
+              </Suspense>
             </motion.div>
           )}
           
@@ -762,3 +764,38 @@ export function AppLayout() {
   );
 }
 
+function WeeklyStatsSkeleton() {
+  return (
+    <div className="w-full space-y-5 animate-pulse pb-10">
+      {/* Sub-tab pills skeleton */}
+      <div className="flex gap-2 p-1.5 rounded-2xl bg-black/60 border border-cyan-500/30">
+        <div className="h-10 flex-1 bg-cyan-950/40 rounded-xl border border-cyan-500/20" />
+        <div className="h-10 flex-1 bg-cyan-950/20 rounded-xl" />
+        <div className="h-10 flex-1 bg-cyan-950/20 rounded-xl" />
+      </div>
+
+      {/* Hero card skeleton */}
+      <div className="h-64 rounded-[24px] bg-gradient-to-b from-[#0a0f25] to-[#030612] border-2 border-cyan-500/30 p-6 flex flex-col justify-between">
+        <div className="flex items-center justify-between">
+          <div className="h-5 w-40 bg-cyan-500/20 rounded-lg" />
+          <div className="h-5 w-16 bg-cyan-400/30 rounded-lg" />
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="w-20 h-20 rounded-2xl bg-cyan-950/60 border border-cyan-500/40" />
+          <div className="space-y-2 flex-1">
+            <div className="h-4 w-32 bg-cyan-500/30 rounded" />
+            <div className="h-6 w-48 bg-white/20 rounded" />
+            <div className="h-3 w-28 bg-amber-400/30 rounded" />
+          </div>
+        </div>
+        <div className="h-3 w-full bg-cyan-950/60 rounded-full border border-cyan-500/30" />
+      </div>
+
+      {/* Grid skeleton */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="h-72 rounded-3xl bg-[#0a0f25]/80 border border-cyan-900/40" />
+        <div className="h-72 rounded-3xl bg-[#0a0f25]/80 border border-cyan-900/40" />
+      </div>
+    </div>
+  );
+}
