@@ -40,6 +40,7 @@ import * as gameEngine from '../../engine/gameEngine';
 import { useAppStore } from '../../store/useAppStore';
 import { useTaskStore } from '../../store/useTaskStore';
 import { usePlayerStore } from '../../store/usePlayerStore';
+import { useUIStore } from '../../store/useUIStore';
 import { soundFX } from '../../utils/audio';
 import { getHabitBaseId, computeHabitStreak } from '../../intelligence/masteryEngine';
 import { getTodayDateString, addDaysToDateString } from '../../utils/date';
@@ -636,6 +637,7 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
           const isStrictlyLockedPast = Boolean(currentDate && currentDate < reconciliationLimit);
           const isDayEnded = (Boolean(isDayFinalized) || Boolean(currentDate && currentDate < todayStr)) && isStrictlyLockedPast;
           const isLocked = isDayEnded && !isFinished;
+          const isFutureDay = Boolean(currentDate && currentDate > todayStr);
 
           const shortLabel = getShortHabitLabel(qh.title, qh.quickIcon);
 
@@ -651,6 +653,17 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
               <div
                 onClick={(e) => {
                   if (isLocked) return;
+
+                  if (isFutureDay) {
+                    soundFX.playClick();
+                    useUIStore.getState().addFloatingEffect({
+                      x: e.clientX,
+                      y: e.clientY - 20,
+                      text: '⏳ Día futuro: modo planificación',
+                      type: 'coins',
+                    });
+                    return;
+                  }
 
                   // 1. Protección Anti-Reinicio Accidental para hábitos con contador (target > 1)
                   if (isCounterHabit && isFinished) {

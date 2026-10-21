@@ -10,6 +10,7 @@ export interface SatelliteHubItem {
   accentColor: string;
   glowColor: string;
   liveStat: string;
+  hasBadge?: boolean;
   action: () => void;
 }
 
@@ -18,6 +19,7 @@ interface SatelliteKaiHubProps {
   initialIndex?: number;
   onClose: () => void;
   onSelect: (item: SatelliteHubItem) => void;
+  minOpacity?: number;
 }
 
 function wrapIndex(idx: number, len: number) {
@@ -36,6 +38,7 @@ export const SatelliteKaiHub: React.FC<SatelliteKaiHubProps> = ({
   initialIndex = 0,
   onClose,
   onSelect,
+  minOpacity,
 }) => {
   const n = items.length;
 
@@ -236,12 +239,13 @@ export const SatelliteKaiHub: React.FC<SatelliteKaiHubProps> = ({
     const depth = (rawDepth + 1) / 2; // normalizado 0..1
 
     const scale = 0.52 + 0.58 * Math.pow(depth, 1.4);
-    const opacity = 0.28 + 0.72 * Math.pow(depth, 1.2);
+    const baseMinOpacity = minOpacity ?? 0.28;
+    const opacity = baseMinOpacity + (1 - baseMinOpacity) * Math.pow(depth, 1.2);
     const zIndex = Math.round(50 + 20 * depth);
     const isActive = i === wrapIndex(Math.round(rot), n);
 
     return { x, y, scale, opacity, zIndex, isActive, angle, depth };
-  }, [n]);
+  }, [minOpacity, n]);
 
   const activeItemDisplay = items[wrapIndex(Math.round(rotState), n)] || items[0];
 
@@ -384,6 +388,10 @@ export const SatelliteKaiHub: React.FC<SatelliteKaiHubProps> = ({
                 >
                   {item.icon}
                 </div>
+
+                {item.hasBadge && (
+                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-purple-400 ring-2 ring-black shadow-[0_0_8px_rgba(192,132,252,0.9)] z-20" />
+                )}
               </div>
             </motion.div>
           );

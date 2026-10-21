@@ -338,6 +338,15 @@ export const handleToggleTask = (taskId: string, e?: any) => {
     }
   }
 
+  // Guard de Días Futuros: solo modo planificación (no se permite marcar completado)
+  if (date > today) {
+    soundFX.playClick();
+    const x = e?.clientX || (typeof window !== 'undefined' ? window.innerWidth / 2 : 200);
+    const y = (e?.clientY || 200) - 20;
+    triggerFloatingHit(x, y, '⏳ Día futuro: modo planificación', 'coins');
+    return;
+  }
+
   const wasCompleted = task.completed;
   stateTask.toggleTaskCompletion(date, taskId);
   
@@ -511,6 +520,15 @@ export const handleIncrementHabit = (taskId: string, e?: any) => {
 
   if (isStrictlyLocked && !task.completed) {
     soundFX.playClick();
+    return;
+  }
+
+  // Guard de Días Futuros: solo modo planificación (no se permite incrementar hábitos)
+  if (date > today) {
+    soundFX.playClick();
+    const x = e?.clientX || (typeof window !== 'undefined' ? window.innerWidth / 2 : 200);
+    const y = (e?.clientY || 200) - 20;
+    triggerFloatingHit(x, y, '⏳ Día futuro: modo planificación', 'coins');
     return;
   }
 

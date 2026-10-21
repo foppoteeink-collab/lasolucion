@@ -142,6 +142,7 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
   // Quick Note Modal State
   const [noteTargetTask, setNoteTargetTask] = useState<TaskItem | null>(null);
   const [taskNoteText, setTaskNoteText] = useState('');
+  const [openActionMenuTaskId, setOpenActionMenuTaskId] = useState<string | null>(null);
 
   const toggleSpecificDay = (dayIndex: number) => {
     if (formSpecificDays.includes(dayIndex)) {
@@ -479,7 +480,7 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
   const legendaryTask = tasks.find((t) => t.isLegendaryBounty);
 
   return (
-    <div className="space-y-4 font-sans tracking-wide pb-12">
+    <div className="space-y-4 font-sans tracking-wide pb-28 sm:pb-32">
       {/* Calendar Bar */}
       <CalendarView currentDate={currentDate} onChangeDate={onChangeDate} />
 
@@ -564,6 +565,9 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
               <TaskCard
                 key={task.id}
                 task={task}
+                currentDate={currentDate}
+                isMenuOpen={openActionMenuTaskId === task.id}
+                onToggleMenu={(id) => setOpenActionMenuTaskId(id)}
                 onToggle={onToggleTask}
                 onIncrementHabit={onIncrementHabit}
                 onOpenEditModal={openEditModal}

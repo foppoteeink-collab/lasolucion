@@ -179,6 +179,11 @@ export const useTaskStore = create<TaskState>()(
         const reconciliationLimit = addDaysToDateString(today, -2);
         const isPast48h = date < reconciliationLimit;
 
+        // Días futuros: modo planificación (no se permite marcar completado por adelantado)
+        if (date > today) {
+          return state;
+        }
+
         // Solo se bloquea rígidamente si el día fue finalizado Y han pasado más de 48 horas
         if (isFinalized && isPast48h && !targetTask.completed) {
           return state;
