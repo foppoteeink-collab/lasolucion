@@ -33,8 +33,6 @@ import {
   Ban,
   Apple,
   ShieldAlert,
-  ChevronDown,
-  ChevronUp,
 } from 'lucide-react';
 import { TaskItem, CustomHabit, HabitEnergyType } from '../../types';
 import { INITIAL_CUSTOM_HABITS } from '../../data/defaults';
@@ -53,6 +51,7 @@ interface AuraTheme {
   bar: string;
   bgGlow: string;
   badge: string;
+  strokeColor: string;
 }
 
 const AURA_THEMES: Record<HabitEnergyType, AuraTheme> = {
@@ -62,6 +61,7 @@ const AURA_THEMES: Record<HabitEnergyType, AuraTheme> = {
     bar: 'bg-cyan-400 shadow-[0_0_8px_rgba(6,182,212,0.8)]',
     bgGlow: 'bg-cyan-950/40',
     badge: 'text-cyan-300 bg-cyan-950/80 border-cyan-500/50',
+    strokeColor: '#00f0ff',
   },
   strength: {
     border: 'border-orange-500/30 hover:border-orange-400/60',
@@ -69,6 +69,7 @@ const AURA_THEMES: Record<HabitEnergyType, AuraTheme> = {
     bar: 'bg-orange-400 shadow-[0_0_8px_rgba(249,115,22,0.8)]',
     bgGlow: 'bg-orange-950/40',
     badge: 'text-orange-300 bg-orange-950/80 border-orange-500/50',
+    strokeColor: '#f97316',
   },
   mind: {
     border: 'border-purple-500/30 hover:border-purple-400/60',
@@ -76,6 +77,7 @@ const AURA_THEMES: Record<HabitEnergyType, AuraTheme> = {
     bar: 'bg-purple-400 shadow-[0_0_8px_rgba(168,85,247,0.8)]',
     bgGlow: 'bg-purple-950/40',
     badge: 'text-purple-300 bg-purple-950/80 border-purple-500/50',
+    strokeColor: '#c084fc',
   },
   discipline: {
     border: 'border-amber-400/30 hover:border-amber-300/60',
@@ -83,6 +85,7 @@ const AURA_THEMES: Record<HabitEnergyType, AuraTheme> = {
     bar: 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]',
     bgGlow: 'bg-amber-950/40',
     badge: 'text-amber-300 bg-amber-950/80 border-amber-400/50',
+    strokeColor: '#fbbf24',
   },
   creativity: {
     border: 'border-pink-500/30 hover:border-pink-400/60',
@@ -90,6 +93,7 @@ const AURA_THEMES: Record<HabitEnergyType, AuraTheme> = {
     bar: 'bg-pink-400 shadow-[0_0_8px_rgba(236,72,153,0.8)]',
     bgGlow: 'bg-pink-950/40',
     badge: 'text-pink-300 bg-pink-950/80 border-pink-500/50',
+    strokeColor: '#f472b6',
   },
 };
 
@@ -171,6 +175,62 @@ export const cleanHabitTitle = (title: string, icon?: string): string => {
 
   // Remove any trailing unicode emoji characters
   cleaned = cleaned.replace(/[\s]*[\u{1F300}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]+$/u, '').trim();
+  return cleaned || title;
+};
+
+/**
+ * Generates an intelligent ultra-concise label for the Instagram-story habit circles.
+ * Strips common prefixes ("Tomar 8 vasos de ", "Tomar ", "Ir al ", "Hacer ", "Lavarse los ", etc.)
+ */
+export const getShortHabitLabel = (title: string, icon?: string): string => {
+  let cleaned = cleanHabitTitle(title, icon);
+  if (!cleaned) return '';
+
+  const lower = cleaned.toLowerCase();
+
+  // Specific common cases
+  if (lower.includes('agua') || lower.includes('hidrat')) return 'Agua';
+  if (lower.includes('diente') || lower.includes('cepill')) return 'Dientes';
+  if (lower.includes('gym') || lower.includes('entren') || lower.includes('físic') || lower.includes('ejercicio')) return 'Gimnasio';
+  if (lower.includes('leer') || lower.includes('lectura') || lower.includes('libro')) return 'Lectura';
+  if (lower.includes('medit') || lower.includes('respir') || lower.includes('zen')) return 'Meditar';
+  if (lower.includes('comida') || lower.includes('saludable') || lower.includes('dieta') || lower.includes('nutric')) return 'Nutrición';
+  if (lower.includes('dibuj') || lower.includes('pint') || lower.includes('arte')) return 'Dibujar';
+  if (lower.includes('estudi') || lower.includes('repas')) return 'Estudio';
+  if (lower.includes('dormir') || lower.includes('sueño') || lower.includes('descans')) return 'Descanso';
+  if (lower.includes('caminar') || lower.includes('pasos')) return 'Caminar';
+  if (lower.includes('fumar') || lower.includes('tabaco')) return 'No fumar';
+
+  // Strip common verb/action prefixes
+  const prefixes = [
+    /^tomar\s+\d+\s+vasos\s+de\s+/i,
+    /^tomar\s+\d+\s+litros\s+de\s+/i,
+    /^tomar\s+agua\s+/i,
+    /^tomar\s+/i,
+    /^beber\s+/i,
+    /^hacer\s+/i,
+    /^ir\s+al\s+/i,
+    /^ir\s+a\s+/i,
+    /^lavarse\s+los\s+/i,
+    /^lavar\s+los\s+/i,
+    /^lavar\s+/i,
+    /^practicar\s+/i,
+    /^realizar\s+/i,
+    /^leer\s+/i,
+  ];
+
+  for (const prefix of prefixes) {
+    if (prefix.test(cleaned)) {
+      cleaned = cleaned.replace(prefix, '').trim();
+      break;
+    }
+  }
+
+  // Capitalize first letter
+  if (cleaned.length > 0) {
+    cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+  }
+
   return cleaned || title;
 };
 
@@ -402,28 +462,6 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
   const [selectedHabitForProtocol, setSelectedHabitForProtocol] = useState<TaskItem | null>(null);
   const [activatedNotice, setActivatedNotice] = useState<string | null>(null);
 
-  // Persistent collapsible state (same pattern as DailyFinanceWidget)
-  const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
-    try {
-      const saved = localStorage.getItem('taskquest_quick_habits_collapsed');
-      return saved === null ? false : saved === 'true';
-    } catch {
-      return false;
-    }
-  });
-
-  const toggleCollapse = (e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
-    soundFX.playClick();
-    setIsCollapsed((prev) => {
-      const next = !prev;
-      try {
-        localStorage.setItem('taskquest_quick_habits_collapsed', String(next));
-      } catch {}
-      return next;
-    });
-  };
-
   // Strictly select dedicated quick/discipline habits for 21/66 day tracking, deduplicated by title and ID
   const quickHabits = React.useMemo(() => {
     const rawList = tasks.filter((t) => {
@@ -479,81 +517,29 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
   ).length;
 
   return (
-    <div className={`scifi-glass-panel rounded-2xl transition-all duration-300 font-sans text-white ${
-      isCollapsed ? 'p-3' : 'p-3 sm:p-3.5 space-y-2.5'
-    }`}>
-      {/* Header with Title, Preview when collapsed, and Action Buttons */}
-      <div 
-        onClick={toggleCollapse}
-        className={`flex items-center justify-between gap-2 cursor-pointer transition-colors ${
-          !isCollapsed ? 'border-b border-cyan-500/30 pb-2.5' : ''
-        }`}
-      >
+    <div className="scifi-glass-panel rounded-2xl p-3 sm:p-3.5 space-y-2.5 font-sans text-white">
+      {/* Header with Title and Ratio Summary (Ultra-Clean) */}
+      <div className="flex items-center justify-between gap-2 px-0.5">
         <div className="flex items-center gap-2 min-w-0">
-          <div className="p-1.5 rounded-xl bg-[#04020e] border border-cyan-500/60 text-cyan-400 shadow-[0_0_12px_rgba(0,240,255,0.3)] shrink-0">
-            <Zap className="w-4 h-4 fill-cyan-400" />
+          <div className="p-1 rounded-lg bg-[#04020e] border border-cyan-500/60 text-cyan-400 shadow-[0_0_10px_rgba(0,240,255,0.3)] shrink-0">
+            <Zap className="w-3.5 h-3.5 fill-cyan-400" />
           </div>
-          <h3 className="text-xs sm:text-sm font-bold font-anton text-cyan-300 uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap truncate">
+          <h3 className="text-xs font-bold font-anton text-cyan-300 uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap">
             <span>Hábitos (Ley 21/66)</span>
-            <span className="text-[10px] font-mono bg-cyan-950/90 px-1.5 py-0.5 rounded-md border border-cyan-500/60 text-cyan-200 shrink-0">
+            <span className="text-[10px] font-mono bg-cyan-950/90 px-1.5 py-0.2 rounded-md border border-cyan-500/60 text-cyan-200">
               {quickHabits.length}
             </span>
           </h3>
         </div>
 
-        {/* Preview de hábitos cuando está colapsado (Emoji chips + Ratio X/Y ✓) */}
-        {isCollapsed && quickHabits.length > 0 && (
-          <div className="flex items-center gap-2 text-xs font-mono text-slate-300 ml-auto mr-1 truncate">
-            <div className="flex items-center gap-1 text-sm shrink-0">
-              {quickHabits.slice(0, 4).map((h, i) => (
-                <span key={i} className="select-none leading-none">
-                  {renderDisplayIcon(h.quickIcon, h.title, 'text-xs')}
-                </span>
-              ))}
-              {quickHabits.length > 4 && (
-                <span className="text-[10px] text-gray-400 font-mono">+{quickHabits.length - 4}</span>
-              )}
-            </div>
-            <span
-              className={`px-1.5 py-0.5 rounded text-[11px] font-bold shrink-0 border ${
-                completedHabitsCount === quickHabits.length
-                  ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500/50 shadow-[0_0_8px_rgba(52,211,153,0.3)]'
-                  : 'bg-black/60 text-cyan-300 border-white/10'
-              }`}
-            >
-              {completedHabitsCount}/{quickHabits.length} ✓
-            </span>
+        {quickHabits.length > 0 && (
+          <div className="text-[10.5px] font-mono text-cyan-300/90 font-bold bg-cyan-950/60 px-2 py-0.5 rounded-md border border-cyan-500/30">
+            {completedHabitsCount}/{quickHabits.length} Hechos
           </div>
         )}
-
-        {/* Controles de la derecha: + Hábito y Flecha Colapso */}
-        <div className="flex items-center gap-1.5 shrink-0 ml-auto">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              soundFX.playClick();
-              onOpenAddModal(true);
-            }}
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-cyan-950/80 hover:bg-cyan-900/80 text-cyan-300 border border-cyan-500/60 hover:border-cyan-400 text-xs font-black transition-all cursor-pointer shrink-0 whitespace-nowrap active:scale-95 shadow-[0_0_12px_rgba(0,240,255,0.2)]"
-            title="Crear un nuevo hábito con Protocolo Ley 21/66 y Auras para Kai"
-          >
-            <Plus className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-            <span>Hábito</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={toggleCollapse}
-            className="p-1.5 rounded-xl bg-black/40 hover:bg-cyan-950/60 border border-white/10 hover:border-cyan-500/40 text-slate-400 hover:text-white transition-colors cursor-pointer shrink-0"
-            title={isCollapsed ? 'Desplegar hábitos' : 'Colapsar hábitos'}
-          >
-            {isCollapsed ? <ChevronDown className="w-3.5 h-3.5 text-cyan-400" /> : <ChevronUp className="w-3.5 h-3.5 text-slate-400" />}
-          </button>
-        </div>
       </div>
 
-      {activatedNotice && !isCollapsed && (
+      {activatedNotice && (
         <div className="p-2 rounded-xl bg-cyan-950/90 border border-cyan-400 text-cyan-200 text-xs font-bold flex items-center justify-between animate-in fade-in slide-in-from-top-1 shadow-[0_0_15px_rgba(0,240,255,0.3)]">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-cyan-300" />
@@ -568,140 +554,186 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
         </div>
       )}
 
-      {/* Chips Compactos de Hábitos en 1 Sola Fila (flex flex-wrap items-center gap-1.5) */}
-      {!isCollapsed && (
-        <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-          {quickHabits.length === 0 ? (
-            <div className="w-full text-center py-3 text-xs text-slate-500 dark:text-cyan-300/70 italic bg-black/20 rounded-xl border border-white/5">
-              No tienes hábitos activos aún. Toca "+ Hábito" para registrar tu primer hábito con Protocolo Ley 21/66.
-            </div>
-          ) : (
-            quickHabits.map((qh, idx) => {
-              const current = qh.currentCount || 0;
-              const target = qh.targetCount || 1;
-              const isCounterHabit = target > 1;
-              const isFinished = qh.completed || current >= target;
-              const progressPct = Math.min(100, Math.round((current / target) * 100));
+      {/* Fila Horizontal de Orbes Circulares (Estilo Historias de Instagram) */}
+      <div className="flex items-center gap-3.5 overflow-x-auto no-scrollbar py-1 px-0.5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        {quickHabits.map((qh, idx) => {
+          const current = qh.currentCount || 0;
+          const target = qh.targetCount || 1;
+          const isCounterHabit = target > 1;
+          const isFinished = qh.completed || current >= target;
+          const progressPct = Math.min(100, Math.round((current / target) * 100));
 
-              // Dynamic consecutive days streak computed from history
-              const baseId = getHabitBaseId(qh);
-              const mastery = habitMastery?.[baseId] || habitMastery?.[qh.id];
-              const { currentStreak } = computeHabitStreak(
-                qh,
-                tasksByDate,
-                currentDate,
-                mastery
-              );
-              const streakGoal = currentStreak >= 21 ? '66' : '21';
+          // Dynamic consecutive days streak computed from history
+          const baseId = getHabitBaseId(qh);
+          const mastery = habitMastery?.[baseId] || habitMastery?.[qh.id];
+          const { currentStreak } = computeHabitStreak(
+            qh,
+            tasksByDate,
+            currentDate,
+            mastery
+          );
+          const streakGoal = currentStreak >= 21 ? '66' : '21';
 
-              // Aura de Kai detection and theming
-              const energyKey: HabitEnergyType = (qh.habitEnergyType as any) || detectHabitEnergy(qh.title, qh.category as any);
-              const auraTheme = AURA_THEMES[energyKey] || AURA_THEMES.purification;
+          // Aura de Kai detection and theming
+          const energyKey: HabitEnergyType = (qh.habitEnergyType as any) || detectHabitEnergy(qh.title, qh.category as any);
+          const auraTheme = AURA_THEMES[energyKey] || AURA_THEMES.purification;
 
-              const todayStr = getTodayDateString();
-              const reconciliationLimit = addDaysToDateString(todayStr, -2);
-              const isStrictlyLockedPast = Boolean(currentDate && currentDate < reconciliationLimit);
-              const isDayEnded = (Boolean(isDayFinalized) || Boolean(currentDate && currentDate < todayStr)) && isStrictlyLockedPast;
-              const isLocked = isDayEnded && !isFinished;
+          const todayStr = getTodayDateString();
+          const reconciliationLimit = addDaysToDateString(todayStr, -2);
+          const isStrictlyLockedPast = Boolean(currentDate && currentDate < reconciliationLimit);
+          const isDayEnded = (Boolean(isDayFinalized) || Boolean(currentDate && currentDate < todayStr)) && isStrictlyLockedPast;
+          const isLocked = isDayEnded && !isFinished;
 
-              const displayTitle = cleanHabitTitle(qh.title, qh.quickIcon);
+          const shortLabel = getShortHabitLabel(qh.title, qh.quickIcon);
 
-              return (
-                <div
-                  key={qh.id ? `qh-chip-${qh.id}-${idx}` : `qh-chip-${idx}`}
-                  className={`group relative inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl border transition-all select-none overflow-hidden max-w-full ${
-                    isLocked
-                      ? 'bg-rose-950/20 border-rose-900/40 opacity-70 cursor-not-allowed'
-                      : isFinished
-                      ? `${auraTheme.bgGlow} ${auraTheme.activeBorder} bg-opacity-40`
-                      : `bg-[#070b16]/95 ${auraTheme.border} hover:bg-[#0c1222]`
-                  }`}
-                >
-                  {/* Lado Izquierdo: Emoji + Título Corto (Tocar abre el modal de Ley 21/66 / Edición) */}
-                  <button
-                    type="button"
+          // SVG Ring calculation: circumference = 2 * PI * 24 ≈ 150.8
+          const strokeDashoffset = isFinished ? 0 : 150.8 - (progressPct / 100) * 150.8;
+
+          return (
+            <div
+              key={qh.id ? `qh-orb-${qh.id}-${idx}` : `qh-orb-${idx}`}
+              className="flex flex-col items-center w-16 shrink-0 select-none group"
+            >
+              {/* Círculo Principal de 56x56 con Anillo SVG y Emoji */}
+              <div
+                onClick={(e) => {
+                  if (isLocked) return;
+                  onIncrementHabit(qh.id, e);
+                }}
+                className={`w-14 h-14 relative flex items-center justify-center cursor-pointer transition-transform duration-150 active:scale-90 ${
+                  isLocked ? 'cursor-not-allowed opacity-60' : ''
+                }`}
+                title={
+                  isLocked
+                    ? 'Bloqueado por fin de jornada'
+                    : isCounterHabit
+                    ? `${qh.title} (${current}/${target}) - Toca para sumar +1`
+                    : isFinished
+                    ? `${qh.title} - Completado hoy (Toca para deshacer)`
+                    : `${qh.title} - Toca para completar`
+                }
+              >
+                {/* Micro-Llama Superior de Racha (Sólo si streak > 0) */}
+                {currentStreak > 0 && (
+                  <div
                     onClick={(e) => {
                       e.stopPropagation();
                       soundFX.playClick();
                       setSelectedHabitForProtocol(qh);
                     }}
-                    className="flex items-center gap-1.5 min-w-0 cursor-pointer text-left focus:outline-none"
-                    title={`Ver racha de "${qh.title}" (${currentStreak}/${streakGoal}d) - Toca para configurar`}
+                    className="absolute -top-1 left-1/2 -translate-x-1/2 bg-black/95 border border-amber-500/70 px-1 py-0 rounded-full flex items-center gap-0.5 z-20 shadow-sm cursor-pointer hover:scale-105 transition-transform"
+                    title={`Racha: ${currentStreak} días (Meta: ${streakGoal}d)`}
                   >
-                    <span className="text-sm select-none leading-none shrink-0">
-                      {renderDisplayIcon(qh.quickIcon, qh.title, 'text-sm')}
-                    </span>
-                    <span
-                      className={`text-xs font-semibold max-w-[85px] sm:max-w-[120px] truncate block hover:text-cyan-300 transition-colors ${
-                        isFinished ? 'text-gray-300 line-through decoration-cyan-400/60' : 'text-white'
-                      }`}
-                    >
-                      {displayTitle}
-                    </span>
-                  </button>
-
-                  {/* Lado Derecho: Botón táctil de Progreso / Check */}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (isLocked) return;
-                      onIncrementHabit(qh.id, e);
-                    }}
-                    className={`shrink-0 ml-0.5 cursor-pointer focus:outline-none active:scale-90 transition-transform ${
-                      isLocked ? 'cursor-not-allowed opacity-60' : ''
-                    }`}
-                    title={
-                      isLocked
-                        ? 'Bloqueado por fin de jornada'
-                        : isCounterHabit
-                        ? `Toca para sumar (+1) a "${qh.title}"`
-                        : isFinished
-                        ? `Completado hoy (Toca para deshacer)`
-                        : `Marcar como completado`
-                    }
-                  >
-                    {isCounterHabit ? (
-                      <div
-                        className={`h-6 px-1.5 rounded-lg border text-[11px] font-mono font-bold flex items-center gap-1 shrink-0 transition-all ${
-                          isFinished
-                            ? `${auraTheme.badge} border-emerald-400 font-black`
-                            : 'bg-black/70 border-cyan-500/40 text-cyan-200 group-hover:border-cyan-300'
-                        }`}
-                      >
-                        <span>{current}/{target}</span>
-                        {isFinished ? (
-                          <Check className="w-3 h-3 text-emerald-400 stroke-[3]" />
-                        ) : (
-                          <span className="text-cyan-400 font-black leading-none">+</span>
-                        )}
-                      </div>
-                    ) : (
-                      <div
-                        className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 border transition-all ${
-                          isFinished
-                            ? 'bg-emerald-950/80 border-emerald-400 text-emerald-300 shadow-[0_0_8px_rgba(52,211,153,0.3)]'
-                            : 'bg-black/70 border-white/20 text-gray-400 group-hover:border-cyan-400 group-hover:text-cyan-300'
-                        }`}
-                      >
-                        <Check className={`w-3.5 h-3.5 ${isFinished ? 'text-emerald-400 stroke-[3]' : 'text-gray-400'}`} />
-                      </div>
-                    )}
-                  </button>
-
-                  {/* Micro-Barra de Progreso Absoluta Pegada al Borde Inferior (h-[2px]) */}
-                  <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-black/40 overflow-hidden">
-                    <div
-                      className={`h-full transition-all duration-300 ${auraTheme.bar}`}
-                      style={{ width: `${progressPct}%` }}
-                    />
+                    <Flame className="w-2 h-2 text-amber-400 fill-amber-400" />
+                    <span className="text-[8.5px] font-mono font-black text-amber-300 leading-none">{currentStreak}</span>
                   </div>
+                )}
+
+                {/* Anillo Circular SVG */}
+                <svg className="w-14 h-14 absolute inset-0 -rotate-90 pointer-events-none" viewBox="0 0 56 56">
+                  {/* Track de fondo tenue */}
+                  <circle
+                    cx="28"
+                    cy="28"
+                    r="24"
+                    stroke="currentColor"
+                    className="text-white/10"
+                    strokeWidth="2.5"
+                    fill="none"
+                  />
+                  {/* Trazo activo de progreso */}
+                  <circle
+                    cx="28"
+                    cy="28"
+                    r="24"
+                    stroke={isFinished ? '#10b981' : auraTheme.strokeColor}
+                    strokeWidth={isFinished ? 3 : 2.5}
+                    strokeLinecap="round"
+                    fill="none"
+                    style={{
+                      strokeDasharray: 150.8,
+                      strokeDashoffset: strokeDashoffset,
+                      filter: isFinished
+                        ? 'drop-shadow(0 0 5px rgba(16, 185, 129, 0.8))'
+                        : progressPct > 0
+                        ? `drop-shadow(0 0 3px ${auraTheme.strokeColor})`
+                        : 'none',
+                      transition: 'stroke-dashoffset 0.4s ease, stroke 0.3s ease',
+                    }}
+                  />
+                </svg>
+
+                {/* Núcleo Central del Círculo (Fondo y Emoji) */}
+                <div
+                  className={`w-11 h-11 rounded-full flex items-center justify-center transition-all ${
+                    isFinished
+                      ? 'bg-emerald-950/80 border border-emerald-400/70 shadow-[0_0_12px_rgba(16,185,129,0.35)]'
+                      : `bg-[#040814] border ${auraTheme.border} group-hover:border-white/30`
+                  }`}
+                >
+                  <span className="text-xl sm:text-2xl select-none leading-none">
+                    {renderDisplayIcon(qh.quickIcon, qh.title, 'text-xl sm:text-2xl')}
+                  </span>
                 </div>
-              );
-            })
-          )}
+
+                {/* Micro-Badge Inferior Derecho: [0/8] o [✓] */}
+                <div
+                  className={`absolute -bottom-0.5 -right-0.5 px-1 py-0.5 rounded-full border text-[8px] font-mono font-bold leading-none flex items-center justify-center shadow-md z-10 ${
+                    isFinished
+                      ? 'bg-emerald-950 border-emerald-400 text-emerald-300 shadow-[0_0_6px_rgba(16,185,129,0.7)]'
+                      : isCounterHabit
+                      ? 'bg-[#060a14] border-cyan-500/60 text-cyan-200'
+                      : 'bg-[#060a14] border-white/20 text-gray-400'
+                  }`}
+                >
+                  {isFinished ? (
+                    <Check className="w-2.5 h-2.5 text-emerald-400 stroke-[3]" />
+                  ) : isCounterHabit ? (
+                    `${current}/${target}`
+                  ) : (
+                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400/60" />
+                  )}
+                </div>
+              </div>
+
+              {/* Etiqueta Corta Inferior (Estilo Instagram - Tocar abre modal) */}
+              <span
+                onClick={(e) => {
+                  e.stopPropagation();
+                  soundFX.playClick();
+                  setSelectedHabitForProtocol(qh);
+                }}
+                className={`text-[10px] font-medium max-w-[64px] truncate text-center mt-1 transition-colors block cursor-pointer select-none leading-tight ${
+                  isFinished
+                    ? 'text-emerald-400/90 hover:text-emerald-300'
+                    : 'text-white/80 hover:text-cyan-300'
+                }`}
+                title={`${qh.title} - Toca para configurar`}
+              >
+                {shortLabel}
+              </span>
+            </div>
+          );
+        })}
+
+        {/* Círculo Final: (+) Nuevo Hábito Integrado en la Misma Fila */}
+        <div className="flex flex-col items-center w-16 shrink-0 select-none group">
+          <button
+            type="button"
+            onClick={() => {
+              soundFX.playClick();
+              onOpenAddModal(true);
+            }}
+            className="w-14 h-14 rounded-full border-2 border-dashed border-cyan-500/40 hover:border-cyan-400 bg-white/[0.02] hover:bg-cyan-950/40 flex items-center justify-center transition-all cursor-pointer group active:scale-95 shadow-[0_0_10px_rgba(0,240,255,0.1)]"
+            title="Crear un nuevo hábito (Ley 21/66)"
+          >
+            <Plus className="w-5 h-5 text-cyan-400 group-hover:scale-110 transition-transform" />
+          </button>
+          <span className="text-[10px] text-cyan-300/80 group-hover:text-cyan-200 font-medium text-center mt-1 select-none leading-tight">
+            Nuevo
+          </span>
         </div>
-      )}
+      </div>
 
       {/* PROTOCOLO LEY 21/66 & AURAS DE KAI MODAL (ENFOCADO EN EL HÁBITO SELECCIONADO) */}
       {selectedHabitForProtocol && (() => {
