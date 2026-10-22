@@ -110,27 +110,36 @@ export const NightlyReflectionModal: React.FC<NightlyReflectionModalProps> = ({
   const handleConsolidate = () => {
 
     const playerStore = usePlayerStore.getState();
-    const incompleteImportant = allTasks.filter(t => 
-      !t.completed && (t.priority === 'alta' || t.priority === 'epica' || t.isHabit || t.category === 'habito')
-    );
-    
-    let totalDamage = 0;
-    incompleteImportant.forEach(t => {
-      if (t.priority === 'epica') totalDamage += 8;
-      else if (t.priority === 'alta') totalDamage += 4;
-      else totalDamage += 2; // Habits
-    });
+    const isRestDay = Boolean(stats.restDays?.[todayStr]);
 
-    if (totalDamage > 0) {
-      const damageResult = playerStore.takeDamage(totalDamage);
-      window.dispatchEvent(new CustomEvent('player-damage', { 
-        detail: { 
-          amount: totalDamage, 
-          died: damageResult.died, 
-          xpLost: damageResult.xpLost, 
-          coinsLost: damageResult.coinsLost 
-        } 
-      }));
+    if (isRestDay) {
+      soundFX.playHeal();
+    } else if (completionRate >= 80) {
+      playerStore.heal(40);
+      soundFX.playHeal();
+    } else {
+      const incompleteImportant = allTasks.filter(t => 
+        !t.completed && (t.priority === 'alta' || t.priority === 'epica' || t.isHabit || t.category === 'habito')
+      );
+      
+      let totalDamage = 0;
+      incompleteImportant.forEach(t => {
+        if (t.priority === 'epica') totalDamage += 8;
+        else if (t.priority === 'alta') totalDamage += 4;
+        else totalDamage += 2; // Habits
+      });
+
+      if (totalDamage > 0) {
+        const damageResult = playerStore.takeDamage(totalDamage);
+        window.dispatchEvent(new CustomEvent('player-damage', { 
+          detail: { 
+            amount: totalDamage, 
+            died: damageResult.died, 
+            xpLost: damageResult.xpLost, 
+            coinsLost: damageResult.coinsLost 
+          } 
+        }));
+      }
     }
 
     soundFX.playLevelUp();

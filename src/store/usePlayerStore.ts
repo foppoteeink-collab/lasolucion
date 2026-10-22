@@ -10,6 +10,8 @@ interface PlayerState {
   setStats: (updater: PlayerStats | ((prev: PlayerStats) => PlayerStats)) => void;
   addXpAndCoins: (xp: number, coins: number, alreadyBoosted?: boolean) => void;
   takeDamage: (amount: number) => { died: boolean, xpLost: number, coinsLost: number };
+  revivePlayer: (method: 'xp' | 'coins') => { xpLost: number; coinsLost: number };
+  toggleRestDay: (dateStr?: string) => boolean;
   heal: (amount: number) => void;
   purchaseItem: (cost: number, logic?: (stats: PlayerStats) => Partial<PlayerStats>) => boolean;
   finalizeDay: (currentDate: string, bonusXp: number, bonusCoins: number, bedtime: string) => void;
@@ -143,20 +145,71 @@ export const usePlayerStore = create<PlayerState>()(
         
         let currentHp = state.stats.hp ?? 100;
         let newHp = Math.max(0, currentHp - amount);
-        let statsUpdates: Partial<PlayerStats> = { hp: newHp };
         
         if (newHp <= 0) {
           result.died = true;
-          result.xpLost = Math.min(state.stats.currentXp, 15);
-          result.coinsLost = Math.min(state.stats.coins, 10);
-          
-          statsUpdates.hp = state.stats.maxHp || 100;
-          statsUpdates.currentXp = Math.max(0, state.stats.currentXp - result.xpLost);
-          statsUpdates.coins = Math.max(0, state.stats.coins - result.coinsLost);
+          set({ stats: { ...state.stats, hp: 0 } });
+          useUIStore.getState().setModalState('isHunterCollapseOpen', true);
+        } else {
+          set({ stats: { ...state.stats, hp: newHp } });
         }
-        
-        set({ stats: { ...state.stats, ...statsUpdates } });
         return result;
+      },
+
+      revivePlayer: (method: 'xp' | 'coins') => {
+        const state = get();
+        const currentStats = state.stats;
+        const maxHp = currentStats.maxHp || 100;
+        const revivedHp = Math.max(50, Math.round(maxHp / 2)); // Restores to 50% HP minimum 50
+        let xpLost = 0;
+        let coinsLost = 0;
+
+        if (method === 'coins' && (currentStats.coins || 0) >= 30) {
+          coinsLost = 30;
+          set({
+            stats: {
+              ...currentStats,
+              hp: revivedHp,
+              coins: Math.max(0, (currentStats.coins || 0) - 30)
+            }
+          });
+        } else {
+          // Default XP deduction: 20% of current level's accumulated XP, never drops below level floor (0 XP in current level)
+          const currentXp = currentStats.currentXp || 0;
+          xpLost = Math.round(currentXp * 0.20);
+          set({
+            stats: {
+              ...currentStats,
+              hp: revivedHp,
+              currentXp: Math.max(0, currentXp - xpLost)
+            }
+          });
+        }
+
+        useUIStore.getState().setModalState('isHunterCollapseOpen', false);
+        return { xpLost, coinsLost };
+      },
+
+      toggleRestDay: (dateStr) => {
+        const state = get();
+        const targetDate = dateStr || new Date().toISOString().split('T')[0];
+        const currentRestDays = { ...(state.stats.restDays || {}) };
+        const isCurrentlyRest = Boolean(currentRestDays[targetDate]);
+        
+        if (isCurrentlyRest) {
+          delete currentRestDays[targetDate];
+        } else {
+          currentRestDays[targetDate] = true;
+        }
+
+        set({
+          stats: {
+            ...state.stats,
+            restDays: currentRestDays
+          }
+        });
+
+        return !isCurrentlyRest;
       },
 
       heal: (amount) => set((state) => {

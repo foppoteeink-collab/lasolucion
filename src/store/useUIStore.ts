@@ -8,7 +8,8 @@ export type ModalName =
   | 'isDayTemplatesOpen' 
   | 'isPomodoroOpen' 
   | 'isNightlyReflectionOpen'
-  | 'isSurpriseBossOpen';
+  | 'isSurpriseBossOpen'
+  | 'isHunterCollapseOpen';
 
 export interface QueuedModalItem {
   id: string;
@@ -43,6 +44,7 @@ interface UIState {
   isPomodoroOpen: boolean;
   isNightlyReflectionOpen: boolean;
   isSurpriseBossOpen: boolean;
+  isHunterCollapseOpen: boolean;
   isTaskFormOpen: boolean;
   taskFormInitialTab: 'task' | 'habit' | 'oracle';
   surpriseBossData: { archetypeName: string; buffName: string; buffDescription: string } | null;
@@ -123,6 +125,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   isPomodoroOpen: false,
   isNightlyReflectionOpen: false,
   isSurpriseBossOpen: false,
+  isHunterCollapseOpen: false,
   isTaskFormOpen: false,
   taskFormInitialTab: 'task',
   surpriseBossData: null,
@@ -285,6 +288,7 @@ export const useUIStore = create<UIState>((set, get) => ({
       isPomodoroOpen: false,
       isNightlyReflectionOpen: false,
       isSurpriseBossOpen: false,
+      isHunterCollapseOpen: false,
     });
   },
 

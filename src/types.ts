@@ -82,6 +82,7 @@ export interface PlayerStats {
   hiddenBossDate?: string;
   hiddenBossDefeatedDate?: string;
   lastEncounterDate?: string; // To track if a random encounter happened today
+  restDays?: Record<string, boolean>; // YYYY-MM-DD -> true if marked as intentional Rest/Recovery day
   activeDailyBuff?: {
     archetypeId: string;
     archetypeName: string;

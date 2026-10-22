@@ -21,6 +21,7 @@ import { HunterAwakeningModal } from './HunterAwakeningModal';
 import { NightlyReflectionModal } from './NightlyReflectionModal';
 import { NightlyTunnel } from './NightlyTunnel';
 import { SurpriseBossModal } from './SurpriseBossModal';
+import { HunterCollapseModal } from './HunterCollapseModal';
 import { DeleteConfirmModal } from './DeleteConfirmModal';
 import { TaskListView } from './TaskListView';
 import { PomodoroTimer } from './PomodoroTimer';
@@ -275,8 +276,8 @@ export function AppLayout() {
         <NotificationToastOverlay />
 
         {/* CAPA 3: CONTENIDO DE LA APP (GLASSMORPHISM) */}
-        <main className={`relative z-10 min-h-screen flex flex-col p-3 sm:p-6 pointer-events-auto ${
-          navigationMode === 'classic' ? 'pb-20 sm:pb-6' : 'pb-6'
+        <main className={`relative z-10 min-h-screen flex flex-col p-3 sm:p-6 pt-safe pointer-events-auto ${
+          navigationMode === 'classic' ? 'pb-24 sm:pb-6' : 'pb-safe sm:pb-6'
         }`}>
           
 
@@ -575,7 +576,7 @@ export function AppLayout() {
       {/* Mobile Bottom Navigation Bar (Optimized for Phones - Only visible in Classic Mode) */}
       {/* MAIN NAVIGATION BAR (Keep backdrop blur here for spatial depth) */}
       {navigationMode === 'classic' && (
-        <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#030712]/90 backdrop-blur-xl border-t border-cyan-500/40 shadow-[0px_-4px_25px_rgba(0,240,255,0.2)] px-3 py-2 font-sans tracking-wide">
+        <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#030712]/95 backdrop-blur-xl border-t border-cyan-500/40 shadow-[0px_-4px_25px_rgba(0,240,255,0.2)] px-3 pt-2 pb-safe font-sans tracking-wide">
           <div className="flex items-center justify-between">
             <button
               onClick={() => { soundFX.playClick(); setActiveTab('stats'); }}
@@ -681,6 +682,9 @@ export function AppLayout() {
           onConfirm={executeDeleteTask}
         />
       )}
+
+      {/* Hunter Collapse / Revival Modal */}
+      <HunterCollapseModal />
 
       {/* Oracle AI Wizard Modal */}
       <OracleModal 

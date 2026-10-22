@@ -301,3 +301,23 @@ body.modal-open-hide-floating .omni-companion-hub-root {
   }
 }
 
+/* Mobile Safe Area Insets (iOS Dynamic Island / Notch / Android Navigation Bar) */
+.pt-safe {
+  padding-top: max(env(safe-area-inset-top, 0px), 8px);
+}
+.pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 16px);
+}
+.pl-safe {
+  padding-left: max(env(safe-area-inset-left, 0px), 8px);
+}
+.pr-safe {
+  padding-right: max(env(safe-area-inset-right, 0px), 8px);
+}
+
+/* Touch targets: 44x44px minimum touch area standard (Apple HIG / Android Material) */
+.touch-target-44 {
+  min-width: 44px;
+  min-height: 44px;
+}
+

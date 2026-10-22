@@ -1083,12 +1083,26 @@ export const handleRegisterWakeUp = (dateStr?: string, customWakeTime?: string) 
   if (typeof window !== 'undefined') {
     const updatedStats = statePlayer.stats;
     const log = updatedStats.sleepLogs?.[pendingDate];
-    const hours = log?.sleepDurationHours ? `${log.sleepDurationHours}h` : '';
+    const duration = log?.sleepDurationHours || 0;
+    const hours = duration ? `${duration}h` : '';
+    
     stateUI.addFloatingEffect({
       x: window.innerWidth / 2,
       y: window.innerHeight / 2 - 20,
       text: `☀️ ¡Jornada Iniciada! ${hours ? `(${hours} de Sueño)` : ''}`,
       type: 'xp'
     });
+
+    if (duration >= 7) {
+      statePlayer.heal(20);
+      setTimeout(() => {
+        stateUI.addFloatingEffect({
+          x: window.innerWidth / 2,
+          y: window.innerHeight / 2 - 45,
+          text: '💖 Sueño Reparador (+20 HP)',
+          type: 'heal'
+        });
+      }, 350);
+    }
   }
 };

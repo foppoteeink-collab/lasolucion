@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   Moon, Sparkles, CheckCircle2, Coins, Zap, BookOpen,
   Clock, Flame, Star, Check, Gift, Lock, ChevronRight,
-  Sun, ArrowRight
+  Sun, ArrowRight, Heart
 } from 'lucide-react';
 import { triggerShockwave } from '../utils/celebration';
 import { soundFX } from '../utils/audio';
@@ -114,18 +114,29 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
     if (dayConsolidated) return;
 
     const playerStore = usePlayerStore.getState();
-    const incompleteImportant = allTasks.filter(t =>
-      !t.completed && (t.priority === 'alta' || t.priority === 'epica' || t.isHabit || t.category === 'habito')
-    );
-    let totalDamage = 0;
-    incompleteImportant.forEach(t => {
-      if (t.priority === 'epica') totalDamage += 8;
-      else if (t.priority === 'alta') totalDamage += 4;
-      else totalDamage += 2;
-    });
-    if (totalDamage > 0) {
-      const dmg = playerStore.takeDamage(totalDamage);
-      window.dispatchEvent(new CustomEvent('player-damage', { detail: { amount: totalDamage, ...dmg } }));
+    const isRestDay = Boolean(stats.restDays?.[todayStr]);
+
+    if (isRestDay) {
+      // Día de descanso planificado: sin penalización ni daño de HP
+      soundFX.playHeal();
+    } else if (completionRate >= 80) {
+      // Disciplina destacada (>=80% completado): Regeneración Celular (+40 HP)
+      playerStore.heal(40);
+      soundFX.playHeal();
+    } else {
+      const incompleteImportant = allTasks.filter(t =>
+        !t.completed && (t.priority === 'alta' || t.priority === 'epica' || t.isHabit || t.category === 'habito')
+      );
+      let totalDamage = 0;
+      incompleteImportant.forEach(t => {
+        if (t.priority === 'epica') totalDamage += 8;
+        else if (t.priority === 'alta') totalDamage += 4;
+        else totalDamage += 2;
+      });
+      if (totalDamage > 0) {
+        const dmg = playerStore.takeDamage(totalDamage);
+        window.dispatchEvent(new CustomEvent('player-damage', { detail: { amount: totalDamage, ...dmg } }));
+      }
     }
 
     soundFX.playLevelUp();
@@ -277,6 +288,44 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
                     </div>
                   ))}
                 </div>
+
+                {/* Rest Day / Recovery Mode Toggle */}
+                <div className={`p-3 rounded-2xl border transition-all flex items-center justify-between ${
+                  Boolean(stats.restDays?.[todayStr])
+                    ? 'bg-emerald-950/40 border-emerald-500/60 shadow-[0_0_20px_rgba(16,185,129,0.2)]'
+                    : 'bg-[#000a14]/90 border-cyan-500/30'
+                }`}>
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-lg">{Boolean(stats.restDays?.[todayStr]) ? '🌿' : '🛡️'}</span>
+                    <div>
+                      <span className="text-xs font-bold text-white block">
+                        {Boolean(stats.restDays?.[todayStr]) ? 'Día de Descanso Planificado (Activo)' : 'Modo Descanso / Recuperación'}
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        {Boolean(stats.restDays?.[todayStr]) ? 'Protegido: 0 penalizaciones de vida hoy.' : 'Activa si hoy fue un descanso deliberado.'}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => usePlayerStore.getState().toggleRestDay(todayStr)}
+                    className={`px-3 py-1.5 rounded-xl text-[11px] font-bold font-mono transition-all cursor-pointer ${
+                      Boolean(stats.restDays?.[todayStr])
+                        ? 'bg-emerald-400 text-black shadow-[0_0_12px_rgba(16,185,129,0.5)]'
+                        : 'bg-cyan-950/80 text-cyan-300 border border-cyan-800 hover:border-cyan-500'
+                    }`}
+                  >
+                    {Boolean(stats.restDays?.[todayStr]) ? 'Activo ✓' : 'Activar'}
+                  </button>
+                </div>
+
+                {/* Cellular Regeneration Badge if Grade A or S+ and not in Rest Day */}
+                {completionRate >= 80 && !stats.restDays?.[todayStr] && (
+                  <div className="bg-emerald-950/40 border border-emerald-500/50 rounded-xl p-2.5 text-center flex items-center justify-center gap-2 text-emerald-300 text-xs font-mono font-bold shadow-[0_0_15px_rgba(16,185,129,0.15)]">
+                    <Heart className="w-4 h-4 fill-emerald-400 text-emerald-400" />
+                    <span>¡Disciplina Destacada! Regeneración Celular (+40 HP)</span>
+                  </div>
+                )}
 
                 {/* Bedtime Override */}
                 <div className="bg-[#000a14]/90 border border-cyan-500/30 rounded-2xl p-3.5 flex items-center justify-between">
