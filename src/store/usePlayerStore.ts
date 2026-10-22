@@ -8,7 +8,7 @@ import { getTodayDateString, getYesterdayDateString, calcSleepDuration, getSleep
 interface PlayerState {
   stats: PlayerStats;
   setStats: (updater: PlayerStats | ((prev: PlayerStats) => PlayerStats)) => void;
-  addXpAndCoins: (xp: number, coins: number) => void;
+  addXpAndCoins: (xp: number, coins: number, alreadyBoosted?: boolean) => void;
   takeDamage: (amount: number) => { died: boolean, xpLost: number, coinsLost: number };
   heal: (amount: number) => void;
   purchaseItem: (cost: number, logic?: (stats: PlayerStats) => Partial<PlayerStats>) => boolean;
@@ -66,20 +66,29 @@ export const usePlayerStore = create<PlayerState>()(
         const lvl = typeof raw.level === 'number' && raw.level > 0 ? raw.level : 1;
         const expectedRank = getRankForLevel(lvl).title;
 
+        // Auto-save previousStreak whenever streakDays is being reduced to preserve it for revive_streak
+        const currentStreak = state.stats.streakDays || 0;
+        const incomingStreak = raw.streakDays ?? currentStreak;
+        const preservedPreviousStreak =
+          incomingStreak < currentStreak && currentStreak > 0
+            ? currentStreak
+            : (raw.previousStreak ?? state.stats.previousStreak);
+
         const nextStats: PlayerStats = {
           ...raw,
           level: lvl,
           rankTitle: expectedRank,
-          requiredXp: calculateRequiredXp(lvl)
+          requiredXp: calculateRequiredXp(lvl),
+          previousStreak: preservedPreviousStreak,
         };
         return { stats: nextStats };
       }),
 
-      addXpAndCoins: (baseXp, baseCoins) => set((state) => {
+      addXpAndCoins: (baseXp, baseCoins, alreadyBoosted = false) => set((state) => {
         let xp = baseXp;
         let coins = baseCoins;
         
-        if (state.stats.focusPotionExpiresAt && state.stats.focusPotionExpiresAt > Date.now()) {
+        if (!alreadyBoosted && state.stats.focusPotionExpiresAt && state.stats.focusPotionExpiresAt > Date.now()) {
           xp = Math.ceil(xp * 1.5);
           coins = Math.ceil(coins * 1.5);
         }
@@ -411,8 +420,8 @@ export const usePlayerStore = create<PlayerState>()(
             success = true;
             break;
           case 'revive_streak':
-            // Logic for revive streak. We just give them their max streak back or add some grace
-            updates.streakDays = Math.max(state.stats.streakDays || 0, 7); // Placeholder for reviving logic
+            // Logic for revive streak: restore previousStreak if available or streakDays or minimum 7
+            updates.streakDays = Math.max(state.stats.previousStreak || 0, state.stats.streakDays || 0, 7);
             updates.streakShields = (state.stats.streakShields || 0) + 1;
             success = true;
             break;

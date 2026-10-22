@@ -501,6 +501,7 @@ export const JournalView: React.FC<JournalViewProps> = ({
                         </span>
                         <textarea
                           rows={3}
+                          maxLength={5000}
                           value={reflectionText}
                           onChange={(e) => setReflectionText(e.target.value)}
                           placeholder="¿Qué aprendiste hoy? ¿Qué salió excelente y qué mejorarás mañana?"

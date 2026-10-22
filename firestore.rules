@@ -27,7 +27,8 @@ service cloud.firestore {
 
     // Entities Validations
     function isValidPlayerStats(data) {
-      return (!('level' in data) || data.level is number)
+      return data.keys().size() > 0
+        && (!('level' in data) || data.level is number)
         && (!('currentXp' in data) || data.currentXp is number)
         && (!('coins' in data) || data.coins is number)
         && (!('hp' in data) || data.hp is number)
@@ -36,7 +37,8 @@ service cloud.firestore {
         && (!('highestStreak' in data) || data.highestStreak is number)
         && (!('lastCompletedDate' in data) || (data.lastCompletedDate is string && data.lastCompletedDate.size() <= 50))
         && (!('totalTasksCompleted' in data) || data.totalTasksCompleted is number)
-        && (!('theme' in data) || (data.theme is string && data.theme.size() <= 50));
+        && (!('theme' in data) || (data.theme is string && data.theme.size() <= 50))
+        && (!('reflections' in data) || (data.reflections is map && data.reflections.size() <= 3650));
     }
 
     function isValidTaskItem(data) {
@@ -44,6 +46,7 @@ service cloud.firestore {
         && data.id is string && data.id.size() <= 100
         && data.title is string && data.title.size() <= 300
         && (!('description' in data) || (data.description is string && data.description.size() <= 1000))
+        && (!('notes' in data) || (data.notes is string && data.notes.size() <= 5000))
         && (!('status' in data) || (data.status in ['todo', 'completed', 'failed', 'cancelled']))
         && (!('date' in data) || (data.date is string && data.date.size() <= 50))
         && (!('type' in data) || (data.type in ['daily', 'weekly', 'habit', 'one-time', 'monthly', 'yearly']))
@@ -92,6 +95,12 @@ service cloud.firestore {
         && data.data is string && data.data.size() <= 20000;
     }
 
+    function isValidTaskMonth(data) {
+      return data.keys().hasOnly(['tasksByDate'])
+        && data.tasksByDate is map
+        && data.tasksByDate.size() <= 35;
+    }
+
     // Rules
     match /users/{userId} {
       allow read: if isOwner(userId) && isValidId(userId);
@@ -136,8 +145,8 @@ service cloud.firestore {
 
       match /task_months/{monthId} {
         allow read: if isOwner(userId) && isValidId(userId);
-        allow create: if isOwner(userId) && isValidId(userId) && isValidId(monthId);
-        allow update: if isOwner(userId) && isValidId(userId) && isValidId(monthId);
+        allow create: if isOwner(userId) && isValidId(userId) && isValidId(monthId) && isValidTaskMonth(incoming());
+        allow update: if isOwner(userId) && isValidId(userId) && isValidId(monthId) && isValidTaskMonth(incoming());
         allow delete: if isOwner(userId) && isValidId(userId) && isValidId(monthId);
       }
     }

@@ -65,6 +65,7 @@ export const TaskNoteModal: React.FC<TaskNoteModalProps> = ({
             onChange={(e) => onNoteChange(e.target.value)}
             placeholder="Ej. Repasé 15 verbos irregulares; avancé diseño de vista de misiones; 4 series pesadas en press militar..."
             rows={4}
+            maxLength={5000}
             className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl bg-[#000a14] border border-cyan-500/40 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/50 resize-none leading-relaxed"
             onKeyDown={(e) => {
               if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {

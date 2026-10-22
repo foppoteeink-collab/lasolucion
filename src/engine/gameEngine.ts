@@ -198,10 +198,11 @@ export const handleResetAccount = async () => {
 
   export const handleSaveReflection = (date: string, text: string) => {
     const { setReflections } = getEngineContext();
+    const sanitized = (text || '').slice(0, 5000);
     setReflections((prev) => {
       const next = { ...prev };
-      if (text.trim()) {
-        next[date] = text.trim();
+      if (sanitized.trim()) {
+        next[date] = sanitized.trim();
       } else {
         delete next[date];
       }
@@ -333,7 +334,21 @@ export const handleToggleTask = (taskId: string, e?: any) => {
       });
       return;
     } else {
-      alert('Esta jornada ya está archivada (+48h) 🔒. Las actividades pasadas antiguas no se pueden modificar.');
+      if (typeof window !== 'undefined') {
+        spawnJuiceParticle({
+            x: e?.clientX || window.innerWidth / 2,
+            y: (e?.clientY || window.innerHeight / 2) - 20,
+            text: '🔒 Jornada archivada (+48h): sin cambios',
+            type: 'custom',
+            colorClass: 'text-rose-400 bg-rose-950/95 border-rose-500'
+        });
+      }
+      useUIStore.getState().addFloatingEffect({
+        x: e?.clientX || (typeof window !== 'undefined' ? window.innerWidth / 2 : 200),
+        y: (e?.clientY || 200) - 20,
+        text: '🔒 Jornada archivada (+48h): sin cambios',
+        type: 'streak'
+      });
       return;
     }
   }
@@ -706,8 +721,9 @@ export const handleEditTask = (taskId: string, updates: any) => {
   store.updateTask(store.currentViewDate, taskId, updates);
 };
 export const handleUpdateTaskNote = (taskId: string, notes: string) => {
+  const sanitized = (notes || '').slice(0, 5000);
   const store = useTaskStore.getState();
-  store.updateTask(store.currentViewDate, taskId, { notes });
+  store.updateTask(store.currentViewDate, taskId, { notes: sanitized });
 };
 export const handleClearDay = () => {
   const store = useTaskStore.getState();

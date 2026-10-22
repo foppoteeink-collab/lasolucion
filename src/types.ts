@@ -69,6 +69,7 @@ export interface PlayerStats {
   hp: number;
   maxHp: number;
   streakDays: number;
+  previousStreak?: number; // Saved streak value before it was reset, used by revive_streak item
   lastActiveDate: string; // YYYY-MM-DD
   lastDailyRewardClaimedDate: string; // YYYY-MM-DD
   profession?: string;

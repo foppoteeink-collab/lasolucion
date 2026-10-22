@@ -235,7 +235,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       setTimeout(() => setExportFeedback(null), 4500);
     } catch (err) {
       console.error('Error al exportar:', err);
-      alert('Error al generar la copia de seguridad.');
+      setExportFeedback('⚠️ Error al generar la copia de seguridad.');
+      setTimeout(() => setExportFeedback(null), 4500);
     }
   };
 
@@ -248,7 +249,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       setTimeout(() => setExportFeedback(null), 4500);
     } catch (err) {
       console.error('Error al exportar CSV:', err);
-      alert('Error al exportar la bitácora.');
+      setExportFeedback('⚠️ Error al exportar la bitácora.');
+      setTimeout(() => setExportFeedback(null), 4500);
     }
   };
 
@@ -279,7 +281,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           window.location.reload();
         }, 1200);
       } catch (err) {
-        alert('Formato de copia de seguridad inválido.');
+        setImportStatus('⚠️ Formato de copia de seguridad inválido.');
+        setTimeout(() => setImportStatus(null), 4500);
       }
     };
     reader.readAsText(file);
@@ -294,7 +297,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       setTimeout(() => setExportFeedback(null), 4500);
     } catch (err) {
       console.error('Error al exportar horario:', err);
-      alert('Error al exportar el horario.');
+      setExportFeedback('⚠️ Error al exportar el horario.');
+      setTimeout(() => setExportFeedback(null), 4500);
     }
   };
 
@@ -332,7 +336,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           throw new Error('No se encontraron rutinas válidas en el archivo.');
         }
       } catch (err: any) {
-        alert(`Error al importar horario: ${err.message || 'Formato inválido.'}`);
+        setImportStatus(`⚠️ Error al importar horario: ${err.message || 'Formato inválido.'}`);
+        setTimeout(() => setImportStatus(null), 4500);
       }
     };
     reader.readAsText(file);

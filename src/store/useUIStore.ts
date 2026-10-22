@@ -139,11 +139,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   floatingRewards: [],
 
   setActiveTab: (tab) => {
-    set({ isTransitioning: true });
-    setTimeout(() => {
-      set({ activeTab: tab });
-      setTimeout(() => set({ isTransitioning: false }), 300);
-    }, 250);
+    set({ activeTab: tab, isTransitioning: false });
   },
 
   setFocusModeActive: (active) => {

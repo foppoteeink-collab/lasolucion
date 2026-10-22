@@ -439,6 +439,7 @@ export const useCloudSync = (
   const isApplyingRemoteRef = useRef(false);
   const initialLoadDoneRef = useRef(false);
   const isSavingRef = useRef(false);
+  const saveDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Monitor network status and trigger automatic sync when online status changes
   useEffect(() => {
@@ -610,11 +611,49 @@ export const useCloudSync = (
     ]
   );
 
-  // Expose global immediate cloud sync trigger for task/habit completion actions
+  const scheduleSave = useCallback((delay = 3000) => {
+    if (saveDebounceTimerRef.current) {
+      clearTimeout(saveDebounceTimerRef.current);
+    }
+    setSyncStatus('saving');
+    saveDebounceTimerRef.current = setTimeout(() => {
+      saveDebounceTimerRef.current = null;
+      performSave();
+    }, delay);
+  }, [performSave]);
+
+  const flushSave = useCallback(() => {
+    if (saveDebounceTimerRef.current) {
+      clearTimeout(saveDebounceTimerRef.current);
+      saveDebounceTimerRef.current = null;
+      performSave();
+    }
+  }, [performSave]);
+
+  // Flush pending save immediately when tab is hidden or page is about to unload
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (typeof document !== 'undefined' && document.hidden) {
+        flushSave();
+      }
+    };
+    const handleBeforeUnload = () => {
+      flushSave();
+    };
+
+    window.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [flushSave]);
+
+  // Expose global debounced cloud sync trigger for task/habit completion actions (3s debounce)
   useEffect(() => {
     if (typeof window !== 'undefined') {
       (window as any).__triggerCloudSyncNow = () => {
-        performSave(undefined, true);
+        scheduleSave(3000);
       };
     }
     return () => {
@@ -622,7 +661,7 @@ export const useCloudSync = (
         delete (window as any).__triggerCloudSyncNow;
       }
     };
-  }, [performSave]);
+  }, [scheduleSave]);
 
   // 1. Real-time Firestore Listener (Cloud -> Client) with Conflict Resolution
   useEffect(() => {
@@ -854,7 +893,7 @@ export const useCloudSync = (
     };
   }, [user, hasMeaningfulLocalData, performSave]);
 
-  // 2. Debounced Auto-Save (Client -> Cloud)
+  // 2. Debounced Auto-Save (Client -> Cloud, 3000ms debounce)
   useEffect(() => {
     if (!db || !initialLoadDoneRef.current) return;
     if (isApplyingRemoteRef.current) return;
@@ -864,11 +903,7 @@ export const useCloudSync = (
       return;
     }
 
-    const timer = setTimeout(() => {
-      performSave();
-    }, 450);
-
-    return () => clearTimeout(timer);
+    scheduleSave(3000);
   }, [
     user,
     stats,
@@ -883,10 +918,14 @@ export const useCloudSync = (
     skillTree,
     companion,
     expenses,
-    performSave,
+    scheduleSave,
   ]);
 
   const forceSyncNow = useCallback(async () => {
+    if (saveDebounceTimerRef.current) {
+      clearTimeout(saveDebounceTimerRef.current);
+      saveDebounceTimerRef.current = null;
+    }
     return await performSave(undefined, true);
   }, [performSave]);
 

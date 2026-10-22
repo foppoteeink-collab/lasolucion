@@ -495,6 +495,7 @@ class SoundFX {
         lfoGain.gain.value = 2; // slight frequency modulation
         lfo.connect(lfoGain);
         lfoGain.connect(osc.frequency);
+        this.safeDisconnectOnEnd(lfo, [lfoGain], decay * 1000 + 100);
         lfo.start(now);
         lfo.stop(now + decay);
       }
@@ -505,6 +506,7 @@ class SoundFX {
       
       osc.connect(gain);
       gain.connect(this.getDestination()!);
+      this.safeDisconnectOnEnd(osc, [gain], decay * 1000 + 100);
       osc.start(now);
       osc.stop(now + decay);
     });
@@ -531,7 +533,9 @@ class SoundFX {
         const lfoGain = this.ctx.createGain();
         lfo.frequency.value = 4.5;
         lfoGain.gain.value = 2.5;
-        lfo.connect(osc.frequency);
+        lfo.connect(lfoGain);
+        lfoGain.connect(osc.frequency);
+        this.safeDisconnectOnEnd(lfo, [lfoGain], 4600);
         lfo.start(now);
         lfo.stop(now + 4.5);
       }
@@ -543,6 +547,7 @@ class SoundFX {
 
       osc.connect(gain);
       gain.connect(this.getDestination()!);
+      this.safeDisconnectOnEnd(osc, [gain], decay * 1000 + 100);
       osc.start(now);
       osc.stop(now + decay);
     });

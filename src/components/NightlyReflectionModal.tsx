@@ -345,6 +345,7 @@ export const NightlyReflectionModal: React.FC<NightlyReflectionModalProps> = ({
           <textarea
             value={reflectionText}
             onChange={(e) => setReflectionText(e.target.value)}
+            maxLength={5000}
             placeholder="¿Qué aprendiste hoy? ¿Qué mantendrás o mejorarás mañana?"
             className="w-full bg-[#000a14] border border-cyan-900/70 rounded-xl p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 resize-none h-20 shadow-inner"
           />
