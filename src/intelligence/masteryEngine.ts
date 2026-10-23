@@ -96,34 +96,37 @@ export const computeHabitStreak = (
   // If not done on reference date, user still has the ongoing streak from yesterday (backwardStreak)
   const currentStreak = isDoneRefDate ? backwardStreak + 1 : backwardStreak;
 
-  // 3. Calculate all-time highest streak across all dates in history
-  let maxConsecutive = currentStreak;
-  const sortedDates = Object.keys(tasksByDate).filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d)).sort();
-  let tempStreak = 0;
-  let prevDateStr: string | null = null;
-
-  for (const dateKey of sortedDates) {
-    if (isHabitCompletedInDay(tasksByDate[dateKey], baseId, normalizedTitle)) {
-      if (prevDateStr && getAdjacentDateStr(prevDateStr, 1) === dateKey) {
-        tempStreak++;
-      } else {
-        tempStreak = 1;
-      }
-      prevDateStr = dateKey;
-      if (tempStreak > maxConsecutive) {
-        maxConsecutive = tempStreak;
-      }
-    } else {
-      tempStreak = 0;
-      prevDateStr = null;
-    }
-  }
-
-  const highestStreak = Math.max(
-    maxConsecutive,
+  // 3. Calculate all-time highest streak
+  let highestStreak = Math.max(
     storedMastery?.highestStreak || 0,
     currentStreak
   );
+
+  // If no record exists yet, perform a single lightweight historical scan
+  if (!storedMastery || !storedMastery.highestStreak) {
+    let maxConsecutive = currentStreak;
+    const sortedDates = Object.keys(tasksByDate).filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d)).sort();
+    let tempStreak = 0;
+    let prevDateStr: string | null = null;
+
+    for (const dateKey of sortedDates) {
+      if (isHabitCompletedInDay(tasksByDate[dateKey], baseId, normalizedTitle)) {
+        if (prevDateStr && getAdjacentDateStr(prevDateStr, 1) === dateKey) {
+          tempStreak++;
+        } else {
+          tempStreak = 1;
+        }
+        prevDateStr = dateKey;
+        if (tempStreak > maxConsecutive) {
+          maxConsecutive = tempStreak;
+        }
+      } else {
+        tempStreak = 0;
+        prevDateStr = null;
+      }
+    }
+    highestStreak = Math.max(highestStreak, maxConsecutive);
+  }
 
   return { currentStreak, highestStreak };
 };

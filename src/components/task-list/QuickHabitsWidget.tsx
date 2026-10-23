@@ -697,6 +697,7 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                     ? `${qh.title} - Completado hoy (Toca para desmarcar)`
                     : `${qh.title} - Toca para completar`
                 }
+                aria-label={`${qh.title}: ${current} de ${target} completado`}
               >
                 {/* Micro-Llama Superior de Racha (Sólo si streak > 0) */}
                 {currentStreak > 0 && (

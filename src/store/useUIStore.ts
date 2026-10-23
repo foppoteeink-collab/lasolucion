@@ -35,6 +35,7 @@ interface UIState {
   soundEnabled: boolean;
   screenFlash: 'damage' | 'heal' | 'buff' | null;
   isFocusModeActive: boolean; // INMUNIZADOR DE FLUJO
+  zenMode: boolean; // MODO ZEN (REDUCCIÓN DE ESTÍMULOS / AHORRO BATERÍA)
   
   // Modales
   isDailyRewardsOpen: boolean;
@@ -78,6 +79,7 @@ interface UIState {
   removeFloatingReward: (id: string) => void;
   setNavigationMode: (mode: NavigationMode) => void;
   toggleNavigationMode: () => void;
+  toggleZenMode: () => void;
 }
 
 export const syncRootTheme = (_mode?: ThemeMode) => {
@@ -107,6 +109,15 @@ const getSavedNavMode = (): NavigationMode => {
   return 'nexus'; // Default to ultra-clean Kai Nexus mode (no bottom bar)
 };
 
+const getSavedZenMode = (): boolean => {
+  if (typeof window !== 'undefined') {
+    try {
+      return localStorage.getItem('taskquest_zen_mode') === 'true';
+    } catch (e) {}
+  }
+  return false;
+};
+
 let modalTransitionTimeout: ReturnType<typeof setTimeout> | null = null;
 
 export const useUIStore = create<UIState>((set, get) => ({
@@ -117,6 +128,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   soundEnabled: true,
   screenFlash: null,
   isFocusModeActive: false,
+  zenMode: getSavedZenMode(),
   
   isDailyRewardsOpen: false,
   isLevelUpOpen: false,
@@ -192,6 +204,16 @@ export const useUIStore = create<UIState>((set, get) => ({
       } catch (e) {}
     }
     set({ navigationMode: next });
+  },
+
+  toggleZenMode: () => {
+    const next = !get().zenMode;
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('taskquest_zen_mode', String(next));
+      } catch (e) {}
+    }
+    set({ zenMode: next });
   },
 
   // Enqueue or open modal through FIFO orchestrator

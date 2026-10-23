@@ -240,7 +240,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
               onToggle(task.id, e);
             }}
             disabled={isDayEnded}
-            className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all cursor-pointer shrink-0 ${
+            className={`relative touch-target-44 before:absolute before:-inset-3 before:content-[''] w-5 h-5 rounded-md border flex items-center justify-center transition-all cursor-pointer shrink-0 ${
               isCompleted
                 ? 'bg-emerald-500 border-emerald-400 text-black'
                 : isFutureDay

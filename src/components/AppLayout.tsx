@@ -71,6 +71,7 @@ export function AppLayout() {
     deleteConfirmTask,
     floatingEffects,
     floatingRewards,
+    zenMode,
     setActiveTab,
     setModalState,
     setDeleteConfirmTask,
@@ -238,30 +239,34 @@ export function AppLayout() {
       {/* Clean UI: Overlays disabled to prevent screen clutter */}
       <div id="main-layout-wrapper" className="relative min-h-screen bg-[#000000] overflow-hidden text-white font-sans selection:bg-[#d6f421] selection:text-black">
         
-        {/* CAPA 1: ORBES DE ENERGÍA */}
-        <div className="absolute inset-0 pointer-events-none z-0">
-          <motion.div 
-            animate={{ scale: [1, 1.05, 1], opacity: [0.8, 1, 0.8] }}
-            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-600/40 rounded-full blur-[140px]"
-          />
-          <div className="absolute -top-20 -right-20 w-[400px] h-[400px] bg-[#9600ff]/50 rounded-full blur-[120px]" />
-          <div className="absolute -bottom-32 -left-32 w-[300px] h-[300px] bg-[#d6f421]/30 rounded-full blur-[100px]" />
-        </div>
+        {/* CAPA 1: ORBES DE ENERGÍA (DESACTIVADA EN MODO ZEN PARA ULTRA-ENFOQUE Y RENDIMIENTO) */}
+        {!zenMode && (
+          <div className="absolute inset-0 pointer-events-none z-0">
+            <motion.div 
+              animate={{ scale: [1, 1.05, 1], opacity: [0.8, 1, 0.8] }}
+              transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-600/40 rounded-full blur-[140px]"
+            />
+            <div className="absolute -top-20 -right-20 w-[400px] h-[400px] bg-[#9600ff]/50 rounded-full blur-[120px]" />
+            <div className="absolute -bottom-32 -left-32 w-[300px] h-[300px] bg-[#d6f421]/30 rounded-full blur-[100px]" />
+          </div>
+        )}
 
-        {/* CAPA 2: PARTICULAS PARALLAX */}
-        <div className="absolute inset-0 pointer-events-none z-0 opacity-40">
-          <motion.div 
-            animate={{ y: ["-100%", "0%"] }}
-            transition={{ duration: 45, repeat: Infinity, ease: "linear" }}
-            className="absolute inset-0 w-full h-[200%] bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMSIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==')] opacity-50"
-          />
-          <motion.div 
-            animate={{ y: ["-100%", "0%"] }}
-            transition={{ duration: 22.5, repeat: Infinity, ease: "linear" }}
-            className="absolute inset-0 w-full h-[200%] bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCI+PGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iMiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==')] opacity-80"
-          />
-        </div>
+        {/* CAPA 2: PARTICULAS PARALLAX (DESACTIVADA EN MODO ZEN) */}
+        {!zenMode && (
+          <div className="absolute inset-0 pointer-events-none z-0 opacity-40">
+            <motion.div 
+              animate={{ y: ["-100%", "0%"] }}
+              transition={{ duration: 45, repeat: Infinity, ease: "linear" }}
+              className="absolute inset-0 w-full h-[200%] bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMSIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==')] opacity-50"
+            />
+            <motion.div 
+              animate={{ y: ["-100%", "0%"] }}
+              transition={{ duration: 22.5, repeat: Infinity, ease: "linear" }}
+              className="absolute inset-0 w-full h-[200%] bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCI+PGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iMiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==')] opacity-80"
+            />
+          </div>
+        )}
 
         {/* GLOBAL LEVEL UP / REWARD GLOW */}
         <div 

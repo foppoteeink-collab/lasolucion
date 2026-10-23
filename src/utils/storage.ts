@@ -162,7 +162,11 @@ export const loadSavedTasksByDate = (): Record<string, TaskItem[]> => {
 
 export const saveTasksByDate = (tasksByDate: Record<string, TaskItem[]>) => {
   safeSetItem('taskquest_tasks_by_date_v2', JSON.stringify(tasksByDate));
-  safeSetItem('taskquest_tasks_by_date', JSON.stringify(tasksByDate));
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.removeItem('taskquest_tasks_by_date');
+    } catch {}
+  }
 };
 
 export const loadSavedTasks = (): TaskItem[] => {
@@ -261,7 +265,8 @@ export const loadNotifications = (): AppNotification[] => {
 };
 
 export const saveNotifications = (notifs: AppNotification[]) => {
-  safeSetItem(STORAGE_KEYS.NOTIFICATIONS, JSON.stringify(notifs));
+  const capped = Array.isArray(notifs) ? notifs.slice(0, 50) : [];
+  safeSetItem(STORAGE_KEYS.NOTIFICATIONS, JSON.stringify(capped));
 };
 
 export const exportBackupJSON = (

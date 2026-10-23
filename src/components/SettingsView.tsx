@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Settings, Sparkles, Activity, ShieldAlert, LogOut, User, LogIn, 
+  Settings, Sparkles, Activity, ShieldAlert, ShieldCheck, Shield, LogOut, User, LogIn, 
   Cloud, CloudOff, Download, Upload, Database, Check, RefreshCw, 
-  ShieldCheck, HardDrive, FileSpreadsheet, Cpu, CheckCircle2,
+  HardDrive, FileSpreadsheet, Cpu, CheckCircle2,
   Coins, Volume2, VolumeX, Target, Sun, Moon, Laptop, ArrowUpRight, CheckCheck,
   SlidersHorizontal, Smartphone, Share, PlusSquare, FlaskConical,
   Compass, Eye, Layout, Bell, BellOff, BellRing, Zap, Flame, Timer
@@ -57,7 +57,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [showIOSInstructions, setShowIOSInstructions] = useState(false);
   const game = gameEngine as any;
   const cloudSync = propCloudSync || game?.cloudSync;
-  const { soundEnabled, toggleSound, themeMode, navigationMode, setNavigationMode } = useUIStore();
+  const { soundEnabled, toggleSound, themeMode, navigationMode, setNavigationMode, zenMode, toggleZenMode } = useUIStore();
   
   const [activeSubTab, setActiveSubTab] = useState<SettingsSubTab>('general');
   const [currentCurrency, setCurrentCurrency] = useState<string>(getSavedCurrencySymbol);
@@ -822,6 +822,29 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     <span>Clásico (Con Barra)</span>
                   </button>
                 </div>
+              </div>
+
+              {/* Modo Zen / Rendimiento Limpio */}
+              <div className="flex items-center justify-between gap-4 py-2 border-t border-slate-800/80">
+                <div>
+                  <h4 className="text-sm font-black text-white flex items-center gap-2 mb-1">
+                    <Shield className="w-4 h-4 text-emerald-400" /> Modo Zen (Ultra Enfoque & Batería)
+                  </h4>
+                  <p className="text-xs text-slate-400">
+                    Desactiva orbes de energía pesados y partículas continuas para una interfaz sobria, sin distracciones y con mínimo consumo de GPU en móvil.
+                  </p>
+                </div>
+                <button 
+                  type="button"
+                  onClick={() => {
+                    soundFX.playClick();
+                    toggleZenMode();
+                  }}
+                  className={`w-12 h-6 rounded-full relative transition-colors flex-shrink-0 cursor-pointer ${zenMode ? 'bg-emerald-500' : 'bg-slate-700'}`}
+                  title={zenMode ? 'Modo Zen activado' : 'Modo Zen desactivado'}
+                >
+                  <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-all ${zenMode ? 'left-6.5 translate-x-[24px]' : 'left-0.5'}`}></div>
+                </button>
               </div>
             </div>
 

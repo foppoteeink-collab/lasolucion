@@ -184,7 +184,7 @@ export const TaskActionsDropdown: React.FC<TaskActionsDropdownProps> = ({
         type="button"
         whileTap={{ scale: 0.88 }}
         onClick={handleToggle}
-        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all cursor-pointer relative z-40 ${
+        className={`touch-target-44 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all cursor-pointer relative z-40 before:absolute before:-inset-2 before:content-[''] ${
           isMenuOpen
             ? 'bg-cyan-950 border border-cyan-400 text-cyan-300 shadow-[0_0_15px_rgba(0,240,255,0.4)] rotate-90'
             : 'bg-[#080515] border border-cyan-500/30 text-cyan-400 hover:border-cyan-400 hover:text-cyan-200 hover:bg-[#0c0a20] shadow-[0_0_8px_rgba(0,240,255,0.1)]'

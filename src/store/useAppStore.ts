@@ -33,6 +33,7 @@ interface AppState {
 
   notifications: AppNotification[];
   setNotifications: (val: AppNotification[] | ((prev: AppNotification[]) => AppNotification[])) => void;
+  clearAllNotifications: () => void;
 
   notificationSettings: NotificationSettings;
   setNotificationSettings: (val: NotificationSettings | ((prev: NotificationSettings) => NotificationSettings)) => void;
@@ -78,7 +79,16 @@ export const useAppStore = create<AppState>((set) => ({
   setPomodoroSessions: (val) => set((state) => { const n = typeof val === 'function' ? val(state.pomodoroSessions) : val; savePomodoroHistory(n); return { pomodoroSessions: n }; }),
 
   notifications: loadNotifications(),
-  setNotifications: (val) => set((state) => { const n = typeof val === 'function' ? val(state.notifications) : val; saveNotifications(n); return { notifications: n }; }),
+  setNotifications: (val) => set((state) => {
+    const raw = typeof val === 'function' ? val(state.notifications) : val;
+    const n = Array.isArray(raw) ? raw.slice(0, 50) : [];
+    saveNotifications(n);
+    return { notifications: n };
+  }),
+  clearAllNotifications: () => set(() => {
+    saveNotifications([]);
+    return { notifications: [] };
+  }),
 
   notificationSettings: loadNotificationSettings(),
   setNotificationSettings: (val) => set((state) => {

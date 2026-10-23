@@ -428,8 +428,8 @@ export const handleToggleTask = (taskId: string, e?: any) => {
     
     // Encuentro Determinista con Jefe Diario (Umbral: 3 hábitos o tareas de alta prioridad completadas hoy)
     const todayStr = getTodayDateString();
-    let currentStats = statePlayer.stats;
-    const isBossEligible = !hasClaimedBossToday() && currentStats.lastEncounterDate !== todayStr;
+    let triggeredBoss = false;
+    const isBossEligible = !hasClaimedBossToday() && statePlayer.stats.lastEncounterDate !== todayStr;
     if (isBossEligible) {
       const allDayTasks = stateTask.tasksByDate[date] || [];
       const completedHabitsOrPriority = allDayTasks.filter(t => {
@@ -439,7 +439,7 @@ export const handleToggleTask = (taskId: string, e?: any) => {
       }).length;
 
       if (completedHabitsOrPriority >= 3) {
-        currentStats = { ...currentStats, lastEncounterDate: todayStr };
+        triggeredBoss = true;
         stateUI.openSurpriseBoss({
           archetypeName: 'Comandante de la Procrastinación',
           buffName: 'Jefe Diario Enfrentado',
@@ -448,13 +448,11 @@ export const handleToggleTask = (taskId: string, e?: any) => {
       }
     }
 
-    if (currentStats.lastEncounterDate === todayStr && xpReward === 0 && coinReward === 0) {
-       statePlayer.setStats(currentStats);
-    }
-    
     if (xpReward > 0 || coinReward > 0) {
-      const newStats = checkLevelUp(currentStats, xpReward, coinReward);
-      statePlayer.setStats(newStats);
+      statePlayer.setStats((prev) => {
+        const base = triggeredBoss ? { ...prev, lastEncounterDate: todayStr } : prev;
+        return checkLevelUp(base, xpReward, coinReward);
+      });
       
       // Crisp, tactile feedback on task complete without screen pollution
       try {
@@ -470,19 +468,20 @@ export const handleToggleTask = (taskId: string, e?: any) => {
           type: 'critical'
         });
       }
+    } else if (triggeredBoss) {
+      statePlayer.setStats((prev) => ({ ...prev, lastEncounterDate: todayStr }));
     }
   } else {
-    // Task was uncompleted, subtract points
+    // Task was uncompleted, subtract points atomically
     soundFX.playClick();
     stateTask.updateTask(date, taskId, { awardedXp: 0, awardedCoins: 0 });
     if (xpReward > 0 || coinReward > 0) {
-      const stats = statePlayer.stats;
-      statePlayer.setStats({
-         ...stats,
-         currentXp: Math.max(0, stats.currentXp - xpReward),
-         totalXpEarned: Math.max(0, stats.totalXpEarned - xpReward),
-         coins: Math.max(0, stats.coins - coinReward)
-      });
+      statePlayer.setStats((prev) => ({
+        ...prev,
+        currentXp: Math.max(0, prev.currentXp - xpReward),
+        totalXpEarned: Math.max(0, prev.totalXpEarned - xpReward),
+        coins: Math.max(0, prev.coins - coinReward)
+      }));
     }
   }
 
@@ -498,8 +497,7 @@ export const handleToggleTask = (taskId: string, e?: any) => {
     );
     appStore.setHabitMastery(newMastery);
     if (bonusXp > 0) {
-      const stats = statePlayer.stats;
-      statePlayer.setStats(checkLevelUp(stats, bonusXp, 0));
+      statePlayer.setStats((prev) => checkLevelUp(prev, bonusXp, 0));
     }
     if (notifications.length > 0) {
       const currentNotifs = appStore.notifications || [];
@@ -577,8 +575,7 @@ export const handleIncrementHabit = (taskId: string, e?: any) => {
   const coinReward = Math.floor((task.coinReward || 0) * taxMultiplier);
 
   if (xpReward > 0 || coinReward > 0) {
-    const newStats = checkLevelUp(statePlayer.stats, xpReward, coinReward);
-    statePlayer.setStats(newStats);
+    statePlayer.setStats((prev) => checkLevelUp(prev, xpReward, coinReward));
   }
 
   if (isRetroactive && !isNowCompleted) {
@@ -603,8 +600,7 @@ export const handleIncrementHabit = (taskId: string, e?: any) => {
     }
 
     // Encuentro Determinista con Jefe Diario (Umbral: 3 hábitos o tareas de alta prioridad completadas hoy)
-    let currentStats = statePlayer.stats;
-    const isBossEligible = !hasClaimedBossToday() && currentStats.lastEncounterDate !== today;
+    const isBossEligible = !hasClaimedBossToday() && statePlayer.stats.lastEncounterDate !== today;
     if (isBossEligible) {
       const allDayTasks = stateTask.tasksByDate[date] || [];
       const completedHabitsOrPriority = allDayTasks.filter(t => {
@@ -614,8 +610,7 @@ export const handleIncrementHabit = (taskId: string, e?: any) => {
       }).length;
 
       if (completedHabitsOrPriority >= 3) {
-        currentStats = { ...currentStats, lastEncounterDate: today };
-        statePlayer.setStats(currentStats);
+        statePlayer.setStats((prev) => ({ ...prev, lastEncounterDate: today }));
         stateUI.openSurpriseBoss({
           archetypeName: 'Comandante de la Procrastinación',
           buffName: 'Jefe Diario Enfrentado',
@@ -635,8 +630,7 @@ export const handleIncrementHabit = (taskId: string, e?: any) => {
   );
   stateApp.setHabitMastery(newMastery);
   if (bonusXp > 0) {
-    const stats = statePlayer.stats;
-    statePlayer.setStats(checkLevelUp(stats, bonusXp, 0));
+    statePlayer.setStats((prev) => checkLevelUp(prev, bonusXp, 0));
   }
   if (notifications.length > 0) {
     const currentNotifs = stateApp.notifications || [];
