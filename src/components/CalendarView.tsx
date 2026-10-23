@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Plus } from 'lucide-react';
 import { soundFX } from '../utils/audio';
 import { addDaysToDateString, getTodayDateString, parseLocalDate } from '../utils/date';
+import { usePlayerStore } from '../store/usePlayerStore';
 
 interface CalendarViewProps {
   currentDate: string;
@@ -10,6 +11,9 @@ interface CalendarViewProps {
 }
 
 export const CalendarView: React.FC<CalendarViewProps> = ({ currentDate, onChangeDate, onOpenAddModal }) => {
+  const restDays = usePlayerStore((s) => s.stats.restDays || {});
+  const toggleRestDay = usePlayerStore((s) => s.toggleRestDay);
+  const isCurrentDateRest = Boolean(restDays[currentDate]);
   const weekDays = useMemo(() => {
     const days = [];
     // -3 to +3 keeps currentDate exactly in the center of 7 days
@@ -51,7 +55,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ currentDate, onChang
   return (
     <div className="scifi-glass-panel rounded-2xl p-3.5 sm:p-4 mb-4 text-white">
       <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <h3 className="text-sm font-anton tracking-wide text-white uppercase flex items-center gap-2">
             <CalendarIcon className="w-4 h-4 text-cyan-400 drop-shadow-[0_0_8px_rgba(0,240,255,0.7)]" /> {monthName}
           </h3>
@@ -64,6 +68,25 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ currentDate, onChang
               Ir a Hoy
             </button>
           )}
+          <button
+            type="button"
+            onClick={() => {
+              soundFX.playClick();
+              const wasActivated = toggleRestDay(currentDate);
+              if (wasActivated) {
+                soundFX.playItemEquip();
+              }
+            }}
+            className={`text-[10px] sm:text-[11px] font-anton uppercase tracking-wider px-2.5 py-1 rounded-xl border transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 ${
+              isCurrentDateRest
+                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.35)] ring-1 ring-emerald-400'
+                : 'bg-[#04020e] text-slate-400 border-white/10 hover:border-emerald-500/50 hover:text-emerald-300'
+            }`}
+            title={isCurrentDateRest ? 'Día de descanso activo: sin daño de HP y hábitos 21/66 protegidos' : 'Activar día de descanso deliberado para esta fecha'}
+          >
+            <span>{isCurrentDateRest ? '🌿' : '🛡️'}</span>
+            <span>{isCurrentDateRest ? 'Descanso Activo' : 'Modo Descanso'}</span>
+          </button>
         </div>
         <div className="flex gap-2">
           <button 
@@ -119,6 +142,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ currentDate, onChang
         {weekDays.map(dateStr => {
           const isSelected = dateStr === currentDate;
           const isToday = dateStr === todayStr;
+          const isRestDay = Boolean(restDays[dateStr]);
           
           return (
             <button
@@ -134,7 +158,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ currentDate, onChang
                     ? 'bg-cyan-950/80 text-white border-cyan-400 shadow-[0_0_15px_rgba(0,240,255,0.4)] scale-105 z-10 ring-1 ring-cyan-400'
                     : isToday 
                       ? 'bg-yellow-400/15 border border-yellow-400 text-yellow-300 shadow-[0_0_12px_rgba(250,204,21,0.35)] hover:border-yellow-300'
-                      : 'bg-[#04020e]/80 border border-cyan-500/20 text-slate-300 hover:border-cyan-400/60 hover:text-white'
+                      : isRestDay
+                        ? 'bg-emerald-950/30 border border-emerald-500/30 text-emerald-300 hover:border-emerald-400/60'
+                        : 'bg-[#04020e]/80 border border-cyan-500/20 text-slate-300 hover:border-cyan-400/60 hover:text-white'
               }`}
             >
               {isToday && (
@@ -144,6 +170,14 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ currentDate, onChang
                     : 'bg-yellow-400 text-black font-bold'
                 }`}>
                   Hoy
+                </span>
+              )}
+              {isRestDay && (
+                <span 
+                  className="absolute -bottom-1.5 px-1 py-0.2 rounded-full text-[8px] bg-emerald-950/90 text-emerald-300 border border-emerald-500/60 font-mono font-bold z-20 shadow-[0_0_6px_rgba(16,185,129,0.4)]"
+                  title="Día de Descanso Planificado"
+                >
+                  🌿
                 </span>
               )}
               <span className={`text-[10px] sm:text-xs font-bold uppercase ${

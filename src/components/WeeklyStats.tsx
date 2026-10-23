@@ -1,13 +1,14 @@
-import { FinanceDashboard } from "./FinanceDashboard";
-import { HeroProfileModal } from './HeroProfileModal';
-import { RanksModal } from './RanksModal';
-import { ArchetypesModal } from './ArchetypesModal';
+import React, { useState, useMemo, lazy, Suspense } from 'react';
 import { HoloCompanion } from './HoloCompanion';
 import { ScrollReveal } from './common/ScrollReveal';
-import React, { useState, useMemo } from 'react';
 import { IntelligenceOverlay } from '../intelligence/IntelligenceOverlay';
 import { PlayerStats, PomodoroSession, TaskItem, HabitMasteryRecord, FinancialTransaction } from '../types';
 import { CloudSyncResult } from '../hooks/useCloudSync';
+
+const FinanceDashboard = lazy(() => import("./FinanceDashboard").then(m => ({ default: m.FinanceDashboard })));
+const HeroProfileModal = lazy(() => import('./HeroProfileModal').then(m => ({ default: m.HeroProfileModal })));
+const RanksModal = lazy(() => import('./RanksModal').then(m => ({ default: m.RanksModal })));
+const ArchetypesModal = lazy(() => import('./ArchetypesModal').then(m => ({ default: m.ArchetypesModal })));
 import { getTodayDateString, addDaysToDateString } from '../utils/date';
 import { HABIT_ENERGY_DETAILS, detectHabitEnergy } from '../utils/habitEnergyDetector';
 import {
@@ -574,35 +575,41 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
   return (
     <div className="space-y-5 pb-6">
 
-      <HeroProfileModal 
-        isOpen={isEditingProfile} 
-        onClose={() => setIsEditingProfile(false)} 
-        stats={stats} 
-        onUpdateStats={onUpdateStats} 
-        cloudSync={cloudSync}
-        onOpenAwakening={onOpenAwakening}
-        onOpenArchetypes={() => setIsArchetypesModalOpen(true)}
-      />
+      <Suspense fallback={null}>
+        <HeroProfileModal 
+          isOpen={isEditingProfile} 
+          onClose={() => setIsEditingProfile(false)} 
+          stats={stats} 
+          onUpdateStats={onUpdateStats} 
+          cloudSync={cloudSync}
+          onOpenAwakening={onOpenAwakening}
+          onOpenArchetypes={() => setIsArchetypesModalOpen(true)}
+        />
+      </Suspense>
 
-      <RanksModal
-        isOpen={isRanksModalOpen}
-        onClose={() => setIsRanksModalOpen(false)}
-        currentLevel={stats.level || 1}
-      />
+      <Suspense fallback={null}>
+        <RanksModal
+          isOpen={isRanksModalOpen}
+          onClose={() => setIsRanksModalOpen(false)}
+          currentLevel={stats.level || 1}
+        />
+      </Suspense>
 
-      <ArchetypesModal
-        isOpen={isArchetypesModalOpen}
-        onClose={() => setIsArchetypesModalOpen(false)}
-        currentArchetype={stats.characterClass || 'El Héroe'}
-        onSelectArchetype={(arch) => {
-          if (onUpdateStats) {
-            onUpdateStats(prev => ({
-              ...prev,
-              characterClass: arch.name,
-            }));
-          }
-        }}
-      />
+      <Suspense fallback={null}>
+        <ArchetypesModal
+          isOpen={isArchetypesModalOpen}
+          onClose={() => setIsArchetypesModalOpen(false)}
+          currentArchetype={stats.characterClass || 'El Héroe'}
+          onSelectArchetype={(arch) => {
+            if (onUpdateStats) {
+              onUpdateStats(prev => ({
+                ...prev,
+                characterClass: arch.name,
+              }));
+            }
+          }}
+        />
+      </Suspense>
 
       {/* ---------------- SUB-TABS SELECTOR (TACTICAL SCI-FI SWITCHER) ---------------- */}
       <div className="sticky top-0 z-30 mb-5 p-1.5 rounded-2xl bg-[#030612]/95 backdrop-blur-md border border-cyan-500/40 shadow-[0_4px_25px_rgba(0,240,255,0.15)] flex items-center gap-1.5 overflow-x-auto no-scrollbar">
@@ -1711,7 +1718,9 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
       {activeSubTab === 'finance' && (
         <div className="space-y-6 animate-fadeIn">
           {/* Finance Dashboard */}
-          <FinanceDashboard expenses={expenses} setExpenses={setExpenses} tasksByDate={tasksByDate} />
+          <Suspense fallback={<div className="p-8 text-center text-xs font-mono text-cyan-400">Cargando panel financiero...</div>}>
+            <FinanceDashboard expenses={expenses} setExpenses={setExpenses} tasksByDate={tasksByDate} />
+          </Suspense>
 
           {/* Advanced Intelligence Layer */}
           <ScrollReveal>

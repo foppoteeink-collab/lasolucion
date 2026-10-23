@@ -140,76 +140,89 @@ export const usePlayerStore = create<PlayerState>()(
       }),
 
       takeDamage: (amount) => {
-        const state = get();
         let result = { died: false, xpLost: 0, coinsLost: 0 };
-        
-        let currentHp = state.stats.hp ?? 100;
-        let newHp = Math.max(0, currentHp - amount);
-        
-        if (newHp <= 0) {
-          result.died = true;
-          set({ stats: { ...state.stats, hp: 0 } });
+        let shouldOpenCollapse = false;
+
+        set((state) => {
+          const currentHp = state.stats.hp ?? 100;
+          const newHp = Math.max(0, currentHp - amount);
+          
+          if (newHp <= 0) {
+            result.died = true;
+            shouldOpenCollapse = true;
+            return { stats: { ...state.stats, hp: 0 } };
+          } else {
+            return { stats: { ...state.stats, hp: newHp } };
+          }
+        });
+
+        if (shouldOpenCollapse) {
           useUIStore.getState().setModalState('isHunterCollapseOpen', true);
-        } else {
-          set({ stats: { ...state.stats, hp: newHp } });
         }
         return result;
       },
 
       revivePlayer: (method: 'xp' | 'coins') => {
-        const state = get();
-        const currentStats = state.stats;
-        const maxHp = currentStats.maxHp || 100;
-        const revivedHp = Math.max(50, Math.round(maxHp / 2)); // Restores to 50% HP minimum 50
         let xpLost = 0;
         let coinsLost = 0;
 
-        if (method === 'coins' && (currentStats.coins || 0) >= 30) {
-          coinsLost = 30;
-          set({
-            stats: {
-              ...currentStats,
-              hp: revivedHp,
-              coins: Math.max(0, (currentStats.coins || 0) - 30)
-            }
-          });
-        } else {
-          // Default XP deduction: 20% of current level's accumulated XP, never drops below level floor (0 XP in current level)
-          const currentXp = currentStats.currentXp || 0;
-          xpLost = Math.round(currentXp * 0.20);
-          set({
-            stats: {
-              ...currentStats,
-              hp: revivedHp,
-              currentXp: Math.max(0, currentXp - xpLost)
-            }
-          });
-        }
+        set((state) => {
+          const currentStats = state.stats;
+          const maxHp = currentStats.maxHp || 100;
+          const revivedHp = Math.max(50, Math.round(maxHp / 2)); // Restores to 50% HP minimum 50
+
+          if (method === 'coins' && (currentStats.coins || 0) >= 30) {
+            coinsLost = 30;
+            return {
+              stats: {
+                ...currentStats,
+                hp: revivedHp,
+                coins: Math.max(0, (currentStats.coins || 0) - 30)
+              }
+            };
+          } else {
+            // Default XP deduction: 20% of current level's accumulated XP, never drops below level floor (0 XP in current level)
+            const currentXp = currentStats.currentXp || 0;
+            xpLost = Math.round(currentXp * 0.20);
+            return {
+              stats: {
+                ...currentStats,
+                hp: revivedHp,
+                currentXp: Math.max(0, currentXp - xpLost)
+              }
+            };
+          }
+        });
 
         useUIStore.getState().setModalState('isHunterCollapseOpen', false);
         return { xpLost, coinsLost };
       },
 
       toggleRestDay: (dateStr) => {
-        const state = get();
         const targetDate = dateStr || new Date().toISOString().split('T')[0];
-        const currentRestDays = { ...(state.stats.restDays || {}) };
-        const isCurrentlyRest = Boolean(currentRestDays[targetDate]);
+        let isNowRest = false;
         
-        if (isCurrentlyRest) {
-          delete currentRestDays[targetDate];
-        } else {
-          currentRestDays[targetDate] = true;
-        }
-
-        set({
-          stats: {
-            ...state.stats,
-            restDays: currentRestDays
+        set((state) => {
+          const currentRestDays = { ...(state.stats.restDays || {}) };
+          const isCurrentlyRest = Boolean(currentRestDays[targetDate]);
+          
+          if (isCurrentlyRest) {
+            delete currentRestDays[targetDate];
+            isNowRest = false;
+          } else {
+            currentRestDays[targetDate] = true;
+            isNowRest = true;
           }
+
+          return {
+            stats: {
+              ...state.stats,
+              restDays: currentRestDays
+            }
+          };
         });
 
-        return !isCurrentlyRest;
+        return isNowRest;
       },
 
       heal: (amount) => set((state) => {
@@ -224,19 +237,22 @@ export const usePlayerStore = create<PlayerState>()(
       }),
 
       purchaseItem: (cost, logic) => {
-        const state = get();
-        if ((state.stats.coins || 0) >= cost) {
-          const updates = logic ? logic(state.stats) : {};
-          set({
-            stats: {
-              ...state.stats,
-              coins: (state.stats.coins || 0) - cost,
-              ...updates
-            }
-          });
-          return true;
-        }
-        return false;
+        let purchased = false;
+        set((state) => {
+          if ((state.stats.coins || 0) >= cost) {
+            purchased = true;
+            const updates = logic ? logic(state.stats) : {};
+            return {
+              stats: {
+                ...state.stats,
+                coins: (state.stats.coins || 0) - cost,
+                ...updates
+              }
+            };
+          }
+          return state;
+        });
+        return purchased;
       },
 
       finalizeDay: (currentDate, bonusXp, bonusCoins, bedtime) => {
@@ -424,79 +440,84 @@ export const usePlayerStore = create<PlayerState>()(
           newInventory.push({ ...droppedBaseItem, id: Math.random().toString(36).substr(2, 9) } as any);
         }
 
-        set({
+        set((state) => ({
           stats: {
             ...state.stats,
-            unopenedBoxes: (state.stats.unopenedBoxes || 1) - 1,
+            unopenedBoxes: Math.max(0, (state.stats.unopenedBoxes || 1) - 1),
             inventory: newInventory
           }
-        });
+        }));
 
         return { item: droppedBaseItem, success: true };
       },
 
       useInventoryItem: (itemId) => {
-        const state = get();
-        const inventory = [...(state.stats.inventory || [])];
-        const itemIndex = inventory.findIndex(i => i.id === itemId);
-        
-        if (itemIndex === -1 || inventory[itemIndex].quantity <= 0) return false;
-        
-        const item = inventory[itemIndex];
-        let updates: Partial<PlayerStats> = {};
         let success = false;
 
-        switch (item.effectType) {
-          case 'heal_hp':
-            updates.hp = Math.min(state.stats.maxHp || 100, (state.stats.hp || 0) + (item.effectValue || 50));
-            success = true;
-            break;
-          case 'streak_shield':
-            updates.streakShields = (state.stats.streakShields || 0) + 1;
-            success = true;
-            break;
-          case 'coin_boost':
-            updates.focusPotionExpiresAt = Date.now() + (item.durationHours || 24) * 60 * 60 * 1000;
-            success = true;
-            break;
-          case 'xp_boost':
-            // we will need a new field for xp boost expiration, let's reuse focusPotionExpiresAt or add activeDailyBuff
-            updates.activeDailyBuff = {
-              archetypeId: 'amulet_wisdom',
-              archetypeName: 'Amuleto Sabiduría',
-              buffName: 'Multiplicador XP',
-              description: 'XP x3 en todas las tareas por 24h.',
-              xpMultiplier: 3,
-              coinMultiplier: 1,
-              activatedAtDate: new Date().toISOString()
-            };
-            success = true;
-            break;
-          case 'revive_streak':
-            // Logic for revive streak: restore previousStreak if available or streakDays or minimum 7
-            updates.streakDays = Math.max(state.stats.previousStreak || 0, state.stats.streakDays || 0, 7);
-            updates.streakShields = (state.stats.streakShields || 0) + 1;
-            success = true;
-            break;
-        }
-
-        if (success) {
-          inventory[itemIndex].quantity -= 1;
-          if (inventory[itemIndex].quantity <= 0) {
-            inventory.splice(itemIndex, 1);
+        set((state) => {
+          const inventory = [...(state.stats.inventory || [])];
+          const itemIndex = inventory.findIndex(i => i.id === itemId);
+          
+          if (itemIndex === -1 || (inventory[itemIndex].quantity || 0) <= 0) {
+            return state;
           }
           
-          set({
-            stats: {
-              ...state.stats,
-              ...updates,
-              inventory
+          const item = inventory[itemIndex];
+          let updates: Partial<PlayerStats> = {};
+
+          switch (item.effectType) {
+            case 'heal_hp':
+              updates.hp = Math.min(state.stats.maxHp || 100, (state.stats.hp || 0) + (item.effectValue || 50));
+              success = true;
+              break;
+            case 'streak_shield':
+              updates.streakShields = (state.stats.streakShields || 0) + 1;
+              success = true;
+              break;
+            case 'coin_boost':
+              updates.focusPotionExpiresAt = Date.now() + (item.durationHours || 24) * 60 * 60 * 1000;
+              success = true;
+              break;
+            case 'xp_boost':
+              updates.activeDailyBuff = {
+                archetypeId: 'amulet_wisdom',
+                archetypeName: 'Amuleto Sabiduría',
+                buffName: 'Multiplicador XP',
+                description: 'XP x3 en todas las tareas por 24h.',
+                xpMultiplier: 3,
+                coinMultiplier: 1,
+                activatedAtDate: new Date().toISOString()
+              };
+              success = true;
+              break;
+            case 'revive_streak':
+              updates.streakDays = Math.max(state.stats.previousStreak || 0, state.stats.streakDays || 0, 7);
+              updates.streakShields = (state.stats.streakShields || 0) + 1;
+              success = true;
+              break;
+          }
+
+          if (success) {
+            const updatedItem = { ...inventory[itemIndex], quantity: inventory[itemIndex].quantity - 1 };
+            if (updatedItem.quantity <= 0) {
+              inventory.splice(itemIndex, 1);
+            } else {
+              inventory[itemIndex] = updatedItem;
             }
-          });
-          return true;
-        }
-        
-        return false;
+            
+            return {
+              stats: {
+                ...state.stats,
+                ...updates,
+                inventory
+              }
+            };
+          }
+
+          return state;
+        });
+
+        return success;
       },
 
       completeAwakening: (data) => set((state) => {

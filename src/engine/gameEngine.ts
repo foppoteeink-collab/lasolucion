@@ -676,13 +676,12 @@ export const handleResetHabit = (taskId: string, e?: any) => {
   });
 
   if (task.completed && (xpReward > 0 || coinReward > 0)) {
-    const stats = statePlayer.stats;
-    statePlayer.setStats({
-      ...stats,
-      currentXp: Math.max(0, stats.currentXp - xpReward),
-      totalXpEarned: Math.max(0, stats.totalXpEarned - xpReward),
-      coins: Math.max(0, stats.coins - coinReward)
-    });
+    statePlayer.setStats((prev) => ({
+      ...prev,
+      currentXp: Math.max(0, (prev.currentXp || 0) - xpReward),
+      totalXpEarned: Math.max(0, (prev.totalXpEarned || 0) - xpReward),
+      coins: Math.max(0, (prev.coins || 0) - coinReward)
+    }));
   }
 
   useUIStore.getState().addFloatingEffect({
@@ -763,13 +762,12 @@ export const handleClaimDailyReward = (day: number, xp: number, coins: number, b
   const { player: statePlayer, ui: stateUI } = getEngineContext();
   
   if (xp > 0 || coins > 0) {
-    const newStats = checkLevelUp(statePlayer.stats, xp, coins);
-    statePlayer.setStats(newStats);
+    statePlayer.setStats((prev) => checkLevelUp(prev, xp, coins));
     
     if (typeof window !== 'undefined') {
        stateUI.addFloatingEffect({ x: window.innerWidth / 2, y: window.innerHeight / 2 - 20, text: `+${xp} XP`, type: 'xp' });
        setTimeout(() => {
-         stateUI.addFloatingEffect({ x: window.innerWidth / 2, y: window.innerHeight / 2 - 40, text: `+${coins} Oro`, type: 'coins' });
+         stateUI.addFloatingEffect({ x: window.innerWidth / 2, y: window.innerHeight / 2 - 40, text: `+${coins} Monedas`, type: 'coins' });
        }, 150);
     }
   }
@@ -783,34 +781,34 @@ export const handleConfirmFinishDay = (bonusXp: number, bonusCoins: number) => {
   const now = new Date();
   const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-  let nextStats = statePlayer.stats;
-  if (bonusXp > 0 || bonusCoins > 0) {
-    nextStats = checkLevelUp(nextStats, bonusXp, bonusCoins);
-  }
-
-  nextStats = {
-    ...nextStats,
-    finalizedDays: {
-      ...(nextStats.finalizedDays || {}),
-      [currentDate]: {
-        finalizedAt: now.toISOString(),
-        bonusXp,
-        bonusCoins,
-        sleepStartTime: timeString,
-        isSleepActive: true
-      }
-    },
-    sleepLogs: {
-      ...(nextStats.sleepLogs || {}),
-      [currentDate]: {
-        bedtime: timeString,
-        isTrackingActive: true,
-        trackingStartedAt: now.toISOString()
-      }
+  statePlayer.setStats((prev) => {
+    let nextStats = prev;
+    if (bonusXp > 0 || bonusCoins > 0) {
+      nextStats = checkLevelUp(nextStats, bonusXp, bonusCoins);
     }
-  };
 
-  statePlayer.setStats(nextStats);
+    return {
+      ...nextStats,
+      finalizedDays: {
+        ...(nextStats.finalizedDays || {}),
+        [currentDate]: {
+          finalizedAt: now.toISOString(),
+          bonusXp,
+          bonusCoins,
+          sleepStartTime: timeString,
+          isSleepActive: true
+        }
+      },
+      sleepLogs: {
+        ...(nextStats.sleepLogs || {}),
+        [currentDate]: {
+          bedtime: timeString,
+          isTrackingActive: true,
+          trackingStartedAt: now.toISOString()
+        }
+      }
+    };
+  });
 
   // Conciliación Retrospectiva Honesta: Marcar tareas incompletas como bloqueadas en la fecha finalizada SOLO si está fuera del rango de 48h
   const reconciliationLimit = addDaysToDateString(getTodayDateString(), -2);
@@ -833,7 +831,7 @@ export const handleConfirmFinishDay = (bonusXp: number, bonusCoins: number) => {
     if (typeof window !== 'undefined') {
        stateUI.addFloatingEffect({ x: window.innerWidth / 2, y: window.innerHeight / 2 - 20, text: `+${bonusXp} XP`, type: 'xp' });
        setTimeout(() => {
-         stateUI.addFloatingEffect({ x: window.innerWidth / 2, y: window.innerHeight / 2 - 40, text: `+${bonusCoins} Oro`, type: 'coins' });
+         stateUI.addFloatingEffect({ x: window.innerWidth / 2, y: window.innerHeight / 2 - 40, text: `+${bonusCoins} Monedas`, type: 'coins' });
        }, 150);
     }
   }
@@ -844,17 +842,18 @@ export const handleReopenDay = (dateStr?: string) => {
   const { player: statePlayer, task: stateTask } = getEngineContext();
   const targetDate = dateStr || stateTask.currentViewDate;
   
-  const stats = statePlayer.stats;
-  const newFinalized = { ...stats.finalizedDays };
-  delete newFinalized[targetDate];
-  
-  const newSleep = { ...stats.sleepLogs };
-  delete newSleep[targetDate];
+  statePlayer.setStats((prev) => {
+    const newFinalized = { ...(prev.finalizedDays || {}) };
+    delete newFinalized[targetDate];
+    
+    const newSleep = { ...(prev.sleepLogs || {}) };
+    delete newSleep[targetDate];
 
-  statePlayer.setStats({
-    ...stats,
-    finalizedDays: newFinalized,
-    sleepLogs: newSleep
+    return {
+      ...prev,
+      finalizedDays: newFinalized,
+      sleepLogs: newSleep
+    };
   });
 
   // Desbloquear tareas en la fecha reabierta

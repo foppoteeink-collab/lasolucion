@@ -15,12 +15,6 @@ import { Header } from './Header';
 import { FloatingGainEffect } from './FloatingGainEffect';
 import { FloatingEffectsOverlay } from './FloatingEffectsOverlay';
 import { FloatingJuiceOverlay } from './FloatingJuiceOverlay';
-import { DailyRewardsModal } from './DailyRewardsModal';
-import { LevelUpModal } from './LevelUpModal';
-import { NightlyReflectionModal } from './NightlyReflectionModal';
-import { NightlyTunnel } from './NightlyTunnel';
-import { SurpriseBossModal } from './SurpriseBossModal';
-import { HunterCollapseModal } from './HunterCollapseModal';
 import { DeleteConfirmModal } from './DeleteConfirmModal';
 import { TaskListView } from './TaskListView';
 import { PomodoroTimer } from './PomodoroTimer';
@@ -36,6 +30,12 @@ const DayTemplatesModal = lazy(() => import('./DayTemplatesModal').then(m => ({ 
 const OracleModal = lazy(() => import('./OracleModal').then(m => ({ default: m.OracleModal })));
 const NeuralAnalysisModal = lazy(() => import('./NeuralAnalysisModal').then(m => ({ default: m.NeuralAnalysisModal })));
 const HunterAwakeningModal = lazy(() => import('./HunterAwakeningModal').then(m => ({ default: m.HunterAwakeningModal })));
+const DailyRewardsModal = lazy(() => import('./DailyRewardsModal').then(m => ({ default: m.DailyRewardsModal })));
+const LevelUpModal = lazy(() => import('./LevelUpModal').then(m => ({ default: m.LevelUpModal })));
+const NightlyReflectionModal = lazy(() => import('./NightlyReflectionModal').then(m => ({ default: m.NightlyReflectionModal })));
+const NightlyTunnel = lazy(() => import('./NightlyTunnel').then(m => ({ default: m.NightlyTunnel })));
+const SurpriseBossModal = lazy(() => import('./SurpriseBossModal').then(m => ({ default: m.SurpriseBossModal })));
+const HunterCollapseModal = lazy(() => import('./HunterCollapseModal').then(m => ({ default: m.HunterCollapseModal })));
 
 import { DailyBossWidget } from './DailyBossWidget';
 import { DailyScheduleStrip } from './DailyScheduleStrip';
@@ -177,7 +177,7 @@ export function AppLayout() {
         const stateUI = useUIStore.getState();
         stateUI.addFloatingEffect({ x: window.innerWidth / 2, y: window.innerHeight / 2 - 20, text: `+${bonusXp} XP`, type: 'xp' });
         setTimeout(() => {
-          stateUI.addFloatingEffect({ x: window.innerWidth / 2, y: window.innerHeight / 2 - 40, text: `+${bonusCoins} Oro`, type: 'coins' });
+          stateUI.addFloatingEffect({ x: window.innerWidth / 2, y: window.innerHeight / 2 - 40, text: `+${bonusCoins} Monedas`, type: 'coins' });
         }, 150);
       }
     }
@@ -669,29 +669,35 @@ export function AppLayout() {
       </Suspense>
 
       {/* Daily Rewards Modal */}
-      <DailyRewardsModal
-        isOpen={isDailyRewardsOpen}
-        onClose={() => setIsDailyRewardsOpen(false)}
-        stats={stats}
-        onClaimReward={handleClaimDailyReward}
-      />
+      <Suspense fallback={null}>
+        <DailyRewardsModal
+          isOpen={isDailyRewardsOpen}
+          onClose={() => setIsDailyRewardsOpen(false)}
+          stats={stats}
+          onClaimReward={handleClaimDailyReward}
+        />
+      </Suspense>
 
       {/* Level Up Celebration Modal */}
-      <LevelUpModal
-        isOpen={isLevelUpOpen}
-        onClose={() => setIsLevelUpOpen(false)}
-        newLevel={levelUpData?.level || 1}
-        newRankTitle={levelUpData?.rank || 'Aventurero'}
-        stats={stats}
-      />
+      <Suspense fallback={null}>
+        <LevelUpModal
+          isOpen={isLevelUpOpen}
+          onClose={() => setIsLevelUpOpen(false)}
+          newLevel={levelUpData?.level || 1}
+          newRankTitle={levelUpData?.rank || 'Aventurero'}
+          stats={stats}
+        />
+      </Suspense>
 
-            <SurpriseBossModal
-        isOpen={isSurpriseBossOpen}
-        onClose={() => setModalState('isSurpriseBossOpen', false)}
-        archetypeName={surpriseBossData?.archetypeName || 'Jefe Sorpresa'}
-        buffName={surpriseBossData?.buffName || 'Recompensa del Jefe'}
-        buffDescription={surpriseBossData?.buffDescription || 'Reclama tu poder.'}
-      />
+      <Suspense fallback={null}>
+        <SurpriseBossModal
+          isOpen={isSurpriseBossOpen}
+          onClose={() => setModalState('isSurpriseBossOpen', false)}
+          archetypeName={surpriseBossData?.archetypeName || 'Jefe Sorpresa'}
+          buffName={surpriseBossData?.buffName || 'Recompensa del Jefe'}
+          buffDescription={surpriseBossData?.buffDescription || 'Reclama tu poder.'}
+        />
+      </Suspense>
 
       {deleteConfirmTask && (
         <DeleteConfirmModal
@@ -702,7 +708,9 @@ export function AppLayout() {
       )}
 
       {/* Hunter Collapse / Revival Modal */}
-      <HunterCollapseModal />
+      <Suspense fallback={null}>
+        <HunterCollapseModal />
+      </Suspense>
 
       {/* Oracle AI Wizard Modal */}
       <Suspense fallback={null}>
@@ -725,26 +733,28 @@ export function AppLayout() {
       </Suspense>
 
       {/* Nightly Tunnel — Sequential End-of-Day Flow (Evaluation + Reward + Seal) */}
-      <NightlyTunnel
-        isOpen={isNightlyReflectionOpen || isFinishDayOpen}
-        onClose={() => {
-          setIsNightlyReflectionOpen(false);
-          setIsFinishDayOpen(false);
-        }}
-        stats={stats}
-        allTasks={tasks}
-        pomodoroSessions={pomodoroSessions}
-        onConfirmFinishDay={handleConfirmFinishDayLocal}
-        onClaimDailyReward={handleClaimDailyReward}
-        onAddJournalEntry={(note) => {
-          const today = getTodayDateString();
-          const taskList = tasksByDate[today] || [];
-          if (taskList.length > 0) {
-            handleUpdateTaskNote(today, taskList[0].id, note);
-          }
-          handleSaveReflection(today, note);
-        }}
-      />
+      <Suspense fallback={null}>
+        <NightlyTunnel
+          isOpen={isNightlyReflectionOpen || isFinishDayOpen}
+          onClose={() => {
+            setIsNightlyReflectionOpen(false);
+            setIsFinishDayOpen(false);
+          }}
+          stats={stats}
+          allTasks={tasks}
+          pomodoroSessions={pomodoroSessions}
+          onConfirmFinishDay={handleConfirmFinishDayLocal}
+          onClaimDailyReward={handleClaimDailyReward}
+          onAddJournalEntry={(note) => {
+            const today = getTodayDateString();
+            const taskList = tasksByDate[today] || [];
+            if (taskList.length > 0) {
+              handleUpdateTaskNote(today, taskList[0].id, note);
+            }
+            handleSaveReflection(today, note);
+          }}
+        />
+      </Suspense>
 
       {/* Hunter Awakening Ceremony Onboarding Modal */}
       <Suspense fallback={null}>

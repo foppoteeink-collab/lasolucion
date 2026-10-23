@@ -1,5 +1,6 @@
 import { HabitMasteryRecord, TaskItem, PlayerStats, AppNotification } from '../types';
 import { getTodayDateString } from '../utils/date';
+import { usePlayerStore } from '../store/usePlayerStore';
 
 export const getAdjacentDateStr = (dateStr: string, dayOffset: number): string => {
   const [y, m, d] = dateStr.split('-').map(Number);
@@ -74,22 +75,35 @@ export const computeHabitStreak = (
   task: TaskItem,
   tasksByDate: Record<string, TaskItem[]>,
   currentDate?: string,
-  storedMastery?: HabitMasteryRecord
+  storedMastery?: HabitMasteryRecord,
+  explicitRestDays?: Record<string, boolean>
 ): { currentStreak: number; highestStreak: number } => {
   const baseId = getHabitBaseId(task);
   const normalizedTitle = (task.title || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
   const refDate = currentDate || getTodayDateString();
+  const restDays = explicitRestDays || usePlayerStore.getState().stats?.restDays || {};
 
   // 1. Is it completed on reference date?
   const isDoneRefDate = isHabitCompletedInDay(tasksByDate[refDate], baseId, normalizedTitle);
 
-  // 2. Count consecutive completed days backward from yesterday
+  // 2. Count consecutive completed days backward from yesterday, bridging intentional Rest Days
   let backwardStreak = 0;
   let checkDate = getAdjacentDateStr(refDate, -1);
 
-  while (backwardStreak < 365 && isHabitCompletedInDay(tasksByDate[checkDate], baseId, normalizedTitle)) {
-    backwardStreak++;
-    checkDate = getAdjacentDateStr(checkDate, -1);
+  while (backwardStreak < 365) {
+    const isDone = isHabitCompletedInDay(tasksByDate[checkDate], baseId, normalizedTitle);
+    const isRest = Boolean(restDays[checkDate]);
+
+    if (isDone) {
+      backwardStreak++;
+      checkDate = getAdjacentDateStr(checkDate, -1);
+    } else if (isRest) {
+      // Intentional Rest Day: bridges the streak without breaking it or penalizing the user
+      checkDate = getAdjacentDateStr(checkDate, -1);
+    } else {
+      // Uncompleted non-rest day: streak ends here
+      break;
+    }
   }
 
   // If done on reference date, streak includes reference date (backwardStreak + 1)
@@ -110,9 +124,17 @@ export const computeHabitStreak = (
     let prevDateStr: string | null = null;
 
     for (const dateKey of sortedDates) {
-      if (isHabitCompletedInDay(tasksByDate[dateKey], baseId, normalizedTitle)) {
-        if (prevDateStr && getAdjacentDateStr(prevDateStr, 1) === dateKey) {
-          tempStreak++;
+      const isDone = isHabitCompletedInDay(tasksByDate[dateKey], baseId, normalizedTitle);
+      const isRest = Boolean(restDays[dateKey]);
+
+      if (isDone) {
+        if (prevDateStr) {
+          const nextOfPrev = getAdjacentDateStr(prevDateStr, 1);
+          if (nextOfPrev === dateKey || restDays[nextOfPrev]) {
+            tempStreak++;
+          } else {
+            tempStreak = 1;
+          }
         } else {
           tempStreak = 1;
         }
@@ -120,6 +142,9 @@ export const computeHabitStreak = (
         if (tempStreak > maxConsecutive) {
           maxConsecutive = tempStreak;
         }
+      } else if (isRest) {
+        // Rest day bridges consecutive count
+        continue;
       } else {
         tempStreak = 0;
         prevDateStr = null;

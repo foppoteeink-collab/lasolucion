@@ -460,6 +460,7 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
   const customHabits = useTaskStore(s => s.customHabits);
   const tasksByDate = useTaskStore(s => s.tasksByDate);
   const playerLevel = usePlayerStore(s => s.stats.level || 1);
+  const isRestDay = Boolean(usePlayerStore(s => s.stats.restDays?.[currentDate]));
   const [selectedHabitForProtocol, setSelectedHabitForProtocol] = useState<TaskItem | null>(null);
   const [activatedNotice, setActivatedNotice] = useState<string | null>(null);
   const lastBinaryToggleRef = React.useRef<Record<string, number>>({});
@@ -605,6 +606,16 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
           >
             ✕
           </button>
+        </div>
+      )}
+
+      {isRestDay && (
+        <div className="p-2.5 rounded-xl bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 text-xs font-mono flex items-center gap-2 animate-in fade-in shadow-[0_0_12px_rgba(16,185,129,0.2)]">
+          <span className="text-base">🌿</span>
+          <div className="min-w-0 flex-1 leading-tight">
+            <span className="font-bold text-white block">Día de Descanso Activo</span>
+            <span className="text-[11px] text-emerald-400">Tus hábitos y avance (Ley 21/66) están blindados hoy sin penalización.</span>
+          </div>
         </div>
       )}
 
