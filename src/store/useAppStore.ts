@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { 
-  AppNotification, PomodoroSession, ShopReward, TaskCategory, TaskItem, CustomHabit, HabitMasteryRecord, FinancialTransaction, NotificationSettings 
+  AppNotification, PomodoroSession, ShopReward, TaskCategory, TaskItem, CustomHabit, 
+  HabitMasteryRecord, FinancialTransaction, NotificationSettings, GameSettings, SkillNode, Companion 
 } from '../types';
 import { 
   loadHabitMastery, saveHabitMastery, loadGameSettings, saveGameSettings, loadSkillTree, saveSkillTree, loadCompanion, saveCompanion, 
@@ -12,26 +13,26 @@ interface AppState {
   habitMastery: Record<string, HabitMasteryRecord>;
   setHabitMastery: (val: Record<string, HabitMasteryRecord> | ((prev: Record<string, HabitMasteryRecord>) => Record<string, HabitMasteryRecord>)) => void;
 
-  gameSettings: any;
-  setGameSettings: (val: any) => void;
+  gameSettings: GameSettings;
+  setGameSettings: (val: GameSettings | ((prev: GameSettings) => GameSettings)) => void;
 
-  skillTree: any;
-  setSkillTree: (val: any) => void;
+  skillTree: SkillNode[];
+  setSkillTree: (val: SkillNode[] | ((prev: SkillNode[]) => SkillNode[])) => void;
 
-  companion: any;
-  setCompanion: (val: any) => void;
+  companion: Companion | null;
+  setCompanion: (val: (Companion | null) | ((prev: Companion | null) => Companion | null)) => void;
 
   expenses: FinancialTransaction[];
   setExpenses: (val: FinancialTransaction[] | ((prev: FinancialTransaction[]) => FinancialTransaction[])) => void;
 
   shopRewards: ShopReward[];
-  setShopRewards: (val: any) => void;
+  setShopRewards: (val: ShopReward[] | ((prev: ShopReward[]) => ShopReward[])) => void;
 
   pomodoroSessions: PomodoroSession[];
-  setPomodoroSessions: (val: any) => void;
+  setPomodoroSessions: (val: PomodoroSession[] | ((prev: PomodoroSession[]) => PomodoroSession[])) => void;
 
   notifications: AppNotification[];
-  setNotifications: (val: any) => void;
+  setNotifications: (val: AppNotification[] | ((prev: AppNotification[]) => AppNotification[])) => void;
 
   notificationSettings: NotificationSettings;
   setNotificationSettings: (val: NotificationSettings | ((prev: NotificationSettings) => NotificationSettings)) => void;
@@ -40,7 +41,7 @@ interface AppState {
   setComboCount: (val: number | ((prev: number) => number)) => void;
 
   reflections: Record<string, string>;
-  setReflections: (val: any) => void;
+  setReflections: (val: Record<string, string> | ((prev: Record<string, string>) => Record<string, string>)) => void;
 
   levelUpData: { level: number; rank: string };
   setLevelUpData: (val: { level: number; rank: string }) => void;

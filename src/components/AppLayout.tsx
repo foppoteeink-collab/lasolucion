@@ -17,7 +17,6 @@ import { FloatingEffectsOverlay } from './FloatingEffectsOverlay';
 import { FloatingJuiceOverlay } from './FloatingJuiceOverlay';
 import { DailyRewardsModal } from './DailyRewardsModal';
 import { LevelUpModal } from './LevelUpModal';
-import { HunterAwakeningModal } from './HunterAwakeningModal';
 import { NightlyReflectionModal } from './NightlyReflectionModal';
 import { NightlyTunnel } from './NightlyTunnel';
 import { SurpriseBossModal } from './SurpriseBossModal';
@@ -25,25 +24,28 @@ import { HunterCollapseModal } from './HunterCollapseModal';
 import { DeleteConfirmModal } from './DeleteConfirmModal';
 import { TaskListView } from './TaskListView';
 import { PomodoroTimer } from './PomodoroTimer';
+
+// Lazy Loaded Secondary Tabs & Modals (Code-Splitting for Instant PWA Launch)
 const WeeklyStats = lazy(() => import('./WeeklyStats').then(m => ({ default: m.WeeklyStats })));
-import { SkillTreeAndSettings } from './SkillTreeAndSettings';
-import { SettingsView } from './SettingsView';
-import { RewardShop } from './RewardShop';
+const MonthlyCalendar = lazy(() => import('./MonthlyCalendar').then(m => ({ default: m.MonthlyCalendar })));
+const JournalView = lazy(() => import('./JournalView').then(m => ({ default: m.JournalView })));
+const RewardShop = lazy(() => import('./RewardShop').then(m => ({ default: m.RewardShop })));
+const SkillTreeAndSettings = lazy(() => import('./SkillTreeAndSettings').then(m => ({ default: m.SkillTreeAndSettings })));
+const SettingsView = lazy(() => import('./SettingsView').then(m => ({ default: m.SettingsView })));
+const DayTemplatesModal = lazy(() => import('./DayTemplatesModal').then(m => ({ default: m.DayTemplatesModal })));
+const OracleModal = lazy(() => import('./OracleModal').then(m => ({ default: m.OracleModal })));
+const NeuralAnalysisModal = lazy(() => import('./NeuralAnalysisModal').then(m => ({ default: m.NeuralAnalysisModal })));
+const HunterAwakeningModal = lazy(() => import('./HunterAwakeningModal').then(m => ({ default: m.HunterAwakeningModal })));
+
 import { DailyBossWidget } from './DailyBossWidget';
 import { DailyScheduleStrip } from './DailyScheduleStrip';
-import { CalendarView } from './CalendarView';
-import { MonthlyCalendar } from './MonthlyCalendar';
 import { SciFiGridBackground } from './SciFiGridBackground';
 import { TransitionOverlay } from './TransitionOverlay';
 import { DamageOverlay } from './DamageOverlay';
 import { ShockwaveOverlay } from './ShockwaveOverlay';
-import { JournalView } from './JournalView';
-import { DayTemplatesModal } from './DayTemplatesModal';
 import { DailyProgressWidget } from './DailyProgressWidget';
 import { DailyFinanceWidget } from './DailyFinanceWidget';
 import { ScrollReveal } from './common/ScrollReveal';
-import { OracleModal } from './OracleModal';
-import { NeuralAnalysisModal } from './NeuralAnalysisModal';
 import { OfflineIndicator } from './OfflineIndicator';
 import { NotificationToastOverlay } from './NotificationToastOverlay';
 import { PWAInstallBanner } from './PWAInstallBanner';
@@ -415,21 +417,22 @@ export function AppLayout() {
         >
           {activeTab === 'planner' && (
             <motion.div variants={itemVariant} className="w-full">
-                  <MonthlyCalendar 
-                    currentDate={currentViewDate}
-                    tasksByDate={tasksByDate}
-                    onChangeDate={handleSetCurrentViewDate}
-                    onNavigateToDay={(date) => {
-                       handleSetCurrentViewDate(date);
-                       setActiveTab('dashboard');
-                    }}
-                  />
-                </motion.div>
-              )}
+              <Suspense fallback={<TabLoadingSkeleton />}>
+                <MonthlyCalendar 
+                  currentDate={currentViewDate}
+                  tasksByDate={tasksByDate}
+                  onChangeDate={handleSetCurrentViewDate}
+                  onNavigateToDay={(date) => {
+                     handleSetCurrentViewDate(date);
+                     setActiveTab('dashboard');
+                  }}
+                />
+              </Suspense>
+            </motion.div>
+          )}
 
-              {activeTab === 'dashboard' && (
-                <>
-
+          {activeTab === 'dashboard' && (
+            <>
               {/* COLLAPSIBLE LIVE SCHEDULE TIMELINE */}
               {showBossSchedule && (
                 <motion.div 
@@ -503,30 +506,34 @@ export function AppLayout() {
 
           {activeTab === 'journal' && (
             <motion.div variants={itemVariant} className="w-full">
-              <JournalView 
-                tasksByDate={tasksByDate}
-                stats={stats}
-                currentDate={currentViewDate}
-                reflections={reflections}
-                onSaveReflection={handleSaveReflection}
-                onUpdateTaskNote={handleUpdateTaskNote}
-                onNavigateToDay={(date) => {
-                  handleSetCurrentViewDate(date);
-                  setActiveTab('dashboard');
-                }}
-                onBackToMissions={() => setActiveTab('dashboard')}
-                onAddRecallAsTask={handleAddRecallAsTask}
-                onRewardEarned={(xp, coins, text) => {
-                  triggerRewardPopup(xp, coins, text);
-                  setStats((prev) => checkLevelUp(prev, xp, coins));
-                }}
-              />
+              <Suspense fallback={<TabLoadingSkeleton />}>
+                <JournalView 
+                  tasksByDate={tasksByDate}
+                  stats={stats}
+                  currentDate={currentViewDate}
+                  reflections={reflections}
+                  onSaveReflection={handleSaveReflection}
+                  onUpdateTaskNote={handleUpdateTaskNote}
+                  onNavigateToDay={(date) => {
+                    handleSetCurrentViewDate(date);
+                    setActiveTab('dashboard');
+                  }}
+                  onBackToMissions={() => setActiveTab('dashboard')}
+                  onAddRecallAsTask={handleAddRecallAsTask}
+                  onRewardEarned={(xp, coins, text) => {
+                    triggerRewardPopup(xp, coins, text);
+                    setStats((prev) => checkLevelUp(prev, xp, coins));
+                  }}
+                />
+              </Suspense>
             </motion.div>
           )}
 
           {activeTab === 'shop' && (
             <motion.div variants={itemVariant} className="w-full">
-              <RewardShop />
+              <Suspense fallback={<TabLoadingSkeleton />}>
+                <RewardShop />
+              </Suspense>
             </motion.div>
           )}
 
@@ -550,23 +557,27 @@ export function AppLayout() {
           
           {activeTab === 'skills' && (
             <motion.div variants={itemVariant} className="w-full">
-              <SkillTreeAndSettings 
-                skillTree={skillTree}
-                onUpdateSkillTree={setSkillTree}
-                stats={stats}
-                onUpdateStats={setStats}
-              />
+              <Suspense fallback={<TabLoadingSkeleton />}>
+                <SkillTreeAndSettings 
+                  skillTree={skillTree}
+                  onUpdateSkillTree={setSkillTree}
+                  stats={stats}
+                  onUpdateStats={setStats}
+                />
+              </Suspense>
             </motion.div>
           )}
           
           {activeTab === 'settings' && (
             <motion.div variants={itemVariant} className="w-full">
-              <SettingsView
-                settings={gameSettings}
-                onUpdateSettings={setGameSettings}
-                onResetAccount={handleResetAccount}
-                cloudSync={cloudSync}
-              />
+              <Suspense fallback={<TabLoadingSkeleton />}>
+                <SettingsView
+                  settings={gameSettings}
+                  onUpdateSettings={setGameSettings}
+                  onResetAccount={handleResetAccount}
+                  cloudSync={cloudSync}
+                />
+              </Suspense>
             </motion.div>
           )}
         </motion.div>
@@ -642,13 +653,15 @@ export function AppLayout() {
       )}
 
       {/* Day Routine Templates Modal */}
-      <DayTemplatesModal 
-        isOpen={isDayTemplatesOpen}
-        onClose={() => setIsDayTemplatesOpen(false)}
-        currentDate={currentViewDate}
-        currentTasks={tasks}
-        onApplyTemplate={handleApplyTemplate}
-      />
+      <Suspense fallback={null}>
+        <DayTemplatesModal 
+          isOpen={isDayTemplatesOpen}
+          onClose={() => setIsDayTemplatesOpen(false)}
+          currentDate={currentViewDate}
+          currentTasks={tasks}
+          onApplyTemplate={handleApplyTemplate}
+        />
+      </Suspense>
 
       {/* Daily Rewards Modal */}
       <DailyRewardsModal
@@ -687,20 +700,24 @@ export function AppLayout() {
       <HunterCollapseModal />
 
       {/* Oracle AI Wizard Modal */}
-      <OracleModal 
-        isOpen={isOracleOpen}
-        initialPrompt={oracleInitialPrompt}
-        onClose={() => {
-          setIsOracleOpen(false);
-          setOracleInitialPrompt(undefined);
-        }}
-      />
+      <Suspense fallback={null}>
+        <OracleModal 
+          isOpen={isOracleOpen}
+          initialPrompt={oracleInitialPrompt}
+          onClose={() => {
+            setIsOracleOpen(false);
+            setOracleInitialPrompt(undefined);
+          }}
+        />
+      </Suspense>
 
       {/* Neural Analysis Modal (Separate Diagnostic Module) */}
-      <NeuralAnalysisModal
-        isOpen={isNeuralAnalysisOpen}
-        onClose={() => setIsNeuralAnalysisOpen(false)}
-      />
+      <Suspense fallback={null}>
+        <NeuralAnalysisModal
+          isOpen={isNeuralAnalysisOpen}
+          onClose={() => setIsNeuralAnalysisOpen(false)}
+        />
+      </Suspense>
 
       {/* Nightly Tunnel — Sequential End-of-Day Flow (Evaluation + Reward + Seal) */}
       <NightlyTunnel
@@ -725,19 +742,21 @@ export function AppLayout() {
       />
 
       {/* Hunter Awakening Ceremony Onboarding Modal */}
-      <HunterAwakeningModal
-        isOpen={isAwakeningOpen}
-        onClose={() => setIsAwakeningOpen(false)}
-        stats={stats}
-        onCompleteAwakening={(data) => {
-          setIsAwakeningOpen(false);
-          usePlayerStore.getState().completeAwakening(data);
-          if (cloudSync?.forceSyncNow) {
-            cloudSync.forceSyncNow();
-          }
-        }}
-        cloudSync={cloudSync}
-      />
+      <Suspense fallback={null}>
+        <HunterAwakeningModal
+          isOpen={isAwakeningOpen}
+          onClose={() => setIsAwakeningOpen(false)}
+          stats={stats}
+          onCompleteAwakening={(data) => {
+            setIsAwakeningOpen(false);
+            usePlayerStore.getState().completeAwakening(data);
+            if (cloudSync?.forceSyncNow) {
+              cloudSync.forceSyncNow();
+            }
+          }}
+          cloudSync={cloudSync}
+        />
+      </Suspense>
 
       {/* Cyberpunk Floating Pomodoro Pop-up Modal */}
       <AnimatePresence>
@@ -785,6 +804,19 @@ export function AppLayout() {
       <OfflineIndicator />
     </div>
     </>
+  );
+}
+
+function TabLoadingSkeleton() {
+  return (
+    <div className="w-full min-h-[300px] flex flex-col items-center justify-center p-8 space-y-4 animate-pulse">
+      <div className="w-12 h-12 rounded-2xl bg-cyan-950/60 border border-cyan-500/40 flex items-center justify-center shadow-[0_0_15px_rgba(0,240,255,0.2)]">
+        <div className="w-5 h-5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+      </div>
+      <span className="text-xs font-mono uppercase tracking-widest text-cyan-400">
+        Cargando Módulo...
+      </span>
+    </div>
   );
 }
 
