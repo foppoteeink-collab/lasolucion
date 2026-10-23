@@ -185,7 +185,7 @@ export const RewardShop: React.FC = () => {
           >
             <Coins className="w-4 h-4 text-amber-400 stroke-[2.5]" />
             <span>{coins}</span>
-            <span className="text-[10px] font-sans font-bold text-amber-400/80 hidden sm:inline">Oro</span>
+            <span className="text-[10px] font-sans font-bold text-amber-400/80 hidden sm:inline">Monedas</span>
           </div>
 
           <button
@@ -204,11 +204,11 @@ export const RewardShop: React.FC = () => {
       </div>
 
       {/* ─── 2. FAST FILTER TABS (CYBERPUNK PILLS) ─── */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none font-mono text-xs">
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none font-mono text-[11px] sm:text-xs">
         <button
           type="button"
           onClick={() => { soundFX.playClick(); setActiveTab('todos'); }}
-          className={`px-3 py-1.5 rounded-xl border transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
+          className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl border transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
             activeTab === 'todos'
               ? 'bg-purple-500/25 border-purple-400 text-purple-200 shadow-[0_0_12px_rgba(168,85,247,0.35)] font-bold'
               : 'bg-[#030614]/80 border-white/10 text-slate-400 hover:text-white'
@@ -221,7 +221,7 @@ export const RewardShop: React.FC = () => {
         <button
           type="button"
           onClick={() => { soundFX.playClick(); setActiveTab('vida_real'); }}
-          className={`px-3 py-1.5 rounded-xl border transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
+          className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl border transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
             activeTab === 'vida_real'
               ? 'bg-amber-500/25 border-amber-400 text-amber-200 shadow-[0_0_12px_rgba(245,158,11,0.35)] font-bold'
               : 'bg-[#030614]/80 border-white/10 text-slate-400 hover:text-white'
@@ -234,20 +234,20 @@ export const RewardShop: React.FC = () => {
         <button
           type="button"
           onClick={() => { soundFX.playClick(); setActiveTab('perks'); }}
-          className={`px-3 py-1.5 rounded-xl border transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
+          className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl border transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
             activeTab === 'perks'
               ? 'bg-cyan-500/25 border-cyan-400 text-cyan-200 shadow-[0_0_12px_rgba(0,240,255,0.35)] font-bold'
               : 'bg-[#030614]/80 border-white/10 text-slate-400 hover:text-white'
           }`}
         >
           <Shield className="w-3.5 h-3.5 text-cyan-400" />
-          <span>Perks RPG</span>
+          <span>Potenciadores</span>
         </button>
 
         <button
           type="button"
           onClick={() => { soundFX.playClick(); setActiveTab('descanso'); }}
-          className={`px-3 py-1.5 rounded-xl border transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
+          className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl border transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
             activeTab === 'descanso'
               ? 'bg-emerald-500/25 border-emerald-400 text-emerald-200 shadow-[0_0_12px_rgba(52,211,153,0.35)] font-bold'
               : 'bg-[#030614]/80 border-white/10 text-slate-400 hover:text-white'
@@ -260,20 +260,20 @@ export const RewardShop: React.FC = () => {
         <button
           type="button"
           onClick={() => { soundFX.playClick(); setActiveTab('personalizados'); }}
-          className={`px-3 py-1.5 rounded-xl border transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
+          className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl border transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
             activeTab === 'personalizados'
               ? 'bg-rose-500/25 border-rose-400 text-rose-200 shadow-[0_0_12px_rgba(244,63,94,0.35)] font-bold'
               : 'bg-[#030614]/80 border-white/10 text-slate-400 hover:text-white'
           }`}
         >
           <Flame className="w-3.5 h-3.5 text-rose-400" />
-          <span>Mis Deseos</span>
+          <span>Deseos</span>
         </button>
 
         <button
           type="button"
           onClick={() => { soundFX.playClick(); setActiveTab('mochila'); }}
-          className={`px-3 py-1.5 rounded-xl border transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ml-auto ${
+          className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl border transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ml-auto ${
             activeTab === 'mochila'
               ? 'bg-blue-500/25 border-blue-400 text-blue-200 shadow-[0_0_12px_rgba(59,130,246,0.35)] font-bold'
               : 'bg-[#030614]/80 border-white/10 text-slate-400 hover:text-white'
@@ -297,7 +297,7 @@ export const RewardShop: React.FC = () => {
             </div>
             <div>
               <h4 className="text-xs sm:text-sm font-black font-anton text-amber-300 uppercase tracking-wide">
-                ¡Tienes {unopenedBoxes} Caja{unopenedBoxes !== 1 ? 's' : ''} de Botín!
+                ¡Tienes {unopenedBoxes} Cofre{unopenedBoxes !== 1 ? 's' : ''} de Botín!
               </h4>
               <p className="text-[11px] text-amber-200/80">
                 Ganadas por consistencia. Ábrelas para reclamar ítems legendarios.
@@ -549,7 +549,7 @@ export const RewardShop: React.FC = () => {
                       <option value="☕">☕ Café Especial</option>
                       <option value="🎮">🎮 Videojuegos</option>
                       <option value="🍿">🍿 Cine / Serie</option>
-                      <option value="🍕">🍕 Cheat Meal</option>
+                      <option value="🍕">🍕 Comida Libre</option>
                       <option value="🛋️">🛋️ Siesta / Tarde Libre</option>
                       <option value="🎧">🎧 Música / Audio</option>
                       <option value="📚">📚 Lectura</option>

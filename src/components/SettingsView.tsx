@@ -147,7 +147,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       return;
     }
     notificationService.sendTestNotification();
-    setNotifTestFeedback('✓ Notificación de prueba enviada (Sistema Operativo y Toast En Pantalla)');
+    setNotifTestFeedback('✓ Notificación de prueba enviada (Sistema Operativo y Alerta en Pantalla)');
     setTimeout(() => setNotifTestFeedback(null), 4000);
   };
 
@@ -171,9 +171,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         const habitsCount = (st.customHabits || []).length;
         const todayCount = activeList.length;
         const completedCount = activeList.filter(t => t.completed).length;
+        const taskWord = todayCount === 1 ? 'tarea' : 'tareas';
+        const doneWord = completedCount === 1 ? 'completada' : 'completadas';
+        const habitWord = habitsCount === 1 ? 'hábito listo' : 'hábitos listos';
         soundFX.playSuccess();
         setCloudActionToast(
-          `✓ Subido a la nube con éxito (${todayCount} tareas, ${completedCount} hechas, ${habitsCount} rutinas listas para tu otro equipo).`
+          `✓ Subido a la nube con éxito (${todayCount} ${taskWord}, ${completedCount} ${doneWord}, ${habitsCount} ${habitWord} para tu otro equipo).`
         );
         setTimeout(() => setCloudActionToast(null), 6000);
       } else {
@@ -1230,7 +1233,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     </span>
                   ) : (
                     <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-cyan-950/80 text-cyan-300 border border-cyan-500/40">
-                      PWA Disponible
+                      Instalable en Móvil
                     </span>
                   )}
                 </div>
@@ -1238,7 +1241,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 <div className="bg-[#001020] border border-cyan-900/50 p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="space-y-1">
                     <p className="text-xs font-bold text-slate-100">
-                      Instala TaskQuest en tu teléfono, tablet o escritorio
+                      Instala La Solución en tu teléfono, tablet o escritorio
                     </p>
                     <p className="text-[11px] text-slate-400 leading-relaxed">
                       Carga instantánea, funcionamiento sin conexión a internet y acceso directo desde tu pantalla de inicio.

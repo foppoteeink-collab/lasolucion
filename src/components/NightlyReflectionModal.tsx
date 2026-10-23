@@ -228,7 +228,7 @@ export const NightlyReflectionModal: React.FC<NightlyReflectionModalProps> = ({
                value={customBedtime}
                onChange={(e) => setCustomBedtime(e.target.value)}
                className="bg-black/50 border border-cyan-800 rounded-xl px-3 py-1.5 text-white font-mono text-sm sm:text-base outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-all cursor-pointer"
-               title="Editar hora si te olvidaste de presionar el botón anoche"
+               title="Editar hora si olvidaste presionar el botón anoche"
             />
         </div>
 

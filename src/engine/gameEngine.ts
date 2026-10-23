@@ -442,8 +442,8 @@ export const handleToggleTask = (taskId: string, e?: any) => {
         triggeredBoss = true;
         stateUI.openSurpriseBoss({
           archetypeName: 'Comandante de la Procrastinación',
-          buffName: 'Jefe Diario Enfrentado',
-          buffDescription: '¡Alcanzaste 3 hábitos/prioridades clave hoy! Reclama 50 XP y 20 Oro.'
+          buffName: 'Desafío Diario Superado',
+          buffDescription: '¡Alcanzaste 3 hábitos o tareas clave hoy! Reclama 50 XP y 20 Monedas.'
         });
       }
     }
@@ -464,7 +464,7 @@ export const handleToggleTask = (taskId: string, e?: any) => {
         stateUI.addFloatingEffect({
           x: e?.clientX || (typeof window !== 'undefined' ? window.innerWidth / 2 : 200),
           y: (e?.clientY || 200) - 45,
-          text: '🎁 ¡Cofre de Hito (5 tareas)! +15 Oro',
+          text: '🎁 ¡Cofre de Hito (5 tareas)! +15 Monedas',
           type: 'critical'
         });
       }
@@ -613,8 +613,8 @@ export const handleIncrementHabit = (taskId: string, e?: any) => {
         statePlayer.setStats((prev) => ({ ...prev, lastEncounterDate: today }));
         stateUI.openSurpriseBoss({
           archetypeName: 'Comandante de la Procrastinación',
-          buffName: 'Jefe Diario Enfrentado',
-          buffDescription: '¡Alcanzaste 3 hábitos/prioridades clave hoy! Reclama 50 XP y 20 Oro.'
+          buffName: 'Desafío Diario Superado',
+          buffDescription: '¡Alcanzaste 3 hábitos o tareas clave hoy! Reclama 50 XP y 20 Monedas.'
         });
       }
     }

@@ -217,7 +217,7 @@ export const INITIAL_SHOP_REWARDS: ShopReward[] = [
   {
     id: 'perk-healing-potion',
     title: 'Poción de Curación Mayor 💖',
-    description: 'Restaura inmediatamente 30 puntos de HP (Vitalidad). Ideal para recuperarte tras fallar misiones o pomodoros.',
+    description: 'Restaura inmediatamente 30 puntos de Energía Vital (HP). Ideal para recuperarte tras fallar tareas o sesiones de foco.',
     cost: 120,
     icon: '💖',
     category: 'perk',
@@ -235,7 +235,7 @@ export const INITIAL_SHOP_REWARDS: ShopReward[] = [
   {
     id: 'perk-focus-potion',
     title: 'Poción de Enfoque (+50% XP/Monedas) 🧪',
-    description: 'Bebida alquímica que potencia un 50% las ganancias de XP y oro durante tus próximas misiones.',
+    description: 'Bebida alquímica que potencia un 50% las ganancias de XP y monedas durante tus próximas tareas.',
     cost: 180,
     icon: '🧪',
     category: 'perk',
@@ -244,7 +244,7 @@ export const INITIAL_SHOP_REWARDS: ShopReward[] = [
   {
     id: 'perk-resurrection-potion',
     title: 'Poción de Resurrección 💖',
-    description: 'Comodín supremo para reanimar una racha caída y proteger tus días de mayor esfuerzo (+2 Escudos).',
+    description: 'Comodín supremo para reanimar una racha caída y proteger tus días de mayor esfuerzo (+2 Escudos de Racha).',
     cost: 450,
     icon: '💖',
     category: 'perk',
@@ -252,8 +252,8 @@ export const INITIAL_SHOP_REWARDS: ShopReward[] = [
   },
   {
     id: 'perk-epic-title',
-    title: 'Título Épico / Monarca 👑',
-    description: 'Desbloquea el prestigioso título de "Monarca de las Sombras" y +10 en todos tus atributos.',
+    title: 'Título de Maestría / Enfoque Supremo 👑',
+    description: 'Desbloquea el título honorífico de "Maestro del Enfoque" y +10 en todos tus atributos.',
     cost: 700,
     icon: '👑',
     category: 'perk',
@@ -288,7 +288,7 @@ export const INITIAL_SHOP_REWARDS: ShopReward[] = [
   },
   {
     id: 'shop-4',
-    title: 'Día de Descanso / Cheat Meal 🍕',
+    title: 'Día de Descanso / Comida Libre 🍕',
     description: 'Una comida libre total o tarde libre de domingo.',
     cost: 450,
     icon: '🍕',

@@ -58,8 +58,8 @@ const quickEmojis = ['⚡', '💧', '🏋️', '📖', '🧘', '🥗', '🧠', '
 const habitPresets = [
   { label: '💧 Agua 2L', title: 'Tomar 2 Litros de Agua', icon: '💧', category: 'habito' as TaskCategory, target: 8, unit: 'vasos', energy: 'purification' as HabitEnergyType, hasCounter: true, targetStreak: 21 as const },
   { label: '🏋️ Gimnasio', title: 'Entrenamiento de Gimnasio', icon: '🏋️', category: 'entrenamiento' as TaskCategory, target: 1, unit: 'sesión', energy: 'strength' as HabitEnergyType, hasCounter: false, targetStreak: 21 as const },
-  { label: '📖 Lectura', title: 'Lectura de Desarrollo', icon: '📖', category: 'estudio' as TaskCategory, target: 20, unit: 'mins', energy: 'mind' as HabitEnergyType, hasCounter: true, targetStreak: 21 as const },
-  { label: '🧘 Meditación', title: 'Meditación & Enfoque', icon: '🧘', category: 'habito' as TaskCategory, target: 10, unit: 'mins', energy: 'discipline' as HabitEnergyType, hasCounter: true, targetStreak: 21 as const },
+  { label: '📖 Lectura', title: 'Lectura de Desarrollo', icon: '📖', category: 'estudio' as TaskCategory, target: 20, unit: 'min', energy: 'mind' as HabitEnergyType, hasCounter: true, targetStreak: 21 as const },
+  { label: '🧘 Meditación', title: 'Meditación & Enfoque', icon: '🧘', category: 'habito' as TaskCategory, target: 10, unit: 'min', energy: 'discipline' as HabitEnergyType, hasCounter: true, targetStreak: 21 as const },
   { label: '🥗 Saludable', title: 'Alimentación Limpia', icon: '🥗', category: 'comida' as TaskCategory, target: 3, unit: 'comidas', energy: 'purification' as HabitEnergyType, hasCounter: true, targetStreak: 21 as const },
 ];
 

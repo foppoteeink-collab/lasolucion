@@ -61,7 +61,7 @@ export const HunterAwakeningModal: React.FC<HunterAwakeningModalProps> = ({
   const handleNextStep1 = () => {
     soundFX.playClick();
     if (!username.trim()) {
-      setUsername('Cazador_' + Math.floor(100 + Math.random() * 900));
+      setUsername('Operador_' + Math.floor(100 + Math.random() * 900));
     }
     setStep(2);
   };
@@ -86,7 +86,7 @@ export const HunterAwakeningModal: React.FC<HunterAwakeningModalProps> = ({
 
     try {
       onCompleteAwakening({
-        username: username.trim() || 'Cazador',
+        username: username.trim() || 'Operador',
         fullName: fullName.trim(),
         characterClass: selectedArchName,
         mantra: mantra.trim()
@@ -116,7 +116,7 @@ export const HunterAwakeningModal: React.FC<HunterAwakeningModalProps> = ({
                   Protocolo del Sistema
                 </span>
                 <h2 className="font-anton text-sm sm:text-lg uppercase text-white tracking-wider">
-                  Ceremonia del Despertar del Cazador
+                  Ceremonia del Despertar Inicial
                 </h2>
               </div>
             </div>
@@ -181,7 +181,7 @@ export const HunterAwakeningModal: React.FC<HunterAwakeningModalProps> = ({
             <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-200">
               <div className="bg-[#030d1a]/80 p-4 rounded-2xl border border-cyan-500/30">
                 <p className="text-xs sm:text-sm text-slate-200 font-sans leading-relaxed">
-                  Has sido elegido por el Sistema para romper la inercia diaria y construir hábitos de alto rendimiento. Ingresa tu nombre de cazador y vincula tu cuenta para que tu progreso quede blindado en la nube.
+                  Has sido elegido por el Sistema para romper la inercia diaria y construir hábitos de alto rendimiento. Ingresa tu nombre de usuario y vincula tu cuenta para que tu progreso quede blindado en la nube.
                 </p>
               </div>
 
@@ -189,14 +189,14 @@ export const HunterAwakeningModal: React.FC<HunterAwakeningModalProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
                   <label className="block text-xs font-anton text-cyan-300 uppercase tracking-wider mb-1.5">
-                    1. Nombre de Cazador (@usuario) *
+                    1. Nombre de Usuario (@usuario) *
                   </label>
                   <input 
                     type="text" 
                     value={username} 
                     onChange={(e) => setUsername(e.target.value)}
                     className="w-full bg-[#04020e] border border-cyan-500/50 rounded-xl p-3 text-white focus:outline-none focus:border-cyan-300 text-xs font-mono"
-                    placeholder="Ej: Hunter_Prime"
+                    placeholder="Ej: Operador_Prime"
                   />
                 </div>
                 <div>
@@ -362,11 +362,11 @@ export const HunterAwakeningModal: React.FC<HunterAwakeningModalProps> = ({
                   ¡DESPERTAR CONFIRMADO!
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-300 font-mono mt-1">
-                  Bienvenido al Sistema, Cazador <strong className="text-cyan-300">@{username || 'Cazador'}</strong>
+                  Bienvenido al Sistema, <strong className="text-cyan-300">@{username || 'Operador'}</strong>
                 </p>
               </div>
 
-              {/* Hunter Dossier */}
+              {/* Dossier */}
               <div className="max-w-md mx-auto p-4 rounded-2xl bg-[#040e1b] border border-cyan-500/50 shadow-[0_0_20px_rgba(0,240,255,0.2)] text-left space-y-3 font-mono text-xs">
                 <div className="flex items-center justify-between pb-2 border-b border-cyan-500/30">
                   <span className="text-slate-400">Arquetipo Activo:</span>

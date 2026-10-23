@@ -99,7 +99,7 @@ export async function uploadBackupToDrive(
     const metadata = {
       name: BACKUP_FILENAME,
       mimeType: 'application/json',
-      description: 'Respaldo de progreso de La Solución / TaskQuest',
+      description: 'Respaldo de progreso de La Solución',
     };
 
     const boundary = '-------314159265358979323846';

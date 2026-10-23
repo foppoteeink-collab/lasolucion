@@ -164,7 +164,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
         icon: <BarChart3 className="w-5 h-5" />,
         accentColor: '#06b6d4',
         glowColor: 'rgba(6, 182, 212, 0.45)',
-        liveStat: `Nivel ${stats.level || 1} • Cazador`,
+        liveStat: `Nivel ${stats.level || 1} • Operador`,
         action: () => setActiveTab('stats'),
       },
       {

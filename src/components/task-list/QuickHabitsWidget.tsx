@@ -588,7 +588,7 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
 
         {quickHabits.length > 0 && (
           <div className="text-[10.5px] font-mono text-cyan-300/90 font-bold bg-cyan-950/60 px-2 py-0.5 rounded-md border border-cyan-500/30">
-            {completedHabitsCount}/{quickHabits.length} Hechos
+            {completedHabitsCount}/{quickHabits.length} {completedHabitsCount === 1 ? 'Completado' : 'Completados'}
           </div>
         )}
       </div>

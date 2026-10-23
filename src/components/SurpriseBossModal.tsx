@@ -83,7 +83,7 @@ export const SurpriseBossModal: React.FC<SurpriseBossModalProps> = ({
             </div>
 
             <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#d6f421]/20 border border-[#d6f421]/50 text-[#d6f421] text-[10px] font-mono font-black uppercase tracking-widest mb-2">
-              <Sparkles className="w-3.5 h-3.5" /> ¡INCURSIÓN CONQUISTADA!
+              <Sparkles className="w-3.5 h-3.5" /> ¡DESAFÍO SUPERADO!
             </div>
 
             <h2 className="text-xl sm:text-2xl font-anton uppercase tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-white via-amber-200 to-[#d6f421] mb-2 drop-shadow-[0_0_15px_rgba(214,244,33,0.4)]">
@@ -91,19 +91,19 @@ export const SurpriseBossModal: React.FC<SurpriseBossModalProps> = ({
             </h2>
             
             <p className="text-slate-300 text-xs sm:text-sm mb-4 leading-relaxed font-mono">
-              <strong className="text-[#d6f421]">OPERADOR:</strong> Has completado 3 hábitos/prioridades clave hoy. Quebraste la resistencia del letargo y mantuviste el ritmo de combate.
+              <strong className="text-[#d6f421]">OPERADOR:</strong> Has completado tus tareas clave de hoy. Quebraste la resistencia del letargo y mantuviste el foco.
             </p>
 
             {/* Bounty Card */}
             <div className="w-full bg-[#001224] rounded-2xl p-4 border border-[#d6f421]/30 mb-5 relative overflow-hidden shadow-inner">
                <div className="flex items-center justify-center gap-2 mb-2">
                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                 <span className="text-[11px] font-black uppercase tracking-widest text-emerald-400">Botín de Recompensa Activo</span>
+                 <span className="text-[11px] font-black uppercase tracking-widest text-emerald-400">Recompensa Táctica Activa</span>
                </div>
                
                <div className="grid grid-cols-3 gap-2 py-2 border-t border-b border-cyan-900/40 text-center font-mono">
                  <div className="text-amber-400 font-bold text-xs">+50 XP</div>
-                 <div className="text-yellow-400 font-bold text-xs">+20 Oro</div>
+                 <div className="text-yellow-400 font-bold text-xs">+20 Monedas</div>
                  <div className="text-emerald-400 font-bold text-xs flex items-center justify-center gap-1">
                    <Heart className="w-3 h-3 fill-emerald-400" /> +50 HP
                  </div>
@@ -120,7 +120,7 @@ export const SurpriseBossModal: React.FC<SurpriseBossModalProps> = ({
               className="w-full py-3.5 bg-gradient-to-r from-[#d6f421] to-amber-400 hover:from-lime-300 hover:to-amber-300 text-black font-anton rounded-xl text-xs sm:text-sm uppercase tracking-wider transition-all shadow-[0_0_25px_rgba(214,244,33,0.4)] hover:shadow-[0_0_35px_rgba(214,244,33,0.6)] active:scale-95 cursor-pointer flex items-center justify-center gap-2"
             >
               <Zap className="w-4 h-4 text-black" />
-              <span>Reclamar Botín y Restaurar Salud</span>
+              <span>Reclamar Recompensa (+HP)</span>
             </button>
           </div>
         </motion.div>

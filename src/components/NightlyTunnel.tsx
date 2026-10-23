@@ -265,7 +265,7 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
                     </div>
                     <p className="text-xs italic text-slate-300 leading-relaxed">
                       {completedToday.length > 0
-                        ? `"¡Gran trabajo hoy! Completaste el ${completionRate}% de tus misiones."`
+                        ? `"¡Gran trabajo hoy! Completaste el ${completionRate}% de tus tareas."`
                         : '"Hoy fue un día de descanso. Mañana renacerá tu energía."'}
                     </p>
                   </div>
@@ -277,7 +277,7 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
                     { label: 'Cumplimiento', value: `${completionRate}%`, sub: `${completedToday.length}/${totalTasks}`, icon: CheckCircle2, color: 'text-cyan-400' },
                     { label: 'Total XP', value: `+${xpEarnedToday + bonusXp}`, sub: `+${bonusXp} Bonus`, icon: Zap, color: 'text-amber-400' },
                     { label: 'Monedas', value: `+${coinsEarnedToday + bonusCoins}`, sub: `+${bonusCoins} Bonus`, icon: Coins, color: 'text-yellow-400' },
-                    { label: 'Foco', value: `${todayFocusMinutes}m`, sub: 'Pomodoro', icon: Clock, color: 'text-indigo-400' },
+                    { label: 'Foco', value: `${todayFocusMinutes}m`, sub: 'Modo Foco', icon: Clock, color: 'text-indigo-400' },
                   ].map(({ label, value, sub, icon: Icon, color }) => (
                     <div key={label} className="bg-[#000a14]/70 border border-cyan-900/40 rounded-xl p-3 text-center">
                       <div className={`flex items-center justify-center gap-1 ${color} text-[11px] font-bold mb-1`}>
@@ -290,26 +290,26 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
                 </div>
 
                 {/* Rest Day / Recovery Mode Toggle */}
-                <div className={`p-3 rounded-2xl border transition-all flex items-center justify-between ${
+                <div className={`p-3 rounded-2xl border transition-all flex items-center justify-between gap-2 ${
                   Boolean(stats.restDays?.[todayStr])
                     ? 'bg-emerald-950/40 border-emerald-500/60 shadow-[0_0_20px_rgba(16,185,129,0.2)]'
                     : 'bg-[#000a14]/90 border-cyan-500/30'
                 }`}>
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-lg">{Boolean(stats.restDays?.[todayStr]) ? '🌿' : '🛡️'}</span>
-                    <div>
-                      <span className="text-xs font-bold text-white block">
-                        {Boolean(stats.restDays?.[todayStr]) ? 'Día de Descanso Planificado (Activo)' : 'Modo Descanso / Recuperación'}
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-lg shrink-0">{Boolean(stats.restDays?.[todayStr]) ? '🌿' : '🛡️'}</span>
+                    <div className="min-w-0">
+                      <span className="text-xs font-bold text-white block truncate">
+                        {Boolean(stats.restDays?.[todayStr]) ? 'Día de Descanso (Activo)' : 'Modo Descanso'}
                       </span>
-                      <span className="text-[10px] text-slate-400 font-mono">
-                        {Boolean(stats.restDays?.[todayStr]) ? 'Protegido: 0 penalizaciones de vida hoy.' : 'Activa si hoy fue un descanso deliberado.'}
+                      <span className="text-[10px] text-slate-400 font-mono block truncate">
+                        {Boolean(stats.restDays?.[todayStr]) ? 'Protegido: sin pérdida de HP hoy.' : 'Activa para descanso deliberado.'}
                       </span>
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={() => usePlayerStore.getState().toggleRestDay(todayStr)}
-                    className={`px-3 py-1.5 rounded-xl text-[11px] font-bold font-mono transition-all cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-xl text-[11px] font-bold font-mono transition-all cursor-pointer shrink-0 ${
                       Boolean(stats.restDays?.[todayStr])
                         ? 'bg-emerald-400 text-black shadow-[0_0_12px_rgba(16,185,129,0.5)]'
                         : 'bg-cyan-950/80 text-cyan-300 border border-cyan-800 hover:border-cyan-500'
@@ -322,8 +322,8 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
                 {/* Cellular Regeneration Badge if Grade A or S+ and not in Rest Day */}
                 {completionRate >= 80 && !stats.restDays?.[todayStr] && (
                   <div className="bg-emerald-950/40 border border-emerald-500/50 rounded-xl p-2.5 text-center flex items-center justify-center gap-2 text-emerald-300 text-xs font-mono font-bold shadow-[0_0_15px_rgba(16,185,129,0.15)]">
-                    <Heart className="w-4 h-4 fill-emerald-400 text-emerald-400" />
-                    <span>¡Disciplina Destacada! Regeneración Celular (+40 HP)</span>
+                    <Heart className="w-4 h-4 fill-emerald-400 text-emerald-400 shrink-0" />
+                    <span className="truncate">¡Gran Disciplina! (+40 HP)</span>
                   </div>
                 )}
 

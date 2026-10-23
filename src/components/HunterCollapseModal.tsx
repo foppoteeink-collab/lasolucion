@@ -26,7 +26,7 @@ export const HunterCollapseModal: React.FC = () => {
       addFloatingEffect({
         x: window.innerWidth / 2,
         y: window.innerHeight / 2 - 30,
-        text: method === 'coins' ? `🏥 Reanimado (-30 Oro) • HP al 50%` : `⚡ Reanimado (-${result.xpLost} XP) • HP al 50%`,
+        text: method === 'coins' ? `🏥 Reanimado (-30 Monedas) • HP al 50%` : `⚡ Reanimado (-${result.xpLost} XP) • HP al 50%`,
         type: 'heal',
       });
     }
@@ -62,15 +62,15 @@ export const HunterCollapseModal: React.FC = () => {
             </div>
 
             <span className="px-3 py-1 rounded-full bg-rose-950/80 border border-rose-600/60 text-rose-300 text-[10px] font-mono font-black uppercase tracking-widest mb-2">
-              ⚠️ ALERTA DE VITALIDAD CRÍTICA (0 HP)
+              ⚠️ ALERTA DE ENERGÍA CRÍTICA (0 HP)
             </span>
 
             <h2 className="text-xl sm:text-2xl font-anton uppercase tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-white via-rose-200 to-rose-400 mb-2">
-              Colapso del Cazador
+              Agotamiento de Energía
             </h2>
 
             <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-mono mb-5">
-              Tu reserva de energía vital ha colapsado. Tu determinación te permite levantarte de nuevo al <strong className="text-emerald-400">50% de HP</strong>. Elige tu método de reanimación:
+              Tu reserva de energía vital se ha agotado. Tu determinación te permite levantarte de nuevo al <strong className="text-emerald-400">50% de HP</strong>. Elige tu método de recuperación:
             </p>
 
             {/* Options */}
@@ -110,12 +110,12 @@ export const HunterCollapseModal: React.FC = () => {
                     <Coins className="w-4 h-4 text-yellow-400" /> Tratamiento Médico
                   </span>
                   <span className="text-xs font-mono font-bold text-yellow-400">
-                    -30 Oro
+                    -30 Monedas
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-400 font-mono leading-snug">
-                  Paga con tus créditos acumulados para restaurar tu salud <span className="text-amber-300 font-bold">sin perder XP</span>.
-                  {!canAffordCoins && ` (Tienes ${currentCoins} oro)`}
+                  Paga con tus monedas acumuladas para restaurar tu salud <span className="text-amber-300 font-bold">sin perder XP</span>.
+                  {!canAffordCoins && ` (Tienes ${currentCoins} monedas)`}
                 </p>
               </button>
             </div>

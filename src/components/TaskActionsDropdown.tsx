@@ -60,7 +60,7 @@ export const TaskActionsDropdown: React.FC<TaskActionsDropdownProps> = ({
   const actions = [
     {
       id: 'pomodoro',
-      label: 'Foco / Pomodoro',
+      label: 'Modo Foco',
       icon: <Timer className="w-3.5 h-3.5 sm:w-4 sm:h-4" />,
       color: '#00f0ff',
       glow: 'shadow-[0_0_12px_rgba(0,240,255,0.55)]',
@@ -75,7 +75,7 @@ export const TaskActionsDropdown: React.FC<TaskActionsDropdownProps> = ({
     },
     {
       id: 'note',
-      label: task.notes ? 'Ver notas guardadas' : 'Escribir nota',
+      label: task.notes ? 'Notas' : 'Escribir nota',
       icon: <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4" />,
       color: '#c084fc',
       glow: 'shadow-[0_0_12px_rgba(192,132,252,0.55)]',

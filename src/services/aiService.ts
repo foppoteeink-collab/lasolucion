@@ -161,8 +161,9 @@ export async function generateScheduleFrontend(
        - Estructura el día en un máximo de 7 a 10 bloques bien distribuidos sin choques de horario.`;
 
   const systemInstruction = `
-    Eres el ARQUITECTO SUPREMO DE PRODUCTIVIDAD Y GESTIÓN DEL TIEMPO del Núcleo Central (KAI).
-    Tu misión es analizar la solicitud del operador humano y transformarla en una AGENDA DIARIA LIMPIA, EQUILIBRADA Y 100% LIBRE DE CHOQUES DE HORARIO.
+    Eres KAI, el estratega táctico de alto rendimiento y neuroplasticidad de La Solución.
+    Tu misión es analizar la solicitud del usuario y transformarla en una AGENDA DIARIA LIMPIA, EQUILIBRADA Y 100% LIBRE DE CHOQUES DE HORARIO.
+    Comunícate con claridad, calidez motivacional y enfoque constructivo libre de culpa, respetando los tiempos de descanso y optimizando la energía mental.
 
     ${modeDirective}
 
@@ -279,7 +280,7 @@ export async function generateNeuralAnalysisAI(
   const tasksWithNotes = (currentTasks || []).filter((t: any) => t.notes && t.notes.trim());
   const taskNotesContext = tasksWithNotes.length > 0
     ? tasksWithNotes.map((t: any) => `  • [${t.completed ? '✓' : '⏳'}] ${t.title}: "${t.notes.trim()}"`).join('\n')
-    : 'Sin notas de misiones registradas hoy.';
+    : 'Sin notas de tareas registradas hoy.';
 
   // Build a 14-day historical context
   const todayStr = new Date().toISOString().split('T')[0];
@@ -311,16 +312,16 @@ export async function generateNeuralAnalysisAI(
   }
 
   const prompt = `
- Eres un Asistente Personal Ejecutivo y Analista de Rendimiento.
- Tu tono debe ser minimalista, directo al grano, corporativo, limpio y altamente analítico.
- Evita usar metáforas, jerga de ciencia ficción, excesos de emojis o lenguaje emocional. Presenta conclusiones basadas estrictamente en datos.
+ Eres KAI, el estratega táctico de alto rendimiento y neuroplasticidad de La Solución.
+ Tu misión es analizar la jornada del usuario con precisión analítica, calidez motivacional y enfoque constructivo libre de culpa.
+ Presenta conclusiones claras basadas en datos, destacando patrones de progreso y oportunidades de mejora sin generar ansiedad ni reproches.
 
- DATOS DEL CLIENTE / OPERADOR:
- - Rol / Perfil: ${archetypeClass || 'Ejecutivo'}
+ DATOS DEL OPERADOR:
+ - Rol / Perfil: ${archetypeClass || 'Operador'}
  - Nivel Actual: ${stats?.level || 1} (${stats?.rankTitle || 'Principiante'})
- - Salud (HP): ${stats?.hp || 100}/${stats?.maxHp || 100}
- - Monedas / Créditos: ${stats?.coins || 0}
- - Días de Racha Activa: ${stats?.streakDays || 0} (Días de gracia: ${stats?.streakShields || 0})
+ - Energía Vital (HP): ${stats?.hp || 100}/${stats?.maxHp || 100}
+ - Monedas acumuladas: ${stats?.coins || 0}
+ - Días de Racha Activa: ${stats?.streakDays || 0} (Días de gracia / Escudos: ${stats?.streakShields || 0})
  - Desglose de Atributos: Disciplina=${stats?.attributes?.disciplina || 0}, Fuerza=${stats?.attributes?.fuerza || 0}, Mente=${stats?.attributes?.mente || 0}, Energía=${stats?.attributes?.energia || 0}, Estudio=${stats?.attributes?.estudio || 0}
  - Tareas Completadas Hoy: ${completedTasks.length} | Tareas Pendientes Hoy: ${pendingTasks.length}
  - Lista de Tareas Pendientes: ${pendingTasks.map((t: any) => t.title).join(', ') || 'Ninguna'}

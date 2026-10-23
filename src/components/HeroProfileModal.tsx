@@ -186,7 +186,7 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-bold text-white truncate">{user.displayName || 'Cazador Autenticado'}</p>
+                    <p className="text-xs font-bold text-white truncate">{user.displayName || 'Operador Autenticado'}</p>
                     <p className="text-[11px] text-slate-300 font-mono truncate flex items-center gap-1 mt-0.5">
                       <Mail className="w-3 h-3 text-cyan-400 shrink-0" />
                       {user.email}
@@ -249,10 +249,10 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
             )}
           </div>
 
-          {/* ──────────────── SECCIÓN 2: AVATAR DEL CAZADOR ──────────────── */}
+          {/* ──────────────── SECCIÓN 2: AVATAR DEL OPERADOR ──────────────── */}
           <div>
             <label className="block text-xs font-anton text-cyan-300 uppercase tracking-wider mb-2">
-              Avatar del Cazador (Emoji o Símbolo)
+              Avatar del Operador (Emoji o Símbolo)
             </label>
             <div className="flex items-center gap-3 mb-2.5">
               <div className="w-14 h-14 rounded-2xl bg-[#04020e] border-2 border-cyan-400 flex items-center justify-center text-3xl shadow-[0_0_15px_rgba(0,240,255,0.35)] shrink-0">
@@ -424,7 +424,7 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
                 className="text-[11px] font-mono text-cyan-400 hover:text-cyan-200 underline decoration-cyan-500/40 hover:decoration-cyan-300 transition-colors cursor-pointer inline-flex items-center gap-1.5"
               >
                 <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                <span>Repetir Ceremonia del Despertar del Cazador</span>
+                <span>Repetir Ceremonia del Despertar</span>
               </button>
             </div>
           )}

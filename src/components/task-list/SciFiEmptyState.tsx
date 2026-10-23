@@ -68,7 +68,7 @@ export const SciFiEmptyState: React.FC<SciFiEmptyStateProps> = ({
           ) : isFiltered ? (
             'No hay tareas asignadas dentro del filtro o categoría seleccionada. Puedes ajustar los filtros o agregar una nueva tarea.'
           ) : (
-            '¡Excelente trabajo! Has completado todas tus actividades o aún no has programado tareas para hoy.'
+            '¡Excelente trabajo! Has completado todas tus tareas o aún no has programado tareas para hoy.'
           )}
         </p>
 
@@ -98,7 +98,7 @@ export const SciFiEmptyState: React.FC<SciFiEmptyStateProps> = ({
               className="min-h-[44px] px-5 py-2.5 rounded-xl sm:rounded-2xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/50 hover:border-amber-400 font-black text-xs sm:text-sm shadow-[0_0_12px_rgba(245,158,11,0.25)] active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               <RefreshCw className="w-4 h-4 text-amber-400" />
-              <span>Restablecer Rutina del Día</span>
+              <span>Restablecer Tareas del Día</span>
             </button>
           )}
 
@@ -113,7 +113,7 @@ export const SciFiEmptyState: React.FC<SciFiEmptyStateProps> = ({
               className="min-h-[44px] px-5 py-2.5 rounded-xl sm:rounded-2xl bg-blue-900/40 hover:bg-blue-800/60 text-blue-200 border border-blue-500/50 font-bold text-xs sm:text-sm active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               <FilterX className="w-4 h-4 text-cyan-400" />
-              <span>Ver Todas las Misiones</span>
+              <span>Ver Todas las Tareas</span>
             </button>
           )}
         </div>

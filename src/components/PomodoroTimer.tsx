@@ -498,7 +498,7 @@ export const PomodoroTimer: React.FC<PomodoroTimerProps> = React.memo(({
                   title="Ecualizador avanzado de 3 canales"
                 >
                   <Sliders className="w-3 h-3" />
-                  <span>3CH</span>
+                  <span>EQ</span>
                 </button>
               </div>
             </div>

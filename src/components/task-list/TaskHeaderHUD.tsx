@@ -46,7 +46,7 @@ export const TaskHeaderHUD: React.FC<TaskHeaderHUDProps> = ({
         <div className="px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between text-amber-300 text-xs">
           <div className="flex items-center gap-2">
             <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
-            <span className="font-semibold">{activeBuff.name || 'Buff Activo'}</span>
+            <span className="font-semibold">{activeBuff.name || 'Mejora Activa'}</span>
           </div>
           <span className="text-amber-400/80 font-mono text-[11px]">{activeBuff.description}</span>
         </div>
@@ -63,7 +63,7 @@ export const TaskHeaderHUD: React.FC<TaskHeaderHUDProps> = ({
             type="button"
             onClick={() => onOpenAddModal('task')}
             className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-cyan-400/50 bg-[#001020] hover:bg-cyan-400 hover:text-black text-cyan-300 shadow-[0_0_12px_rgba(0,240,255,0.25)] flex items-center justify-center transition-all cursor-pointer active:scale-90"
-            title="Centro de Misiones: Añadir Tarea, Hábito u Oráculo"
+            title="Centro de Tareas: Añadir Tarea, Hábito u Oráculo"
           >
             <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5]" />
           </button>
