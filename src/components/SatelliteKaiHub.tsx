@@ -196,21 +196,10 @@ export const SatelliteKaiHub: React.FC<SatelliteKaiHubProps> = ({
       (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
     }
 
-    // Si fue un toque rápido sobre un ítem específico
+    // Si fue un toque rápido sobre cualquier ítem satélite, seleccionarlo y cerrarlo de inmediato
     if (wasTap && itemIndex !== undefined) {
-      const currentActive = wrapIndex(Math.round(rotRef.current), n);
-      if (itemIndex === currentActive) {
-        onSelect(items[itemIndex]);
-      } else {
-        soundFX.playClick();
-        velRef.current = 0;
-        const currentRound = Math.round(rotRef.current);
-        let diff = itemIndex - currentRound;
-        if (diff > n / 2) diff -= n;
-        if (diff < -n / 2) diff += n;
-        commit(rotRef.current + diff);
-        startEngine();
-      }
+      soundFX.playClick();
+      onSelect(items[itemIndex]);
       return;
     }
 
@@ -344,6 +333,11 @@ export const SatelliteKaiHub: React.FC<SatelliteKaiHubProps> = ({
                 onPointerMove={onPointerMove}
                 onPointerUp={(e) => onPointerUp(e, i)}
                 onPointerCancel={(e) => onPointerUp(e, i)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  soundFX.playClick();
+                  onSelect(item);
+                }}
                 className="w-full h-full rounded-full flex items-center justify-center cursor-pointer relative active:scale-90 transition-all duration-200"
                 style={{
                   background: isActive
@@ -418,6 +412,7 @@ export const SatelliteKaiHub: React.FC<SatelliteKaiHubProps> = ({
             <div
               onClick={(e) => {
                 e.stopPropagation();
+                soundFX.playClick();
                 onSelect(activeItemDisplay);
               }}
               className="group flex flex-col items-center cursor-pointer active:scale-95 transition-transform"

@@ -232,22 +232,43 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
     ]
   );
 
+  // Cerrar menú con tecla Escape
+  useEffect(() => {
+    if (!isMenuOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsMenuOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isMenuOpen]);
+
   const lastToggleTimeRef = useRef(0);
   const handleCompanionClick = useCallback((e?: React.SyntheticEvent) => {
-    if (e) e.stopPropagation();
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault?.();
+    }
     if (isDraggingRef.current) return;
     const now = Date.now();
-    if (now - lastToggleTimeRef.current < 280) return;
+    if (now < lastToggleTimeRef.current || now - lastToggleTimeRef.current < 300) return;
     lastToggleTimeRef.current = now;
     soundFX.playClick();
     setIsMenuOpen((prev) => !prev);
   }, []);
 
-  const handleSelectItem = (item: SatelliteHubItem) => {
+  const handleSelectItem = useCallback((item: SatelliteHubItem) => {
     soundFX.playClick();
     setIsMenuOpen(false);
-    item.action();
-  };
+    // Bloquear reactivación inmediata por eventos de clic sintéticos o rebote
+    lastToggleTimeRef.current = Date.now() + 600;
+    try {
+      item.action();
+    } catch (err) {
+      console.error('Error al ejecutar acción de KAI:', err);
+    }
+  }, []);
 
   const openOffset = useMemo(() => {
     // Detectamos posición base de KAI en reposo
@@ -338,11 +359,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
           )}
 
           {/* KAI CON ANILLO ORBITAL 360° */}
-          <div
-            className="group relative cursor-pointer touch-none flex items-center justify-center z-[70]"
-            onClick={handleCompanionClick}
-            title="Toca a KAI para abrir el menú táctico"
-          >
+          <div className="relative touch-none flex items-center justify-center z-[70]">
             {/* ÓRBITA PLANETARIA 360° */}
             <AnimatePresence>
               {isMenuOpen && (
@@ -360,7 +377,9 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
                 scale: isMenuOpen ? 1.15 : 1,
               }}
               transition={{ type: 'spring', damping: 22, stiffness: 280 }}
-              className="relative flex items-center justify-center"
+              className="relative flex items-center justify-center cursor-pointer"
+              onClick={handleCompanionClick}
+              title={isMenuOpen ? 'Cerrar menú' : 'Toca a KAI para abrir el menú táctico'}
             >
               <HoloCompanion
                 archetype={archetype}
