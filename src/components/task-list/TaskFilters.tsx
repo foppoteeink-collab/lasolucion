@@ -17,6 +17,7 @@ import {
   LucideIcon 
 } from 'lucide-react';
 import { soundFX } from '../../utils/audio';
+import { CATEGORY_COLORS } from '../../data/categoryColors';
 
 export type TaskFilterType = 'todos' | 'rutina' | 'habitos' | 'pendientes' | 'completados';
 
@@ -45,13 +46,13 @@ interface CategoryItem {
 
 const CATEGORIES: CategoryItem[] = [
   { id: 'todos', label: 'Todas', icon: Layers },
-  { id: 'entrenamiento', label: 'Gym', icon: Dumbbell, color: '#38bdf8' },
-  { id: 'estudio', label: 'Estudio', icon: BookOpen, color: '#facc15' },
-  { id: 'trabajo', label: 'Trabajo', icon: Briefcase, color: '#fb923c' },
-  { id: 'limpieza', label: 'Orden', icon: Sparkles, color: '#34d399' },
-  { id: 'comida', label: 'Nutrición', icon: Apple, color: '#4ade80' },
-  { id: 'creativo', label: 'Creativo', icon: Palette, color: '#c084fc' },
-  { id: 'clientes', label: 'Clientes', icon: Users, color: '#60a5fa' },
+  { id: 'entrenamiento', label: 'Gym', icon: Dumbbell, color: CATEGORY_COLORS.entrenamiento.color },
+  { id: 'estudio', label: 'Estudio', icon: BookOpen, color: CATEGORY_COLORS.estudio.textColor },
+  { id: 'trabajo', label: 'Trabajo', icon: Briefcase, color: CATEGORY_COLORS.trabajo.color },
+  { id: 'limpieza', label: 'Orden', icon: Sparkles, color: CATEGORY_COLORS.limpieza.color },
+  { id: 'comida', label: 'Nutrición', icon: Apple, color: CATEGORY_COLORS.comida.color },
+  { id: 'creativo', label: 'Creativo', icon: Palette, color: CATEGORY_COLORS.creativo.color },
+  { id: 'clientes', label: 'Clientes', icon: Users, color: CATEGORY_COLORS.clientes.color },
 ];
 
 export const TaskFilters: React.FC<TaskFiltersProps> = ({
@@ -137,7 +138,7 @@ export const TaskFilters: React.FC<TaskFiltersProps> = ({
             className={`px-2.5 py-1.5 rounded-xl border text-xs font-mono flex items-center gap-1 cursor-pointer transition-all shrink-0 ${
               showCategories || selectedCategory !== 'todos'
                 ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400'
-                : 'bg-[#011420]/80 text-slate-400 border-cyan-500/25 hover:text-white'
+                : 'bg-surface-card text-slate-400 border-cyan-500/25 hover:text-white'
             }`}
             title="Filtrar por categoría"
           >
@@ -166,7 +167,7 @@ export const TaskFilters: React.FC<TaskFiltersProps> = ({
                 className={`px-2.5 py-1 rounded-lg whitespace-nowrap border transition-all cursor-pointer flex items-center gap-1 active:scale-95 text-xs font-medium ${
                   isSelected
                     ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400'
-                    : 'bg-[#011420]/60 border-white/10 text-slate-400 hover:text-white'
+                    : 'bg-surface-card border-white/10 text-slate-400 hover:text-white'
                 }`}
               >
                 {IconComp && (

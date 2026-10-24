@@ -122,11 +122,11 @@ export const SmartRecallModal: React.FC<SmartRecallModalProps> = ({
       onClick={onClose}
     >
       <div 
-        className="w-full max-w-xl bg-[#011420] border border-cyan-500/40 rounded-2xl sm:rounded-3xl shadow-[0_0_40px_rgba(0,240,255,0.2)] overflow-hidden flex flex-col max-h-[88dvh] sm:max-h-[84vh]"
+        className="w-full max-w-xl bg-surface-modal border border-cyan-500/40 rounded-2xl sm:rounded-3xl shadow-[0_0_40px_rgba(0,240,255,0.2)] overflow-hidden flex flex-col max-h-[88dvh] sm:max-h-[84vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-cyan-500/30 flex items-center justify-between bg-[#000a14] shrink-0">
+        <div className="p-4 sm:p-5 border-b border-cyan-500/30 flex items-center justify-between bg-surface-base shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-[#001020] border border-amber-400/50 flex items-center justify-center text-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.3)]">
               <Brain className="w-5 h-5 animate-pulse" />
@@ -158,7 +158,7 @@ export const SmartRecallModal: React.FC<SmartRecallModalProps> = ({
           {dueItems.length === 0 ? (
             /* No cards due today */
             <div className="py-10 text-center flex flex-col items-center">
-              <div className="w-16 h-16 rounded-2xl bg-[#000a14] border border-cyan-500/40 flex items-center justify-center text-cyan-400 mb-4 shadow-[0_0_20px_rgba(0,240,255,0.2)]">
+              <div className="w-16 h-16 rounded-2xl bg-surface-base border border-cyan-500/40 flex items-center justify-center text-cyan-400 mb-4 shadow-[0_0_20px_rgba(0,240,255,0.2)]">
                 <CheckCircle2 className="w-8 h-8" />
               </div>
               <h3 className="text-lg font-black text-white font-anton uppercase mb-2">¡Todo al día!</h3>
@@ -166,7 +166,7 @@ export const SmartRecallModal: React.FC<SmartRecallModalProps> = ({
                 No tienes notas de misiones pendientes de repaso para hoy ({currentDate}).
                 Tus recuerdos están frescos y consolidados.
               </p>
-              <div className="bg-[#000a14] border border-cyan-500/30 rounded-xl p-4 text-xs text-slate-300 max-w-sm w-full mb-6 text-left">
+              <div className="bg-surface-base border border-cyan-500/30 rounded-xl p-4 text-xs text-slate-300 max-w-sm w-full mb-6 text-left">
                 <p className="font-bold text-white mb-1 flex items-center gap-1.5 font-anton uppercase">
                   <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                   ¿Cómo agregar más memorias?
@@ -198,15 +198,15 @@ export const SmartRecallModal: React.FC<SmartRecallModalProps> = ({
               </p>
 
               <div className="grid grid-cols-3 gap-3 w-full max-w-sm mb-6">
-                <div className="bg-[#000a14] border border-amber-500/40 rounded-xl p-3 text-center">
+                <div className="bg-surface-base border border-amber-500/40 rounded-xl p-3 text-center">
                   <span className="text-[10px] text-slate-400 uppercase font-mono font-bold block">Repasadas</span>
                   <span className="text-lg font-black text-amber-300 font-mono">{sessionCompletedCount}</span>
                 </div>
-                <div className="bg-[#000a14] border border-cyan-500/40 rounded-xl p-3 text-center">
+                <div className="bg-surface-base border border-cyan-500/40 rounded-xl p-3 text-center">
                   <span className="text-[10px] text-slate-400 uppercase font-mono font-bold block">XP Ganada</span>
                   <span className="text-lg font-black text-cyan-400 font-mono">+{sessionXpEarned}</span>
                 </div>
-                <div className="bg-[#000a14] border border-amber-500/40 rounded-xl p-3 text-center">
+                <div className="bg-surface-base border border-amber-500/40 rounded-xl p-3 text-center">
                   <span className="text-[10px] text-slate-400 uppercase font-mono font-bold block">Monedas</span>
                   <span className="text-lg font-black text-amber-400 font-mono">+{sessionCoinsEarned}</span>
                 </div>
@@ -228,18 +228,18 @@ export const SmartRecallModal: React.FC<SmartRecallModalProps> = ({
                   Memoria {currentIndex + 1} de {dueItems.length}
                 </span>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-amber-300 flex items-center gap-1 bg-[#000a14] px-2 py-0.5 rounded-full border border-amber-500/40 font-mono">
+                  <span className="text-xs font-bold text-amber-300 flex items-center gap-1 bg-surface-base px-2 py-0.5 rounded-full border border-amber-500/40 font-mono">
                     <Flame className="w-3.5 h-3.5 text-amber-400" />
                     Racha {currentItem.streak}
                   </span>
-                  <span className="text-[11px] font-bold text-slate-300 bg-[#000a14] px-2 py-0.5 rounded-full border border-cyan-500/30">
+                  <span className="text-[11px] font-bold text-slate-300 bg-surface-base px-2 py-0.5 rounded-full border border-cyan-500/30">
                     {RECALL_LEVEL_LABELS[currentItem.level] || 'Aprendiz'}
                   </span>
                 </div>
               </div>
 
               {/* Card Container */}
-              <div className="relative bg-[#000a14] border border-cyan-500/40 rounded-2xl p-5 sm:p-6 shadow-[0_0_25px_rgba(0,240,255,0.1)] flex flex-col min-h-[260px] justify-between">
+              <div className="relative bg-surface-base border border-cyan-500/40 rounded-2xl p-5 sm:p-6 shadow-[0_0_25px_rgba(0,240,255,0.1)] flex flex-col min-h-[260px] justify-between">
                 <div>
                   {/* Category & Date */}
                   <div className="flex items-center justify-between mb-3">
@@ -373,7 +373,7 @@ export const SmartRecallModal: React.FC<SmartRecallModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-3 sm:p-4 border-t border-cyan-500/20 bg-[#000a14] flex items-center justify-between text-xs text-slate-400">
+        <div className="p-3 sm:p-4 border-t border-cyan-500/20 bg-surface-base flex items-center justify-between text-xs text-slate-400">
           <div className="flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
             <span>Repasar cada día afianza el hábito y el conocimiento</span>

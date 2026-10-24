@@ -1018,7 +1018,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
                   <div className="p-2.5 bg-purple-500/20 rounded-xl text-purple-400"><Clock className="w-5 h-5" /></div>
                   <div>
                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Sesión Deep Work Máxima</p>
-                    <p className="text-xl font-black text-purple-300">{maxPomodoro} <span className="text-xs text-purple-600">MIN</span></p>
+                    <p className="text-xl font-black text-purple-300">{maxPomodoro} <span className="text-xs text-purple-400 font-bold">MIN</span></p>
                   </div>
                 </div>
                 {/* Record: Racha */}
@@ -1026,7 +1026,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
                   <div className="p-2.5 bg-orange-500/20 rounded-xl text-orange-400"><Flame className="w-5 h-5" /></div>
                   <div>
                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Mejor Racha Histórica</p>
-                    <p className="text-xl font-black text-orange-400">{maxHabitStreak} <span className="text-xs text-orange-600">DÍAS</span></p>
+                    <p className="text-xl font-black text-orange-400">{maxHabitStreak} <span className="text-xs text-orange-400 font-bold">DÍAS</span></p>
                   </div>
                 </div>
                 {/* Record: Total Tareas */}

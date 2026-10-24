@@ -32,7 +32,7 @@ import { useAuth } from '../context/AuthContext';
 import { usePlayerStore } from '../store/usePlayerStore';
 import { useTaskStore } from '../store/useTaskStore';
 import { useUIStore } from '../store/useUIStore';
-import { getRankForLevel } from '../data/defaults';
+import { getRankForLevel, getCategoryColor } from '../data/defaults';
 import { CloudSyncResult } from '../hooks/useCloudSync';
 import { ArchetypeGlyph } from './ArchetypeGlyph';
 import { getTodayDateString, getYesterdayDateString } from '../utils/date';
@@ -99,19 +99,7 @@ export const Header: React.FC<HeaderProps> = ({
     : (todaySleep?.bedtime && todaySleep?.wakeTime) ? 'complete'
     : 'none';
 
-  const getCategoryColor = (category?: string) => {
-    switch (category) {
-      case 'entrenamiento': return '#ef4444'; // Rojo (red-500)
-      case 'limpieza': return '#10b981'; // Verde (emerald-500)
-      case 'comida': return '#f59e0b'; // Naranja (amber-500)
-      case 'estudio': return '#3b82f6'; // Azul (blue-500)
-      case 'creativo': return '#d946ef'; // Fucsia (fuchsia-500)
-      case 'trabajo': return '#6366f1'; // Indigo
-      default: return '#00f0ff'; // Cyan por defecto
-    }
-  };
-
-  // Determinar el color del aura de KAI
+  // Determinar el color del aura de KAI (Sincronizado con CATEGORY_COLORS)
   let kaiPulseColor = '#00f0ff'; // Cyan base
   let isKaiPulsing = false;
   let pulseSpeed = 4;
@@ -212,7 +200,7 @@ export const Header: React.FC<HeaderProps> = ({
               className={`relative p-1.5 sm:p-2 rounded-xl border transition-all cursor-pointer ${
                 hasUnclaimedDailyReward
                   ? 'bg-amber-500/20 border-amber-400 text-amber-300 animate-pulse shadow-[0_0_14px_rgba(245,158,11,0.5)]'
-                  : 'bg-[#011420]/80 text-cyan-200 border-cyan-500/30 hover:border-cyan-400 hover:bg-cyan-950/40'
+                  : 'bg-surface-card text-cyan-200 border-cyan-500/30 hover:border-cyan-400 hover:bg-cyan-950/40'
               }`}
             >
               <Gift className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
@@ -226,7 +214,7 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 onClick={() => { soundFX.playClick(); onOpenNightlyReflection(); }}
                 title="Cierre de Jornada / Reflexión Cuántica"
-                className="p-1.5 sm:p-2 rounded-xl bg-[#011420]/80 text-cyan-300 border border-cyan-500/30 hover:border-cyan-400 hover:bg-cyan-950/40 transition-all cursor-pointer flex items-center gap-1.5 shadow-[0_0_10px_rgba(0,240,255,0.15)]"
+                className="p-1.5 sm:p-2 rounded-xl bg-surface-card text-cyan-300 border border-cyan-500/30 hover:border-cyan-400 hover:bg-cyan-950/40 transition-all cursor-pointer flex items-center gap-1.5 shadow-[0_0_10px_rgba(0,240,255,0.15)]"
               >
                 <Moon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-400" />
                 <span className="hidden lg:inline text-[10px] font-mono font-bold tracking-wider uppercase">Cierre</span>
@@ -291,7 +279,7 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Settings (Mobile Only) */}
             <button
               onClick={() => { if(onGoToSettings) { soundFX.playClick(); onGoToSettings(); } }}
-              className="md:hidden p-1.5 rounded-xl bg-[#011420]/80 text-cyan-300 border border-cyan-500/30 hover:border-cyan-400 hover:bg-cyan-950/40 transition-all cursor-pointer"
+              className="md:hidden p-1.5 rounded-xl bg-surface-card text-cyan-300 border border-cyan-500/30 hover:border-cyan-400 hover:bg-cyan-950/40 transition-all cursor-pointer"
               title="Ajustes"
             >
               <Settings className="w-4 h-4" />
@@ -304,18 +292,18 @@ export const Header: React.FC<HeaderProps> = ({
                   soundFX.playClick();
                   setShowNotifMenu(!showNotifMenu);
                 }}
-                className="relative p-1.5 sm:p-2 rounded-xl bg-[#011420]/80 text-cyan-300 border border-cyan-500/30 hover:border-cyan-400 hover:bg-cyan-950/40 transition-all cursor-pointer"
+                className="relative p-1.5 sm:p-2 rounded-xl bg-surface-card text-cyan-300 border border-cyan-500/30 hover:border-cyan-400 hover:bg-cyan-950/40 transition-all cursor-pointer"
                 title="Transmisiones y Notificaciones"
               >
                 <Bell className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
                 {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-cyan-400 text-[8px] font-mono font-black text-black border border-[#010a12] shadow-[0_0_8px_rgba(0,240,255,0.9)] animate-pulse">
+                  <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-cyan-400 text-[8px] font-mono font-black text-black border border-black shadow-[0_0_8px_rgba(0,240,255,0.9)] animate-pulse">
                     {unreadCount}
                   </span>
                 )}
               </button>
               {showNotifMenu && (
-                <div className="absolute right-0 mt-2 w-64 sm:w-80 rounded-2xl bg-[#010e17]/95 backdrop-blur-xl border border-cyan-500/50 shadow-[0_0_30px_rgba(0,240,255,0.25)] p-3.5 z-50 animate-in fade-in slide-in-from-top-2">
+                <div className="absolute right-0 mt-2 w-64 sm:w-80 rounded-2xl bg-surface-modal backdrop-blur-xl border border-cyan-500/50 shadow-[0_0_30px_rgba(0,240,255,0.25)] p-3.5 z-50 animate-in fade-in slide-in-from-top-2">
                   <div className="flex items-center justify-between pb-2 border-b border-cyan-500/30">
                     <span className="text-xs font-anton tracking-wider text-white flex items-center gap-1.5">
                       <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
@@ -358,10 +346,10 @@ export const Header: React.FC<HeaderProps> = ({
                 }}
                 className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-[10px] font-mono font-bold tracking-wider transition cursor-pointer ${
                   cloudSync?.syncStatus === 'saving' || isSyncBusy
-                    ? 'bg-[#011420] border-cyan-400 text-cyan-300 shadow-[0_0_12px_rgba(0,240,255,0.3)]'
+                    ? 'bg-surface-card border-cyan-400 text-cyan-300 shadow-[0_0_12px_rgba(0,240,255,0.3)]'
                     : cloudSync?.syncStatus === 'offline'
                     ? 'bg-amber-950/40 border-amber-500 text-amber-300'
-                    : 'bg-[#011420]/90 hover:bg-cyan-950/50 border-cyan-500/50 text-cyan-300 shadow-[0_0_10px_rgba(0,240,255,0.15)]'
+                    : 'bg-surface-card hover:bg-cyan-950/50 border-cyan-500/50 text-cyan-300 shadow-[0_0_10px_rgba(0,240,255,0.15)]'
                 }`}
                 title="Sincronizar datos entre Tablet y Teléfono"
               >
@@ -472,7 +460,7 @@ export const Header: React.FC<HeaderProps> = ({
               {/* Sound Toggle */}
               <button
                 onClick={toggleSound}
-                className="p-1.5 sm:p-2 rounded-xl bg-[#011420]/80 text-cyan-300 border border-cyan-500/30 hover:border-cyan-400 hover:bg-cyan-950/40 transition-all cursor-pointer"
+                className="p-1.5 sm:p-2 rounded-xl bg-surface-card text-cyan-300 border border-cyan-500/30 hover:border-cyan-400 hover:bg-cyan-950/40 transition-all cursor-pointer"
                 title={soundEnabled ? 'Sonido Activado' : 'Sonido Silenciado'}
               >
                 {soundEnabled ? <Volume2 className="w-4 h-4 text-cyan-400" /> : <VolumeX className="w-4 h-4 text-zinc-500" />}
@@ -488,7 +476,7 @@ export const Header: React.FC<HeaderProps> = ({
               ) : (
                 <button
                   onClick={() => { soundFX.playClick(); signInWithGoogle(); }}
-                  className="p-1.5 sm:p-2 rounded-xl bg-[#011420]/80 text-cyan-300 border border-cyan-500/40 hover:bg-cyan-950/50 transition-all cursor-pointer"
+                  className="p-1.5 sm:p-2 rounded-xl bg-surface-card text-cyan-300 border border-cyan-500/40 hover:bg-cyan-950/50 transition-all cursor-pointer"
                   title="Conectar con Google"
                 >
                   <LogIn className="w-4 h-4" />
@@ -500,7 +488,7 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* ROW 2: HUD PROGRESS & QUANTUM TELEMETRY */}
-      <div className="px-3 sm:px-5 py-2 bg-[#010e17]/85 border-b border-cyan-500/30 shadow-[0_4px_16px_rgba(0,0,0,0.6)]">
+      <div className="px-3 sm:px-5 py-2 bg-surface-modal border-b border-cyan-500/30 shadow-[0_4px_16px_rgba(0,0,0,0.6)]">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
           
           {/* Avatar & XP */}
@@ -511,7 +499,7 @@ export const Header: React.FC<HeaderProps> = ({
               title={`Perfil - Nivel ${stats.level} (${displayRankTitle})`}
             >
               {/* Contenedor del Avatar sin emoji, usando glifo sagrado */}
-              <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-[#011420] border-2 border-cyan-400 flex items-center justify-center shadow-[0_0_15px_rgba(0,240,255,0.4)] group-hover:scale-105 transition-transform overflow-hidden relative">
+              <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-surface-card border-2 border-cyan-400 flex items-center justify-center shadow-[0_0_15px_rgba(0,240,255,0.4)] group-hover:scale-105 transition-transform overflow-hidden relative">
                 <ArchetypeGlyph
                   archetypeNameOrId={stats.characterClass || 'heroe'}
                   size={22}
@@ -519,7 +507,7 @@ export const Header: React.FC<HeaderProps> = ({
                   glow={false}
                 />
               </div>
-              <div className="absolute -bottom-1 -right-1 bg-[#010e17] text-cyan-300 text-[9px] sm:text-[10px] font-mono font-bold px-1.5 py-0.2 rounded border border-cyan-400 shadow-[0_0_8px_rgba(0,240,255,0.6)]">
+              <div className="absolute -bottom-1 -right-1 bg-surface-base text-cyan-300 text-[9px] sm:text-[10px] font-mono font-bold px-1.5 py-0.2 rounded border border-cyan-400 shadow-[0_0_8px_rgba(0,240,255,0.6)]">
                 NV.{stats.level}
               </div>
             </button>
@@ -571,7 +559,7 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Streak Shield Indicator */}
             {stats.streakShields !== undefined && stats.streakShields > 0 && (
               <div
-                className="flex items-center gap-1 px-2 py-1 sm:px-3 sm:py-1.5 rounded-xl bg-[#011420] border border-cyan-400 text-cyan-300 text-xs sm:text-sm font-anton tracking-wider shadow-[0_0_10px_rgba(0,240,255,0.25)]"
+                className="flex items-center gap-1 px-2 py-1 sm:px-3 sm:py-1.5 rounded-xl bg-surface-card border border-cyan-400 text-cyan-300 text-xs sm:text-sm font-anton tracking-wider shadow-[0_0_10px_rgba(0,240,255,0.25)]"
                 title={`Escudos Cuánticos Activos: ${stats.streakShields}`}
               >
                 <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-400 fill-cyan-400/30" />
@@ -581,7 +569,7 @@ export const Header: React.FC<HeaderProps> = ({
             
             {/* Coins */}
             <div 
-              className="flex items-center gap-1.5 px-2 py-1 sm:px-3 sm:py-1.5 rounded-xl bg-[#011420] border border-yellow-500/50 text-white text-xs sm:text-sm font-anton tracking-wider shadow-[0_0_10px_rgba(234,179,8,0.2)]"
+              className="flex items-center gap-1.5 px-2 py-1 sm:px-3 sm:py-1.5 rounded-xl bg-surface-card border border-yellow-500/50 text-white text-xs sm:text-sm font-anton tracking-wider shadow-[0_0_10px_rgba(234,179,8,0.2)]"
               title={`${stats.coins || 0} Monedas de Oro acumuladas`}
             >
               <Coins className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-yellow-400 drop-shadow-[0_0_6px_rgba(234,179,8,0.6)]" />
@@ -590,7 +578,7 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* Streak */}
             <div 
-              className="flex items-center gap-1.5 px-2 py-1 sm:px-3 sm:py-1.5 rounded-xl bg-[#011420] border border-amber-500/50 text-white text-xs sm:text-sm font-anton tracking-wider shadow-[0_0_10px_rgba(245,158,11,0.2)]"
+              className="flex items-center gap-1.5 px-2 py-1 sm:px-3 sm:py-1.5 rounded-xl bg-surface-card border border-amber-500/50 text-white text-xs sm:text-sm font-anton tracking-wider shadow-[0_0_10px_rgba(245,158,11,0.2)]"
               title={`Racha Activa: ${stats.streakDays || 0} Días continuos`}
             >
               <Flame className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-amber-400 fill-amber-400/50 drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]" />

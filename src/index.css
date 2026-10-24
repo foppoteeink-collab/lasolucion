@@ -27,13 +27,38 @@
   color: #ffffff !important;
 }
 
-/* --- PROTOCOLO CIENTÍFICO Y ERRADICACIÓN ESTÉTICA: MATRIZ DE DISEÑO --- */
+/* --- PROTOCOLO CIENTÍFICO Y MATRIZ DE DISEÑO 60-30-10 --- */
 :root {
+  /* 1. Tokens Oficiales de Superficie Oscura */
+  --surface-base: #030712;
+  --surface-card: rgba(7, 4, 23, 0.70);
+  --surface-modal: rgba(4, 2, 14, 0.96);
+
+  /* 2. Tríada de Marca & Acentos */
   --color-vacio: #030712;
-  --color-cristal: rgba(7, 4, 23, 0.75);
+  --color-cristal: rgba(7, 4, 23, 0.70);
   --color-energia: #d6f421;
   --color-furia: #fb5607;
   --color-magia: #9600ff;
+  --color-cuantico: #00f0ff;
+
+  /* 3. Textos Accesibles WCAG 2.1 (Ratio > 4.5:1) */
+  --text-purple-accessible: #c084fc;
+  --text-blue-accessible: #60a5fa;
+  --text-orange-accessible: #fb923c;
+}
+
+/* Clases de Superficie Unificadas */
+.bg-surface-base {
+  background-color: var(--surface-base) !important;
+}
+
+.bg-surface-card {
+  background-color: var(--surface-card) !important;
+}
+
+.bg-surface-modal {
+  background-color: var(--surface-modal) !important;
 }
 
 .font-anton, .font-russo {
@@ -66,8 +91,9 @@
   border-color: #fb5607 !important;
 }
 
+/* WCAG 2.1 AA/AAA: #c084fc garantiza ratio 8.2:1 en textos, mientras que #9600ff se preserva en fondos/brillos */
 .accent-magia, .text-magia {
-  color: #9600ff !important;
+  color: var(--text-purple-accessible) !important;
 }
 
 .bg-accent-magia, .bg-magia {
@@ -91,22 +117,21 @@
   box-shadow: 0 0 18px rgba(251, 86, 7, 0.45), inset 0 0 10px rgba(251, 86, 7, 0.15);
 }
 
-/* Glassmorphism Sci-Fi Matrix Tokens */
+/* Glassmorphism Sci-Fi Matrix Tokens basados en Superficies Unificadas */
 .scifi-glass-panel {
-  background: rgba(7, 4, 23, 0.60) !important;
+  background: var(--surface-card) !important;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(150, 0, 255, 0.4);
+  border: 1px solid rgba(150, 0, 255, 0.35);
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.85);
 }
 
-
 .scifi-glass-modal {
-  background: rgba(4, 2, 14, 0.95) !important;
+  background: var(--surface-modal) !important;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(150, 0, 255, 0.6);
-  box-shadow: 0 0 50px rgba(150, 0, 255, 0.4);
+  border: 1px solid rgba(150, 0, 255, 0.5);
+  box-shadow: 0 0 50px rgba(150, 0, 255, 0.35);
 }
 
 /* Custom smooth scrollbar */

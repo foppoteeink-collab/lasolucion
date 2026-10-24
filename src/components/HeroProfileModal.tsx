@@ -125,7 +125,7 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="p-4 border-b border-cyan-500/40 flex items-center justify-between bg-[#04020e] shrink-0">
+        <div className="p-4 border-b border-cyan-500/40 flex items-center justify-between bg-surface-modal shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-cyan-950/80 border border-cyan-400 flex items-center justify-center text-cyan-300 shadow-[0_0_10px_rgba(0,240,255,0.4)]">
               <Shield className="w-5 h-5" />
@@ -255,7 +255,7 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
               Avatar del Operador (Emoji o Símbolo)
             </label>
             <div className="flex items-center gap-3 mb-2.5">
-              <div className="w-14 h-14 rounded-2xl bg-[#04020e] border-2 border-cyan-400 flex items-center justify-center text-3xl shadow-[0_0_15px_rgba(0,240,255,0.35)] shrink-0">
+              <div className="w-14 h-14 rounded-2xl bg-surface-modal border-2 border-cyan-400 flex items-center justify-center text-3xl shadow-[0_0_15px_rgba(0,240,255,0.35)] shrink-0">
                 {editForm.avatarIcon || '👤'}
               </div>
               <div className="flex-1">
@@ -263,7 +263,7 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
                   type="text" 
                   value={editForm.avatarIcon} 
                   onChange={(e) => setEditForm({...editForm, avatarIcon: e.target.value})}
-                  className="w-full bg-[#04020e] border border-cyan-500/50 rounded-xl p-2.5 text-white focus:outline-none focus:border-cyan-300 text-center text-xl font-mono transition-colors"
+                  className="w-full bg-surface-modal border border-cyan-500/50 rounded-xl p-2.5 text-white focus:outline-none focus:border-cyan-300 text-center text-xl font-mono transition-colors"
                   placeholder="Emoji"
                   maxLength={4}
                 />
@@ -303,7 +303,7 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
                 type="text" 
                 value={editForm.username} 
                 onChange={(e) => setEditForm({...editForm, username: e.target.value})}
-                className="w-full bg-[#04020e] border border-cyan-500/50 rounded-xl p-2.5 text-white focus:outline-none focus:border-cyan-300 transition-colors text-xs font-mono"
+                className="w-full bg-surface-modal border border-cyan-500/50 rounded-xl p-2.5 text-white focus:outline-none focus:border-cyan-300 transition-colors text-xs font-mono"
                 placeholder="Ej: Hunter_Jin"
               />
             </div>
@@ -315,7 +315,7 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
                 type="text" 
                 value={editForm.fullName} 
                 onChange={(e) => setEditForm({...editForm, fullName: e.target.value})}
-                className="w-full bg-[#04020e] border border-cyan-500/50 rounded-xl p-2.5 text-white focus:outline-none focus:border-cyan-300 transition-colors text-xs"
+                className="w-full bg-surface-modal border border-cyan-500/50 rounded-xl p-2.5 text-white focus:outline-none focus:border-cyan-300 transition-colors text-xs"
                 placeholder="Ej: Sung Jin-Woo"
               />
             </div>
@@ -330,7 +330,7 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
                 type="text" 
                 value={editForm.profession} 
                 onChange={(e) => setEditForm({...editForm, profession: e.target.value})}
-                className="w-full bg-[#04020e] border border-cyan-500/50 rounded-xl p-2.5 text-white focus:outline-none focus:border-cyan-300 transition-colors text-xs"
+                className="w-full bg-surface-modal border border-cyan-500/50 rounded-xl p-2.5 text-white focus:outline-none focus:border-cyan-300 transition-colors text-xs"
                 placeholder="Ej: Desarrollador, Diseñador, Atleta"
               />
             </div>
@@ -342,7 +342,7 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
                 type="number" 
                 value={editForm.age} 
                 onChange={(e) => setEditForm({...editForm, age: e.target.value})}
-                className="w-full bg-[#04020e] border border-cyan-500/50 rounded-xl p-2.5 text-white focus:outline-none focus:border-cyan-300 transition-colors text-xs"
+                className="w-full bg-surface-modal border border-cyan-500/50 rounded-xl p-2.5 text-white focus:outline-none focus:border-cyan-300 transition-colors text-xs"
                 placeholder="Ej: 24"
               />
             </div>
@@ -356,7 +356,7 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
               type="text" 
               value={editForm.mantra} 
               onChange={(e) => setEditForm({...editForm, mantra: e.target.value})}
-              className="w-full bg-[#04020e] border border-cyan-500/50 rounded-xl p-2.5 text-white focus:outline-none focus:border-cyan-300 transition-colors text-xs"
+              className="w-full bg-surface-modal border border-cyan-500/50 rounded-xl p-2.5 text-white focus:outline-none focus:border-cyan-300 transition-colors text-xs"
               placeholder="Ej: Levántate y vence cada día"
             />
           </div>
@@ -369,7 +369,7 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
               type="text" 
               value={editForm.mainGoal} 
               onChange={(e) => setEditForm({...editForm, mainGoal: e.target.value})}
-              className="w-full bg-[#04020e] border border-cyan-500/50 rounded-xl p-2.5 text-white focus:outline-none focus:border-cyan-300 transition-colors text-xs"
+              className="w-full bg-surface-modal border border-cyan-500/50 rounded-xl p-2.5 text-white focus:outline-none focus:border-cyan-300 transition-colors text-xs"
               placeholder="Ej: Alcanzar Rango S y dominar la disciplina diaria"
             />
           </div>
@@ -381,7 +381,7 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
             <textarea 
               value={editForm.bio} 
               onChange={(e) => setEditForm({...editForm, bio: e.target.value})}
-              className="w-full bg-[#04020e] border border-cyan-500/50 rounded-xl p-2.5 text-white focus:outline-none focus:border-cyan-300 h-20 resize-none transition-colors text-xs"
+              className="w-full bg-surface-modal border border-cyan-500/50 rounded-xl p-2.5 text-white focus:outline-none focus:border-cyan-300 h-20 resize-none transition-colors text-xs"
               placeholder="Escribe unas líneas sobre quién eres y qué buscas conquistar en el Sistema..."
             />
           </div>
@@ -432,7 +432,7 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
         </div>
 
         {/* Footer pinned */}
-        <div className="p-4 border-t border-cyan-500/40 bg-[#04020e] shrink-0">
+        <div className="p-4 border-t border-cyan-500/40 bg-surface-modal shrink-0">
           <button 
             type="button"
             onClick={handleSave}

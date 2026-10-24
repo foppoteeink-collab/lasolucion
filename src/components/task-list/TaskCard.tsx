@@ -22,112 +22,7 @@ import { SlashText } from './SlashText';
 import { TaskActionsDropdown } from '../TaskActionsDropdown';
 import { useUIStore } from '../../store/useUIStore';
 import { getTodayDateString } from '../../utils/date';
-
-interface TaskCardProps {
-  task: TaskItem;
-  index?: number;
-  currentDate?: string;
-  isMenuOpen?: boolean;
-  onToggleMenu?: (id: string | null) => void;
-  onToggle: (taskId: string, e?: React.MouseEvent) => void;
-  onIncrementHabit?: (taskId: string, e?: React.MouseEvent) => void;
-  onEdit?: (task: TaskItem) => void;
-  onOpenEditModal?: (task: TaskItem) => void;
-  onDelete?: (taskId: string) => void;
-  onDeleteTask?: (taskId: string) => void;
-  onOpenPomodoro?: (title: string, category: TaskCategory) => void;
-  onOpenNoteModal?: (task: TaskItem) => void;
-  onOpenSleepModal?: (task: TaskItem) => void;
-  isDayEnded?: boolean;
-  habitMastery?: Record<string, HabitMasteryRecord>;
-}
-
-interface CategoryStyle {
-  border: string;
-  bgBadge: string;
-  textIcon: string;
-  slashColor: string;
-  checkboxBorder: string;
-}
-
-const getCategoryStyle = (category?: string): CategoryStyle => {
-  switch (category?.toLowerCase()) {
-    case 'trabajo':
-      return {
-        border: 'border-orange-500/20 hover:border-orange-500/40',
-        bgBadge: 'bg-orange-500/10 border-orange-500/20 text-orange-300',
-        textIcon: 'text-orange-400',
-        slashColor: '#f97316',
-        checkboxBorder: 'bg-orange-500 border-orange-400 text-black'
-      };
-    case 'clientes':
-      return {
-        border: 'border-blue-500/20 hover:border-blue-500/40',
-        bgBadge: 'bg-blue-500/10 border-blue-500/20 text-blue-300',
-        textIcon: 'text-blue-400',
-        slashColor: '#3b82f6',
-        checkboxBorder: 'bg-blue-500 border-blue-400 text-black'
-      };
-    case 'entrenamiento':
-      return {
-        border: 'border-cyan-500/20 hover:border-cyan-500/40',
-        bgBadge: 'bg-cyan-500/10 border-cyan-500/20 text-cyan-300',
-        textIcon: 'text-cyan-400',
-        slashColor: '#06b6d4',
-        checkboxBorder: 'bg-cyan-500 border-cyan-400 text-black'
-      };
-    case 'estudio':
-      return {
-        border: 'border-purple-500/20 hover:border-purple-500/40',
-        bgBadge: 'bg-purple-500/10 border-purple-500/20 text-purple-300',
-        textIcon: 'text-purple-400',
-        slashColor: '#a855f7',
-        checkboxBorder: 'bg-purple-500 border-purple-400 text-black'
-      };
-    case 'creativo':
-      return {
-        border: 'border-fuchsia-500/20 hover:border-fuchsia-500/40',
-        bgBadge: 'bg-fuchsia-500/10 border-fuchsia-500/20 text-fuchsia-300',
-        textIcon: 'text-fuchsia-400',
-        slashColor: '#d946ef',
-        checkboxBorder: 'bg-fuchsia-500 border-fuchsia-400 text-black'
-      };
-    case 'limpieza':
-    case 'rutina':
-      return {
-        border: 'border-emerald-500/20 hover:border-emerald-500/40',
-        bgBadge: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300',
-        textIcon: 'text-emerald-400',
-        slashColor: '#10b981',
-        checkboxBorder: 'bg-emerald-500 border-emerald-400 text-black'
-      };
-    case 'habito':
-    case 'comida':
-      return {
-        border: 'border-amber-500/20 hover:border-amber-500/40',
-        bgBadge: 'bg-amber-500/10 border-amber-500/20 text-amber-300',
-        textIcon: 'text-amber-400',
-        slashColor: '#f59e0b',
-        checkboxBorder: 'bg-amber-500 border-amber-400 text-black'
-      };
-    case 'pomodoro':
-      return {
-        border: 'border-rose-500/20 hover:border-rose-500/40',
-        bgBadge: 'bg-rose-500/10 border-rose-500/20 text-rose-300',
-        textIcon: 'text-rose-400',
-        slashColor: '#f43f5e',
-        checkboxBorder: 'bg-rose-500 border-rose-400 text-black'
-      };
-    default:
-      return {
-        border: 'border-white/10 hover:border-white/20',
-        bgBadge: 'bg-white/5 border-white/10 text-slate-300',
-        textIcon: 'text-cyan-400',
-        slashColor: '#00f0ff',
-        checkboxBorder: 'bg-cyan-500 border-cyan-400 text-black'
-      };
-  }
-};
+import { getCategoryStyle } from '../../data/categoryColors';
 
 const getRarityBadge = (task: TaskItem) => {
   const isLegendary = task.isTracked2166 || task.isLegendaryBounty;
@@ -173,6 +68,25 @@ const getCategoryIcon = (category?: string) => {
   }
 };
 
+interface TaskCardProps {
+  task: TaskItem;
+  index?: number;
+  currentDate?: string;
+  isMenuOpen?: boolean;
+  onToggleMenu?: (id: string | null) => void;
+  onToggle: (taskId: string, e?: React.MouseEvent) => void;
+  onIncrementHabit?: (taskId: string, e?: React.MouseEvent) => void;
+  onEdit?: (task: TaskItem) => void;
+  onOpenEditModal?: (task: TaskItem) => void;
+  onDelete?: (taskId: string) => void;
+  onDeleteTask?: (taskId: string) => void;
+  onOpenPomodoro?: (title: string, category: TaskCategory) => void;
+  onOpenNoteModal?: (task: TaskItem) => void;
+  onOpenSleepModal?: (task: TaskItem) => void;
+  isDayEnded?: boolean;
+  habitMastery?: Record<string, HabitMasteryRecord>;
+}
+
 export const TaskCard: React.FC<TaskCardProps> = ({
   task,
   index = 0,
@@ -215,8 +129,8 @@ export const TaskCard: React.FC<TaskCardProps> = ({
         isMenuOpen ? 'z-30 ring-1 ring-cyan-500/40 shadow-[0_0_15px_rgba(0,240,255,0.15)]' : 'z-0'
       } ${
         isCompleted 
-          ? 'bg-[#060a10]/50 border-white/5 text-slate-400 opacity-60' 
-          : `bg-[#0b121e]/80 ${catStyle.border} text-white shadow-sm hover:border-white/20`
+          ? 'bg-[#030712]/60 border-emerald-500/25 text-slate-400 opacity-60' 
+          : 'bg-surface-card backdrop-blur-md border-white/10 hover:border-white/20 text-white shadow-sm'
       }`}
     >
       {/* Línea 1: Protagonista (Check + Título + Menú Orbital Kai) */}

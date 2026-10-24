@@ -43,7 +43,7 @@ export const RanksModal: React.FC<RanksModalProps> = ({ isOpen, onClose, current
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-cyan-500/40 flex items-center justify-between bg-[#04020e] shrink-0">
+        <div className="p-4 sm:p-5 border-b border-cyan-500/40 flex items-center justify-between bg-surface-modal shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-cyan-950/80 border border-cyan-400 flex items-center justify-center shadow-[0_0_12px_rgba(0,240,255,0.4)]">
               <Award className="w-5 h-5 text-cyan-300" />
@@ -159,7 +159,7 @@ export const RanksModal: React.FC<RanksModalProps> = ({ isOpen, onClose, current
         </div>
 
         {/* Footer */}
-        <div className="p-3.5 sm:p-4 border-t border-cyan-500/40 bg-[#04020e] flex items-center justify-between shrink-0">
+        <div className="p-3.5 sm:p-4 border-t border-cyan-500/40 bg-surface-modal flex items-center justify-between shrink-0">
           <p className="text-[10px] sm:text-xs text-slate-400 font-mono flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
             Avanza completando misiones y hábitos diarios para ganar EXP y ascender.

@@ -36,7 +36,7 @@ export const DailyRewardsModal: React.FC<DailyRewardsModalProps> = ({
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#000a14]/80 backdrop-blur-sm animate-in fade-in duration-200 font-sans"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-surface-modal/90 backdrop-blur-sm animate-in fade-in duration-200 font-sans"
       onClick={onClose}
     >
       <div 

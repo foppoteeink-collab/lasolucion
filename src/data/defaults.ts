@@ -1,6 +1,8 @@
 import { DailyRewardItem, PlayerStats, ShopReward, TaskItem, CustomHabit, TaskCategory } from '../types';
 import { JUNG_ARCHETYPES, getArchetypeByName } from './archetypes';
 import { getTodayDateString, parseLocalDate } from '../utils/date';
+export { CATEGORY_COLORS, getCategoryColor, getCategoryStyle } from './categoryColors';
+export type { CategoryColorDef } from './categoryColors';
 
 /**
  * Hardcore RPG Level Curve:

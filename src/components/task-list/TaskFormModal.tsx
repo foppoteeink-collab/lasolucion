@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { X, Sparkles, Clock, Crown, Zap, Flame, ChevronDown, ChevronUp, FileText, Smile, Layers } from 'lucide-react';
 import { TaskCategory, HabitEnergyType } from '../../types';
 import { HABIT_ENERGY_DETAILS, detectHabitEnergy } from '../../utils/habitEnergyDetector';
+import { CATEGORY_COLORS } from '../../data/categoryColors';
 
 interface TaskFormModalProps {
   isOpen: boolean;
