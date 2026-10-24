@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
+import { QuantumNoiseCanvas } from './QuantumNoiseCanvas';
 
 // Distant cosmic micro-stars with subtle twinkle effect
 const COSMIC_STARS = [
@@ -186,6 +187,9 @@ export const SciFiGridBackground: React.FC = () => {
           }}
         />
       </div>
+
+      {/* CAPA 2.5: FLUJO VECTORIAL PERLIN/SIMPLEX CUÁNTICO (SUTIL Y ELEGANTE) */}
+      <QuantumNoiseCanvas />
 
       {/* CAPA 3: CUADRÍCULA SCI-FI MATRICIAL (SUAVE SOBRE LA AURORA) */}
       <div 
