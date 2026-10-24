@@ -153,7 +153,7 @@ export const Header: React.FC<HeaderProps> = ({
   const activeHelixColor = isKaiPulsing ? kaiPulseColor : rainbowColor;
 
   return (
-    <header className="sticky top-0 z-50 bg-[#010a12]/95 backdrop-blur-xl flex flex-col border-b border-cyan-500/30 shadow-[0_4px_30px_rgba(0,240,255,0.12)]">
+    <header className="sticky top-0 z-50 bg-[#010a12]/80 backdrop-blur-xl flex flex-col border-b border-cyan-500/30 shadow-[0_4px_30px_rgba(0,240,255,0.12)]">
       {/* ROW 1: BRANDING & UTILITIES */}
       <div className="px-3 sm:px-5 py-2 border-b border-cyan-500/20">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">

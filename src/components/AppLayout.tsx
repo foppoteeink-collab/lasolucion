@@ -239,34 +239,8 @@ export function AppLayout() {
       {/* Clean UI: Overlays disabled to prevent screen clutter */}
       <div id="main-layout-wrapper" className="relative min-h-screen bg-[#000000] overflow-hidden text-white font-sans selection:bg-[#d6f421] selection:text-black">
         
-        {/* CAPA 1: ORBES DE ENERGÍA (DESACTIVADA EN MODO ZEN PARA ULTRA-ENFOQUE Y RENDIMIENTO) */}
-        {!zenMode && (
-          <div className="absolute inset-0 pointer-events-none z-0">
-            <motion.div 
-              animate={{ scale: [1, 1.05, 1], opacity: [0.8, 1, 0.8] }}
-              transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-600/40 rounded-full blur-[140px]"
-            />
-            <div className="absolute -top-20 -right-20 w-[400px] h-[400px] bg-[#9600ff]/50 rounded-full blur-[120px]" />
-            <div className="absolute -bottom-32 -left-32 w-[300px] h-[300px] bg-[#d6f421]/30 rounded-full blur-[100px]" />
-          </div>
-        )}
-
-        {/* CAPA 2: PARTICULAS PARALLAX (DESACTIVADA EN MODO ZEN) */}
-        {!zenMode && (
-          <div className="absolute inset-0 pointer-events-none z-0 opacity-40">
-            <motion.div 
-              animate={{ y: ["-100%", "0%"] }}
-              transition={{ duration: 45, repeat: Infinity, ease: "linear" }}
-              className="absolute inset-0 w-full h-[200%] bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMSIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==')] opacity-50"
-            />
-            <motion.div 
-              animate={{ y: ["-100%", "0%"] }}
-              transition={{ duration: 22.5, repeat: Infinity, ease: "linear" }}
-              className="absolute inset-0 w-full h-[200%] bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCI+PGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iMiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==')] opacity-80"
-            />
-          </div>
-        )}
+        {/* ATMÓSFERA CÓSMICA / AURORA BOREAL & GRID */}
+        <SciFiGridBackground />
 
         {/* GLOBAL LEVEL UP / REWARD GLOW */}
         <div 
@@ -278,7 +252,7 @@ export function AppLayout() {
             backdropFilter: isGlowing ? 'brightness(1.1) saturate(1.2)' : 'none'
           }}
         />
-        <SciFiGridBackground />
+
         <FloatingGainEffect rewards={floatingRewards} />
         <NotificationToastOverlay />
 
@@ -305,7 +279,7 @@ export function AppLayout() {
             />
           </div>
 
-          <div className="w-full max-w-6xl mx-auto flex-1 bg-[#030712]/95 border border-white/10 rounded-3xl shadow-2xl p-4 sm:p-8">
+          <div className="w-full max-w-6xl mx-auto flex-1 bg-[#030712]/40 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl p-4 sm:p-8">
         {authError && (
           <div className="mb-4 p-3 rounded-xl bg-[#1a0500] border border-[#fb5607]/60 text-[#fb5607] text-xs flex items-center justify-between gap-3 shadow-[0_0_15px_rgba(251,86,7,0.3)]">
             <span>{authError}</span>
@@ -323,7 +297,7 @@ export function AppLayout() {
 
         {/* Navigation Tabs (Desktop / Tablet pills) */}
         <div className="hidden sm:flex items-center justify-center gap-2 mb-5 overflow-x-auto pb-1 scrollbar-none">
-          <div className="flex items-center gap-1 sm:gap-1.5 p-1 sm:p-1.5 rounded-2xl bg-[#030712]/95 border border-cyan-500/40 shadow-[0_0_25px_rgba(0,240,255,0.15)]">
+          <div className="flex items-center gap-1 sm:gap-1.5 p-1 sm:p-1.5 rounded-2xl bg-[#030712]/75 backdrop-blur-md border border-cyan-500/40 shadow-[0_0_25px_rgba(0,240,255,0.15)]">
             <button
               onClick={() => { soundFX.playClick(); setActiveTab('stats'); }}
               className={`flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2 rounded-xl transition-all font-anton text-sm sm:text-base whitespace-nowrap cursor-pointer tracking-wider ${
@@ -592,7 +566,7 @@ export function AppLayout() {
       {/* Mobile Bottom Navigation Bar (Optimized for Phones - Only visible in Classic Mode) */}
       {/* MAIN NAVIGATION BAR (Keep backdrop blur here for spatial depth) */}
       {navigationMode === 'classic' && (
-        <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#030712]/95 backdrop-blur-xl border-t border-cyan-500/40 shadow-[0px_-4px_25px_rgba(0,240,255,0.2)] px-3 pt-2 pb-safe font-sans tracking-wide">
+        <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#030712]/80 backdrop-blur-xl border-t border-cyan-500/40 shadow-[0px_-4px_25px_rgba(0,240,255,0.2)] px-3 pt-2 pb-safe font-sans tracking-wide">
           <div className="flex items-center justify-between">
             <button
               onClick={() => { soundFX.playClick(); setActiveTab('stats'); }}

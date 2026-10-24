@@ -93,12 +93,13 @@
 
 /* Glassmorphism Sci-Fi Matrix Tokens */
 .scifi-glass-panel {
-  background: rgba(7, 4, 23, 0.75) !important;
+  background: rgba(7, 4, 23, 0.60) !important;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(150, 0, 255, 0.4);
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.85);
 }
+
 
 .scifi-glass-modal {
   background: rgba(4, 2, 14, 0.95) !important;
@@ -320,4 +321,91 @@ body.modal-open-hide-floating .omni-companion-hub-root {
   min-width: 44px;
   min-height: 44px;
 }
+
+/* ==========================================================================
+   AURORA BOREALIS COSMIC AMBIENCE (GPU ACCELERATED & BATTERY-CONSCIOUS)
+   ========================================================================== */
+
+@keyframes auroraDrift1 {
+  0% {
+    transform: translate3d(-4%, -2%, 0) rotate(-2deg) scale(1);
+    opacity: 0.85;
+  }
+  33% {
+    transform: translate3d(5%, 3%, 0) rotate(3deg) scale(1.12);
+    opacity: 1;
+  }
+  66% {
+    transform: translate3d(-3%, 4%, 0) rotate(-2deg) scale(0.95);
+    opacity: 0.88;
+  }
+  100% {
+    transform: translate3d(-4%, -2%, 0) rotate(-2deg) scale(1);
+    opacity: 0.85;
+  }
+}
+
+@keyframes auroraDrift2 {
+  0% {
+    transform: translate3d(4%, 3%, 0) rotate(3deg) scale(1.02);
+    opacity: 0.82;
+  }
+  45% {
+    transform: translate3d(-5%, -4%, 0) rotate(-4deg) scale(0.92);
+    opacity: 0.98;
+  }
+  80% {
+    transform: translate3d(3%, -2%, 0) rotate(2deg) scale(1.10);
+    opacity: 0.88;
+  }
+  100% {
+    transform: translate3d(4%, 3%, 0) rotate(3deg) scale(1.02);
+    opacity: 0.82;
+  }
+}
+
+@keyframes auroraDrift3 {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translate3d(4%, -4%, 0) scale(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.8;
+  }
+}
+
+@keyframes auroraCurtainShift {
+  0%, 100% {
+    background-position: 0% 0%;
+  }
+  50% {
+    background-position: 100% 0%;
+  }
+}
+
+.animate-aurora-1 {
+  animation: auroraDrift1 14s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.animate-aurora-2 {
+  animation: auroraDrift2 18s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.animate-aurora-3 {
+  animation: auroraDrift3 15s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.animate-aurora-curtain {
+  animation: auroraCurtainShift 24s linear infinite;
+  will-change: background-position;
+}
+
 
