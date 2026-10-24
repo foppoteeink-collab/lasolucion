@@ -129,37 +129,7 @@ export const QuantumNoiseCanvas: React.FC = () => {
       // 1. Limpieza cristalina transparente para no tapar ni ensuciar el degradado del fondo
       ctx.clearRect(0, 0, width, height);
 
-      // 2. ONDAS CUÁNTICAS ESTRUCTURALES (2 ondas sutiles de flujo armónico)
-      const waveCount = 2;
-      for (let w = 0; w < waveCount; w++) {
-        const baseY = height * (w === 0 ? 0.38 : 0.68);
-        const waveColor = w === 0 ? 'rgba(0, 240, 255, 0.12)' : 'rgba(150, 0, 255, 0.10)';
-
-        ctx.beginPath();
-        ctx.strokeStyle = waveColor;
-        ctx.lineWidth = 1;
-        ctx.setLineDash([4, 8]); // Estilo línea cuántica discontinua
-
-        const step = 28;
-        let first = true;
-
-        for (let x = 0; x <= width + step; x += step) {
-          // Muestreo de Simplex Noise 3D
-          const n = simplex3(x * 0.0016, (w + 1) * 2.4, time * 0.00012);
-          const y = baseY + n * 48;
-
-          if (first) {
-            ctx.moveTo(x, y);
-            first = false;
-          } else {
-            ctx.lineTo(x, y);
-          }
-        }
-        ctx.stroke();
-        ctx.setLineDash([]); // Reset
-      }
-
-      // 3. PARTÍCULAS DE FLUJO VECTORIAL PERLIN/SIMPLEX
+      // 2. PARTÍCULAS DE FLUJO VECTORIAL PERLIN/SIMPLEX (Puro flujo orgánico sin líneas geométricas)
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
         p.prevX = p.x;
