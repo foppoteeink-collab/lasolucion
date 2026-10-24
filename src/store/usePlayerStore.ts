@@ -56,6 +56,9 @@ const INITIAL_PLAYER_STATS: PlayerStats = {
   inventory: [],
   unopenedBoxes: 0,
   hasCompletedAwakening: false,
+  restDays: {},
+  finalizedDays: {},
+  sleepLogs: {},
 };
 
 export const usePlayerStore = create<PlayerState>()(

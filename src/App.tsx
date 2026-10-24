@@ -9,9 +9,11 @@ import { notificationService } from './utils/notifications';
 import { scheduleAll } from './utils/notificationScheduler';
 import { getTodayDateString } from './utils/date';
 
+const EMPTY_TASKS: any[] = [];
+
 export default function App() {
   const ensureTodayTasks = useTaskStore(s => s.ensureTodayTasks);
-  const todayTasks = useTaskStore(s => s.tasksByDate[getTodayDateString()] || []);
+  const todayTasks = useTaskStore(s => s.tasksByDate[getTodayDateString()] ?? EMPTY_TASKS);
   const streakDays = usePlayerStore(s => s.stats.streakDays);
   const scheduledRef = useRef(false);
 

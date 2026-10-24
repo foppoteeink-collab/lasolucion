@@ -44,6 +44,8 @@ interface SettingsViewProps {
   cloudSync?: CloudSyncResult;
 }
 
+const EMPTY_TASK_LIST: any[] = [];
+
 type SettingsSubTab = 'general' | 'finances' | 'oracle' | 'simulator' | 'cloud' | 'backup' | 'danger';
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
@@ -68,7 +70,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [notifTestFeedback, setNotifTestFeedback] = useState<string | null>(null);
   const [currencyChangedToast, setCurrencyChangedToast] = useState<string | null>(null);
 
-  const todayTasks = useTaskStore(s => s.tasksByDate[getTodayDateString()] || []);
+  const todayTasks = useTaskStore(s => s.tasksByDate[getTodayDateString()] ?? EMPTY_TASK_LIST);
   const streakDays = usePlayerStore(s => s.stats.streakDays);
 
   const [confirmReset, setConfirmReset] = useState(false);

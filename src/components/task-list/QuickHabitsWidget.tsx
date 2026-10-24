@@ -460,7 +460,8 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
   const customHabits = useTaskStore(s => s.customHabits);
   const tasksByDate = useTaskStore(s => s.tasksByDate);
   const playerLevel = usePlayerStore(s => s.stats.level || 1);
-  const isRestDay = Boolean(usePlayerStore(s => s.stats.restDays?.[currentDate]));
+  const restDays = usePlayerStore(s => s.stats.restDays);
+  const isRestDay = Boolean(currentDate && restDays?.[currentDate]);
   const [selectedHabitForProtocol, setSelectedHabitForProtocol] = useState<TaskItem | null>(null);
   const [activatedNotice, setActivatedNotice] = useState<string | null>(null);
   const lastBinaryToggleRef = React.useRef<Record<string, number>>({});

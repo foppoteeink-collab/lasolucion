@@ -42,6 +42,8 @@ interface PomodoroTimerProps {
   onClose?: () => void;
 }
 
+const EMPTY_TASK_LIST: any[] = [];
+
 export const PomodoroTimer: React.FC<PomodoroTimerProps> = React.memo(({
   initialTaskTitle,
   initialCategory,
@@ -68,7 +70,7 @@ export const PomodoroTimer: React.FC<PomodoroTimerProps> = React.memo(({
   } = useTimer();
 
   const stats = usePlayerStore(state => state.stats);
-  const todayTasks = useTaskStore(state => state.tasksByDate[getTodayDateString()] || []);
+  const todayTasks = useTaskStore(state => state.tasksByDate[getTodayDateString()] ?? EMPTY_TASK_LIST);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [scState, setScState] = useState<SoundscapeState>(quantumSoundscape.getState());
   const [showAdvancedEq, setShowAdvancedEq] = useState(false);

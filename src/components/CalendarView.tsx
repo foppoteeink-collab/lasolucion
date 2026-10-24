@@ -11,9 +11,9 @@ interface CalendarViewProps {
 }
 
 export const CalendarView: React.FC<CalendarViewProps> = ({ currentDate, onChangeDate, onOpenAddModal }) => {
-  const restDays = usePlayerStore((s) => s.stats.restDays || {});
+  const restDays = usePlayerStore((s) => s.stats.restDays);
   const toggleRestDay = usePlayerStore((s) => s.toggleRestDay);
-  const isCurrentDateRest = Boolean(restDays[currentDate]);
+  const isCurrentDateRest = Boolean(currentDate && restDays?.[currentDate]);
   const weekDays = useMemo(() => {
     const days = [];
     // -3 to +3 keeps currentDate exactly in the center of 7 days
@@ -142,7 +142,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ currentDate, onChang
         {weekDays.map(dateStr => {
           const isSelected = dateStr === currentDate;
           const isToday = dateStr === todayStr;
-          const isRestDay = Boolean(restDays[dateStr]);
+          const isRestDay = Boolean(dateStr && restDays?.[dateStr]);
           
           return (
             <button
