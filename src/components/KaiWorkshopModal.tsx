@@ -693,15 +693,46 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
 
                   <div>
                     <label className="text-[11px] font-bold text-slate-300 block mb-1">
-                      Contexto o Nombre Opcional (Ayuda a la IA):
+                      Pista u Objeto (Ayuda a la IA a afinar la similitud):
                     </label>
                     <input
                       type="text"
                       value={forgePrompt}
                       onChange={(e) => setForgePrompt(e.target.value)}
-                      placeholder="Ej. Mis auriculares Sony de estudio, mi gato negro..."
+                      placeholder="Ej. Gafas de sol, encendedor, audífonos, reloj, taza..."
                       className="w-full px-3 py-2 rounded-xl bg-black/60 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-fuchsia-400"
                     />
+
+                    {/* Chips de Selección Rápida de Objeto */}
+                    <div className="flex flex-wrap gap-1.5 pt-1.5">
+                      {[
+                        { label: 'Gafas de Sol', icon: '🕶️' },
+                        { label: 'Encendedor', icon: '⚡' },
+                        { label: 'Audífonos', icon: '🎧' },
+                        { label: 'Reloj', icon: '⌚' },
+                        { label: 'Taza', icon: '☕' },
+                        { label: 'Mancuerna', icon: '🏋️' },
+                        { label: 'Manzana', icon: '🍎' },
+                        { label: 'Smartphone', icon: '📱' },
+                      ].map((item) => (
+                        <button
+                          key={item.label}
+                          type="button"
+                          onClick={() => {
+                            soundFX.playClick();
+                            setForgePrompt(item.label);
+                          }}
+                          className={`text-[10px] font-mono px-2 py-0.5 rounded-lg border transition-all cursor-pointer flex items-center gap-1 ${
+                            forgePrompt.toLowerCase().includes(item.label.toLowerCase())
+                              ? 'bg-fuchsia-500/20 border-fuchsia-400 text-fuchsia-200'
+                              : 'bg-white/5 border-white/10 text-slate-400 hover:text-white hover:bg-white/10'
+                          }`}
+                        >
+                          <span>{item.icon}</span>
+                          <span>{item.label}</span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   {forgeError && (
@@ -720,7 +751,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                     {isForging ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Vectorizando en el Motor Neural...</span>
+                        <span>Sintetizando Icono KAI con IA...</span>
                       </>
                     ) : (
                       <>
@@ -739,7 +770,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                     </span>
                     {forgedResult ? (
                       <span className="text-[10px] font-mono text-emerald-400 font-bold bg-emerald-950/60 border border-emerald-500/40 px-2 py-0.5 rounded">
-                        ✓ Vectorización Lista
+                        ✓ Icono KAI Generado
                       </span>
                     ) : stats.kaiCustomForm ? (
                       <span className="text-[10px] font-mono text-fuchsia-300 font-bold bg-fuchsia-950/60 border border-fuchsia-500/40 px-2 py-0.5 rounded">
@@ -783,13 +814,25 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
 
                   {forgedResult ? (
                     <div className="w-full text-center space-y-1">
+                      {forgedResult.detectedObject && (
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-400/50 text-[10px] font-mono text-cyan-300 font-bold mb-1 shadow-[0_0_10px_rgba(0,240,255,0.2)]">
+                          <span>🎯 Similitud:</span>
+                          <span className="text-white">{forgedResult.detectedObject}</span>
+                        </div>
+                      )}
                       <h4 className="text-sm font-bold text-white">{forgedResult.name}</h4>
                       <p className="text-[10px] font-mono text-fuchsia-300">
-                        {forgedResult.lines.length} trazos geométricos simétricos • Nueva Generación
+                        {forgedResult.lines.length} trazos vectoriales simétricos • Icono KAI
                       </p>
                     </div>
                   ) : stats.kaiCustomForm ? (
                     <div className="w-full text-center space-y-1">
+                      {stats.kaiCustomForm.detectedObject && (
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-fuchsia-950/80 border border-fuchsia-400/50 text-[10px] font-mono text-fuchsia-300 font-bold mb-1">
+                          <span>🎯 Similitud:</span>
+                          <span className="text-white">{stats.kaiCustomForm.detectedObject}</span>
+                        </div>
+                      )}
                       <h4 className="text-sm font-bold text-white">{stats.kaiCustomForm.name}</h4>
                       <p className="text-[10px] font-mono text-emerald-400">
                         {stats.kaiShape === 'custom' ? '✓ Actualmente Equipado' : 'Guardado en tu Arsenal'}

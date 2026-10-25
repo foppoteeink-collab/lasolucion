@@ -148,6 +148,7 @@ export interface KaiCustomForm {
   name: string;
   sourceType: 'image' | 'prompt';
   createdAt: string;
+  detectedObject?: string;
   lines: Array<{ x1: number; y1: number; x2: number; y2: number }>;
   polygons?: Array<{ points: string }>;
   coreEye?: { cx: number; cy: number; r: number };

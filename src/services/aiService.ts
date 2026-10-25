@@ -382,20 +382,33 @@ export async function forgeKaiFromImage(params: {
   const cleanBase64 = imageBase64.includes(',') ? imageBase64.split(',')[1] : imageBase64;
 
   const systemInstructions = `
-Eres el Motor Neural de Vectorización Geométrica de "La Solución".
-Tu misión es transformar el objeto o sujeto principal de la imagen en un compañero holográfico Cyber-Origami / Wireframe poligonal simétrico sobre el eje central x=60 dentro de un lienzo SVG viewBox="0 0 120 120".
+Eres el Diseñador Cyber-Origami e Iconográfico de "La Solución".
+Tu misión es identificar el objeto real en la foto (por ejemplo: un encendedor, unas gafas de sol, unos audífonos, un reloj, una taza de café, una pesa/mancuerna, una manzana, un teléfono móvil, una guitarra, etc.) y sintetizarlo en un compañero KAI icónico con CLARA SIMILITUD VISUAL al objeto, adaptado a nuestra estética neón poligonal.
 
-REGLAS DE VECTORIZACIÓN ESTRICTAS:
-1. Toda la figura debe estar contenida en el lienzo viewBox="0 0 160 170" (entre x: 20 y 140, y entre y: 20 y 140).
-2. Simetría bilateral rigurosa respecto al eje central x=80. Si un punto está en (80 - dx, y), su contraparte debe estar en (80 + dx, y).
-3. Todas las líneas deben ser segmentos rectos poligonales (mínimo 10, máximo 26 líneas representativas de la silueta).
-4. El núcleo o sensor visual debe ubicarse en el centro 'coreEye' { cx: 80, cy: 85, r: 8 }.
-5. Dale un nombre épico al compañero (ej. "Cyber-Titan Auricular", "Lobo Cuántico", "Orbe Solar de Acero").
-${promptDescription ? `Contexto del usuario: "${promptDescription}".` : ''}
+REGLAS DE IDENTIFICACIÓN Y SIMILITUD ICÓNICA:
+1. DETECCIÓN: Identifica el objeto principal de la imagen ("detectedObject", ej: "Gafas de Sol", "Encendedor", "Audífonos", "Reloj", "Taza de Café", etc.).
+2. SIMILITUD VISUAL INMEDIATA (LIKENESS):
+   - El compañero KAI debe ser reconocible de inmediato como ese objeto específico, reinterpretado en arte vectorial poligonal de líneas rectas simétricas neón.
+   - Si son GAFAS DE SOL: Dibuja los dos marcos de lentes simétricos en facetas poligonales a la izquierda y derecha, el puente central que los une en el centro x=80, las patillas laterales plegadas y la visera superior.
+   - Si es un ENCENDEDOR: Dibuja el cuerpo rectangular facetado con biseles, la chimenea/cortavientos metálico, los hombros con rueda de chispa y una llama o arco de plasma geométrico que corone la parte superior.
+   - Si son AUDÍFONOS: Dibuja la diadema exterior e interior curvada en arco sobre la parte superior y las dos copas o almohadillas auriculares hexagonales simétricas a los lados.
+   - Si es un RELOJ: Dibuja el bisel octagonal/hexagonal, las correas saliendo arriba y abajo, y los índices horarios.
+   - Si es una TAZA: Dibuja el cuerpo trapezoidal, las asas cibernéticas y las ondas de vapor de energía ascendente.
+   - Si es una PESA / MANCUERNA: Dibuja las placas de peso hexagonales a ambos lados y la barra central con moleteado.
+   - Si es otro objeto: Extrae sus rasgos más icónicos y plásmalos de forma simétrica y reconocible.
 
-DEVOLUCIÓN OBLIGATORIA:
-Responde ÚNICAMENTE con un objeto JSON sin formato markdown, sin texto antes ni después:
+3. REGLAS ESTRICTAS DEL LIENZO SVG (viewBox="0 0 160 170"):
+   - Eje de simetría bilateral estricto: x = 80. Para todo punto (80 - dx, y), su contraparte simétrica debe ser (80 + dx, y).
+   - Coordenadas válidas: x entre 20 y 140, y entre 20 y 144.
+   - Segmentos rectos poligonales (entre 16 y 32 líneas bien conectadas).
+   - Entre 3 y 8 polígonos ('points': "x1,y1 x2,y2 x3,y3 ...") para las facetas sombreadas principales.
+   - El ojo sagrado de KAI debe ubicarse en el centro exacto: "coreEye": { "cx": 80, "cy": 85, "r": 8 }.
+   - Nombre épico: Dale un nombre que refleje el objeto detectado (ej: "KAI Visor Solaris", "KAI Ignis Monolito", "KAI Sónico Vórtice", etc.).
+${promptDescription ? `Contexto o pista del usuario: "${promptDescription}".` : ''}
+
+DEVOLUCIÓN OBLIGATORIA (Responde ÚNICAMENTE con JSON puro, sin bloques markdown ni texto antes ni después):
 {
+  "detectedObject": "Nombre del objeto detectado",
   "name": "Nombre Épico",
   "lines": [
     { "x1": 80, "y1": 24, "x2": 44, "y2": 65 },
@@ -526,9 +539,10 @@ Responde ÚNICAMENTE con un objeto JSON sin formato markdown, sin texto antes ni
         if (safeLines.length >= 4) {
           console.log('[Forja Neural] ✓ Geometría generada exitosamente por IA');
           return {
-            name: (parsed.name || (promptDescription ? `Tótem ${promptDescription.slice(0, 16)}` : 'Compañero Forja Neural')).slice(0, 32),
+            name: (parsed.name || (promptDescription ? `KAI ${promptDescription.slice(0, 16)}` : 'Compañero Forja Neural')).slice(0, 32),
             sourceType: 'image',
             createdAt: new Date().toISOString(),
+            detectedObject: parsed.detectedObject ? String(parsed.detectedObject).slice(0, 24) : undefined,
             lines: safeLines,
             polygons: Array.isArray(parsed.polygons) ? parsed.polygons : undefined,
             coreEye:
