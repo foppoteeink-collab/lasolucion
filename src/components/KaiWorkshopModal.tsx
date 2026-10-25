@@ -71,8 +71,8 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
   const ascensionGrade = habits66Count; // Grado I, II, III...
   const ascensionCrystals = Math.max(0, habits66Count - 1);
 
-  // Cargas de Forja (Garantizar al menos 1 carga de prueba desbloqueada)
-  const forgeCharges = stats.kaiNeuralForgeCharges ?? 1;
+  // Cargas de Forja (Modo libre de pruebas ilimitadas)
+  const forgeCharges: number = stats.kaiNeuralForgeCharges ?? 9999;
 
   if (!isOpen) return null;
 
@@ -144,10 +144,6 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
 
   const handleRunNeuralForge = async () => {
     if (!capturedImageBase64) return;
-    if (forgeCharges <= 0) {
-      setForgeError('No tienes cargas de Forja Neural. Adquiere un Núcleo en la Tienda o conquista un nuevo hábito de 66 días.');
-      return;
-    }
 
     soundFX.playClick();
     setIsForging(true);
@@ -164,10 +160,10 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
         triggerShockwave({ color: 'violet', intensity: 'epic' });
         setForgedResult(customForm);
 
-        // Descontar carga y registrar forma
+        // Registrar forma conservando modo libre
         setStats((prev) => ({
           ...prev,
-          kaiNeuralForgeCharges: Math.max(0, (prev.kaiNeuralForgeCharges ?? 1) - 1),
+          kaiNeuralForgeCharges: 9999,
         }));
       } else {
         setForgeError('No se pudo procesar la silueta. Intenta con un objeto con fondo más despejado.');
@@ -604,13 +600,13 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
 
                 <div className="p-3.5 rounded-2xl bg-black/60 border border-fuchsia-500/40 text-center shrink-0 min-w-[140px]">
                   <span className="text-[10px] font-mono text-fuchsia-300 font-bold uppercase block">
-                    Cargas Disponibles
+                    Modo Pruebas Libre
                   </span>
-                  <span className="text-2xl font-black text-fuchsia-200 font-mono">
-                    {forgeCharges}
+                  <span className="text-xl font-black text-fuchsia-200 font-mono">
+                    ∞ ILIMITADO
                   </span>
                   <span className="text-[9px] text-emerald-400 block font-mono mt-0.5">
-                    ✓ 1 Uso de prueba activo
+                    ✓ Forja libre activa
                   </span>
                 </div>
               </div>

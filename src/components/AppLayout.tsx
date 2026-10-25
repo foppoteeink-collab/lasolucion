@@ -36,7 +36,7 @@ const NightlyReflectionModal = lazy(() => import('./NightlyReflectionModal').the
 const NightlyTunnel = lazy(() => import('./NightlyTunnel').then(m => ({ default: m.NightlyTunnel })));
 const SurpriseBossModal = lazy(() => import('./SurpriseBossModal').then(m => ({ default: m.SurpriseBossModal })));
 const HunterCollapseModal = lazy(() => import('./HunterCollapseModal').then(m => ({ default: m.HunterCollapseModal })));
-const KaiTacticalGuideModal = lazy(() => import('./common/KaiTacticalGuideModal').then(m => ({ default: m.KaiTacticalGuideModal })));
+const KaiInteractiveSpotlightTour = lazy(() => import('./common/KaiInteractiveSpotlightTour').then(m => ({ default: m.KaiInteractiveSpotlightTour })));
 
 import { DailyBossWidget } from './DailyBossWidget';
 import { DailyScheduleStrip } from './DailyScheduleStrip';
@@ -755,9 +755,9 @@ export function AppLayout() {
         />
       </Suspense>
 
-      {/* Guía Táctica y Tutorial de KAI */}
+      {/* Tour Táctico Interactivo con Spotlight de KAI */}
       <Suspense fallback={null}>
-        <KaiTacticalGuideModal />
+        <KaiInteractiveSpotlightTour />
       </Suspense>
 
       {/* Cyberpunk Floating Pomodoro Pop-up Modal */}

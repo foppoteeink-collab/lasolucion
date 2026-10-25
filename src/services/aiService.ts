@@ -379,10 +379,10 @@ Eres el Motor Neural de Vectorización Geométrica de "La Solución".
 Tu misión es transformar el objeto o sujeto principal de la imagen en un compañero holográfico Cyber-Origami / Wireframe poligonal simétrico sobre el eje central x=60 dentro de un lienzo SVG viewBox="0 0 120 120".
 
 REGLAS DE VECTORIZACIÓN ESTRICTAS:
-1. Toda la figura debe estar contenida entre x: 14 y 106, y entre y: 16 y 104.
-2. Simetría bilateral rigurosa respecto al eje central x=60. Si un punto está en (60 - dx, y), su contraparte debe estar en (60 + dx, y).
-3. Todas las líneas deben ser segmentos rectos poligonales (mínimo 10, máximo 24 líneas representativas de la silueta).
-4. El núcleo o sensor visual debe ubicarse en el centro de atención 'coreEye' { cx: 60, cy: número entre 45 y 70, r: 6 }.
+1. Toda la figura debe estar contenida en el lienzo viewBox="0 0 160 170" (entre x: 20 y 140, y entre y: 20 y 140).
+2. Simetría bilateral rigurosa respecto al eje central x=80. Si un punto está en (80 - dx, y), su contraparte debe estar en (80 + dx, y).
+3. Todas las líneas deben ser segmentos rectos poligonales (mínimo 10, máximo 26 líneas representativas de la silueta).
+4. El núcleo o sensor visual debe ubicarse en el centro 'coreEye' { cx: 80, cy: 85, r: 8 }.
 5. Dale un nombre épico al compañero (ej. "Cyber-Titan Auricular", "Lobo Cuántico", "Orbe Solar de Acero").
 ${promptDescription ? `Contexto del usuario: "${promptDescription}".` : ''}
 
@@ -391,14 +391,14 @@ Responde ÚNICAMENTE con un objeto JSON sin formato markdown, sin texto antes ni
 {
   "name": "Nombre Épico",
   "lines": [
-    { "x1": 60, "y1": 20, "x2": 36, "y2": 52 },
-    { "x1": 60, "y1": 20, "x2": 84, "y2": 52 }
+    { "x1": 80, "y1": 24, "x2": 44, "y2": 65 },
+    { "x1": 80, "y1": 24, "x2": 116, "y2": 65 }
   ],
   "polygons": [
-    { "points": "60,20 36,52 60,78" },
-    { "points": "60,20 84,52 60,78" }
+    { "points": "80,24 44,65 80,85" },
+    { "points": "80,24 116,65 80,85" }
   ],
-  "coreEye": { "cx": 60, "cy": 60, "r": 6 }
+  "coreEye": { "cx": 80, "cy": 85, "r": 8 }
 }
 `;
 
@@ -478,14 +478,14 @@ Responde ÚNICAMENTE con un objeto JSON sin formato markdown, sin texto antes ni
       const parsed = JSON.parse(cleaned);
 
       if (parsed && Array.isArray(parsed.lines) && parsed.lines.length >= 4) {
-        // Validación de límites seguros (0 a 120)
+        // Validación de límites seguros (0 a 160 x 170)
         const safeLines = parsed.lines
           .filter((l: any) => typeof l.x1 === 'number' && typeof l.y1 === 'number' && typeof l.x2 === 'number' && typeof l.y2 === 'number')
           .map((l: any) => ({
-            x1: Math.max(10, Math.min(110, Math.round(l.x1))),
-            y1: Math.max(12, Math.min(106, Math.round(l.y1))),
-            x2: Math.max(10, Math.min(110, Math.round(l.x2))),
-            y2: Math.max(12, Math.min(106, Math.round(l.y2))),
+            x1: Math.max(16, Math.min(144, Math.round(l.x1))),
+            y1: Math.max(16, Math.min(144, Math.round(l.y1))),
+            x2: Math.max(16, Math.min(144, Math.round(l.x2))),
+            y2: Math.max(16, Math.min(144, Math.round(l.y2))),
           }));
 
         return {
@@ -496,11 +496,11 @@ Responde ÚNICAMENTE con un objeto JSON sin formato markdown, sin texto antes ni
           polygons: Array.isArray(parsed.polygons) ? parsed.polygons : undefined,
           coreEye: parsed.coreEye && typeof parsed.coreEye.cx === 'number'
             ? {
-                cx: Math.max(20, Math.min(100, Math.round(parsed.coreEye.cx))),
-                cy: Math.max(30, Math.min(90, Math.round(parsed.coreEye.cy))),
-                r: Math.max(4, Math.min(12, Math.round(parsed.coreEye.r || 6))),
+                cx: Math.max(30, Math.min(130, Math.round(parsed.coreEye.cx))),
+                cy: Math.max(40, Math.min(120, Math.round(parsed.coreEye.cy))),
+                r: Math.max(6, Math.min(14, Math.round(parsed.coreEye.r || 8))),
               }
-            : { cx: 60, cy: 60, r: 6 },
+            : { cx: 80, cy: 85, r: 8 },
         };
       }
     } catch (parseErr) {
@@ -515,27 +515,27 @@ Responde ÚNICAMENTE con un objeto JSON sin formato markdown, sin texto antes ni
     sourceType: 'image',
     createdAt: new Date().toISOString(),
     lines: [
-      { x1: 60, y1: 20, x2: 32, y2: 48 },
-      { x1: 60, y1: 20, x2: 88, y2: 48 },
-      { x1: 32, y1: 48, x2: 24, y2: 74 },
-      { x1: 88, y1: 48, x2: 96, y2: 74 },
-      { x1: 24, y1: 74, x2: 60, y2: 98 },
-      { x1: 96, y1: 74, x2: 60, y2: 98 },
-      { x1: 60, y1: 20, x2: 60, y2: 98 },
-      { x1: 32, y1: 48, x2: 60, y2: 60 },
-      { x1: 88, y1: 48, x2: 60, y2: 60 },
-      { x1: 24, y1: 74, x2: 60, y2: 60 },
-      { x1: 96, y1: 74, x2: 60, y2: 60 },
+      { x1: 80, y1: 24, x2: 44, y2: 60 },
+      { x1: 80, y1: 24, x2: 116, y2: 60 },
+      { x1: 44, y1: 60, x2: 32, y2: 96 },
+      { x1: 116, y1: 60, x2: 128, y2: 96 },
+      { x1: 32, y1: 96, x2: 80, y2: 132 },
+      { x1: 128, y1: 96, x2: 80, y2: 132 },
+      { x1: 80, y1: 24, x2: 80, y2: 132 },
+      { x1: 44, y1: 60, x2: 80, y2: 85 },
+      { x1: 116, y1: 60, x2: 80, y2: 85 },
+      { x1: 32, y1: 96, x2: 80, y2: 85 },
+      { x1: 128, y1: 96, x2: 80, y2: 85 },
     ],
     polygons: [
-      { points: '60,20 32,48 60,60' },
-      { points: '60,20 88,48 60,60' },
-      { points: '32,48 24,74 60,60' },
-      { points: '88,48 96,74 60,60' },
-      { points: '24,74 60,98 60,60' },
-      { points: '96,74 60,98 60,60' },
+      { points: '80,24 44,60 80,85' },
+      { points: '80,24 116,60 80,85' },
+      { points: '44,60 32,96 80,85' },
+      { points: '116,60 128,96 80,85' },
+      { points: '32,96 80,132 80,85' },
+      { points: '128,96 80,132 80,85' },
     ],
-    coreEye: { cx: 60, cy: 60, r: 7 },
+    coreEye: { cx: 80, cy: 85, r: 8 },
   };
 }
 

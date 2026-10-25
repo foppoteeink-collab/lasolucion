@@ -140,6 +140,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           {/* Checkbox / Completion Toggle */}
           <motion.button
             type="button"
+            {...(index === 0 ? { 'data-tour': 'task-checkbox' } : {})}
             whileTap={{ scale: 0.88 }}
             onClick={(e) => {
               if (isTogglingRef.current) return;
@@ -258,6 +259,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
         {/* Indicador de Nota */}
         {task.notes && (
           <span 
+            {...(index === 0 ? { 'data-tour': 'task-note-btn' } : {})}
             onClick={() => onOpenNoteModal && onOpenNoteModal(task)}
             className="flex items-center gap-1 text-purple-300 hover:text-purple-200 cursor-pointer bg-purple-950/60 border border-purple-500/40 px-2 py-1 min-h-[28px] rounded transition-colors"
             title={task.notes}

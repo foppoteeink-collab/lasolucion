@@ -557,7 +557,7 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
 
               {/* Barra de Vitalidad / HP */}
-              <div className="flex items-center gap-2 max-w-sm mt-1">
+              <div data-tour="hp-bar" className="flex items-center gap-2 max-w-sm mt-1">
                 <div className="flex-1 h-2 sm:h-2.5 bg-black/80 rounded-full border border-red-500/40 p-px overflow-hidden shadow-inner">
                   <div
                     className="h-full bg-gradient-to-r from-rose-600 to-red-400 rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(244,63,94,0.7)]"

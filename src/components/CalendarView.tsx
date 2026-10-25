@@ -77,6 +77,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ currentDate, onChang
                 soundFX.playItemEquip();
               }
             }}
+            data-tour="rest-mode-btn"
             className={`text-[10px] sm:text-[11px] font-anton uppercase tracking-wider px-2.5 py-1 rounded-xl border transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 ${
               isCurrentDateRest
                 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.35)] ring-1 ring-emerald-400'

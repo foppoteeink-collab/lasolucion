@@ -219,66 +219,61 @@ export const HunterAwakeningModal: React.FC<HunterAwakeningModalProps> = ({
                 </div>
               </div>
 
-              {/* 6 Formas Oficiales Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+              {/* 6 Formas Oficiales Grid: Compacto y Proporcional (Tamaño Original) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {KAI_OFFICIAL_SHAPES.map((shape) => {
                   const isSelected = selectedKaiShape === shape.id;
                   return (
                     <div
                       key={shape.id}
                       onClick={() => handleSelectKaiShape(shape)}
-                      className={`p-3 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between group relative overflow-hidden ${
+                      className={`p-2.5 rounded-2xl border transition-all cursor-pointer flex items-center gap-3 group relative overflow-hidden ${
                         isSelected
-                          ? 'bg-gradient-to-b from-[#06182c] to-[#042838] border-cyan-300 shadow-[0_0_25px_rgba(0,240,255,0.45)] ring-1 ring-cyan-400'
-                          : 'bg-[#030d17]/80 border-cyan-500/25 hover:border-cyan-400 hover:bg-[#041525]'
+                          ? 'bg-gradient-to-r from-[#06182c] to-[#042838] border-cyan-300 shadow-[0_0_20px_rgba(0,240,255,0.35)] ring-1 ring-cyan-400'
+                          : 'bg-[#030d17]/80 border-cyan-500/25 hover:border-cyan-400/60 hover:bg-[#041525]'
                       }`}
                     >
-                      {/* Live SVG Vector Graphic Preview */}
-                      <div className="w-full flex items-center justify-center py-2 relative">
-                          <KaiVectorGraphics 
-                            shapeId={shape.id} 
-                            activeColor={isSelected ? '#00f0ff' : '#67e8f9'}
-                            secondaryColor="#0284c7"
-                            glowFilterId={`awakening-shape-${shape.id}`}
-                          />
+                      {/* Live SVG Vector Graphic Preview: Escala Original Compacta (48px - 54px) */}
+                      <div className="w-13 h-14 shrink-0 flex items-center justify-center rounded-xl bg-black/40 border border-white/5 p-1">
+                        <KaiVectorGraphics 
+                          shapeId={shape.id} 
+                          activeColor={isSelected ? '#00f0ff' : '#67e8f9'}
+                          secondaryColor="#0284c7"
+                          glowFilterId={`awakening-shape-${shape.id}`}
+                        />
                       </div>
 
                       {/* Info & Metadata */}
-                      <div className="pt-2 border-t border-cyan-500/20">
-                        <div className="flex items-center justify-between gap-1 mb-1">
-                          <span className="text-[9px] font-mono text-cyan-400 uppercase tracking-widest">
-                            {shape.codename}
-                          </span>
-                          <span className="text-[9px] font-mono text-amber-300 bg-amber-500/10 border border-amber-500/30 px-1.5 py-0.2 rounded">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-1 mb-0.5">
+                          <h4 className="font-anton text-xs uppercase tracking-wide text-white group-hover:text-cyan-300 transition-colors flex items-center gap-1.5 truncate">
+                            <span>{shape.icon}</span>
+                            <span className="truncate">{shape.name}</span>
+                          </h4>
+                          <span className="text-[9px] font-mono text-amber-300 bg-amber-500/10 border border-amber-500/30 px-1.5 py-0.2 rounded shrink-0">
                             {shape.themeTrait}
                           </span>
                         </div>
 
-                        <h4 className="font-anton text-xs sm:text-sm uppercase tracking-wide text-white group-hover:text-cyan-300 transition-colors flex items-center gap-1.5">
-                          <span>{shape.icon}</span>
-                          <span>{shape.name}</span>
-                        </h4>
-
-                        <p className="text-[10px] text-slate-300 leading-snug font-sans mt-1 line-clamp-2">
-                          {shape.description}
+                        <p className="text-[10px] text-slate-300 leading-snug font-sans line-clamp-1">
+                          {shape.tagline}
                         </p>
-                      </div>
 
-                      {/* Selection Pill */}
-                      <div className="mt-2.5 pt-2 border-t border-cyan-500/15 flex items-center justify-between">
-                        <span className="text-[9px] font-mono text-slate-400">
-                          {shape.archetypeMatch}
-                        </span>
-                        {isSelected ? (
-                          <span className="flex items-center gap-1 text-[10px] font-mono font-bold text-cyan-300 bg-cyan-900/60 border border-cyan-400 px-2 py-0.5 rounded-lg shadow-[0_0_8px_rgba(0,240,255,0.4)]">
-                            <Check className="w-3 h-3 text-cyan-300" />
-                            Sintonizado
+                        <div className="flex items-center justify-between mt-1">
+                          <span className="text-[9px] font-mono text-cyan-400/80">
+                            {shape.codename}
                           </span>
-                        ) : (
-                          <span className="text-[10px] font-mono text-cyan-400/70 group-hover:text-cyan-300">
-                            Elegir
-                          </span>
-                        )}
+                          {isSelected ? (
+                            <span className="flex items-center gap-1 text-[9px] font-mono font-bold text-cyan-300 bg-cyan-900/60 border border-cyan-400 px-1.5 py-0.2 rounded shadow-[0_0_6px_rgba(0,240,255,0.4)]">
+                              <Check className="w-2.5 h-2.5 text-cyan-300" />
+                              Sintonizado
+                            </span>
+                          ) : (
+                            <span className="text-[9px] font-mono text-slate-400 group-hover:text-cyan-300">
+                              Seleccionar
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );

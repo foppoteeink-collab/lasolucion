@@ -75,6 +75,7 @@ export const TaskHeaderHUD: React.FC<TaskHeaderHUDProps> = ({
           </button>
           <button
             type="button"
+            data-tour="add-task-btn"
             onClick={() => onOpenAddModal('task')}
             className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-cyan-400/50 bg-[#001020] hover:bg-cyan-400 hover:text-black text-cyan-300 shadow-[0_0_12px_rgba(0,240,255,0.25)] flex items-center justify-center transition-all cursor-pointer active:scale-90"
             title="Centro de Tareas: Añadir Tarea, Hábito u Oráculo"
