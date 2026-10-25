@@ -302,7 +302,7 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
                         {Boolean(stats.restDays?.[todayStr]) ? 'Día de Descanso (Activo)' : 'Modo Descanso'}
                       </span>
                       <span className="text-[10px] text-slate-400 font-mono block truncate">
-                        {Boolean(stats.restDays?.[todayStr]) ? 'Protegido: sin pérdida de HP hoy.' : 'Activa para descanso deliberado.'}
+                        {Boolean(stats.restDays?.[todayStr]) ? 'Protegido: sin pérdida de Energía Vital hoy.' : 'Activa para descanso deliberado.'}
                       </span>
                     </div>
                   </div>

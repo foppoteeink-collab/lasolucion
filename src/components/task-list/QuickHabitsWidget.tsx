@@ -464,7 +464,7 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
   const isRestDay = Boolean(currentDate && restDays?.[currentDate]);
   const [selectedHabitForProtocol, setSelectedHabitForProtocol] = useState<TaskItem | null>(null);
   const [activatedNotice, setActivatedNotice] = useState<string | null>(null);
-  const lastBinaryToggleRef = React.useRef<Record<string, number>>({});
+  const togglingOrbsRef = React.useRef<Set<string>>(new Set());
 
   // Strictly select dedicated quick/discipline habits for 21/66 day tracking, deduplicated by title and ID
   const quickHabits = React.useMemo(() => {
@@ -677,20 +677,19 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                     return;
                   }
 
+                  // Guard Anti Double-Tap (< 350ms) por habitId individual
+                  if (togglingOrbsRef.current.has(qh.id)) {
+                    return;
+                  }
+                  togglingOrbsRef.current.add(qh.id);
+                  setTimeout(() => {
+                    togglingOrbsRef.current.delete(qh.id);
+                  }, 350);
+
                   // 1. Protección Anti-Reinicio Accidental para hábitos con contador (target > 1)
                   if (isCounterHabit && isFinished) {
                     soundFX.playClick();
                     return;
-                  }
-
-                  // 2. Cooldown de 400ms para hábitos binarios (target === 1) para evitar desmarcado accidental
-                  if (!isCounterHabit) {
-                    const now = Date.now();
-                    const lastTime = lastBinaryToggleRef.current[qh.id] || 0;
-                    if (now - lastTime < 400) {
-                      return;
-                    }
-                    lastBinaryToggleRef.current[qh.id] = now;
                   }
 
                   onIncrementHabit(qh.id, e);
@@ -882,7 +881,7 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
               {/* Body */}
               <div className="flex-1 overflow-y-auto py-4 space-y-4 pr-1 scrollbar-thin scrollbar-thumb-cyan-800">
                 {/* Control Manual para Hoy (Ajuste rápido -1 y Reiniciar) */}
-                <div className="p-3 rounded-xl bg-[#000d1a] border border-cyan-500/30 flex items-center justify-between gap-3">
+                <div className="p-3 rounded-xl bg-surface-card border border-cyan-500/30 flex items-center justify-between gap-3">
                   <div>
                     <span className="text-[11px] font-bold text-slate-300 block">Progreso de hoy</span>
                     <div className="text-xs font-mono text-cyan-300 flex items-center gap-1.5 mt-0.5">
@@ -922,7 +921,7 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                 </div>
 
                 {/* Science Note */}
-                <div className="p-3 rounded-xl bg-[#000a14] border border-white/10 text-xs text-slate-300 space-y-1">
+                <div className="p-3 rounded-xl bg-surface-card border border-white/10 text-xs text-slate-300 space-y-1">
                   <span className="font-bold text-cyan-300 flex items-center gap-1">
                     <Sparkles className="w-3.5 h-3.5 text-cyan-400" /> Protocolo Ley 21/66 (Neuroplasticidad)
                   </span>

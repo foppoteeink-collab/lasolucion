@@ -245,6 +245,9 @@ export const usePlayerStore = create<PlayerState>()(
           if ((state.stats.coins || 0) >= cost) {
             purchased = true;
             const updates = logic ? logic(state.stats) : {};
+            if (updates.streakShields !== undefined) {
+              updates.streakShields = Math.min(updates.streakShields, 3);
+            }
             return {
               stats: {
                 ...state.stats,

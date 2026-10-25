@@ -104,6 +104,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   isDayEnded = false
 }) => {
   if (!task || !task.title) return null;
+  const isTogglingRef = React.useRef(false);
   const isCompleted = task.completed;
   const handleEdit = onEdit || onOpenEditModal;
   const handleDelete = onDelete || onDeleteTask;
@@ -141,6 +142,12 @@ export const TaskCard: React.FC<TaskCardProps> = ({
             type="button"
             whileTap={{ scale: 0.88 }}
             onClick={(e) => {
+              if (isTogglingRef.current) return;
+              isTogglingRef.current = true;
+              setTimeout(() => {
+                isTogglingRef.current = false;
+              }, 350);
+
               soundFX.playClick();
               if (isFutureDay) {
                 useUIStore.getState().addFloatingEffect({
@@ -252,7 +259,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
         {task.notes && (
           <span 
             onClick={() => onOpenNoteModal && onOpenNoteModal(task)}
-            className="flex items-center gap-1 text-purple-300 hover:text-purple-200 cursor-pointer bg-purple-950/60 border border-purple-500/40 px-1.5 py-0.2 rounded transition-colors"
+            className="flex items-center gap-1 text-purple-300 hover:text-purple-200 cursor-pointer bg-purple-950/60 border border-purple-500/40 px-2 py-1 min-h-[28px] rounded transition-colors"
             title={task.notes}
           >
             <FileText className="w-2.5 h-2.5 text-purple-400" />

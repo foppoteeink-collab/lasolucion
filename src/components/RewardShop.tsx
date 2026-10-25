@@ -61,6 +61,17 @@ export const RewardShop: React.FC = () => {
   };
 
   const handleRedeem = (reward: ShopReward) => {
+    // Cap de Escudos de Racha: máximo 3 activos simultáneamente
+    if (reward.id === 'perk-streak-shield' && (stats.streakShields || 0) >= 3) {
+      soundFX.playClick();
+      notificationService.triggerNotification(
+        '🛡️ Máximo de 3 Escudos de Racha activos alcanzado',
+        'Ya dispones de 3 Escudos de Racha activos. Consúmelos antes de forjar más.',
+        '🛡️'
+      );
+      return;
+    }
+
     const finalCost = getDiscountedCost(reward);
     
     const success = usePlayerStore.getState().purchaseItem(finalCost, (prev) => {
@@ -69,7 +80,7 @@ export const RewardShop: React.FC = () => {
         extra = { hp: Math.min(prev.maxHp || 100, (prev.hp ?? 100) + 30) };
       }
       if (reward.id === 'perk-streak-shield') {
-        extra = { streakShields: (prev.streakShields || 0) + 1 };
+        extra = { streakShields: Math.min((prev.streakShields || 0) + 1, 3) };
       }
       if (reward.id === 'perk-focus-potion') {
         const now = Date.now();
@@ -375,7 +386,8 @@ export const RewardShop: React.FC = () => {
           <AnimatePresence mode="popLayout">
             {filteredRewards.map((reward) => {
               const discountedCost = getDiscountedCost(reward);
-              const canAfford = coins >= discountedCost;
+              const isShieldCapped = reward.id === 'perk-streak-shield' && streakShields >= 3;
+              const canAfford = !isShieldCapped && coins >= discountedCost;
               const isCustom = reward.id.startsWith('custom-');
 
               // Categorization theme
@@ -464,6 +476,11 @@ export const RewardShop: React.FC = () => {
                       <>
                         <Coins className="w-3.5 h-3.5 fill-current text-black" />
                         <span>{discountedCost}</span>
+                      </>
+                    ) : isShieldCapped ? (
+                      <>
+                        <Shield className="w-3 h-3 text-slate-600" />
+                        <span>Máx. 3 activos</span>
                       </>
                     ) : (
                       <>

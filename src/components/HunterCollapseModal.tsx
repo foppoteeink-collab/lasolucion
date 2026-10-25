@@ -62,7 +62,7 @@ export const HunterCollapseModal: React.FC = () => {
             </div>
 
             <span className="px-3 py-1 rounded-full bg-rose-950/80 border border-rose-600/60 text-rose-300 text-[10px] font-mono font-black uppercase tracking-widest mb-2">
-              ⚠️ ALERTA DE ENERGÍA CRÍTICA (0 HP)
+              ⚡ ENERGÍA VITAL AGOTADA (0 HP)
             </span>
 
             <h2 className="text-xl sm:text-2xl font-anton uppercase tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-white via-rose-200 to-rose-400 mb-2">
