@@ -3,6 +3,7 @@ import { firebaseAI, firebaseConfig } from '../firebase';
 import { generateProceduralSchedule, generateProceduralAnalysis } from '../utils/proceduralHeuristics';
 import { autoArrangeSchedule, cleanScheduleTitle } from '../utils/timeUtils';
 import { KaiCustomForm } from '../types';
+import { synthesizeKaiFromImageSilhouette } from '../utils/kaiSilhouetteSynthesizer';
 
 interface RateLimitState {
   lastCallTimestamp: number;
@@ -45,7 +46,7 @@ function checkAndConsumeRateLimit(): { allowed: boolean; reason?: string } {
   }
 }
 
-async function fetchGeminiPrompt(promptText: string, modelName: string = 'gemini-3.8-flash'): Promise<string | null> {
+async function fetchGeminiPrompt(promptText: string, modelName: string = 'gemini-2.5-flash'): Promise<string | null> {
   if (!promptText || typeof promptText !== 'string' || !promptText.trim()) {
     return null;
   }
@@ -57,61 +58,67 @@ async function fetchGeminiPrompt(promptText: string, modelName: string = 'gemini
   }
 
   const sanitizedPrompt = promptText.trim().slice(0, 4000);
-  const targetModel =
-    modelName.includes('1.5') || modelName.includes('2.0') || modelName.includes('2.5') || modelName.includes('3.6')
-      ? 'gemini-3.8-flash'
-      : modelName;
+  const preferredModel =
+    modelName === 'gemini-3.8-flash' || !modelName ? 'gemini-2.5-flash' : modelName;
 
-  // 1. Primary: Official Firebase AI Logic SDK (GoogleAIBackend -> gemini-3.8-flash)
+  const candidateModels = Array.from(
+    new Set([preferredModel, 'gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash-lite'])
+  );
+
+  // 1. Primary: Official Firebase AI Logic SDK
   if (firebaseAI) {
-    try {
-      const model = getGenerativeModel(firebaseAI, {
-        model: targetModel,
-        generationConfig: {
-          temperature: 0.35,
-          maxOutputTokens: 8192,
-        },
-      });
-      const result = await model.generateContent(sanitizedPrompt);
-      const text = result.response.text();
-      if (text && text.trim()) {
-        console.log(`[Firebase AI Logic] ✓ Response from ${targetModel}`);
-        return text;
+    for (const modelToTry of candidateModels) {
+      try {
+        const model = getGenerativeModel(firebaseAI, {
+          model: modelToTry,
+          generationConfig: {
+            temperature: 0.35,
+            maxOutputTokens: 8192,
+          },
+        });
+        const result = await model.generateContent(sanitizedPrompt);
+        const text = result.response.text();
+        if (text && text.trim()) {
+          console.log(`[Firebase AI Logic] ✓ Response from ${modelToTry}`);
+          return text;
+        }
+      } catch (err: any) {
+        console.warn(`[Firebase AI Logic] (${modelToTry}) unavailable:`, err?.message || err);
       }
-    } catch (err: any) {
-      console.warn(`[Firebase AI Logic] (${targetModel}) unavailable:`, err?.message || err);
     }
   }
 
-  // 2. Secondary: Direct Gemini Developer API (if custom key or gen-lang-client key is active)
+  // 2. Secondary: Direct Gemini Developer API
   const customKey =
     typeof window !== 'undefined' ? window.localStorage.getItem('lasolucion_gemini_api_key') : null;
   const apiKeyToTry = customKey || firebaseConfig?.apiKey;
   if (apiKeyToTry) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000);
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${apiKeyToTry}`;
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: sanitizedPrompt }] }],
-          generationConfig: { temperature: 0.35, maxOutputTokens: 8192 },
-        }),
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-      if (res.ok) {
-        const data = await res.json();
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (text && text.trim()) {
-          console.log(`[Gemini API] ✓ Response from ${targetModel}`);
-          return text;
+    for (const modelToTry of candidateModels) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelToTry}:generateContent?key=${apiKeyToTry}`;
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: sanitizedPrompt }] }],
+            generationConfig: { temperature: 0.35, maxOutputTokens: 8192 },
+          }),
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+        if (res.ok) {
+          const data = await res.json();
+          const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (text && text.trim()) {
+            console.log(`[Gemini API] ✓ Response from ${modelToTry}`);
+            return text;
+          }
         }
+      } catch (err) {
+        // try next model
       }
-    } catch (err) {
-      // Ignore and proceed to fallback
     }
   }
 
@@ -203,7 +210,7 @@ export async function generateScheduleFrontend(
   let generatedText = "";
   const fullPrompt = systemInstruction + "\n\nSolicitud del usuario:\n" + prompt;
 
-  const text = await fetchGeminiPrompt(fullPrompt, 'gemini-3.8-flash');
+  const text = await fetchGeminiPrompt(fullPrompt, 'gemini-2.5-flash');
   if (text) {
     generatedText = text;
   }
@@ -344,7 +351,7 @@ ${historyContext}
     - Proporciona exactamente 3 acciones tácticas concretas y ejecutables que el cliente debe priorizar hoy para maximizar la productividad y mantener la trayectoria de crecimiento.
   `;
 
-  const text = await fetchGeminiPrompt(prompt, 'gemini-3.8-flash');
+  const text = await fetchGeminiPrompt(prompt, 'gemini-2.5-flash');
   if (text) {
     return { analysis: text, source: 'ai' };
   }
@@ -403,33 +410,37 @@ Responde ÚNICAMENTE con un objeto JSON sin formato markdown, sin texto antes ni
 `;
 
   let jsonResult: string | null = null;
+  const CANDIDATE_MODELS = ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash-lite'];
 
   // 1. Firebase AI Logic SDK (Multimodal)
   if (firebaseAI) {
-    try {
-      const model = getGenerativeModel(firebaseAI, {
-        model: 'gemini-3.8-flash',
-        generationConfig: {
-          temperature: 0.25,
-          maxOutputTokens: 2048,
-        },
-      });
+    for (const modelName of CANDIDATE_MODELS) {
+      try {
+        const model = getGenerativeModel(firebaseAI, {
+          model: modelName,
+          generationConfig: {
+            temperature: 0.25,
+            maxOutputTokens: 2048,
+          },
+        });
 
-      const imagePart = {
-        inlineData: {
-          data: cleanBase64,
-          mimeType,
-        },
-      };
+        const imagePart = {
+          inlineData: {
+            data: cleanBase64,
+            mimeType,
+          },
+        };
 
-      const result = await model.generateContent([imagePart, { text: systemInstructions }]);
-      const text = result.response.text();
-      if (text && text.trim()) {
-        jsonResult = text.trim();
-        console.log('[Firebase AI Logic] ✓ Forja Neural procesada con éxito');
+        const result = await model.generateContent([systemInstructions, imagePart]);
+        const text = result.response.text();
+        if (text && text.trim()) {
+          jsonResult = text.trim();
+          console.log(`[Firebase AI Logic] ✓ Forja Neural procesada con éxito usando ${modelName}`);
+          break;
+        }
+      } catch (err: any) {
+        console.warn(`[Firebase AI Logic Multimodal] (${modelName}) no disponible:`, err?.message || err);
       }
-    } catch (err: any) {
-      console.warn('[Firebase AI Logic Multimodal] Error:', err?.message || err);
     }
   }
 
@@ -440,47 +451,71 @@ Responde ÚNICAMENTE con un objeto JSON sin formato markdown, sin texto antes ni
     const apiKeyToTry = customKey || firebaseConfig?.apiKey;
 
     if (apiKeyToTry) {
-      try {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKeyToTry}`;
-        const res = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [
-                  { inline_data: { mime_type: mimeType, data: cleanBase64 } },
-                  { text: systemInstructions },
-                ],
-              },
-            ],
-            generationConfig: { temperature: 0.25, maxOutputTokens: 2048 },
-          }),
-        });
+      for (const modelName of CANDIDATE_MODELS) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 9000);
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKeyToTry}`;
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [
+                {
+                  parts: [
+                    { inline_data: { mime_type: mimeType, data: cleanBase64 } },
+                    { text: systemInstructions },
+                  ],
+                },
+              ],
+              generationConfig: { temperature: 0.25, maxOutputTokens: 2048 },
+            }),
+            signal: controller.signal,
+          });
+          clearTimeout(timeoutId);
 
-        if (res.ok) {
-          const data = await res.json();
-          const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (text && text.trim()) {
-            jsonResult = text.trim();
+          if (res.ok) {
+            const data = await res.json();
+            const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (text && text.trim()) {
+              jsonResult = text.trim();
+              console.log(`[Gemini API Multimodal] ✓ Respuesta exitosa con ${modelName}`);
+              break;
+            }
           }
+        } catch (err) {
+          // Intentar siguiente modelo
         }
-      } catch (err) {
-        console.warn('[Gemini Multimodal API] Error:', err);
       }
     }
   }
 
-  // Parsear y sanitizar JSON devuelto
+  // Parsear y sanitizar JSON devuelto por la IA
   if (jsonResult) {
     try {
-      const cleaned = jsonResult.replace(/```json/gi, '').replace(/```/g, '').trim();
-      const parsed = JSON.parse(cleaned);
+      let rawJson = jsonResult;
+      const fenceMatch = rawJson.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+      if (fenceMatch) {
+        rawJson = fenceMatch[1];
+      }
+      const firstBrace = rawJson.indexOf('{');
+      const lastBrace = rawJson.lastIndexOf('}');
+      if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+        rawJson = rawJson.substring(firstBrace, lastBrace + 1);
+      }
+
+      const parsed = JSON.parse(rawJson.trim());
 
       if (parsed && Array.isArray(parsed.lines) && parsed.lines.length >= 4) {
         // Validación de límites seguros (0 a 160 x 170)
         const safeLines = parsed.lines
-          .filter((l: any) => typeof l.x1 === 'number' && typeof l.y1 === 'number' && typeof l.x2 === 'number' && typeof l.y2 === 'number')
+          .filter(
+            (l: any) =>
+              typeof l.x1 === 'number' &&
+              typeof l.y1 === 'number' &&
+              typeof l.x2 === 'number' &&
+              typeof l.y2 === 'number'
+          )
           .map((l: any) => ({
             x1: Math.max(16, Math.min(144, Math.round(l.x1))),
             y1: Math.max(16, Math.min(144, Math.round(l.y1))),
@@ -488,55 +523,42 @@ Responde ÚNICAMENTE con un objeto JSON sin formato markdown, sin texto antes ni
             y2: Math.max(16, Math.min(144, Math.round(l.y2))),
           }));
 
-        return {
-          name: (parsed.name || 'Compañero Forja Neural').slice(0, 32),
-          sourceType: 'image',
-          createdAt: new Date().toISOString(),
-          lines: safeLines,
-          polygons: Array.isArray(parsed.polygons) ? parsed.polygons : undefined,
-          coreEye: parsed.coreEye && typeof parsed.coreEye.cx === 'number'
-            ? {
-                cx: Math.max(30, Math.min(130, Math.round(parsed.coreEye.cx))),
-                cy: Math.max(40, Math.min(120, Math.round(parsed.coreEye.cy))),
-                r: Math.max(6, Math.min(14, Math.round(parsed.coreEye.r || 8))),
-              }
-            : { cx: 80, cy: 85, r: 8 },
-        };
+        if (safeLines.length >= 4) {
+          console.log('[Forja Neural] ✓ Geometría generada exitosamente por IA');
+          return {
+            name: (parsed.name || (promptDescription ? `Tótem ${promptDescription.slice(0, 16)}` : 'Compañero Forja Neural')).slice(0, 32),
+            sourceType: 'image',
+            createdAt: new Date().toISOString(),
+            lines: safeLines,
+            polygons: Array.isArray(parsed.polygons) ? parsed.polygons : undefined,
+            coreEye:
+              parsed.coreEye && typeof parsed.coreEye.cx === 'number'
+                ? {
+                    cx: Math.max(30, Math.min(130, Math.round(parsed.coreEye.cx))),
+                    cy: Math.max(40, Math.min(120, Math.round(parsed.coreEye.cy))),
+                    r: Math.max(6, Math.min(14, Math.round(parsed.coreEye.r || 8))),
+                  }
+                : { cx: 80, cy: 85, r: 8 },
+          };
+        }
       }
     } catch (parseErr) {
       console.warn('[Forja Neural] Error parseando JSON de Gemini:', parseErr);
     }
   }
 
-  // 3. Procedural Fallback de Respaldo (Garantía de que nunca falla)
-  console.log('[Forja Neural] Activando generador procedural simétrico de respaldo');
-  return {
-    name: promptDescription ? `Tótem ${promptDescription.slice(0, 16)}` : 'Holo-Artefacto Cuántico',
-    sourceType: 'image',
-    createdAt: new Date().toISOString(),
-    lines: [
-      { x1: 80, y1: 24, x2: 44, y2: 60 },
-      { x1: 80, y1: 24, x2: 116, y2: 60 },
-      { x1: 44, y1: 60, x2: 32, y2: 96 },
-      { x1: 116, y1: 60, x2: 128, y2: 96 },
-      { x1: 32, y1: 96, x2: 80, y2: 132 },
-      { x1: 128, y1: 96, x2: 80, y2: 132 },
-      { x1: 80, y1: 24, x2: 80, y2: 132 },
-      { x1: 44, y1: 60, x2: 80, y2: 85 },
-      { x1: 116, y1: 60, x2: 80, y2: 85 },
-      { x1: 32, y1: 96, x2: 80, y2: 85 },
-      { x1: 128, y1: 96, x2: 80, y2: 85 },
-    ],
-    polygons: [
-      { points: '80,24 44,60 80,85' },
-      { points: '80,24 116,60 80,85' },
-      { points: '44,60 32,96 80,85' },
-      { points: '116,60 128,96 80,85' },
-      { points: '32,96 80,132 80,85' },
-      { points: '128,96 80,132 80,85' },
-    ],
-    coreEye: { cx: 80, cy: 85, r: 8 },
-  };
+  // 3. Sintetizador de Silueta de la Imagen (Garantiza diseño único para cada foto)
+  console.log('[Forja Neural] Sintetizando geometría única a partir de los datos visuales de la foto...');
+  try {
+    const bespokeForm = await synthesizeKaiFromImageSilhouette({
+      imageBase64: cleanBase64,
+      promptDescription,
+    });
+    return bespokeForm;
+  } catch (synthErr) {
+    console.error('[Forja Neural] Error en síntesis de silueta:', synthErr);
+    return null;
+  }
 }
 
 
