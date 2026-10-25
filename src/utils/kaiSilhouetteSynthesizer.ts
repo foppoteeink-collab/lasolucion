@@ -850,6 +850,432 @@ function buildBespokeContourKai(analysis: ImageSampleAnalysis): {
   return { lines, polygons };
 }
 
+// ══════════════════════════════════════════════════════════════════════════════
+// 🧸 1. GENERADOR MULTIVERSO TOON (CHIBI MASCOT NINTENDO / PIXAR)
+// Siluetas redondeadas, cabeza grande, proporciones chibi y gran sonrisa
+// ══════════════════════════════════════════════════════════════════════════════
+function buildToonGeometry(category: string, label: string): {
+  lines: Array<{ x1: number; y1: number; x2: number; y2: number }>;
+  polygons: Array<{ points: string }>;
+  dualEyes: { left: { cx: number; cy: number; rx: number; ry: number }; right: { cx: number; cy: number; rx: number; ry: number } };
+  mouth: { d: string };
+  baseName: string;
+} {
+  const lines: Array<{ x1: number; y1: number; x2: number; y2: number }> = [];
+  const polygons: Array<{ points: string }> = [];
+
+  // Cabeza Chibi Redonda y Amigable
+  polygons.push({
+    points: '60,26 100,26 122,46 128,74 120,98 96,112 64,112 40,98 32,74 38,46',
+  });
+  lines.push(
+    { x1: 60, y1: 26, x2: 100, y2: 26 },
+    { x1: 100, y1: 26, x2: 122, y2: 46 },
+    { x1: 122, y1: 46, x2: 128, y2: 74 },
+    { x1: 128, y1: 74, x2: 120, y2: 98 },
+    { x1: 120, y1: 98, x2: 96, y2: 112 },
+    { x1: 96, y1: 112, x2: 64, y2: 112 },
+    { x1: 64, y1: 112, x2: 40, y2: 98 },
+    { x1: 40, y1: 98, x2: 32, y2: 74 },
+    { x1: 32, y1: 74, x2: 38, y2: 46 },
+    { x1: 38, y1: 46, x2: 60, y2: 26 }
+  );
+
+  // Cuerpecito Rechoncho Chibi y patitas
+  polygons.push({
+    points: '54,112 106,112 118,136 102,148 58,148 42,136',
+  });
+  lines.push(
+    { x1: 54, y1: 112, x2: 42, y2: 136 },
+    { x1: 42, y1: 136, x2: 58, y2: 148 },
+    { x1: 58, y1: 148, x2: 102, y2: 148 },
+    { x1: 102, y1: 148, x2: 118, y2: 136 },
+    { x1: 118, y1: 136, x2: 106, y2: 112 },
+    { x1: 66, y1: 148, x2: 66, y2: 154 },
+    { x1: 94, y1: 148, x2: 94, y2: 154 }
+  );
+
+  // Manitas / Alitas saludando a los lados
+  lines.push(
+    { x1: 40, y1: 118, x2: 24, y2: 108 },
+    { x1: 24, y1: 108, x2: 28, y2: 126 },
+    { x1: 28, y1: 126, x2: 44, y2: 128 },
+    { x1: 120, y1: 118, x2: 136, y2: 108 },
+    { x1: 136, y1: 108, x2: 132, y2: 126 },
+    { x1: 132, y1: 126, x2: 116, y2: 128 }
+  );
+
+  let baseName = 'Toon ' + label;
+
+  if (category === 'lighter') {
+    baseName = 'Chibi Ignis';
+    polygons.push({ points: '80,6 92,20 86,28 74,28 68,20' });
+    lines.push(
+      { x1: 80, y1: 6, x2: 92, y2: 20 },
+      { x1: 92, y1: 20, x2: 86, y2: 28 },
+      { x1: 86, y1: 28, x2: 74, y2: 28 },
+      { x1: 74, y1: 28, x2: 68, y2: 20 },
+      { x1: 68, y1: 20, x2: 80, y2: 6 },
+      { x1: 80, y1: 12, x2: 80, y2: 22 }
+    );
+  } else if (category === 'animal') {
+    baseName = 'Mascota Chibi';
+    polygons.push(
+      { points: '42,38 24,12 56,26' },
+      { points: '118,38 136,12 104,26' }
+    );
+    lines.push(
+      { x1: 42, y1: 38, x2: 24, y2: 12 },
+      { x1: 24, y1: 12, x2: 56, y2: 26 },
+      { x1: 118, y1: 38, x2: 136, y2: 12 },
+      { x1: 136, y1: 12, x2: 104, y2: 26 },
+      { x1: 34, y1: 82, x2: 20, y2: 80 },
+      { x1: 34, y1: 88, x2: 20, y2: 92 },
+      { x1: 126, y1: 82, x2: 140, y2: 80 },
+      { x1: 126, y1: 88, x2: 140, y2: 92 }
+    );
+  } else if (category === 'sunglasses') {
+    baseName = 'Solaris Toon';
+    lines.push(
+      { x1: 44, y1: 70, x2: 74, y2: 70 },
+      { x1: 74, y1: 70, x2: 74, y2: 80 },
+      { x1: 74, y1: 80, x2: 44, y2: 80 },
+      { x1: 44, y1: 80, x2: 44, y2: 70 },
+      { x1: 74, y1: 72, x2: 86, y2: 72 },
+      { x1: 86, y1: 70, x2: 116, y2: 70 },
+      { x1: 116, y1: 70, x2: 116, y2: 80 },
+      { x1: 116, y1: 80, x2: 86, y2: 80 },
+      { x1: 86, y1: 80, x2: 86, y2: 70 }
+    );
+  } else if (category === 'headphones') {
+    baseName = 'Beats Chibi';
+    polygons.push(
+      { points: '24,62 36,62 36,92 24,92' },
+      { points: '124,62 136,62 136,92 124,92' },
+      { points: '42,42 80,18 118,42 110,48 80,26 50,48' }
+    );
+    lines.push(
+      { x1: 42, y1: 42, x2: 80, y2: 18 },
+      { x1: 80, y1: 18, x2: 118, y2: 42 },
+      { x1: 24, y1: 62, x2: 36, y2: 62 },
+      { x1: 36, y1: 62, x2: 36, y2: 92 },
+      { x1: 36, y1: 92, x2: 24, y2: 92 },
+      { x1: 24, y1: 92, x2: 24, y2: 62 },
+      { x1: 124, y1: 62, x2: 136, y2: 62 },
+      { x1: 136, y1: 62, x2: 136, y2: 92 },
+      { x1: 136, y1: 92, x2: 124, y2: 92 },
+      { x1: 124, y1: 92, x2: 124, y2: 62 }
+    );
+  } else if (category === 'mug') {
+    baseName = 'Cafeto Chibi';
+    lines.push(
+      { x1: 124, y1: 60, x2: 144, y2: 74 },
+      { x1: 144, y1: 74, x2: 142, y2: 98 },
+      { x1: 142, y1: 98, x2: 120, y2: 104 },
+      { x1: 72, y1: 20, x2: 76, y2: 10 },
+      { x1: 88, y1: 20, x2: 84, y2: 10 }
+    );
+  } else if (category === 'monolith') {
+    baseName = 'BMO Bot';
+    lines.push(
+      { x1: 80, y1: 26, x2: 80, y2: 14 },
+      { x1: 74, y1: 12, x2: 86, y2: 12 },
+      { x1: 80, y1: 6, x2: 80, y2: 14 }
+    );
+    polygons.push({ points: '76,8 84,8 84,14 76,14' });
+  } else {
+    lines.push(
+      { x1: 80, y1: 26, x2: 80, y2: 12 },
+      { x1: 80, y1: 12, x2: 90, y2: 18 }
+    );
+  }
+
+  return {
+    lines,
+    polygons,
+    dualEyes: {
+      left: { cx: 60, cy: 72, rx: 9.5, ry: 13 },
+      right: { cx: 100, cy: 72, rx: 9.5, ry: 13 },
+    },
+    mouth: {
+      d: 'M 68 94 Q 80 110 92 94',
+    },
+    baseName,
+  };
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 👾 2. GENERADOR MULTIVERSO PIXEL ART 16-BIT (ARCADE RETRO)
+// Estrictamente escaleras y bloques ortogonales (píxeles)
+// ══════════════════════════════════════════════════════════════════════════════
+function buildPixelGeometry(category: string, label: string): {
+  lines: Array<{ x1: number; y1: number; x2: number; y2: number }>;
+  polygons: Array<{ points: string }>;
+  dualEyes: { left: { cx: number; cy: number; rx: number; ry: number }; right: { cx: number; cy: number; rx: number; ry: number } };
+  mouth: { d: string };
+  baseName: string;
+} {
+  const lines: Array<{ x1: number; y1: number; x2: number; y2: number }> = [];
+  const polygons: Array<{ points: string }> = [];
+
+  // Cabeza en escalones de píxeles
+  polygons.push({
+    points: '56,24 104,24 104,36 120,36 120,56 128,56 128,96 120,96 120,112 104,112 104,120 56,120 56,112 40,112 40,96 32,96 32,56 40,56 40,36 56,36',
+  });
+
+  lines.push(
+    { x1: 56, y1: 24, x2: 104, y2: 24 },
+    { x1: 104, y1: 24, x2: 104, y2: 36 },
+    { x1: 104, y1: 36, x2: 120, y2: 36 },
+    { x1: 120, y1: 36, x2: 120, y2: 56 },
+    { x1: 120, y1: 56, x2: 128, y2: 56 },
+    { x1: 128, y1: 56, x2: 128, y2: 96 },
+    { x1: 128, y1: 96, x2: 120, y2: 96 },
+    { x1: 120, y1: 96, x2: 120, y2: 112 },
+    { x1: 120, y1: 112, x2: 104, y2: 112 },
+    { x1: 104, y1: 112, x2: 104, y2: 120 },
+    { x1: 104, y1: 120, x2: 56, y2: 120 },
+    { x1: 56, y1: 120, x2: 56, y2: 112 },
+    { x1: 56, y1: 112, x2: 40, y2: 112 },
+    { x1: 40, y1: 112, x2: 40, y2: 96 },
+    { x1: 40, y1: 96, x2: 32, y2: 96 },
+    { x1: 32, y1: 96, x2: 32, y2: 56 },
+    { x1: 32, y1: 56, x2: 40, y2: 56 },
+    { x1: 40, y1: 56, x2: 40, y2: 36 },
+    { x1: 40, y1: 36, x2: 56, y2: 36 },
+    { x1: 56, y1: 36, x2: 56, y2: 24 }
+  );
+
+  // Cuerpo y patitas en píxeles
+  polygons.push({
+    points: '48,120 112,120 112,144 96,144 96,136 64,136 64,144 48,144',
+  });
+  lines.push(
+    { x1: 48, y1: 120, x2: 48, y2: 144 },
+    { x1: 48, y1: 144, x2: 64, y2: 144 },
+    { x1: 64, y1: 144, x2: 64, y2: 136 },
+    { x1: 64, y1: 136, x2: 96, y2: 136 },
+    { x1: 96, y1: 136, x2: 96, y2: 144 },
+    { x1: 96, y1: 144, x2: 112, y2: 144 },
+    { x1: 112, y1: 144, x2: 112, y2: 120 }
+  );
+
+  let baseName = 'Pixel Sprite';
+  if (category === 'lighter') {
+    baseName = 'Pixel Ignis';
+    lines.push(
+      { x1: 76, y1: 8, x2: 84, y2: 8 },
+      { x1: 84, y1: 8, x2: 84, y2: 16 },
+      { x1: 84, y1: 16, x2: 92, y2: 16 },
+      { x1: 92, y1: 16, x2: 92, y2: 24 },
+      { x1: 76, y1: 8, x2: 76, y2: 16 },
+      { x1: 76, y1: 16, x2: 68, y2: 16 },
+      { x1: 68, y1: 16, x2: 68, y2: 24 }
+    );
+  } else if (category === 'animal') {
+    baseName = 'Pixel Pet';
+    lines.push(
+      { x1: 40, y1: 16, x2: 48, y2: 16 },
+      { x1: 48, y1: 16, x2: 48, y2: 24 },
+      { x1: 40, y1: 16, x2: 40, y2: 36 },
+      { x1: 112, y1: 16, x2: 120, y2: 16 },
+      { x1: 112, y1: 16, x2: 112, y2: 24 },
+      { x1: 120, y1: 16, x2: 120, y2: 36 }
+    );
+  }
+
+  return {
+    lines,
+    polygons,
+    dualEyes: {
+      left: { cx: 58, cy: 70, rx: 6, ry: 6 },
+      right: { cx: 102, cy: 70, rx: 6, ry: 6 },
+    },
+    mouth: {
+      d: 'M 68 94 H 74 V 98 H 86 V 94 H 92',
+    },
+    baseName,
+  };
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 🔮 3. GENERADOR MULTIVERSO ARTE 3D / VINIL (CLAYMATION / POP MART)
+// ══════════════════════════════════════════════════════════════════════════════
+function buildClay3dGeometry(category: string, label: string): {
+  lines: Array<{ x1: number; y1: number; x2: number; y2: number }>;
+  polygons: Array<{ points: string }>;
+  dualEyes: { left: { cx: number; cy: number; rx: number; ry: number }; right: { cx: number; cy: number; rx: number; ry: number } };
+  mouth: { d: string };
+  baseName: string;
+} {
+  const lines: Array<{ x1: number; y1: number; x2: number; y2: number }> = [];
+  const polygons: Array<{ points: string }> = [];
+
+  polygons.push({
+    points: '64,28 96,28 118,44 126,68 122,96 98,110 62,110 38,96 34,68 42,44',
+  });
+  lines.push(
+    { x1: 64, y1: 28, x2: 96, y2: 28 },
+    { x1: 96, y1: 28, x2: 118, y2: 44 },
+    { x1: 118, y1: 44, x2: 126, y2: 68 },
+    { x1: 126, y1: 68, x2: 122, y2: 96 },
+    { x1: 122, y1: 96, x2: 98, y2: 110 },
+    { x1: 98, y1: 110, x2: 62, y2: 110 },
+    { x1: 62, y1: 110, x2: 38, y2: 96 },
+    { x1: 38, y1: 96, x2: 34, y2: 68 },
+    { x1: 34, y1: 68, x2: 42, y2: 44 },
+    { x1: 42, y1: 44, x2: 64, y2: 28 }
+  );
+
+  polygons.push({
+    points: '54,110 106,110 114,134 98,146 62,146 46,134',
+  });
+  lines.push(
+    { x1: 54, y1: 110, x2: 46, y2: 134 },
+    { x1: 46, y1: 134, x2: 62, y2: 146 },
+    { x1: 62, y1: 146, x2: 98, y2: 146 },
+    { x1: 98, y1: 146, x2: 114, y2: 134 },
+    { x1: 114, y1: 134, x2: 106, y2: 110 },
+    { x1: 52, y1: 46, x2: 68, y2: 36 }
+  );
+
+  let baseName = 'Clay ' + label;
+  if (category === 'lighter') {
+    baseName = 'Clay Flame';
+    polygons.push({ points: '80,10 90,22 84,28 76,28 70,22' });
+    lines.push(
+      { x1: 80, y1: 10, x2: 90, y2: 22 },
+      { x1: 90, y1: 22, x2: 84, y2: 28 },
+      { x1: 84, y1: 28, x2: 76, y2: 28 },
+      { x1: 76, y1: 28, x2: 70, y2: 22 },
+      { x1: 70, y1: 22, x2: 80, y2: 10 }
+    );
+  } else if (category === 'animal') {
+    baseName = 'Clay Pet';
+    polygons.push(
+      { points: '44,38 30,16 54,28' },
+      { points: '116,38 130,16 106,28' }
+    );
+    lines.push(
+      { x1: 44, y1: 38, x2: 30, y2: 16 },
+      { x1: 30, y1: 16, x2: 54, y2: 28 },
+      { x1: 116, y1: 38, x2: 130, y2: 16 },
+      { x1: 130, y1: 16, x2: 106, y2: 28 }
+    );
+  }
+
+  return {
+    lines,
+    polygons,
+    dualEyes: {
+      left: { cx: 62, cy: 74, rx: 8, ry: 9 },
+      right: { cx: 98, cy: 74, rx: 8, ry: 9 },
+    },
+    mouth: {
+      d: 'M 72 96 Q 80 102 88 96',
+    },
+    baseName,
+  };
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 📄 4. GENERADOR MULTIVERSO RECORTES / PAPEL (ORIGAMI 3D)
+// ══════════════════════════════════════════════════════════════════════════════
+function buildPapercraftGeometry(category: string, label: string): {
+  lines: Array<{ x1: number; y1: number; x2: number; y2: number }>;
+  polygons: Array<{ points: string }>;
+  dualEyes: { left: { cx: number; cy: number; rx: number; ry: number }; right: { cx: number; cy: number; rx: number; ry: number } };
+  mouth: { d: string };
+  baseName: string;
+} {
+  const lines: Array<{ x1: number; y1: number; x2: number; y2: number }> = [];
+  const polygons: Array<{ points: string }> = [];
+
+  polygons.push(
+    { points: '80,24 46,48 80,72' },
+    { points: '80,24 114,48 80,72' },
+    { points: '46,48 36,88 80,108' },
+    { points: '114,48 124,88 80,108' },
+    { points: '80,108 52,142 80,148 108,142' }
+  );
+
+  lines.push(
+    { x1: 80, y1: 24, x2: 46, y2: 48 },
+    { x1: 46, y1: 48, x2: 80, y2: 72 },
+    { x1: 80, y1: 24, x2: 114, y2: 48 },
+    { x1: 114, y1: 48, x2: 80, y2: 72 },
+    { x1: 46, y1: 48, x2: 36, y2: 88 },
+    { x1: 36, y1: 88, x2: 80, y2: 108 },
+    { x1: 114, y1: 48, x2: 124, y2: 88 },
+    { x1: 124, y1: 88, x2: 80, y2: 108 },
+    { x1: 80, y1: 72, x2: 80, y2: 108 },
+    { x1: 80, y1: 108, x2: 52, y2: 142 },
+    { x1: 52, y1: 142, x2: 80, y2: 148 },
+    { x1: 80, y1: 148, x2: 108, y2: 142 },
+    { x1: 108, y1: 142, x2: 80, y2: 108 }
+  );
+
+  return {
+    lines,
+    polygons,
+    dualEyes: {
+      left: { cx: 60, cy: 74, rx: 8, ry: 6.5 },
+      right: { cx: 100, cy: 74, rx: 8, ry: 6.5 },
+    },
+    mouth: {
+      d: 'M 70 96 L 80 104 L 90 96',
+    },
+    baseName: 'Origami ' + label,
+  };
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ⚡ 5. GENERADOR MULTIVERSO CROMO & MERCURIO (FUTURISTA Y2K)
+// ══════════════════════════════════════════════════════════════════════════════
+function buildChromeGeometry(category: string, label: string): {
+  lines: Array<{ x1: number; y1: number; x2: number; y2: number }>;
+  polygons: Array<{ points: string }>;
+  dualEyes: { left: { cx: number; cy: number; rx: number; ry: number }; right: { cx: number; cy: number; rx: number; ry: number } };
+  mouth: { d: string };
+  baseName: string;
+} {
+  const lines: Array<{ x1: number; y1: number; x2: number; y2: number }> = [];
+  const polygons: Array<{ points: string }> = [];
+
+  polygons.push(
+    { points: '80,18 52,42 42,88 80,112 118,88 108,42' },
+    { points: '42,88 56,134 80,146 104,134 118,88 80,112' }
+  );
+
+  lines.push(
+    { x1: 80, y1: 18, x2: 52, y2: 42 },
+    { x1: 52, y1: 42, x2: 42, y2: 88 },
+    { x1: 42, y1: 88, x2: 56, y2: 134 },
+    { x1: 56, y1: 134, x2: 80, y2: 146 },
+    { x1: 80, y1: 146, x2: 104, y2: 134 },
+    { x1: 104, y1: 134, x2: 118, y2: 88 },
+    { x1: 118, y1: 88, x2: 108, y2: 42 },
+    { x1: 108, y1: 42, x2: 80, y2: 18 },
+    { x1: 80, y1: 18, x2: 80, y2: 64 },
+    { x1: 80, y1: 112, x2: 80, y2: 146 },
+    { x1: 52, y1: 42, x2: 80, y2: 64 },
+    { x1: 108, y1: 42, x2: 80, y2: 64 }
+  );
+
+  return {
+    lines,
+    polygons,
+    dualEyes: {
+      left: { cx: 58, cy: 74, rx: 13, ry: 6 },
+      right: { cx: 102, cy: 74, rx: 13, ry: 6 },
+    },
+    mouth: {
+      d: 'M 70 95 L 80 98 L 90 95',
+    },
+    baseName: 'Cromo ' + label,
+  };
+}
+
 /**
  * ══════════════════════════════════════════════════════════════════════════════
  * SINTETIZADOR PRINCIPAL: IDENTIFICA EL OBJETO Y GENERA SU ICONO KAI CON SIMILITUD
@@ -874,50 +1300,30 @@ export async function synthesizeKaiFromImageSilhouette(params: {
 
   const { category, label } = identifyObjectCategory(promptDescription, analysis);
 
-  let vectorArt: { lines: Array<{ x1: number; y1: number; x2: number; y2: number }>; polygons: Array<{ points: string }> };
-  let baseName = label;
+  let vectorResult: {
+    lines: Array<{ x1: number; y1: number; x2: number; y2: number }>;
+    polygons: Array<{ points: string }>;
+    dualEyes: { left: { cx: number; cy: number; rx: number; ry: number }; right: { cx: number; cy: number; rx: number; ry: number } };
+    mouth: { d: string };
+    baseName: string;
+  };
 
-  switch (category) {
-    case 'lighter':
-      vectorArt = buildLighterKai();
-      baseName = 'Ignis';
+  switch (artStyle) {
+    case 'toon':
+      vectorResult = buildToonGeometry(category, label);
       break;
-    case 'monolith':
-      vectorArt = buildMonolithKai();
-      baseName = 'Monolito';
+    case 'pixel':
+      vectorResult = buildPixelGeometry(category, label);
       break;
-    case 'sunglasses':
-      vectorArt = buildSunglassesKai();
-      baseName = 'Solaris';
+    case 'clay3d':
+      vectorResult = buildClay3dGeometry(category, label);
       break;
-    case 'headphones':
-      vectorArt = buildHeadphonesKai();
-      baseName = 'Sónico';
+    case 'papercraft':
+      vectorResult = buildPapercraftGeometry(category, label);
       break;
-    case 'watch':
-      vectorArt = buildWatchKai();
-      baseName = 'Crono';
-      break;
-    case 'mug':
-      vectorArt = buildMugKai();
-      baseName = 'Cafeto';
-      break;
-    case 'dumbbell':
-      vectorArt = buildDumbbellKai();
-      baseName = 'Titán';
-      break;
-    case 'animal':
-      vectorArt = buildAnimalKai();
-      baseName = 'Fiel Guardián';
-      break;
-    case 'apple':
-      vectorArt = buildAppleKai();
-      baseName = 'Orbe';
-      break;
-    case 'bespoke':
+    case 'chrome':
     default:
-      vectorArt = buildBespokeContourKai(analysis);
-      baseName = 'Tótem';
+      vectorResult = buildChromeGeometry(category, label);
       break;
   }
 
@@ -994,8 +1400,8 @@ export async function synthesizeKaiFromImageSilhouette(params: {
   };
 
   const finalName = promptDescription
-    ? `KAI ${baseName} ${promptDescription.slice(0, 12)}`
-    : `KAI ${baseName} ${styleNames[artStyle]}`;
+    ? `KAI ${vectorResult.baseName} ${promptDescription.slice(0, 12)}`
+    : `KAI ${vectorResult.baseName}`;
 
   const quote = STYLE_QUOTES[artStyle]?.[category] || STYLE_QUOTES[artStyle]?.bespoke;
 
@@ -1018,17 +1424,10 @@ export async function synthesizeKaiFromImageSilhouette(params: {
     primaryColor: PALETTES[artStyle].primary,
     secondaryColor: PALETTES[artStyle].secondary,
     mood: 'happy',
-    lines: vectorArt.lines,
-    polygons: vectorArt.polygons,
-    // Ojos dobles caricaturescos vivos
-    dualEyes: {
-      left: { cx: 62, cy: 74, rx: 8.5, ry: 11 },
-      right: { cx: 98, cy: 74, rx: 8.5, ry: 11 },
-    },
-    // Sonrisa animada
-    mouth: {
-      d: 'M 70 96 Q 80 108 90 96',
-    },
+    lines: vectorResult.lines,
+    polygons: vectorResult.polygons,
+    dualEyes: vectorResult.dualEyes,
+    mouth: vectorResult.mouth,
     coreEye: { cx: 80, cy: 85, r: 8 },
   };
 }

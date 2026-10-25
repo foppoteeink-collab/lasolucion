@@ -853,22 +853,35 @@ export const KaiVectorGraphics: React.FC<KaiVectorGraphicsProps> = ({
                   if (!eye) return null;
                   return (
                     <g key={key} id={`${gradientId}-custom-eye-${key}`}>
-                      {/* Fondo Esclerótica Blanco Puro */}
-                      <ellipse
-                        cx={eye.cx}
-                        cy={eye.cy}
-                        rx={eye.rx}
-                        ry={eye.ry}
-                        fill="#ffffff"
-                        filter={`url(#${filterId})`}
-                      />
-                      <ellipse
-                        cx={eye.cx}
-                        cy={eye.cy}
-                        rx={eye.rx}
-                        ry={eye.ry}
-                        fill="#ffffff"
-                      />
+                      {/* Fondo Esclerótica Blanco */}
+                      {isPixel ? (
+                        <rect
+                          x={eye.cx - eye.rx}
+                          y={eye.cy - eye.ry}
+                          width={eye.rx * 2}
+                          height={eye.ry * 2}
+                          fill="#ffffff"
+                          shapeRendering="crispEdges"
+                        />
+                      ) : (
+                        <>
+                          <ellipse
+                            cx={eye.cx}
+                            cy={eye.cy}
+                            rx={eye.rx}
+                            ry={eye.ry}
+                            fill="#ffffff"
+                            filter={`url(#${filterId})`}
+                          />
+                          <ellipse
+                            cx={eye.cx}
+                            cy={eye.cy}
+                            rx={eye.rx}
+                            ry={eye.ry}
+                            fill="#ffffff"
+                          />
+                        </>
+                      )}
 
                       {/* Parpadeo Orgánico del Ojo */}
                       <g
@@ -878,13 +891,24 @@ export const KaiVectorGraphics: React.FC<KaiVectorGraphicsProps> = ({
                         }}
                       >
                         {/* Iris de Color */}
-                        <ellipse
-                          cx={eye.cx}
-                          cy={eye.cy}
-                          rx={eye.rx * 0.72}
-                          ry={eye.ry * 0.75}
-                          fill={customSecColor || customLineColor}
-                        />
+                        {isPixel ? (
+                          <rect
+                            x={eye.cx - eye.rx * 0.75}
+                            y={eye.cy - eye.ry * 0.75}
+                            width={eye.rx * 1.5}
+                            height={eye.ry * 1.5}
+                            fill={customSecColor || customLineColor}
+                            shapeRendering="crispEdges"
+                          />
+                        ) : (
+                          <ellipse
+                            cx={eye.cx}
+                            cy={eye.cy}
+                            rx={eye.rx * 0.72}
+                            ry={eye.ry * 0.75}
+                            fill={customSecColor || customLineColor}
+                          />
+                        )}
 
                         {/* Pupila con Seguimiento de Mirada */}
                         <g
@@ -897,51 +921,90 @@ export const KaiVectorGraphics: React.FC<KaiVectorGraphicsProps> = ({
                               : { animation: 'kai-mascot-gaze 5s infinite ease-in-out' }
                           }
                         >
-                          <ellipse
-                            cx={eye.cx}
-                            cy={eye.cy}
-                            rx={eye.rx * 0.45}
-                            ry={eye.ry * 0.48}
-                            fill="#020813"
-                          />
+                          {isPixel ? (
+                            <rect
+                              x={eye.cx - eye.rx * 0.4}
+                              y={eye.cy - eye.ry * 0.4}
+                              width={eye.rx * 0.8}
+                              height={eye.ry * 0.8}
+                              fill="#020813"
+                              shapeRendering="crispEdges"
+                            />
+                          ) : (
+                            <ellipse
+                              cx={eye.cx}
+                              cy={eye.cy}
+                              rx={eye.rx * 0.45}
+                              ry={eye.ry * 0.48}
+                              fill="#020813"
+                            />
+                          )}
 
-                          {/* Doble Destello Especular Nintendo / Pixar */}
-                          <circle
-                            cx={eye.cx + eye.rx * 0.22}
-                            cy={eye.cy - eye.ry * 0.25}
-                            r={Math.max(1.4, eye.rx * 0.24)}
-                            fill="#ffffff"
-                          />
-                          <circle
-                            cx={eye.cx - eye.rx * 0.2}
-                            cy={eye.cy + eye.ry * 0.22}
-                            r={Math.max(0.8, eye.rx * 0.14)}
-                            fill="#ffffff"
-                            opacity="0.95"
-                          />
+                          {/* Destello Especular */}
+                          {isPixel ? (
+                            <rect
+                              x={eye.cx + eye.rx * 0.1}
+                              y={eye.cy - eye.ry * 0.5}
+                              width={eye.rx * 0.35}
+                              height={eye.ry * 0.35}
+                              fill="#ffffff"
+                              shapeRendering="crispEdges"
+                            />
+                          ) : (
+                            <>
+                              <circle
+                                cx={eye.cx + eye.rx * 0.22}
+                                cy={eye.cy - eye.ry * 0.25}
+                                r={Math.max(1.4, eye.rx * 0.24)}
+                                fill="#ffffff"
+                              />
+                              <circle
+                                cx={eye.cx - eye.rx * 0.2}
+                                cy={eye.cy + eye.ry * 0.22}
+                                r={Math.max(0.8, eye.rx * 0.14)}
+                                fill="#ffffff"
+                                opacity="0.95"
+                              />
+                            </>
+                          )}
                         </g>
                       </g>
 
-                      {/* Contorno Delineado Neón del Ojo */}
-                      <ellipse
-                        cx={eye.cx}
-                        cy={eye.cy}
-                        rx={eye.rx}
-                        ry={eye.ry}
-                        stroke={customLineColor}
-                        strokeWidth="2.4"
-                        fill="none"
-                        filter={`url(#${filterId})`}
-                      />
-                      <ellipse
-                        cx={eye.cx}
-                        cy={eye.cy}
-                        rx={eye.rx}
-                        ry={eye.ry}
-                        stroke="#020813"
-                        strokeWidth="1.2"
-                        fill="none"
-                      />
+                      {/* Contorno Delineado del Ojo */}
+                      {isPixel ? (
+                        <rect
+                          x={eye.cx - eye.rx}
+                          y={eye.cy - eye.ry}
+                          width={eye.rx * 2}
+                          height={eye.ry * 2}
+                          stroke={customLineColor}
+                          strokeWidth="2.4"
+                          fill="none"
+                          shapeRendering="crispEdges"
+                        />
+                      ) : (
+                        <>
+                          <ellipse
+                            cx={eye.cx}
+                            cy={eye.cy}
+                            rx={eye.rx}
+                            ry={eye.ry}
+                            stroke={customLineColor}
+                            strokeWidth="2.4"
+                            fill="none"
+                            filter={`url(#${filterId})`}
+                          />
+                          <ellipse
+                            cx={eye.cx}
+                            cy={eye.cy}
+                            rx={eye.rx}
+                            ry={eye.ry}
+                            stroke="#020813"
+                            strokeWidth="1.2"
+                            fill="none"
+                          />
+                        </>
+                      )}
                     </g>
                   );
                 })}
@@ -1017,18 +1080,20 @@ export const KaiVectorGraphics: React.FC<KaiVectorGraphicsProps> = ({
                 <path
                   d={customForm.mouth.d}
                   stroke={customLineColor}
-                  strokeWidth="3.2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+                  strokeWidth={isPixel ? '3.6' : '3.2'}
+                  strokeLinecap={isPixel ? 'square' : 'round'}
+                  strokeLinejoin={isPixel ? 'miter' : 'round'}
+                  shapeRendering={isPixel ? 'crispEdges' : 'auto'}
                   fill="none"
                   filter={`url(#${filterId})`}
                 />
                 <path
                   d={customForm.mouth.d}
                   stroke="#ffffff"
-                  strokeWidth="1.3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+                  strokeWidth={isPixel ? '1.6' : '1.3'}
+                  strokeLinecap={isPixel ? 'square' : 'round'}
+                  strokeLinejoin={isPixel ? 'miter' : 'round'}
+                  shapeRendering={isPixel ? 'crispEdges' : 'auto'}
                   fill="none"
                   opacity="0.95"
                 />

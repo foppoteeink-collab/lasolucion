@@ -382,60 +382,111 @@ export async function forgeKaiFromImage(params: {
   // Limpiar encabezado data:image/... si está presente
   const cleanBase64 = imageBase64.includes(',') ? imageBase64.split(',')[1] : imageBase64;
 
-  const systemInstructions = `
+  function buildMultiversePrompt(selectedArtStyle: KaiMultiverseStyle, userPrompt: string): string {
+    let styleDirective = '';
+    let eyesInstruction = '';
+    let mouthInstruction = '';
+    let geometryGuidance = '';
+
+    switch (selectedArtStyle) {
+      case 'toon':
+        styleDirective = `
+ESTILO OBLIGATORIO: 🧸 CARICATURA TOON (NINTENDO / PIXAR / STUDIO GHIBLI)
+¡ESTRICTAMENTE PROHIBIDO CABLES, LINEAS ANGULARES CYBERPUNK O MONOLITOS ROBOTICOS!
+El personaje debe ser una MASCOTA CHIBI TIERNA, VIVA Y AMIGABLE:
+- Silueta curvilínea y rechoncha: cabeza grande redondeada (aproximación poligonal suave), mejillas adorables y pancita redonda.
+- Manitas, alitas o patitas tiernas a los lados.
+- El objeto fotografiado define la cabeza o accesorio de forma caricaturesca (si es encendedor, es un muñequito de llama con ojos vivos y sonrisa; si es animal, una mascota chibi regordeta; si es móvil, un robotito tierno con carita feliz; si es taza, una taza viviente sonriente).`;
+        eyesInstruction = `"dualEyes": { "left": { "cx": 60, "cy": 72, "rx": 9.5, "ry": 13 }, "right": { "cx": 100, "cy": 72, "rx": 9.5, "ry": 13 } }`;
+        mouthInstruction = `"mouth": { "d": "M 68 94 Q 80 110 92 94" }`;
+        geometryGuidance = `Trazos suaves que forman una cabeza redonda chibi y cuerpo gordito amigable.`;
+        break;
+
+      case 'clay3d':
+        styleDirective = `
+ESTILO OBLIGATORIO: 🔮 ARTE 3D / VINIL COLECCIONABLE (POP MART / FUNKO / NINTENDO AMIIBO)
+¡ESTRICTAMENTE PROHIBIDO ESTILO WIREFRAME CIBERNÉTICO O LÍNEAS PLANAS!
+El personaje debe ser un JUGUETE 3D TÁCTIL COLECCIONABLE DE VINIL BRILLANTE:
+- Silueta suave y abombada con curvatura esférica táctil (cabeza suave de arcilla, torso de muñeco de vinilo).
+- Facetas poligonales amplias y redondeadas que dan sensación de volumen 3D bajo una luz suave.
+- Acabados redondeados de muñeco de plastilina o vinilo coleccionable.`;
+        eyesInstruction = `"dualEyes": { "left": { "cx": 62, "cy": 74, "rx": 8, "ry": 9 }, "right": { "cx": 98, "cy": 74, "rx": 8, "ry": 9 } }`;
+        mouthInstruction = `"mouth": { "d": "M 72 96 Q 80 102 88 96" }`;
+        geometryGuidance = `Facetas curvas y convexas que modelan una cabeza esférica de arcilla y cuerpo abombado.`;
+        break;
+
+      case 'pixel':
+        styleDirective = `
+ESTILO OBLIGATORIO: 👾 PIXEL ART 16-BIT (ARCADE RETRO / SUPER NINTENDO)
+¡REGLA ABSOLUTA: PROHIBIDAS LÍNEAS DIAGONALES LISAS O CURVAS CONTINUAS!
+Todo el personaje debe ser un AUTÉNTICO SPRITE DE VIDEOJUEGO DE 16-BITS:
+- ¡TODO EL DIBUJO DEBE ESTAR COMPUESTO POR ESCALERAS Y BLOQUES DE PÍXELES!
+- Cada trazo avanza ortogonalmente en horizontal y vertical (pasos de 4 a 8px) como en un bitmap real de 16-bits.
+- Silueta pixelada nostálgica de personaje jugable de videojuego retro.`;
+        eyesInstruction = `"dualEyes": { "left": { "cx": 58, "cy": 70, "rx": 6, "ry": 6 }, "right": { "cx": 102, "cy": 70, "rx": 6, "ry": 6 } }`;
+        mouthInstruction = `"mouth": { "d": "M 68 94 H 74 V 98 H 86 V 94 H 92" }`;
+        geometryGuidance = `Coordenadas ortogonales en cuadrícula (escalones rectos en horizontal y vertical sin diagonales lisas).`;
+        break;
+
+      case 'papercraft':
+        styleDirective = `
+ESTILO OBLIGATORIO: 📄 RECORTES / PAPEL (ORIGAMI 3D / PAPERCRAFT JAPONÉS)
+El personaje debe ser una ESCULTURA DE HOJAS DE PAPEL Y CARTULINA CORTADA A MANO:
+- Capas de papel superpuestas con planos geométricos bien marcados, solapas dobladas y relieve de capas.
+- Facetas de cartulina con pliegues limpios y sombras entre planos de papel superpuestos.`;
+        eyesInstruction = `"dualEyes": { "left": { "cx": 60, "cy": 74, "rx": 8, "ry": 6.5 }, "right": { "cx": 100, "cy": 74, "rx": 8, "ry": 6.5 } }`;
+        mouthInstruction = `"mouth": { "d": "M 70 96 L 80 104 L 90 96" }`;
+        geometryGuidance = `Planos de papel diagonales rectos que simulan dobleces de papiroflexia y relieve.`;
+        break;
+
+      case 'chrome':
+      default:
+        styleDirective = `
+ESTILO OBLIGATORIO: ⚡ CROMO & MERCURIO (FUTURISTA Y2K / METAL LÍQUIDO)
+El personaje debe ser una ESCULTURA DE CROMO LÍQUIDO Y MERCURIO PULIDO AERODINÁMICA:
+- Líneas fluidas y aerodinámicas de metal reflectante, arcos de titanio y visor futurista.
+- Foco en velocidad, destellos especulares y elegancia metálica pulida.`;
+        eyesInstruction = `"dualEyes": { "left": { "cx": 58, "cy": 74, "rx": 13, "ry": 6 }, "right": { "cx": 102, "cy": 74, "rx": 13, "ry": 6 } }`;
+        mouthInstruction = `"mouth": { "d": "M 70 95 L 80 98 L 90 95" }`;
+        geometryGuidance = `Líneas aerodinámicas fluidas y quilla inferior de levitación.`;
+        break;
+    }
+
+    return `
 Eres el Diseñador Maestro de Personajes y Mascotas del Multiverso de "La Solución".
-Tu misión es transformar el objeto, mascota o sujeto principal de la foto en un PERSONAJE VIVO CON CARISMA, ALMA Y PERSONALIDAD (KAI MULTIVERSE).
+Tu misión es transformar el objeto o sujeto de la foto en un PERSONAJE VIVO CON ALMA Y CARISMA SEGÚN EL ESTILO ARTÍSTICO ESPECIFICADO.
 
-ESTILO DE ARTE DEL MULTIVERSO SELECCIONADO: "${artStyle.toUpperCase()}"
-- Si es "toon": Caricatura animada tipo Nintendo/Pixar. Ojos grandes expresivos, sonrisa pícara o noble, líneas contundentes y carisma vivo.
-- Si es "clay3d": Escultura 3D en vinilo o plastilina brillante coleccionable con volumen suave y ojos tiernos.
-- Si es "chrome": Escultura de cromo líquido y mercurio reflectante, visor cibernético y reflejos plateados.
-- Si es "papercraft": Personaje ensamblado en capas de papel de colores artesanales superpuestas con relieve y sombras.
-- Si es "pixel": Sprite retro arcade de 16 bits con píxeles limpios, ojos de bloque expresivos y actitud lúdica.
+${styleDirective}
 
-CANON ESTÉTICO OFICIAL DE KAI:
-1. GEOMETRÍA SIMÉTRICA VIVA:
-   - Trazos poligonales limpios, simétricos respecto al eje central x = 80.
-   - Facetas poligonales sombreadas ('polygons') para dar volumen y profundidad.
-   - La base inferior de la figura converge de forma armónica hacia la elipse de levitación de la app (alrededor de y: 120 a 140 en el centro x: 80).
-
-2. SIMILITUD VISUAL INMEDIATA (LIKENESS) & PROHIBICIÓN DE RECTÁNGULOS PLANOS:
-   - PROHIBIDO DIBUJAR CAJAS O RECTÁNGULOS VACÍOS: Aunque el objeto fotografiado sea intrínsecamente rectangular (un mechero, un móvil, un libro, una tarjeta o una caja), NUNCA dibujes un simple rectángulo ni una pantalla vacía. Dale ojos vivos, cuerpo de personaje y personalidad.
-   - Si es un ENCENDEDOR: Cuerpo facetado en 3D con chaflanes, chimenea perforada con ranuras, rueda de chispa y una LLAMA VIVA ascendente con ojos de fuego y sonrisa.
-   - Si es un MÓVIL / GADGET / OBJETO RECTANGULAR: Transfórmalo en un MONOLITO ROBÓTICO AMIGABLE con ojos de pantalla viva, visera de cristal y detalles mecánicos.
-   - Si son GAFAS DE SOL: Dos lentes poligonales simétricos con ojos brillantes en su interior, puente central y patillas estilizadas.
-   - Si son AUDÍFONOS: Diadema exterior e interior en arco superior y copas auriculares hexagonales simétricas que son como orejeras de un androide.
-   - Si es un ANIMAL / MASCOTA: Orejas anatómicas poligonales, pómulos facetados, hocico simétrico y ojos vivos con personalidad felina, canina o lupina.
-
-3. OJOS VIVOS Y EXPRESIÓN FACIAL:
-   - Los personajes deben tener ojos expresivos (ya sea "dualEyes" o "coreEye") y una boca/sonrisa ("mouth").
-   - Genera una frase de personalidad ("personalityQuote") que diga el personaje al despertar.
-
-4. ESPECIFICACIÓN DEL LIENZO SVG (viewBox="0 0 160 170"):
-   - Simetría bilateral rigurosa respecto al eje central x = 80. Para todo punto (80 - dx, y), debe existir (80 + dx, y).
-   - Coordenadas válidas: x entre 18 y 142, y entre 18 y 144.
-   - Entre 18 y 36 líneas rectas conectadas.
-   - Entre 4 y 10 polígonos ('points': "x1,y1 x2,y2 x3,y3 ...") para las facetas principales.
-   - Ojo/núcleo central: "coreEye": { "cx": 80, "cy": 85, "r": 8 }.
-${promptDescription ? `Contexto o pista del usuario: "${promptDescription}".` : ''}
+REGLAS GENERALES DEL LIENZO SVG (viewBox="0 0 160 170"):
+1. Simetría bilateral respecto al eje central x = 80. Para todo punto (80 - dx, y), debe existir (80 + dx, y).
+2. Coordenadas válidas: x entre 20 y 140, y entre 20 y 145.
+3. ${geometryGuidance}
+4. Entre 16 y 32 líneas rectas ('lines').
+5. Entre 4 y 10 polígonos ('polygons') para las facetas principales.
+6. Genera una frase de despertar carismática adaptada al objeto y estilo ("personalityQuote").
+${userPrompt ? `Contexto o pista del usuario: "${userPrompt}".` : ''}
 
 DEVOLUCIÓN OBLIGATORIA (Responde ÚNICAMENTE con JSON puro, sin bloques markdown ni texto antes ni después):
 {
   "detectedObject": "Nombre del objeto detectado",
-  "name": "Nombre Épico del Personaje",
-  "personalityQuote": "Frase carismática que dice el personaje al despertar",
+  "name": "Nombre Carismático del Personaje",
+  "personalityQuote": "Frase que dice el personaje al despertar",
   "mood": "playful",
   "lines": [
-    { "x1": 80, "y1": 24, "x2": 44, "y2": 65 },
-    { "x1": 80, "y1": 24, "x2": 116, "y2": 65 }
+    { "x1": 80, "y1": 28, "x2": 56, "y2": 44 },
+    { "x1": 80, "y1": 28, "x2": 104, "y2": 44 }
   ],
   "polygons": [
-    { "points": "80,24 44,65 80,85" },
-    { "points": "80,24 116,65 80,85" }
+    { "points": "80,28 56,44 80,68 104,44" }
   ],
-  "coreEye": { "cx": 80, "cy": 85, "r": 8 }
+  ${eyesInstruction},
+  ${mouthInstruction}
 }
 `;
+  }
+
+  const systemInstructions = buildMultiversePrompt(artStyle, promptDescription);
 
   let jsonResult: string | null = null;
   const CANDIDATE_MODELS = ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash-lite'];
