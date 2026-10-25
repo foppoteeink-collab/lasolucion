@@ -409,28 +409,6 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
                 className="drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)] pointer-events-auto cursor-pointer"
               />
             </motion.div>
-
-            {/* BOTÓN DIRECTO DE ACCESO AL TALLER CUANDO KAI ESTÁ PROYECTADO */}
-            {isMenuOpen && onOpenKaiWorkshop && (
-              <motion.button
-                type="button"
-                initial={{ opacity: 0, y: 15, scale: 0.85 }}
-                animate={{ opacity: 1, y: 46, scale: 1 }}
-                exit={{ opacity: 0, y: 15, scale: 0.85 }}
-                transition={{ delay: 0.08, duration: 0.2 }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  soundFX.playClick();
-                  setIsMenuOpen(false);
-                  onOpenKaiWorkshop();
-                }}
-                className="absolute z-[85] px-3.5 py-1 rounded-full bg-[#030712]/95 border border-cyan-400 text-[10px] font-mono font-bold text-cyan-300 shadow-[0_0_15px_rgba(0,240,255,0.45)] hover:bg-cyan-950 hover:text-white transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap active:scale-95 pointer-events-auto"
-                title="Toca para cambiar la figura de KAI o crear con IA"
-              >
-                <Palette className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Cambiar KAI / Taller 🎨</span>
-              </motion.button>
-            )}
           </div>
         </div>
       </motion.div>
