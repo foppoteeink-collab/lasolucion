@@ -453,7 +453,8 @@ export const HoloCompanion: React.FC<HoloCompanionProps> = ({
           style={{
             width: `${svgWidth}px`,
             height: `${svgHeight}px`,
-          }}
+            '--color-aura-activa': activeColor,
+          } as React.CSSProperties}
           className="relative z-10 flex items-center justify-center"
         >
           <KaiVectorGraphics

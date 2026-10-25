@@ -1,5 +1,6 @@
 import React, { useId } from 'react';
 import { KaiShapeKey, KaiCustomForm } from '../types';
+import { injectAuraColorIntoSvg } from './KAICompanion';
 
 interface KaiVectorGraphicsProps {
   shapeId: KaiShapeKey;
@@ -763,6 +764,22 @@ export const KaiVectorGraphics: React.FC<KaiVectorGraphicsProps> = ({
 
       {/* ──────────────── 7. CUSTOM / FORJA NEURAL IA (📸 MULTIVERSE) ──────────────── */}
       {shapeId === 'custom' && customForm && (() => {
+        // Si el resultado de la forja incluye código SVG puro (arquitectura 100% SVG)
+        if (customForm.svgContent) {
+          const artStyle = customForm.artStyle || 'neon-geometry';
+          const processed = injectAuraColorIntoSvg(customForm.svgContent, artStyle, lineColor);
+          const innerMatch = processed.match(/<svg[^>]*>([\s\S]*?)<\/svg>/i);
+          const innerContent = innerMatch ? innerMatch[1] : processed;
+          return (
+            <g
+              id={`${gradientId}-custom-svg-body`}
+              style={{ '--color-aura-activa': lineColor } as React.CSSProperties}
+              filter={`url(#${filterId})`}
+              dangerouslySetInnerHTML={{ __html: innerContent }}
+            />
+          );
+        }
+
         const artStyle = customForm.artStyle || 'toon';
         const customLineColor = customForm.primaryColor || lineColor;
         const customSecColor = customForm.secondaryColor || secondaryStroke;

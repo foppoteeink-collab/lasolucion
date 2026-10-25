@@ -1277,6 +1277,229 @@ function buildChromeGeometry(category: string, label: string): {
 }
 
 /**
+/**
+ * ══════════════════════════════════════════════════════════════════════════════
+ * MOTORES DE GENERACIÓN VECTORIAL 100% SVG (ARQUITECTURA DE LA FORJA NEURAL)
+ * ══════════════════════════════════════════════════════════════════════════════
+ */
+
+// 1. Geometría Neón (Default): <polygon> y <path> simétricos, stroke-width="2", fill="none"
+function buildNeonGeometryEngine(category: string, label: string) {
+  const polygons: Array<{ points: string }> = [
+    { points: "80,24 60,48 80,72 100,48" },
+    { points: "60,48 40,68 60,94 80,72" },
+    { points: "100,48 80,72 100,94 120,68" },
+    { points: "80,72 56,104 80,140 104,104" },
+    { points: "56,104 36,126 56,146 80,140" },
+    { points: "104,104 80,140 104,146 124,126" },
+  ];
+
+  let topper = '';
+  if (category === 'lighter') {
+    topper = `<path d="M 80,12 L 86,22 L 80,26 L 74,22 Z" stroke="var(--color-aura-activa, currentColor)" stroke-width="2" fill="none" />`;
+  } else if (category === 'sunglasses') {
+    topper = `<polygon points="46,54 74,54 68,68 52,68" stroke="var(--color-aura-activa, currentColor)" stroke-width="2" fill="none" /><polygon points="86,54 114,54 108,68 92,68" stroke="var(--color-aura-activa, currentColor)" stroke-width="2" fill="none" />`;
+  } else if (category === 'headphones') {
+    topper = `<path d="M 40,70 L 40,42 L 80,22 L 120,42 L 120,70" stroke="var(--color-aura-activa, currentColor)" stroke-width="2" fill="none" />`;
+  }
+
+  const polySvg = polygons.map(p => `<polygon points="${p.points}" stroke="var(--color-aura-activa, currentColor)" stroke-width="2" fill="none" stroke-linejoin="round" />`).join('\n    ');
+  const pathSvg = `
+    <path d="M 80,24 L 80,140" stroke="var(--color-aura-activa, currentColor)" stroke-width="2" fill="none" />
+    <path d="M 60,48 L 100,48" stroke="var(--color-aura-activa, currentColor)" stroke-width="2" fill="none" />
+    <path d="M 56,104 L 104,104" stroke="var(--color-aura-activa, currentColor)" stroke-width="2" fill="none" />
+    ${topper}
+  `.trim();
+
+  const svgContent = `
+<svg viewBox="0 0 160 170" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+  <g class="kai-neon-geometry-group" stroke="var(--color-aura-activa, currentColor)" stroke-width="2" fill="none" stroke-linejoin="round">
+    ${polySvg}
+    ${pathSvg}
+  </g>
+</svg>`.trim();
+
+  return {
+    svgContent,
+    polygons,
+    lines: [
+      { x1: 80, y1: 24, x2: 80, y2: 140 },
+      { x1: 60, y1: 48, x2: 100, y2: 48 },
+      { x1: 56, y1: 104, x2: 104, y2: 104 },
+    ],
+    baseName: `Neón ${label}`,
+    dualEyes: { left: { cx: 62, cy: 56, rx: 7, ry: 7 }, right: { cx: 98, cy: 56, rx: 7, ry: 7 } },
+    mouth: { d: 'M 72 82 L 80 88 L 88 82' },
+  };
+}
+
+// 2. Cyber-Pixel: Únicamente elementos <rect> alineados a cuadrícula de 8x8px
+function buildCyberPixelEngine(category: string, label: string) {
+  const rects: Array<{ x: number; y: number }> = [];
+
+  const addSymmetric = (xOffset: number, y: number) => {
+    rects.push({ x: 80 - xOffset, y });
+    if (xOffset !== 0) {
+      rects.push({ x: 72 + xOffset, y });
+    }
+  };
+
+  // Antenas o copete superior
+  addSymmetric(24, 24);
+  addSymmetric(16, 32);
+
+  // Corona y frente
+  for (let x = 8; x <= 32; x += 8) addSymmetric(x, 40);
+  for (let x = 8; x <= 40; x += 8) addSymmetric(x, 48);
+  for (let x = 16; x <= 40; x += 8) addSymmetric(x, 56);
+
+  // Nivel de Ojos (dejamos hueco en x=24 para pupilas)
+  addSymmetric(8, 64);
+  addSymmetric(16, 64);
+  addSymmetric(32, 64);
+  addSymmetric(40, 64);
+
+  // Mejillas
+  for (let x = 8; x <= 40; x += 8) addSymmetric(x, 72);
+  for (let x = 8; x <= 32; x += 8) addSymmetric(x, 80);
+
+  // Boca pixel
+  addSymmetric(16, 88);
+  addSymmetric(8, 88);
+
+  // Cuello y hombros
+  for (let x = 8; x <= 24; x += 8) addSymmetric(x, 96);
+  for (let x = 8; x <= 40; x += 8) addSymmetric(x, 104);
+  for (let x = 16; x <= 48; x += 8) addSymmetric(x, 112);
+
+  // Torso / Base
+  for (let x = 8; x <= 32; x += 8) addSymmetric(x, 120);
+  for (let x = 8; x <= 24; x += 8) addSymmetric(x, 128);
+  addSymmetric(16, 136);
+  addSymmetric(8, 136);
+
+  const rectsSvg = rects
+    .map(r => `<rect x="${r.x}" y="${r.y}" width="8" height="8" fill="var(--color-aura-activa, currentColor)" shape-rendering="crispEdges" />`)
+    .join('\n    ');
+
+  const eyeHighlights = `
+    <!-- Ojos Specular Pixel -->
+    <rect x="56" y="64" width="8" height="8" fill="#ffffff" shape-rendering="crispEdges" />
+    <rect x="96" y="64" width="8" height="8" fill="#ffffff" shape-rendering="crispEdges" />
+  `;
+
+  const svgContent = `
+<svg viewBox="0 0 160 170" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+  <g class="kai-cyber-pixel-group" shape-rendering="crispEdges">
+    ${rectsSvg}
+    ${eyeHighlights}
+  </g>
+</svg>`.trim();
+
+  return {
+    svgContent,
+    polygons: [],
+    lines: [],
+    baseName: `Pixel ${label}`,
+    dualEyes: { left: { cx: 60, cy: 68, rx: 4, ry: 4 }, right: { cx: 100, cy: 68, rx: 4, ry: 4 } },
+    mouth: { d: 'M 72 88 H 88' },
+  };
+}
+
+// 3. Flujo Orgánico: Exclusivamente curvas Bezier suaves (C y S), sin ángulos rectos, fill="none"
+function buildOrganicFlowEngine(category: string, label: string) {
+  const paths: string[] = [
+    `M 80 20 C 50 20 30 50 30 80 C 30 115 55 145 80 155 C 105 145 130 115 130 80 C 130 50 110 20 80 20 Z`,
+    `M 80 25 C 65 35 55 55 55 80 S 70 125 80 145 S 105 105 105 80 S 95 35 80 25 Z`,
+    `M 40 75 C 40 60 60 50 80 50 S 120 60 120 75 S 100 100 80 100 S 40 90 40 75`,
+    `M 45 90 C 45 105 60 120 80 120 S 115 105 115 90`,
+    `M 30 80 C 20 70 20 90 30 95 C 40 100 50 90 50 80`,
+    `M 130 80 C 140 70 140 90 130 95 C 120 100 110 90 110 80`,
+  ];
+
+  const pathsSvg = paths
+    .map(d => `<path d="${d}" stroke="var(--color-aura-activa, currentColor)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />`)
+    .join('\n    ');
+
+  const eyesSvg = `
+    <!-- Ojos fluidos orgánicos -->
+    <ellipse cx="62" cy="72" rx="7" ry="9" stroke="var(--color-aura-activa, currentColor)" stroke-width="2" fill="none" />
+    <ellipse cx="98" cy="72" rx="7" ry="9" stroke="var(--color-aura-activa, currentColor)" stroke-width="2" fill="none" />
+    <circle cx="64" cy="70" r="2.5" fill="#ffffff" />
+    <circle cx="96" cy="70" r="2.5" fill="#ffffff" />
+    <path d="M 70 94 C 75 102 85 102 90 94" stroke="var(--color-aura-activa, currentColor)" stroke-width="2" fill="none" stroke-linecap="round" />
+  `;
+
+  const svgContent = `
+<svg viewBox="0 0 160 170" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+  <g class="kai-organic-flow-group" stroke="var(--color-aura-activa, currentColor)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    ${pathsSvg}
+    ${eyesSvg}
+  </g>
+</svg>`.trim();
+
+  return {
+    svgContent,
+    polygons: [],
+    lines: [],
+    baseName: `Flujo ${label}`,
+    dualEyes: { left: { cx: 62, cy: 72, rx: 7, ry: 9 }, right: { cx: 98, cy: 72, rx: 7, ry: 9 } },
+    mouth: { d: 'M 70 94 C 75 102 85 102 90 94' },
+  };
+}
+
+// 4. Low Poly: Polígonos cerrados con fill-opacity aleatorio entre 0.1 y 0.9 para volumen 3D, sin trazos
+function buildLowPolyEngine(category: string, label: string) {
+  const facets: Array<{ points: string; opacity: number }> = [
+    { points: "80,20 60,38 80,45", opacity: 0.35 },
+    { points: "80,20 80,45 100,38", opacity: 0.85 },
+    { points: "60,38 42,54 62,62 80,45", opacity: 0.22 },
+    { points: "80,45 98,62 118,54 100,38", opacity: 0.70 },
+    { points: "62,62 80,45 80,75", opacity: 0.45 },
+    { points: "80,45 98,62 80,75", opacity: 0.90 },
+    { points: "42,54 30,76 54,82 62,62", opacity: 0.18 },
+    { points: "118,54 98,62 106,82 130,76", opacity: 0.60 },
+    { points: "62,62 80,75 80,95 64,88", opacity: 0.40 },
+    { points: "98,62 80,75 80,95 96,88", opacity: 0.78 },
+    { points: "54,82 64,88 80,95 72,118", opacity: 0.28 },
+    { points: "106,82 96,88 80,95 88,118", opacity: 0.65 },
+    { points: "72,118 80,95 88,118 80,128", opacity: 0.52 },
+    { points: "30,76 22,112 50,122 54,82", opacity: 0.15 },
+    { points: "130,76 106,82 110,122 138,112", opacity: 0.55 },
+    { points: "50,122 72,118 80,128 68,148 44,142", opacity: 0.32 },
+    { points: "110,122 88,118 80,128 92,148 116,142", opacity: 0.75 },
+    { points: "68,148 80,128 92,148 80,158", opacity: 0.48 },
+  ];
+
+  const polySvg = facets
+    .map(f => `<polygon points="${f.points}" fill="var(--color-aura-activa, currentColor)" fill-opacity="${f.opacity}" stroke="none" />`)
+    .join('\n    ');
+
+  const eyeAccents = `
+    <!-- Cristales de Ojos Specular -->
+    <polygon points="56,66 66,66 62,74 54,72" fill="#ffffff" fill-opacity="0.95" stroke="none" />
+    <polygon points="104,66 94,66 98,74 106,72" fill="#ffffff" fill-opacity="0.95" stroke="none" />
+  `;
+
+  const svgContent = `
+<svg viewBox="0 0 160 170" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+  <g class="kai-low-poly-group">
+    ${polySvg}
+    ${eyeAccents}
+  </g>
+</svg>`.trim();
+
+  return {
+    svgContent,
+    polygons: facets.map(f => ({ points: f.points, fillOpacity: f.opacity })),
+    lines: [],
+    baseName: `Poly ${label}`,
+    dualEyes: { left: { cx: 60, cy: 68, rx: 6, ry: 5 }, right: { cx: 100, cy: 68, rx: 6, ry: 5 } },
+    mouth: { d: 'M 72 95 L 80 102 L 88 95' },
+  };
+}
+
+/**
  * ══════════════════════════════════════════════════════════════════════════════
  * SINTETIZADOR PRINCIPAL: IDENTIFICA EL OBJETO Y GENERA SU ICONO KAI CON SIMILITUD
  * ══════════════════════════════════════════════════════════════════════════════
@@ -1286,7 +1509,7 @@ export async function synthesizeKaiFromImageSilhouette(params: {
   promptDescription?: string;
   artStyle?: KaiMultiverseStyle;
 }): Promise<KaiCustomForm> {
-  const { imageBase64, promptDescription = '', artStyle = 'toon' } = params;
+  const { imageBase64, promptDescription = '', artStyle = 'neon-geometry' } = params;
   const cleanBase64 = imageBase64.includes(',') ? imageBase64.split(',')[1] : imageBase64;
 
   let analysis: ImageSampleAnalysis;
@@ -1301,84 +1524,71 @@ export async function synthesizeKaiFromImageSilhouette(params: {
   const { category, label } = identifyObjectCategory(promptDescription, analysis);
 
   let vectorResult: {
-    lines: Array<{ x1: number; y1: number; x2: number; y2: number }>;
-    polygons: Array<{ points: string }>;
-    dualEyes: { left: { cx: number; cy: number; rx: number; ry: number }; right: { cx: number; cy: number; rx: number; ry: number } };
-    mouth: { d: string };
+    lines?: Array<{ x1: number; y1: number; x2: number; y2: number }>;
+    polygons?: Array<{ points: string; fillOpacity?: number }>;
+    dualEyes?: { left: { cx: number; cy: number; rx: number; ry: number }; right: { cx: number; cy: number; rx: number; ry: number } };
+    mouth?: { d: string };
     baseName: string;
+    svgContent: string;
   };
 
   switch (artStyle) {
-    case 'toon':
-      vectorResult = buildToonGeometry(category, label);
-      break;
+    case 'cyber-pixel':
     case 'pixel':
-      vectorResult = buildPixelGeometry(category, label);
+      vectorResult = buildCyberPixelEngine(category, label);
       break;
-    case 'clay3d':
-      vectorResult = buildClay3dGeometry(category, label);
+
+    case 'organic-flow':
+      vectorResult = buildOrganicFlowEngine(category, label);
       break;
-    case 'papercraft':
-      vectorResult = buildPapercraftGeometry(category, label);
+
+    case 'low-poly':
+      vectorResult = buildLowPolyEngine(category, label);
       break;
-    case 'chrome':
+
+    case 'toon': {
+      const r = buildToonGeometry(category, label);
+      vectorResult = { ...r, svgContent: '' };
+      break;
+    }
+    case 'clay3d': {
+      const r = buildClay3dGeometry(category, label);
+      vectorResult = { ...r, svgContent: '' };
+      break;
+    }
+    case 'papercraft': {
+      const r = buildPapercraftGeometry(category, label);
+      vectorResult = { ...r, svgContent: '' };
+      break;
+    }
+    case 'chrome': {
+      const r = buildChromeGeometry(category, label);
+      vectorResult = { ...r, svgContent: '' };
+      break;
+    }
+
+    case 'neon-geometry':
     default:
-      vectorResult = buildChromeGeometry(category, label);
+      vectorResult = buildNeonGeometryEngine(category, label);
       break;
   }
 
   // Frases de Personalidad según Estilo y Categoría
-  const STYLE_QUOTES: Record<KaiMultiverseStyle, Record<string, string>> = {
-    toon: {
-      lighter: '¡Soy Ignis! ¡Vamos a prenderle fuego a tus excusas y encender tu racha hoy!',
-      sunglasses: '¡Soy Solaris! Cero distracciones, hoy vemos tu futuro con claridad 20/20.',
-      headphones: '¡Soy Sónico! ¡Ponte los audífonos y entremos en la zona de deep work!',
-      watch: '¡Soy Crono! El tiempo vuela, ¡vamos a hacer que cada minuto cuente!',
-      mug: '¡Soy Cafeto! ¡Un sorbo de energía pura para conquistar cada hábito!',
-      dumbbell: '¡Soy Titán! ¡Una repetición más de disciplina y nadie nos para!',
-      animal: '¡Guau! / ¡Miau! ¡Soy tu fiel guardián! ¡Hoy no te dejaré aflojar!',
-      monolith: '¡Soy Bit! Tu compa cuántico listo para ordenar tu mente y tu vida.',
-      apple: '¡Soy Manzanita! Salud, vitalidad y frescura en tu jornada.',
-      bespoke: '¡Cobré vida gracias a tu foto! ¡Prometo ser tu mejor aliado de hábitos!',
+  const STYLE_QUOTES: Record<string, Record<string, string>> = {
+    'neon-geometry': {
+      lighter: 'Llama cuántica encendida. Enfoque láser y cero tolerancia a las excusas.',
+      sunglasses: 'Visión wireframe calibrada. El objetivo de hoy está claro como el cristal.',
+      headphones: 'Sintonizando frecuencia de hiperenfoque. Silencio total a las distracciones.',
+      watch: 'Pulso de reloj atómico activado. Cada segundo forja tu disciplina.',
+      mug: 'Recarga de energía pura. La consistencia es el combustible del éxito.',
+      dumbbell: 'Estructura reforzada. La resistencia mental se forja en cada hábito.',
+      animal: 'Centinela guardián activo. Cuidando tus metas a cada paso.',
+      monolith: 'Matriz geométrica alineada. Orden absoluto para tu jornada.',
+      apple: 'Núcleo biosintético en armonía. Salud y vitalidad optimizadas.',
+      bespoke: '¡Forjado a partir de tu foto! Listo para sincronizarnos y triunfar.',
     },
-    clay3d: {
-      lighter: 'Fuego interno modelado con paciencia. Tu chispa de constancia no se apaga.',
-      sunglasses: 'Visión suave y enfoque nítido. Nada te saca de tu centro hoy.',
-      headphones: 'Armonía y ritmo en cada tarea. Respira profundo y avanza.',
-      watch: 'Tic-tac de vinil. Cada segundo es una oportunidad de maestría.',
-      mug: 'Calor de hogar y paciencia. Un hábito a la vez, sin prisa.',
-      dumbbell: 'Fuerza que se moldea día con día. Eres más fuerte de lo que crees.',
-      animal: 'Lealtad esculpida con amor. Siempre a tu lado cuidando tu racha.',
-      monolith: 'Base sólida de vinil para construir tus metas más grandes.',
-      apple: 'Equilibrio orgánico y serenidad para tus hábitos diarios.',
-      bespoke: 'Una criatura táctil única nacida de tu foto. Juntos somos imparables.',
-    },
-    chrome: {
-      lighter: 'Ignición de plasma activada. Foco láser y temperatura máxima en tus metas.',
-      sunglasses: 'Visor polarizado de titanio. Escaneo de objetivos al 100%.',
-      headphones: 'Frecuencia sónica sintonizada. Cancelación de ruido y pereza.',
-      watch: 'Cronómetro atómico sincronizado. Tu tiempo vale oro puro.',
-      mug: 'Reactor térmico lleno. Energía mental al máximo rendimiento.',
-      dumbbell: 'Titanio reforzado. Cada repetición fortalece tu voluntad de acero.',
-      animal: 'Sensor guardián alerta. Siguiendo el rastro de tus hábitos sin descanso.',
-      monolith: 'Terminal de mercurio líquido. Foco absoluto y ejecución limpia.',
-      apple: 'Núcleo biosintético puro. Salud optimizada para tu rendimiento.',
-      bespoke: 'Artefacto cromado sintetizado. Tu energía en su forma más pulida.',
-    },
-    papercraft: {
-      lighter: 'Llama de origami: cada hábito prende una nueva página de éxito.',
-      sunglasses: 'Filtro de papel y sombra: solo entra lo que te hace crecer.',
-      headphones: 'Ondas de papel plegadas al compás de tu progreso.',
-      watch: 'Las manecillas de papel marcan el inicio de tu nueva racha.',
-      mug: 'Vapor de papel artesanal. Claridad, pausa y calma en cada sorbo.',
-      dumbbell: 'La verdadera fuerza se construye doblando la inercia diaria.',
-      animal: 'Guardián de origami: fiel protector de tus hábitos y promesas.',
-      monolith: 'Bloque de papel rúnico: tu fortaleza de concentración silenciosa.',
-      apple: 'Fruto de papel sagrado. Lo natural siempre rinde frutos.',
-      bespoke: 'Papiro viviente: tu creatividad y constancia no tienen límites.',
-    },
-    pixel: {
-      lighter: '16-bits de fuego arcade. ¡Combo de hábitos x10 encendido!',
+    'cyber-pixel': {
+      lighter: '¡8-bits de fuego arcade! ¡Combo de hábitos x10 encendido!',
       sunglasses: '¡Modo Sigilo Gamer Activado! Cero distracciones en la pantalla.',
       headphones: '¡Banda sonora de 8-bits lista! ¡A vencer al jefe de la pereza!',
       watch: 'Speedrun activado. ¡Completando misiones a tiempo récord!',
@@ -1387,32 +1597,62 @@ export async function synthesizeKaiFromImageSilhouette(params: {
       animal: '¡Compañero Pokémon listo para la batalla de los hábitos diarios!',
       monolith: 'Consola arcade portátil. ¡Insert coin para ganar el día!',
       apple: 'Ítem de salud restaurado. ¡A seguir sumando puntos de EXP!',
+      bespoke: '¡Sprite secreto desbloqueado! ¡A jugar y ganar la jornada!',
+    },
+    'organic-flow': {
+      lighter: 'Flujo ígneo constante. Tu energía vital se mueve sin fricción.',
+      sunglasses: 'Curvatura visual serena. Fluye con la jornada sin resistirte.',
+      headphones: 'Ondas armónicas continuas. Respira y avanza en paz.',
+      watch: 'El tiempo es un río que fluye. Navega cada momento con gracia.',
+      mug: 'Fluidez y serenidad en cada sorbo. Un hábito a la vez.',
+      dumbbell: 'Flexibilidad y potencia biomecánica. Fuerte como el agua.',
+      animal: 'Compañero orgánico en perfecta sintonía con tu energía.',
+      monolith: 'Estructura viviente ondulante. Enraizamiento y fluidez total.',
+      apple: 'Vitalidad natural viva. La salud brota sin esfuerzo.',
+      bespoke: 'Criatura de flujo continuo nacida de tu captura. Vamos a fluir.',
+    },
+    'low-poly': {
+      lighter: 'Cristal de fuego tridimensional. Facetas que reflejan tu determinación.',
+      sunglasses: 'Prisma facetado de enfoque. Claridad geométrica 3D.',
+      headphones: 'Volumen acústico cristalino. Tu zona de deep work protegida.',
+      watch: 'Escultura del tiempo en relieve. Cada cara del día cuenta.',
+      mug: 'Fuerza poliédrica. Energía sólida y tangible.',
+      dumbbell: 'Densidad geométrica pura. Hábitos duros como el diamante.',
+      animal: 'Guardián poligonal 3D. Lealtad facetada inquebrantable.',
+      monolith: 'Monolito 3D de alta estabilidad. Tu ancla diaria de hábitos.',
+      apple: 'Esfera facetada de vitalidad. Geometría sagrada de bienestar.',
+      bespoke: 'Escultura tridimensional facetada. Tu foto hecha volumen.',
+    },
+    toon: {
+      lighter: '¡Soy Ignis! ¡Vamos a prenderle fuego a tus excusas y encender tu racha hoy!',
+      bespoke: '¡Cobré vida gracias a tu foto! ¡Prometo ser tu mejor aliado de hábitos!',
+    },
+    pixel: {
+      lighter: '16-bits de fuego arcade. ¡Combo de hábitos x10 encendido!',
       bespoke: '¡Personaje secreto desbloqueado! ¡A jugar y ganar la jornada!',
     },
-  };
-
-  const styleNames: Record<KaiMultiverseStyle, string> = {
-    toon: 'Toon',
-    clay3d: 'Clay',
-    chrome: 'Cromo',
-    papercraft: 'Origami',
-    pixel: 'Pixel',
   };
 
   const finalName = promptDescription
     ? `KAI ${vectorResult.baseName} ${promptDescription.slice(0, 12)}`
     : `KAI ${vectorResult.baseName}`;
 
-  const quote = STYLE_QUOTES[artStyle]?.[category] || STYLE_QUOTES[artStyle]?.bespoke;
+  const quote = STYLE_QUOTES[artStyle]?.[category] || STYLE_QUOTES[artStyle]?.bespoke || STYLE_QUOTES['neon-geometry']?.bespoke || '¡Listo para ganar el día!';
 
   // Paletas de color por estilo
-  const PALETTES: Record<KaiMultiverseStyle, { primary: string; secondary: string }> = {
+  const PALETTES: Record<string, { primary: string; secondary: string }> = {
+    'neon-geometry': { primary: '#00f0ff', secondary: '#0284c7' },
+    'cyber-pixel': { primary: '#10b981', secondary: '#059669' },
+    'organic-flow': { primary: '#ec4899', secondary: '#a855f7' },
+    'low-poly': { primary: '#f59e0b', secondary: '#d97706' },
     toon: { primary: '#f59e0b', secondary: '#ef4444' },
     clay3d: { primary: '#a855f7', secondary: '#ec4899' },
     chrome: { primary: '#00f0ff', secondary: '#38bdf8' },
     papercraft: { primary: '#f97316', secondary: '#d97706' },
     pixel: { primary: '#10b981', secondary: '#059669' },
   };
+
+  const resolvedPalette = PALETTES[artStyle] || PALETTES['neon-geometry'];
 
   return {
     name: finalName,
@@ -1421,9 +1661,10 @@ export async function synthesizeKaiFromImageSilhouette(params: {
     detectedObject: label,
     artStyle,
     personalityQuote: quote,
-    primaryColor: PALETTES[artStyle].primary,
-    secondaryColor: PALETTES[artStyle].secondary,
+    primaryColor: resolvedPalette.primary,
+    secondaryColor: resolvedPalette.secondary,
     mood: 'happy',
+    svgContent: vectorResult.svgContent,
     lines: vectorResult.lines,
     polygons: vectorResult.polygons,
     dualEyes: vectorResult.dualEyes,

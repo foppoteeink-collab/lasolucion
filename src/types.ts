@@ -143,7 +143,16 @@ export interface PlayerStats {
 }
 
 export type KaiShapeKey = 'prism' | 'octahedron' | 'wolf' | 'hound' | 'panther' | 'elephant' | 'custom';
-export type KaiMultiverseStyle = 'toon' | 'clay3d' | 'chrome' | 'papercraft' | 'pixel';
+export type KaiMultiverseStyle =
+  | 'neon-geometry'
+  | 'cyber-pixel'
+  | 'organic-flow'
+  | 'low-poly'
+  | 'toon'
+  | 'clay3d'
+  | 'chrome'
+  | 'papercraft'
+  | 'pixel';
 
 export interface KaiCustomForm {
   name: string;
@@ -154,9 +163,10 @@ export interface KaiCustomForm {
   personalityQuote?: string;
   primaryColor?: string;
   secondaryColor?: string;
-  mood?: 'happy' | 'determined' | 'curious' | 'fierce';
-  lines: Array<{ x1: number; y1: number; x2: number; y2: number }>;
-  polygons?: Array<{ points: string; fill?: string }>;
+  mood?: 'happy' | 'determined' | 'curious' | 'fierce' | 'playful';
+  svgContent?: string; // 100% Código SVG devuelto por la IA o el sintetizador
+  lines?: Array<{ x1: number; y1: number; x2: number; y2: number }>;
+  polygons?: Array<{ points: string; fill?: string; fillOpacity?: number }>;
   coreEye?: { cx: number; cy: number; r: number };
   dualEyes?: {
     left: { cx: number; cy: number; rx?: number; ry?: number };

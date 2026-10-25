@@ -384,104 +384,73 @@ export async function forgeKaiFromImage(params: {
 
   function buildMultiversePrompt(selectedArtStyle: KaiMultiverseStyle, userPrompt: string): string {
     let styleDirective = '';
-    let eyesInstruction = '';
-    let mouthInstruction = '';
-    let geometryGuidance = '';
 
     switch (selectedArtStyle) {
-      case 'toon':
-        styleDirective = `
-ESTILO OBLIGATORIO: 🧸 CARICATURA TOON (NINTENDO / PIXAR / STUDIO GHIBLI)
-¡ESTRICTAMENTE PROHIBIDO CABLES, LINEAS ANGULARES CYBERPUNK O MONOLITOS ROBOTICOS!
-El personaje debe ser una MASCOTA CHIBI TIERNA, VIVA Y AMIGABLE:
-- Silueta curvilínea y rechoncha: cabeza grande redondeada (aproximación poligonal suave), mejillas adorables y pancita redonda.
-- Manitas, alitas o patitas tiernas a los lados.
-- El objeto fotografiado define la cabeza o accesorio de forma caricaturesca (si es encendedor, es un muñequito de llama con ojos vivos y sonrisa; si es animal, una mascota chibi regordeta; si es móvil, un robotito tierno con carita feliz; si es taza, una taza viviente sonriente).`;
-        eyesInstruction = `"dualEyes": { "left": { "cx": 60, "cy": 72, "rx": 9.5, "ry": 13 }, "right": { "cx": 100, "cy": 72, "rx": 9.5, "ry": 13 } }`;
-        mouthInstruction = `"mouth": { "d": "M 68 94 Q 80 110 92 94" }`;
-        geometryGuidance = `Trazos suaves que forman una cabeza redonda chibi y cuerpo gordito amigable.`;
-        break;
-
-      case 'clay3d':
-        styleDirective = `
-ESTILO OBLIGATORIO: 🔮 ARTE 3D / VINIL COLECCIONABLE (POP MART / FUNKO / NINTENDO AMIIBO)
-¡ESTRICTAMENTE PROHIBIDO ESTILO WIREFRAME CIBERNÉTICO O LÍNEAS PLANAS!
-El personaje debe ser un JUGUETE 3D TÁCTIL COLECCIONABLE DE VINIL BRILLANTE:
-- Silueta suave y abombada con curvatura esférica táctil (cabeza suave de arcilla, torso de muñeco de vinilo).
-- Facetas poligonales amplias y redondeadas que dan sensación de volumen 3D bajo una luz suave.
-- Acabados redondeados de muñeco de plastilina o vinilo coleccionable.`;
-        eyesInstruction = `"dualEyes": { "left": { "cx": 62, "cy": 74, "rx": 8, "ry": 9 }, "right": { "cx": 98, "cy": 74, "rx": 8, "ry": 9 } }`;
-        mouthInstruction = `"mouth": { "d": "M 72 96 Q 80 102 88 96" }`;
-        geometryGuidance = `Facetas curvas y convexas que modelan una cabeza esférica de arcilla y cuerpo abombado.`;
-        break;
-
+      case 'cyber-pixel':
       case 'pixel':
         styleDirective = `
-ESTILO OBLIGATORIO: 👾 PIXEL ART 16-BIT (ARCADE RETRO / SUPER NINTENDO)
-¡REGLA ABSOLUTA: PROHIBIDAS LÍNEAS DIAGONALES LISAS O CURVAS CONTINUAS!
-Todo el personaje debe ser un AUTÉNTICO SPRITE DE VIDEOJUEGO DE 16-BITS:
-- ¡TODO EL DIBUJO DEBE ESTAR COMPUESTO POR ESCALERAS Y BLOQUES DE PÍXELES!
-- Cada trazo avanza ortogonalmente en horizontal y vertical (pasos de 4 a 8px) como en un bitmap real de 16-bits.
-- Silueta pixelada nostálgica de personaje jugable de videojuego retro.`;
-        eyesInstruction = `"dualEyes": { "left": { "cx": 58, "cy": 70, "rx": 6, "ry": 6 }, "right": { "cx": 102, "cy": 70, "rx": 6, "ry": 6 } }`;
-        mouthInstruction = `"mouth": { "d": "M 68 94 H 74 V 98 H 86 V 94 H 92" }`;
-        geometryGuidance = `Coordenadas ortogonales en cuadrícula (escalones rectos en horizontal y vertical sin diagonales lisas).`;
+ESTILO OBLIGATORIO: "Cyber-Pixel".
+REGLA ESTRICTA DE ARQUITECTURA SVG:
+Genera únicamente elementos <rect> alineados en una cuadrícula de 8x8px simulando pixel art de 8-bits.
+- Cada elemento DEBE ser un <rect x="..." y="..." width="8" height="8" /> donde x e y son estrictamente múltiplos de 8 (16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144).
+- ¡ESTRICTAMENTE PROHIBIDO cualquier elemento que no sea <rect>! No uses paths, ni polygons, ni circles.
+- Compón el personaje / objeto mediante rectángulos de 8x8 contiguos que formen la figura de la entidad con ojos y silueta reconocible.`;
         break;
 
-      case 'papercraft':
+      case 'organic-flow':
         styleDirective = `
-ESTILO OBLIGATORIO: 📄 RECORTES / PAPEL (ORIGAMI 3D / PAPERCRAFT JAPONÉS)
-El personaje debe ser una ESCULTURA DE HOJAS DE PAPEL Y CARTULINA CORTADA A MANO:
-- Capas de papel superpuestas con planos geométricos bien marcados, solapas dobladas y relieve de capas.
-- Facetas de cartulina con pliegues limpios y sombras entre planos de papel superpuestos.`;
-        eyesInstruction = `"dualEyes": { "left": { "cx": 60, "cy": 74, "rx": 8, "ry": 6.5 }, "right": { "cx": 100, "cy": 74, "rx": 8, "ry": 6.5 } }`;
-        mouthInstruction = `"mouth": { "d": "M 70 96 L 80 104 L 90 96" }`;
-        geometryGuidance = `Planos de papel diagonales rectos que simulan dobleces de papiroflexia y relieve.`;
+ESTILO OBLIGATORIO: "Flujo Orgánico".
+REGLA ESTRICTA DE ARQUITECTURA SVG:
+Genera exclusivamente curvas Bezier suaves (C y S en los paths), sin ángulos rectos, fill='none'.
+- Cada elemento DEBE ser un <path d="..." stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" /> compuesto exclusivamente por comandos Bezier suaves (M, C, S y Z).
+- ¡ESTRICTAMENTE PROHIBIDO ángulos rectos de 90 grados o polígonos duros!
+- Curvas continuas, orgánicas y fluidas que capturen la esencia biológica o aerodinámica del objeto.`;
         break;
 
-      case 'chrome':
+      case 'low-poly':
+        styleDirective = `
+ESTILO OBLIGATORIO: "Low Poly".
+REGLA ESTRICTA DE ARQUITECTURA SVG:
+Genera polígonos cerrados asignando a cada uno un atributo fill-opacity aleatorio entre 0.1 y 0.9 para simular volumen, sin trazos exteriores.
+- Cada elemento DEBE ser un <polygon points="x1,y1 x2,y2 x3,y3 ..." fill-opacity="0.xx" stroke="none" />
+- Asigna a cada faceta poligonal un 'fill-opacity' aleatorio entre 0.1 y 0.9 (ej: 0.15, 0.4, 0.7, 0.85, 0.3) simulando iluminación y volumen tridimensional 3D.
+- ¡ESTRICTAMENTE PROHIBIDO trazos exteriores (stroke="none")!
+- Genera entre 14 y 32 polígonos contiguos que formen la escultura 3D facetada del objeto.`;
+        break;
+
+      case 'neon-geometry':
       default:
         styleDirective = `
-ESTILO OBLIGATORIO: ⚡ CROMO & MERCURIO (FUTURISTA Y2K / METAL LÍQUIDO)
-El personaje debe ser una ESCULTURA DE CROMO LÍQUIDO Y MERCURIO PULIDO AERODINÁMICA:
-- Líneas fluidas y aerodinámicas de metal reflectante, arcos de titanio y visor futurista.
-- Foco en velocidad, destellos especulares y elegancia metálica pulida.`;
-        eyesInstruction = `"dualEyes": { "left": { "cx": 58, "cy": 74, "rx": 13, "ry": 6 }, "right": { "cx": 102, "cy": 74, "rx": 13, "ry": 6 } }`;
-        mouthInstruction = `"mouth": { "d": "M 70 95 L 80 98 L 90 95" }`;
-        geometryGuidance = `Líneas aerodinámicas fluidas y quilla inferior de levitación.`;
+ESTILO OBLIGATORIO: "Geometría Neón" (Default).
+REGLA ESTRICTA DE ARQUITECTURA SVG:
+Genera <polygon> y <path> con líneas rectas simétricas, stroke-width='2', fill='none'.
+- Líneas rectas afiladas, limpias y simétricas respecto al eje central x = 80.
+- Todos los elementos deben tener stroke-width="2" y fill="none".
+- Estética cyberpunk wireframe pura y futurista.`;
         break;
     }
 
     return `
-Eres el Diseñador Maestro de Personajes y Mascotas del Multiverso de "La Solución".
-Tu misión es transformar el objeto o sujeto de la foto en un PERSONAJE VIVO CON ALMA Y CARISMA SEGÚN EL ESTILO ARTÍSTICO ESPECIFICADO.
+ERES EL MOTOR ARQUITECTÓNICO DE LA FORJA NEURAL DE "LA SOLUCIÓN".
+Tu misión es escanear la foto y transformarla en un COMPAÑERO KAI VECTORIAL 100% SVG.
 
-${styleDirective}
-
-REGLAS GENERALES DEL LIENZO SVG (viewBox="0 0 160 170"):
-1. Simetría bilateral respecto al eje central x = 80. Para todo punto (80 - dx, y), debe existir (80 + dx, y).
-2. Coordenadas válidas: x entre 20 y 140, y entre 20 y 145.
-3. ${geometryGuidance}
-4. Entre 16 y 32 líneas rectas ('lines').
-5. Entre 4 y 10 polígonos ('polygons') para las facetas principales.
-6. Genera una frase de despertar carismática adaptada al objeto y estilo ("personalityQuote").
+DIRECTIVAS CRÍTICAS DE ARQUITECTURA:
+1. EXIGE SIEMPRE UN JSON CON CÓDIGO SVG EN LA PROPIEDAD "svg".
+2. ¡ESTRICTAMENTE PROHIBIDO GENERAR IMÁGENES RENDERIZADAS (NO BITMAPS, NO PNG, NO JPEG, NO WEBP, NO DATA-URLS RASTERIZADAS)!
+3. El SVG debe tener viewBox="0 0 160 170" y width="100%" height="100%".
+4. ${styleDirective}
+5. Coordenadas válidas en el lienzo: x entre 16 y 144, y entre 20 y 150.
+6. El componente KAICompanion.tsx inyectará el color de la variable --color-aura-activa al atributo stroke o fill del SVG devuelto, integrándolo perfectamente a la interfaz sin importar el estilo elegido.
 ${userPrompt ? `Contexto o pista del usuario: "${userPrompt}".` : ''}
 
-DEVOLUCIÓN OBLIGATORIA (Responde ÚNICAMENTE con JSON puro, sin bloques markdown ni texto antes ni después):
+DEVOLUCIÓN OBLIGATORIA (Responde ÚNICAMENTE con un JSON válido):
 {
   "detectedObject": "Nombre del objeto detectado",
-  "name": "Nombre Carismático del Personaje",
-  "personalityQuote": "Frase que dice el personaje al despertar",
+  "name": "Nombre Creativo del Compañero",
+  "personalityQuote": "Frase breve de despertar del compañero",
+  "artStyle": "${selectedArtStyle}",
   "mood": "playful",
-  "lines": [
-    { "x1": 80, "y1": 28, "x2": 56, "y2": 44 },
-    { "x1": 80, "y1": 28, "x2": 104, "y2": 44 }
-  ],
-  "polygons": [
-    { "points": "80,28 56,44 80,68 104,44" }
-  ],
-  ${eyesInstruction},
-  ${mouthInstruction}
+  "svg": "<svg viewBox=\\"0 0 160 170\\" xmlns=\\"http://www.w3.org/2000/svg\\">...elementos SVG según la regla estricta...</svg>"
 }
 `;
   }
@@ -585,47 +554,59 @@ DEVOLUCIÓN OBLIGATORIA (Responde ÚNICAMENTE con JSON puro, sin bloques markdow
 
       const parsed = JSON.parse(rawJson.trim());
 
-      if (parsed && Array.isArray(parsed.lines) && parsed.lines.length >= 4) {
-        // Validación de límites seguros (0 a 160 x 170)
-        const safeLines = parsed.lines
-          .filter(
-            (l: any) =>
-              typeof l.x1 === 'number' &&
-              typeof l.y1 === 'number' &&
-              typeof l.x2 === 'number' &&
-              typeof l.y2 === 'number'
-          )
-          .map((l: any) => ({
-            x1: Math.max(16, Math.min(144, Math.round(l.x1))),
-            y1: Math.max(16, Math.min(144, Math.round(l.y1))),
-            x2: Math.max(16, Math.min(144, Math.round(l.x2))),
-            y2: Math.max(16, Math.min(144, Math.round(l.y2))),
-          }));
+      const rawSvg = parsed.svg || parsed.svgContent || parsed.svg_code;
 
-        if (safeLines.length >= 4) {
-          console.log('[Forja Neural] ✓ Geometría generada exitosamente por IA');
-          return {
-            name: (parsed.name || (promptDescription ? `KAI ${promptDescription.slice(0, 16)}` : 'Compañero Forja Neural')).slice(0, 32),
-            sourceType: 'image',
-            createdAt: new Date().toISOString(),
-            detectedObject: parsed.detectedObject ? String(parsed.detectedObject).slice(0, 24) : undefined,
-            lines: safeLines,
-            polygons: Array.isArray(parsed.polygons) ? parsed.polygons : undefined,
-            coreEye:
-              parsed.coreEye && typeof parsed.coreEye.cx === 'number'
-                ? {
-                    cx: Math.max(30, Math.min(130, Math.round(parsed.coreEye.cx))),
-                    cy: Math.max(40, Math.min(120, Math.round(parsed.coreEye.cy))),
-                    r: Math.max(6, Math.min(14, Math.round(parsed.coreEye.r || 8))),
-                  }
-                : { cx: 80, cy: 85, r: 8 },
-            artStyle,
-            personalityQuote: parsed.personalityQuote || `¡He despertado en el Multiverso bajo el estilo ${artStyle.toUpperCase()}!`,
-            mood: parsed.mood || 'playful',
-            dualEyes: parsed.dualEyes,
-            mouth: parsed.mouth,
-          };
+      if (parsed && (rawSvg || (Array.isArray(parsed.lines) && parsed.lines.length >= 4))) {
+        let svgContent: string | undefined = undefined;
+
+        if (typeof rawSvg === 'string' && rawSvg.trim()) {
+          svgContent = rawSvg.trim();
+          svgContent = svgContent.replace(/^```(?:svg|xml|html)?\s*/i, '').replace(/\s*```$/i, '').trim();
+          if (!svgContent.startsWith('<svg')) {
+            svgContent = `<svg viewBox="0 0 160 170" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">${svgContent}</svg>`;
+          }
         }
+
+        const safeLines = Array.isArray(parsed.lines)
+          ? parsed.lines
+              .filter(
+                (l: any) =>
+                  typeof l.x1 === 'number' &&
+                  typeof l.y1 === 'number' &&
+                  typeof l.x2 === 'number' &&
+                  typeof l.y2 === 'number'
+              )
+              .map((l: any) => ({
+                x1: Math.max(16, Math.min(144, Math.round(l.x1))),
+                y1: Math.max(16, Math.min(144, Math.round(l.y1))),
+                x2: Math.max(16, Math.min(144, Math.round(l.x2))),
+                y2: Math.max(16, Math.min(144, Math.round(l.y2))),
+              }))
+          : undefined;
+
+        console.log('[Forja Neural] ✓ Geometría 100% SVG generada exitosamente por IA');
+        return {
+          name: (parsed.name || (promptDescription ? `KAI ${promptDescription.slice(0, 16)}` : 'Compañero Forja Neural')).slice(0, 32),
+          sourceType: 'image',
+          createdAt: new Date().toISOString(),
+          detectedObject: parsed.detectedObject ? String(parsed.detectedObject).slice(0, 24) : undefined,
+          artStyle,
+          personalityQuote: parsed.personalityQuote || `¡He despertado en el Multiverso bajo el estilo ${artStyle.toUpperCase()}!`,
+          mood: parsed.mood || 'playful',
+          svgContent,
+          lines: safeLines,
+          polygons: Array.isArray(parsed.polygons) ? parsed.polygons : undefined,
+          coreEye:
+            parsed.coreEye && typeof parsed.coreEye.cx === 'number'
+              ? {
+                  cx: Math.max(30, Math.min(130, Math.round(parsed.coreEye.cx))),
+                  cy: Math.max(40, Math.min(120, Math.round(parsed.coreEye.cy))),
+                  r: Math.max(6, Math.min(14, Math.round(parsed.coreEye.r || 8))),
+                }
+              : { cx: 80, cy: 85, r: 8 },
+          dualEyes: parsed.dualEyes,
+          mouth: parsed.mouth,
+        };
       }
     } catch (parseErr) {
       console.warn('[Forja Neural] Error parseando JSON de Gemini:', parseErr);

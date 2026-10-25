@@ -48,7 +48,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
   // Neural Forge States
   const [capturedImageBase64, setCapturedImageBase64] = useState<string | null>(null);
   const [forgePrompt, setForgePrompt] = useState<string>('');
-  const [selectedStyle, setSelectedStyle] = useState<KaiMultiverseStyle>('toon');
+  const [selectedStyle, setSelectedStyle] = useState<KaiMultiverseStyle>('neon-geometry');
   const [isForging, setIsForging] = useState(false);
   const [forgedResult, setForgedResult] = useState<KaiCustomForm | null>(null);
   const [forgeError, setForgeError] = useState<string | null>(null);
@@ -598,12 +598,12 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                   <div className="flex items-center gap-2">
                     <h3 className="text-base font-black uppercase text-white tracking-wider flex items-center gap-2">
                       <Camera className="w-5 h-5 text-fuchsia-400 animate-pulse" />
-                      Multiverse Character Studio // Da Vida a Cualquier Objeto
+                      Forja Neural Multi-Estilo (100% SVG) // Da Vida a Cualquier Objeto
                     </h3>
                   </div>
                   <p className="text-xs text-slate-300 max-w-xl leading-relaxed">
-                    Sube una foto de cualquier cosa del mundo real (un encendedor, tu mascota, unas gafas, un reloj, una taza) y elígele un estilo artístico. 
-                    El motor neural lo transformará en un <strong>personaje vivo con alma, ojos expresivos animados, sonrisa y personalidad única</strong>.
+                    Escanea cualquier objeto del mundo real y elige tu estilo de forja. El backend inyecta una regla vectorial estricta a Gemini Flash, 
+                    garantizando <strong>código SVG 100% nativo con inyección del token <code className="text-cyan-300">--color-aura-activa</code></strong> sincronizado a tu interfaz.
                   </p>
                 </div>
 
@@ -615,7 +615,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                     ∞ ILIMITADO
                   </span>
                   <span className="text-[9px] text-emerald-400 block font-mono mt-0.5">
-                    ✓ 5 Estilos Multiverso
+                    ✓ 4 Estilos 100% SVG
                   </span>
                 </div>
               </div>
@@ -625,14 +625,14 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                 <div className="flex items-center justify-between">
                   <h4 className="text-xs font-black uppercase text-white tracking-wider flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-fuchsia-400" />
-                    <span>Selecciona el Estilo Artístico del Multiverso:</span>
+                    <span>Selecciona el Estilo de Forja Vectorial:</span>
                   </h4>
                   <span className="text-[10px] font-mono text-fuchsia-300">
                     Estilo Activo: <strong className="text-white">{KAI_MULTIVERSE_STYLES.find(s => s.id === selectedStyle)?.name}</strong>
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                   {KAI_MULTIVERSE_STYLES.map((style) => {
                     const isSelected = selectedStyle === style.id;
                     return (
@@ -911,8 +911,8 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                         </div>
                       )}
 
-                      <p className="text-[10px] font-mono text-fuchsia-300">
-                        {forgedResult.lines.length} trazos vectoriales • {forgedResult.dualEyes ? '👀 Ojos Vivos Animados' : '✨ Núcleo Óptico'}
+                      <p className="text-[10px] font-mono text-cyan-300">
+                        {forgedResult.svgContent ? '⚡ Geometría 100% SVG' : `${forgedResult.lines?.length || 0} trazos`} • Token --color-aura-activa sincronizado
                       </p>
                     </div>
                   ) : stats.kaiCustomForm ? (
