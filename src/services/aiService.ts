@@ -1,8 +1,8 @@
 import { getGenerativeModel } from 'firebase/ai';
 import { firebaseAI, firebaseConfig } from '../firebase';
-import { generateProceduralSchedule, generateProceduralAnalysis } from '../utils/proceduralHeuristics';
 import { autoArrangeSchedule, cleanScheduleTitle } from '../utils/timeUtils';
-import { KaiCustomForm } from '../types';
+import { generateProceduralSchedule, generateProceduralAnalysis } from '../utils/proceduralHeuristics';
+import { KaiCustomForm, KaiMultiverseStyle } from '../types';
 import { synthesizeKaiFromImageSilhouette } from '../utils/kaiSilhouetteSynthesizer';
 
 interface RateLimitState {
@@ -371,8 +371,9 @@ export async function forgeKaiFromImage(params: {
   imageBase64: string;
   mimeType?: string;
   promptDescription?: string;
+  artStyle?: KaiMultiverseStyle;
 }): Promise<KaiCustomForm | null> {
-  const { imageBase64, mimeType = 'image/jpeg', promptDescription = '' } = params;
+  const { imageBase64, mimeType = 'image/jpeg', promptDescription = '', artStyle = 'toon' } = params;
 
   if (!imageBase64 || typeof imageBase64 !== 'string') {
     return null;
@@ -382,28 +383,33 @@ export async function forgeKaiFromImage(params: {
   const cleanBase64 = imageBase64.includes(',') ? imageBase64.split(',')[1] : imageBase64;
 
   const systemInstructions = `
-Eres el Diseñador Maestro Cyber-Origami e Iconográfico de "La Solución".
-Tu misión es transformar el objeto, mascota o sujeto principal de la foto en un KAI OFICIAL de alta gama, respetando rigurosamente el canon estético de nuestros 5 KAI oficiales (Lobo Cyber-Alfa, Sabueso Táctico, Felino Sombra, Núcleo Octaedro, Titán de Memoria).
+Eres el Diseñador Maestro de Personajes y Mascotas del Multiverso de "La Solución".
+Tu misión es transformar el objeto, mascota o sujeto principal de la foto en un PERSONAJE VIVO CON CARISMA, ALMA Y PERSONALIDAD (KAI MULTIVERSE).
+
+ESTILO DE ARTE DEL MULTIVERSO SELECCIONADO: "${artStyle.toUpperCase()}"
+- Si es "toon": Caricatura animada tipo Nintendo/Pixar. Ojos grandes expresivos, sonrisa pícara o noble, líneas contundentes y carisma vivo.
+- Si es "clay3d": Escultura 3D en vinilo o plastilina brillante coleccionable con volumen suave y ojos tiernos.
+- Si es "chrome": Escultura de cromo líquido y mercurio reflectante, visor cibernético y reflejos plateados.
+- Si es "papercraft": Personaje ensamblado en capas de papel de colores artesanales superpuestas con relieve y sombras.
+- Si es "pixel": Sprite retro arcade de 16 bits con píxeles limpios, ojos de bloque expresivos y actitud lúdica.
 
 CANON ESTÉTICO OFICIAL DE KAI:
-1. GEOMETRÍA CYBER-ORIGAMI WIREFRAME FRONTAL:
-   - Trazos poligonales rectos, simétricos, limpios y afilados.
-   - Facetas triangulares y trapezoidales bien definidas con jerarquía visual: contornos exteriores fuertes y líneas de faceteado interior que dan volumen 3D.
-   - Facetas sombreadas ('polygons') para dar profundidad de cristal ahumado.
+1. GEOMETRÍA SIMÉTRICA VIVA:
+   - Trazos poligonales limpios, simétricos respecto al eje central x = 80.
+   - Facetas poligonales sombreadas ('polygons') para dar volumen y profundidad.
    - La base inferior de la figura converge de forma armónica hacia la elipse de levitación de la app (alrededor de y: 120 a 140 en el centro x: 80).
 
 2. SIMILITUD VISUAL INMEDIATA (LIKENESS) & PROHIBICIÓN DE RECTÁNGULOS PLANOS:
-   - PROHIBIDO DIBUJAR CAJAS O RECTÁNGULOS VACÍOS: Aunque el objeto fotografiado sea intrínsecamente rectangular (un mechero, un móvil, un libro, una tarjeta o una caja), NUNCA dibujes un simple rectángulo ni una pantalla vacía.
-   - Si es un ENCENDEDOR: Cuerpo facetado en 3D con chaflanes, chimenea perforada con ranuras, rueda de chispa y una LLAMA DE PLASMA NEÓN ascendente en la cúspide con ojo de fuego.
-   - Si es un MÓVIL / GADGET / OBJETO RECTANGULAR: Transfórmalo en un MONOLITO CIBERNÉTICO con chaflanes angulares en las esquinas, facetas triangulares en el pecho, cámara ocular en diamante en { cx: 80, cy: 85 } y quilla inferior hacia el pedestal.
+   - PROHIBIDO DIBUJAR CAJAS O RECTÁNGULOS VACÍOS: Aunque el objeto fotografiado sea intrínsecamente rectangular (un mechero, un móvil, un libro, una tarjeta o una caja), NUNCA dibujes un simple rectángulo ni una pantalla vacía. Dale ojos vivos, cuerpo de personaje y personalidad.
+   - Si es un ENCENDEDOR: Cuerpo facetado en 3D con chaflanes, chimenea perforada con ranuras, rueda de chispa y una LLAMA VIVA ascendente con ojos de fuego y sonrisa.
+   - Si es un MÓVIL / GADGET / OBJETO RECTANGULAR: Transfórmalo en un MONOLITO ROBÓTICO AMIGABLE con ojos de pantalla viva, visera de cristal y detalles mecánicos.
    - Si son GAFAS DE SOL: Dos lentes poligonales simétricos con ojos brillantes en su interior, puente central y patillas estilizadas.
-   - Si son AUDÍFONOS: Diadema exterior e interior en arco superior y copas auriculares hexagonales simétricas en los laterales.
-   - Si es un ANIMAL / MASCOTA: Orejas anatómicas poligonales, pómulos facetados, hocico simétrico y ojos rasgados o almendrados con personalidad felina, canina o lupina.
-   - Si es otro objeto (reloj, taza, pesa, etc.): Reproduce sus componentes más icónicos con geometría angular pura y ojo/núcleo integrado.
+   - Si son AUDÍFONOS: Diadema exterior e interior en arco superior y copas auriculares hexagonales simétricas que son como orejeras de un androide.
+   - Si es un ANIMAL / MASCOTA: Orejas anatómicas poligonales, pómulos facetados, hocico simétrico y ojos vivos con personalidad felina, canina o lupina.
 
-3. OJOS VIVOS CON ANATOMÍA PROPIA:
-   - Los ojos deben tener personalidad anatómica: ojos rasgados almendrados para felinos/lobos, ojos nobles con destello para caninos, o un núcleo de sensor de energía en { "cx": 80, "cy": 85, "r": 8 }.
-   - Integra el núcleo o los ojos en las líneas estructurales del chasis.
+3. OJOS VIVOS Y EXPRESIÓN FACIAL:
+   - Los personajes deben tener ojos expresivos (ya sea "dualEyes" o "coreEye") y una boca/sonrisa ("mouth").
+   - Genera una frase de personalidad ("personalityQuote") que diga el personaje al despertar.
 
 4. ESPECIFICACIÓN DEL LIENZO SVG (viewBox="0 0 160 170"):
    - Simetría bilateral rigurosa respecto al eje central x = 80. Para todo punto (80 - dx, y), debe existir (80 + dx, y).
@@ -411,13 +417,14 @@ CANON ESTÉTICO OFICIAL DE KAI:
    - Entre 18 y 36 líneas rectas conectadas.
    - Entre 4 y 10 polígonos ('points': "x1,y1 x2,y2 x3,y3 ...") para las facetas principales.
    - Ojo/núcleo central: "coreEye": { "cx": 80, "cy": 85, "r": 8 }.
-   - Nombre épico oficial: Ej. "KAI Visor Solaris", "KAI Ignis Monolito", "KAI Sónico Vórtice", etc.
 ${promptDescription ? `Contexto o pista del usuario: "${promptDescription}".` : ''}
 
 DEVOLUCIÓN OBLIGATORIA (Responde ÚNICAMENTE con JSON puro, sin bloques markdown ni texto antes ni después):
 {
   "detectedObject": "Nombre del objeto detectado",
-  "name": "Nombre Épico",
+  "name": "Nombre Épico del Personaje",
+  "personalityQuote": "Frase carismática que dice el personaje al despertar",
+  "mood": "playful",
   "lines": [
     { "x1": 80, "y1": 24, "x2": 44, "y2": 65 },
     { "x1": 80, "y1": 24, "x2": 116, "y2": 65 }
@@ -561,6 +568,11 @@ DEVOLUCIÓN OBLIGATORIA (Responde ÚNICAMENTE con JSON puro, sin bloques markdow
                     r: Math.max(6, Math.min(14, Math.round(parsed.coreEye.r || 8))),
                   }
                 : { cx: 80, cy: 85, r: 8 },
+            artStyle,
+            personalityQuote: parsed.personalityQuote || `¡He despertado en el Multiverso bajo el estilo ${artStyle.toUpperCase()}!`,
+            mood: parsed.mood || 'playful',
+            dualEyes: parsed.dualEyes,
+            mouth: parsed.mouth,
           };
         }
       }
@@ -570,11 +582,12 @@ DEVOLUCIÓN OBLIGATORIA (Responde ÚNICAMENTE con JSON puro, sin bloques markdow
   }
 
   // 3. Sintetizador de Silueta de la Imagen (Garantiza diseño único para cada foto)
-  console.log('[Forja Neural] Sintetizando geometría única a partir de los datos visuales de la foto...');
+  console.log(`[Forja Neural] Sintetizando personaje Multiverse (${artStyle}) a partir de la foto...`);
   try {
     const bespokeForm = await synthesizeKaiFromImageSilhouette({
       imageBase64: cleanBase64,
       promptDescription,
+      artStyle,
     });
     return bespokeForm;
   } catch (synthErr) {

@@ -143,15 +143,26 @@ export interface PlayerStats {
 }
 
 export type KaiShapeKey = 'prism' | 'octahedron' | 'wolf' | 'hound' | 'panther' | 'elephant' | 'custom';
+export type KaiMultiverseStyle = 'toon' | 'clay3d' | 'chrome' | 'papercraft' | 'pixel';
 
 export interface KaiCustomForm {
   name: string;
   sourceType: 'image' | 'prompt';
   createdAt: string;
   detectedObject?: string;
+  artStyle?: KaiMultiverseStyle;
+  personalityQuote?: string;
+  primaryColor?: string;
+  secondaryColor?: string;
+  mood?: 'happy' | 'determined' | 'curious' | 'fierce';
   lines: Array<{ x1: number; y1: number; x2: number; y2: number }>;
-  polygons?: Array<{ points: string }>;
+  polygons?: Array<{ points: string; fill?: string }>;
   coreEye?: { cx: number; cy: number; r: number };
+  dualEyes?: {
+    left: { cx: number; cy: number; rx?: number; ry?: number };
+    right: { cx: number; cy: number; rx?: number; ry?: number };
+  };
+  mouth?: { d: string };
 }
 
 export interface FloatingReward {

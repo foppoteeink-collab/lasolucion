@@ -20,9 +20,9 @@ import {
 } from 'lucide-react';
 import { usePlayerStore } from '../store/usePlayerStore';
 import { useAppStore } from '../store/useAppStore';
-import { KAI_OFFICIAL_SHAPES, KAI_AURAS_REGISTRY, KaiShapeDefinition } from '../data/kaiShapes';
+import { KAI_OFFICIAL_SHAPES, KAI_AURAS_REGISTRY, KAI_MULTIVERSE_STYLES, KaiShapeDefinition } from '../data/kaiShapes';
 import { KaiVectorGraphics } from './KaiVectorGraphics';
-import { KaiShapeKey, KaiCustomForm } from '../types';
+import { KaiShapeKey, KaiCustomForm, KaiMultiverseStyle } from '../types';
 import { soundFX } from '../utils/audio';
 import { triggerShockwave } from '../utils/celebration';
 import { forgeKaiFromImage } from '../services/aiService';
@@ -48,6 +48,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
   // Neural Forge States
   const [capturedImageBase64, setCapturedImageBase64] = useState<string | null>(null);
   const [forgePrompt, setForgePrompt] = useState<string>('');
+  const [selectedStyle, setSelectedStyle] = useState<KaiMultiverseStyle>('toon');
   const [isForging, setIsForging] = useState(false);
   const [forgedResult, setForgedResult] = useState<KaiCustomForm | null>(null);
   const [forgeError, setForgeError] = useState<string | null>(null);
@@ -155,6 +156,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
       const customForm = await forgeKaiFromImage({
         imageBase64: capturedImageBase64,
         promptDescription: forgePrompt.trim(),
+        artStyle: selectedStyle,
       });
 
       if (customForm) {
@@ -596,12 +598,12 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                   <div className="flex items-center gap-2">
                     <h3 className="text-base font-black uppercase text-white tracking-wider flex items-center gap-2">
                       <Camera className="w-5 h-5 text-fuchsia-400 animate-pulse" />
-                      Forja Neural IA // Convierte Fotos en Compañeros Neón
+                      Multiverse Character Studio // Da Vida a Cualquier Objeto
                     </h3>
                   </div>
                   <p className="text-xs text-slate-300 max-w-xl leading-relaxed">
-                    Toma una foto de cualquier objeto real (unos auriculares, una pesa, tu perro, una taza, una guitarra) o descríbelo. 
-                    El motor neural de Gemini extraerá su silueta y la transformará en una figura poligonal simétrica estilo <strong>Cyber-Wireframe</strong>.
+                    Sube una foto de cualquier cosa del mundo real (un encendedor, tu mascota, unas gafas, un reloj, una taza) y elígele un estilo artístico. 
+                    El motor neural lo transformará en un <strong>personaje vivo con alma, ojos expresivos animados, sonrisa y personalidad única</strong>.
                   </p>
                 </div>
 
@@ -613,8 +615,76 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                     ∞ ILIMITADO
                   </span>
                   <span className="text-[9px] text-emerald-400 block font-mono mt-0.5">
-                    ✓ Forja libre activa
+                    ✓ 5 Estilos Multiverso
                   </span>
+                </div>
+              </div>
+
+              {/* ─── SELECTOR DE ESTILOS DEL MULTIVERSO KAI ─── */}
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-black uppercase text-white tracking-wider flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-fuchsia-400" />
+                    <span>Selecciona el Estilo Artístico del Multiverso:</span>
+                  </h4>
+                  <span className="text-[10px] font-mono text-fuchsia-300">
+                    Estilo Activo: <strong className="text-white">{KAI_MULTIVERSE_STYLES.find(s => s.id === selectedStyle)?.name}</strong>
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5">
+                  {KAI_MULTIVERSE_STYLES.map((style) => {
+                    const isSelected = selectedStyle === style.id;
+                    return (
+                      <button
+                        key={style.id}
+                        type="button"
+                        onClick={() => {
+                          soundFX.playClick();
+                          setSelectedStyle(style.id);
+                        }}
+                        className={`p-3 rounded-2xl border text-left transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between ${
+                          isSelected
+                            ? 'bg-gradient-to-b from-fuchsia-950/70 to-[#0f0728] border-fuchsia-400 shadow-[0_0_20px_rgba(217,70,239,0.35)] scale-[1.02]'
+                            : 'bg-[#040814]/80 border-white/10 hover:border-white/30 hover:bg-white/5 opacity-80 hover:opacity-100'
+                        }`}
+                      >
+                        {isSelected && (
+                          <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-fuchsia-400 shadow-[0_0_8px_#d946ef] animate-ping" />
+                        )}
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xl">{style.badge}</span>
+                            <span className={`text-[8px] font-mono font-bold uppercase px-1.5 py-0.5 rounded ${
+                              isSelected ? 'bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/40' : 'bg-white/5 text-slate-400'
+                            }`}>
+                              {style.id}
+                            </span>
+                          </div>
+                          <div className="text-xs font-bold text-white leading-tight">
+                            {style.name}
+                          </div>
+                          <p className="text-[10px] text-slate-400 leading-snug line-clamp-2">
+                            {style.tagline}
+                          </p>
+                        </div>
+                        <div className="mt-2 pt-2 border-t border-white/5 flex items-center justify-between">
+                          <span className="text-[9px] font-mono text-slate-400">
+                            {isSelected ? '✓ Activo' : 'Elegir'}
+                          </span>
+                          <div className="flex -space-x-1">
+                            {style.palette.slice(0, 3).map((col, i) => (
+                              <span
+                                key={i}
+                                className="w-2.5 h-2.5 rounded-full border border-black/40"
+                                style={{ backgroundColor: col }}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -812,29 +882,71 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                   </div>
 
                   {forgedResult ? (
-                    <div className="w-full text-center space-y-1">
-                      {forgedResult.detectedObject && (
-                        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-400/50 text-[10px] font-mono text-cyan-300 font-bold mb-1 shadow-[0_0_10px_rgba(0,240,255,0.2)]">
-                          <span>🎯 Similitud:</span>
-                          <span className="text-white">{forgedResult.detectedObject}</span>
+                    <div className="w-full text-center space-y-2">
+                      <div className="flex flex-wrap items-center justify-center gap-1.5 mb-1">
+                        {forgedResult.detectedObject && (
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-400/50 text-[10px] font-mono text-cyan-300 font-bold shadow-[0_0_10px_rgba(0,240,255,0.2)]">
+                            <span>🎯 Objeto:</span>
+                            <span className="text-white">{forgedResult.detectedObject}</span>
+                          </div>
+                        )}
+                        {forgedResult.artStyle && (
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-fuchsia-950/80 border border-fuchsia-400/50 text-[10px] font-mono text-fuchsia-200 font-bold shadow-[0_0_10px_rgba(217,70,239,0.2)]">
+                            <span>{KAI_MULTIVERSE_STYLES.find(s => s.id === forgedResult.artStyle)?.badge || '🎨'}</span>
+                            <span className="uppercase">{forgedResult.artStyle}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      <h4 className="text-sm font-bold text-white">{forgedResult.name}</h4>
+
+                      {forgedResult.personalityQuote && (
+                        <div className="w-full p-2.5 rounded-xl bg-gradient-to-r from-fuchsia-950/60 via-purple-950/40 to-cyan-950/60 border border-fuchsia-500/30 text-center shadow-[0_0_15px_rgba(217,70,239,0.15)] animate-fadeIn">
+                          <span className="text-[9px] font-mono text-fuchsia-300 uppercase tracking-widest block font-bold mb-0.5">
+                            💬 Personalidad & Voz del Personaje:
+                          </span>
+                          <p className="text-xs text-white italic font-medium leading-relaxed">
+                            "{forgedResult.personalityQuote}"
+                          </p>
                         </div>
                       )}
-                      <h4 className="text-sm font-bold text-white">{forgedResult.name}</h4>
+
                       <p className="text-[10px] font-mono text-fuchsia-300">
-                        {forgedResult.lines.length} trazos vectoriales simétricos • Icono KAI
+                        {forgedResult.lines.length} trazos vectoriales • {forgedResult.dualEyes ? '👀 Ojos Vivos Animados' : '✨ Núcleo Óptico'}
                       </p>
                     </div>
                   ) : stats.kaiCustomForm ? (
-                    <div className="w-full text-center space-y-1">
-                      {stats.kaiCustomForm.detectedObject && (
-                        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-fuchsia-950/80 border border-fuchsia-400/50 text-[10px] font-mono text-fuchsia-300 font-bold mb-1">
-                          <span>🎯 Similitud:</span>
-                          <span className="text-white">{stats.kaiCustomForm.detectedObject}</span>
+                    <div className="w-full text-center space-y-2">
+                      <div className="flex flex-wrap items-center justify-center gap-1.5 mb-1">
+                        {stats.kaiCustomForm.detectedObject && (
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-fuchsia-950/80 border border-fuchsia-400/50 text-[10px] font-mono text-fuchsia-300 font-bold">
+                            <span>🎯 Objeto:</span>
+                            <span className="text-white">{stats.kaiCustomForm.detectedObject}</span>
+                          </div>
+                        )}
+                        {stats.kaiCustomForm.artStyle && (
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-purple-950/80 border border-purple-400/50 text-[10px] font-mono text-purple-200 font-bold">
+                            <span>{KAI_MULTIVERSE_STYLES.find(s => s.id === stats.kaiCustomForm.artStyle)?.badge || '🎨'}</span>
+                            <span className="uppercase">{stats.kaiCustomForm.artStyle}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      <h4 className="text-sm font-bold text-white">{stats.kaiCustomForm.name}</h4>
+
+                      {stats.kaiCustomForm.personalityQuote && (
+                        <div className="w-full p-2.5 rounded-xl bg-gradient-to-r from-fuchsia-950/60 via-purple-950/40 to-cyan-950/60 border border-fuchsia-500/30 text-center shadow-[0_0_15px_rgba(217,70,239,0.15)]">
+                          <span className="text-[9px] font-mono text-fuchsia-300 uppercase tracking-widest block font-bold mb-0.5">
+                            💬 Personalidad & Voz del Personaje:
+                          </span>
+                          <p className="text-xs text-white italic font-medium leading-relaxed">
+                            "{stats.kaiCustomForm.personalityQuote}"
+                          </p>
                         </div>
                       )}
-                      <h4 className="text-sm font-bold text-white">{stats.kaiCustomForm.name}</h4>
+
                       <p className="text-[10px] font-mono text-emerald-400">
-                        {stats.kaiShape === 'custom' ? '✓ Actualmente Equipado' : 'Guardado en tu Arsenal'}
+                        {stats.kaiShape === 'custom' ? '✓ Actualmente Equipado en tu Interfaz' : 'Guardado en tu Arsenal'}
                       </p>
                     </div>
                   ) : null}

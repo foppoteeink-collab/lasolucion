@@ -122,6 +122,36 @@ export const KaiVectorGraphics: React.FC<KaiVectorGraphicsProps> = ({
         <clipPath id={`${gradientId}-titan-clip-r`}>
           <polygon points="98,64 90,62 88,68 96,70" />
         </clipPath>
+
+        {/* ─── MULTIVERSE STYLE SHADERS & FILTERS ─── */}
+        <filter id={`${gradientId}-toon-shadow`} x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="3" stdDeviation="3.5" floodColor="#000000" floodOpacity="0.65" />
+        </filter>
+
+        <filter id={`${gradientId}-paper-relief`} x="-30%" y="-30%" width="160%" height="160%">
+          <feDropShadow dx="2" dy="3" stdDeviation="2.5" floodColor="#020813" floodOpacity="0.8" />
+        </filter>
+
+        <radialGradient id={`${gradientId}-clay-grad`} cx="35%" cy="30%" r="70%">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.75" />
+          <stop offset="35%" stopColor={lineColor} stopOpacity="0.55" />
+          <stop offset="85%" stopColor="#0a192f" stopOpacity="0.85" />
+          <stop offset="100%" stopColor="#020813" stopOpacity="0.98" />
+        </radialGradient>
+
+        <linearGradient id={`${gradientId}-chrome-metal`} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#f8fafc" stopOpacity="0.95" />
+          <stop offset="25%" stopColor="#94a3b8" stopOpacity="0.65" />
+          <stop offset="48%" stopColor="#38bdf8" stopOpacity="0.9" />
+          <stop offset="52%" stopColor="#ffffff" stopOpacity="1" />
+          <stop offset="75%" stopColor="#0284c7" stopOpacity="0.7" />
+          <stop offset="100%" stopColor="#0f172a" stopOpacity="0.95" />
+        </linearGradient>
+
+        <pattern id={`${gradientId}-pixel-grid`} width="6" height="6" patternUnits="userSpaceOnUse">
+          <rect width="6" height="6" fill="rgba(5, 12, 18, 0.55)" />
+          <rect width="5" height="5" fill="rgba(16, 185, 129, 0.12)" />
+        </pattern>
       </defs>
 
       {/* ─── ANIMACIONES CSS ORGÁNICAS Y ESPECÍFICAS DE CADA ESPECIE ─── */}
@@ -224,6 +254,27 @@ export const KaiVectorGraphics: React.FC<KaiVectorGraphicsProps> = ({
             93.5% { transform: scaleY(0.06); }
             97% { transform: scaleY(1); }
             100% { transform: scaleY(1); }
+          }
+
+          /* 7. KAI MULTIVERSE: MASCOTA VIVA CON OJOS EXPRESIVOS Y BLINK NATURAL */
+          @keyframes kai-mascot-blink {
+            0%, 88% { transform: scaleY(1); }
+            90% { transform: scaleY(0.08); }
+            92% { transform: scaleY(1); }
+            95% { transform: scaleY(0.2); }
+            97% { transform: scaleY(1); }
+            100% { transform: scaleY(1); }
+          }
+          @keyframes kai-mascot-gaze {
+            0%, 25% { transform: translate(0px, 0px); }
+            30%, 55% { transform: translate(2px, -1.2px); }
+            60%, 85% { transform: translate(-2px, 0.8px); }
+            90%, 100% { transform: translate(0px, 0px); }
+          }
+          @keyframes kai-mascot-wiggle {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-1deg); }
+            75% { transform: rotate(1deg); }
           }
         `}
       </style>
@@ -710,50 +761,289 @@ export const KaiVectorGraphics: React.FC<KaiVectorGraphicsProps> = ({
         </g>
       )}
 
-      {/* ──────────────── 7. CUSTOM / FORJA NEURAL IA (📸) ──────────────── */}
-      {shapeId === 'custom' && customForm && (
-        <g>
-          <g filter={`url(#${filterId})`}>
-            {customForm.polygons?.map((p, idx) => (
-              <polygon
-                key={`poly-${idx}`}
-                points={p.points}
-                stroke={lineColor}
-                strokeWidth="2.8"
-                strokeLinejoin="round"
-                fill="rgba(5, 12, 18, 0.45)"
-              />
-            ))}
-            {customForm.lines?.map((l, idx) => (
-              <line
-                key={`line-${idx}`}
-                x1={l.x1}
-                y1={l.y1}
-                x2={l.x2}
-                y2={l.y2}
-                stroke={idx % 2 === 0 ? lineColor : secondaryStroke}
-                strokeWidth="2.2"
-                strokeLinecap="round"
-              />
-            ))}
+      {/* ──────────────── 7. CUSTOM / FORJA NEURAL IA (📸 MULTIVERSE) ──────────────── */}
+      {shapeId === 'custom' && customForm && (() => {
+        const artStyle = customForm.artStyle || 'toon';
+        const customLineColor = customForm.primaryColor || lineColor;
+        const customSecColor = customForm.secondaryColor || secondaryStroke;
+
+        const getPolyFill = () => {
+          if (artStyle === 'clay3d') return `url(#${gradientId}-clay-grad)`;
+          if (artStyle === 'chrome') return `url(#${gradientId}-chrome-metal)`;
+          if (artStyle === 'papercraft') return 'rgba(245, 158, 11, 0.22)';
+          if (artStyle === 'pixel') return `url(#${gradientId}-pixel-grid)`;
+          return 'rgba(15, 23, 42, 0.65)';
+        };
+
+        const getPolyFilter = () => {
+          if (artStyle === 'papercraft') return `url(#${gradientId}-paper-relief)`;
+          if (artStyle === 'toon') return `url(#${gradientId}-toon-shadow)`;
+          return undefined;
+        };
+
+        const isPixel = artStyle === 'pixel';
+
+        return (
+          <g id={`${gradientId}-custom-multiverse-body`}>
+            {/* Capa Base con Bloom Neón / Sombra de Estilo */}
+            <g filter={`url(#${filterId})`}>
+              {customForm.polygons?.map((p, idx) => (
+                <polygon
+                  key={`poly-${idx}`}
+                  points={p.points}
+                  stroke={customLineColor}
+                  strokeWidth={isPixel ? '3' : '2.8'}
+                  strokeLinejoin={isPixel ? 'miter' : 'round'}
+                  strokeLinecap={isPixel ? 'square' : 'round'}
+                  fill={getPolyFill()}
+                  filter={getPolyFilter()}
+                  shapeRendering={isPixel ? 'crispEdges' : 'auto'}
+                />
+              ))}
+              {customForm.lines?.map((l, idx) => (
+                <line
+                  key={`line-${idx}`}
+                  x1={l.x1}
+                  y1={l.y1}
+                  x2={l.x2}
+                  y2={l.y2}
+                  stroke={idx % 2 === 0 ? customLineColor : customSecColor}
+                  strokeWidth={isPixel ? '2.8' : '2.2'}
+                  strokeLinecap={isPixel ? 'square' : 'round'}
+                  shapeRendering={isPixel ? 'crispEdges' : 'auto'}
+                />
+              ))}
+            </g>
+
+            {/* Capa Núcleo Brillante */}
+            <g opacity={0.92}>
+              {customForm.polygons?.map((p, idx) => (
+                <polygon
+                  key={`core-poly-${idx}`}
+                  points={p.points}
+                  stroke={coreStroke}
+                  strokeWidth="1"
+                  strokeLinejoin={isPixel ? 'miter' : 'round'}
+                  fill="none"
+                  shapeRendering={isPixel ? 'crispEdges' : 'auto'}
+                />
+              ))}
+              {customForm.lines?.map((l, idx) => (
+                <line
+                  key={`core-line-${idx}`}
+                  x1={l.x1}
+                  y1={l.y1}
+                  x2={l.x2}
+                  y2={l.y2}
+                  stroke={coreStroke}
+                  strokeWidth="0.8"
+                  strokeLinecap={isPixel ? 'square' : 'round'}
+                  shapeRendering={isPixel ? 'crispEdges' : 'auto'}
+                />
+              ))}
+            </g>
+
+            {/* ── SISTEMA DE OJOS VIVOS EXPRESIVOS DEL PERSONAJE ── */}
+            {customForm.dualEyes && (
+              <g id={`${gradientId}-custom-dual-living-eyes`}>
+                {[
+                  { key: 'left', eye: customForm.dualEyes.left },
+                  { key: 'right', eye: customForm.dualEyes.right },
+                ].map(({ key, eye }) => {
+                  if (!eye) return null;
+                  return (
+                    <g key={key} id={`${gradientId}-custom-eye-${key}`}>
+                      {/* Fondo Esclerótica Blanco Puro */}
+                      <ellipse
+                        cx={eye.cx}
+                        cy={eye.cy}
+                        rx={eye.rx}
+                        ry={eye.ry}
+                        fill="#ffffff"
+                        filter={`url(#${filterId})`}
+                      />
+                      <ellipse
+                        cx={eye.cx}
+                        cy={eye.cy}
+                        rx={eye.rx}
+                        ry={eye.ry}
+                        fill="#ffffff"
+                      />
+
+                      {/* Parpadeo Orgánico del Ojo */}
+                      <g
+                        style={{
+                          transformOrigin: `${eye.cx}px ${eye.cy}px`,
+                          animation: isFocusTrance ? undefined : 'kai-mascot-blink 4.8s infinite ease-in-out',
+                        }}
+                      >
+                        {/* Iris de Color */}
+                        <ellipse
+                          cx={eye.cx}
+                          cy={eye.cy}
+                          rx={eye.rx * 0.72}
+                          ry={eye.ry * 0.75}
+                          fill={customSecColor || customLineColor}
+                        />
+
+                        {/* Pupila con Seguimiento de Mirada */}
+                        <g
+                          style={
+                            isTrackingMouse
+                              ? {
+                                  transform: `translate(${eyeOffset.x * 0.4}px, ${eyeOffset.y * 0.4}px)`,
+                                  transition: 'transform 0.12s ease-out',
+                                }
+                              : { animation: 'kai-mascot-gaze 5s infinite ease-in-out' }
+                          }
+                        >
+                          <ellipse
+                            cx={eye.cx}
+                            cy={eye.cy}
+                            rx={eye.rx * 0.45}
+                            ry={eye.ry * 0.48}
+                            fill="#020813"
+                          />
+
+                          {/* Doble Destello Especular Nintendo / Pixar */}
+                          <circle
+                            cx={eye.cx + eye.rx * 0.22}
+                            cy={eye.cy - eye.ry * 0.25}
+                            r={Math.max(1.4, eye.rx * 0.24)}
+                            fill="#ffffff"
+                          />
+                          <circle
+                            cx={eye.cx - eye.rx * 0.2}
+                            cy={eye.cy + eye.ry * 0.22}
+                            r={Math.max(0.8, eye.rx * 0.14)}
+                            fill="#ffffff"
+                            opacity="0.95"
+                          />
+                        </g>
+                      </g>
+
+                      {/* Contorno Delineado Neón del Ojo */}
+                      <ellipse
+                        cx={eye.cx}
+                        cy={eye.cy}
+                        rx={eye.rx}
+                        ry={eye.ry}
+                        stroke={customLineColor}
+                        strokeWidth="2.4"
+                        fill="none"
+                        filter={`url(#${filterId})`}
+                      />
+                      <ellipse
+                        cx={eye.cx}
+                        cy={eye.cy}
+                        rx={eye.rx}
+                        ry={eye.ry}
+                        stroke="#020813"
+                        strokeWidth="1.2"
+                        fill="none"
+                      />
+                    </g>
+                  );
+                })}
+              </g>
+            )}
+
+            {/* Ojo Central Mascota (si no tiene ojos duales) */}
+            {!customForm.dualEyes && customForm.coreEye && (
+              <g id={`${gradientId}-custom-mascot-core-eye`}>
+                <circle
+                  cx={customForm.coreEye.cx}
+                  cy={customForm.coreEye.cy}
+                  r={customForm.coreEye.r}
+                  fill="#ffffff"
+                  filter={`url(#${filterId})`}
+                />
+                <circle
+                  cx={customForm.coreEye.cx}
+                  cy={customForm.coreEye.cy}
+                  r={customForm.coreEye.r}
+                  fill="#ffffff"
+                />
+                <g
+                  style={{
+                    transformOrigin: `${customForm.coreEye.cx}px ${customForm.coreEye.cy}px`,
+                    animation: isFocusTrance ? undefined : 'kai-mascot-blink 4.6s infinite ease-in-out',
+                  }}
+                >
+                  <circle
+                    cx={customForm.coreEye.cx}
+                    cy={customForm.coreEye.cy}
+                    r={customForm.coreEye.r * 0.72}
+                    fill={customSecColor || customLineColor}
+                  />
+                  <g
+                    style={
+                      isTrackingMouse
+                        ? {
+                            transform: `translate(${eyeOffset.x * 0.4}px, ${eyeOffset.y * 0.4}px)`,
+                            transition: 'transform 0.12s ease-out',
+                          }
+                        : { animation: 'kai-mascot-gaze 5s infinite ease-in-out' }
+                    }
+                  >
+                    <circle
+                      cx={customForm.coreEye.cx}
+                      cy={customForm.coreEye.cy}
+                      r={customForm.coreEye.r * 0.44}
+                      fill="#020813"
+                    />
+                    <circle
+                      cx={customForm.coreEye.cx + customForm.coreEye.r * 0.24}
+                      cy={customForm.coreEye.cy - customForm.coreEye.r * 0.24}
+                      r={customForm.coreEye.r * 0.24}
+                      fill="#ffffff"
+                    />
+                  </g>
+                </g>
+                <circle
+                  cx={customForm.coreEye.cx}
+                  cy={customForm.coreEye.cy}
+                  r={customForm.coreEye.r}
+                  stroke={customLineColor}
+                  strokeWidth="2.4"
+                  fill="none"
+                />
+              </g>
+            )}
+
+            {/* Boca / Sonrisa Expresiva del Personaje */}
+            {customForm.mouth?.d && (
+              <g id={`${gradientId}-custom-mouth`}>
+                <path
+                  d={customForm.mouth.d}
+                  stroke={customLineColor}
+                  strokeWidth="3.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  fill="none"
+                  filter={`url(#${filterId})`}
+                />
+                <path
+                  d={customForm.mouth.d}
+                  stroke="#ffffff"
+                  strokeWidth="1.3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  fill="none"
+                  opacity="0.95"
+                />
+              </g>
+            )}
           </g>
-          <g opacity={0.9}>
-            {customForm.polygons?.map((p, idx) => (
-              <polygon key={`core-poly-${idx}`} points={p.points} stroke={coreStroke} strokeWidth="1" strokeLinejoin="round" fill="none" />
-            ))}
-            {customForm.lines?.map((l, idx) => (
-              <line key={`core-line-${idx}`} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke={coreStroke} strokeWidth="0.8" strokeLinecap="round" />
-            ))}
-          </g>
-        </g>
-      )}
+        );
+      })()}
 
       {/* ══════════════════════════════════════════════════════════════════════ */}
       {/* 2. SISTEMA DE OJOS VIVOS: FIEL AL ARTE & CON ANIMACIÓN ORGÁNICA NATURAL */}
       {/* ══════════════════════════════════════════════════════════════════════ */}
 
-      {/* ── CASO 1: PRISMA & CUSTOM INERTE (OJO SAGRADO CLÁSICO) ── */}
-      {(shapeId === 'prism' || shapeId === 'custom') && (
+      {/* ── CASO 1: PRISMA (OJO SAGRADO CLÁSICO) ── */}
+      {shapeId === 'prism' && (
         <g id={`${gradientId}-central-living-eye`}>
           <path d="M 50 85 C 60 67, 100 67, 110 85 C 100 103, 60 103, 50 85 Z" fill={`url(#${gradientId}-eye-void)`} />
           <g clipPath={`url(#${gradientId}-eye-clip-prism)`}>

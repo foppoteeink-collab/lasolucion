@@ -1,4 +1,4 @@
-import { KaiCustomForm } from '../types';
+import { KaiCustomForm, KaiMultiverseStyle } from '../types';
 
 interface ImageSampleAnalysis {
   aspectRatio: number; // width / height
@@ -858,8 +858,9 @@ function buildBespokeContourKai(analysis: ImageSampleAnalysis): {
 export async function synthesizeKaiFromImageSilhouette(params: {
   imageBase64: string;
   promptDescription?: string;
+  artStyle?: KaiMultiverseStyle;
 }): Promise<KaiCustomForm> {
-  const { imageBase64, promptDescription = '' } = params;
+  const { imageBase64, promptDescription = '', artStyle = 'toon' } = params;
   const cleanBase64 = imageBase64.includes(',') ? imageBase64.split(',')[1] : imageBase64;
 
   let analysis: ImageSampleAnalysis;
@@ -874,59 +875,160 @@ export async function synthesizeKaiFromImageSilhouette(params: {
   const { category, label } = identifyObjectCategory(promptDescription, analysis);
 
   let vectorArt: { lines: Array<{ x1: number; y1: number; x2: number; y2: number }>; polygons: Array<{ points: string }> };
-  let epicName = `KAI ${label}`;
+  let baseName = label;
 
   switch (category) {
     case 'lighter':
       vectorArt = buildLighterKai();
-      epicName = promptDescription ? `KAI Ignis ${promptDescription.slice(0, 14)}` : 'KAI Ignis Monolito';
+      baseName = 'Ignis';
       break;
     case 'monolith':
       vectorArt = buildMonolithKai();
-      epicName = promptDescription ? `KAI Monolito ${promptDescription.slice(0, 14)}` : 'KAI Monolito Aether';
+      baseName = 'Monolito';
       break;
     case 'sunglasses':
       vectorArt = buildSunglassesKai();
-      epicName = promptDescription ? `KAI Visor ${promptDescription.slice(0, 14)}` : 'KAI Visor Solaris';
+      baseName = 'Solaris';
       break;
     case 'headphones':
       vectorArt = buildHeadphonesKai();
-      epicName = promptDescription ? `KAI Sónico ${promptDescription.slice(0, 14)}` : 'KAI Sónico Vórtice';
+      baseName = 'Sónico';
       break;
     case 'watch':
       vectorArt = buildWatchKai();
-      epicName = promptDescription ? `KAI Crono ${promptDescription.slice(0, 14)}` : 'KAI Crono-Bisel';
+      baseName = 'Crono';
       break;
     case 'mug':
       vectorArt = buildMugKai();
-      epicName = promptDescription ? `KAI Termo ${promptDescription.slice(0, 14)}` : 'KAI Termo-Reactor';
+      baseName = 'Cafeto';
       break;
     case 'dumbbell':
       vectorArt = buildDumbbellKai();
-      epicName = promptDescription ? `KAI Fuerza ${promptDescription.slice(0, 14)}` : 'KAI Titán de Fuerza';
+      baseName = 'Titán';
       break;
     case 'animal':
       vectorArt = buildAnimalKai();
-      epicName = promptDescription ? `KAI Bestia ${promptDescription.slice(0, 14)}` : 'KAI Guardián Bestial';
+      baseName = 'Fiel Guardián';
       break;
     case 'apple':
       vectorArt = buildAppleKai();
-      epicName = promptDescription ? `KAI Orbe ${promptDescription.slice(0, 14)}` : 'KAI Orbe Botánico';
+      baseName = 'Orbe';
       break;
     case 'bespoke':
     default:
       vectorArt = buildBespokeContourKai(analysis);
-      epicName = promptDescription ? `KAI Tótem ${promptDescription.slice(0, 14)}` : 'KAI Matriz Fractal';
+      baseName = 'Tótem';
       break;
   }
 
+  // Frases de Personalidad según Estilo y Categoría
+  const STYLE_QUOTES: Record<KaiMultiverseStyle, Record<string, string>> = {
+    toon: {
+      lighter: '¡Soy Ignis! ¡Vamos a prenderle fuego a tus excusas y encender tu racha hoy!',
+      sunglasses: '¡Soy Solaris! Cero distracciones, hoy vemos tu futuro con claridad 20/20.',
+      headphones: '¡Soy Sónico! ¡Ponte los audífonos y entremos en la zona de deep work!',
+      watch: '¡Soy Crono! El tiempo vuela, ¡vamos a hacer que cada minuto cuente!',
+      mug: '¡Soy Cafeto! ¡Un sorbo de energía pura para conquistar cada hábito!',
+      dumbbell: '¡Soy Titán! ¡Una repetición más de disciplina y nadie nos para!',
+      animal: '¡Guau! / ¡Miau! ¡Soy tu fiel guardián! ¡Hoy no te dejaré aflojar!',
+      monolith: '¡Soy Bit! Tu compa cuántico listo para ordenar tu mente y tu vida.',
+      apple: '¡Soy Manzanita! Salud, vitalidad y frescura en tu jornada.',
+      bespoke: '¡Cobré vida gracias a tu foto! ¡Prometo ser tu mejor aliado de hábitos!',
+    },
+    clay3d: {
+      lighter: 'Fuego interno modelado con paciencia. Tu chispa de constancia no se apaga.',
+      sunglasses: 'Visión suave y enfoque nítido. Nada te saca de tu centro hoy.',
+      headphones: 'Armonía y ritmo en cada tarea. Respira profundo y avanza.',
+      watch: 'Tic-tac de vinil. Cada segundo es una oportunidad de maestría.',
+      mug: 'Calor de hogar y paciencia. Un hábito a la vez, sin prisa.',
+      dumbbell: 'Fuerza que se moldea día con día. Eres más fuerte de lo que crees.',
+      animal: 'Lealtad esculpida con amor. Siempre a tu lado cuidando tu racha.',
+      monolith: 'Base sólida de vinil para construir tus metas más grandes.',
+      apple: 'Equilibrio orgánico y serenidad para tus hábitos diarios.',
+      bespoke: 'Una criatura táctil única nacida de tu foto. Juntos somos imparables.',
+    },
+    chrome: {
+      lighter: 'Ignición de plasma activada. Foco láser y temperatura máxima en tus metas.',
+      sunglasses: 'Visor polarizado de titanio. Escaneo de objetivos al 100%.',
+      headphones: 'Frecuencia sónica sintonizada. Cancelación de ruido y pereza.',
+      watch: 'Cronómetro atómico sincronizado. Tu tiempo vale oro puro.',
+      mug: 'Reactor térmico lleno. Energía mental al máximo rendimiento.',
+      dumbbell: 'Titanio reforzado. Cada repetición fortalece tu voluntad de acero.',
+      animal: 'Sensor guardián alerta. Siguiendo el rastro de tus hábitos sin descanso.',
+      monolith: 'Terminal de mercurio líquido. Foco absoluto y ejecución limpia.',
+      apple: 'Núcleo biosintético puro. Salud optimizada para tu rendimiento.',
+      bespoke: 'Artefacto cromado sintetizado. Tu energía en su forma más pulida.',
+    },
+    papercraft: {
+      lighter: 'Llama de origami: cada hábito prende una nueva página de éxito.',
+      sunglasses: 'Filtro de papel y sombra: solo entra lo que te hace crecer.',
+      headphones: 'Ondas de papel plegadas al compás de tu progreso.',
+      watch: 'Las manecillas de papel marcan el inicio de tu nueva racha.',
+      mug: 'Vapor de papel artesanal. Claridad, pausa y calma en cada sorbo.',
+      dumbbell: 'La verdadera fuerza se construye doblando la inercia diaria.',
+      animal: 'Guardián de origami: fiel protector de tus hábitos y promesas.',
+      monolith: 'Bloque de papel rúnico: tu fortaleza de concentración silenciosa.',
+      apple: 'Fruto de papel sagrado. Lo natural siempre rinde frutos.',
+      bespoke: 'Papiro viviente: tu creatividad y constancia no tienen límites.',
+    },
+    pixel: {
+      lighter: '16-bits de fuego arcade. ¡Combo de hábitos x10 encendido!',
+      sunglasses: '¡Modo Sigilo Gamer Activado! Cero distracciones en la pantalla.',
+      headphones: '¡Banda sonora de 8-bits lista! ¡A vencer al jefe de la pereza!',
+      watch: 'Speedrun activado. ¡Completando misiones a tiempo récord!',
+      mug: 'Poción de maná +100. ¡Listos para la aventura de hoy!',
+      dumbbell: 'Fuerza +50. ¡Subiste de nivel guerrero, sigue entrenando!',
+      animal: '¡Compañero Pokémon listo para la batalla de los hábitos diarios!',
+      monolith: 'Consola arcade portátil. ¡Insert coin para ganar el día!',
+      apple: 'Ítem de salud restaurado. ¡A seguir sumando puntos de EXP!',
+      bespoke: '¡Personaje secreto desbloqueado! ¡A jugar y ganar la jornada!',
+    },
+  };
+
+  const styleNames: Record<KaiMultiverseStyle, string> = {
+    toon: 'Toon',
+    clay3d: 'Clay',
+    chrome: 'Cromo',
+    papercraft: 'Origami',
+    pixel: 'Pixel',
+  };
+
+  const finalName = promptDescription
+    ? `KAI ${baseName} ${promptDescription.slice(0, 12)}`
+    : `KAI ${baseName} ${styleNames[artStyle]}`;
+
+  const quote = STYLE_QUOTES[artStyle]?.[category] || STYLE_QUOTES[artStyle]?.bespoke;
+
+  // Paletas de color por estilo
+  const PALETTES: Record<KaiMultiverseStyle, { primary: string; secondary: string }> = {
+    toon: { primary: '#f59e0b', secondary: '#ef4444' },
+    clay3d: { primary: '#a855f7', secondary: '#ec4899' },
+    chrome: { primary: '#00f0ff', secondary: '#38bdf8' },
+    papercraft: { primary: '#f97316', secondary: '#d97706' },
+    pixel: { primary: '#10b981', secondary: '#059669' },
+  };
+
   return {
-    name: epicName,
+    name: finalName,
     sourceType: 'image',
     createdAt: new Date().toISOString(),
     detectedObject: label,
+    artStyle,
+    personalityQuote: quote,
+    primaryColor: PALETTES[artStyle].primary,
+    secondaryColor: PALETTES[artStyle].secondary,
+    mood: 'happy',
     lines: vectorArt.lines,
     polygons: vectorArt.polygons,
+    // Ojos dobles caricaturescos vivos
+    dualEyes: {
+      left: { cx: 62, cy: 74, rx: 8.5, ry: 11 },
+      right: { cx: 98, cy: 74, rx: 8.5, ry: 11 },
+    },
+    // Sonrisa animada
+    mouth: {
+      d: 'M 70 96 Q 80 108 90 96',
+    },
     coreEye: { cx: 80, cy: 85, r: 8 },
   };
 }

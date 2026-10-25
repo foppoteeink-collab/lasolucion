@@ -1,5 +1,5 @@
 import React from 'react';
-import { KaiShapeKey } from '../types';
+import { KaiShapeKey, KaiMultiverseStyle } from '../types';
 
 export interface KaiShapeDefinition {
   id: KaiShapeKey;
@@ -141,3 +141,68 @@ export const KAI_AURAS_REGISTRY: KaiAuraDefinition[] = [
     requiredStreak: 66,
   },
 ];
+
+export interface MultiverseStyleDefinition {
+  id: KaiMultiverseStyle;
+  name: string;
+  badge: string;
+  icon: string;
+  tagline: string;
+  description: string;
+  palette: { primary: string; secondary: string; accent: string };
+  sampleEmoji: string;
+}
+
+export const KAI_MULTIVERSE_STYLES: MultiverseStyleDefinition[] = [
+  {
+    id: 'toon',
+    name: 'Caricatura Toon',
+    badge: 'MÁXIMA EXPRESIÓN',
+    icon: '🧸',
+    tagline: 'Ojos gigantes, sonrisa viviente y carisma estilo dibujo animado.',
+    description: 'Transforma cualquier objeto en una mascota amigable con grandes ojos expresivos, boca simpática y contornos entintados vivos.',
+    palette: { primary: '#f59e0b', secondary: '#ef4444', accent: '#3b82f6' },
+    sampleEmoji: '👀✨',
+  },
+  {
+    id: 'clay3d',
+    name: 'Arte 3D / Vinil',
+    badge: 'PIXAR / CLAY',
+    icon: '🔮',
+    tagline: 'Volumen suave 3D, iluminación táctil y acabado coleccionable.',
+    description: 'Convierte el objeto en un tierno juguete 3D de vinilo o plastilina modelada, con luces redondeadas y sombras suaves.',
+    palette: { primary: '#8b5cf6', secondary: '#ec4899', accent: '#06b6d4' },
+    sampleEmoji: '🧸💫',
+  },
+  {
+    id: 'chrome',
+    name: 'Cromo & Mercurio',
+    badge: 'FUTURISTA Y2K',
+    icon: '⚡',
+    tagline: 'Metal líquido pulido, reflejos de titanio y destellos puros.',
+    description: 'Estiliza el objeto en una escultura de cromo líquido futurista, con reflejos de mercurio y destellos especulares brillantes.',
+    palette: { primary: '#00f0ff', secondary: '#38bdf8', accent: '#ffffff' },
+    sampleEmoji: '🪞⚡',
+  },
+  {
+    id: 'papercraft',
+    name: 'Recortes / Papel',
+    badge: 'ARTESANAL 3D',
+    icon: '📄',
+    tagline: 'Capas de papel cortado a mano con relieve y sombras en profundidad.',
+    description: 'Diseño multicapa artesanal con sombras proyectadas realistas, texturas de cartulina y origami tridimensional cálido.',
+    palette: { primary: '#f97316', secondary: '#d97706', accent: '#fef3c7' },
+    sampleEmoji: '✂️🎨',
+  },
+  {
+    id: 'pixel',
+    name: 'Pixel Art 16-bit',
+    badge: 'RETRO GAMER',
+    icon: '👾',
+    tagline: 'Estética arcade nostálgica de Super Nintendo con ojos en bloque.',
+    description: 'Reinterpreta el objeto como un personaje de videojuego clásico retro, con cuadrícula de píxeles nítidos y animación arcade.',
+    palette: { primary: '#10b981', secondary: '#059669', accent: '#6ee7b7' },
+    sampleEmoji: '🕹️👾',
+  },
+];
+
