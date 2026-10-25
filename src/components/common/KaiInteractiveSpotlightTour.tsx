@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Sparkles,
@@ -10,7 +10,9 @@ import {
   PlusCircle,
   CheckCircle2,
   Heart,
-  FileText
+  FileText,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
 import { soundFX } from '../../utils/audio';
 import { triggerShockwave } from '../../utils/celebration';
@@ -25,7 +27,6 @@ interface TourStep {
   title: string;
   instruction: string;
   fallbackIcon: React.ReactNode;
-  positionPreference?: 'top' | 'bottom';
   interactiveAction?: {
     label: string;
     onClick: () => void;
@@ -46,9 +47,8 @@ export const KaiInteractiveSpotlightTour: React.FC = () => {
       badge: 'PASO 1 DE 5 // LEY 21/66',
       title: 'ORBES DE HÁBITOS',
       instruction:
-        'Toca este orbe para registrar tu hábito diario (+1). Mantén tu racha: 21 días para asimilar el hábito y 66 días para maestría permanente.',
-      fallbackIcon: <Target className="w-5 h-5 text-cyan-400" />,
-      positionPreference: 'bottom'
+        'Toca este orbe diario (+1). Mantén tu racha: 21 días para asimilar el hábito y 66 días para maestría permanente.',
+      fallbackIcon: <Target className="w-5 h-5 text-cyan-400" />
     },
     {
       id: 'add-task-btn',
@@ -56,9 +56,8 @@ export const KaiInteractiveSpotlightTour: React.FC = () => {
       badge: 'PASO 2 DE 5 // CREACIÓN',
       title: 'FORJAR NUEVA MISIÓN',
       instruction:
-        'Pulsa este botón "+" para crear tareas o hábitos. Asígnales categoría, dificultad y un bloque horario para ordenar tu día.',
+        'Pulsa este botón "+" para crear tareas o hábitos con categoría y bloques horarios ordenados.',
       fallbackIcon: <PlusCircle className="w-5 h-5 text-amber-400" />,
-      positionPreference: 'bottom',
       interactiveAction: {
         label: '✨ Abrir forjador de tareas',
         onClick: () => {
@@ -73,9 +72,8 @@ export const KaiInteractiveSpotlightTour: React.FC = () => {
       badge: 'PASO 3 DE 5 // COMPLETADO',
       title: 'MARCAR TAREAS',
       instruction:
-        'Marca este recuadro para completar tu misión. Al tacharla cobrarás Monedas de Oro y XP al instante para subir de rango.',
-      fallbackIcon: <CheckCircle2 className="w-5 h-5 text-emerald-400" />,
-      positionPreference: 'bottom'
+        'Marca este recuadro al terminar tu misión para cobrar Monedas de Oro y XP al instante.',
+      fallbackIcon: <CheckCircle2 className="w-5 h-5 text-emerald-400" />
     },
     {
       id: 'task-note-btn',
@@ -83,9 +81,8 @@ export const KaiInteractiveSpotlightTour: React.FC = () => {
       badge: 'PASO 4 DE 5 // BITÁCORA',
       title: 'NOTAS PRIVADAS',
       instruction:
-        'Toca el chip "Nota" para desplegar la bitácora interna de la tarea y registrar ideas, enlaces o reflexiones de trabajo.',
-      fallbackIcon: <FileText className="w-5 h-5 text-purple-400" />,
-      positionPreference: 'top'
+        'Toca el chip "Nota" para desplegar la bitácora de la tarea con ideas o enlaces de trabajo.',
+      fallbackIcon: <FileText className="w-5 h-5 text-purple-400" />
     },
     {
       id: 'hp-bar',
@@ -93,9 +90,8 @@ export const KaiInteractiveSpotlightTour: React.FC = () => {
       badge: 'PASO 5 DE 5 // TELEMETRÍA',
       title: 'ENERGÍA VITAL (HP)',
       instruction:
-        'Esta barra refleja tu salud. Si necesitas recargar, activa "Modo Descanso" en el calendario para protegerla sin ninguna penalización.',
-      fallbackIcon: <Heart className="w-5 h-5 text-rose-400" />,
-      positionPreference: 'bottom'
+        'Esta barra es tu salud. Si necesitas descansar, activa "Modo Descanso" en el calendario para protegerla.',
+      fallbackIcon: <Heart className="w-5 h-5 text-rose-400" />
     }
   ];
 
@@ -117,37 +113,52 @@ export const KaiInteractiveSpotlightTour: React.FC = () => {
     if (el) {
       const rect = el.getBoundingClientRect();
       setTargetRect(rect);
-      // Smooth scroll if element is far off view
-      const isInView =
-        rect.top >= 0 &&
-        rect.bottom <= (window.innerHeight || document.documentElement.clientHeight);
-      if (!isInView) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
     } else {
       setTargetRect(null);
     }
   }, [isTacticalGuideOpen, stepIndex]);
 
+  // When step changes, smooth scroll into view and recalculate
   useEffect(() => {
+    if (!isTacticalGuideOpen) return;
+    const currentStep = steps[stepIndex];
+    if (!currentStep) return;
+
+    const el = document.querySelector(currentStep.targetSelector);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+    }
+
     updateTargetRect();
+    const t1 = setTimeout(updateTargetRect, 80);
+    const t2 = setTimeout(updateTargetRect, 220);
+    const t3 = setTimeout(updateTargetRect, 450);
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
+  }, [isTacticalGuideOpen, stepIndex, updateTargetRect]);
+
+  // Global window listeners for resize & scroll
+  useEffect(() => {
+    if (!isTacticalGuideOpen) return;
     const handleRecalc = () => updateTargetRect();
     window.addEventListener('resize', handleRecalc);
     window.addEventListener('scroll', handleRecalc, true);
 
-    // Timeout to allow dynamic DOM rendering
-    const timer = setTimeout(updateTargetRect, 100);
-
     return () => {
       window.removeEventListener('resize', handleRecalc);
       window.removeEventListener('scroll', handleRecalc, true);
-      clearTimeout(timer);
     };
-  }, [updateTargetRect, stepIndex]);
+  }, [isTacticalGuideOpen, updateTargetRect]);
 
   if (!isTacticalGuideOpen) return null;
 
   const currentStep = steps[stepIndex];
+  const padding = 8;
+  const hasTarget = Boolean(targetRect && targetRect.width > 0 && targetRect.height > 0);
 
   const handleNext = () => {
     soundFX.playClick();
@@ -194,52 +205,45 @@ export const KaiInteractiveSpotlightTour: React.FC = () => {
     closeTacticalGuide();
   };
 
-  // Compute spotlight cutout style
-  const padding = 8;
-  const hasTarget = Boolean(targetRect && targetRect.width > 0 && targetRect.height > 0);
+  // Determine if the target is in the upper half of screen
+  const isTargetInTopHalf = hasTarget && targetRect
+    ? (targetRect.top + targetRect.height / 2) < (typeof window !== 'undefined' ? window.innerHeight / 2 : 400)
+    : true;
 
-  // Position tooltip relative to target rect
+  // Safe Responsive Placement:
+  // If target is in top half (habit orbs, hp bar), place card at BOTTOM.
+  // If target is in bottom half (task cards, notes), place card at TOP.
+  // Left and right are clamped between 12px with max-width 400px so it NEVER overflows.
   const getTooltipStyle = (): React.CSSProperties => {
-    if (!hasTarget || !targetRect) {
+    if (isTargetInTopHalf) {
       return {
         position: 'fixed',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: '90%',
-        maxWidth: '420px',
+        bottom: 'calc(env(safe-area-inset-bottom, 0px) + 20px)',
+        left: '12px',
+        right: '12px',
+        margin: '0 auto',
+        maxWidth: '400px',
+        zIndex: 60
+      };
+    } else {
+      return {
+        position: 'fixed',
+        top: 'calc(env(safe-area-inset-top, 0px) + 20px)',
+        left: '12px',
+        right: '12px',
+        margin: '0 auto',
+        maxWidth: '400px',
         zIndex: 60
       };
     }
-
-    const spaceBelow = window.innerHeight - targetRect.bottom;
-    const isPreferTop = currentStep.positionPreference === 'top' || spaceBelow < 220;
-
-    const top = isPreferTop
-      ? Math.max(16, targetRect.top - 200)
-      : Math.min(window.innerHeight - 230, targetRect.bottom + 16);
-
-    const left = Math.max(
-      16,
-      Math.min(window.innerWidth - 380, targetRect.left + targetRect.width / 2 - 180)
-    );
-
-    return {
-      position: 'fixed',
-      top: `${top}px`,
-      left: `${left}px`,
-      width: 'calc(100% - 32px)',
-      maxWidth: '380px',
-      zIndex: 60
-    };
   };
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden pointer-events-auto">
-      {/* ── 1. SPOTLIGHT HOLE CUTOUT ── */}
+      {/* ── 1. SPOTLIGHT HOLE CUTOUT (Foco de Luz con Halo de Neón) ── */}
       {hasTarget && targetRect && (
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
+          initial={{ opacity: 0, scale: 0.85 }}
           animate={{
             opacity: 1,
             scale: 1,
@@ -248,21 +252,21 @@ export const KaiInteractiveSpotlightTour: React.FC = () => {
             width: targetRect.width + padding * 2,
             height: targetRect.height + padding * 2
           }}
-          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+          transition={{ type: 'spring', damping: 28, stiffness: 320 }}
           style={{
             position: 'fixed',
-            boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.85)',
+            boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.84)',
             pointerEvents: 'none',
             zIndex: 51
           }}
-          className="rounded-2xl border-2 border-cyan-400 ring-4 ring-cyan-500/40 shadow-[0_0_25px_rgba(0,240,255,0.8)]"
+          className="rounded-2xl border-2 border-cyan-400 ring-4 ring-cyan-500/40 shadow-[0_0_25px_rgba(0,240,255,0.85)]"
         >
-          {/* Animated pulsing neon halo */}
-          <span className="absolute -inset-1 rounded-2xl bg-cyan-400/20 animate-ping pointer-events-none" />
+          {/* Animated pulsing beacon halo */}
+          <span className="absolute -inset-1.5 rounded-2xl bg-cyan-400/25 animate-ping pointer-events-none" />
         </motion.div>
       )}
 
-      {/* Fallback backdrop when target is not yet found on DOM */}
+      {/* Fallback backdrop when target is not yet located on DOM */}
       {!hasTarget && (
         <div
           className="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 pointer-events-auto"
@@ -270,16 +274,33 @@ export const KaiInteractiveSpotlightTour: React.FC = () => {
         />
       )}
 
-      {/* ── 2. TACTICAL TOOLTIP SPEECH BUBBLE ── */}
+      {/* ── 2. TACTICAL TOOLTIP SPEECH BUBBLE (Anti-Desbordamiento Total) ── */}
       <motion.div
         key={currentStep.id}
-        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+        initial={{ opacity: 0, y: isTargetInTopHalf ? 15 : -15, scale: 0.96 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: -10, scale: 0.95 }}
-        transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+        exit={{ opacity: 0, scale: 0.96 }}
+        transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
         style={getTooltipStyle()}
-        className="scifi-glass-modal rounded-2xl p-4 border border-cyan-500/60 shadow-[0_0_35px_rgba(0,240,255,0.3)] text-white space-y-3 pointer-events-auto"
+        className="scifi-glass-modal rounded-2xl p-3.5 sm:p-4 border border-cyan-500/60 shadow-[0_0_35px_rgba(0,240,255,0.35)] text-white space-y-2.5 pointer-events-auto"
       >
+        {/* Directional Beacon Pointer */}
+        {hasTarget && (
+          <div className="flex items-center justify-center -mt-1 text-cyan-400">
+            {isTargetInTopHalf ? (
+              <div className="flex items-center gap-1 text-[10px] font-mono font-bold uppercase tracking-wider text-cyan-300">
+                <ArrowUp className="w-3.5 h-3.5 animate-bounce text-cyan-400" />
+                <span>Elemento resaltado arriba</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1 text-[10px] font-mono font-bold uppercase tracking-wider text-cyan-300">
+                <ArrowDown className="w-3.5 h-3.5 animate-bounce text-cyan-400" />
+                <span>Elemento resaltado abajo</span>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Header: KAI Badge + Step Counter + Close */}
         <div className="flex items-center justify-between gap-2 border-b border-cyan-500/30 pb-2">
           <div className="flex items-center gap-1.5 min-w-0">
@@ -299,13 +320,13 @@ export const KaiInteractiveSpotlightTour: React.FC = () => {
           </button>
         </div>
 
-        {/* Title & Micro-Instruction */}
+        {/* Title & Concise Instruction */}
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <span className="p-1 rounded-lg bg-cyan-950/80 border border-cyan-400/50 shrink-0">
               {currentStep.fallbackIcon}
             </span>
-            <h4 className="text-sm font-anton uppercase tracking-wide text-white">
+            <h4 className="text-xs sm:text-sm font-anton uppercase tracking-wide text-white leading-tight">
               {currentStep.title}
             </h4>
           </div>
@@ -314,7 +335,7 @@ export const KaiInteractiveSpotlightTour: React.FC = () => {
           </p>
         </div>
 
-        {/* Interactive Action Button (e.g., Open Task Form on Step 2) */}
+        {/* Interactive Action Button (Step 2: Forjador de tareas) */}
         {currentStep.interactiveAction && (
           <button
             type="button"

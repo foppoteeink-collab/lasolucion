@@ -671,11 +671,11 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
           return (
             <div
               key={qh.id ? `qh-orb-${qh.id}-${idx}` : `qh-orb-${idx}`}
-              {...(idx === 0 ? { 'data-tour': 'habit-orb' } : {})}
               className="flex flex-col items-center w-14 shrink-0 select-none group"
             >
               {/* Círculo Principal de 48x48 con Anillo SVG Fino y Emoji */}
               <div
+                {...(idx === 0 ? { 'data-tour': 'habit-orb' } : {})}
                 onClick={(e) => {
                   if (isLocked) return;
 
