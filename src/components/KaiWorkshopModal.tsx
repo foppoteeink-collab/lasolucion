@@ -654,7 +654,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                         )}
                         <div className="space-y-1">
                           <div className="flex items-center gap-1.5">
-                            <span className="text-xl">{style.badge}</span>
+                            <span className="text-xl">{style.icon}</span>
                             <span className={`text-[8px] font-mono font-bold uppercase px-1.5 py-0.5 rounded ${
                               isSelected ? 'bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/40' : 'bg-white/5 text-slate-400'
                             }`}>
@@ -673,7 +673,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                             {isSelected ? '✓ Activo' : 'Elegir'}
                           </span>
                           <div className="flex -space-x-1">
-                            {style.palette.slice(0, 3).map((col, i) => (
+                            {[style.palette.primary, style.palette.secondary, style.palette.accent].map((col, i) => (
                               <span
                                 key={i}
                                 className="w-2.5 h-2.5 rounded-full border border-black/40"
@@ -892,7 +892,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                         )}
                         {forgedResult.artStyle && (
                           <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-fuchsia-950/80 border border-fuchsia-400/50 text-[10px] font-mono text-fuchsia-200 font-bold shadow-[0_0_10px_rgba(217,70,239,0.2)]">
-                            <span>{KAI_MULTIVERSE_STYLES.find(s => s.id === forgedResult.artStyle)?.badge || '🎨'}</span>
+                            <span>{KAI_MULTIVERSE_STYLES.find(s => s.id === forgedResult.artStyle)?.icon || '🎨'}</span>
                             <span className="uppercase">{forgedResult.artStyle}</span>
                           </div>
                         )}
@@ -926,7 +926,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                         )}
                         {stats.kaiCustomForm.artStyle && (
                           <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-purple-950/80 border border-purple-400/50 text-[10px] font-mono text-purple-200 font-bold">
-                            <span>{KAI_MULTIVERSE_STYLES.find(s => s.id === stats.kaiCustomForm.artStyle)?.badge || '🎨'}</span>
+                            <span>{KAI_MULTIVERSE_STYLES.find(s => s.id === stats.kaiCustomForm.artStyle)?.icon || '🎨'}</span>
                             <span className="uppercase">{stats.kaiCustomForm.artStyle}</span>
                           </div>
                         )}
