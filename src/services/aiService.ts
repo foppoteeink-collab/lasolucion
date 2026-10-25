@@ -392,13 +392,14 @@ CANON ESTÉTICO OFICIAL DE KAI:
    - Facetas sombreadas ('polygons') para dar profundidad de cristal ahumado.
    - La base inferior de la figura converge de forma armónica hacia la elipse de levitación de la app (alrededor de y: 120 a 140 en el centro x: 80).
 
-2. SIMILITUD VISUAL INMEDIATA (LIKENESS):
-   - El compañero KAI debe ser inmediatamente reconocible como el objeto o sujeto fotografiado, pero transformado en un tótem cibernético legendario.
-   - Si son GAFAS DE SOL: Dos lentes poligonales simétricos, puente central sólido, patillas estilizadas y visera superior.
-   - Si es un ENCENDEDOR: Cuerpo rectangular facetado, chimenea perforada, rueda de chispa y llama de plasma neón en la cúspide.
+2. SIMILITUD VISUAL INMEDIATA (LIKENESS) & PROHIBICIÓN DE RECTÁNGULOS PLANOS:
+   - PROHIBIDO DIBUJAR CAJAS O RECTÁNGULOS VACÍOS: Aunque el objeto fotografiado sea intrínsecamente rectangular (un mechero, un móvil, un libro, una tarjeta o una caja), NUNCA dibujes un simple rectángulo ni una pantalla vacía.
+   - Si es un ENCENDEDOR: Cuerpo facetado en 3D con chaflanes, chimenea perforada con ranuras, rueda de chispa y una LLAMA DE PLASMA NEÓN ascendente en la cúspide con ojo de fuego.
+   - Si es un MÓVIL / GADGET / OBJETO RECTANGULAR: Transfórmalo en un MONOLITO CIBERNÉTICO con chaflanes angulares en las esquinas, facetas triangulares en el pecho, cámara ocular en diamante en { cx: 80, cy: 85 } y quilla inferior hacia el pedestal.
+   - Si son GAFAS DE SOL: Dos lentes poligonales simétricos con ojos brillantes en su interior, puente central y patillas estilizadas.
    - Si son AUDÍFONOS: Diadema exterior e interior en arco superior y copas auriculares hexagonales simétricas en los laterales.
    - Si es un ANIMAL / MASCOTA: Orejas anatómicas poligonales, pómulos facetados, hocico simétrico y ojos rasgados o almendrados con personalidad felina, canina o lupina.
-   - Si es otro objeto (reloj, taza, pesa, etc.): Reproduce sus componentes más icónicos con geometría angular pura.
+   - Si es otro objeto (reloj, taza, pesa, etc.): Reproduce sus componentes más icónicos con geometría angular pura y ojo/núcleo integrado.
 
 3. OJOS VIVOS CON ANATOMÍA PROPIA:
    - Los ojos deben tener personalidad anatómica: ojos rasgados almendrados para felinos/lobos, ojos nobles con destello para caninos, o un núcleo de sensor de energía en { "cx": 80, "cy": 85, "r": 8 }.

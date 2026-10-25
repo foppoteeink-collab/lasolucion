@@ -702,6 +702,36 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                       placeholder="Ej. Mis auriculares Sony de estudio, mi encendedor Zippo..."
                       className="w-full px-3 py-2 rounded-xl bg-black/60 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-fuchsia-400"
                     />
+
+                    {/* Chips de Selección Rápida de Objeto */}
+                    <div className="flex flex-wrap gap-1.5 pt-1.5">
+                      <span className="text-[10px] text-slate-400 w-full font-mono">
+                        Sugerencias rápidas (toca una si deseas guiar a la IA):
+                      </span>
+                      {[
+                        { label: '🔥 Encendedor', value: 'Encendedor Zippo' },
+                        { label: '🕶️ Gafas de Sol', value: 'Gafas de Sol Solaris' },
+                        { label: '🎧 Audífonos', value: 'Audífonos de Diadema' },
+                        { label: '⌚ Reloj', value: 'Reloj Cronómetro' },
+                        { label: '📱 Móvil / Gadget', value: 'Monolito Gadget' },
+                        { label: '☕ Taza / Vaso', value: 'Taza de Café' },
+                        { label: '🏋️ Mancuerna', value: 'Mancuerna Gym' },
+                        { label: '🐺 Mascota', value: 'Mascota Cyber' },
+                      ].map((chip) => (
+                        <button
+                          key={chip.label}
+                          type="button"
+                          onClick={() => setForgePrompt(chip.value)}
+                          className={`px-2 py-0.5 rounded-lg text-[10px] font-mono transition-all cursor-pointer border ${
+                            forgePrompt === chip.value
+                              ? 'bg-fuchsia-600 text-white border-fuchsia-400 shadow-[0_0_10px_rgba(217,70,239,0.5)]'
+                              : 'bg-white/5 hover:bg-white/10 text-slate-300 border-white/10'
+                          }`}
+                        >
+                          {chip.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   {forgeError && (

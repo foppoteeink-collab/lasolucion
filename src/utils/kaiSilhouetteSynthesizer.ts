@@ -154,50 +154,29 @@ function analyzePixelMatrix(data: Uint8ClampedArray, dim: number): ImageSampleAn
       const b = data[idx + 2];
       const a = data[idx + 3];
 
-      hash = (hash << 3) ^ (r + g * 3 + b * 7);
-      const lum = 0.299 * r + 0.587 * g + 0.114 * b;
-      totalLum += lum;
-
-      let isForeground = false;
+      let isFg = false;
       if (isTransparentBg) {
-        isForeground = a > 140;
+        isFg = a > 140;
       } else {
-        const colorDist = Math.hypot(r - bgR, g - bgG, b - bgB);
-        isForeground = colorDist > 28;
+        const colorDist = Math.abs(r - bgR) + Math.abs(g - bgG) + Math.abs(b - bgB);
+        isFg = colorDist > 45 || Math.abs(a - bgA) > 60;
       }
 
-      if (isForeground) {
+      if (isFg) {
         mask[y][x] = true;
         totalForeground++;
+        totalLum += (r * 0.299 + g * 0.587 + b * 0.114);
         if (x < minX) minX = x;
         if (x > maxX) maxX = x;
         if (y < minY) minY = y;
         if (y > maxY) maxY = y;
+        hash = (hash << 3) ^ (r + (g << 2) + (b << 4));
       }
     }
   }
 
   if (totalForeground < 25) {
-    const avgLum = totalLum / (dim * dim);
-    for (let y = 0; y < dim; y++) {
-      for (let x = 0; x < dim; x++) {
-        const idx = (y * dim + x) * 4;
-        const lum = 0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2];
-        if (Math.abs(lum - avgLum) > 22) {
-          mask[y][x] = true;
-          totalForeground++;
-          if (x < minX) minX = x;
-          if (x > maxX) maxX = x;
-          if (y < minY) minY = y;
-          if (y > maxY) maxY = y;
-        }
-      }
-    }
-  }
-
-  if (totalForeground === 0 || minX > maxX || minY > maxY) {
-    minX = 6; maxX = dim - 7; minY = 6; maxY = dim - 7;
-    totalForeground = (maxX - minX) * (maxY - minY);
+    return analyzeBase64Bytes('fallback-empty');
   }
 
   const objW = Math.max(1, maxX - minX + 1);
@@ -206,47 +185,42 @@ function analyzePixelMatrix(data: Uint8ClampedArray, dim: number): ImageSampleAn
 
   const halfWidths: number[] = [];
   const centerOffsets: number[] = [];
-  let maxHalfWidth = 1;
+  const sliceH = Math.max(1, Math.floor(objH / 10));
 
-  for (let slice = 0; slice < 10; slice++) {
-    const sampleY = Math.min(dim - 1, Math.max(0, Math.round(minY + (slice / 9) * (objH - 1))));
-    let sliceLeft = -1;
-    let sliceRight = -1;
+  for (let s = 0; s < 10; s++) {
+    const startY = minY + s * sliceH;
+    const endY = Math.min(maxY, startY + sliceH);
+    let sMinX = dim, sMaxX = 0, hasPix = false;
 
-    for (let x = 0; x < dim; x++) {
-      if (mask[sampleY][x]) {
-        if (sliceLeft === -1) sliceLeft = x;
-        sliceRight = x;
+    for (let y = startY; y < endY; y++) {
+      for (let x = minX; x <= maxX; x++) {
+        if (mask[y][x]) {
+          hasPix = true;
+          if (x < sMinX) sMinX = x;
+          if (x > sMaxX) sMaxX = x;
+        }
       }
     }
 
-    if (sliceLeft === -1 || sliceRight === -1) {
-      const fallbackHW = Math.sin(((slice + 1) / 11) * Math.PI) * (objW / 2);
-      halfWidths.push(Math.max(2, fallbackHW));
-      centerOffsets.push(0);
+    if (hasPix) {
+      const w = (sMaxX - sMinX + 1) / objW;
+      halfWidths.push(Math.max(0.2, Math.min(1.0, w)));
+      const mid = (sMinX + sMaxX) / 2;
+      const center = (mid - (minX + objW / 2)) / (objW / 2);
+      centerOffsets.push(center);
     } else {
-      const hw = Math.max(1.5, (sliceRight - sliceLeft + 1) / 2);
-      const mid = (sliceLeft + sliceRight) / 2;
-      const centerShift = (mid - (minX + objW / 2)) / (objW / 2 || 1);
-      halfWidths.push(hw);
-      centerOffsets.push(Math.max(-1, Math.min(1, centerShift)));
-      if (hw > maxHalfWidth) maxHalfWidth = hw;
+      halfWidths.push(halfWidths.length > 0 ? halfWidths[halfWidths.length - 1] * 0.8 : 0.4);
+      centerOffsets.push(0);
     }
   }
 
-  const normalizedHW = halfWidths.map((hw) => Math.max(0.12, hw / maxHalfWidth));
+  const maxHW = Math.max(...halfWidths);
+  const normalizedHW = halfWidths.map(h => h / (maxHW || 1));
 
-  const topY = Math.min(dim - 1, minY);
-  let topTransitions = 0;
-  for (let x = 1; x < dim; x++) {
-    if (mask[topY][x] !== mask[topY][x - 1]) topTransitions++;
-  }
-  const isDualPeaked = topTransitions >= 3 || (normalizedHW[0] > 0.4 && normalizedHW[1] < normalizedHW[0]);
-  const midHW = (normalizedHW[4] + normalizedHW[5]) / 2;
-  const isConvex = midHW > normalizedHW[0] * 1.3 && midHW > normalizedHW[9] * 1.3;
-  const isSlender = aspectRatio < 0.65;
-  const waistHW = (normalizedHW[4] + normalizedHW[5]) / 2;
-  const isHourglass = waistHW < normalizedHW[2] * 0.85 && waistHW < normalizedHW[8] * 0.85;
+  const isDualPeaked = normalizedHW[0] > 0.6 && normalizedHW[2] < 0.65 && normalizedHW[5] > 0.7;
+  const isConvex = normalizedHW[4] > normalizedHW[0] * 1.3 && normalizedHW[4] > normalizedHW[9] * 1.3;
+  const isSlender = aspectRatio < 0.75;
+  const isHourglass = normalizedHW[4] < normalizedHW[1] * 0.75 && normalizedHW[4] < normalizedHW[8] * 0.75;
   const isWide = aspectRatio > 1.3;
 
   return {
@@ -272,44 +246,51 @@ function analyzePixelMatrix(data: Uint8ClampedArray, dim: number): ImageSampleAn
 function identifyObjectCategory(
   prompt: string,
   analysis: ImageSampleAnalysis
-): { category: 'sunglasses' | 'lighter' | 'headphones' | 'watch' | 'mug' | 'dumbbell' | 'apple' | 'phone' | 'bespoke'; label: string } {
+): { category: 'sunglasses' | 'lighter' | 'headphones' | 'watch' | 'mug' | 'dumbbell' | 'apple' | 'monolith' | 'animal' | 'bespoke'; label: string } {
   const p = prompt.toLowerCase();
 
   // 1. Coincidencia por texto / prompt del usuario
-  if (p.includes('gafa') || p.includes('lente') || p.includes('anteojo') || p.includes('sunglass') || p.includes('visor') || p.includes('rayban')) {
+  if (p.includes('gafa') || p.includes('lente') || p.includes('anteojo') || p.includes('sunglass') || p.includes('visor') || p.includes('rayban') || p.includes('polarizado')) {
     return { category: 'sunglasses', label: 'Gafas de Sol' };
   }
-  if (p.includes('encendedor') || p.includes('mechero') || p.includes('zippo') || p.includes('lighter') || p.includes('fuego') || p.includes('bic') || p.includes('chispa')) {
+  if (p.includes('encendedor') || p.includes('mechero') || p.includes('zippo') || p.includes('lighter') || p.includes('fuego') || p.includes('bic') || p.includes('chispa') || p.includes('clipper') || p.includes('gas')) {
     return { category: 'lighter', label: 'Encendedor' };
   }
-  if (p.includes('audifono') || p.includes('audífono') || p.includes('auricular') || p.includes('headphone') || p.includes('headset') || p.includes('sony') || p.includes('airpod') || p.includes('diadema')) {
+  if (p.includes('audifono') || p.includes('audífono') || p.includes('auricular') || p.includes('headphone') || p.includes('headset') || p.includes('sony') || p.includes('airpod') || p.includes('diadema') || p.includes('bose')) {
     return { category: 'headphones', label: 'Audífonos' };
   }
-  if (p.includes('reloj') || p.includes('watch') || p.includes('smartwatch') || p.includes('cronometro') || p.includes('cronómetro') || p.includes('rolex')) {
+  if (p.includes('reloj') || p.includes('watch') || p.includes('smartwatch') || p.includes('cronometro') || p.includes('cronómetro') || p.includes('rolex') || p.includes('casio')) {
     return { category: 'watch', label: 'Reloj' };
   }
-  if (p.includes('taza') || p.includes('cafe') || p.includes('café') || p.includes('vaso') || p.includes('termo') || p.includes('mug') || p.includes('cup') || p.includes('starbucks')) {
+  if (p.includes('taza') || p.includes('cafe') || p.includes('café') || p.includes('vaso') || p.includes('termo') || p.includes('mug') || p.includes('cup') || p.includes('starbucks') || p.includes('pocillo')) {
     return { category: 'mug', label: 'Taza de Café' };
   }
-  if (p.includes('pesa') || p.includes('mancuerna') || p.includes('dumbbell') || p.includes('gym') || p.includes('barra') || p.includes('disco')) {
+  if (p.includes('pesa') || p.includes('mancuerna') || p.includes('dumbbell') || p.includes('gym') || p.includes('barra') || p.includes('disco') || p.includes('fitness')) {
     return { category: 'dumbbell', label: 'Pesa / Mancuerna' };
+  }
+  if (p.includes('perro') || p.includes('gato') || p.includes('dog') || p.includes('cat') || p.includes('mascota') || p.includes('lobo') || p.includes('wolf') || p.includes('pantera') || p.includes('tigre') || p.includes('loro') || p.includes('ave') || p.includes('conejo')) {
+    return { category: 'animal', label: 'Mascota Cyber' };
+  }
+  if (p.includes('celular') || p.includes('telefono') || p.includes('teléfono') || p.includes('smartphone') || p.includes('iphone') || p.includes('pantalla') || p.includes('movil') || p.includes('móvil') || p.includes('monolito') || p.includes('caja') || p.includes('bateria') || p.includes('powerbank') || p.includes('tarjeta') || p.includes('rectangulo') || p.includes('rectángulo')) {
+    return { category: 'monolith', label: 'Monolito Cibernético' };
   }
   if (p.includes('manzana') || p.includes('fruta') || p.includes('apple') || p.includes('fruto')) {
     return { category: 'apple', label: 'Manzana' };
-  }
-  if (p.includes('celular') || p.includes('telefono') || p.includes('teléfono') || p.includes('smartphone') || p.includes('iphone') || p.includes('pantalla')) {
-    return { category: 'phone', label: 'Smartphone' };
   }
 
   // 2. Coincidencia por morfología visual (si el prompt está vacío)
   if (analysis.isWide && analysis.isDualPeaked) {
     return { category: 'headphones', label: 'Audífonos' };
   }
-  if (analysis.isWide && analysis.aspectRatio > 1.45) {
+  if (analysis.isWide && analysis.aspectRatio > 1.35) {
     return { category: 'sunglasses', label: 'Gafas de Sol' };
   }
+  // Si es esbelto o rectangular vertical: encendedor o monolito
   if (analysis.isSlender && analysis.aspectRatio < 0.65) {
     return { category: 'lighter', label: 'Encendedor' };
+  }
+  if (analysis.aspectRatio >= 0.55 && analysis.aspectRatio <= 0.85) {
+    return { category: 'monolith', label: 'Monolito Cibernético' };
   }
   if (analysis.isHourglass) {
     return { category: 'dumbbell', label: 'Pesa / Mancuerna' };
@@ -323,213 +304,298 @@ function identifyObjectCategory(
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════
- * GENERADORES ICONOGRÁFICOS ESPECIALIZADOS (ESTILO KAI: LÍNEAS NEÓN + OJO SAGRADO)
+ * GENERADORES ICONOGRÁFICOS CYBER-ORIGAMI (CANON ESTRICTO KAI)
+ * NUNCA DIBUJAN CAJAS VACÍAS NI RECTÁNGULOS PLANOS:
+ * SIEMPRE FACETAS TRIANGULARES 3D, BISELES ANGULARES Y OJO SAGRADO INTEGRADO.
  * ══════════════════════════════════════════════════════════════════════════════
  */
 
-// 🕶️ GAFAS DE SOL / VISOR SOLARIS
-function buildSunglassesKai(): { lines: Array<{ x1: number; y1: number; x2: number; y2: number }>; polygons: Array<{ points: string }> } {
-  return {
-    lines: [
-      // Barra superior del marco
-      { x1: 34, y1: 68, x2: 126, y2: 68 },
-      // Lente Izquierdo (Marco exterior)
-      { x1: 34, y1: 68, x2: 38, y2: 104 },
-      { x1: 38, y1: 104, x2: 66, y2: 108 },
-      { x1: 66, y1: 108, x2: 74, y2: 90 },
-      { x1: 74, y1: 90, x2: 74, y2: 68 },
-      // Lente Derecho (Marco exterior)
-      { x1: 126, y1: 68, x2: 122, y2: 104 },
-      { x1: 122, y1: 104, x2: 94, y2: 108 },
-      { x1: 94, y1: 108, x2: 86, y2: 90 },
-      { x1: 86, y1: 90, x2: 86, y2: 68 },
-      // Puente central sobre el ojo de KAI (80, 85)
-      { x1: 74, y1: 76, x2: 86, y2: 76 },
-      { x1: 74, y1: 90, x2: 86, y2: 90 },
-      // Facetas internas del lente izquierdo
-      { x1: 42, y1: 74, x2: 44, y2: 98 },
-      { x1: 44, y1: 98, x2: 64, y2: 102 },
-      { x1: 64, y1: 102, x2: 70, y2: 88 },
-      { x1: 70, y1: 88, x2: 70, y2: 74 },
-      { x1: 42, y1: 74, x2: 70, y2: 74 },
-      // Facetas internas del lente derecho
-      { x1: 118, y1: 74, x2: 116, y2: 98 },
-      { x1: 116, y1: 98, x2: 96, y2: 102 },
-      { x1: 96, y1: 102, x2: 90, y2: 88 },
-      { x1: 90, y1: 88, x2: 90, y2: 74 },
-      { x1: 118, y1: 74, x2: 90, y2: 74 },
-      // Patillas laterales plegadas estilo cyberpunk
-      { x1: 34, y1: 68, x2: 22, y2: 112 },
-      { x1: 22, y1: 112, x2: 24, y2: 128 },
-      { x1: 126, y1: 68, x2: 138, y2: 112 },
-      { x1: 138, y1: 112, x2: 136, y2: 128 },
-      // Visera / Ceja superior poligonal
-      { x1: 52, y1: 52, x2: 80, y2: 42 },
-      { x1: 80, y1: 42, x2: 108, y2: 52 },
-      { x1: 52, y1: 52, x2: 34, y2: 68 },
-      { x1: 108, y1: 52, x2: 126, y2: 68 },
-      // Conexión del puente al ojo central
-      { x1: 80, y1: 42, x2: 80, y2: 68 },
-      { x1: 80, y1: 90, x2: 80, y2: 114 },
-    ],
-    polygons: [
-      { points: '34,68 38,104 66,108 74,90 74,68' },
-      { points: '126,68 122,104 94,108 86,90 86,68' },
-      { points: '52,52 80,42 108,52 80,68' },
-    ],
-  };
-}
-
-// ⚡ ENCENDEDOR / KAI IGNIS MONOLITO
+// ⚡ 1. ENCENDEDOR // KAI IGNIS MONOLITO
 function buildLighterKai(): { lines: Array<{ x1: number; y1: number; x2: number; y2: number }>; polygons: Array<{ points: string }> } {
   return {
     lines: [
-      // Base biselada del encendedor
-      { x1: 54, y1: 138, x2: 106, y2: 138 },
-      { x1: 54, y1: 138, x2: 46, y2: 130 },
-      { x1: 106, y1: 138, x2: 114, y2: 130 },
-      // Laterales del chasis
-      { x1: 46, y1: 130, x2: 46, y2: 74 },
-      { x1: 114, y1: 130, x2: 114, y2: 74 },
-      // Ranura horizontal de la tapa abatible
+      // Base y pedestal biselado inferior
+      { x1: 56, y1: 136, x2: 104, y2: 136 },
+      { x1: 56, y1: 136, x2: 46, y2: 126 },
+      { x1: 104, y1: 136, x2: 114, y2: 126 },
+      // Laterales de armadura
+      { x1: 46, y1: 126, x2: 46, y2: 74 },
+      { x1: 114, y1: 126, x2: 114, y2: 74 },
+
+      // Costura biselada de la tapa abatible
       { x1: 46, y1: 74, x2: 114, y2: 74 },
+      { x1: 46, y1: 74, x2: 50, y2: 44 },
+      { x1: 114, y1: 74, x2: 110, y2: 44 },
+      { x1: 50, y1: 44, x2: 80, y2: 38 },
+      { x1: 110, y1: 44, x2: 80, y2: 38 },
+
       // Chimenea / Cortavientos perforado metálico
-      { x1: 58, y1: 52, x2: 102, y2: 52 },
-      { x1: 58, y1: 74, x2: 58, y2: 52 },
-      { x1: 102, y1: 74, x2: 102, y2: 52 },
-      // Perforaciones de aire en la chimenea
-      { x1: 66, y1: 64, x2: 72, y2: 64 },
-      { x1: 88, y1: 64, x2: 94, y2: 64 },
-      // Rueda de chispa / estrías en los hombros
-      { x1: 46, y1: 74, x2: 36, y2: 58 },
-      { x1: 36, y1: 58, x2: 44, y2: 48 },
-      { x1: 44, y1: 48, x2: 58, y2: 52 },
-      { x1: 114, y1: 74, x2: 124, y2: 58 },
-      { x1: 124, y1: 58, x2: 116, y2: 48 },
-      { x1: 116, y1: 48, x2: 102, y2: 52 },
-      // Llama de plasma geométrica superior
-      { x1: 80, y1: 20, x2: 68, y2: 40 },
-      { x1: 80, y1: 20, x2: 92, y2: 40 },
-      { x1: 68, y1: 40, x2: 74, y2: 52 },
-      { x1: 92, y1: 40, x2: 86, y2: 52 },
-      // Núcleo interno de la llama
-      { x1: 80, y1: 28, x2: 74, y2: 42 },
-      { x1: 80, y1: 28, x2: 86, y2: 42 },
-      { x1: 74, y1: 42, x2: 80, y2: 48 },
-      { x1: 86, y1: 42, x2: 80, y2: 48 },
-      // Refuerzos de facetado en el cuerpo alrededor del ojo
-      { x1: 46, y1: 98, x2: 64, y2: 98 },
-      { x1: 114, y1: 98, x2: 96, y2: 98 },
-      { x1: 64, y1: 98, x2: 80, y2: 120 },
-      { x1: 96, y1: 98, x2: 80, y2: 120 },
-      { x1: 80, y1: 120, x2: 80, y2: 138 },
-      // Canales de anclaje ocular
-      { x1: 46, y1: 74, x2: 62, y2: 85 },
-      { x1: 114, y1: 74, x2: 98, y2: 85 },
+      { x1: 62, y1: 44, x2: 98, y2: 44 },
+      { x1: 62, y1: 74, x2: 62, y2: 44 },
+      { x1: 98, y1: 74, x2: 98, y2: 44 },
+      // Ranuras de ventilación
+      { x1: 68, y1: 58, x2: 74, y2: 58 },
+      { x1: 86, y1: 58, x2: 92, y2: 58 },
+
+      // Rueda de chispa facetada
+      { x1: 46, y1: 74, x2: 38, y2: 62 },
+      { x1: 38, y1: 62, x2: 46, y2: 52 },
+      { x1: 46, y1: 52, x2: 62, y2: 56 },
+      { x1: 114, y1: 74, x2: 122, y2: 62 },
+      { x1: 122, y1: 62, x2: 114, y2: 52 },
+      { x1: 114, y1: 52, x2: 98, y2: 56 },
+
+      // LLAMA DE PLASMA EN APEX SUPERIOR
+      { x1: 80, y1: 14, x2: 68, y2: 32 },
+      { x1: 80, y1: 14, x2: 92, y2: 32 },
+      { x1: 68, y1: 32, x2: 74, y2: 44 },
+      { x1: 92, y1: 32, x2: 86, y2: 44 },
+      { x1: 80, y1: 22, x2: 74, y2: 34 },
+      { x1: 80, y1: 22, x2: 86, y2: 34 },
+      { x1: 74, y1: 34, x2: 80, y2: 40 },
+      { x1: 86, y1: 34, x2: 80, y2: 40 },
+
+      // Facetas 3D en espina de pez alrededor del Ojo Central (80, 85)
+      { x1: 80, y1: 74, x2: 62, y2: 88 },
+      { x1: 80, y1: 74, x2: 98, y2: 88 },
+      { x1: 62, y1: 88, x2: 80, y2: 104 },
+      { x1: 98, y1: 88, x2: 80, y2: 104 },
+      { x1: 46, y1: 96, x2: 62, y2: 88 },
+      { x1: 114, y1: 96, x2: 98, y2: 88 },
+      { x1: 46, y1: 96, x2: 64, y2: 116 },
+      { x1: 114, y1: 96, x2: 96, y2: 116 },
+      { x1: 80, y1: 104, x2: 80, y2: 126 },
+      { x1: 64, y1: 116, x2: 80, y2: 126 },
+      { x1: 96, y1: 116, x2: 80, y2: 126 },
+      { x1: 80, y1: 126, x2: 80, y2: 136 },
     ],
     polygons: [
-      { points: '80,20 68,40 74,52 86,52 92,40' },
-      { points: '58,52 102,52 102,74 58,74' },
-      { points: '46,74 114,74 106,138 54,138' },
+      { points: '80,14 68,32 74,44 86,44 92,32' },
+      { points: '50,44 80,38 110,44 114,74 46,74' },
+      { points: '80,74 62,88 80,104 98,88' },
+      { points: '46,74 62,88 46,96' },
+      { points: '114,74 98,88 114,96' },
+      { points: '56,136 104,136 114,126 46,126' },
     ],
   };
 }
 
-// 🎧 AUDÍFONOS / KAI SÓNICO VÓRTICE
+// 📱 2. MONOLITO CIBERNÉTICO // KAI AETHER-BLOCK (Para Móviles, Gadgets, Cajas, Libros o Rectángulos)
+function buildMonolithKai(): { lines: Array<{ x1: number; y1: number; x2: number; y2: number }>; polygons: Array<{ points: string }> } {
+  return {
+    lines: [
+      // Corona superior en cresta angular
+      { x1: 80, y1: 18, x2: 58, y2: 28 },
+      { x1: 80, y1: 18, x2: 102, y2: 28 },
+      // Chaflanes de esquina superior
+      { x1: 58, y1: 28, x2: 44, y2: 44 },
+      { x1: 102, y1: 28, x2: 116, y2: 44 },
+      // Flancos blindados
+      { x1: 44, y1: 44, x2: 44, y2: 118 },
+      { x1: 116, y1: 44, x2: 116, y2: 118 },
+      // Chaflanes de esquina inferior
+      { x1: 44, y1: 118, x2: 58, y2: 134 },
+      { x1: 116, y1: 118, x2: 102, y2: 134 },
+      // Quilla de levitación inferior
+      { x1: 58, y1: 134, x2: 80, y2: 144 },
+      { x1: 102, y1: 134, x2: 80, y2: 144 },
+
+      // Costillas de Facetado Origami en el Pecho Superior
+      { x1: 80, y1: 18, x2: 80, y2: 56 },
+      { x1: 58, y1: 28, x2: 80, y2: 56 },
+      { x1: 102, y1: 28, x2: 80, y2: 56 },
+      { x1: 44, y1: 44, x2: 80, y2: 56 },
+      { x1: 116, y1: 44, x2: 80, y2: 56 },
+
+      // Cámara Ocular Central en Diamante Alrededor del Ojo (80, 85)
+      { x1: 80, y1: 64, x2: 58, y2: 85 },
+      { x1: 80, y1: 64, x2: 102, y2: 85 },
+      { x1: 58, y1: 85, x2: 80, y2: 106 },
+      { x1: 102, y1: 85, x2: 80, y2: 106 },
+      // Líneas de conexión entre el pecho y la cámara ocular
+      { x1: 80, y1: 56, x2: 80, y2: 64 },
+      { x1: 44, y1: 72, x2: 58, y2: 85 },
+      { x1: 116, y1: 72, x2: 102, y2: 85 },
+
+      // Brackets de Energía Laterales (HUD Matrix)
+      { x1: 44, y1: 98, x2: 58, y2: 85 },
+      { x1: 116, y1: 98, x2: 102, y2: 85 },
+      { x1: 44, y1: 98, x2: 66, y2: 118 },
+      { x1: 116, y1: 98, x2: 94, y2: 118 },
+
+      // Faldón Inferior en Chevron
+      { x1: 80, y1: 106, x2: 66, y2: 118 },
+      { x1: 80, y1: 106, x2: 94, y2: 118 },
+      { x1: 66, y1: 118, x2: 80, y2: 130 },
+      { x1: 94, y1: 118, x2: 80, y2: 130 },
+      { x1: 80, y1: 130, x2: 80, y2: 144 },
+      { x1: 58, y1: 134, x2: 80, y2: 130 },
+      { x1: 102, y1: 134, x2: 80, y2: 130 },
+    ],
+    polygons: [
+      { points: '80,18 58,28 80,56 102,28' },
+      { points: '80,64 58,85 80,106 102,85' },
+      { points: '44,44 80,56 58,28' },
+      { points: '116,44 80,56 102,28' },
+      { points: '80,106 66,118 80,130 94,118' },
+      { points: '58,134 80,144 102,134 80,130' },
+    ],
+  };
+}
+
+// 🕶️ 3. GAFAS DE SOL // KAI VISOR SOLARIS
+function buildSunglassesKai(): { lines: Array<{ x1: number; y1: number; x2: number; y2: number }>; polygons: Array<{ points: string }> } {
+  return {
+    lines: [
+      // Visera superior en cresta facetada
+      { x1: 54, y1: 46, x2: 80, y2: 36 },
+      { x1: 80, y1: 36, x2: 106, y2: 46 },
+      { x1: 54, y1: 46, x2: 32, y2: 64 },
+      { x1: 106, y1: 46, x2: 128, y2: 64 },
+      { x1: 80, y1: 36, x2: 80, y2: 64 },
+
+      // Barra frontal superior de la montura
+      { x1: 32, y1: 64, x2: 128, y2: 64 },
+
+      // Lente Izquierdo Poligonal (Dual-Facet)
+      { x1: 32, y1: 64, x2: 36, y2: 102 },
+      { x1: 36, y1: 102, x2: 66, y2: 108 },
+      { x1: 66, y1: 108, x2: 74, y2: 88 },
+      { x1: 74, y1: 88, x2: 74, y2: 64 },
+      // Lente Derecho Poligonal
+      { x1: 128, y1: 64, x2: 124, y2: 102 },
+      { x1: 124, y1: 102, x2: 94, y2: 108 },
+      { x1: 94, y1: 108, x2: 86, y2: 88 },
+      { x1: 86, y1: 88, x2: 86, y2: 64 },
+
+      // Puente Ocular Central
+      { x1: 74, y1: 74, x2: 86, y2: 74 },
+      { x1: 74, y1: 88, x2: 86, y2: 88 },
+
+      // Facetas internas reflectantes
+      { x1: 42, y1: 72, x2: 44, y2: 96 },
+      { x1: 44, y1: 96, x2: 64, y2: 100 },
+      { x1: 64, y1: 100, x2: 68, y2: 84 },
+      { x1: 68, y1: 84, x2: 68, y2: 72 },
+      { x1: 42, y1: 72, x2: 68, y2: 72 },
+
+      { x1: 118, y1: 72, x2: 116, y2: 96 },
+      { x1: 116, y1: 96, x2: 96, y2: 100 },
+      { x1: 96, y1: 100, x2: 92, y2: 84 },
+      { x1: 92, y1: 84, x2: 92, y2: 72 },
+      { x1: 118, y1: 72, x2: 92, y2: 72 },
+
+      // Patillas aerodinámicas laterales
+      { x1: 32, y1: 64, x2: 20, y2: 108 },
+      { x1: 20, y1: 108, x2: 26, y2: 126 },
+      { x1: 128, y1: 64, x2: 140, y2: 108 },
+      { x1: 140, y1: 108, x2: 134, y2: 126 },
+
+      // Quilla de anclaje inferior al pedestal
+      { x1: 66, y1: 108, x2: 80, y2: 124 },
+      { x1: 94, y1: 108, x2: 80, y2: 124 },
+      { x1: 80, y1: 124, x2: 80, y2: 140 },
+    ],
+    polygons: [
+      { points: '32,64 36,102 66,108 74,88 74,64' },
+      { points: '128,64 124,102 94,108 86,88 86,64' },
+      { points: '54,46 80,36 106,46 80,64' },
+      { points: '66,108 80,124 94,108 80,88' },
+    ],
+  };
+}
+
+// 🎧 4. AUDÍFONOS // KAI SÓNICO VÓRTICE
 function buildHeadphonesKai(): { lines: Array<{ x1: number; y1: number; x2: number; y2: number }>; polygons: Array<{ points: string }> } {
   return {
     lines: [
-      // Diadema exterior arqueada
-      { x1: 38, y1: 72, x2: 54, y2: 42 },
-      { x1: 54, y1: 42, x2: 80, y2: 24 },
-      { x1: 80, y1: 24, x2: 106, y2: 42 },
-      { x1: 106, y1: 42, x2: 122, y2: 72 },
+      // Diadema exterior en arco poligonal
+      { x1: 38, y1: 72, x2: 54, y2: 40 },
+      { x1: 54, y1: 40, x2: 80, y2: 22 },
+      { x1: 80, y1: 22, x2: 106, y2: 40 },
+      { x1: 106, y1: 40, x2: 122, y2: 72 },
       // Diadema interior
       { x1: 44, y1: 74, x2: 58, y2: 48 },
       { x1: 58, y1: 48, x2: 80, y2: 34 },
       { x1: 80, y1: 34, x2: 102, y2: 48 },
       { x1: 102, y1: 48, x2: 116, y2: 74 },
-      // Almohadilla superior de confort
-      { x1: 64, y1: 29, x2: 96, y2: 29 },
-      // Horquilla izquierda (Yoke)
+      { x1: 64, y1: 28, x2: 96, y2: 28 },
+
+      // Horquillas laterales (Yokes)
       { x1: 38, y1: 72, x2: 26, y2: 84 },
       { x1: 38, y1: 72, x2: 54, y2: 84 },
-      // Copa auricular izquierda
+      { x1: 122, y1: 72, x2: 134, y2: 84 },
+      { x1: 122, y1: 72, x2: 106, y2: 84 },
+
+      // Copas Auriculares Hexagonales
+      // Izquierda
       { x1: 26, y1: 84, x2: 46, y2: 76 },
       { x1: 46, y1: 76, x2: 56, y2: 96 },
       { x1: 56, y1: 96, x2: 46, y2: 118 },
       { x1: 46, y1: 118, x2: 26, y2: 110 },
       { x1: 26, y1: 110, x2: 26, y2: 84 },
-      // Transductor interior izquierdo
-      { x1: 32, y1: 88, x2: 42, y2: 82 },
-      { x1: 42, y1: 82, x2: 48, y2: 96 },
-      { x1: 48, y1: 96, x2: 42, y2: 110 },
-      { x1: 42, y1: 110, x2: 32, y2: 104 },
-      { x1: 32, y1: 104, x2: 32, y2: 88 },
-      // Horquilla derecha (Yoke)
-      { x1: 122, y1: 72, x2: 134, y2: 84 },
-      { x1: 122, y1: 72, x2: 106, y2: 84 },
-      // Copa auricular derecha
+      // Derecha
       { x1: 134, y1: 84, x2: 114, y2: 76 },
       { x1: 114, y1: 76, x2: 104, y2: 96 },
       { x1: 104, y1: 96, x2: 114, y2: 118 },
       { x1: 114, y1: 118, x2: 134, y2: 110 },
       { x1: 134, y1: 110, x2: 134, y2: 84 },
-      // Transductor interior derecho
-      { x1: 128, y1: 88, x2: 118, y2: 82 },
-      { x1: 118, y1: 82, x2: 112, y2: 96 },
-      { x1: 112, y1: 96, x2: 118, y2: 110 },
-      { x1: 118, y1: 110, x2: 128, y2: 104 },
-      { x1: 128, y1: 104, x2: 128, y2: 88 },
-      // Núcleo de onda sónica hacia el ojo sagrado (80, 85)
+
+      // Conexión sónica hacia el Ojo Central (80, 85)
       { x1: 56, y1: 96, x2: 68, y2: 85 },
       { x1: 104, y1: 96, x2: 92, y2: 85 },
       { x1: 80, y1: 34, x2: 80, y2: 66 },
-      { x1: 80, y1: 104, x2: 80, y2: 136 },
-      { x1: 46, y1: 118, x2: 80, y2: 136 },
-      { x1: 114, y1: 118, x2: 80, y2: 136 },
+      { x1: 80, y1: 104, x2: 80, y2: 138 },
+      { x1: 46, y1: 118, x2: 80, y2: 138 },
+      { x1: 114, y1: 118, x2: 80, y2: 138 },
     ],
     polygons: [
       { points: '26,84 46,76 56,96 46,118 26,110' },
       { points: '134,84 114,76 104,96 114,118 134,110' },
-      { points: '54,42 80,24 106,42 102,48 80,34 58,48' },
+      { points: '54,40 80,22 106,40 102,48 80,34 58,48' },
+      { points: '68,85 80,104 92,85 80,66' },
     ],
   };
 }
 
-// ⌚ RELOJ / KAI CRONO-BISEL
+// ⌚ 5. RELOJ / SMARTWATCH // KAI CRONO-BISEL
 function buildWatchKai(): { lines: Array<{ x1: number; y1: number; x2: number; y2: number }>; polygons: Array<{ points: string }> } {
   return {
     lines: [
-      // Bisel octagonal exterior
+      // Bisel Octagonal Exterior
       { x1: 58, y1: 62, x2: 102, y2: 62 },
       { x1: 102, y1: 62, x2: 124, y2: 85 },
       { x1: 124, y1: 85, x2: 102, y2: 108 },
       { x1: 102, y1: 108, x2: 58, y2: 108 },
       { x1: 58, y1: 108, x2: 36, y2: 85 },
       { x1: 36, y1: 85, x2: 58, y2: 62 },
-      // Esfera circular interna
+
+      // Esfera Circular Interna
       { x1: 64, y1: 68, x2: 96, y2: 68 },
       { x1: 96, y1: 68, x2: 112, y2: 85 },
       { x1: 112, y1: 85, x2: 96, y2: 102 },
       { x1: 96, y1: 102, x2: 64, y2: 102 },
       { x1: 64, y1: 102, x2: 48, y2: 85 },
       { x1: 48, y1: 85, x2: 64, y2: 68 },
-      // Correa superior con nervaduras
+
+      // Eslabones de Correa Superior
       { x1: 64, y1: 62, x2: 68, y2: 24 },
       { x1: 96, y1: 62, x2: 92, y2: 24 },
       { x1: 68, y1: 24, x2: 92, y2: 24 },
       { x1: 66, y1: 42, x2: 94, y2: 42 },
-      // Correa inferior
-      { x1: 64, y1: 108, x2: 68, y2: 146 },
-      { x1: 96, y1: 108, x2: 92, y2: 146 },
-      { x1: 68, y1: 146, x2: 92, y2: 146 },
-      { x1: 66, y1: 128, x2: 94, y2: 128 },
-      // Botones / Coronas laterales tácticas
+
+      // Eslabones de Correa Inferior
+      { x1: 64, y1: 108, x2: 68, y2: 144 },
+      { x1: 96, y1: 108, x2: 92, y2: 144 },
+      { x1: 68, y1: 144, x2: 92, y2: 144 },
+      { x1: 66, y1: 126, x2: 94, y2: 126 },
+
+      // Botón Pulsador / Corona Táctica
       { x1: 124, y1: 78, x2: 132, y2: 78 },
       { x1: 132, y1: 78, x2: 132, y2: 92 },
       { x1: 132, y1: 92, x2: 124, y2: 92 },
-      // Índices horarios
+
+      // Retícula de Escaneo Ocular
       { x1: 80, y1: 68, x2: 80, y2: 74 },
       { x1: 80, y1: 96, x2: 80, y2: 102 },
       { x1: 48, y1: 85, x2: 56, y2: 85 },
@@ -538,38 +604,38 @@ function buildWatchKai(): { lines: Array<{ x1: number; y1: number; x2: number; y
     polygons: [
       { points: '58,62 102,62 124,85 102,108 58,108 36,85' },
       { points: '64,62 68,24 92,24 96,62' },
-      { points: '64,108 68,146 92,146 96,108' },
+      { points: '64,108 68,144 92,144 96,108' },
     ],
   };
 }
 
-// ☕ TAZA / KAI TERMO-REACTOR
+// ☕ 6. TAZA // KAI TERMO-REACTOR
 function buildMugKai(): { lines: Array<{ x1: number; y1: number; x2: number; y2: number }>; polygons: Array<{ points: string }> } {
   return {
     lines: [
-      // Borde superior de la taza
       { x1: 48, y1: 58, x2: 112, y2: 58 },
-      // Cuerpo trapezoidal
       { x1: 48, y1: 58, x2: 56, y2: 132 },
       { x1: 112, y1: 58, x2: 104, y2: 132 },
-      // Base y pedestal
       { x1: 56, y1: 132, x2: 104, y2: 132 },
       { x1: 52, y1: 138, x2: 108, y2: 138 },
       { x1: 56, y1: 132, x2: 52, y2: 138 },
       { x1: 104, y1: 132, x2: 108, y2: 138 },
-      // Asas cibernéticas simétricas en ambos costados
-      { x1: 48, y1: 70, x2: 26, y2: 82 },
-      { x1: 26, y1: 82, x2: 26, y2: 114 },
-      { x1: 26, y1: 114, x2: 54, y2: 122 },
-      { x1: 112, y1: 70, x2: 134, y2: 82 },
-      { x1: 134, y1: 82, x2: 134, y2: 114 },
-      { x1: 134, y1: 114, x2: 106, y2: 122 },
-      // Vapor / Energía ascendente en vectores
-      { x1: 76, y1: 52, x2: 80, y2: 22 },
-      { x1: 80, y1: 22, x2: 84, y2: 52 },
-      { x1: 62, y1: 54, x2: 66, y2: 32 },
-      { x1: 98, y1: 54, x2: 94, y2: 32 },
-      // Facetas en el cuerpo hacia el ojo (80, 85)
+
+      // Asas cibernéticas simétricas
+      { x1: 48, y1: 70, x2: 24, y2: 82 },
+      { x1: 24, y1: 82, x2: 24, y2: 114 },
+      { x1: 24, y1: 114, x2: 54, y2: 122 },
+      { x1: 112, y1: 70, x2: 136, y2: 82 },
+      { x1: 136, y1: 82, x2: 136, y2: 114 },
+      { x1: 136, y1: 114, x2: 106, y2: 122 },
+
+      // Vapor de plasma ascendente
+      { x1: 76, y1: 52, x2: 80, y2: 20 },
+      { x1: 80, y1: 20, x2: 84, y2: 52 },
+      { x1: 62, y1: 54, x2: 66, y2: 30 },
+      { x1: 98, y1: 54, x2: 94, y2: 30 },
+
+      // Facetas del cáliz hacia el ojo
       { x1: 48, y1: 85, x2: 64, y2: 85 },
       { x1: 112, y1: 85, x2: 96, y2: 85 },
       { x1: 64, y1: 85, x2: 80, y2: 110 },
@@ -577,50 +643,37 @@ function buildMugKai(): { lines: Array<{ x1: number; y1: number; x2: number; y2:
     ],
     polygons: [
       { points: '48,58 112,58 104,132 56,132' },
-      { points: '76,52 80,22 84,52' },
+      { points: '76,52 80,20 84,52' },
+      { points: '64,85 80,110 96,85 80,72' },
     ],
   };
 }
 
-// 🏋️ MANCUERNA / KAI TITÁN DE FUERZA
+// 🏋️ 7. MANCUERNA // KAI TITÁN DE FUERZA
 function buildDumbbellKai(): { lines: Array<{ x1: number; y1: number; x2: number; y2: number }>; polygons: Array<{ points: string }> } {
   return {
     lines: [
-      // Discos izquierdos hexagonales
       { x1: 22, y1: 60, x2: 44, y2: 60 },
       { x1: 44, y1: 60, x2: 48, y2: 85 },
       { x1: 48, y1: 85, x2: 44, y2: 110 },
       { x1: 44, y1: 110, x2: 22, y2: 110 },
       { x1: 22, y1: 110, x2: 18, y2: 85 },
       { x1: 18, y1: 85, x2: 22, y2: 60 },
-      // Disco secundario izquierdo
-      { x1: 28, y1: 66, x2: 38, y2: 66 },
-      { x1: 38, y1: 66, x2: 42, y2: 85 },
-      { x1: 42, y1: 85, x2: 38, y2: 104 },
-      { x1: 38, y1: 104, x2: 28, y2: 104 },
-      { x1: 28, y1: 104, x2: 24, y2: 85 },
-      { x1: 24, y1: 85, x2: 28, y2: 66 },
-      // Discos derechos hexagonales
+
       { x1: 138, y1: 60, x2: 116, y2: 60 },
       { x1: 116, y1: 60, x2: 112, y2: 85 },
       { x1: 112, y1: 85, x2: 116, y2: 110 },
       { x1: 116, y1: 110, x2: 138, y2: 110 },
       { x1: 138, y1: 110, x2: 142, y2: 85 },
       { x1: 142, y1: 85, x2: 138, y2: 60 },
-      // Disco secundario derecho
-      { x1: 132, y1: 66, x2: 122, y2: 66 },
-      { x1: 122, y1: 66, x2: 118, y2: 85 },
-      { x1: 118, y1: 85, x2: 122, y2: 104 },
-      { x1: 122, y1: 104, x2: 132, y2: 104 },
-      { x1: 132, y1: 104, x2: 136, y2: 85 },
-      { x1: 136, y1: 85, x2: 132, y2: 66 },
+
       // Barra central moleteada
       { x1: 48, y1: 78, x2: 112, y2: 78 },
       { x1: 48, y1: 92, x2: 112, y2: 92 },
-      // Anillas de tope en la barra
       { x1: 58, y1: 74, x2: 58, y2: 96 },
       { x1: 102, y1: 74, x2: 102, y2: 96 },
-      // Facetas diagonales alrededor del ojo central
+
+      // Facetas alrededor del ojo
       { x1: 68, y1: 78, x2: 80, y2: 64 },
       { x1: 92, y1: 78, x2: 80, y2: 64 },
       { x1: 68, y1: 92, x2: 80, y2: 106 },
@@ -630,154 +683,169 @@ function buildDumbbellKai(): { lines: Array<{ x1: number; y1: number; x2: number
       { points: '22,60 44,60 48,85 44,110 22,110 18,85' },
       { points: '138,60 116,60 112,85 116,110 138,110 142,85' },
       { points: '58,78 102,78 102,92 58,92' },
+      { points: '68,78 80,64 92,78 80,92' },
     ],
   };
 }
 
-// 🍎 MANZANA / KAI ORBE BOTÁNICO
+// 🐺 8. MASCOTA / ANIMAL CYBER-ORIGAMI
+function buildAnimalKai(): { lines: Array<{ x1: number; y1: number; x2: number; y2: number }>; polygons: Array<{ points: string }> } {
+  return {
+    lines: [
+      // Orejas
+      { x1: 40, y1: 18, x2: 28, y2: 54 },
+      { x1: 40, y1: 18, x2: 62, y2: 42 },
+      { x1: 28, y1: 54, x2: 62, y2: 42 },
+      { x1: 120, y1: 18, x2: 132, y2: 54 },
+      { x1: 120, y1: 18, x2: 98, y2: 42 },
+      { x1: 132, y1: 54, x2: 98, y2: 42 },
+
+      // Frente
+      { x1: 80, y1: 28, x2: 62, y2: 42 },
+      { x1: 80, y1: 28, x2: 98, y2: 42 },
+      { x1: 62, y1: 42, x2: 80, y2: 56 },
+      { x1: 98, y1: 42, x2: 80, y2: 56 },
+
+      // Mejillas
+      { x1: 28, y1: 54, x2: 22, y2: 78 },
+      { x1: 22, y1: 78, x2: 46, y2: 104 },
+      { x1: 46, y1: 104, x2: 80, y2: 138 },
+      { x1: 132, y1: 54, x2: 138, y2: 78 },
+      { x1: 138, y1: 78, x2: 114, y2: 104 },
+      { x1: 114, y1: 104, x2: 80, y2: 138 },
+
+      // Hocico
+      { x1: 80, y1: 56, x2: 68, y2: 82 },
+      { x1: 80, y1: 56, x2: 92, y2: 82 },
+      { x1: 68, y1: 82, x2: 80, y2: 108 },
+      { x1: 92, y1: 82, x2: 80, y2: 108 },
+      { x1: 74, y1: 108, x2: 86, y2: 108 },
+      { x1: 80, y1: 108, x2: 80, y2: 138 },
+    ],
+    polygons: [
+      { points: '40,18 28,54 62,42' },
+      { points: '120,18 132,54 98,42' },
+      { points: '80,28 62,42 80,56 98,42' },
+      { points: '80,56 68,82 80,108 92,82' },
+      { points: '46,104 80,138 114,104 80,108' },
+    ],
+  };
+}
+
+// 🍎 9. MANZANA // KAI ORBE BOTÁNICO
 function buildAppleKai(): { lines: Array<{ x1: number; y1: number; x2: number; y2: number }>; polygons: Array<{ points: string }> } {
   return {
     lines: [
-      // Hombros superiores redondeados y hendidura central
       { x1: 80, y1: 56, x2: 62, y2: 48 },
       { x1: 80, y1: 56, x2: 98, y2: 48 },
       { x1: 62, y1: 48, x2: 40, y2: 68 },
       { x1: 98, y1: 48, x2: 120, y2: 68 },
-      // Flancos exteriores
       { x1: 40, y1: 68, x2: 36, y2: 96 },
       { x1: 120, y1: 68, x2: 124, y2: 96 },
       { x1: 36, y1: 96, x2: 44, y2: 120 },
       { x1: 124, y1: 96, x2: 116, y2: 120 },
-      // Base inferior con hoyuelo
       { x1: 44, y1: 120, x2: 66, y2: 136 },
       { x1: 116, y1: 120, x2: 94, y2: 136 },
       { x1: 66, y1: 136, x2: 80, y2: 132 },
       { x1: 94, y1: 136, x2: 80, y2: 132 },
-      // Tallo botánico
-      { x1: 80, y1: 56, x2: 80, y2: 32 },
-      { x1: 80, y1: 32, x2: 84, y2: 24 },
-      // Hoja poligonal estilizada
-      { x1: 80, y1: 38, x2: 98, y2: 30 },
-      { x1: 98, y1: 30, x2: 94, y2: 46 },
-      { x1: 94, y1: 46, x2: 80, y2: 38 },
-      // Facetas internas geodésicas hacia el ojo
-      { x1: 40, y1: 68, x2: 64, y2: 85 },
-      { x1: 120, y1: 68, x2: 96, y2: 85 },
-      { x1: 44, y1: 120, x2: 64, y2: 85 },
-      { x1: 116, y1: 120, x2: 96, y2: 85 },
+      { x1: 80, y1: 56, x2: 80, y2: 30 },
+      { x1: 80, y1: 30, x2: 84, y2: 22 },
+      { x1: 80, y1: 36, x2: 98, y2: 28 },
+      { x1: 98, y1: 28, x2: 94, y2: 44 },
+      { x1: 94, y1: 44, x2: 80, y2: 36 },
     ],
     polygons: [
       { points: '80,56 62,48 40,68 36,96 44,120 66,136 80,132 94,136 116,120 124,96 120,68 98,48' },
-      { points: '80,38 98,30 94,46' },
+      { points: '80,36 98,28 94,44' },
     ],
   };
 }
 
-// 📱 SMARTPHONE / KAI TERMINAL CUÁNTICO
-function buildPhoneKai(): { lines: Array<{ x1: number; y1: number; x2: number; y2: number }>; polygons: Array<{ points: string }> } {
-  return {
-    lines: [
-      // Chasis exterior redondeado
-      { x1: 54, y1: 26, x2: 106, y2: 26 },
-      { x1: 106, y1: 26, x2: 114, y2: 34 },
-      { x1: 114, y1: 34, x2: 114, y2: 136 },
-      { x1: 114, y1: 136, x2: 106, y2: 144 },
-      { x1: 106, y1: 144, x2: 54, y2: 144 },
-      { x1: 54, y1: 144, x2: 46, y2: 136 },
-      { x1: 46, y1: 136, x2: 46, y2: 34 },
-      { x1: 46, y1: 34, x2: 54, y2: 26 },
-      // Marco de pantalla interior
-      { x1: 52, y1: 42, x2: 108, y2: 42 },
-      { x1: 108, y1: 42, x2: 108, y2: 128 },
-      { x1: 108, y1: 128, x2: 52, y2: 128 },
-      { x1: 52, y1: 128, x2: 52, y2: 42 },
-      // Dynamic Island / Cámara frontal
-      { x1: 72, y1: 34, x2: 88, y2: 34 },
-      // Barra de inicio táctil
-      { x1: 70, y1: 136, x2: 90, y2: 136 },
-      // Facetas diagonales hacia el sensor ocular
-      { x1: 52, y1: 42, x2: 64, y2: 85 },
-      { x1: 108, y1: 42, x2: 96, y2: 85 },
-      { x1: 52, y1: 128, x2: 64, y2: 85 },
-      { x1: 108, y1: 128, x2: 96, y2: 85 },
-    ],
-    polygons: [
-      { points: '54,26 106,26 114,34 114,136 106,144 54,144 46,136 46,34' },
-      { points: '52,42 108,42 108,128 52,128' },
-    ],
-  };
-}
-
-// 🌐 SILUETA PERSONALIZADA ADAPTATIVA (PARA CUALQUIER OTRO OBJETO)
+// 🌐 10. TESELADOR CYBER-ORIGAMI ADAPTATIVO (PARA CUALQUIER SILUETA O FORMA DESCONOCIDA)
+// NUNCA genera un rectángulo vacío: divide el volumen en facetas triangulares 3D con cresta y quilla
 function buildBespokeContourKai(analysis: ImageSampleAnalysis): {
   lines: Array<{ x1: number; y1: number; x2: number; y2: number }>;
   polygons: Array<{ points: string }>;
 } {
-  const Y_LEVELS = [26, 38, 50, 62, 74, 86, 98, 110, 124, 138];
-  const maxAllowedHalfWidth = analysis.isSlender ? 38 : analysis.isWide ? 54 : 48;
-  const minAllowedHalfWidth = 14;
+  // 6 niveles de altura armónicos entre y=24 e y=140
+  const Y_NODES = [24, 46, 68, 88, 110, 134];
+  const maxW = analysis.isSlender ? 36 : analysis.isWide ? 54 : 46;
+  const minW = 16;
 
-  const dxList: number[] = analysis.halfWidths.map((hw) => {
-    return Math.round(minAllowedHalfWidth + hw * (maxAllowedHalfWidth - minAllowedHalfWidth));
-  });
+  const dx: number[] = [
+    Math.round(minW + analysis.halfWidths[0] * (maxW * 0.7 - minW)),
+    Math.round(minW + analysis.halfWidths[2] * (maxW * 0.9 - minW)),
+    Math.round(minW + analysis.halfWidths[4] * (maxW - minW)),
+    Math.round(minW + analysis.halfWidths[6] * (maxW - minW)),
+    Math.round(minW + analysis.halfWidths[8] * (maxW * 0.85 - minW)),
+    Math.round(minW + analysis.halfWidths[9] * (maxW * 0.5 - minW)),
+  ];
 
   const lines: Array<{ x1: number; y1: number; x2: number; y2: number }> = [];
   const polygons: Array<{ points: string }> = [];
 
-  for (let i = 0; i < 9; i++) {
-    lines.push({
-      x1: 80 - dxList[i],
-      y1: Y_LEVELS[i],
-      x2: 80 - dxList[i + 1],
-      y2: Y_LEVELS[i + 1],
-    });
-    lines.push({
-      x1: 80 + dxList[i],
-      y1: Y_LEVELS[i],
-      x2: 80 + dxList[i + 1],
-      y2: Y_LEVELS[i + 1],
-    });
-  }
-
-  const apexY = Y_LEVELS[0] - 8;
-  lines.push({ x1: 80 - dxList[0], y1: Y_LEVELS[0], x2: 80, y2: apexY });
-  lines.push({ x1: 80 + dxList[0], y1: Y_LEVELS[0], x2: 80, y2: apexY });
-  lines.push({ x1: 80, y1: apexY, x2: 80, y2: Y_LEVELS[2] });
+  // 1. Cresta / Ápice Superior
+  const apexY = 14;
+  lines.push({ x1: 80, y1: apexY, x2: 80 - dx[0], y2: Y_NODES[0] });
+  lines.push({ x1: 80, y1: apexY, x2: 80 + dx[0], y2: Y_NODES[0] });
+  lines.push({ x1: 80 - dx[0], y1: Y_NODES[0], x2: 80 + dx[0], y2: Y_NODES[0] });
 
   polygons.push({
-    points: `${80 - dxList[0]},${Y_LEVELS[0]} 80,${apexY} ${80 + dxList[0]},${Y_LEVELS[0]}`,
+    points: `80,${apexY} ${80 - dx[0]},${Y_NODES[0]} ${80 + dx[0]},${Y_NODES[0]}`,
   });
 
-  const bottomTipY = 142;
-  lines.push({ x1: 80 - dxList[9], y1: Y_LEVELS[9], x2: 80, y2: bottomTipY });
-  lines.push({ x1: 80 + dxList[9], y1: Y_LEVELS[9], x2: 80, y2: bottomTipY });
-
-  polygons.push({
-    points: `${80 - dxList[9]},${Y_LEVELS[9]} 80,${bottomTipY} ${80 + dxList[9]},${Y_LEVELS[9]}`,
-  });
-
-  for (let i = 0; i < 9; i += 2) {
-    const midY = Math.round((Y_LEVELS[i] + Y_LEVELS[i + 1]) / 2);
-    lines.push({ x1: 80 - dxList[i], y1: Y_LEVELS[i], x2: 80, y2: midY });
-    lines.push({ x1: 80 + dxList[i], y1: Y_LEVELS[i], x2: 80, y2: midY });
-    lines.push({ x1: 80, y1: midY, x2: 80 - dxList[i + 1], y2: Y_LEVELS[i + 1] });
-    lines.push({ x1: 80, y1: midY, x2: 80 + dxList[i + 1], y2: Y_LEVELS[i + 1] });
-
-    polygons.push({
-      points: `${80 - dxList[i]},${Y_LEVELS[i]} ${80 - dxList[i + 1]},${Y_LEVELS[i + 1]} 80,${midY}`,
-    });
-    polygons.push({
-      points: `${80 + dxList[i]},${Y_LEVELS[i]} ${80 + dxList[i + 1]},${Y_LEVELS[i + 1]} 80,${midY}`,
-    });
+  // 2. Contorno Exterior Facetado en Chaflán
+  for (let i = 0; i < Y_NODES.length - 1; i++) {
+    lines.push({ x1: 80 - dx[i], y1: Y_NODES[i], x2: 80 - dx[i + 1], y2: Y_NODES[i + 1] });
+    lines.push({ x1: 80 + dx[i], y1: Y_NODES[i], x2: 80 + dx[i + 1], y2: Y_NODES[i + 1] });
   }
 
-  lines.push({ x1: 80 - dxList[5], y1: Y_LEVELS[5], x2: 50, y2: 85 });
-  lines.push({ x1: 80 + dxList[5], y1: Y_LEVELS[5], x2: 110, y2: 85 });
-  lines.push({ x1: 80 - dxList[4], y1: Y_LEVELS[4], x2: 60, y2: 74 });
-  lines.push({ x1: 80 + dxList[4], y1: Y_LEVELS[4], x2: 100, y2: 74 });
+  // 3. Quilla de Levitación Inferior
+  const keelY = 144;
+  lines.push({ x1: 80 - dx[5], y1: Y_NODES[5], x2: 80, y2: keelY });
+  lines.push({ x1: 80 + dx[5], y1: Y_NODES[5], x2: 80, y2: keelY });
+  lines.push({ x1: 80 - dx[5], y1: Y_NODES[5], x2: 80 + dx[5], y2: Y_NODES[5] });
 
-  lines.push({ x1: 80, y1: 26, x2: 80, y2: 64 });
-  lines.push({ x1: 80, y1: 106, x2: 80, y2: 138 });
+  polygons.push({
+    points: `${80 - dx[5]},${Y_NODES[5]} 80,${keelY} ${80 + dx[5]},${Y_NODES[5]}`,
+  });
+
+  // 4. Facetas Trianguladas Internas (Cyber-Origami Cross-Struts)
+  // Nivel 0 a 1: Pecho Superior
+  lines.push({ x1: 80 - dx[0], y1: Y_NODES[0], x2: 80, y2: Y_NODES[1] });
+  lines.push({ x1: 80 + dx[0], y1: Y_NODES[0], x2: 80, y2: Y_NODES[1] });
+  lines.push({ x1: 80, y1: Y_NODES[0], x2: 80, y2: Y_NODES[1] });
+
+  polygons.push({
+    points: `${80 - dx[0]},${Y_NODES[0]} 80,${Y_NODES[1]} ${80 - dx[1]},${Y_NODES[1]}`,
+  });
+  polygons.push({
+    points: `${80 + dx[0]},${Y_NODES[0]} 80,${Y_NODES[1]} ${80 + dx[1]},${Y_NODES[1]}`,
+  });
+
+  // Nivel 1 a 3: Cámara Ocular Central (Encuadra el Ojo Sagrado en 80, 85)
+  lines.push({ x1: 80, y1: Y_NODES[1], x2: 80 - dx[2], y2: Y_NODES[2] });
+  lines.push({ x1: 80, y1: Y_NODES[1], x2: 80 + dx[2], y2: Y_NODES[2] });
+  lines.push({ x1: 80 - dx[2], y1: Y_NODES[2], x2: 80, y2: Y_NODES[3] });
+  lines.push({ x1: 80 + dx[2], y1: Y_NODES[2], x2: 80, y2: Y_NODES[3] });
+
+  polygons.push({
+    points: `80,${Y_NODES[1]} ${80 - dx[2]},${Y_NODES[2]} 80,${Y_NODES[3]} ${80 + dx[2]},${Y_NODES[2]}`,
+  });
+
+  // Nivel 3 a 5: Faldón y Armadura Inferior
+  lines.push({ x1: 80 - dx[3], y1: Y_NODES[3], x2: 80, y2: Y_NODES[4] });
+  lines.push({ x1: 80 + dx[3], y1: Y_NODES[3], x2: 80, y2: Y_NODES[4] });
+  lines.push({ x1: 80, y1: Y_NODES[3], x2: 80, y2: Y_NODES[4] });
+  lines.push({ x1: 80 - dx[4], y1: Y_NODES[4], x2: 80, y2: keelY });
+  lines.push({ x1: 80 + dx[4], y1: Y_NODES[4], x2: 80, y2: keelY });
+
+  polygons.push({
+    points: `${80 - dx[3]},${Y_NODES[3]} 80,${Y_NODES[4]} ${80 - dx[4]},${Y_NODES[4]}`,
+  });
+  polygons.push({
+    points: `${80 + dx[3]},${Y_NODES[3]} 80,${Y_NODES[4]} ${80 + dx[4]},${Y_NODES[4]}`,
+  });
 
   return { lines, polygons };
 }
@@ -809,13 +877,17 @@ export async function synthesizeKaiFromImageSilhouette(params: {
   let epicName = `KAI ${label}`;
 
   switch (category) {
-    case 'sunglasses':
-      vectorArt = buildSunglassesKai();
-      epicName = promptDescription ? `KAI Visor ${promptDescription.slice(0, 14)}` : 'KAI Visor Solaris';
-      break;
     case 'lighter':
       vectorArt = buildLighterKai();
       epicName = promptDescription ? `KAI Ignis ${promptDescription.slice(0, 14)}` : 'KAI Ignis Monolito';
+      break;
+    case 'monolith':
+      vectorArt = buildMonolithKai();
+      epicName = promptDescription ? `KAI Monolito ${promptDescription.slice(0, 14)}` : 'KAI Monolito Aether';
+      break;
+    case 'sunglasses':
+      vectorArt = buildSunglassesKai();
+      epicName = promptDescription ? `KAI Visor ${promptDescription.slice(0, 14)}` : 'KAI Visor Solaris';
       break;
     case 'headphones':
       vectorArt = buildHeadphonesKai();
@@ -833,18 +905,18 @@ export async function synthesizeKaiFromImageSilhouette(params: {
       vectorArt = buildDumbbellKai();
       epicName = promptDescription ? `KAI Fuerza ${promptDescription.slice(0, 14)}` : 'KAI Titán de Fuerza';
       break;
+    case 'animal':
+      vectorArt = buildAnimalKai();
+      epicName = promptDescription ? `KAI Bestia ${promptDescription.slice(0, 14)}` : 'KAI Guardián Bestial';
+      break;
     case 'apple':
       vectorArt = buildAppleKai();
       epicName = promptDescription ? `KAI Orbe ${promptDescription.slice(0, 14)}` : 'KAI Orbe Botánico';
       break;
-    case 'phone':
-      vectorArt = buildPhoneKai();
-      epicName = promptDescription ? `KAI Terminal ${promptDescription.slice(0, 14)}` : 'KAI Terminal Cuántico';
-      break;
     case 'bespoke':
     default:
       vectorArt = buildBespokeContourKai(analysis);
-      epicName = promptDescription ? `KAI Tótem ${promptDescription.slice(0, 14)}` : 'KAI Matriz Neón';
+      epicName = promptDescription ? `KAI Tótem ${promptDescription.slice(0, 14)}` : 'KAI Matriz Fractal';
       break;
   }
 
