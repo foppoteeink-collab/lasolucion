@@ -130,6 +130,13 @@ export function mergePlayerStats(local: PlayerStats, remote: PlayerStats): Playe
     mantra: pickStr(remote.mantra, local.mantra),
     mainGoal: pickStr(remote.mainGoal, local.mainGoal),
     characterClass: pickStr(remote.characterClass, local.characterClass, 'Aventurero'),
+    // CRITICAL: Protect user's local KAI equipment & customization choices from stale remote snapshots
+    kaiShape: local.kaiShape || remote.kaiShape || 'prism',
+    kaiAuraColor: local.kaiAuraColor || remote.kaiAuraColor || '#00f0ff',
+    kaiParticleEffect: local.kaiParticleEffect || remote.kaiParticleEffect || 'none',
+    kaiCustomForm: local.kaiCustomForm || remote.kaiCustomForm || null,
+    kaiNeuralForgeCharges: Math.max(local.kaiNeuralForgeCharges ?? 9999, remote.kaiNeuralForgeCharges ?? 9999),
+    hasCompletedAwakening: local.hasCompletedAwakening || remote.hasCompletedAwakening || false,
     level,
     currentXp,
     requiredXp,

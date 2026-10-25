@@ -289,8 +289,9 @@ export const HunterAwakeningModal: React.FC<HunterAwakeningModalProps> = ({
                     <strong className="text-cyan-300 uppercase">{currentKaiShapeDef.name}</strong>
                   </div>
                 </div>
-                <div className="text-[11px] text-slate-300 italic hidden sm:block">
-                  "{currentKaiShapeDef.tagline}"
+                <div className="text-[11px] text-slate-300 hidden sm:block text-right">
+                  <span className="text-emerald-400 font-bold block">✓ 100% Desbloqueado</span>
+                  <span className="text-[10px] text-slate-400">Podrás cambiar de figura cuando quieras en el Taller de KAI</span>
                 </div>
               </div>
             </div>

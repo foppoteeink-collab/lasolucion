@@ -5,7 +5,7 @@ import {
   HardDrive, FileSpreadsheet, Cpu, CheckCircle2,
   Coins, Volume2, VolumeX, Target, Sun, Moon, Laptop, ArrowUpRight, CheckCheck,
   SlidersHorizontal, Smartphone, Share, PlusSquare, FlaskConical,
-  Compass, Eye, Layout, Bell, BellOff, BellRing, Zap, Flame, Timer
+  Compass, Eye, Layout, Bell, BellOff, BellRing, Zap, Flame, Timer, Palette
 } from 'lucide-react';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 import { GameSettings } from '../types';
@@ -27,6 +27,8 @@ import { getTodayDateString } from '../utils/date';
 import { OracleModal } from './OracleModal';
 import { ScenarioSimulatorPanel } from './ScenarioSimulatorPanel';
 import { GoogleDriveSyncCard } from './GoogleDriveSyncCard';
+import { KAI_OFFICIAL_SHAPES } from '../data/kaiShapes';
+import { KaiVectorGraphics } from './KaiVectorGraphics';
 import { 
   SUPPORTED_CURRENCIES, 
   getSavedCurrencySymbol, 
@@ -42,6 +44,7 @@ interface SettingsViewProps {
   onUpdateSettings: (newSettings: GameSettings) => void;
   onResetAccount?: () => void;
   cloudSync?: CloudSyncResult;
+  onOpenKaiWorkshop?: () => void;
 }
 
 const EMPTY_TASK_LIST: any[] = [];
@@ -53,6 +56,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   onUpdateSettings,
   onResetAccount,
   cloudSync: propCloudSync,
+  onOpenKaiWorkshop,
 }) => {
   const { user, signInWithGoogle, signOut } = useAuth();
   const pwa = usePWAInstall();
@@ -71,7 +75,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [currencyChangedToast, setCurrencyChangedToast] = useState<string | null>(null);
 
   const todayTasks = useTaskStore(s => s.tasksByDate[getTodayDateString()] ?? EMPTY_TASK_LIST);
-  const streakDays = usePlayerStore(s => s.stats.streakDays);
+  const stats = usePlayerStore(s => s.stats);
+  const streakDays = stats.streakDays;
 
   const [confirmReset, setConfirmReset] = useState(false);
   const [importStatus, setImportStatus] = useState<string | null>(null);
@@ -531,6 +536,56 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   <RefreshCw className="w-3.5 h-3.5 text-cyan-400" />
                   <span>Restablecer Avisos</span>
                 </button>
+              </div>
+            </div>
+
+            {/* COMPAÑERO CUÁNTICO KAI: SELECCIÓN Y FORJA */}
+            <div className="bg-[#00152b] p-5 sm:p-6 rounded-2xl border border-cyan-500/35 space-y-4 shadow-[0_0_20px_rgba(0,240,255,0.08)]">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Palette className="w-4 h-4 text-cyan-400" />
+                  <h3 className="text-xs font-black text-cyan-400 uppercase tracking-widest">
+                    Compañero Holográfico KAI
+                  </h3>
+                </div>
+                <span className="text-[10px] font-mono font-bold text-cyan-300 bg-cyan-950/70 border border-cyan-500/40 px-2 py-0.5 rounded-full">
+                  {stats.kaiShape === 'custom' ? 'Forja IA Activa' : '6 Formas Día 0'}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between gap-4 p-3.5 rounded-xl bg-black/40 border border-white/10">
+                <div className="flex items-center gap-3">
+                  <div className="w-14 h-14 rounded-xl bg-cyan-950/40 border border-cyan-400/40 p-1 flex items-center justify-center shrink-0">
+                    <KaiVectorGraphics
+                      shapeId={stats.kaiShape || 'prism'}
+                      activeColor="#00f0ff"
+                      customForm={stats.kaiCustomForm}
+                    />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-mono text-slate-400 uppercase block">Figura Equipada:</span>
+                    <strong className="text-sm font-anton text-white tracking-wide uppercase">
+                      {stats.kaiShape === 'custom' ? (stats.kaiCustomForm?.name || 'Forja Neural IA') : (KAI_OFFICIAL_SHAPES.find(s => s.id === stats.kaiShape)?.name || 'El Prisma')}
+                    </strong>
+                    <span className="text-[10px] text-slate-400 block mt-0.5">
+                      {stats.kaiShape === 'custom' ? 'Compañero vectorizado con IA multimodal' : 'Geometría oficial desbloqueada'}
+                    </span>
+                  </div>
+                </div>
+
+                {onOpenKaiWorkshop && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFX.playClick();
+                      onOpenKaiWorkshop();
+                    }}
+                    className="px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black font-anton text-xs uppercase tracking-wider transition-all cursor-pointer shadow-[0_0_12px_rgba(0,240,255,0.3)] active:scale-95 flex items-center gap-1.5 shrink-0"
+                  >
+                    <Palette className="w-3.5 h-3.5" />
+                    <span>Cambiar KAI</span>
+                  </button>
+                )}
               </div>
             </div>
 

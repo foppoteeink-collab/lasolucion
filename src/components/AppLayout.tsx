@@ -559,6 +559,7 @@ export function AppLayout() {
                   onUpdateSettings={setGameSettings}
                   onResetAccount={handleResetAccount}
                   cloudSync={cloudSync}
+                  onOpenKaiWorkshop={() => setIsKaiWorkshopOpen(true)}
                 />
               </Suspense>
             </motion.div>

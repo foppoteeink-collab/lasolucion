@@ -140,6 +140,8 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
       img.src = event.target?.result as string;
     };
     reader.readAsDataURL(file);
+    // Resetear valor para que volver a seleccionar la misma foto dispare onChange
+    e.target.value = '';
   };
 
   const handleRunNeuralForge = async () => {
@@ -291,17 +293,22 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
           {/* ═══════════════════════════════════════════════════════════════ */}
           {activeTab === 'shapes' && (
             <div className="space-y-5">
-              <div className="p-3.5 rounded-2xl bg-[#001020] border border-cyan-500/30 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2.5">
-                  <span className="text-xl">⚡</span>
+              <div className="p-3.5 rounded-2xl bg-cyan-950/40 border border-cyan-400/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-[0_0_15px_rgba(0,240,255,0.15)]">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">
+                    {stats.kaiShape === 'custom' ? '✨' : (KAI_OFFICIAL_SHAPES.find(s => s.id === stats.kaiShape)?.icon || '🔺')}
+                  </span>
                   <div>
-                    <span className="text-xs font-black uppercase text-cyan-300 block tracking-wide">
-                      6 Arquetipos Oficiales en Día 0
+                    <span className="text-[10px] font-mono uppercase text-cyan-300 font-bold block">
+                      KAI Equipado Actualmente:
                     </span>
-                    <p className="text-[11px] text-slate-300">
-                      Elige con qué espíritu resonar desde hoy. Todas las formas conservan tus auras de 21d y coronas de 66d ganadas.
-                    </p>
+                    <strong className="text-sm font-anton text-white tracking-wide uppercase">
+                      {stats.kaiShape === 'custom' ? (stats.kaiCustomForm?.name || 'Forja Neural IA') : (KAI_OFFICIAL_SHAPES.find(s => s.id === stats.kaiShape)?.name || 'El Prisma')}
+                    </strong>
                   </div>
+                </div>
+                <div className="text-[10px] font-mono text-slate-300 bg-black/40 border border-white/10 px-3 py-1.5 rounded-xl">
+                  ✓ Puedes cambiar de KAI cuantas veces quieras tocando <strong className="text-cyan-300">"Equipar"</strong>.
                 </div>
               </div>
 
@@ -630,15 +637,43 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                     </span>
 
                     {capturedImageBase64 ? (
-                      <div className="relative rounded-xl overflow-hidden border border-fuchsia-500/40 bg-black aspect-video flex items-center justify-center">
-                        <img src={capturedImageBase64} alt="Captura" className="max-h-full max-w-full object-contain" />
-                        <button
-                          type="button"
-                          onClick={() => { setCapturedImageBase64(null); setForgedResult(null); }}
-                          className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/80 text-white hover:bg-rose-950 transition-colors cursor-pointer"
+                      <div className="space-y-2">
+                        <div 
+                          onClick={() => fileInputRef.current?.click()}
+                          className="relative rounded-xl overflow-hidden border border-fuchsia-500/40 bg-black aspect-video flex items-center justify-center cursor-pointer group"
+                          title="Toca para cambiar la foto"
                         >
-                          <X className="w-4 h-4" />
-                        </button>
+                          <img src={capturedImageBase64} alt="Captura" className="max-h-full max-w-full object-contain" />
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); setCapturedImageBase64(null); setForgedResult(null); }}
+                            className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/80 text-white hover:bg-rose-950 transition-colors cursor-pointer"
+                            title="Quitar imagen"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-xs font-mono text-white transition-opacity">
+                            📷 Toca para elegir otra foto
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            className="flex-1 py-1.5 px-3 rounded-xl bg-fuchsia-950/60 hover:bg-fuchsia-900 border border-fuchsia-500/40 text-[10px] font-mono font-bold text-fuchsia-200 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                          >
+                            <Camera className="w-3.5 h-3.5 text-fuchsia-400" />
+                            <span>Cambiar Foto / Subir Otra</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { setCapturedImageBase64(null); setForgedResult(null); }}
+                            className="py-1.5 px-3 rounded-xl bg-rose-950/60 hover:bg-rose-900 border border-rose-500/40 text-[10px] font-mono text-rose-300 transition-colors cursor-pointer"
+                          >
+                            Quitar
+                          </button>
+                        </div>
                       </div>
                     ) : (
                       <div
@@ -702,11 +737,15 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                     <span className="text-xs font-bold uppercase text-slate-300 tracking-wide">
                       2. Resultado Holográfico
                     </span>
-                    {forgedResult && (
+                    {forgedResult ? (
                       <span className="text-[10px] font-mono text-emerald-400 font-bold bg-emerald-950/60 border border-emerald-500/40 px-2 py-0.5 rounded">
                         ✓ Vectorización Lista
                       </span>
-                    )}
+                    ) : stats.kaiCustomForm ? (
+                      <span className="text-[10px] font-mono text-fuchsia-300 font-bold bg-fuchsia-950/60 border border-fuchsia-500/40 px-2 py-0.5 rounded">
+                        KAI Guardado en Arsenal
+                      </span>
+                    ) : null}
                   </div>
 
                   <div className="w-48 h-48 relative flex items-center justify-center bg-black/70 rounded-2xl border border-white/10 p-2 shadow-[inset_0_0_20px_rgba(217,70,239,0.1)]">
@@ -721,6 +760,17 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                         ascensionCrystalsCount={ascensionCrystals}
                         customForm={forgedResult}
                       />
+                    ) : stats.kaiCustomForm ? (
+                      <KaiVectorGraphics
+                        shapeId="custom"
+                        activeColor="#e879f9"
+                        secondaryColor="#a21caf"
+                        glowFilterId="forge-saved-result"
+                        has21Days={has21Days}
+                        has66Days={has66Days}
+                        ascensionCrystalsCount={ascensionCrystals}
+                        customForm={stats.kaiCustomForm}
+                      />
                     ) : (
                       <div className="text-center p-4 text-slate-500 space-y-2">
                         <Sparkles className="w-8 h-8 mx-auto opacity-30 text-fuchsia-400" />
@@ -731,24 +781,67 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                     )}
                   </div>
 
-                  {forgedResult && (
+                  {forgedResult ? (
                     <div className="w-full text-center space-y-1">
                       <h4 className="text-sm font-bold text-white">{forgedResult.name}</h4>
                       <p className="text-[10px] font-mono text-fuchsia-300">
-                        {forgedResult.lines.length} trazos geométricos simétricos • Peso: 1.8 KB
+                        {forgedResult.lines.length} trazos geométricos simétricos • Nueva Generación
                       </p>
                     </div>
-                  )}
+                  ) : stats.kaiCustomForm ? (
+                    <div className="w-full text-center space-y-1">
+                      <h4 className="text-sm font-bold text-white">{stats.kaiCustomForm.name}</h4>
+                      <p className="text-[10px] font-mono text-emerald-400">
+                        {stats.kaiShape === 'custom' ? '✓ Actualmente Equipado' : 'Guardado en tu Arsenal'}
+                      </p>
+                    </div>
+                  ) : null}
 
-                  <button
-                    type="button"
-                    onClick={handleEquipCustomForm}
-                    disabled={!forgedResult}
-                    className="w-full py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 disabled:opacity-30 text-black font-black text-xs uppercase tracking-wider shadow-[0_0_15px_rgba(0,240,255,0.3)] transition-all cursor-pointer flex items-center justify-center gap-2"
-                  >
-                    <Check className="w-4 h-4 stroke-[3]" />
-                    <span>Guardar y Equipar como Mi KAI Activo</span>
-                  </button>
+                  {forgedResult ? (
+                    <button
+                      type="button"
+                      onClick={handleEquipCustomForm}
+                      className="w-full py-3 rounded-xl bg-gradient-to-r from-fuchsia-600 via-purple-600 to-cyan-500 hover:opacity-95 text-white font-black text-xs uppercase tracking-wider shadow-[0_0_20px_rgba(217,70,239,0.4)] transition-all cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      <Check className="w-4 h-4 stroke-[3]" />
+                      <span>Guardar y Equipar Este Nuevo KAI</span>
+                    </button>
+                  ) : stats.kaiCustomForm ? (
+                    <div className="w-full space-y-2">
+                      {stats.kaiShape === 'custom' ? (
+                        <div className="space-y-2">
+                          <div className="py-2 px-3 rounded-xl bg-fuchsia-950/60 border border-fuchsia-500/40 text-center font-mono text-[10px] text-fuchsia-300 font-bold flex items-center justify-center gap-1.5">
+                            <Check className="w-3.5 h-3.5 text-fuchsia-300" />
+                            <span>Compañero IA Activo</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleSelectShape('prism')}
+                            className="w-full py-2 rounded-xl bg-white/10 hover:bg-cyan-500 hover:text-black font-mono text-[10px] font-bold text-slate-200 transition-all cursor-pointer border border-white/10"
+                          >
+                            ↩️ Volver a El Prisma Oficial
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleSelectShape('custom')}
+                          className="w-full py-3 rounded-xl bg-fuchsia-500 hover:bg-fuchsia-400 text-black font-black text-xs uppercase tracking-wider shadow-[0_0_15px_rgba(217,70,239,0.3)] transition-all cursor-pointer flex items-center justify-center gap-2"
+                        >
+                          <Check className="w-4 h-4 stroke-[3]" />
+                          <span>Equipar Mi KAI IA Guardado</span>
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled
+                      className="w-full py-3 rounded-xl bg-white/10 text-slate-500 font-black text-xs uppercase tracking-wider cursor-not-allowed"
+                    >
+                      Sube una foto para forjar
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

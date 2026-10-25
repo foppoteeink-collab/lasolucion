@@ -806,7 +806,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
                       KAI • Nv. {stats.level || 1}
                     </div>
                     <div className="text-[10px] text-cyan-300/80 flex items-center gap-1 mt-0.5">
-                      <span className="text-cyan-400 font-bold underline">Taller & Forja 🎨</span>
+                      <span className="text-cyan-400 font-bold underline">Cambiar KAI / Taller 🎨</span>
                       <Sparkles className="w-3 h-3 text-amber-300" />
                     </div>
                   </div>
