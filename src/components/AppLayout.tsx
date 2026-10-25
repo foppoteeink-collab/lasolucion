@@ -279,6 +279,8 @@ export function AppLayout() {
               onOpenNightlyReflection={() => setIsNightlyReflectionOpen(true)}
               onRegisterWakeUp={(dateStr, customWakeTime) => handleRegisterWakeUp(dateStr, customWakeTime)}
               cloudSync={cloudSync}
+              onOpenKaiWorkshop={() => setIsKaiWorkshopOpen(true)}
+              onOpenProfile={() => setActiveTab('stats')}
             />
           </div>
 

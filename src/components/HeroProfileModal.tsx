@@ -20,6 +20,8 @@ import { getRankForLevel } from '../data/defaults';
 import { useAuth } from '../context/AuthContext';
 import { CloudSyncResult } from '../hooks/useCloudSync';
 import { soundFX } from '../utils/audio';
+import { KaiVectorGraphics } from './KaiVectorGraphics';
+import { KAI_MULTIVERSE_STYLES, KAI_OFFICIAL_SHAPES } from '../data/kaiShapes';
 
 interface HeroProfileModalProps {
   isOpen: boolean;
@@ -29,6 +31,7 @@ interface HeroProfileModalProps {
   cloudSync?: CloudSyncResult;
   onOpenAwakening?: () => void;
   onOpenArchetypes?: () => void;
+  onOpenKaiWorkshop?: () => void;
 }
 
 const QUICK_AVATARS = ['⚔️', '🛡️', '⚡', '👑', '🐺', '🐲', '🦅', '🥋', '🧠', '🎯', '🚀', '💎', '🧙', '🧘', '🔥', '🌟'];
@@ -41,6 +44,7 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
   cloudSync,
   onOpenAwakening,
   onOpenArchetypes,
+  onOpenKaiWorkshop,
 }) => {
   const { user, signInWithGoogle, signOut: authSignOut } = useAuth();
   const [isSyncing, setIsSyncing] = useState(false);
@@ -247,6 +251,87 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
                 </button>
               </div>
             )}
+          </div>
+
+          {/* ──────────────── SECCIÓN: COMPAÑERO KAI VINCULADO ──────────────── */}
+          <div className="p-3.5 sm:p-4 rounded-2xl bg-[#040e1b] border border-cyan-500/40 shadow-[0_0_15px_rgba(0,240,255,0.1)]">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[11px] font-anton text-cyan-300 uppercase tracking-wider flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+                Compañero KAI Vinculado
+              </span>
+              {stats.kaiShape === 'custom' && stats.kaiCustomForm ? (
+                <span className="text-[10px] font-mono text-fuchsia-300 bg-fuchsia-950/60 border border-fuchsia-500/50 px-2 py-0.5 rounded-lg flex items-center gap-1">
+                  ✨ Forja Neural IA
+                </span>
+              ) : (
+                <span className="text-[10px] font-mono text-cyan-300 bg-cyan-950/60 border border-cyan-500/50 px-2 py-0.5 rounded-lg flex items-center gap-1">
+                  Forma Cuántica Oficial
+                </span>
+              )}
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center gap-4 bg-[#020710] p-3.5 rounded-xl border border-cyan-500/20">
+              {/* Contenedor Holográfico del KAI */}
+              <div className="w-20 h-20 shrink-0 relative flex items-center justify-center bg-black/60 rounded-2xl border border-cyan-500/30 p-1 shadow-[inset_0_0_15px_rgba(0,240,255,0.15)]">
+                <KaiVectorGraphics
+                  shapeId={stats.kaiShape || 'prism'}
+                  activeColor="var(--color-aura-activa, #00f0ff)"
+                  secondaryColor="#0284c7"
+                  glowFilterId="profile-kai-companion"
+                  has21Days={(stats.streakDays || 0) >= 21}
+                  has66Days={(stats.streakDays || 0) >= 66}
+                  ascensionCrystalsCount={stats.ascensionCrystals || 0}
+                  customForm={stats.kaiCustomForm}
+                />
+              </div>
+
+              {/* Info del Compañero */}
+              <div className="flex-1 min-w-0 text-center sm:text-left space-y-1.5">
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5">
+                  <h4 className="text-sm font-bold text-white">
+                    {stats.kaiShape === 'custom' && stats.kaiCustomForm
+                      ? stats.kaiCustomForm.name
+                      : (KAI_OFFICIAL_SHAPES.find(s => s.id === stats.kaiShape)?.name || 'KAI El Prisma')}
+                  </h4>
+                  {stats.kaiShape === 'custom' && stats.kaiCustomForm?.artStyle && (
+                    <span className="text-[9px] font-mono uppercase px-2 py-0.5 rounded-md bg-fuchsia-500/20 text-fuchsia-200 border border-fuchsia-500/40">
+                      {KAI_MULTIVERSE_STYLES.find(s => s.id === stats.kaiCustomForm?.artStyle)?.icon}{' '}
+                      {stats.kaiCustomForm.artStyle}
+                    </span>
+                  )}
+                </div>
+
+                {stats.kaiShape === 'custom' && stats.kaiCustomForm?.personalityQuote ? (
+                  <div className="p-2 rounded-lg bg-fuchsia-950/30 border border-fuchsia-500/30">
+                    <p className="text-[11px] text-fuchsia-200 italic">
+                      "{stats.kaiCustomForm.personalityQuote}"
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-300">
+                    Entidad holográfica activa guiando tu disciplina, rutinas y crecimiento cuántico.
+                  </p>
+                )}
+
+                {onOpenKaiWorkshop && (
+                  <div className="pt-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        soundFX.playClick();
+                        onClose();
+                        onOpenKaiWorkshop();
+                      }}
+                      className="text-[10px] font-mono font-bold text-cyan-300 hover:text-white px-2.5 py-1 rounded-lg bg-cyan-950/60 hover:bg-cyan-900 border border-cyan-500/40 transition-all cursor-pointer inline-flex items-center gap-1 active:scale-95"
+                    >
+                      <Sparkles className="w-3 h-3 text-cyan-400" />
+                      <span>Abrir Taller Cuántico de KAI →</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* ──────────────── SECCIÓN 2: AVATAR DEL OPERADOR ──────────────── */}

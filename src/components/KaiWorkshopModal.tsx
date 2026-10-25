@@ -35,6 +35,54 @@ interface KaiWorkshopModalProps {
 
 type WorkshopTab = 'shapes' | 'evolution' | 'forge' | 'armory';
 
+const renderStyleMiniPreview = (styleId: KaiMultiverseStyle) => {
+  switch (styleId) {
+    case 'neon-geometry':
+      return (
+        <svg viewBox="0 0 50 50" className="w-10 h-10 text-cyan-400 drop-shadow-[0_0_8px_rgba(0,240,255,0.6)]">
+          <polygon points="25,5 45,16 45,38 25,48 5,38 5,16" fill="none" stroke="currentColor" strokeWidth="2" />
+          <polygon points="25,14 37,21 37,33 25,40 13,33 13,21" fill="none" stroke="#38bdf8" strokeWidth="1" opacity="0.6" />
+          <circle cx="21" cy="24" r="2" fill="#00f0ff" />
+          <circle cx="29" cy="24" r="2" fill="#00f0ff" />
+          <path d="M22,31 Q25,34 28,31" fill="none" stroke="#00f0ff" strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
+      );
+    case 'cyber-pixel':
+      return (
+        <svg viewBox="0 0 48 48" className="w-10 h-10 drop-shadow-[0_0_8px_rgba(16,185,129,0.6)]">
+          <rect x="12" y="8" width="6" height="6" fill="#10b981" />
+          <rect x="30" y="8" width="6" height="6" fill="#10b981" />
+          <rect x="12" y="16" width="24" height="18" fill="#10b981" />
+          <rect x="16" y="20" width="4" height="4" fill="#040814" />
+          <rect x="28" y="20" width="4" height="4" fill="#040814" />
+          <rect x="20" y="28" width="8" height="3" fill="#040814" />
+          <rect x="8" y="34" width="8" height="6" fill="#059669" />
+          <rect x="32" y="34" width="8" height="6" fill="#059669" />
+        </svg>
+      );
+    case 'organic-flow':
+      return (
+        <svg viewBox="0 0 50 50" className="w-10 h-10 text-fuchsia-400 drop-shadow-[0_0_8px_rgba(236,72,153,0.6)]">
+          <path d="M25,6 C13,6 8,18 8,28 C8,40 16,46 25,46 C34,46 42,40 42,28 C42,18 37,6 25,6 Z" fill="none" stroke="currentColor" strokeWidth="2" />
+          <path d="M18,22 C20,19 22,19 24,22" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
+          <path d="M26,22 C28,19 30,19 32,22" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
+          <path d="M20,32 C23,37 27,37 30,32" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      );
+    case 'low-poly':
+      return (
+        <svg viewBox="0 0 50 50" className="w-10 h-10 drop-shadow-[0_0_8px_rgba(245,158,11,0.6)]">
+          <polygon points="25,6 12,20 25,28" fill="#f59e0b" fillOpacity="0.85" />
+          <polygon points="25,6 38,20 25,28" fill="#f59e0b" fillOpacity="0.65" />
+          <polygon points="12,20 25,28 25,46 12,34" fill="#d97706" fillOpacity="0.45" />
+          <polygon points="38,20 25,28 25,46 38,34" fill="#fbbf24" fillOpacity="0.3" />
+          <polygon points="18,20 22,18 22,22" fill="#ffffff" fillOpacity="0.9" />
+          <polygon points="32,20 28,18 28,22" fill="#ffffff" fillOpacity="0.9" />
+        </svg>
+      );
+  }
+};
+
 export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
   isOpen,
   onClose,
@@ -52,6 +100,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
   const [isForging, setIsForging] = useState(false);
   const [forgedResult, setForgedResult] = useState<KaiCustomForm | null>(null);
   const [forgeError, setForgeError] = useState<string | null>(null);
+  const [equippedFeedback, setEquippedFeedback] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Progresión de Hábitos 21d / 66d
@@ -160,7 +209,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
       });
 
       if (customForm) {
-        soundFX.playLevelUp();
+        soundFX.playFanfare();
         triggerShockwave({ color: 'violet', intensity: 'epic' });
         setForgedResult(customForm);
 
@@ -181,13 +230,15 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
 
   const handleEquipCustomForm = () => {
     if (!forgedResult) return;
-    soundFX.playItemEquip();
+    soundFX.playFanfare();
     triggerShockwave({ color: 'gold', intensity: 'epic' });
     setStats((prev) => ({
       ...prev,
       kaiCustomForm: forgedResult,
       kaiShape: 'custom',
     }));
+    setEquippedFeedback(true);
+    setTimeout(() => setEquippedFeedback(false), 4500);
   };
 
   return (
@@ -419,7 +470,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                           FORJA NEURAL IA
                         </span>
                         <span className="inline-block mt-1 px-1.5 py-0.2 rounded text-[9px] font-mono bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/40">
-                          {stats.kaiCustomForm.lines.length} trazos vectoriales
+                          {stats.kaiCustomForm.svgContent ? '100% SVG Vectorial' : `${stats.kaiCustomForm.lines?.length || 0} trazos`}
                         </span>
                       </div>
                     </div>
@@ -643,7 +694,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                           soundFX.playClick();
                           setSelectedStyle(style.id);
                         }}
-                        className={`p-3 rounded-2xl border text-left transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between ${
+                        className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between ${
                           isSelected
                             ? 'bg-gradient-to-b from-fuchsia-950/70 to-[#0f0728] border-fuchsia-400 shadow-[0_0_20px_rgba(217,70,239,0.35)] scale-[1.02]'
                             : 'bg-[#040814]/80 border-white/10 hover:border-white/30 hover:bg-white/5 opacity-80 hover:opacity-100'
@@ -652,24 +703,34 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                         {isSelected && (
                           <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-fuchsia-400 shadow-[0_0_8px_#d946ef] animate-ping" />
                         )}
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-xl">{style.icon}</span>
-                            <span className={`text-[8px] font-mono font-bold uppercase px-1.5 py-0.5 rounded ${
+                        <div className="space-y-2">
+                          {/* Mini SVG Preview & Badge */}
+                          <div className="flex items-center justify-between">
+                            <div className="p-1 rounded-xl bg-black/60 border border-white/10 flex items-center justify-center">
+                              {renderStyleMiniPreview(style.id)}
+                            </div>
+                            <span className={`text-[8px] font-mono font-bold uppercase px-2 py-0.5 rounded-full ${
                               isSelected ? 'bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/40' : 'bg-white/5 text-slate-400'
                             }`}>
-                              {style.id}
+                              {style.badge}
                             </span>
                           </div>
-                          <div className="text-xs font-bold text-white leading-tight">
-                            {style.name}
+
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-sm">{style.icon}</span>
+                              <div className="text-xs font-bold text-white leading-tight">
+                                {style.name}
+                              </div>
+                            </div>
+                            <p className="text-[10px] text-slate-400 leading-snug line-clamp-2 mt-1">
+                              {style.tagline}
+                            </p>
                           </div>
-                          <p className="text-[10px] text-slate-400 leading-snug line-clamp-2">
-                            {style.tagline}
-                          </p>
                         </div>
-                        <div className="mt-2 pt-2 border-t border-white/5 flex items-center justify-between">
-                          <span className="text-[9px] font-mono text-slate-400">
+
+                        <div className="mt-3 pt-2 border-t border-white/5 flex items-center justify-between">
+                          <span className="text-[9px] font-mono font-bold text-slate-400">
                             {isSelected ? '✓ Activo' : 'Elegir'}
                           </span>
                           <div className="flex -space-x-1">
@@ -815,31 +876,36 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                     type="button"
                     onClick={handleRunNeuralForge}
                     disabled={!capturedImageBase64 || isForging}
-                    className="w-full py-3 rounded-xl bg-gradient-to-r from-fuchsia-600 via-purple-600 to-cyan-600 hover:opacity-90 disabled:opacity-40 text-white font-black text-xs uppercase tracking-wider shadow-[0_0_20px_rgba(217,70,239,0.4)] transition-all cursor-pointer flex items-center justify-center gap-2"
+                    className="w-full py-3.5 rounded-xl bg-gradient-to-r from-fuchsia-600 via-purple-600 to-cyan-500 hover:opacity-95 disabled:opacity-40 text-white font-black text-xs uppercase tracking-wider shadow-[0_0_25px_rgba(217,70,239,0.4)] transition-all cursor-pointer flex items-center justify-center gap-2"
                   >
                     {isForging ? (
                       <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Sintetizando Icono KAI con IA...</span>
+                        <Loader2 className="w-4 h-4 animate-spin text-cyan-300" />
+                        <span>Sintetizando Vector y Dando Vida al Personaje...</span>
                       </>
                     ) : (
                       <>
                         <Zap className="w-4 h-4 fill-white" />
-                        <span>Forjar KAI con IA (Consumir 1 Carga)</span>
+                        <span>Dar Vida al Personaje con IA (Forja Cuántica)</span>
                       </>
                     )}
                   </button>
                 </div>
 
-                {/* Panel Derecho: Previsualización Vectorial Holográfica */}
-                <div className="p-5 rounded-2xl bg-[#040814] border border-white/10 space-y-4 flex flex-col items-center justify-between">
-                  <div className="w-full flex items-center justify-between">
-                    <span className="text-xs font-bold uppercase text-slate-300 tracking-wide">
-                      2. Resultado Holográfico
+                {/* Panel Derecho: Previsualización Vectorial Holográfica / Escenario de Revelación */}
+                <div className="p-5 rounded-2xl bg-gradient-to-b from-[#040814] via-[#060c20] to-[#040814] border border-white/10 space-y-4 flex flex-col items-center justify-between relative overflow-hidden">
+                  
+                  {/* Luz ambiental holográfica de fondo */}
+                  <div className="absolute inset-0 bg-radial from-fuchsia-600/10 via-transparent to-transparent pointer-events-none blur-2xl" />
+
+                  <div className="w-full flex items-center justify-between z-10">
+                    <span className="text-xs font-bold uppercase text-slate-300 tracking-wide flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-fuchsia-400" />
+                      <span>{forgedResult ? 'Escenario de Revelación' : 'Previsualización Holográfica'}</span>
                     </span>
                     {forgedResult ? (
-                      <span className="text-[10px] font-mono text-emerald-400 font-bold bg-emerald-950/60 border border-emerald-500/40 px-2 py-0.5 rounded">
-                        ✓ Icono KAI Generado
+                      <span className="text-[10px] font-mono text-emerald-300 font-bold bg-emerald-950/80 border border-emerald-400/60 px-2.5 py-0.5 rounded-full shadow-[0_0_12px_rgba(16,185,129,0.3)] animate-pulse">
+                        ✨ ¡Compañero Convocado!
                       </span>
                     ) : stats.kaiCustomForm ? (
                       <span className="text-[10px] font-mono text-fuchsia-300 font-bold bg-fuchsia-950/60 border border-fuchsia-500/40 px-2 py-0.5 rounded">
@@ -848,84 +914,111 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                     ) : null}
                   </div>
 
-                  <div className="w-48 h-48 relative flex items-center justify-center bg-black/70 rounded-2xl border border-white/10 p-2 shadow-[inset_0_0_20px_rgba(217,70,239,0.1)]">
+                  {/* Escenario Holográfico */}
+                  <div className="w-56 h-56 relative flex items-center justify-center p-2 z-10">
+                    {/* Anillos concéntricos del pedestal holográfico */}
+                    <div className="absolute inset-0 rounded-full border border-fuchsia-500/20 animate-ping opacity-30" />
+                    <div className="absolute inset-2 rounded-full border border-dashed border-fuchsia-400/40 animate-[spin_20s_linear_infinite]" />
+                    <div className="absolute inset-5 rounded-full border border-dotted border-cyan-400/40 animate-[spin_12s_linear_infinite_reverse]" />
+                    <div className="absolute bottom-2 w-32 h-6 bg-fuchsia-500/20 blur-md rounded-full pointer-events-none" />
+
                     {forgedResult ? (
-                      <KaiVectorGraphics
-                        shapeId="custom"
-                        activeColor="#e879f9"
-                        secondaryColor="#a21caf"
-                        glowFilterId="forge-result"
-                        has21Days={has21Days}
-                        has66Days={has66Days}
-                        ascensionCrystalsCount={ascensionCrystals}
-                        customForm={forgedResult}
-                      />
+                      <motion.div
+                        key={forgedResult.name}
+                        initial={{ scale: 0.5, opacity: 0, y: 15 }}
+                        animate={{ scale: 1, opacity: 1, y: 0 }}
+                        transition={{ type: "spring", stiffness: 220, damping: 18 }}
+                        className="relative z-10 w-44 h-44 flex items-center justify-center"
+                      >
+                        <KaiVectorGraphics
+                          shapeId="custom"
+                          activeColor="var(--color-aura-activa, #e879f9)"
+                          secondaryColor="#a21caf"
+                          glowFilterId="forge-result-stage"
+                          has21Days={has21Days}
+                          has66Days={has66Days}
+                          ascensionCrystalsCount={ascensionCrystals}
+                          customForm={forgedResult}
+                        />
+                      </motion.div>
                     ) : stats.kaiCustomForm ? (
-                      <KaiVectorGraphics
-                        shapeId="custom"
-                        activeColor="#e879f9"
-                        secondaryColor="#a21caf"
-                        glowFilterId="forge-saved-result"
-                        has21Days={has21Days}
-                        has66Days={has66Days}
-                        ascensionCrystalsCount={ascensionCrystals}
-                        customForm={stats.kaiCustomForm}
-                      />
+                      <div className="w-44 h-44 flex items-center justify-center">
+                        <KaiVectorGraphics
+                          shapeId="custom"
+                          activeColor="var(--color-aura-activa, #e879f9)"
+                          secondaryColor="#a21caf"
+                          glowFilterId="forge-saved-result"
+                          has21Days={has21Days}
+                          has66Days={has66Days}
+                          ascensionCrystalsCount={ascensionCrystals}
+                          customForm={stats.kaiCustomForm}
+                        />
+                      </div>
                     ) : (
-                      <div className="text-center p-4 text-slate-500 space-y-2">
-                        <Sparkles className="w-8 h-8 mx-auto opacity-30 text-fuchsia-400" />
-                        <span className="text-[11px] block">
-                          Sube una imagen y toca "Forjar" para ver nacer a tu KAI personalizado.
+                      <div className="text-center p-4 text-slate-500 space-y-3 z-10">
+                        <div className="w-12 h-12 mx-auto rounded-2xl bg-fuchsia-950/40 border border-fuchsia-500/30 flex items-center justify-center">
+                          <Sparkles className="w-6 h-6 text-fuchsia-400 animate-pulse" />
+                        </div>
+                        <span className="text-[11px] block leading-relaxed text-slate-400">
+                          Sube o toma una foto de cualquier objeto y toca <strong>"Dar Vida al Personaje"</strong> para materializar a tu compañero.
                         </span>
                       </div>
                     )}
                   </div>
 
+                  {/* Diálogo / Voz & Badges de Revelación */}
                   {forgedResult ? (
-                    <div className="w-full text-center space-y-2">
-                      <div className="flex flex-wrap items-center justify-center gap-1.5 mb-1">
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="w-full space-y-3 z-10"
+                    >
+                      {/* Bocadillo de Diálogo / Speech Bubble */}
+                      <div className="relative p-3 rounded-2xl bg-gradient-to-r from-fuchsia-950/90 via-[#180933] to-cyan-950/90 border-2 border-fuchsia-400/60 shadow-[0_0_25px_rgba(217,70,239,0.3)] text-center">
+                        {/* Triángulo del bocadillo apuntando arriba hacia la mascota */}
+                        <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-3.5 h-3.5 bg-[#180933] border-t-2 border-l-2 border-fuchsia-400/60 rotate-45" />
+                        
+                        <div className="flex items-center justify-center gap-1.5 mb-1">
+                          <span className="text-xs">💬</span>
+                          <span className="text-[10px] font-mono uppercase tracking-widest text-fuchsia-300 font-black">
+                            {forgedResult.name} te saluda:
+                          </span>
+                        </div>
+                        <p className="text-xs sm:text-sm text-white italic font-bold tracking-wide leading-relaxed">
+                          "{forgedResult.personalityQuote || '¡Saludos, Operador! He despertado con forma y voluntad propia.'}"
+                        </p>
+                      </div>
+
+                      {/* Badges de ADN del Personaje */}
+                      <div className="flex flex-wrap items-center justify-center gap-1.5">
                         {forgedResult.detectedObject && (
-                          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-400/50 text-[10px] font-mono text-cyan-300 font-bold shadow-[0_0_10px_rgba(0,240,255,0.2)]">
+                          <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-400/50 text-[10px] font-mono text-cyan-300 font-bold shadow-[0_0_10px_rgba(0,240,255,0.2)]">
                             <span>🎯 Objeto:</span>
                             <span className="text-white">{forgedResult.detectedObject}</span>
                           </div>
                         )}
                         {forgedResult.artStyle && (
-                          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-fuchsia-950/80 border border-fuchsia-400/50 text-[10px] font-mono text-fuchsia-200 font-bold shadow-[0_0_10px_rgba(217,70,239,0.2)]">
+                          <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-fuchsia-950/80 border border-fuchsia-400/50 text-[10px] font-mono text-fuchsia-200 font-bold shadow-[0_0_10px_rgba(217,70,239,0.2)]">
                             <span>{KAI_MULTIVERSE_STYLES.find(s => s.id === forgedResult.artStyle)?.icon || '🎨'}</span>
                             <span className="uppercase">{forgedResult.artStyle}</span>
                           </div>
                         )}
-                      </div>
-
-                      <h4 className="text-sm font-bold text-white">{forgedResult.name}</h4>
-
-                      {forgedResult.personalityQuote && (
-                        <div className="w-full p-2.5 rounded-xl bg-gradient-to-r from-fuchsia-950/60 via-purple-950/40 to-cyan-950/60 border border-fuchsia-500/30 text-center shadow-[0_0_15px_rgba(217,70,239,0.15)] animate-fadeIn">
-                          <span className="text-[9px] font-mono text-fuchsia-300 uppercase tracking-widest block font-bold mb-0.5">
-                            💬 Personalidad & Voz del Personaje:
-                          </span>
-                          <p className="text-xs text-white italic font-medium leading-relaxed">
-                            "{forgedResult.personalityQuote}"
-                          </p>
+                        <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-400/50 text-[10px] font-mono text-emerald-300 font-bold">
+                          <span>⚡ 100% SVG Vectorial</span>
                         </div>
-                      )}
-
-                      <p className="text-[10px] font-mono text-cyan-300">
-                        {forgedResult.svgContent ? '⚡ Geometría 100% SVG' : `${forgedResult.lines?.length || 0} trazos`} • Token --color-aura-activa sincronizado
-                      </p>
-                    </div>
+                      </div>
+                    </motion.div>
                   ) : stats.kaiCustomForm ? (
-                    <div className="w-full text-center space-y-2">
+                    <div className="w-full space-y-2.5 z-10 text-center">
                       <div className="flex flex-wrap items-center justify-center gap-1.5 mb-1">
                         {stats.kaiCustomForm.detectedObject && (
-                          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-fuchsia-950/80 border border-fuchsia-400/50 text-[10px] font-mono text-fuchsia-300 font-bold">
+                          <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-fuchsia-950/80 border border-fuchsia-400/50 text-[10px] font-mono text-fuchsia-300 font-bold">
                             <span>🎯 Objeto:</span>
                             <span className="text-white">{stats.kaiCustomForm.detectedObject}</span>
                           </div>
                         )}
                         {stats.kaiCustomForm.artStyle && (
-                          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-purple-950/80 border border-purple-400/50 text-[10px] font-mono text-purple-200 font-bold">
+                          <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-purple-950/80 border border-purple-400/50 text-[10px] font-mono text-purple-200 font-bold">
                             <span>{KAI_MULTIVERSE_STYLES.find(s => s.id === stats.kaiCustomForm.artStyle)?.icon || '🎨'}</span>
                             <span className="uppercase">{stats.kaiCustomForm.artStyle}</span>
                           </div>
@@ -951,51 +1044,57 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                     </div>
                   ) : null}
 
-                  {forgedResult ? (
-                    <button
-                      type="button"
-                      onClick={handleEquipCustomForm}
-                      className="w-full py-3 rounded-xl bg-gradient-to-r from-fuchsia-600 via-purple-600 to-cyan-500 hover:opacity-95 text-white font-black text-xs uppercase tracking-wider shadow-[0_0_20px_rgba(217,70,239,0.4)] transition-all cursor-pointer flex items-center justify-center gap-2"
+                  {/* Toast de Éxito al Equipar */}
+                  {equippedFeedback && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="w-full p-2.5 rounded-xl bg-emerald-950/90 border border-emerald-400 text-center font-mono text-xs font-bold text-emerald-300 shadow-[0_0_20px_rgba(16,185,129,0.4)] z-10"
                     >
-                      <Check className="w-4 h-4 stroke-[3]" />
-                      <span>Guardar y Equipar Este Nuevo KAI</span>
-                    </button>
-                  ) : stats.kaiCustomForm ? (
-                    <div className="w-full space-y-2">
-                      {stats.kaiShape === 'custom' ? (
-                        <div className="space-y-2">
-                          <div className="py-2 px-3 rounded-xl bg-fuchsia-950/60 border border-fuchsia-500/40 text-center font-mono text-[10px] text-fuchsia-300 font-bold flex items-center justify-center gap-1.5">
-                            <Check className="w-3.5 h-3.5 text-fuchsia-300" />
-                            <span>Compañero IA Activo</span>
+                      🎉 ¡Compañero Adoptado y Equipado en toda la App!
+                    </motion.div>
+                  )}
+
+                  {/* Acciones de Equipado */}
+                  <div className="w-full z-10">
+                    {forgedResult ? (
+                      <button
+                        type="button"
+                        onClick={handleEquipCustomForm}
+                        className="w-full py-3.5 rounded-xl bg-gradient-to-r from-fuchsia-600 via-purple-600 to-cyan-400 hover:opacity-95 text-black font-anton uppercase tracking-widest text-xs sm:text-sm shadow-[0_0_25px_rgba(217,70,239,0.5)] transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-95"
+                      >
+                        <Check className="w-4 h-4 stroke-[3]" />
+                        <span>¡Adoptar & Equipar a Mi Compañero!</span>
+                      </button>
+                    ) : stats.kaiCustomForm ? (
+                      <div className="w-full space-y-2">
+                        {stats.kaiShape === 'custom' ? (
+                          <div className="space-y-2">
+                            <div className="py-2 px-3 rounded-xl bg-fuchsia-950/60 border border-fuchsia-500/40 text-center font-mono text-[10px] text-fuchsia-300 font-bold flex items-center justify-center gap-1.5">
+                              <Check className="w-3.5 h-3.5 text-fuchsia-300" />
+                              <span>Compañero IA Activo</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleSelectShape('prism')}
+                              className="w-full py-2 rounded-xl bg-white/10 hover:bg-cyan-500 hover:text-black font-mono text-[10px] font-bold text-slate-200 transition-all cursor-pointer border border-white/10"
+                            >
+                              ↩️ Volver a El Prisma Oficial
+                            </button>
                           </div>
+                        ) : (
                           <button
                             type="button"
-                            onClick={() => handleSelectShape('prism')}
-                            className="w-full py-2 rounded-xl bg-white/10 hover:bg-cyan-500 hover:text-black font-mono text-[10px] font-bold text-slate-200 transition-all cursor-pointer border border-white/10"
+                            onClick={() => handleSelectShape('custom')}
+                            className="w-full py-3 rounded-xl bg-fuchsia-500 hover:bg-fuchsia-400 text-black font-black text-xs uppercase tracking-wider shadow-[0_0_15px_rgba(217,70,239,0.3)] transition-all cursor-pointer flex items-center justify-center gap-2"
                           >
-                            ↩️ Volver a El Prisma Oficial
+                            <Check className="w-4 h-4 stroke-[3]" />
+                            <span>Equipar Mi KAI IA Guardado</span>
                           </button>
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => handleSelectShape('custom')}
-                          className="w-full py-3 rounded-xl bg-fuchsia-500 hover:bg-fuchsia-400 text-black font-black text-xs uppercase tracking-wider shadow-[0_0_15px_rgba(217,70,239,0.3)] transition-all cursor-pointer flex items-center justify-center gap-2"
-                        >
-                          <Check className="w-4 h-4 stroke-[3]" />
-                          <span>Equipar Mi KAI IA Guardado</span>
-                        </button>
-                      )}
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      disabled
-                      className="w-full py-3 rounded-xl bg-white/10 text-slate-500 font-black text-xs uppercase tracking-wider cursor-not-allowed"
-                    >
-                      Sube una foto para forjar
-                    </button>
-                  )}
+                        )}
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
               </div>
             </div>

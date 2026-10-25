@@ -36,10 +36,12 @@ import { useUIStore } from '../store/useUIStore';
 import { getRankForLevel, getCategoryColor } from '../data/defaults';
 import { CloudSyncResult } from '../hooks/useCloudSync';
 import { ArchetypeGlyph } from './ArchetypeGlyph';
+import { KaiVectorGraphics } from './KaiVectorGraphics';
 import { getTodayDateString, getYesterdayDateString } from '../utils/date';
 
 interface HeaderProps {
   onOpenProfile?: () => void;
+  onOpenKaiWorkshop?: () => void;
   notifications: AppNotification[];
   onClearNotifications: () => void;
   hasUnclaimedDailyReward: boolean;
@@ -54,6 +56,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({
   onOpenProfile,
+  onOpenKaiWorkshop,
   notifications,
   onClearNotifications,
   hasUnclaimedDailyReward,
@@ -83,6 +86,12 @@ export const Header: React.FC<HeaderProps> = ({
 
   const xpPercent = Math.min(100, Math.max(0, (stats.currentXp / stats.requiredXp) * 100));
   const hpPercent = Math.min(100, Math.max(0, ((stats.hp || 100) / (stats.maxHp || 100)) * 100));
+
+  const has21Days = (stats.streakDays || 0) >= 21;
+  const has66Days = (stats.streakDays || 0) >= 66;
+  const ascensionCrystals = stats.ascensionCrystals || 0;
+  const isCustomKai = stats.kaiShape === 'custom' && !!stats.kaiCustomForm;
+  const kaiDisplayName = isCustomKai ? stats.kaiCustomForm!.name : 'KAI';
 
   // ─── Sleep Status Logic ───────────────────────────────────────────────────
   const todayStr = getTodayDateString();
@@ -508,8 +517,8 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="px-3 sm:px-5 py-2 bg-surface-modal border-b border-cyan-500/30 shadow-[0_4px_16px_rgba(0,0,0,0.6)]">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
           
-          {/* Avatar & XP */}
-          <div className="flex items-center gap-2.5 sm:gap-4 min-w-0 flex-1">
+            {/* Avatar & XP */}
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
             <button
               onClick={() => { soundFX.playClick(); onOpenProfile?.(); }}
               className="relative group shrink-0 cursor-pointer"
@@ -528,6 +537,40 @@ export const Header: React.FC<HeaderProps> = ({
                 NV.{stats.level}
               </div>
             </button>
+
+            {/* KAI Companion Mini-Pod */}
+            {onOpenKaiWorkshop && (
+              <button
+                type="button"
+                onClick={() => {
+                  soundFX.playClick();
+                  onOpenKaiWorkshop();
+                }}
+                className={`relative group shrink-0 p-0.5 rounded-xl border transition-all cursor-pointer flex items-center justify-center w-9 h-9 sm:w-11 sm:h-11 overflow-hidden ${
+                  isCustomKai
+                    ? 'bg-fuchsia-950/40 border-fuchsia-400/60 hover:border-fuchsia-300 shadow-[0_0_12px_rgba(217,70,239,0.3)] hover:shadow-[0_0_20px_rgba(217,70,239,0.5)]'
+                    : 'bg-[#030a16] border-cyan-500/40 hover:border-cyan-300 shadow-[0_0_12px_rgba(0,240,255,0.2)] hover:shadow-[0_0_20px_rgba(0,240,255,0.4)]'
+                }`}
+                title={`Compañero KAI: ${kaiDisplayName} • Toca para abrir Taller Cuántico`}
+              >
+                <div className="w-full h-full flex items-center justify-center pointer-events-none scale-105">
+                  <KaiVectorGraphics
+                    shapeId={stats.kaiShape || 'prism'}
+                    activeColor="var(--color-aura-activa, #00f0ff)"
+                    secondaryColor="#0284c7"
+                    glowFilterId="header-kai-pod"
+                    has21Days={has21Days}
+                    has66Days={has66Days}
+                    ascensionCrystalsCount={ascensionCrystals}
+                    customForm={stats.kaiCustomForm}
+                  />
+                </div>
+                {/* Micro Pip Indicator */}
+                <span className={`absolute bottom-0.5 right-0.5 w-1.5 h-1.5 rounded-full border border-black animate-pulse ${
+                  isCustomKai ? 'bg-fuchsia-400 shadow-[0_0_6px_#d946ef]' : 'bg-cyan-400 shadow-[0_0_6px_#00f0ff]'
+                }`} />
+              </button>
+            )}
             
             <div 
               onClick={() => { soundFX.playClick(); onOpenProfile?.(); }}

@@ -586,6 +586,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
           cloudSync={cloudSync}
           onOpenAwakening={onOpenAwakening}
           onOpenArchetypes={() => setIsArchetypesModalOpen(true)}
+          onOpenKaiWorkshop={onOpenKaiWorkshop}
         />
       </Suspense>
 
