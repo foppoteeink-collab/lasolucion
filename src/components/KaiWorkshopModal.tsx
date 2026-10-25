@@ -693,46 +693,15 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
 
                   <div>
                     <label className="text-[11px] font-bold text-slate-300 block mb-1">
-                      Pista u Objeto (Ayuda a la IA a afinar la similitud):
+                      Contexto o Nombre Opcional (Ayuda a la IA):
                     </label>
                     <input
                       type="text"
                       value={forgePrompt}
                       onChange={(e) => setForgePrompt(e.target.value)}
-                      placeholder="Ej. Gafas de sol, encendedor, audífonos, reloj, taza..."
+                      placeholder="Ej. Mis auriculares Sony de estudio, mi encendedor Zippo..."
                       className="w-full px-3 py-2 rounded-xl bg-black/60 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-fuchsia-400"
                     />
-
-                    {/* Chips de Selección Rápida de Objeto */}
-                    <div className="flex flex-wrap gap-1.5 pt-1.5">
-                      {[
-                        { label: 'Gafas de Sol', icon: '🕶️' },
-                        { label: 'Encendedor', icon: '⚡' },
-                        { label: 'Audífonos', icon: '🎧' },
-                        { label: 'Reloj', icon: '⌚' },
-                        { label: 'Taza', icon: '☕' },
-                        { label: 'Mancuerna', icon: '🏋️' },
-                        { label: 'Manzana', icon: '🍎' },
-                        { label: 'Smartphone', icon: '📱' },
-                      ].map((item) => (
-                        <button
-                          key={item.label}
-                          type="button"
-                          onClick={() => {
-                            soundFX.playClick();
-                            setForgePrompt(item.label);
-                          }}
-                          className={`text-[10px] font-mono px-2 py-0.5 rounded-lg border transition-all cursor-pointer flex items-center gap-1 ${
-                            forgePrompt.toLowerCase().includes(item.label.toLowerCase())
-                              ? 'bg-fuchsia-500/20 border-fuchsia-400 text-fuchsia-200'
-                              : 'bg-white/5 border-white/10 text-slate-400 hover:text-white hover:bg-white/10'
-                          }`}
-                        >
-                          <span>{item.icon}</span>
-                          <span>{item.label}</span>
-                        </button>
-                      ))}
-                    </div>
                   </div>
 
                   {forgeError && (
