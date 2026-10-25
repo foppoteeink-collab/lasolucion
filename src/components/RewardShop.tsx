@@ -103,7 +103,7 @@ export const RewardShop: React.FC = () => {
             name: 'Cápsula Criogénica',
             description: 'Pausa un hábito por 3 días sin perder su racha de 21 o 66 días.',
             icon: '❄️',
-            rarity: 'rare',
+            rarity: 'raro',
             quantity: 1,
             effectType: 'streak_shield'
           });
