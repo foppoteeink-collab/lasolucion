@@ -382,28 +382,35 @@ export async function forgeKaiFromImage(params: {
   const cleanBase64 = imageBase64.includes(',') ? imageBase64.split(',')[1] : imageBase64;
 
   const systemInstructions = `
-Eres el Diseñador Cyber-Origami e Iconográfico de "La Solución".
-Tu misión es identificar el objeto real en la foto (por ejemplo: un encendedor, unas gafas de sol, unos audífonos, un reloj, una taza de café, una pesa/mancuerna, una manzana, un teléfono móvil, una guitarra, etc.) y sintetizarlo en un compañero KAI icónico con CLARA SIMILITUD VISUAL al objeto, adaptado a nuestra estética neón poligonal.
+Eres el Diseñador Maestro Cyber-Origami e Iconográfico de "La Solución".
+Tu misión es transformar el objeto, mascota o sujeto principal de la foto en un KAI OFICIAL de alta gama, respetando rigurosamente el canon estético de nuestros 5 KAI oficiales (Lobo Cyber-Alfa, Sabueso Táctico, Felino Sombra, Núcleo Octaedro, Titán de Memoria).
 
-REGLAS DE IDENTIFICACIÓN Y SIMILITUD ICÓNICA:
-1. DETECCIÓN: Identifica el objeto principal de la imagen ("detectedObject", ej: "Gafas de Sol", "Encendedor", "Audífonos", "Reloj", "Taza de Café", etc.).
+CANON ESTÉTICO OFICIAL DE KAI:
+1. GEOMETRÍA CYBER-ORIGAMI WIREFRAME FRONTAL:
+   - Trazos poligonales rectos, simétricos, limpios y afilados.
+   - Facetas triangulares y trapezoidales bien definidas con jerarquía visual: contornos exteriores fuertes y líneas de faceteado interior que dan volumen 3D.
+   - Facetas sombreadas ('polygons') para dar profundidad de cristal ahumado.
+   - La base inferior de la figura converge de forma armónica hacia la elipse de levitación de la app (alrededor de y: 120 a 140 en el centro x: 80).
+
 2. SIMILITUD VISUAL INMEDIATA (LIKENESS):
-   - El compañero KAI debe ser reconocible de inmediato como ese objeto específico, reinterpretado en arte vectorial poligonal de líneas rectas simétricas neón.
-   - Si son GAFAS DE SOL: Dibuja los dos marcos de lentes simétricos en facetas poligonales a la izquierda y derecha, el puente central que los une en el centro x=80, las patillas laterales plegadas y la visera superior.
-   - Si es un ENCENDEDOR: Dibuja el cuerpo rectangular facetado con biseles, la chimenea/cortavientos metálico, los hombros con rueda de chispa y una llama o arco de plasma geométrico que corone la parte superior.
-   - Si son AUDÍFONOS: Dibuja la diadema exterior e interior curvada en arco sobre la parte superior y las dos copas o almohadillas auriculares hexagonales simétricas a los lados.
-   - Si es un RELOJ: Dibuja el bisel octagonal/hexagonal, las correas saliendo arriba y abajo, y los índices horarios.
-   - Si es una TAZA: Dibuja el cuerpo trapezoidal, las asas cibernéticas y las ondas de vapor de energía ascendente.
-   - Si es una PESA / MANCUERNA: Dibuja las placas de peso hexagonales a ambos lados y la barra central con moleteado.
-   - Si es otro objeto: Extrae sus rasgos más icónicos y plásmalos de forma simétrica y reconocible.
+   - El compañero KAI debe ser inmediatamente reconocible como el objeto o sujeto fotografiado, pero transformado en un tótem cibernético legendario.
+   - Si son GAFAS DE SOL: Dos lentes poligonales simétricos, puente central sólido, patillas estilizadas y visera superior.
+   - Si es un ENCENDEDOR: Cuerpo rectangular facetado, chimenea perforada, rueda de chispa y llama de plasma neón en la cúspide.
+   - Si son AUDÍFONOS: Diadema exterior e interior en arco superior y copas auriculares hexagonales simétricas en los laterales.
+   - Si es un ANIMAL / MASCOTA: Orejas anatómicas poligonales, pómulos facetados, hocico simétrico y ojos rasgados o almendrados con personalidad felina, canina o lupina.
+   - Si es otro objeto (reloj, taza, pesa, etc.): Reproduce sus componentes más icónicos con geometría angular pura.
 
-3. REGLAS ESTRICTAS DEL LIENZO SVG (viewBox="0 0 160 170"):
-   - Eje de simetría bilateral estricto: x = 80. Para todo punto (80 - dx, y), su contraparte simétrica debe ser (80 + dx, y).
-   - Coordenadas válidas: x entre 20 y 140, y entre 20 y 144.
-   - Segmentos rectos poligonales (entre 16 y 32 líneas bien conectadas).
-   - Entre 3 y 8 polígonos ('points': "x1,y1 x2,y2 x3,y3 ...") para las facetas sombreadas principales.
-   - El ojo sagrado de KAI debe ubicarse en el centro exacto: "coreEye": { "cx": 80, "cy": 85, "r": 8 }.
-   - Nombre épico: Dale un nombre que refleje el objeto detectado (ej: "KAI Visor Solaris", "KAI Ignis Monolito", "KAI Sónico Vórtice", etc.).
+3. OJOS VIVOS CON ANATOMÍA PROPIA:
+   - Los ojos deben tener personalidad anatómica: ojos rasgados almendrados para felinos/lobos, ojos nobles con destello para caninos, o un núcleo de sensor de energía en { "cx": 80, "cy": 85, "r": 8 }.
+   - Integra el núcleo o los ojos en las líneas estructurales del chasis.
+
+4. ESPECIFICACIÓN DEL LIENZO SVG (viewBox="0 0 160 170"):
+   - Simetría bilateral rigurosa respecto al eje central x = 80. Para todo punto (80 - dx, y), debe existir (80 + dx, y).
+   - Coordenadas válidas: x entre 18 y 142, y entre 18 y 144.
+   - Entre 18 y 36 líneas rectas conectadas.
+   - Entre 4 y 10 polígonos ('points': "x1,y1 x2,y2 x3,y3 ...") para las facetas principales.
+   - Ojo/núcleo central: "coreEye": { "cx": 80, "cy": 85, "r": 8 }.
+   - Nombre épico oficial: Ej. "KAI Visor Solaris", "KAI Ignis Monolito", "KAI Sónico Vórtice", etc.
 ${promptDescription ? `Contexto o pista del usuario: "${promptDescription}".` : ''}
 
 DEVOLUCIÓN OBLIGATORIA (Responde ÚNICAMENTE con JSON puro, sin bloques markdown ni texto antes ni después):

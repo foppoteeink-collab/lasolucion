@@ -68,27 +68,55 @@ export const KaiVectorGraphics: React.FC<KaiVectorGraphicsProps> = ({
           <stop offset="100%" stopColor="#00070c" stopOpacity="1" />
         </radialGradient>
 
-        {/* ─── CLIPS PARA OJOS ─── */}
-        {/* Clip del Ojo Central (Prisma, Octaedro, Neural IA) centrado en (80, 85) */}
-        <clipPath id={`${gradientId}-eye-clip-center`}>
+        {/* ─── CLIPS PARA OJOS ORGÁNICOS POR ESPECIE ─── */}
+        {/* Clip del Ojo Central (Prisma / Custom) */}
+        <clipPath id={`${gradientId}-eye-clip-prism`}>
           <path d="M 50 85 C 60 67, 100 67, 110 85 C 100 103, 60 103, 50 85 Z" />
         </clipPath>
 
-        {/* Clip Ojo Izquierdo para animales (Lobo, Sabueso, Pantera, Elefante) */}
-        <clipPath id={`${gradientId}-eye-clip-left`}>
-          <path d="M 51 77 C 55 69, 71 69, 75 77 C 71 85, 55 85, 51 77 Z" />
+        {/* Clip del Ojo Sagrado del Octaedro */}
+        <clipPath id={`${gradientId}-eye-clip-octa`}>
+          <path d="M 48 80 C 58 64, 102 64, 112 80 C 102 96, 58 96, 48 80 Z" />
         </clipPath>
 
-        {/* Clip Ojo Derecho para animales */}
-        <clipPath id={`${gradientId}-eye-clip-right`}>
-          <path d="M 85 77 C 89 69, 105 69, 109 77 C 105 85, 89 85, 85 77 Z" />
+        {/* Clips Ojos del Lobo Cyber-Alfa (Rasgados 30°) */}
+        <clipPath id={`${gradientId}-wolf-clip-l`}>
+          <polygon points="50,72 60,66 68,70 64,77 52,76" />
+        </clipPath>
+        <clipPath id={`${gradientId}-wolf-clip-r`}>
+          <polygon points="110,72 100,66 92,70 96,77 108,76" />
+        </clipPath>
+
+        {/* Clips Ojos del Sabueso Táctico (Ovares / Redondos Despiertos) */}
+        <clipPath id={`${gradientId}-hound-clip-l`}>
+          <ellipse cx="64" cy="70" rx="6.5" ry="5.5" />
+        </clipPath>
+        <clipPath id={`${gradientId}-hound-clip-r`}>
+          <ellipse cx="96" cy="70" rx="6.5" ry="5.5" />
+        </clipPath>
+
+        {/* Clips Ojos de Felino Sombra (Cuña / Slit Agresivo) */}
+        <clipPath id={`${gradientId}-feline-clip-l`}>
+          <polygon points="44,68 66,76 60,82 46,76" />
+        </clipPath>
+        <clipPath id={`${gradientId}-feline-clip-r`}>
+          <polygon points="116,68 94,76 100,82 114,76" />
+        </clipPath>
+
+        {/* Clips Ojos del Titán de Memoria (Rombo Horizontal Bajo Ceño) */}
+        <clipPath id={`${gradientId}-titan-clip-l`}>
+          <polygon points="61,74 66,71 71,74 66,77" />
+        </clipPath>
+        <clipPath id={`${gradientId}-titan-clip-r`}>
+          <polygon points="99,74 94,71 89,74 94,77" />
         </clipPath>
       </defs>
 
-      {/* ─── ANIMACIONES CSS DEL OJO: PÁRPADOS QUE PARPADEAN Y PUPILA QUE MIRA ─── */}
+      {/* ─── ANIMACIONES CSS ORGÁNICAS Y DIFERENCIADAS POR ANIMAL ─── */}
       <style>
         {`
-          @keyframes kai-look-around {
+          /* ──────── 1. PRISMA: ORÁCULO CLÁSICO ──────── */
+          @keyframes kai-prism-look {
             0% { transform: translate(0px, 0px); }
             5% { transform: translate(3.8px, -1.8px); }
             10% { transform: translate(3.8px, -1.8px); }
@@ -97,61 +125,83 @@ export const KaiVectorGraphics: React.FC<KaiVectorGraphicsProps> = ({
             25% { transform: translate(0px, 0px); }
             100% { transform: translate(0px, 0px); }
           }
-
-          @keyframes kai-eyelid-upper {
-            0% { transform: translateY(-19px); }
-            90% { transform: translateY(-19px); }
+          @keyframes kai-prism-eyelid-u {
+            0%, 90% { transform: translateY(-19px); }
             92.5% { transform: translateY(0px); }
             95% { transform: translateY(-19px); }
             97.5% { transform: translateY(0px); }
             100% { transform: translateY(-19px); }
           }
-
-          @keyframes kai-eyelid-lower {
-            0% { transform: translateY(19px); }
-            90% { transform: translateY(19px); }
+          @keyframes kai-prism-eyelid-d {
+            0%, 90% { transform: translateY(19px); }
             92.5% { transform: translateY(0px); }
             95% { transform: translateY(19px); }
             97.5% { transform: translateY(0px); }
             100% { transform: translateY(19px); }
           }
 
-          @keyframes kai-eyelid-dual-upper {
-            0% { transform: translateY(-12px); }
-            90% { transform: translateY(-12px); }
-            92.5% { transform: translateY(0px); }
-            95% { transform: translateY(-12px); }
-            97.5% { transform: translateY(0px); }
-            100% { transform: translateY(-12px); }
+          /* ──────── 2. NÚCLEO OCTAEDRO: RESPIRACIÓN CÓSMICA ──────── */
+          @keyframes kai-octa-breath {
+            0%, 100% { transform: scale(1); opacity: 0.95; }
+            50% { transform: scale(1.08); opacity: 1; }
+          }
+          @keyframes kai-octa-star {
+            0%, 100% { transform: rotate(0deg) scale(0.9); opacity: 0.7; }
+            50% { transform: rotate(45deg) scale(1.25); opacity: 1; }
           }
 
-          @keyframes kai-eyelid-dual-lower {
-            0% { transform: translateY(12px); }
-            90% { transform: translateY(12px); }
-            92.5% { transform: translateY(0px); }
-            95% { transform: translateY(12px); }
-            97.5% { transform: translateY(0px); }
-            100% { transform: translateY(12px); }
+          /* ──────── 3. LOBO CYBER-ALFA: PARPADEO DIAGONAL DE CAZA & MICRO-SACADAS ──────── */
+          @keyframes kai-wolf-hunt-blink {
+            0%, 88% { transform: scaleY(1); }
+            90% { transform: scaleY(0.08); }
+            92% { transform: scaleY(1); }
+            94% { transform: scaleY(0.4); }
+            95.5% { transform: scaleY(1); }
+            100% { transform: scaleY(1); }
+          }
+          @keyframes kai-wolf-gaze {
+            0%, 25% { transform: translate(0px, 0px); }
+            28%, 55% { transform: translate(-1.6px, -0.6px); }
+            58%, 68% { transform: translate(0px, 0px); }
+            71%, 90% { transform: translate(1.8px, -0.4px); }
+            94%, 100% { transform: translate(0px, 0px); }
           }
 
-          .kai-pupil-idle {
-            animation: kai-look-around 4.2s infinite ease-in-out;
+          /* ──────── 4. SABUESO TÁCTICO: PARPADEO SUAVE & MIRADA LEAL DESPIERTA ──────── */
+          @keyframes kai-hound-blink {
+            0%, 89% { transform: scaleY(1); }
+            91.5% { transform: scaleY(0.06); }
+            94% { transform: scaleY(1); }
+            100% { transform: scaleY(1); }
+          }
+          @keyframes kai-hound-gaze {
+            0%, 20% { transform: translate(0px, 0px); }
+            24%, 48% { transform: translate(1.5px, 0.8px); }
+            52%, 76% { transform: translate(-1.3px, 0.5px); }
+            80%, 100% { transform: translate(0px, 0px); }
           }
 
-          .kai-upper-lid {
-            animation: kai-eyelid-upper 4.2s infinite ease-in;
+          /* ──────── 5. FELINO SOMBRA: SLOW-BLINK FELINO & DILATACIÓN DE PUPILA ──────── */
+          @keyframes kai-feline-slow-blink {
+            0%, 42% { transform: scaleY(1); }
+            45%, 52% { transform: scaleY(0.35); } /* Slow blink de confianza */
+            56%, 88% { transform: scaleY(1); }
+            90.5% { transform: scaleY(0.06); }    /* Parpadeo seco de ataque */
+            92.5% { transform: scaleY(1); }
+            100% { transform: scaleY(1); }
+          }
+          @keyframes kai-feline-slit {
+            0%, 100% { transform: scaleX(1); }
+            50% { transform: scaleX(1.4); }
+            75% { transform: scaleX(0.85); }
           }
 
-          .kai-lower-lid {
-            animation: kai-eyelid-lower 4.2s infinite ease-in;
-          }
-
-          .kai-dual-upper-lid {
-            animation: kai-eyelid-dual-upper 4.2s infinite ease-in;
-          }
-
-          .kai-dual-lower-lid {
-            animation: kai-eyelid-dual-lower 4.2s infinite ease-in;
+          /* ──────── 6. TITÁN DE MEMORIA: PARPADEO PESADO MAJESTUOSO (8.5s) ──────── */
+          @keyframes kai-titan-blink {
+            0%, 91% { transform: scaleY(1); }
+            93.5% { transform: scaleY(0.06); }
+            97% { transform: scaleY(1); }
+            100% { transform: scaleY(1); }
           }
         `}
       </style>
@@ -234,33 +284,28 @@ export const KaiVectorGraphics: React.FC<KaiVectorGraphicsProps> = ({
         </g>
       )}
 
-      {/* ─── 1. RENDERIZADO DEL CUERPO SEGÚN LA FORMA SELECCIONADA ─── */}
+      {/* ══════════════════════════════════════════════════════════════════════ */}
+      {/* 1. CHASIS VECTORIAL EXACTO SEGÚN EL ARTE OFICIAL                       */}
+      {/* ══════════════════════════════════════════════════════════════════════ */}
 
       {/* ──────────────── FORMA 1: EL PRISMA ORIGINAL (🔺) ──────────────── */}
       {shapeId === 'prism' && (
         <g filter={`url(#${filterId})`}>
-          {/* Pirámide Principal con Relleno de Cristal Profundo */}
           <polygon
             points="80,22 138,128 22,128"
             stroke={lineColor}
-            strokeWidth="4"
+            strokeWidth="3.8"
             strokeLinejoin="round"
             fill="rgba(0, 14, 24, 0.45)"
           />
-
-          {/* Línea Central Superior e Inferior */}
-          <line x1="80" y1="22" x2="80" y2="70" stroke={lineColor} strokeWidth="3.2" strokeLinecap="round" />
-          <line x1="80" y1="99" x2="80" y2="128" stroke={lineColor} strokeWidth="3.2" strokeLinecap="round" />
-
-          {/* Facetas de Cristal Interiores */}
+          <line x1="80" y1="22" x2="80" y2="70" stroke={lineColor} strokeWidth="3" strokeLinecap="round" />
+          <line x1="80" y1="99" x2="80" y2="128" stroke={lineColor} strokeWidth="3" strokeLinecap="round" />
           <line x1="80" y1="22" x2="50" y2="85" stroke={secondaryStroke} strokeWidth="1.6" opacity="0.75" />
           <line x1="80" y1="22" x2="110" y2="85" stroke={secondaryStroke} strokeWidth="1.6" opacity="0.75" />
           <line x1="50" y1="85" x2="22" y2="128" stroke={secondaryStroke} strokeWidth="1.6" opacity="0.75" />
           <line x1="110" y1="85" x2="138" y2="128" stroke={secondaryStroke} strokeWidth="1.6" opacity="0.75" />
           <line x1="50" y1="85" x2="80" y2="128" stroke={secondaryStroke} strokeWidth="1.8" opacity="0.8" />
           <line x1="110" y1="85" x2="80" y2="128" stroke={secondaryStroke} strokeWidth="1.8" opacity="0.8" />
-
-          {/* Nodo Cuántico Superior */}
           <circle cx="80" cy="22" r="3.5" fill="#ffffff" />
         </g>
       )}
@@ -268,123 +313,226 @@ export const KaiVectorGraphics: React.FC<KaiVectorGraphicsProps> = ({
       {/* ──────────────── FORMA 2: EL NÚCLEO OCTAEDRO (💠) ──────────────── */}
       {shapeId === 'octahedron' && (
         <g filter={`url(#${filterId})`}>
-          {/* Rombo Exterior 3D */}
+          {/* Rombo exterior 3D */}
           <polygon
-            points="80,24 132,85 80,146 28,85"
+            points="80,18 136,80 80,142 24,80"
             stroke={lineColor}
-            strokeWidth="3.8"
+            strokeWidth="3.6"
             strokeLinejoin="round"
             fill="rgba(0, 14, 24, 0.45)"
           />
+          {/* Facetas tridimensionales frontales y posteriores */}
+          <line x1="24" y1="80" x2="136" y2="80" stroke={lineColor} strokeWidth="2.2" />
+          <line x1="80" y1="18" x2="80" y2="58" stroke={lineColor} strokeWidth="2.2" />
+          <line x1="80" y1="102" x2="80" y2="142" stroke={lineColor} strokeWidth="2.2" />
 
-          {/* Facetas Tridimensionales de Octaedro */}
-          <polygon points="80,24 132,85 80,85" stroke={secondaryStroke} strokeWidth="1.8" fill="rgba(0, 240, 255, 0.05)" />
-          <polygon points="80,24 28,85 80,85" stroke={secondaryStroke} strokeWidth="1.8" fill="rgba(0, 240, 255, 0.08)" />
-          <polygon points="80,146 132,85 80,85" stroke={secondaryStroke} strokeWidth="1.8" fill="rgba(0, 240, 255, 0.08)" />
-          <polygon points="80,146 28,85 80,85" stroke={secondaryStroke} strokeWidth="1.8" fill="rgba(0, 240, 255, 0.05)" />
+          {/* Aristas internas en rombo */}
+          <polygon points="80,18 24,80 80,80" stroke={secondaryStroke} strokeWidth="1.8" fill="rgba(0, 240, 255, 0.06)" />
+          <polygon points="80,18 136,80 80,80" stroke={secondaryStroke} strokeWidth="1.8" fill="rgba(0, 240, 255, 0.08)" />
+          <polygon points="80,142 24,80 80,80" stroke={secondaryStroke} strokeWidth="1.8" fill="rgba(0, 240, 255, 0.08)" />
+          <polygon points="80,142 136,80 80,80" stroke={secondaryStroke} strokeWidth="1.8" fill="rgba(0, 240, 255, 0.06)" />
 
-          {/* Vértices de energía */}
-          <circle cx="80" cy="24" r="3" fill="#ffffff" />
-          <circle cx="80" cy="146" r="3" fill="#ffffff" />
-          <circle cx="28" cy="85" r="3" fill="#ffffff" />
-          <circle cx="132" cy="85" r="3" fill="#ffffff" />
+          {/* Vértices nodales de luz */}
+          <circle cx="80" cy="18" r="3" fill="#ffffff" />
+          <circle cx="80" cy="142" r="3" fill="#ffffff" />
+          <circle cx="24" cy="80" r="3" fill="#ffffff" />
+          <circle cx="136" cy="80" r="3" fill="#ffffff" />
         </g>
       )}
 
       {/* ──────────────── FORMA 3: EL LOBO CYBER-ALFA (🐺) ──────────────── */}
       {shapeId === 'wolf' && (
         <g filter={`url(#${filterId})`}>
-          {/* Orejas Puntiagudas Altas */}
-          <polygon points="80,48 54,16 38,54" stroke={lineColor} strokeWidth="3" strokeLinejoin="round" fill="rgba(0, 14, 24, 0.4)" />
-          <polygon points="80,48 106,16 122,54" stroke={lineColor} strokeWidth="3" strokeLinejoin="round" fill="rgba(0, 14, 24, 0.4)" />
-          <line x1="54" y1="16" x2="48" y2="52" stroke={secondaryStroke} strokeWidth="1.5" />
-          <line x1="106" y1="16" x2="112" y2="52" stroke={secondaryStroke} strokeWidth="1.5" />
+          {/* Orejas Puntiagudas Altas Facetadas */}
+          <polygon points="80,48 44,14 26,62" stroke={lineColor} strokeWidth="3" strokeLinejoin="round" fill="rgba(0, 14, 24, 0.4)" />
+          <polygon points="80,48 116,14 134,62" stroke={lineColor} strokeWidth="3" strokeLinejoin="round" fill="rgba(0, 14, 24, 0.4)" />
+          <line x1="44" y1="14" x2="58" y2="48" stroke={secondaryStroke} strokeWidth="1.8" />
+          <line x1="44" y1="14" x2="36" y2="54" stroke={secondaryStroke} strokeWidth="1.5" />
+          <line x1="116" y1="14" x2="102" y2="48" stroke={secondaryStroke} strokeWidth="1.8" />
+          <line x1="116" y1="14" x2="124" y2="54" stroke={secondaryStroke} strokeWidth="1.5" />
+          <circle cx="44" cy="14" r="2.5" fill="#ffffff" />
+          <circle cx="116" cy="14" r="2.5" fill="#ffffff" />
 
-          {/* Frente y Cresta */}
-          <polygon points="54,50 80,42 106,50 80,62" stroke={lineColor} strokeWidth="2.5" fill="rgba(0, 14, 24, 0.5)" />
+          {/* Cresta de la Frente */}
+          <polygon points="80,26 62,38 80,50 98,38" stroke={lineColor} strokeWidth="2.4" fill="rgba(0, 14, 24, 0.5)" />
+          <polygon points="80,50 66,62 80,72 94,62" stroke={lineColor} strokeWidth="2.4" fill="rgba(0, 14, 24, 0.5)" />
 
-          {/* Pómulos Agresivos y Mandíbula */}
-          <polygon points="38,54 26,82 48,110 74,128 80,134 86,128 112,110 134,82 122,54 106,50 80,62 54,50" stroke={lineColor} strokeWidth="3.2" strokeLinejoin="round" fill="rgba(0, 14, 24, 0.4)" />
+          {/* Pómulos en 3 Capas Afiladas y Mandíbula Táctica */}
+          <polygon
+            points="26,62 36,70 20,76 34,84 26,94 46,102 64,120 80,134 96,120 114,102 134,94 126,84 140,76 124,70 134,62 116,60 80,72 44,60"
+            stroke={lineColor}
+            strokeWidth="3.2"
+            strokeLinejoin="round"
+            fill="rgba(0, 14, 24, 0.4)"
+          />
 
-          {/* Hocico y Nariz Táctica */}
-          <polygon points="80,62 70,100 80,116 90,100" stroke={lineColor} strokeWidth="2.2" fill="rgba(0, 240, 255, 0.08)" />
-          <line x1="74" y1="128" x2="80" y2="116" stroke={secondaryStroke} strokeWidth="2" />
-          <line x1="86" y1="128" x2="80" y2="116" stroke={secondaryStroke} strokeWidth="2" />
+          {/* Facetas internas de mejillas */}
+          <line x1="44" y1="60" x2="46" y2="102" stroke={secondaryStroke} strokeWidth="1.6" />
+          <line x1="116" y1="60" x2="114" y2="102" stroke={secondaryStroke} strokeWidth="1.6" />
+          <line x1="34" y1="84" x2="68" y2="94" stroke={secondaryStroke} strokeWidth="1.4" opacity="0.7" />
+          <line x1="126" y1="84" x2="92" y2="94" stroke={secondaryStroke} strokeWidth="1.4" opacity="0.7" />
 
-          {/* Puntas de Luz en Orejas */}
-          <circle cx="54" cy="16" r="2.5" fill="#ffffff" />
-          <circle cx="106" cy="16" r="2.5" fill="#ffffff" />
+          {/* Puente del Hocico y Nariz */}
+          <polygon points="80,72 68,94 80,106 92,94" stroke={lineColor} strokeWidth="2.2" fill="rgba(0, 240, 255, 0.08)" />
+          <polygon points="74,98 80,92 86,98 80,104" stroke={lineColor} strokeWidth="2" fill="#ffffff" />
+          <line x1="80" y1="104" x2="80" y2="134" stroke={lineColor} strokeWidth="2.4" />
+          <line x1="64" y1="120" x2="80" y2="106" stroke={secondaryStroke} strokeWidth="1.8" />
+          <line x1="96" y1="120" x2="80" y2="106" stroke={secondaryStroke} strokeWidth="1.8" />
         </g>
       )}
 
       {/* ──────────────── FORMA 4: EL SABUESO TÁCTICO (🐕) ──────────────── */}
       {shapeId === 'hound' && (
         <g filter={`url(#${filterId})`}>
-          {/* Orejas Plegadas Tácticas */}
-          <polygon points="62,38 32,42 26,88 48,80" stroke={lineColor} strokeWidth="3" strokeLinejoin="round" fill="rgba(0, 14, 24, 0.4)" />
-          <polygon points="98,38 128,42 134,88 112,80" stroke={lineColor} strokeWidth="3" strokeLinejoin="round" fill="rgba(0, 14, 24, 0.4)" />
+          {/* Cúpula y Frente Noble */}
+          <polygon points="68,26 80,24 92,26 80,38" stroke={lineColor} strokeWidth="2.8" strokeLinejoin="round" fill="rgba(0, 14, 24, 0.5)" />
+          <polygon points="80,38 68,48 80,62 92,48" stroke={lineColor} strokeWidth="2.4" fill="rgba(0, 14, 24, 0.5)" />
+          <line x1="80" y1="24" x2="80" y2="62" stroke={lineColor} strokeWidth="2.2" />
 
-          {/* Corona de la Cabeza */}
-          <polygon points="62,38 80,32 98,38 80,52" stroke={lineColor} strokeWidth="2.8" fill="rgba(0, 14, 24, 0.5)" />
+          {/* Orejas Plegadas Caídas Tácticas (Fieles a la Referencia) */}
+          <polygon
+            points="68,26 48,38 22,60 24,88 36,112 48,92 56,68"
+            stroke={lineColor}
+            strokeWidth="3.2"
+            strokeLinejoin="round"
+            fill="rgba(0, 14, 24, 0.45)"
+          />
+          <polygon
+            points="92,26 112,38 138,60 136,88 124,112 112,92 104,68"
+            stroke={lineColor}
+            strokeWidth="3.2"
+            strokeLinejoin="round"
+            fill="rgba(0, 14, 24, 0.45)"
+          />
+          {/* Pliegues internos de las orejas de sabueso */}
+          <line x1="48" y1="38" x2="34" y2="86" stroke={secondaryStroke} strokeWidth="1.8" />
+          <line x1="34" y1="86" x2="36" y2="112" stroke={secondaryStroke} strokeWidth="1.8" />
+          <line x1="22" y1="60" x2="48" y2="92" stroke={secondaryStroke} strokeWidth="1.4" opacity="0.7" />
 
-          {/* Mejillas y Mandíbula Noble */}
-          <polygon points="48,80 58,110 74,126 80,132 86,126 102,110 112,80 98,38 62,38" stroke={lineColor} strokeWidth="3" strokeLinejoin="round" fill="rgba(0, 14, 24, 0.4)" />
+          <line x1="112" y1="38" x2="126" y2="86" stroke={secondaryStroke} strokeWidth="1.8" />
+          <line x1="126" y1="86" x2="124" y2="112" stroke={secondaryStroke} strokeWidth="1.8" />
+          <line x1="138" y1="60" x2="112" y2="92" stroke={secondaryStroke} strokeWidth="1.4" opacity="0.7" />
 
-          {/* Puente del Hocico Recto */}
-          <polygon points="80,52 68,94 80,118 92,94" stroke={lineColor} strokeWidth="2.2" fill="rgba(0, 240, 255, 0.08)" />
-          <polygon points="74,112 80,120 86,112" stroke={secondaryStroke} strokeWidth="1.8" fill="#ffffff" />
+          {/* Perímetro Facial y Mandíbula */}
+          <polygon
+            points="56,68 62,94 72,118 80,122 88,118 98,94 104,68"
+            stroke={lineColor}
+            strokeWidth="2.8"
+            strokeLinejoin="round"
+            fill="rgba(0, 14, 24, 0.4)"
+          />
+
+          {/* Hocico Ancho y Trufa Canina */}
+          <polygon points="80,62 70,88 80,110 90,88" stroke={lineColor} strokeWidth="2.2" fill="rgba(0, 240, 255, 0.08)" />
+          {/* Nariz característica de Pointer/Hound */}
+          <polygon points="74,90 86,90 88,98 80,102 72,98" stroke={lineColor} strokeWidth="2.2" fill="#ffffff" />
+          {/* Orificios nasales geométricos */}
+          <circle cx="77" cy="95" r="1.2" fill="#000f1a" />
+          <circle cx="83" cy="95" r="1.2" fill="#000f1a" />
+          <line x1="80" y1="102" x2="80" y2="122" stroke={lineColor} strokeWidth="2" />
+          <line x1="72" y1="118" x2="80" y2="110" stroke={secondaryStroke} strokeWidth="1.6" />
+          <line x1="88" y1="118" x2="80" y2="110" stroke={secondaryStroke} strokeWidth="1.6" />
         </g>
       )}
 
-      {/* ──────────────── FORMA 5: LA PANTERA NEÓN (🐈‍⬛) ──────────────── */}
+      {/* ──────────────── FORMA 5: FELINO SOMBRA (🐈‍⬛) ──────────────── */}
       {shapeId === 'panther' && (
         <g filter={`url(#${filterId})`}>
-          {/* Orejas Afiladas de Felino */}
-          <polygon points="72,42 46,18 38,50" stroke={lineColor} strokeWidth="2.8" strokeLinejoin="round" fill="rgba(0, 14, 24, 0.4)" />
-          <polygon points="88,42 114,18 122,50" stroke={lineColor} strokeWidth="2.8" strokeLinejoin="round" fill="rgba(0, 14, 24, 0.4)" />
+          {/* Orejas Felinas Afiladas de Ataque */}
+          <polygon points="64,44 42,20 28,54" stroke={lineColor} strokeWidth="3" strokeLinejoin="round" fill="rgba(0, 14, 24, 0.45)" />
+          <polygon points="96,44 118,20 132,54" stroke={lineColor} strokeWidth="3" strokeLinejoin="round" fill="rgba(0, 14, 24, 0.45)" />
+          <line x1="42" y1="20" x2="46" y2="50" stroke={secondaryStroke} strokeWidth="1.6" />
+          <line x1="118" y1="20" x2="114" y2="50" stroke={secondaryStroke} strokeWidth="1.6" />
+          <circle cx="42" cy="20" r="2.5" fill="#ffffff" />
+          <circle cx="118" cy="20" r="2.5" fill="#ffffff" />
 
-          {/* Frente y Contorno Facial Delgado */}
-          <polygon points="46,50 80,44 114,50 80,60" stroke={lineColor} strokeWidth="2.4" fill="rgba(0, 14, 24, 0.5)" />
-          <polygon points="38,50 24,78 48,106 74,124 80,130 86,124 112,106 136,78 122,50 114,50 80,60 46,50" stroke={lineColor} strokeWidth="3.2" strokeLinejoin="round" fill="rgba(0, 14, 24, 0.4)" />
+          {/* Corona y Pómulos en Rombo (Fiel al Vector) */}
+          <line x1="64" y1="44" x2="96" y2="44" stroke={lineColor} strokeWidth="2.4" />
+          <line x1="64" y1="44" x2="80" y2="48" stroke={secondaryStroke} strokeWidth="1.6" />
+          <line x1="96" y1="44" x2="80" y2="48" stroke={secondaryStroke} strokeWidth="1.6" />
 
-          {/* Hocico Felino Minimalista */}
-          <polygon points="80,60 72,92 80,108 88,92" stroke={lineColor} strokeWidth="2" fill="rgba(0, 240, 255, 0.06)" />
-          
-          {/* Bigotes / Tomas de Energía Laterales */}
-          <line x1="38" y1="94" x2="16" y2="92" stroke={secondaryStroke} strokeWidth="1.2" opacity="0.6" />
-          <line x1="42" y1="102" x2="20" y2="104" stroke={secondaryStroke} strokeWidth="1.2" opacity="0.6" />
-          <line x1="122" y1="94" x2="144" y2="92" stroke={secondaryStroke} strokeWidth="1.2" opacity="0.6" />
-          <line x1="118" y1="102" x2="140" y2="104" stroke={secondaryStroke} strokeWidth="1.2" opacity="0.6" />
+          <polygon
+            points="28,54 24,76 46,98 68,114 80,120 92,114 114,98 136,76 132,54"
+            stroke={lineColor}
+            strokeWidth="3.2"
+            strokeLinejoin="round"
+            fill="rgba(0, 14, 24, 0.4)"
+          />
+
+          {/* Facetas de pómulos altos */}
+          <line x1="24" y1="76" x2="48" y2="78" stroke={secondaryStroke} strokeWidth="1.8" />
+          <line x1="48" y1="78" x2="46" y2="98" stroke={secondaryStroke} strokeWidth="1.8" />
+          <line x1="136" y1="76" x2="112" y2="78" stroke={secondaryStroke} strokeWidth="1.8" />
+          <line x1="112" y1="78" x2="114" y2="98" stroke={secondaryStroke} strokeWidth="1.8" />
+
+          {/* Hocico Felino Afilado */}
+          <polygon points="80,64 74,88 80,102 86,88" stroke={lineColor} strokeWidth="2.2" fill="rgba(0, 240, 255, 0.08)" />
+          {/* Nariz de gato */}
+          <polygon points="76,92 84,92 80,98" stroke={lineColor} strokeWidth="2" fill="#ffffff" />
+          <line x1="76" y1="98" x2="80" y2="104" stroke={lineColor} strokeWidth="1.8" />
+          <line x1="84" y1="98" x2="80" y2="104" stroke={lineColor} strokeWidth="1.8" />
+          <line x1="80" y1="104" x2="80" y2="120" stroke={lineColor} strokeWidth="2.2" />
         </g>
       )}
 
       {/* ──────────────── FORMA 6: EL TITÁN DE MEMORIA (🐘) ──────────────── */}
       {shapeId === 'elephant' && (
         <g filter={`url(#${filterId})`}>
-          {/* Orejas Escudo Imponentes */}
-          <polygon points="66,36 22,42 14,92 46,110" stroke={lineColor} strokeWidth="3" strokeLinejoin="round" fill="rgba(0, 14, 24, 0.4)" />
-          <polygon points="94,36 138,42 146,92 114,110" stroke={lineColor} strokeWidth="3" strokeLinejoin="round" fill="rgba(0, 14, 24, 0.4)" />
-          <line x1="22" y1="42" x2="42" y2="90" stroke={secondaryStroke} strokeWidth="1.5" opacity="0.7" />
-          <line x1="138" y1="42" x2="118" y2="90" stroke={secondaryStroke} strokeWidth="1.5" opacity="0.7" />
-
           {/* Corona y Frente del Titán */}
-          <polygon points="66,36 80,24 94,36 80,56" stroke={lineColor} strokeWidth="3" fill="rgba(0, 14, 24, 0.5)" />
+          <polygon points="62,32 80,24 98,32 80,48" stroke={lineColor} strokeWidth="2.8" strokeLinejoin="round" fill="rgba(0, 14, 24, 0.5)" />
+          <polygon points="80,48 64,58 80,68 96,58" stroke={lineColor} strokeWidth="2.4" fill="rgba(0, 14, 24, 0.5)" />
 
-          {/* Colmillos de Luz */}
-          <polygon points="52,106 38,128 58,118" stroke={lineColor} strokeWidth="2.2" fill="rgba(255, 255, 255, 0.25)" />
-          <polygon points="108,106 122,128 102,118" stroke={lineColor} strokeWidth="2.2" fill="rgba(255, 255, 255, 0.25)" />
+          {/* Escudos de Orejas Imponentes (Fiel a la Referencia) */}
+          <polygon
+            points="62,32 38,36 16,48 18,84 36,104 56,100"
+            stroke={lineColor}
+            strokeWidth="3.2"
+            strokeLinejoin="round"
+            fill="rgba(0, 14, 24, 0.45)"
+          />
+          <polygon
+            points="98,32 122,36 144,48 142,84 124,104 104,100"
+            stroke={lineColor}
+            strokeWidth="3.2"
+            strokeLinejoin="round"
+            fill="rgba(0, 14, 24, 0.45)"
+          />
+          {/* Facetas internas de los escudos auriculares */}
+          <line x1="38" y1="36" x2="34" y2="76" stroke={secondaryStroke} strokeWidth="1.8" />
+          <line x1="34" y1="76" x2="56" y2="100" stroke={secondaryStroke} strokeWidth="1.8" />
+          <line x1="122" y1="36" x2="126" y2="76" stroke={secondaryStroke} strokeWidth="1.8" />
+          <line x1="126" y1="76" x2="104" y2="100" stroke={secondaryStroke} strokeWidth="1.8" />
 
-          {/* Trompa Facetada */}
-          <polygon points="72,78 88,78 84,110 76,110" stroke={lineColor} strokeWidth="2.2" fill="rgba(0, 14, 24, 0.5)" />
-          <polygon points="76,110 84,110 82,132 78,132" stroke={lineColor} strokeWidth="2.2" fill="rgba(0, 14, 24, 0.5)" />
-          <circle cx="80" cy="132" r="3" fill={lineColor} />
+          {/* Colmillos de Luz en V (Brillo Supremo Platino/Oro) */}
+          <polygon
+            points="64,104 52,126 44,138 58,122 68,106"
+            stroke="#fffbeb"
+            strokeWidth="2.6"
+            strokeLinejoin="round"
+            fill="rgba(255, 255, 255, 0.4)"
+            filter={`url(#${filterId})`}
+          />
+          <polygon
+            points="96,104 108,126 116,138 102,122 92,106"
+            stroke="#fffbeb"
+            strokeWidth="2.6"
+            strokeLinejoin="round"
+            fill="rgba(255, 255, 255, 0.4)"
+            filter={`url(#${filterId})`}
+          />
+
+          {/* Trompa Facetada Segmentada Hacia Abajo */}
+          <polygon points="72,68 88,68 86,88 74,88" stroke={lineColor} strokeWidth="2.4" fill="rgba(0, 14, 24, 0.5)" />
+          <polygon points="74,88 86,88 84,108 76,108" stroke={lineColor} strokeWidth="2.4" fill="rgba(0, 14, 24, 0.5)" />
+          <polygon points="76,108 84,108 83,126 77,126" stroke={lineColor} strokeWidth="2.4" fill="rgba(0, 14, 24, 0.5)" />
+          <polygon points="77,126 83,126 82,142 78,142" stroke={lineColor} strokeWidth="2.4" fill="rgba(0, 14, 24, 0.5)" />
+          <circle cx="80" cy="142" r="2.5" fill="#ffffff" />
         </g>
       )}
 
-      {/* ──────────────── FORMA CUSTOM: FORJA NEURAL IA (📸) ──────────────── */}
+      {/* ──────────────── FORMA 7: CUSTOM / FORJA NEURAL IA (📸) ──────────── */}
       {shapeId === 'custom' && customForm && (
         <g filter={`url(#${filterId})`}>
-          {/* Polígonos de silueta procesados por IA */}
           {customForm.polygons?.map((p, idx) => (
             <polygon
               key={`poly-${idx}`}
@@ -395,8 +543,6 @@ export const KaiVectorGraphics: React.FC<KaiVectorGraphicsProps> = ({
               fill="rgba(0, 14, 24, 0.45)"
             />
           ))}
-
-          {/* Líneas geométricas de la IA */}
           {customForm.lines?.map((l, idx) => (
             <line
               key={`line-${idx}`}
@@ -412,190 +558,298 @@ export const KaiVectorGraphics: React.FC<KaiVectorGraphicsProps> = ({
         </g>
       )}
 
-      {/* ─── 2. EL OJO SAGRADO DE KAI (SISTEMA DE MIRADA Y PÁRPADOS QUE PARPADEAN) ─── */}
+      {/* ══════════════════════════════════════════════════════════════════════ */}
+      {/* 2. SISTEMA DE OJOS VIVOS Y ANATÓMICOS (SIN COMPARTIR CÓDIGO DEL PRISMA) */}
+      {/* ══════════════════════════════════════════════════════════════════════ */}
 
-      {/* ──────── CASO A: OJO CENTRAL (PRISMA, OCTAEDRO O FORJA NEURAL IA) ──────── */}
-      {(shapeId === 'prism' || shapeId === 'octahedron' || shapeId === 'custom') && (
+      {/* ── CASO 1: EL PRISMA ORIGINAL & CUSTOM INERTE (OJO SAGRADO CENTRAL) ── */}
+      {(shapeId === 'prism' || shapeId === 'custom') && (
         <g id={`${gradientId}-central-living-eye`}>
-          {/* Fondo del Ojo Almendrado */}
-          <path
-            d="M 50 85 C 60 67, 100 67, 110 85 C 100 103, 60 103, 50 85 Z"
-            fill={`url(#${gradientId}-eye-void)`}
-          />
-
-          {/* Contenido enmascarado: Pupila, Iris y Párpados que parpadean */}
-          <g clipPath={`url(#${gradientId}-eye-clip-center)`}>
-            {/* GRUPO DE PUPILA E IRIS (MIRA ALREDEDOR Y SIGUE AL MOUSE) */}
+          <path d="M 50 85 C 60 67, 100 67, 110 85 C 100 103, 60 103, 50 85 Z" fill={`url(#${gradientId}-eye-void)`} />
+          <g clipPath={`url(#${gradientId}-eye-clip-prism)`}>
             <g
-              className={!isTrackingMouse ? 'kai-pupil-idle' : ''}
               style={
                 isTrackingMouse
                   ? {
                       transform: `translate(${eyeOffset.x}px, ${eyeOffset.y}px)`,
                       transition: 'transform 0.12s ease-out',
                     }
-                  : undefined
+                  : { animation: 'kai-prism-look 4.2s infinite ease-in-out' }
               }
             >
-              {/* Aro de Iris Neón */}
-              <circle
-                cx="80"
-                cy="85"
-                r={justClicked ? 14.5 : 13}
-                stroke={lineColor}
-                strokeWidth="3.2"
-                fill="none"
-                filter={`url(#${filterId})`}
-              />
+              <circle cx="80" cy="85" r={justClicked ? 14.5 : 13} stroke={lineColor} strokeWidth="3.2" fill="none" filter={`url(#${filterId})`} />
               <circle cx="80" cy="85" r={justClicked ? 14.5 : 13} stroke="#ffffff" strokeWidth="1.2" fill="none" />
-
-              {/* Pupila Central Brillante */}
               <circle cx="80" cy="85" r={justClicked ? 7.5 : 6} fill={lineColor} filter={`url(#${filterId})`} />
               <circle cx="80" cy="85" r={justClicked ? 4.2 : 3} fill="#ffffff" />
-
-              {/* Destello de Luz Sagrado */}
               <circle cx="82.4" cy="82.6" r="1.5" fill="#ffffff" opacity="0.9" />
             </g>
 
-            {/* PÁRPADO SUPERIOR ANIMADO (SE CIERRA CADA 4 SEGUNDOS) */}
             <path
               d="M 46 66 H 114 V 85 C 104 85, 56 85, 46 85 Z"
               fill="#000f1a"
               stroke={lineColor}
               strokeWidth="1.6"
-              className={!isFocusTrance ? 'kai-upper-lid' : ''}
-              style={isFocusTrance ? { transform: 'translateY(-19px)' } : undefined}
+              style={isFocusTrance ? { transform: 'translateY(-19px)' } : { animation: 'kai-prism-eyelid-u 4.2s infinite ease-in' }}
             />
-
-            {/* PÁRPADO INFERIOR ANIMADO (SE CIERRA AL CENTRO CON EL SUPERIOR) */}
             <path
               d="M 46 104 H 114 V 85 C 104 85, 56 85, 46 85 Z"
               fill="#000f1a"
               stroke={lineColor}
               strokeWidth="1.6"
-              className={!isFocusTrance ? 'kai-lower-lid' : ''}
-              style={isFocusTrance ? { transform: 'translateY(19px)' } : undefined}
+              style={isFocusTrance ? { transform: 'translateY(19px)' } : { animation: 'kai-prism-eyelid-d 4.2s infinite ease-in' }}
             />
           </g>
-
-          {/* Contorno Exterior del Ojo en Neón Radiante */}
-          <path
-            d="M 50 85 C 60 67, 100 67, 110 85 C 100 103, 60 103, 50 85 Z"
-            stroke={lineColor}
-            strokeWidth="3.6"
-            fill="none"
-            filter={`url(#${filterId})`}
-          />
-          <path
-            d="M 50 85 C 60 67, 100 67, 110 85 C 100 103, 60 103, 50 85 Z"
-            stroke="#ffffff"
-            strokeWidth="1.1"
-            fill="none"
-            opacity="0.9"
-          />
+          <path d="M 50 85 C 60 67, 100 67, 110 85 C 100 103, 60 103, 50 85 Z" stroke={lineColor} strokeWidth="3.6" fill="none" filter={`url(#${filterId})`} />
+          <path d="M 50 85 C 60 67, 100 67, 110 85 C 100 103, 60 103, 50 85 Z" stroke="#ffffff" strokeWidth="1.1" fill="none" opacity="0.9" />
         </g>
       )}
 
-      {/* ──────── CASO B: DOS OJOS VIVOS (LOBO, SABUESO, PANTERA, ELEFANTE) ──────── */}
-      {(shapeId === 'wolf' || shapeId === 'hound' || shapeId === 'panther' || shapeId === 'elephant') && (
-        <g id={`${gradientId}-dual-living-eyes`}>
-          {/* ── OJO IZQUIERDO ── */}
-          <path d="M 51 77 C 55 69, 71 69, 75 77 C 71 85, 55 85, 51 77 Z" fill={`url(#${gradientId}-eye-void)`} />
-          <g clipPath={`url(#${gradientId}-eye-clip-left)`}>
-            {/* Pupila Izquierda que mira alrededor */}
+      {/* ── CASO 2: NÚCLEO OCTAEDRO (OJO MÍSTICO CÓSMICO CON RESPIRACIÓN CUÁNTICA) ── */}
+      {shapeId === 'octahedron' && (
+        <g id={`${gradientId}-octa-cosmic-eye`}>
+          <path d="M 48 80 C 58 64, 102 64, 112 80 C 102 96, 58 96, 48 80 Z" fill={`url(#${gradientId}-eye-void)`} />
+          <g clipPath={`url(#${gradientId}-eye-clip-octa)`}>
+            {/* Anillo de Respiración Cósmica */}
             <g
-              className={!isTrackingMouse ? 'kai-pupil-idle' : ''}
-              style={
-                isTrackingMouse
-                  ? {
-                      transform: `translate(${eyeOffset.x * 0.75}px, ${eyeOffset.y * 0.75}px)`,
-                      transition: 'transform 0.12s ease-out',
-                    }
-                  : undefined
-              }
+              style={{
+                transformOrigin: '80px 80px',
+                animation: 'kai-octa-breath 3.6s infinite ease-in-out',
+              }}
             >
-              <circle cx="63" cy="77" r="7" stroke={lineColor} strokeWidth="2" fill="none" filter={`url(#${filterId})`} />
-              <circle cx="63" cy="77" r="3.5" fill={lineColor} filter={`url(#${filterId})`} />
-              <circle cx="63" cy="77" r="1.8" fill="#ffffff" />
-              <circle cx="64.2" cy="75.8" r="0.8" fill="#ffffff" />
+              <circle cx="80" cy="80" r="14" stroke={lineColor} strokeWidth="2.5" fill="none" filter={`url(#${filterId})`} />
+              <circle cx="80" cy="80" r="10" stroke="#fbbf24" strokeWidth="1.5" fill="none" />
+              <circle cx="80" cy="80" r="6" fill={lineColor} filter={`url(#${filterId})`} />
+              <circle cx="80" cy="80" r="3.2" fill="#ffffff" />
             </g>
+            {/* Destello Estelar en Rotación */}
+            <g style={{ transformOrigin: '80px 80px', animation: 'kai-octa-star 5s infinite ease-in-out' }}>
+              <polygon points="80,72 82,78 88,80 82,82 80,88 78,82 72,80 78,78" fill="#ffffff" opacity="0.9" />
+            </g>
+          </g>
+          <path d="M 48 80 C 58 64, 102 64, 112 80 C 102 96, 58 96, 48 80 Z" stroke={lineColor} strokeWidth="3" fill="none" filter={`url(#${filterId})`} />
+          <path d="M 48 80 C 58 64, 102 64, 112 80 C 102 96, 58 96, 48 80 Z" stroke="#ffffff" strokeWidth="1" fill="none" opacity="0.9" />
+        </g>
+      )}
 
-            {/* Párpados que parpadean Ojo Izquierdo */}
-            <path
-              d="M 48 65 H 78 V 77 C 72 77, 56 77, 48 77 Z"
-              fill="#000f1a"
-              stroke={lineColor}
-              strokeWidth="1.4"
-              className={!isFocusTrance ? 'kai-dual-upper-lid' : ''}
-              style={isFocusTrance ? { transform: 'translateY(-12px)' } : undefined}
-            />
-            <path
-              d="M 48 89 H 78 V 77 C 72 77, 56 77, 48 77 Z"
-              fill="#000f1a"
-              stroke={lineColor}
-              strokeWidth="1.4"
-              className={!isFocusTrance ? 'kai-dual-lower-lid' : ''}
-              style={isFocusTrance ? { transform: 'translateY(12px)' } : undefined}
-            />
+      {/* ── CASO 3: LOBO CYBER-ALFA (OJOS RASGADOS DE DEPREDADOR CON PARPADEO DIAGONAL) ── */}
+      {shapeId === 'wolf' && (
+        <g id={`${gradientId}-wolf-living-eyes`}>
+          {/* Ojo Izquierdo del Lobo */}
+          <polygon points="50,72 60,66 68,70 64,77 52,76" fill={`url(#${gradientId}-eye-void)`} />
+          <g
+            style={{
+              transformOrigin: '59px 71px',
+              animation: isFocusTrance ? undefined : 'kai-wolf-hunt-blink 5.4s infinite ease-in-out',
+            }}
+          >
+            <g clipPath={`url(#${gradientId}-wolf-clip-l)`}>
+              <polygon points="50,72 60,66 68,70 64,77 52,76" fill={lineColor} opacity="0.25" filter={`url(#${filterId})`} />
+              {/* Pupila Fiera con Micro-Sacadas */}
+              <g
+                style={
+                  isTrackingMouse
+                    ? { transform: `translate(${eyeOffset.x * 0.6}px, ${eyeOffset.y * 0.5}px)` }
+                    : { animation: 'kai-wolf-gaze 6.2s infinite ease-in-out' }
+                }
+              >
+                <circle cx="60" cy="71.5" r="3.2" fill={lineColor} filter={`url(#${filterId})`} />
+                <circle cx="60" cy="71.5" r="1.6" fill="#ffffff" />
+                <circle cx="61.2" cy="70.5" r="0.7" fill="#ffffff" />
+              </g>
+            </g>
           </g>
           {/* Contorno Neón Ojo Izquierdo */}
-          <path
-            d="M 51 77 C 55 69, 71 69, 75 77 C 71 85, 55 85, 51 77 Z"
-            stroke={lineColor}
-            strokeWidth="2.4"
-            fill="none"
-            filter={`url(#${filterId})`}
-          />
-          <path d="M 51 77 C 55 69, 71 69, 75 77 C 71 85, 55 85, 51 77 Z" stroke="#ffffff" strokeWidth="0.8" fill="none" opacity="0.9" />
+          <polygon points="50,72 60,66 68,70 64,77 52,76" stroke={lineColor} strokeWidth="2.2" strokeLinejoin="round" fill="none" filter={`url(#${filterId})`} />
+          <polygon points="50,72 60,66 68,70 64,77 52,76" stroke="#ffffff" strokeWidth="0.8" fill="none" opacity="0.9" />
 
-          {/* ── OJO DERECHO ── */}
-          <path d="M 85 77 C 89 69, 105 69, 109 77 C 105 85, 89 85, 85 77 Z" fill={`url(#${gradientId}-eye-void)`} />
-          <g clipPath={`url(#${gradientId}-eye-clip-right)`}>
-            {/* Pupila Derecha que mira alrededor */}
-            <g
-              className={!isTrackingMouse ? 'kai-pupil-idle' : ''}
-              style={
-                isTrackingMouse
-                  ? {
-                      transform: `translate(${eyeOffset.x * 0.75}px, ${eyeOffset.y * 0.75}px)`,
-                      transition: 'transform 0.12s ease-out',
-                    }
-                  : undefined
-              }
-            >
-              <circle cx="97" cy="77" r="7" stroke={lineColor} strokeWidth="2" fill="none" filter={`url(#${filterId})`} />
-              <circle cx="97" cy="77" r="3.5" fill={lineColor} filter={`url(#${filterId})`} />
-              <circle cx="97" cy="77" r="1.8" fill="#ffffff" />
-              <circle cx="98.2" cy="75.8" r="0.8" fill="#ffffff" />
+          {/* Ojo Derecho del Lobo */}
+          <polygon points="110,72 100,66 92,70 96,77 108,76" fill={`url(#${gradientId}-eye-void)`} />
+          <g
+            style={{
+              transformOrigin: '101px 71px',
+              animation: isFocusTrance ? undefined : 'kai-wolf-hunt-blink 5.4s infinite ease-in-out',
+            }}
+          >
+            <g clipPath={`url(#${gradientId}-wolf-clip-r)`}>
+              <polygon points="110,72 100,66 92,70 96,77 108,76" fill={lineColor} opacity="0.25" filter={`url(#${filterId})`} />
+              {/* Pupila Fiera con Micro-Sacadas */}
+              <g
+                style={
+                  isTrackingMouse
+                    ? { transform: `translate(${eyeOffset.x * 0.6}px, ${eyeOffset.y * 0.5}px)` }
+                    : { animation: 'kai-wolf-gaze 6.2s infinite ease-in-out' }
+                }
+              >
+                <circle cx="100" cy="71.5" r="3.2" fill={lineColor} filter={`url(#${filterId})`} />
+                <circle cx="100" cy="71.5" r="1.6" fill="#ffffff" />
+                <circle cx="98.8" cy="70.5" r="0.7" fill="#ffffff" />
+              </g>
             </g>
-
-            {/* Párpados que parpadean Ojo Derecho */}
-            <path
-              d="M 82 65 H 112 V 77 C 106 77, 90 77, 82 77 Z"
-              fill="#000f1a"
-              stroke={lineColor}
-              strokeWidth="1.4"
-              className={!isFocusTrance ? 'kai-dual-upper-lid' : ''}
-              style={isFocusTrance ? { transform: 'translateY(-12px)' } : undefined}
-            />
-            <path
-              d="M 82 89 H 112 V 77 C 106 77, 90 77, 82 77 Z"
-              fill="#000f1a"
-              stroke={lineColor}
-              strokeWidth="1.4"
-              className={!isFocusTrance ? 'kai-dual-lower-lid' : ''}
-              style={isFocusTrance ? { transform: 'translateY(12px)' } : undefined}
-            />
           </g>
           {/* Contorno Neón Ojo Derecho */}
-          <path
-            d="M 85 77 C 89 69, 105 69, 109 77 C 105 85, 89 85, 85 77 Z"
-            stroke={lineColor}
-            strokeWidth="2.4"
-            fill="none"
-            filter={`url(#${filterId})`}
-          />
-          <path d="M 85 77 C 89 69, 105 69, 109 77 C 105 85, 89 85, 85 77 Z" stroke="#ffffff" strokeWidth="0.8" fill="none" opacity="0.9" />
+          <polygon points="110,72 100,66 92,70 96,77 108,76" stroke={lineColor} strokeWidth="2.2" strokeLinejoin="round" fill="none" filter={`url(#${filterId})`} />
+          <polygon points="110,72 100,66 92,70 96,77 108,76" stroke="#ffffff" strokeWidth="0.8" fill="none" opacity="0.9" />
+        </g>
+      )}
+
+      {/* ── CASO 4: SABUESO TÁCTICO (OJOS NOBLES REDONDEADOS CON DESTELLO ESPECULAR) ── */}
+      {shapeId === 'hound' && (
+        <g id={`${gradientId}-hound-living-eyes`}>
+          {/* Ojo Izquierdo del Sabueso */}
+          <ellipse cx="64" cy="70" rx="6.5" ry="5.5" fill={`url(#${gradientId}-eye-void)`} />
+          <g
+            style={{
+              transformOrigin: '64px 70px',
+              animation: isFocusTrance ? undefined : 'kai-hound-blink 4.8s infinite ease-in-out',
+            }}
+          >
+            <g clipPath={`url(#${gradientId}-hound-clip-l)`}>
+              <ellipse cx="64" cy="70" rx="6.5" ry="5.5" fill={lineColor} opacity="0.2" />
+              {/* Pupila Leal con Brillo Especular */}
+              <g
+                style={
+                  isTrackingMouse
+                    ? { transform: `translate(${eyeOffset.x * 0.55}px, ${eyeOffset.y * 0.55}px)` }
+                    : { animation: 'kai-hound-gaze 5.6s infinite ease-in-out' }
+                }
+              >
+                <circle cx="64" cy="70" r="3.4" fill={lineColor} filter={`url(#${filterId})`} />
+                <circle cx="64" cy="70" r="1.8" fill="#000e17" />
+                {/* Destello de inteligencia noble (brillo especular blanco) */}
+                <circle cx="65.4" cy="68.6" r="1.1" fill="#ffffff" />
+                <circle cx="63.2" cy="71.2" r="0.6" fill="#ffffff" opacity="0.85" />
+              </g>
+            </g>
+          </g>
+          <ellipse cx="64" cy="70" rx="6.5" ry="5.5" stroke={lineColor} strokeWidth="2.2" fill="none" filter={`url(#${filterId})`} />
+          <ellipse cx="64" cy="70" rx="6.5" ry="5.5" stroke="#ffffff" strokeWidth="0.8" fill="none" opacity="0.9" />
+
+          {/* Ojo Derecho del Sabueso */}
+          <ellipse cx="96" cy="70" rx="6.5" ry="5.5" fill={`url(#${gradientId}-eye-void)`} />
+          <g
+            style={{
+              transformOrigin: '96px 70px',
+              animation: isFocusTrance ? undefined : 'kai-hound-blink 4.8s infinite ease-in-out',
+            }}
+          >
+            <g clipPath={`url(#${gradientId}-hound-clip-r)`}>
+              <ellipse cx="96" cy="70" rx="6.5" ry="5.5" fill={lineColor} opacity="0.2" />
+              {/* Pupila Leal con Brillo Especular */}
+              <g
+                style={
+                  isTrackingMouse
+                    ? { transform: `translate(${eyeOffset.x * 0.55}px, ${eyeOffset.y * 0.55}px)` }
+                    : { animation: 'kai-hound-gaze 5.6s infinite ease-in-out' }
+                }
+              >
+                <circle cx="96" cy="70" r="3.4" fill={lineColor} filter={`url(#${filterId})`} />
+                <circle cx="96" cy="70" r="1.8" fill="#000e17" />
+                {/* Destello especular */}
+                <circle cx="97.4" cy="68.6" r="1.1" fill="#ffffff" />
+                <circle cx="95.2" cy="71.2" r="0.6" fill="#ffffff" opacity="0.85" />
+              </g>
+            </g>
+          </g>
+          <ellipse cx="96" cy="70" rx="6.5" ry="5.5" stroke={lineColor} strokeWidth="2.2" fill="none" filter={`url(#${filterId})`} />
+          <ellipse cx="96" cy="70" rx="6.5" ry="5.5" stroke="#ffffff" strokeWidth="0.8" fill="none" opacity="0.9" />
+        </g>
+      )}
+
+      {/* ── CASO 5: FELINO SOMBRA (CUÑA AFILADA CON SLOW-BLINK FELINO & PUPILA VERTICAL) ── */}
+      {shapeId === 'panther' && (
+        <g id={`${gradientId}-feline-living-eyes`}>
+          {/* Ojo Izquierdo del Felino */}
+          <polygon points="44,68 66,76 60,82 46,76" fill={`url(#${gradientId}-eye-void)`} />
+          <g
+            style={{
+              transformOrigin: '55px 75px',
+              animation: isFocusTrance ? undefined : 'kai-feline-slow-blink 6.8s infinite ease-in-out',
+            }}
+          >
+            <g clipPath={`url(#${gradientId}-feline-clip-l)`}>
+              {/* Brasa de Neón Láser */}
+              <polygon points="44,68 66,76 60,82 46,76" fill={lineColor} opacity="0.45" filter={`url(#${filterId})`} />
+              <polygon points="44,68 66,76 60,82 46,76" fill="#ffffff" opacity="0.25" />
+              {/* Pupila Vertical con Dilatación Felina */}
+              <g
+                style={{
+                  transformOrigin: '55px 75px',
+                  animation: 'kai-feline-slit 4.2s infinite ease-in-out',
+                }}
+              >
+                <ellipse cx="55" cy="75" rx="1.3" ry="4.5" fill="#000e17" />
+                <circle cx="56.2" cy="73.8" r="0.7" fill="#ffffff" />
+              </g>
+            </g>
+          </g>
+          <polygon points="44,68 66,76 60,82 46,76" stroke={lineColor} strokeWidth="2.4" strokeLinejoin="round" fill="none" filter={`url(#${filterId})`} />
+          <polygon points="44,68 66,76 60,82 46,76" stroke="#ffffff" strokeWidth="0.9" fill="none" opacity="0.95" />
+
+          {/* Ojo Derecho del Felino */}
+          <polygon points="116,68 94,76 100,82 114,76" fill={`url(#${gradientId}-eye-void)`} />
+          <g
+            style={{
+              transformOrigin: '105px 75px',
+              animation: isFocusTrance ? undefined : 'kai-feline-slow-blink 6.8s infinite ease-in-out',
+            }}
+          >
+            <g clipPath={`url(#${gradientId}-feline-clip-r)`}>
+              {/* Brasa de Neón Láser */}
+              <polygon points="116,68 94,76 100,82 114,76" fill={lineColor} opacity="0.45" filter={`url(#${filterId})`} />
+              <polygon points="116,68 94,76 100,82 114,76" fill="#ffffff" opacity="0.25" />
+              {/* Pupila Vertical con Dilatación Felina */}
+              <g
+                style={{
+                  transformOrigin: '105px 75px',
+                  animation: 'kai-feline-slit 4.2s infinite ease-in-out',
+                }}
+              >
+                <ellipse cx="105" cy="75" rx="1.3" ry="4.5" fill="#000e17" />
+                <circle cx="103.8" cy="73.8" r="0.7" fill="#ffffff" />
+              </g>
+            </g>
+          </g>
+          <polygon points="116,68 94,76 100,82 114,76" stroke={lineColor} strokeWidth="2.4" strokeLinejoin="round" fill="none" filter={`url(#${filterId})`} />
+          <polygon points="116,68 94,76 100,82 114,76" stroke="#ffffff" strokeWidth="0.9" fill="none" opacity="0.95" />
+        </g>
+      )}
+
+      {/* ── CASO 6: TITÁN DE MEMORIA (OJOS PROFUNDOS MILENARIOS BAJO EL CEÑO) ── */}
+      {shapeId === 'elephant' && (
+        <g id={`${gradientId}-titan-living-eyes`}>
+          {/* Ojo Izquierdo del Titán */}
+          <polygon points="61,74 66,71 71,74 66,77" fill={`url(#${gradientId}-eye-void)`} />
+          <g
+            style={{
+              transformOrigin: '66px 74px',
+              animation: isFocusTrance ? undefined : 'kai-titan-blink 8.4s infinite ease-in-out',
+            }}
+          >
+            <g clipPath={`url(#${gradientId}-titan-clip-l)`}>
+              <polygon points="61,74 66,71 71,74 66,77" fill={lineColor} opacity="0.4" filter={`url(#${filterId})`} />
+              <circle cx="66" cy="74" r="2.2" fill={lineColor} />
+              <circle cx="66" cy="74" r="1.1" fill="#ffffff" />
+            </g>
+          </g>
+          <polygon points="61,74 66,71 71,74 66,77" stroke={lineColor} strokeWidth="1.8" strokeLinejoin="round" fill="none" filter={`url(#${filterId})`} />
+          <polygon points="61,74 66,71 71,74 66,77" stroke="#ffffff" strokeWidth="0.7" fill="none" opacity="0.9" />
+
+          {/* Ojo Derecho del Titán */}
+          <polygon points="99,74 94,71 89,74 94,77" fill={`url(#${gradientId}-eye-void)`} />
+          <g
+            style={{
+              transformOrigin: '94px 74px',
+              animation: isFocusTrance ? undefined : 'kai-titan-blink 8.4s infinite ease-in-out',
+            }}
+          >
+            <g clipPath={`url(#${gradientId}-titan-clip-r)`}>
+              <polygon points="99,74 94,71 89,74 94,77" fill={lineColor} opacity="0.4" filter={`url(#${filterId})`} />
+              <circle cx="94" cy="74" r="2.2" fill={lineColor} />
+              <circle cx="94" cy="74" r="1.1" fill="#ffffff" />
+            </g>
+          </g>
+          <polygon points="99,74 94,71 89,74 94,77" stroke={lineColor} strokeWidth="1.8" strokeLinejoin="round" fill="none" filter={`url(#${filterId})`} />
+          <polygon points="99,74 94,71 89,74 94,77" stroke="#ffffff" strokeWidth="0.7" fill="none" opacity="0.9" />
         </g>
       )}
     </svg>

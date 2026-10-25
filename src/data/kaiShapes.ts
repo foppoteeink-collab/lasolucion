@@ -55,7 +55,7 @@ export const KAI_OFFICIAL_SHAPES: KaiShapeDefinition[] = [
   },
   {
     id: 'panther',
-    name: 'La Pantera Neón',
+    name: 'Felino Sombra',
     codename: 'SHADOW // STEALTH',
     icon: '🐈⬛',
     tagline: 'Velocidad silenciosa, elegancia táctica y ejecución limpia.',
