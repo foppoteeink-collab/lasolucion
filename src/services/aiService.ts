@@ -2,6 +2,7 @@ import { getGenerativeModel } from 'firebase/ai';
 import { firebaseAI, firebaseConfig } from '../firebase';
 import { generateProceduralSchedule, generateProceduralAnalysis } from '../utils/proceduralHeuristics';
 import { autoArrangeSchedule, cleanScheduleTitle } from '../utils/timeUtils';
+import { KaiCustomForm } from '../types';
 
 interface RateLimitState {
   lastCallTimestamp: number;
@@ -350,6 +351,192 @@ ${historyContext}
 
   const fallbackText = generateProceduralAnalysis(stats, archetypeClass, habitMastery, currentTasks);
   return { analysis: fallbackText, source: 'heuristics' };
+}
+
+/**
+ * ══════════════════════════════════════════════════════════════════════════════
+ * 📸 FORJA NEURAL KAI // VECTORIZACIÓN MULTIMODAL GEMINI
+ * Transforma una fotografía u objeto real en un compañero holográfico
+ * geométrico simétrico (viewBox="0 0 120 120") con líneas neón y núcleo de luz.
+ * ══════════════════════════════════════════════════════════════════════════════
+ */
+export async function forgeKaiFromImage(params: {
+  imageBase64: string;
+  mimeType?: string;
+  promptDescription?: string;
+}): Promise<KaiCustomForm | null> {
+  const { imageBase64, mimeType = 'image/jpeg', promptDescription = '' } = params;
+
+  if (!imageBase64 || typeof imageBase64 !== 'string') {
+    return null;
+  }
+
+  // Limpiar encabezado data:image/... si está presente
+  const cleanBase64 = imageBase64.includes(',') ? imageBase64.split(',')[1] : imageBase64;
+
+  const systemInstructions = `
+Eres el Motor Neural de Vectorización Geométrica de "La Solución".
+Tu misión es transformar el objeto o sujeto principal de la imagen en un compañero holográfico Cyber-Origami / Wireframe poligonal simétrico sobre el eje central x=60 dentro de un lienzo SVG viewBox="0 0 120 120".
+
+REGLAS DE VECTORIZACIÓN ESTRICTAS:
+1. Toda la figura debe estar contenida entre x: 14 y 106, y entre y: 16 y 104.
+2. Simetría bilateral rigurosa respecto al eje central x=60. Si un punto está en (60 - dx, y), su contraparte debe estar en (60 + dx, y).
+3. Todas las líneas deben ser segmentos rectos poligonales (mínimo 10, máximo 24 líneas representativas de la silueta).
+4. El núcleo o sensor visual debe ubicarse en el centro de atención 'coreEye' { cx: 60, cy: número entre 45 y 70, r: 6 }.
+5. Dale un nombre épico al compañero (ej. "Cyber-Titan Auricular", "Lobo Cuántico", "Orbe Solar de Acero").
+${promptDescription ? `Contexto del usuario: "${promptDescription}".` : ''}
+
+DEVOLUCIÓN OBLIGATORIA:
+Responde ÚNICAMENTE con un objeto JSON sin formato markdown, sin texto antes ni después:
+{
+  "name": "Nombre Épico",
+  "lines": [
+    { "x1": 60, "y1": 20, "x2": 36, "y2": 52 },
+    { "x1": 60, "y1": 20, "x2": 84, "y2": 52 }
+  ],
+  "polygons": [
+    { "points": "60,20 36,52 60,78" },
+    { "points": "60,20 84,52 60,78" }
+  ],
+  "coreEye": { "cx": 60, "cy": 60, "r": 6 }
+}
+`;
+
+  let jsonResult: string | null = null;
+
+  // 1. Firebase AI Logic SDK (Multimodal)
+  if (firebaseAI) {
+    try {
+      const model = getGenerativeModel(firebaseAI, {
+        model: 'gemini-3.8-flash',
+        generationConfig: {
+          temperature: 0.25,
+          maxOutputTokens: 2048,
+        },
+      });
+
+      const imagePart = {
+        inlineData: {
+          data: cleanBase64,
+          mimeType,
+        },
+      };
+
+      const result = await model.generateContent([imagePart, { text: systemInstructions }]);
+      const text = result.response.text();
+      if (text && text.trim()) {
+        jsonResult = text.trim();
+        console.log('[Firebase AI Logic] ✓ Forja Neural procesada con éxito');
+      }
+    } catch (err: any) {
+      console.warn('[Firebase AI Logic Multimodal] Error:', err?.message || err);
+    }
+  }
+
+  // 2. Secondary: Direct Gemini Developer API
+  if (!jsonResult) {
+    const customKey =
+      typeof window !== 'undefined' ? window.localStorage.getItem('lasolucion_gemini_api_key') : null;
+    const apiKeyToTry = customKey || firebaseConfig?.apiKey;
+
+    if (apiKeyToTry) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKeyToTry}`;
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  { inline_data: { mime_type: mimeType, data: cleanBase64 } },
+                  { text: systemInstructions },
+                ],
+              },
+            ],
+            generationConfig: { temperature: 0.25, maxOutputTokens: 2048 },
+          }),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (text && text.trim()) {
+            jsonResult = text.trim();
+          }
+        }
+      } catch (err) {
+        console.warn('[Gemini Multimodal API] Error:', err);
+      }
+    }
+  }
+
+  // Parsear y sanitizar JSON devuelto
+  if (jsonResult) {
+    try {
+      const cleaned = jsonResult.replace(/```json/gi, '').replace(/```/g, '').trim();
+      const parsed = JSON.parse(cleaned);
+
+      if (parsed && Array.isArray(parsed.lines) && parsed.lines.length >= 4) {
+        // Validación de límites seguros (0 a 120)
+        const safeLines = parsed.lines
+          .filter((l: any) => typeof l.x1 === 'number' && typeof l.y1 === 'number' && typeof l.x2 === 'number' && typeof l.y2 === 'number')
+          .map((l: any) => ({
+            x1: Math.max(10, Math.min(110, Math.round(l.x1))),
+            y1: Math.max(12, Math.min(106, Math.round(l.y1))),
+            x2: Math.max(10, Math.min(110, Math.round(l.x2))),
+            y2: Math.max(12, Math.min(106, Math.round(l.y2))),
+          }));
+
+        return {
+          name: (parsed.name || 'Compañero Forja Neural').slice(0, 32),
+          sourceType: 'image',
+          createdAt: new Date().toISOString(),
+          lines: safeLines,
+          polygons: Array.isArray(parsed.polygons) ? parsed.polygons : undefined,
+          coreEye: parsed.coreEye && typeof parsed.coreEye.cx === 'number'
+            ? {
+                cx: Math.max(20, Math.min(100, Math.round(parsed.coreEye.cx))),
+                cy: Math.max(30, Math.min(90, Math.round(parsed.coreEye.cy))),
+                r: Math.max(4, Math.min(12, Math.round(parsed.coreEye.r || 6))),
+              }
+            : { cx: 60, cy: 60, r: 6 },
+        };
+      }
+    } catch (parseErr) {
+      console.warn('[Forja Neural] Error parseando JSON de Gemini:', parseErr);
+    }
+  }
+
+  // 3. Procedural Fallback de Respaldo (Garantía de que nunca falla)
+  console.log('[Forja Neural] Activando generador procedural simétrico de respaldo');
+  return {
+    name: promptDescription ? `Tótem ${promptDescription.slice(0, 16)}` : 'Holo-Artefacto Cuántico',
+    sourceType: 'image',
+    createdAt: new Date().toISOString(),
+    lines: [
+      { x1: 60, y1: 20, x2: 32, y2: 48 },
+      { x1: 60, y1: 20, x2: 88, y2: 48 },
+      { x1: 32, y1: 48, x2: 24, y2: 74 },
+      { x1: 88, y1: 48, x2: 96, y2: 74 },
+      { x1: 24, y1: 74, x2: 60, y2: 98 },
+      { x1: 96, y1: 74, x2: 60, y2: 98 },
+      { x1: 60, y1: 20, x2: 60, y2: 98 },
+      { x1: 32, y1: 48, x2: 60, y2: 60 },
+      { x1: 88, y1: 48, x2: 60, y2: 60 },
+      { x1: 24, y1: 74, x2: 60, y2: 60 },
+      { x1: 96, y1: 74, x2: 60, y2: 60 },
+    ],
+    polygons: [
+      { points: '60,20 32,48 60,60' },
+      { points: '60,20 88,48 60,60' },
+      { points: '32,48 24,74 60,60' },
+      { points: '88,48 96,74 60,60' },
+      { points: '24,74 60,98 60,60' },
+      { points: '96,74 60,98 60,60' },
+    ],
+    coreEye: { cx: 60, cy: 60, r: 7 },
+  };
 }
 
 

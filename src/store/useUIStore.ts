@@ -48,6 +48,8 @@ interface UIState {
   isHunterCollapseOpen: boolean;
   isTaskFormOpen: boolean;
   taskFormInitialTab: 'task' | 'habit' | 'oracle';
+  isTacticalGuideOpen: boolean;
+  tacticalGuideInitialStep: number;
   surpriseBossData: { archetypeName: string; buffName: string; buffDescription: string } | null;
   deleteConfirmTask: TaskItem | null;
 
@@ -67,6 +69,8 @@ interface UIState {
   toggleSound: () => void;
   openTaskForm: (tab?: 'task' | 'habit' | 'oracle') => void;
   closeTaskForm: () => void;
+  openTacticalGuide: (step?: number) => void;
+  closeTacticalGuide: () => void;
   openSurpriseBoss: (data: { archetypeName: string; buffName: string; buffDescription: string }) => void;
   setModalState: (modalName: ModalName, isOpen: boolean, data?: any) => void;
   dismissCurrentModal: (modalName?: ModalName) => void;
@@ -140,11 +144,15 @@ export const useUIStore = create<UIState>((set, get) => ({
   isHunterCollapseOpen: false,
   isTaskFormOpen: false,
   taskFormInitialTab: 'task',
+  isTacticalGuideOpen: false,
+  tacticalGuideInitialStep: 1,
   surpriseBossData: null,
   deleteConfirmTask: null,
 
   openTaskForm: (tab = 'task') => set({ isTaskFormOpen: true, taskFormInitialTab: tab }),
   closeTaskForm: () => set({ isTaskFormOpen: false }),
+  openTacticalGuide: (step = 1) => set({ isTacticalGuideOpen: true, tacticalGuideInitialStep: step }),
+  closeTacticalGuide: () => set({ isTacticalGuideOpen: false }),
 
   // FIFO Modal Queue State
   activeModal: null,

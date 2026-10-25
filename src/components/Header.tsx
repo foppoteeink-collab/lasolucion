@@ -19,7 +19,8 @@ import {
   Activity,
   Upload,
   Download,
-  CheckCircle2
+  CheckCircle2,
+  HelpCircle
 } from 'lucide-react';
 import { AppNotification } from '../types';
 import { soundFX } from '../utils/audio';
@@ -283,6 +284,22 @@ export const Header: React.FC<HeaderProps> = ({
               title="Ajustes"
             >
               <Settings className="w-4 h-4" />
+            </button>
+
+            {/* Guía Táctica KAI (Tutorial del Sistema) */}
+            <button
+              type="button"
+              onClick={() => {
+                soundFX.playClick();
+                useUIStore.getState().openTacticalGuide(1);
+              }}
+              className="p-1.5 sm:p-2 rounded-xl bg-surface-card text-cyan-300 border border-cyan-500/30 hover:border-cyan-400 hover:bg-cyan-950/40 transition-all cursor-pointer flex items-center gap-1 group shadow-[0_0_10px_rgba(0,240,255,0.15)] active:scale-95"
+              title="Guía Táctica de KAI: Tutorial del Sistema"
+            >
+              <HelpCircle className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-cyan-400 group-hover:rotate-12 transition-transform" />
+              <span className="hidden xl:inline text-[10px] font-mono font-bold tracking-wider uppercase text-cyan-300">
+                Guía
+              </span>
             </button>
 
             {/* Notifications */}

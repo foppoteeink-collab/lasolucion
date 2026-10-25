@@ -10,7 +10,8 @@ import {
   Zap,
   Sparkles,
   BrainCircuit,
-  Settings
+  Settings,
+  Palette
 } from 'lucide-react';
 import { HoloCompanion, CompanionAuraState } from './HoloCompanion';
 import { SatelliteKaiHub, SatelliteHubItem } from './SatelliteKaiHub';
@@ -24,12 +25,14 @@ import { getTodayDateString } from '../utils/date';
 interface OmniCompanionHubProps {
   onOpenOracleWithPrompt?: (promptText?: string) => void;
   onOpenNeuralAnalysis?: () => void;
+  onOpenKaiWorkshop?: () => void;
   archetype?: string;
 }
 
 export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
   onOpenOracleWithPrompt,
   onOpenNeuralAnalysis,
+  onOpenKaiWorkshop,
   archetype = 'sabio',
 }) => {
   const { setActiveTab, setModalState, isPomodoroOpen, navigationMode, openTaskForm } = useUIStore();
@@ -209,6 +212,18 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
         },
       },
       {
+        id: 'workshop',
+        label: 'Taller KAI',
+        categoryBadge: 'FORJA',
+        icon: <Palette className="w-5 h-5 text-fuchsia-400" />,
+        accentColor: '#d946ef',
+        glowColor: 'rgba(217, 70, 239, 0.5)',
+        liveStat: stats.kaiShape === 'custom' ? 'Forja IA' : '6 Formas',
+        action: () => {
+          if (onOpenKaiWorkshop) onOpenKaiWorkshop();
+        },
+      },
+      {
         id: 'settings',
         label: 'Ajustes',
         categoryBadge: 'SISTEMA',
@@ -225,10 +240,12 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
       formattedTime,
       stats.coins,
       stats.level,
+      stats.kaiShape,
       setActiveTab,
       setModalState,
       onOpenOracleWithPrompt,
       onOpenNeuralAnalysis,
+      onOpenKaiWorkshop,
     ]
   );
 

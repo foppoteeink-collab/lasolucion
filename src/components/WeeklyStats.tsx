@@ -71,6 +71,7 @@ export interface WeeklyStatsProps {
   habitMastery?: Record<string, HabitMasteryRecord>;
   cloudSync?: CloudSyncResult;
   onOpenAwakening?: () => void;
+  onOpenKaiWorkshop?: () => void;
 }
 
 type TimeRange = 'semanal' | 'mensual' | 'anual';
@@ -156,7 +157,8 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
   expenses,
   setExpenses,
   cloudSync,
-  onOpenAwakening
+  onOpenAwakening,
+  onOpenKaiWorkshop
 }) => {
   const [activeSubTab, setActiveSubTab] = useState<StatsSubTab>('hero');
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -786,10 +788,14 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
                 <div 
                   onClick={() => {
                     soundFX.playClick();
-                    setIsArchetypesModalOpen(true);
+                    if (onOpenKaiWorkshop) {
+                      onOpenKaiWorkshop();
+                    } else {
+                      setIsArchetypesModalOpen(true);
+                    }
                   }}
                   className="p-3 rounded-2xl bg-[#04020e] border border-cyan-500/50 hover:border-cyan-300 transition-all cursor-pointer flex items-center gap-3 shrink-0 shadow-[0_0_15px_rgba(0,240,255,0.15)] group"
-                  title="Haz clic para ver las explicaciones de los 12 Arquetipos y Compañeros KAI"
+                  title="Haz clic para abrir el Taller de KAI (Formas, Auras, Forja IA)"
                 >
                   <div className="shrink-0">
                     <HoloCompanion archetype={stats.characterClass || 'El Héroe'} size="sm" showHUD={false} />
@@ -800,7 +806,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
                       KAI • Nv. {stats.level || 1}
                     </div>
                     <div className="text-[10px] text-cyan-300/80 flex items-center gap-1 mt-0.5">
-                      <span>{stats.characterClass || 'El Héroe'}</span>
+                      <span className="text-cyan-400 font-bold underline">Taller & Forja 🎨</span>
                       <Sparkles className="w-3 h-3 text-amber-300" />
                     </div>
                   </div>
@@ -813,17 +819,31 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
                   <span className="text-[10px] font-anton text-cyan-300 uppercase tracking-wider flex items-center gap-1">
                     <Trophy className="w-3.5 h-3.5 text-amber-400" /> Insignias de Maestría y Auras (21d / 66d)
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundFX.playClick();
-                      setActiveSubTab('neuro');
-                    }}
-                    className="text-[10px] text-cyan-400 hover:text-cyan-300 font-mono flex items-center gap-1 cursor-pointer"
-                  >
-                    <span>Ver Hábitos</span>
-                    <ArrowRight className="w-3 h-3" />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {onOpenKaiWorkshop && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          soundFX.playClick();
+                          onOpenKaiWorkshop();
+                        }}
+                        className="px-2 py-0.5 rounded-lg bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-500/60 text-[10px] font-anton uppercase text-cyan-300 hover:text-white transition-all cursor-pointer shadow-[0_0_8px_rgba(0,240,255,0.2)] active:scale-95"
+                      >
+                        🎨 Taller KAI
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        soundFX.playClick();
+                        setActiveSubTab('neuro');
+                      }}
+                      className="text-[10px] text-cyan-400 hover:text-cyan-300 font-mono flex items-center gap-1 cursor-pointer"
+                    >
+                      <span>Ver Hábitos</span>
+                      <ArrowRight className="w-3 h-3" />
+                    </button>
+                  </div>
                 </div>
                 
                 {trackedHabits.filter(h => h.currentStreak >= 21).length === 0 ? (

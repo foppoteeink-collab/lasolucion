@@ -130,6 +130,27 @@ export interface PlayerStats {
   inventory?: InventoryItem[];
   unopenedBoxes?: number;
   hasCompletedAwakening?: boolean;
+  // ─── Ecosistema Infinito de KAI ─────────────────────────────
+  kaiShape?: KaiShapeKey;
+  kaiAuraColor?: string;
+  kaiParticleEffect?: string;
+  kaiCustomForm?: KaiCustomForm | null;
+  kaiNeuralForgeCharges?: number;
+  frozenHabits?: Record<string, { frozenUntil: string; daysRemaining: number }>;
+  synapticBoosters?: number;
+  seenTutorialGuides?: Record<string, boolean>;
+  hasClaimedTutorialReward?: boolean;
+}
+
+export type KaiShapeKey = 'prism' | 'octahedron' | 'wolf' | 'hound' | 'panther' | 'elephant' | 'custom';
+
+export interface KaiCustomForm {
+  name: string;
+  sourceType: 'image' | 'prompt';
+  createdAt: string;
+  lines: Array<{ x1: number; y1: number; x2: number; y2: number }>;
+  polygons?: Array<{ points: string }>;
+  coreEye?: { cx: number; cy: number; r: number };
 }
 
 export interface FloatingReward {
@@ -155,7 +176,7 @@ export interface ShopReward {
   description: string;
   cost: number;
   icon: string;
-  category: 'descanso' | 'comida' | 'ocio' | 'perk';
+  category: 'descanso' | 'comida' | 'ocio' | 'perk' | 'kai';
   unlockedCount: number;
 }
 

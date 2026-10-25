@@ -586,6 +586,18 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
           <h3 className="text-xs font-bold font-anton text-cyan-300 uppercase tracking-wider whitespace-nowrap">
             Hábitos (Ley 21/66)
           </h3>
+          <button
+            type="button"
+            onClick={() => {
+              soundFX.playClick();
+              useUIStore.getState().openTacticalGuide(2);
+            }}
+            className="text-[10px] font-mono text-cyan-400/80 hover:text-cyan-200 flex items-center gap-1 px-1.5 py-0.5 rounded-md hover:bg-cyan-950/40 transition-colors cursor-pointer"
+            title="Ver guía de Orbes de Hábitos y Ley 21/66"
+          >
+            <span>💡</span>
+            <span className="hidden sm:inline">Guía 21/66</span>
+          </button>
         </div>
 
         {quickHabits.length > 0 && (

@@ -1,6 +1,10 @@
 import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { soundFX } from '../utils/audio';
+import { KaiVectorGraphics } from './KaiVectorGraphics';
+import { KaiShapeKey, KaiCustomForm } from '../types';
+import { usePlayerStore } from '../store/usePlayerStore';
+import { useAppStore } from '../store/useAppStore';
 
 export type ArchetypeKey =
   | 'heroe'
@@ -129,6 +133,10 @@ export function resolveArchetypeConfig(archetypeProp?: string): CompanionConfig 
 
 export interface HoloCompanionProps {
   archetype?: ArchetypeKey;
+  shapeId?: KaiShapeKey;
+  customForm?: KaiCustomForm | null;
+  auraColor?: string;
+  particleEffect?: string;
   size?: 'nano' | 'xs' | 'sm' | 'md' | 'lg' | 'xl' | number;
   className?: string;
   showHUD?: boolean;
@@ -141,19 +149,16 @@ export interface HoloCompanionProps {
 }
 
 /**
- * ORÁCULO PIRAMIDAL: EL OJO QUE TODO LO VE (Referencia Exacta de la Imagen)
- * 
- * Modos de interacción:
- * 1. OPCIÓN A: Ciclo autónomo de 4s con doble parpadeo
- * 2. OPCIÓN B: Seguimiento suave de cursor / puntero
- * 3. OPCIÓN C: Oráculo reactivo a toques con ondas cuánticas
- * 4. ESTADOS REACTIVOS DINÁMICOS:
- *    - 'focus_trance': Metrónomo de respiración pausada (4s/4s) para modo Pomodoro
- *    - 'warning_amber': Luz ámbar/dorada ante hábitos atrasados o racha en peligro
- *    - 'victory': Ondas expansivas de luz cian celebrando victorias y tareas completadas
+ * COMPAÑERO HOLOGRÁFICO CUÁNTICO // KAI
+ * Soporta las 6 Formas Oficiales (Día 0), Forja Neural por Foto (IA),
+ * Evolución de 21d (Maltz) / 66d (Lally) y Ascensión Infinita con Cristales.
  */
 export const HoloCompanion: React.FC<HoloCompanionProps> = ({
   archetype = 'heroe',
+  shapeId,
+  customForm,
+  auraColor,
+  particleEffect,
   size = 'md',
   className = '',
   showHUD = false,
@@ -168,6 +173,31 @@ export const HoloCompanion: React.FC<HoloCompanionProps> = ({
   const [justClicked, setJustClicked] = useState(false);
   const [internalVictoryCount, setInternalVictoryCount] = useState(0);
 
+  // Estados globales de KAI & Telemetría
+  const stats = usePlayerStore((state) => state.stats);
+  const habitMastery = useAppStore((state) => state.habitMastery);
+
+  const effectiveShape: KaiShapeKey = shapeId || stats?.kaiShape || 'prism';
+  const effectiveCustomForm = customForm !== undefined ? customForm : stats?.kaiCustomForm;
+  const effectiveParticle = particleEffect || stats?.kaiParticleEffect || 'none';
+
+  // Detección de progresión 21d (Maltz) y 66d (Lally / Maestría)
+  const habits21Count = useMemo(() => {
+    const list = Object.values(habitMastery || {});
+    const count = list.filter((h) => h.isMaltzReached || (h.currentStreak || 0) >= 21).length;
+    return count > 0 ? count : ((stats?.streakDays || 0) >= 21 ? 1 : 0);
+  }, [habitMastery, stats?.streakDays]);
+
+  const habits66Count = useMemo(() => {
+    const list = Object.values(habitMastery || {});
+    const count = list.filter((h) => h.isMastered || (h.currentStreak || 0) >= 66).length;
+    return count > 0 ? count : ((stats?.streakDays || 0) >= 66 ? 1 : 0);
+  }, [habitMastery, stats?.streakDays]);
+
+  const has21Days = habits21Count >= 1;
+  const has66Days = habits66Count >= 1;
+  const ascensionCrystalsCount = Math.max(0, habits66Count - 1);
+
   // Estados para el seguimiento del cursor
   const [eyeOffset, setEyeOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isTrackingMouse, setIsTrackingMouse] = useState(false);
@@ -178,15 +208,18 @@ export const HoloCompanion: React.FC<HoloCompanionProps> = ({
   // Modulación cromática y lumínica según el estado
   const activeColor = useMemo(() => {
     if (auraState === 'warning_amber') return '#f59e0b'; // Ámbar dorado sagrado
-    if (auraState === 'victory') return '#00f0ff';
-    if (auraState === 'focus_trance') return '#00f0ff';
+    if (has66Days) return '#fbbf24'; // Oro de Maestría Lally
+    if (auraColor) return auraColor;
+    if (stats?.kaiAuraColor) return stats.kaiAuraColor;
+    if (auraState === 'victory' || auraState === 'focus_trance') return '#00f0ff';
     return baseConfig.primaryGlow || '#00f0ff';
-  }, [auraState, baseConfig.primaryGlow]);
+  }, [auraState, has66Days, auraColor, stats?.kaiAuraColor, baseConfig.primaryGlow]);
 
   const activeSecondaryColor = useMemo(() => {
     if (auraState === 'warning_amber') return '#b45309';
+    if (has66Days) return '#d97706';
     return baseConfig.secondaryGlow || '#0284c7';
-  }, [auraState, baseConfig.secondaryGlow]);
+  }, [auraState, has66Days, baseConfig.secondaryGlow]);
 
   // Activación de onda de victoria cuando triggerVictoryWave cambia a true
   useEffect(() => {
@@ -369,263 +402,76 @@ export const HoloCompanion: React.FC<HoloCompanionProps> = ({
           )}
         </AnimatePresence>
 
-        {/* ILUSTRACIÓN VECTORIAL SVG DE LA PIRÁMIDE CON EL OJO QUE TODO LO VE */}
-        <svg
-          width={svgWidth}
-          height={svgHeight}
-          viewBox="0 0 160 170"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          className="relative z-10 overflow-visible"
+        {/* CAPA DE PARTÍCULAS / ALAS HOLOGRÁFICAS (SI ESTÁN EQUIPADAS EN ARMERÍA) */}
+        {effectiveParticle === 'wings' && (
+          <div className="absolute inset-0 -z-10 flex items-center justify-center pointer-events-none">
+            <svg viewBox="0 0 160 120" className="w-[140%] h-[140%] -translate-y-2 opacity-75 animate-pulse" fill="none">
+              <polygon points="40,50 10,25 25,65 35,70" stroke={activeColor} strokeWidth="1.6" strokeDasharray="3 3" fill={`${activeColor}15`} />
+              <polygon points="120,50 150,25 135,65 125,70" stroke={activeColor} strokeWidth="1.6" strokeDasharray="3 3" fill={`${activeColor}15`} />
+              <line x1="20" y1="40" x2="35" y2="45" stroke="#ffffff" strokeWidth="1" />
+              <line x1="140" y1="40" x2="125" y2="45" stroke="#ffffff" strokeWidth="1" />
+            </svg>
+          </div>
+        )}
+
+        {effectiveParticle === 'matrix' && (
+          <div className="absolute inset-0 -z-10 flex items-center justify-center pointer-events-none overflow-hidden opacity-60">
+            <div className="text-[7px] font-mono font-bold text-emerald-400 tracking-tighter leading-none select-none opacity-40 animate-pulse">
+              01010101<br />10101010<br />01100101
+            </div>
+          </div>
+        )}
+
+        {effectiveParticle === 'solar' && (
+          <div
+            className="absolute rounded-full pointer-events-none -z-10 animate-spin"
+            style={{
+              width: `${Math.round(95 * scaleMultiplier)}px`,
+              height: `${Math.round(95 * scaleMultiplier)}px`,
+              border: `2px dashed ${activeColor}`,
+              animationDuration: '10s',
+              opacity: 0.7,
+            }}
+          />
+        )}
+
+        {effectiveParticle === 'quantum_pulse' && (
+          <div
+            className="absolute rounded-full pointer-events-none -z-10 animate-ping"
+            style={{
+              width: `${Math.round(80 * scaleMultiplier)}px`,
+              height: `${Math.round(80 * scaleMultiplier)}px`,
+              border: `1.5px solid ${activeColor}`,
+              animationDuration: '3s',
+              opacity: 0.5,
+            }}
+          />
+        )}
+
+        {/* RENDERIZADO VECTORIAL MULTI-FORMA: 6 FORMAS BASE + FORJA NEURAL IA */}
+        <div
+          style={{
+            width: `${svgWidth}px`,
+            height: `${svgHeight}px`,
+          }}
+          className="relative z-10 flex items-center justify-center"
         >
-          <defs>
-            {/* Filtro Bloom / Resplandor Neón Optimizado para GPU Móvil */}
-            <filter id={`${gradientId}-neon-glow`} x="-25%" y="-25%" width="150%" height="150%">
-              <feGaussianBlur stdDeviation="2.4" result="blur1" />
-              <feMerge>
-                <feMergeNode in="blur1" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-
-            {/* Máscara del Ojo Almendrado para contener el Iris y la Pupila */}
-            <clipPath id={`${gradientId}-eye-clip`}>
-              <path
-                d="M 50 85 C 60 67, 100 67, 110 85 C 100 103, 60 103, 50 85 Z"
-              />
-            </clipPath>
-
-            {/* Gradiente radial interno del ojo */}
-            <radialGradient id={`${gradientId}-eye-void`} cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#011b2b" stopOpacity="0.95" />
-              <stop offset="70%" stopColor="#000e17" stopOpacity="0.98" />
-              <stop offset="100%" stopColor="#00070c" stopOpacity="1" />
-            </radialGradient>
-          </defs>
-
-          {/* Animación del parpadeo y look-around autónomo */}
-          <style>
-            {`
-              @keyframes pyramid-look-around {
-                0% { transform: translate(0px, 0px); }
-                5% { transform: translate(4px, -2px); }
-                10% { transform: translate(4px, -2px); }
-                15% { transform: translate(-4.5px, -1.8px); }
-                20% { transform: translate(-4.5px, -1.8px); }
-                25% { transform: translate(0px, 0px); }
-                100% { transform: translate(0px, 0px); }
-              }
-
-              @keyframes pyramid-eyelid-upper {
-                0% { transform: translateY(-19px); }
-                90% { transform: translateY(-19px); }
-                92.5% { transform: translateY(0px); }
-                95% { transform: translateY(-19px); }
-                97.5% { transform: translateY(0px); }
-                100% { transform: translateY(-19px); }
-              }
-
-              @keyframes pyramid-eyelid-lower {
-                0% { transform: translateY(19px); }
-                90% { transform: translateY(19px); }
-                92.5% { transform: translateY(0px); }
-                95% { transform: translateY(19px); }
-                97.5% { transform: translateY(0px); }
-                100% { transform: translateY(19px); }
-              }
-
-              .pyramid-pupil-idle {
-                animation: pyramid-look-around 4s infinite ease-in-out;
-              }
-
-              .pyramid-upper-lid {
-                animation: pyramid-eyelid-upper 4s infinite ease-in;
-              }
-
-              .pyramid-lower-lid {
-                animation: pyramid-eyelid-lower 4s infinite ease-in;
-              }
-            `}
-          </style>
-
-          {/* 1. SUELO CUÁNTICO // SOMBRA DE LEVITACIÓN Y LÍNEAS DE REJILLA EN LA BASE */}
-          <g opacity="0.85">
-            <line x1="45" y1="156" x2="115" y2="156" stroke={activeColor} strokeWidth="0.8" opacity="0.3" />
-            <line x1="30" y1="162" x2="130" y2="162" stroke={activeColor} strokeWidth="0.8" opacity="0.2" />
-            
-            <ellipse
-              cx="80"
-              cy="153"
-              rx="40"
-              ry="5.5"
-              fill={activeColor}
-              opacity="0.55"
-              filter={`url(#${gradientId}-neon-glow)`}
-            />
-            <ellipse
-              cx="80"
-              cy="153"
-              rx="24"
-              ry="3"
-              fill="#ffffff"
-              opacity="0.75"
-            />
-          </g>
-
-          {/* 2. CUERPO DE LA PIRÁMIDE: LÍNEAS NEÓN EXTERIORES E INTERIORES */}
-          <g filter={`url(#${gradientId}-neon-glow)`}>
-            <polygon
-              points="80,22 138,128 22,128"
-              stroke={activeColor}
-              strokeWidth="4"
-              strokeLinejoin="round"
-              fill="rgba(0, 14, 24, 0.4)"
-            />
-
-            <line x1="80" y1="22" x2="80" y2="70" stroke={activeColor} strokeWidth="3.2" strokeLinecap="round" />
-            <line x1="80" y1="99" x2="80" y2="128" stroke={activeColor} strokeWidth="3.2" strokeLinecap="round" />
-
-            <line x1="22" y1="128" x2="80" y2="99" stroke={activeColor} strokeWidth="3.2" strokeLinecap="round" />
-            <line x1="138" y1="128" x2="80" y2="99" stroke={activeColor} strokeWidth="3.2" strokeLinecap="round" />
-
-            <line x1="45" y1="85" x2="50" y2="85" stroke={activeColor} strokeWidth="3.2" />
-            <line x1="110" y1="85" x2="115" y2="85" stroke={activeColor} strokeWidth="3.2" />
-          </g>
-
-          {/* Núcleo blanco brillante de las líneas neón */}
-          <g>
-            <polygon
-              points="80,22 138,128 22,128"
-              stroke="#ffffff"
-              strokeWidth="1.2"
-              strokeLinejoin="round"
-              fill="none"
-              opacity="0.9"
-            />
-            <line x1="80" y1="22" x2="80" y2="70" stroke="#ffffff" strokeWidth="1" strokeLinecap="round" opacity="0.9" />
-            <line x1="80" y1="99" x2="80" y2="128" stroke="#ffffff" strokeWidth="1" strokeLinecap="round" opacity="0.9" />
-            <line x1="22" y1="128" x2="80" y2="99" stroke="#ffffff" strokeWidth="1" strokeLinecap="round" opacity="0.9" />
-            <line x1="138" y1="128" x2="80" y2="99" stroke="#ffffff" strokeWidth="1" strokeLinecap="round" opacity="0.9" />
-          </g>
-
-          {/* 3. EL OJO CENTRAL QUE TODO LO VE (INTERACTIVO) */}
-          <g>
-            <path
-              d="M 50 85 C 60 67, 100 67, 110 85 C 100 103, 60 103, 50 85 Z"
-              fill={`url(#${gradientId}-eye-void)`}
-            />
-
-            {/* CONTENIDO INTERIOR DEL OJO */}
-            <g clipPath={`url(#${gradientId}-eye-clip)`}>
-              {/* GRUPO DEL IRIS Y LA PUPILA (Combinación de Opción A, B y C) */}
-              <g
-                style={{
-                  transform: isTrackingMouse
-                    ? `translate(${eyeOffset.x}px, ${eyeOffset.y}px)`
-                    : undefined,
-                  transition: isTrackingMouse ? 'transform 0.08s ease-out' : 'transform 0.4s ease-in-out',
-                }}
-                className={!isTrackingMouse && auraState !== 'focus_trance' ? 'pyramid-pupil-idle' : ''}
-              >
-                {/* Contenedor con animación de respiración guiada si está en 'focus_trance' */}
-                <motion.g
-                  animate={
-                    auraState === 'focus_trance'
-                      ? {
-                          scale: [0.9, 1.25, 0.9],
-                          opacity: [0.85, 1, 0.85],
-                        }
-                      : undefined
-                  }
-                  transition={{
-                    duration: 4.0, // 4s inhalar, 4s exhalar ritmo metrónomo
-                    repeat: Infinity,
-                    ease: 'easeInOut',
-                  }}
-                  style={{ transformOrigin: '80px 85px' }}
-                >
-                  {/* Iris: Aro brillante */}
-                  <circle
-                    cx="80"
-                    cy="85"
-                    r={justClicked ? 14.5 : 13}
-                    stroke={activeColor}
-                    strokeWidth="3.2"
-                    fill="none"
-                    filter={`url(#${gradientId}-neon-glow)`}
-                  />
-                  <circle
-                    cx="80"
-                    cy="85"
-                    r={justClicked ? 14.5 : 13}
-                    stroke="#ffffff"
-                    strokeWidth="1.2"
-                    fill="none"
-                  />
-
-                  {/* Pupila Central */}
-                  <circle
-                    cx="80"
-                    cy="85"
-                    r={justClicked ? 7.5 : 6}
-                    fill={activeColor}
-                    filter={`url(#${gradientId}-neon-glow)`}
-                  />
-                  <circle
-                    cx="80"
-                    cy="85"
-                    r={justClicked ? 4.2 : 3}
-                    fill="#ffffff"
-                  />
-
-                  {/* Destello de luz sagrado */}
-                  <circle
-                    cx="82.4"
-                    cy="82.6"
-                    r="1.5"
-                    fill="#ffffff"
-                    opacity="0.9"
-                  />
-                </motion.g>
-              </g>
-
-              {/* PÁRPADOS SINCRONIZADOS */}
-              <path
-                d="M 46 66 H 114 V 85 C 104 85, 56 85, 46 85 Z"
-                fill="#000f1a"
-                stroke={activeColor}
-                strokeWidth="1.6"
-                className={auraState !== 'focus_trance' ? 'pyramid-upper-lid' : ''}
-                style={auraState === 'focus_trance' ? { transform: 'translateY(-19px)' } : undefined}
-              />
-
-              <path
-                d="M 46 104 H 114 V 85 C 104 85, 56 85, 46 85 Z"
-                fill="#000f1a"
-                stroke={activeColor}
-                strokeWidth="1.6"
-                className={auraState !== 'focus_trance' ? 'pyramid-lower-lid' : ''}
-                style={auraState === 'focus_trance' ? { transform: 'translateY(19px)' } : undefined}
-              />
-            </g>
-
-            {/* Contorno exterior del ojo en neón */}
-            <path
-              d="M 50 85 C 60 67, 100 67, 110 85 C 100 103, 60 103, 50 85 Z"
-              stroke={activeColor}
-              strokeWidth="3.6"
-              fill="none"
-              filter={`url(#${gradientId}-neon-glow)`}
-            />
-            <path
-              d="M 50 85 C 60 67, 100 67, 110 85 C 100 103, 60 103, 50 85 Z"
-              stroke="#ffffff"
-              strokeWidth="1.1"
-              fill="none"
-              opacity="0.9"
-            />
-          </g>
-        </svg>
+          <KaiVectorGraphics
+            shapeId={effectiveShape}
+            activeColor={activeColor}
+            secondaryColor={activeSecondaryColor}
+            glowFilterId={`${gradientId}-neon-glow`}
+            isHovered={isHovered}
+            justClicked={justClicked}
+            eyeOffset={eyeOffset}
+            isTrackingMouse={isTrackingMouse}
+            isFocusTrance={auraState === 'focus_trance'}
+            has21Days={has21Days}
+            has66Days={has66Days}
+            ascensionCrystalsCount={ascensionCrystalsCount}
+            customForm={effectiveCustomForm}
+          />
+        </div>
       </motion.div>
 
       {/* HUD SCI-FI INFERIOR CON EL ARQUETIPO (OPCIONAL) */}

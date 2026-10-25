@@ -5,8 +5,11 @@ import {
   Lock,
   Sparkles,
   Layers,
+  HelpCircle,
 } from 'lucide-react';
 import { formatDateForDisplay } from '../../utils/date';
+import { soundFX } from '../../utils/audio';
+import { useUIStore } from '../../store/useUIStore';
 
 interface TaskHeaderHUDProps {
   currentDate: string;
@@ -59,6 +62,17 @@ export const TaskHeaderHUD: React.FC<TaskHeaderHUDProps> = ({
         </span>
 
         <div className="flex items-center gap-1.5 shrink-0">
+          <button
+            type="button"
+            onClick={() => {
+              soundFX.playClick();
+              useUIStore.getState().openTacticalGuide(3);
+            }}
+            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-white/10 hover:border-cyan-400/50 bg-[#001020]/60 text-slate-400 hover:text-cyan-300 flex items-center justify-center transition-all cursor-pointer active:scale-90"
+            title="¿Cómo crear tareas y planificar bloques? Ver guía"
+          >
+            <HelpCircle className="w-3.5 h-3.5" />
+          </button>
           <button
             type="button"
             onClick={() => onOpenAddModal('task')}

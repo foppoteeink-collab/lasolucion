@@ -17,7 +17,8 @@ import {
   Coffee,
   Gamepad2,
   Package,
-  Layers
+  Layers,
+  Bot
 } from 'lucide-react';
 import { soundFX } from '../utils/audio';
 import { triggerShockwave } from '../utils/celebration';
@@ -27,7 +28,7 @@ import { notificationService } from '../utils/notifications';
 import { useUIStore } from '../store/useUIStore';
 import { triggerHaptic } from '../utils/haptics';
 
-type FilterTab = 'todos' | 'vida_real' | 'perks' | 'descanso' | 'personalizados' | 'mochila';
+type FilterTab = 'todos' | 'vida_real' | 'perks' | 'kai' | 'descanso' | 'personalizados' | 'mochila';
 
 export const RewardShop: React.FC = () => {
   const { stats, openLootBox, useInventoryItem } = usePlayerStore();
@@ -75,7 +76,7 @@ export const RewardShop: React.FC = () => {
     const finalCost = getDiscountedCost(reward);
     
     const success = usePlayerStore.getState().purchaseItem(finalCost, (prev) => {
-      let extra = {};
+      let extra: any = {};
       if (reward.id === 'perk-healing-potion') {
         extra = { hp: Math.min(prev.maxHp || 100, (prev.hp ?? 100) + 30) };
       }
@@ -86,6 +87,40 @@ export const RewardShop: React.FC = () => {
         const now = Date.now();
         const currentExpires = prev.focusPotionExpiresAt || now;
         extra = { focusPotionExpiresAt: Math.max(now, currentExpires) + 3600000 };
+      }
+      if (reward.id === 'kai-neural-core') {
+        extra = { kaiNeuralForgeCharges: (prev.kaiNeuralForgeCharges || 0) + 1 };
+      }
+      if (reward.id === 'kai-freeze-capsule') {
+        const inv = [...(prev.inventory || [])];
+        const existingIdx = inv.findIndex(i => i.id === 'inv-freeze-capsule');
+        if (existingIdx >= 0) {
+          inv[existingIdx] = { ...inv[existingIdx], quantity: inv[existingIdx].quantity + 1 };
+        } else {
+          inv.push({
+            id: 'inv-freeze-capsule',
+            baseId: 'freeze_capsule',
+            name: 'Cápsula Criogénica',
+            description: 'Pausa un hábito por 3 días sin perder su racha de 21 o 66 días.',
+            icon: '❄️',
+            rarity: 'rare',
+            quantity: 1,
+            effectType: 'streak_shield'
+          });
+        }
+        extra = { inventory: inv };
+      }
+      if (reward.id === 'kai-synaptic-booster') {
+        extra = { synapticBoosters: (prev.synapticBoosters || 0) + 1 };
+      }
+      if (reward.id === 'kai-wings-cyber') {
+        extra = { kaiParticleEffect: 'wings' };
+      }
+      if (reward.id === 'kai-particle-matrix') {
+        extra = { kaiParticleEffect: 'matrix' };
+      }
+      if (reward.id === 'kai-particle-solar') {
+        extra = { kaiParticleEffect: 'solar' };
       }
       return extra;
     });
@@ -106,6 +141,22 @@ export const RewardShop: React.FC = () => {
     } else if (reward.id === 'perk-streak-shield') {
       triggerHaptic([80, 80]);
       notificationService.triggerNotification('¡Escudo Forjado! 🛡️', 'Tu racha está protegida ante cualquier imprevisto.', '🛡️');
+    } else if (reward.id === 'kai-neural-core') {
+      triggerScreenFlash('buff');
+      triggerHaptic([100, 50, 100]);
+      notificationService.triggerNotification('¡Núcleo de Forja Activado! 📸', '+1 Carga obtenida para escanear cualquier objeto real con tu cámara en el Taller KAI.', '📸');
+    } else if (reward.id === 'kai-freeze-capsule') {
+      triggerScreenFlash('buff');
+      triggerHaptic([80, 40]);
+      notificationService.triggerNotification('¡Cápsula Criogénica Guardada! ❄️', 'Añadida a tu mochila para congelar un hábito si te lesionas o viajas sin perder tu racha.', '❄️');
+    } else if (reward.id === 'kai-synaptic-booster') {
+      triggerScreenFlash('buff');
+      triggerHaptic([120]);
+      notificationService.triggerNotification('¡Acelerador Sináptico Adquirido! ⚡', 'Tu próximo registro de hábito avanzará al doble hacia tus 21 y 66 días.', '⚡');
+    } else if (reward.id.startsWith('kai-')) {
+      triggerScreenFlash('buff');
+      triggerHaptic([60, 60]);
+      notificationService.triggerNotification('¡Módulo KAI Equipado! 💠', `Has equipado ${reward.title} en tu compañero.`, '💠');
     } else {
       triggerHaptic([40, 60, 40]);
       notificationService.triggerNotification(`¡Disfruta tu premio! ${reward.icon}`, `Has canjeado "${reward.title}". Te lo has ganado con disciplina.`, reward.icon);
@@ -156,6 +207,7 @@ export const RewardShop: React.FC = () => {
       const isCustom = r.id.startsWith('custom-');
       if (activeTab === 'todos') return true;
       if (activeTab === 'personalizados') return isCustom;
+      if (activeTab === 'kai') return r.category === 'kai' || r.id.startsWith('kai-');
       if (activeTab === 'perks') return r.category === 'perk';
       if (activeTab === 'vida_real') return r.category === 'ocio' || r.category === 'comida' || isCustom;
       if (activeTab === 'descanso') return r.category === 'descanso';
@@ -253,6 +305,19 @@ export const RewardShop: React.FC = () => {
         >
           <Shield className="w-3.5 h-3.5 text-cyan-400" />
           <span>Potenciadores</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => { soundFX.playClick(); setActiveTab('kai'); }}
+          className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl border transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
+            activeTab === 'kai'
+              ? 'bg-fuchsia-500/25 border-fuchsia-400 text-fuchsia-200 shadow-[0_0_12px_rgba(217,70,239,0.35)] font-bold'
+              : 'bg-[#030614]/80 border-white/10 text-slate-400 hover:text-white'
+          }`}
+        >
+          <Bot className="w-3.5 h-3.5 text-fuchsia-400" />
+          <span>KAI & Hábitos</span>
         </button>
 
         <button
@@ -394,7 +459,10 @@ export const RewardShop: React.FC = () => {
               let auraBorder = 'border-purple-500/35 hover:border-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.12)]';
               let orbGlow = 'bg-purple-950/50 border-purple-500/40 text-purple-200 shadow-[0_0_15px_rgba(168,85,247,0.3)]';
               
-              if (reward.category === 'perk') {
+              if (reward.category === 'kai' || reward.id.startsWith('kai-')) {
+                auraBorder = 'border-fuchsia-500/40 hover:border-cyan-400 shadow-[0_0_18px_rgba(217,70,239,0.25)]';
+                orbGlow = 'bg-gradient-to-br from-fuchsia-950/70 to-cyan-950/70 border-fuchsia-400/60 text-cyan-200 shadow-[0_0_18px_rgba(0,240,255,0.35)]';
+              } else if (reward.category === 'perk') {
                 auraBorder = 'border-cyan-500/35 hover:border-cyan-400 shadow-[0_0_15px_rgba(0,240,255,0.12)]';
                 orbGlow = 'bg-cyan-950/50 border-cyan-500/40 text-cyan-200 shadow-[0_0_15px_rgba(0,240,255,0.3)]';
               } else if (reward.category === 'descanso') {

@@ -484,6 +484,56 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         {/* ===================== TAB 1: GENERAL & UI ===================== */}
         {activeSubTab === 'general' && (
           <div className="space-y-6 animate-fade-in">
+            {/* PROTOCOLO DE INDUCCIÓN Y GUÍA TÁCTICA DE KAI */}
+            <div className="bg-[#00152b] p-5 sm:p-6 rounded-2xl border border-cyan-500/35 space-y-4 shadow-[0_0_20px_rgba(0,240,255,0.08)]">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-cyan-400" />
+                  <h3 className="text-xs font-black text-cyan-400 uppercase tracking-widest">
+                    Manual y Guía Táctica de KAI
+                  </h3>
+                </div>
+                <span className="text-[10px] font-mono font-bold text-cyan-300 bg-cyan-950/70 border border-cyan-500/40 px-2 py-0.5 rounded-full">
+                  6 Módulos
+                </span>
+              </div>
+
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Repasa en cualquier momento la inducción guiada paso a paso sobre Energía Vital (HP), la Ley 21/66 en tus Orbes, la creación de misiones en Bloques Maestros, el Modo Foco y la Tienda.
+              </p>
+
+              <div className="flex flex-wrap items-center gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFX.playClick();
+                    useUIStore.getState().openTacticalGuide(1);
+                  }}
+                  className="px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black font-anton text-xs uppercase tracking-wider transition-all cursor-pointer shadow-[0_0_12px_rgba(0,240,255,0.3)] active:scale-95 flex items-center gap-1.5"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Repasar Guía Táctica</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFX.playClick();
+                    usePlayerStore.getState().resetTutorialGuides();
+                    notificationService.triggerNotification(
+                      'Avisos Restablecidos 🔄',
+                      'Los avisos contextuales de KAI volverán a mostrarse cuando explores la app.',
+                      '🔄'
+                    );
+                  }}
+                  className="px-3.5 py-2 rounded-xl bg-surface-card hover:bg-white/10 border border-slate-700 text-slate-300 hover:text-white font-mono text-xs font-bold transition-all cursor-pointer active:scale-95 flex items-center gap-1.5"
+                >
+                  <RefreshCw className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Restablecer Avisos</span>
+                </button>
+              </div>
+            </div>
+
             {/* ATMÓSFERA Y ENTORNO */}
             <div className="bg-[#00152b] p-5 sm:p-6 rounded-2xl border border-slate-800 space-y-5">
               <h3 className="text-xs font-black text-cyan-400 uppercase tracking-widest flex items-center gap-2">

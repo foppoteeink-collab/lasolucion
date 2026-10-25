@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { PlayerStats } from '../types';
+import { PlayerStats, KaiShapeKey } from '../types';
 import { getRankForLevel, calculateRequiredXp } from '../data/defaults';
 import { useUIStore } from './useUIStore';
 import { getTodayDateString, getYesterdayDateString, calcSleepDuration, getSleepQuality } from '../utils/date';
@@ -28,7 +28,11 @@ interface PlayerState {
     avatarIcon?: string;
     characterClass: string;
     mantra?: string;
+    kaiShape?: KaiShapeKey;
   }) => void;
+  markTutorialGuideSeen: (guideKey: string) => void;
+  resetTutorialGuides: () => void;
+  claimTutorialReward: () => boolean;
 }
 
 const INITIAL_PLAYER_STATS: PlayerStats = {
@@ -59,6 +63,13 @@ const INITIAL_PLAYER_STATS: PlayerStats = {
   restDays: {},
   finalizedDays: {},
   sleepLogs: {},
+  kaiShape: 'prism',
+  kaiAuraColor: '#00f0ff',
+  kaiParticleEffect: 'none',
+  kaiCustomForm: null,
+  kaiNeuralForgeCharges: 1, // 1 carga de prueba desbloqueada para testear de inmediato
+  frozenHabits: {},
+  synapticBoosters: 0,
 };
 
 export const usePlayerStore = create<PlayerState>()(
@@ -536,6 +547,7 @@ export const usePlayerStore = create<PlayerState>()(
             fullName: data.fullName?.trim() || state.stats.fullName,
             avatarIcon: data.avatarIcon || state.stats.avatarIcon || '🛡️',
             characterClass: data.characterClass || state.stats.characterClass || 'El Héroe',
+            kaiShape: data.kaiShape || state.stats.kaiShape || 'prism',
             mantra: data.mantra?.trim() || state.stats.mantra,
             hasCompletedAwakening: true,
             currentXp: (state.stats.currentXp || 0) + 50,
@@ -544,7 +556,42 @@ export const usePlayerStore = create<PlayerState>()(
             rankTitle: canonicalRank,
           }
         };
-      })
+      }),
+
+      markTutorialGuideSeen: (guideKey) => set((state) => ({
+        stats: {
+          ...state.stats,
+          seenTutorialGuides: {
+            ...(state.stats.seenTutorialGuides || {}),
+            [guideKey]: true
+          }
+        }
+      })),
+
+      resetTutorialGuides: () => set((state) => ({
+        stats: {
+          ...state.stats,
+          seenTutorialGuides: {}
+        }
+      })),
+
+      claimTutorialReward: () => {
+        let claimed = false;
+        set((state) => {
+          if (state.stats.hasClaimedTutorialReward) return state;
+          claimed = true;
+          return {
+            stats: {
+              ...state.stats,
+              hasClaimedTutorialReward: true,
+              currentXp: (state.stats.currentXp || 0) + 50,
+              totalXpEarned: (state.stats.totalXpEarned || 0) + 50,
+              coins: (state.stats.coins || 0) + 25
+            }
+          };
+        });
+        return claimed;
+      }
     }),
     {
       name: 'quantum-os-player-stats',

@@ -36,6 +36,7 @@ const NightlyReflectionModal = lazy(() => import('./NightlyReflectionModal').the
 const NightlyTunnel = lazy(() => import('./NightlyTunnel').then(m => ({ default: m.NightlyTunnel })));
 const SurpriseBossModal = lazy(() => import('./SurpriseBossModal').then(m => ({ default: m.SurpriseBossModal })));
 const HunterCollapseModal = lazy(() => import('./HunterCollapseModal').then(m => ({ default: m.HunterCollapseModal })));
+const KaiTacticalGuideModal = lazy(() => import('./common/KaiTacticalGuideModal').then(m => ({ default: m.KaiTacticalGuideModal })));
 
 import { DailyBossWidget } from './DailyBossWidget';
 import { DailyScheduleStrip } from './DailyScheduleStrip';
@@ -50,6 +51,7 @@ import { OfflineIndicator } from './OfflineIndicator';
 import { NotificationToastOverlay } from './NotificationToastOverlay';
 import { PWAInstallBanner } from './PWAInstallBanner';
 import { OmniCompanionHub } from './OmniCompanionHub';
+import { KaiWorkshopModal } from './KaiWorkshopModal';
 import { SimulationBanner } from './SimulationBanner';
 import { getTodayDateString } from '../utils/date';
 
@@ -85,6 +87,7 @@ export function AppLayout() {
   const [isOracleOpen, setIsOracleOpen] = React.useState(false);
   const [oracleInitialPrompt, setOracleInitialPrompt] = React.useState<string | undefined>(undefined);
   const [isNeuralAnalysisOpen, setIsNeuralAnalysisOpen] = React.useState(false);
+  const [isKaiWorkshopOpen, setIsKaiWorkshopOpen] = React.useState(false);
 
   const handleOpenOracleWithPrompt = (promptText?: string) => {
     setOracleInitialPrompt(promptText);
@@ -529,6 +532,7 @@ export function AppLayout() {
                   setExpenses={setExpenses} 
                   cloudSync={cloudSync}
                   onOpenAwakening={() => setIsAwakeningOpen(true)}
+                  onOpenKaiWorkshop={() => setIsKaiWorkshopOpen(true)}
                 />
               </Suspense>
             </motion.div>
@@ -742,9 +746,18 @@ export function AppLayout() {
             if (cloudSync?.forceSyncNow) {
               cloudSync.forceSyncNow();
             }
+            // Disparar automáticamente la Guía Táctica para el nuevo operador
+            setTimeout(() => {
+              useUIStore.getState().openTacticalGuide(1);
+            }, 600);
           }}
           cloudSync={cloudSync}
         />
+      </Suspense>
+
+      {/* Guía Táctica y Tutorial de KAI */}
+      <Suspense fallback={null}>
+        <KaiTacticalGuideModal />
       </Suspense>
 
       {/* Cyberpunk Floating Pomodoro Pop-up Modal */}
@@ -785,7 +798,15 @@ export function AppLayout() {
       <OmniCompanionHub
         onOpenOracleWithPrompt={handleOpenOracleWithPrompt}
         onOpenNeuralAnalysis={() => setIsNeuralAnalysisOpen(true)}
+        onOpenKaiWorkshop={() => setIsKaiWorkshopOpen(true)}
         archetype={stats?.characterClass || currentArchetype.name}
+      />
+
+      {/* TALLER CUÁNTICO DE KAI (FORMAS DÍA 0, EVOLUCIÓN 21/66D & FORJA IA) */}
+      <KaiWorkshopModal
+        isOpen={isKaiWorkshopOpen}
+        onClose={() => setIsKaiWorkshopOpen(false)}
+        onOpenShop={() => setActiveTab('shop')}
       />
 
       {/* Offline Status Badge & PWA Install Banner */}
