@@ -57,6 +57,10 @@ export function injectAuraColorIntoSvg(
     return `<svg ${newAttrs.trim()}>`;
   });
 
+  // Eliminar rectángulos de fondo opacos que cubran todo el canvas para garantizar fondo transparente
+  cleaned = cleaned.replace(/<rect\b[^>]*?(?:width\s*=\s*["'](?:100%|1[56]\d(?:px)?)["'][^>]*?height\s*=\s*["'](?:100%|1[67]\d(?:px)?)["']|height\s*=\s*["'](?:100%|1[67]\d(?:px)?)["'][^>]*?width\s*=\s*["'](?:100%|1[56]\d(?:px)?)["'])[^>]*?>(?:<\/rect>)?/gi, '');
+  cleaned = cleaned.replace(/<rect\b[^>]*?x\s*=\s*["']0["'][^>]*?y\s*=\s*["']0["'][^>]*?(?:width\s*=\s*["'](?:100%|1[56]\d(?:px)?)["'])[^>]*?>(?:<\/rect>)?/gi, '');
+
   const auraVarStroke = 'var(--color-aura-activa, currentColor)';
   const auraVarFill = 'var(--color-aura-activa, currentColor)';
 
@@ -74,14 +78,13 @@ export function injectAuraColorIntoSvg(
 
     case 'cyber-pixel':
     case 'pixel':
-      // Regla Cyber-Pixel: fill="var(--color-aura-activa)", shape-rendering="crispEdges" en <rect>
-      cleaned = cleaned.replace(/<rect\b([^>]*)>/gi, (_match, attrs) => {
-        // Remover fills y strokes previos para aplicar el token de aura
-        let mod = attrs.replace(/\bfill="[^"]*"/gi, '').replace(/\bstroke="[^"]*"/gi, '');
-        if (!mod.includes('shape-rendering')) mod += ' shape-rendering="crispEdges"';
-        return `<rect ${mod.trim()} fill="${auraVarFill}">`;
+      // Preservar la rica paleta de colores del pixel art generada por la IA
+      // y asegurar renderizado nítido de píxeles sin interpolación borrosa
+      cleaned = cleaned.replace(/<svg\b([^>]*)>/i, (_m, attrs) => {
+        if (!attrs.includes('shape-rendering')) return `<svg ${attrs} shape-rendering="crispEdges">`;
+        return `<svg ${attrs}>`;
       });
-      break;
+      return cleaned;
 
     case 'organic-flow':
       // Regla Flujo Orgánico: exclusivamente curvas suaves, stroke-width="2", fill="none"
@@ -95,11 +98,14 @@ export function injectAuraColorIntoSvg(
       break;
 
     case 'low-poly':
-      // Regla Low Poly: fill="var(--color-aura-activa)", stroke="none", asignando fill-opacity
+      // Regla Low Poly: Si los polígonos ya tienen colores asignados por la IA, preservarlos;
+      // si no tienen fill explícito, armonizarlos con el aura activa
       let polyIndex = 0;
       cleaned = cleaned.replace(/<polygon\b([^>]*)>/gi, (_match, attrs) => {
+        if (attrs.includes('fill=') && !attrs.includes('fill="none"')) {
+          return `<polygon ${attrs}>`;
+        }
         let mod = attrs.replace(/\bfill="[^"]*"/gi, '').replace(/\bstroke="[^"]*"/gi, '');
-        // Si no tiene fill-opacity, asignar uno pseudo-aleatorio armonizado entre 0.15 y 0.85
         if (!mod.includes('fill-opacity')) {
           const pseudoOpacity = (0.2 + ((polyIndex * 0.19) % 0.65)).toFixed(2);
           mod += ` fill-opacity="${pseudoOpacity}"`;

@@ -600,9 +600,9 @@ REGLAS ESTRICTAS DE SVG:
         vectorDirective = `
 ESTILO OBLIGATORIO: "Cyber-Pixel (8-Bit)".
 REGLAS ESTRICTAS DE SVG:
-- Genera únicamente elementos <rect> alineados en una cuadrícula de 8x8px simulando pixel art retro.
-- Cada elemento DEBE ser un <rect x="..." y="..." width="8" height="8" /> donde x e y son múltiplos de 8 (entre 16 y 144).
-- Compón la silueta exacta del objeto detectado con sus colores reales y agrégale ojos grandes pixelados de 8x8 en el rostro.
+- Genera únicamente elementos <rect> alineados en una cuadrícula de 8x8px simulando pixel art retro tipo Super Nintendo / GameBoy Advance.
+- Cada elemento DEBE ser un <rect x="..." y="..." width="8" height="8" fill="#hex" /> donde x e y son múltiplos de 8 (entre 16 y 144).
+- Usa una paleta rica de colores: contornos oscuros (#1e293b o #0f172a), colores base del objeto detectado, sombras (#hex más oscuro), brillos (#ffffff) y ojos pixelados vivaces.
 - ¡ESTRICTAMENTE PROHIBIDO cualquier elemento que no sea <rect>!`;
         break;
 
@@ -618,8 +618,9 @@ REGLAS ESTRICTAS DE SVG:
         vectorDirective = `
 ESTILO OBLIGATORIO: "Low Poly".
 REGLAS ESTRICTAS DE SVG:
-- Genera polígonos cerrados asignando a cada faceta un atributo fill-opacity entre 0.15 y 0.9 para simular volumen 3D del objeto detectado, stroke="none".
-- Cada elemento DEBE ser un <polygon points="x1,y1 x2,y2 x3,y3 ..." fill-opacity="0.xx" stroke="none" />.`;
+- Genera polígonos cerrados triangulares y facetados formando el volumen 3D del objeto detectado.
+- Asigna a cada faceta un color armonizado fill="#hex" con fill-opacity entre 0.25 y 0.95 para simular iluminación tridimensional de piedra preciosa/escultura geométrica.
+- Cada elemento DEBE ser un <polygon points="x1,y1 x2,y2 x3,y3" fill="#hex" fill-opacity="0.xx" stroke="none" />.`;
         break;
 
       case 'neon-geometry':
@@ -642,9 +643,13 @@ PASO 1: ANÁLISIS DEL OBJETO REAL
 - Asígnale un nombre épico (epicName) y una frase breve y carismática de saludo (personalityQuote) acorde a su naturaleza.
 - Extrae sus colores primario y secundario en formato hexadecimal.
 
-PASO 2: ARQUITECTURA SVG
+PASO 2: ARQUITECTURA SVG (REGLAS OBLIGATORIAS)
 1. El SVG debe tener viewBox="0 0 160 170" y width="100%" height="100%".
-2. ${vectorDirective}
+2. FONDO 100% TRANSPARENTE: ¡ESTRICTAMENTE PROHIBIDO incluir rectángulos de fondo, fondos negros o tarjetas sólidas como <rect width="160" height="170" ... /> o <rect width="100%" height="100%" ... />! El fondo DEBE ser 100% transparente para que el personaje flote libremente.
+3. CENTRADO Y PROPORCIONES: Centra el personaje horizontalmente en x=80 y verticalmente entre y=20 e y=148, dejando margen de respiración para que no toque los bordes del viewBox.
+4. EXPRESIÓN Y CARISMA: Los ojos deben ser GRANDES y prominentes (mínimo 10-14px de radio) con destellos blancos especulares. Boca con sonrisa alegre o pícara.
+5. SOMBRA DE FLOTACIÓN: Puedes incluir una elipse de sombra suave en la base (<ellipse cx="80" cy="155" rx="30" ry="6" fill="#000000" opacity="0.25" />) para que flote sobre el pedestal.
+6. ${vectorDirective}
 ${userPrompt ? `Contexto o pista del usuario: "${userPrompt}".` : ''}
 
 DEVOLUCIÓN OBLIGATORIA (Responde ÚNICAMENTE con un JSON válido):
@@ -689,7 +694,7 @@ DEVOLUCIÓN OBLIGATORIA (Responde ÚNICAMENTE con un JSON válido):
                 ],
               },
             ],
-            generationConfig: { temperature: 0.25, maxOutputTokens: 2048 },
+            generationConfig: { temperature: 0.25, maxOutputTokens: 8192 },
           }),
           signal: controller.signal,
         });
@@ -721,7 +726,7 @@ DEVOLUCIÓN OBLIGATORIA (Responde ÚNICAMENTE con un JSON válido):
           model: modelName,
           generationConfig: {
             temperature: 0.25,
-            maxOutputTokens: 2048,
+            maxOutputTokens: 8192,
           },
         });
 
