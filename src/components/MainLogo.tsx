@@ -1,8 +1,8 @@
 import React from 'react';
 import { motion } from 'motion/react';
+import logoImg from '../assets/logo-letters-only.png';
 
 export interface MainLogoProps {
-  text?: string;
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'massive';
   className?: string;
   forceColor?: string;
@@ -15,124 +15,56 @@ export const MainLogo: React.FC<MainLogoProps> = ({
   forceColor,
   speed = 'normal',
 }) => {
-  // Letras de "LA" (rotadas verticalmente a la izquierda) y "SOLUCIÓN" (horizontal)
-  const prefixChars = ['L', 'A'];
-  const mainChars = ['S', 'O', 'L', 'U', 'C', 'I', 'Ó', 'N'];
-  const totalCount = prefixChars.length + mainChars.length; // 10 caracteres
-
-  const delayBetweenLetters = speed === 'fast' ? 0.22 : 0.38;
-  const totalDelayTime = totalCount * delayBetweenLetters;
-  const cycleDuration = speed === 'fast' ? 5 : 8;
-
-  // Paleta Cian ⇄ Verde atenuada: elegante, legible y suave a la vista (sin brillo excesivo)
-  const colors = forceColor
-    ? [forceColor, '#e2e8f0', forceColor]
-    : [
-        '#22d3ee', // Cian equilibrado (Tailwind Cyan 400)
-        '#06b6d4', // Cian medio (Tailwind Cyan 500)
-        '#2dd4bf', // Turquesa menta (Tailwind Teal 400)
-        '#34d399', // Verde Esmeralda suave (Tailwind Emerald 400)
-        '#10b981', // Verde Esmeralda medio (Tailwind Emerald 500)
-        '#2dd4bf', // Turquesa menta
-        '#22d3ee', // Cian equilibrado
-      ];
-
-  // Resplandor suave y controlado: resalta la silueta sin encandilar ni sobreexponer
-  const textShadows = forceColor
-    ? [
-        `0 0 6px ${forceColor}60, 0 0 12px ${forceColor}30`,
-        `0 0 4px rgba(255,255,255,0.6)`,
-        `0 0 6px ${forceColor}60, 0 0 12px ${forceColor}30`,
-      ]
-    : [
-        '0 0 6px rgba(34,211,238,0.45), 0 0 12px rgba(34,211,238,0.2)',
-        '0 0 5px rgba(6,182,212,0.4), 0 0 10px rgba(6,182,212,0.18)',
-        '0 0 6px rgba(45,212,191,0.4), 0 0 12px rgba(45,212,191,0.2)',
-        '0 0 6px rgba(52,211,153,0.45), 0 0 12px rgba(52,211,153,0.2)',
-        '0 0 6px rgba(16,185,129,0.45), 0 0 12px rgba(16,185,129,0.2)',
-        '0 0 6px rgba(45,212,191,0.4), 0 0 12px rgba(45,212,191,0.2)',
-        '0 0 6px rgba(34,211,238,0.45), 0 0 12px rgba(34,211,238,0.2)',
-      ];
-
-  // Tamaños proporcionales sin recuadro negro
+  // Dimensiones calibradas: Ágil y proporcionado en móvil, imponente en pantallas grandes
   const sizeClasses = {
-    sm: 'text-lg sm:text-xl',
-    md: 'text-2xl sm:text-[28px] lg:text-[30px]',
-    lg: 'text-3xl sm:text-4xl lg:text-5xl',
-    xl: 'text-4xl sm:text-5xl lg:text-6xl',
-    massive: 'text-5xl sm:text-6xl md:text-7xl lg:text-8xl',
+    sm: 'h-[22px] sm:h-[26px]',
+    md: 'h-[26px] sm:h-[32px] lg:h-[38px]',
+    lg: 'h-[40px] sm:h-[48px]',
+    xl: 'h-[52px] sm:h-[64px]',
+    massive: 'h-[70px] sm:h-[88px]',
   };
 
   return (
-    <h1
-      id="main-logo-text-flow"
-      className={`font-['Russo_One'] font-russo uppercase select-none inline-flex items-center font-black leading-none ${sizeClasses[size]} ${className}`}
-      style={{ fontFamily: "'Russo One', sans-serif" }}
+    <div
+      id="main-logo-container"
+      className={`relative inline-flex items-center justify-center select-none shrink-0 group transition-transform duration-200 hover:scale-[1.03] ${speed === 'fast' ? 'focus-in-contract-fast' : 'focus-in-contract'} ${sizeClasses[size]} ${className}`}
+      style={{ aspectRatio: '864 / 129' }}
+      role="img"
       aria-label="La Solución"
     >
-      {/* Bloque "LA" Rotado Verticalmente (-90°) a la izquierda */}
-      <span
-        className="relative inline-flex items-center justify-center -rotate-90 select-none shrink-0"
-        style={{
-          width: '0.62em',
-          height: '1em',
-          fontSize: '0.62em',
-          letterSpacing: '-0.02em',
-          lineHeight: 1,
-          marginRight: '0.04em',
+      {/* Resplandor ambiental suave de fondo en onda fluida Cian ⇄ Esmeralda */}
+      <motion.div
+        className="absolute inset-0 pointer-events-none -z-10 rounded-full opacity-40 blur-md transition-opacity duration-300 group-hover:opacity-70"
+        animate={{
+          background: forceColor
+            ? forceColor
+            : [
+                'linear-gradient(90deg, rgba(34,211,238,0.35) 0%, rgba(52,211,153,0.15) 100%)',
+                'linear-gradient(90deg, rgba(52,211,153,0.3) 0%, rgba(34,211,238,0.3) 100%)',
+                'linear-gradient(90deg, rgba(34,211,238,0.15) 0%, rgba(52,211,153,0.35) 100%)',
+                'linear-gradient(90deg, rgba(34,211,238,0.35) 0%, rgba(52,211,153,0.15) 100%)',
+              ],
         }}
-      >
-        {prefixChars.map((char, index) => {
-          const animDelay = index * delayBetweenLetters - totalDelayTime;
-          return (
-            <motion.span
-              key={`prefix-${index}`}
-              className="inline-block relative transition-transform hover:scale-105 duration-150"
-              animate={{
-                color: colors,
-                textShadow: textShadows,
-              }}
-              transition={{
-                duration: cycleDuration,
-                repeat: Infinity,
-                repeatType: 'loop',
-                ease: 'linear',
-                delay: animDelay,
-              }}
-            >
-              {char}
-            </motion.span>
-          );
-        })}
-      </span>
+        transition={{
+          duration: speed === 'fast' ? 3.5 : 6,
+          repeat: Infinity,
+          ease: 'easeInOut',
+        }}
+      />
 
-      {/* Bloque "SOLUCIÓN" Horizontal */}
-      <span className="inline-flex items-center tracking-[0.05em] leading-none">
-        {mainChars.map((char, index) => {
-          const charIndex = prefixChars.length + index;
-          const animDelay = charIndex * delayBetweenLetters - totalDelayTime;
-          return (
-            <motion.span
-              key={`main-${index}`}
-              className="inline-block relative transition-transform hover:scale-105 duration-150"
-              animate={{
-                color: colors,
-                textShadow: textShadows,
-              }}
-              transition={{
-                duration: cycleDuration,
-                repeat: Infinity,
-                repeatType: 'loop',
-                ease: 'linear',
-                delay: animDelay,
-              }}
-            >
-              {char}
-            </motion.span>
-          );
-        })}
-      </span>
-    </h1>
+      {/* Letras originales recortadas: 100% transparentes, sin recuadro negro, sin partículas */}
+      <img
+        src={logoImg}
+        alt="La Solución"
+        className="w-full h-full object-contain pointer-events-none filter drop-shadow-[0_2px_8px_rgba(34,211,238,0.35)] group-hover:drop-shadow-[0_4px_14px_rgba(52,211,153,0.5)] transition-all duration-300"
+        style={forceColor ? { filter: `drop-shadow(0 0 10px ${forceColor}80)` } : undefined}
+      />
+
+      {/* Sutil haz de luz interactivo al pasar el cursor */}
+      <div className="absolute inset-0 pointer-events-none rounded-xl overflow-hidden">
+        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-r from-transparent via-cyan-400/15 to-transparent -skew-x-12 translate-x-[-100%] group-hover:translate-x-[200%] transition-transform duration-1000 ease-out" />
+      </div>
+    </div>
   );
 };
 

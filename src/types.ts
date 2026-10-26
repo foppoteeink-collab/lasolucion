@@ -146,20 +146,24 @@ export interface PlayerStats {
 
 export type KaiShapeKey = 'prism' | 'custom';
 export type KaiMultiverseStyle =
+  | 'pixar'
+  | 'cartoon'
+  | 'anime'
+  | 'pop'
+  | 'doodle'
+  | 'clay3d'
+  // Compatibilidad con registros previos
   | 'mecha-chibi'
   | 'mystic-relic'
   | 'sticker-pop'
   | 'toon'
-  | 'clay3d'
   | 'chrome'
   | 'papercraft'
   | 'cyber-pixel'
-  // Compatibilidad con registros previos
   | 'neon-geometry'
   | 'organic-flow'
   | 'low-poly'
   | 'pixel'
-  | 'anime'
   | 'comic'
   | 'crayon';
 

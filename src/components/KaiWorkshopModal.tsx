@@ -87,123 +87,170 @@ type WorkshopTab = 'forge' | 'vault' | 'shapes' | 'evolution' | 'armory';
 
 const renderStyleMiniPreview = (styleId: KaiMultiverseStyle) => {
   switch (styleId) {
-    case 'clay3d':
+    case 'pixar':
       return (
-        <svg viewBox="0 0 50 50" className="w-10 h-10 drop-shadow-[0_0_8px_rgba(6,182,212,0.6)]">
+        <svg viewBox="0 0 50 50" className="w-10 h-10 drop-shadow-[0_2px_6px_rgba(249,115,22,0.5)]">
           <defs>
-            <radialGradient id="mini-clay3d-grad" cx="35%" cy="30%" r="65%">
-              <stop offset="0%" stopColor="#22d3ee" />
-              <stop offset="60%" stopColor="#0891b2" />
-              <stop offset="100%" stopColor="#0e7490" />
+            <radialGradient id="mini-pixar-body" cx="38%" cy="30%" r="65%">
+              <stop offset="0%" stopColor="#fdba74" />
+              <stop offset="60%" stopColor="#f97316" />
+              <stop offset="100%" stopColor="#c2410c" />
+            </radialGradient>
+            <radialGradient id="mini-pixar-eye-l" cx="35%" cy="30%" r="60%">
+              <stop offset="0%" stopColor="#7dd3fc" />
+              <stop offset="100%" stopColor="#0369a1" />
             </radialGradient>
           </defs>
-          <rect x="8" y="8" width="34" height="34" rx="8" fill="#0f172a" stroke="#06b6d4" strokeWidth="1.8" />
-          <path d="M12,12 L38,12 L35,22 L15,22 Z" fill="#1e293b" opacity="0.6" />
-          {/* Visor ahumado estilizado */}
-          <rect x="14" y="20" width="22" height="7" rx="3.5" fill="#030712" stroke="#22d3ee" strokeWidth="1.4" />
-          <line x1="17" y1="23.5" x2="33" y2="23.5" stroke="#ffffff" strokeWidth="1.2" strokeLinecap="round" />
-          {/* Línea de mandíbula táctica */}
-          <line x1="20" y1="33" x2="30" y2="33" stroke="#22d3ee" strokeWidth="1.6" strokeLinecap="round" />
+          {/* Body - smooth rounded 3D sphere shape */}
+          <ellipse cx="25" cy="30" rx="17" ry="14" fill="url(#mini-pixar-body)" />
+          {/* Head / face area */}
+          <circle cx="25" cy="18" r="11" fill="url(#mini-pixar-body)" />
+          {/* Eyes - large expressive Pixar style */}
+          <circle cx="20" cy="16" r="4.5" fill="white" />
+          <circle cx="30" cy="16" r="4.5" fill="white" />
+          <circle cx="20" cy="17" r="2.8" fill="url(#mini-pixar-eye-l)" />
+          <circle cx="30" cy="17" r="2.8" fill="#0369a1" />
+          <circle cx="20" cy="17" r="1.4" fill="#0f172a" />
+          <circle cx="30" cy="17" r="1.4" fill="#0f172a" />
+          {/* Catchlights */}
+          <circle cx="21.5" cy="15.5" r="0.9" fill="white" />
+          <circle cx="31.5" cy="15.5" r="0.9" fill="white" />
+          {/* Smile */}
+          <path d="M20,23 Q25,27 30,23" fill="none" stroke="#7c2d12" strokeWidth="1.5" strokeLinecap="round" />
         </svg>
       );
+
+    case 'cartoon':
+      return (
+        <svg viewBox="0 0 50 50" className="w-10 h-10 drop-shadow-[0_2px_6px_rgba(239,68,68,0.5)]">
+          {/* Cartoon Network style - thick outlines, flat color, geometric */}
+          <circle cx="25" cy="18" r="12" fill="#facc15" stroke="#050505" strokeWidth="3" />
+          <rect x="10" y="28" width="30" height="16" rx="3" fill="#ef4444" stroke="#050505" strokeWidth="3" />
+          {/* Big cartoon eyes */}
+          <circle cx="20" cy="16" r="5" fill="white" stroke="#050505" strokeWidth="2.5" />
+          <circle cx="30" cy="16" r="5" fill="white" stroke="#050505" strokeWidth="2.5" />
+          <circle cx="20" cy="17" r="2.5" fill="#050505" />
+          <circle cx="30" cy="17" r="2.5" fill="#050505" />
+          <circle cx="21" cy="15.5" r="1" fill="white" />
+          <circle cx="31" cy="15.5" r="1" fill="white" />
+          {/* Thick eyebrows floating */}
+          <rect x="15" y="8" width="7" height="3" rx="1.5" fill="#050505" transform="rotate(-8,18.5,9.5)" />
+          <rect x="28" y="8" width="7" height="3" rx="1.5" fill="#050505" transform="rotate(8,31.5,9.5)" />
+          {/* Big grin */}
+          <path d="M18,22 Q25,28 32,22" fill="#050505" stroke="#050505" strokeWidth="0.5" />
+        </svg>
+      );
+
     case 'anime':
       return (
-        <svg viewBox="0 0 50 50" className="w-10 h-10 drop-shadow-[0_0_8px_rgba(99,102,241,0.7)]">
-          <polygon points="25,6 40,16 36,38 25,44 14,38 10,16" fill="#090d16" stroke="#6366f1" strokeWidth="2" strokeLinejoin="round" />
-          {/* Ojos afilados de cazador (Shonen) */}
-          <polygon points="15,22 22,24 16,27" fill="#818cf8" />
-          <polygon points="35,22 28,24 34,27" fill="#818cf8" />
-          <circle cx="18.5" cy="24.5" r="1.5" fill="#ffffff" />
-          <circle cx="31.5" cy="24.5" r="1.5" fill="#ffffff" />
-          {/* Ceño de combate */}
-          <line x1="14" y1="20" x2="23" y2="23" stroke="#c084fc" strokeWidth="1.4" strokeLinecap="round" />
-          <line x1="36" y1="20" x2="27" y2="23" stroke="#c084fc" strokeWidth="1.4" strokeLinecap="round" />
-          {/* Boca determinada */}
-          <line x1="22" y1="33" x2="28" y2="33" stroke="#818cf8" strokeWidth="1.4" strokeLinecap="round" />
+        <svg viewBox="0 0 50 50" className="w-10 h-10 drop-shadow-[0_2px_6px_rgba(99,102,241,0.6)]">
+          <defs>
+            <linearGradient id="mini-anime-eye" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#a5b4fc" />
+              <stop offset="100%" stopColor="#3730a3" />
+            </linearGradient>
+          </defs>
+          {/* Face */}
+          <ellipse cx="25" cy="22" rx="13" ry="14" fill="#fde8d8" stroke="#111827" strokeWidth="1.8" />
+          {/* Spiky hair */}
+          <polygon points="14,14 12,4 18,12" fill="#4f46e5" stroke="#111827" strokeWidth="1.2" strokeLinejoin="round" />
+          <polygon points="19,11 18,2 24,11" fill="#4f46e5" stroke="#111827" strokeWidth="1.2" strokeLinejoin="round" />
+          <polygon points="24,11 25,2 30,11" fill="#4f46e5" stroke="#111827" strokeWidth="1.2" strokeLinejoin="round" />
+          <polygon points="29,12 34,3 36,13" fill="#4f46e5" stroke="#111827" strokeWidth="1.2" strokeLinejoin="round" />
+          {/* Anime eyes - tall almond shape with gradient */}
+          <ellipse cx="19" cy="21" rx="4" ry="5.5" fill="url(#mini-anime-eye)" stroke="#111827" strokeWidth="1.8" />
+          <ellipse cx="31" cy="21" rx="4" ry="5.5" fill="url(#mini-anime-eye)" stroke="#111827" strokeWidth="1.8" />
+          <ellipse cx="19" cy="21" rx="2" ry="2.8" fill="#1e1b4b" />
+          <ellipse cx="31" cy="21" rx="2" ry="2.8" fill="#1e1b4b" />
+          <circle cx="17.5" cy="18.5" r="1.2" fill="white" opacity="0.9" />
+          <circle cx="29.5" cy="18.5" r="1.2" fill="white" opacity="0.9" />
+          {/* Mouth */}
+          <path d="M22,29 Q25,32 28,29" fill="none" stroke="#c2410c" strokeWidth="1.4" strokeLinecap="round" />
         </svg>
       );
-    case 'comic':
+
+    case 'pop':
       return (
-        <svg viewBox="0 0 50 50" className="w-10 h-10 drop-shadow-[0_0_8px_rgba(249,115,22,0.6)]">
-          <polygon points="25,4 42,14 46,36 34,46 16,46 4,36 8,14" fill="#050811" stroke="#f97316" strokeWidth="2" strokeLinejoin="round" />
-          {/* Sombras duras de alto contraste */}
-          <polygon points="25,4 42,14 46,36 34,46 25,25" fill="#f97316" opacity="0.3" />
-          {/* Mirada angular neo-noir */}
-          <polygon points="14,22 22,25 16,27" fill="#ffffff" stroke="#f97316" strokeWidth="1" />
-          <polygon points="36,22 28,25 34,27" fill="#ffffff" stroke="#f97316" strokeWidth="1" />
-          <line x1="20" y1="34" x2="30" y2="34" stroke="#ffffff" strokeWidth="1.8" strokeLinecap="round" />
+        <svg viewBox="0 0 50 50" className="w-10 h-10 drop-shadow-[0_2px_6px_rgba(236,72,153,0.5)]">
+          <defs>
+            <radialGradient id="mini-pop-head" cx="35%" cy="25%" r="65%">
+              <stop offset="0%" stopColor="#f9a8d4" />
+              <stop offset="100%" stopColor="#db2777" />
+            </radialGradient>
+          </defs>
+          {/* Funko-style big head */}
+          <circle cx="25" cy="17" r="14" fill="url(#mini-pop-head)" />
+          {/* Vinyl shine highlight */}
+          <ellipse cx="20" cy="11" rx="5" ry="3" fill="white" opacity="0.5" transform="rotate(-20,20,11)" />
+          {/* Small compact body */}
+          <rect x="15" y="29" width="20" height="15" rx="4" fill="#db2777" />
+          {/* Iconic button eyes */}
+          <circle cx="19.5" cy="16" r="3.5" fill="#0f172a" />
+          <circle cx="30.5" cy="16" r="3.5" fill="#0f172a" />
+          <circle cx="18.5" cy="14.5" r="1.2" fill="white" opacity="0.8" />
+          <circle cx="29.5" cy="14.5" r="1.2" fill="white" opacity="0.8" />
+          {/* Simple smile */}
+          <path d="M20,22 Q25,25.5 30,22" fill="none" stroke="#0f172a" strokeWidth="1.8" strokeLinecap="round" />
         </svg>
       );
-    case 'mecha-chibi':
-    case 'neon-geometry':
+
+    case 'doodle':
       return (
-        <svg viewBox="0 0 50 50" className="w-10 h-10 drop-shadow-[0_0_8px_rgba(0,240,255,0.7)]">
-          {/* Chasis blindado mecha militar */}
-          <polygon points="12,12 38,12 42,32 34,42 16,42 8,32" fill="#090e17" stroke="#00f0ff" strokeWidth="2" strokeLinejoin="round" />
-          {/* Visor láser panorámico horizontal */}
-          <rect x="13" y="20" width="24" height="6" rx="2" fill="#00f0ff" />
-          <line x1="15" y1="23" x2="35" y2="23" stroke="#ffffff" strokeWidth="1.2" />
-          {/* Ranuras de ventilación y micro-propulsores */}
-          <line x1="18" y1="32" x2="32" y2="32" stroke="#0284c7" strokeWidth="1.5" />
-          <line x1="20" y1="36" x2="30" y2="36" stroke="#0284c7" strokeWidth="1.5" />
-          <circle cx="25" cy="16" r="1.5" fill="#ffffff" />
+        <svg viewBox="0 0 50 50" className="w-10 h-10 drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">
+          {/* Organic doodle face - hand-drawn feel */}
+          <ellipse cx="25" cy="23" rx="14" ry="16" fill="none" stroke="#0f172a" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
+          {/* Cross-hatching shadow lines */}
+          <line x1="13" y1="26" x2="37" y2="30" stroke="#0f172a" strokeWidth="0.8" opacity="0.4" />
+          <line x1="13" y1="29" x2="37" y2="33" stroke="#0f172a" strokeWidth="0.8" opacity="0.4" />
+          <line x1="13" y1="32" x2="30" y2="36" stroke="#0f172a" strokeWidth="0.8" opacity="0.4" />
+          {/* Doodle eyes */}
+          <circle cx="19" cy="20" r="4" fill="white" stroke="#0f172a" strokeWidth="2.2" />
+          <circle cx="31" cy="20" r="4" fill="white" stroke="#0f172a" strokeWidth="2.2" />
+          <circle cx="19" cy="21" r="2" fill="#0f172a" />
+          <circle cx="31" cy="21" r="2" fill="#0f172a" />
+          {/* Doodle smile */}
+          <path d="M19,29 Q25,34 31,29" fill="none" stroke="#0f172a" strokeWidth="2.2" strokeLinecap="round" />
+          {/* Posca color accent touches */}
+          <circle cx="19" cy="20" r="1.5" fill="#f59e0b" opacity="0.7" />
+          <circle cx="31" cy="20" r="1.5" fill="#f59e0b" opacity="0.7" />
+          {/* Doodle stars orbiting */}
+          <path d="M6,10 L7,8 L8,10 L6,9 L8,9Z" fill="#0f172a" />
+          <path d="M42,14 L43,12 L44,14 L42,13 L44,13Z" fill="#0f172a" />
+          <path d="M40,38 L41,36 L42,38 L40,37 L42,37Z" fill="#0f172a" />
         </svg>
       );
-    case 'mystic-relic':
-    case 'organic-flow':
-      return (
-        <svg viewBox="0 0 50 50" className="w-10 h-10 drop-shadow-[0_0_8px_rgba(168,85,247,0.7)]">
-          {/* Monolito de obsidiana */}
-          <polygon points="25,4 43,15 39,40 25,47 11,40 7,15" fill="#0d071a" stroke="#a855f7" strokeWidth="2" strokeLinejoin="round" />
-          {/* Runas mágicas geométricas */}
-          <path d="M16,18 L21,24 L17,32" fill="none" stroke="#c084fc" strokeWidth="1.4" strokeLinecap="round" opacity="0.85" />
-          <path d="M34,18 L29,24 L33,32" fill="none" stroke="#c084fc" strokeWidth="1.4" strokeLinecap="round" opacity="0.85" />
-          {/* Ojo etéreo central */}
-          <circle cx="25" cy="25" r="5" fill="#030712" stroke="#a855f7" strokeWidth="1.5" />
-          <circle cx="25" cy="25" r="2.5" fill="#c084fc" />
-          <circle cx="26" cy="24" r="0.9" fill="#ffffff" />
-        </svg>
-      );
-    case 'sticker-pop':
-    case 'crayon':
-      return (
-        <svg viewBox="0 0 50 50" className="w-10 h-10 drop-shadow-[0_4px_8px_rgba(0,0,0,0.6)]">
-          {/* Borde troquelado blanco grueso */}
-          <polygon points="25,5 44,16 41,39 25,46 9,39 6,16" fill="#ffffff" stroke="#ffffff" strokeWidth="4" strokeLinejoin="round" />
-          {/* Cuerpo streetwear Tokyo */}
-          <polygon points="25,5 44,16 41,39 25,46 9,39 6,16" fill="#0f172a" stroke="#10b981" strokeWidth="2" strokeLinejoin="round" />
-          {/* Lentes de sol cyberpunk reflectantes */}
-          <polygon points="14,20 23,22 23,26 15,26" fill="#10b981" />
-          <polygon points="36,20 27,22 27,26 35,26" fill="#10b981" />
-          <line x1="23" y1="23" x2="27" y2="23" stroke="#10b981" strokeWidth="1.5" />
-          {/* Marca técnica */}
-          <line x1="18" y1="34" x2="32" y2="34" stroke="#f59e0b" strokeWidth="1.5" />
-        </svg>
-      );
-    case 'cyber-pixel':
-    case 'pixel':
-      return (
-        <svg viewBox="0 0 48 48" className="w-10 h-10 drop-shadow-[0_0_8px_rgba(16,185,129,0.6)]">
-          <rect x="12" y="8" width="6" height="6" fill="#10b981" />
-          <rect x="30" y="8" width="6" height="6" fill="#10b981" />
-          <rect x="12" y="16" width="24" height="18" fill="#10b981" />
-          <rect x="16" y="20" width="4" height="4" fill="#040814" />
-          <rect x="28" y="20" width="4" height="4" fill="#040814" />
-          <rect x="20" y="28" width="8" height="3" fill="#040814" />
-          <rect x="8" y="34" width="8" height="6" fill="#059669" />
-          <rect x="32" y="34" width="8" height="6" fill="#059669" />
-        </svg>
-      );
-    case 'low-poly':
+
+    case 'clay3d':
     default:
       return (
-        <svg viewBox="0 0 50 50" className="w-10 h-10 drop-shadow-[0_0_8px_rgba(245,158,11,0.6)]">
-          <polygon points="25,6 12,20 25,28" fill="#f59e0b" fillOpacity="0.85" />
-          <polygon points="25,6 38,20 25,28" fill="#f59e0b" fillOpacity="0.65" />
-          <polygon points="12,20 25,28 25,46 12,34" fill="#d97706" fillOpacity="0.45" />
-          <polygon points="38,20 25,28 25,46 38,34" fill="#fbbf24" fillOpacity="0.3" />
-          <polygon points="18,20 22,18 22,22" fill="#ffffff" fillOpacity="0.9" />
-          <polygon points="32,20 28,18 28,22" fill="#ffffff" fillOpacity="0.9" />
+        <svg viewBox="0 0 50 50" className="w-10 h-10 drop-shadow-[0_2px_6px_rgba(249,115,22,0.4)]">
+          <defs>
+            <radialGradient id="mini-clay-body" cx="35%" cy="30%" r="65%">
+              <stop offset="0%" stopColor="#fdba74" />
+              <stop offset="55%" stopColor="#f97316" />
+              <stop offset="100%" stopColor="#9a3412" />
+            </radialGradient>
+            <radialGradient id="mini-clay-eye-l" cx="30%" cy="30%" r="65%">
+              <stop offset="0%" stopColor="#a3e635" />
+              <stop offset="100%" stopColor="#4d7c0f" />
+            </radialGradient>
+          </defs>
+          {/* Clay body - soft rounded edges like real clay */}
+          <circle cx="25" cy="22" r="15" fill="url(#mini-clay-body)" />
+          {/* Clay highlight - matte shine */}
+          <ellipse cx="19" cy="14" rx="6" ry="4" fill="white" opacity="0.22" transform="rotate(-15,19,14)" />
+          {/* Clay ball eyes */}
+          <circle cx="19" cy="19" r="5" fill="url(#mini-clay-eye-l)" />
+          <circle cx="31" cy="19" r="5" fill="url(#mini-clay-eye-l)" />
+          <circle cx="19" cy="19" r="2.5" fill="#1a2e05" />
+          <circle cx="31" cy="19" r="2.5" fill="#1a2e05" />
+          <circle cx="17.5" cy="17.5" r="1.2" fill="white" opacity="0.7" />
+          <circle cx="29.5" cy="17.5" r="1.2" fill="white" opacity="0.7" />
+          {/* Clay mouth - indented groove */}
+          <path d="M19,27 Q25,31 31,27" fill="none" stroke="#9a3412" strokeWidth="2.5" strokeLinecap="round" />
+          {/* Tubular arms - clay style */}
+          <circle cx="10" cy="32" r="4" fill="#f97316" />
+          <circle cx="40" cy="32" r="4" fill="#f97316" />
         </svg>
       );
   }
@@ -214,6 +261,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
   onClose,
   onOpenShop,
 }) => {
+
   const { stats, setStats } = usePlayerStore();
   const habitMastery = useAppStore((state) => state.habitMastery);
   const customHabits = useTaskStore((state) => state.customHabits);
@@ -249,7 +297,8 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
   // Neural Forge States
   const [capturedImageBase64, setCapturedImageBase64] = useState<string | null>(null);
   const [forgePrompt, setForgePrompt] = useState<string>('');
-  const [selectedStyle, setSelectedStyle] = useState<KaiMultiverseStyle>('neon-geometry');
+  const [selectedStyle, setSelectedStyle] = useState<KaiMultiverseStyle>('pixar');
+
   const [selectedMood, setSelectedMood] = useState<KaiTemperament>('stoic');
   const [isForging, setIsForging] = useState(false);
   const [forgedResult, setForgedResult] = useState<KaiCustomForm | null>(null);
