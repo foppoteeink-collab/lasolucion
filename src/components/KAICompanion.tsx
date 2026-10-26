@@ -61,6 +61,17 @@ export function injectAuraColorIntoSvg(
   const auraVarFill = 'var(--color-aura-activa, currentColor)';
 
   switch (artStyle) {
+    case 'clay3d':
+    case 'anime':
+    case 'comic':
+    case 'crayon':
+    case 'toon':
+    case 'papercraft':
+    case 'chrome':
+      // Estilos artísticos ricos con gradientes, sombreados y luces 3D:
+      // Preservar íntegramente los gradientes, trazados y sombras generadas por la IA
+      return cleaned;
+
     case 'cyber-pixel':
     case 'pixel':
       // Regla Cyber-Pixel: fill="var(--color-aura-activa)", shape-rendering="crispEdges" en <rect>

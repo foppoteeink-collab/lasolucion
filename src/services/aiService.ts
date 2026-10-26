@@ -547,40 +547,54 @@ export async function forgeKaiFromImage(params: {
   }
   cleanBase64 = cleanBase64.trim().replace(/[\r\n\s]+/g, '');
 
-  const isIllustration = ['clay3d', 'anime', 'comic', 'crayon', 'toon'].includes(artStyle);
-
-  // 2. Construcción de directiva del prompt según la rama
+  // 2. Construcción de directiva del prompt unificado 100% SVG
   function buildMultiversePrompt(selectedArtStyle: KaiMultiverseStyle, userPrompt: string): string {
-    if (isIllustration) {
-      return `
-ERES EL OJO CLÍNICO Y MOTOR MULTIMODAL DE LA FORJA NEURAL DE "LA SOLUCIÓN".
-Tu misión es escanear la foto adjunta, identificar con máxima precisión qué objeto real u elemento aparece en ella, y diseñar un personaje antropomórfico carismático basado en ese objeto para el estilo visual: "${selectedArtStyle.toUpperCase()}".
-
-PASO 1: ANÁLISIS DEL OBJETO REAL
-- Identifica el objeto exactamente con sus rasgos distintivos (ej: "Taza de cerámica negra con borde blanco", "Zapatilla deportiva azul con suela gruesa", "Manzana roja con hoja verde").
-- Describe el diseño del personaje antropomórfico (characterConcept): fusiona la silueta del objeto con rasgos vivos de mascota virtual (ojos grandes expresivos integrados en la estructura del objeto, boca amigable, patitas o extremidades tiernas estilo Tamagotchi/Nintendo).
-- Asígnale un nombre épico (epicName) y una frase de despertar o saludo (personalityQuote) acorde a su naturaleza.
-- Extrae sus colores primario y secundario en formato hexadecimal.
-${userPrompt ? `Contexto o pista del usuario: "${userPrompt}".` : ''}
-
-DEVOLUCIÓN OBLIGATORIA (Responde ÚNICAMENTE con un JSON válido):
-{
-  "detectedObject": "Descripción exacta del objeto real identificado",
-  "characterConcept": "Diseño detallado del personaje antropomórfico basado en el objeto",
-  "epicName": "Nombre creativo del compañero",
-  "personalityQuote": "Frase breve de despertar del compañero",
-  "primaryColor": "#hex",
-  "secondaryColor": "#hex",
-  "element": "fuego | agua | tierra | aire | plasma | luz",
-  "artStyle": "${selectedArtStyle}",
-  "mood": "playful"
-}
-`;
-    }
-
-    // Rama Vectorial (Geometría Neón, Cyber-Pixel, Flujo Orgánico, Low Poly)
     let vectorDirective = '';
     switch (selectedArtStyle) {
+      case 'clay3d':
+        vectorDirective = `
+ESTILO OBLIGATORIO: "3D Vinyl / Pixar".
+REGLAS ESTRICTAS DE SVG:
+- Genera código SVG con volumen 3D suave simulando una figura coleccionable de vinilo Pixar/Nintendo basada en la silueta y colores reales del objeto.
+- En <defs>, incluye <radialGradient> y <linearGradient> con luces suaves y brillos especulares (highlights blancos con opacidad).
+- Incluye <filter id="clayShadow"><feDropShadow dx="0" dy="5" stdDeviation="3.5" flood-color="#000000" flood-opacity="0.35" /></filter> para dar profundidad.
+- Diseña grandes ojos brillantes estilo Pixar con destellos radiales y pupilas con doble reflejo blanco.
+- Agrega zapatitos o extremidades tiernas de vinilo glossy y mejillas sonrojadas.`;
+        break;
+
+      case 'anime':
+        vectorDirective = `
+ESTILO OBLIGATORIO: "Anime / Chibi".
+REGLAS ESTRICTAS DE SVG:
+- Genera código SVG con técnica cel-shading manga: contornos limpios oscuros (stroke="#1e293b" stroke-width="1.8").
+- Grandes ojos brillantes anime estilo kawaii/Ghibli con destellos circulares blancos múltiples.
+- Mejillas sonrojadas (<ellipse opacity="0.5" fill="#f43f5e" />), colores planos vibrantes del objeto y expresión tierna.`;
+        break;
+
+      case 'comic':
+        vectorDirective = `
+ESTILO OBLIGATORIO: "Cómic Moderno (Pop Art)".
+REGLAS ESTRICTAS DE SVG:
+- Genera código SVG con entintado negro audaz (stroke="#000000" stroke-width="2.5" a "3").
+- Colores primarios saturados, sombras gráficas dinámicas de corte duro y estética superheroica de novela gráfica moderna.
+- Ojos expresivos con contorno negro marcado y cejas dinámicas.`;
+        break;
+
+      case 'crayon':
+        vectorDirective = `
+ESTILO OBLIGATORIO: "Crayón Infantil".
+REGLAS ESTRICTAS DE SVG:
+- Genera código SVG con trazos discontinuos (stroke-dasharray="3,3" o "4,2") y líneas orgánicas a mano alzada.
+- Colores cera saturados y cálidos, expresión dulce y carismática estilo cuento ilustrado para niños.`;
+        break;
+
+      case 'toon':
+        vectorDirective = `
+ESTILO OBLIGATORIO: "Toon Clásico".
+REGLAS ESTRICTAS DE SVG:
+- Genera código SVG con estilo animación clásica rubber-hose: curvas elásticas, ojos cartoon grandes con pupilas recortadas, colores planos vivos, guantecitos blancos y botitas.`;
+        break;
+
       case 'cyber-pixel':
       case 'pixel':
         vectorDirective = `
@@ -596,7 +610,7 @@ REGLAS ESTRICTAS DE SVG:
         vectorDirective = `
 ESTILO OBLIGATORIO: "Flujo Orgánico".
 REGLAS ESTRICTAS DE SVG:
-- Genera exclusivamente curvas Bezier suaves (C y S en los paths) trazando la silueta del objeto detectado, sin ángulos rectos, fill='none'.
+- Genera exclusivamente curvas Bezier suaves (C y S en los paths) trazando la silueta del objeto detectado, sin ángulos rectos, stroke-width='2', fill='none'.
 - Cada elemento DEBE ser un <path d="..." stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />.`;
         break;
 
@@ -620,20 +634,27 @@ REGLAS ESTRICTAS DE SVG:
 
     return `
 ERES EL OJO CLÍNICO Y MOTOR MULTIMODAL DE LA FORJA NEURAL DE "LA SOLUCIÓN".
-Tu misión es escanear la foto, identificar con máxima precisión el objeto real, y generar un COMPAÑERO KAI VECTORIAL 100% SVG que capture la silueta real del objeto con rostro y ojos expresivos.
+Tu misión es escanear la foto adjunta, identificar con máxima precisión qué objeto real u elemento aparece en ella, y generar un COMPAÑERO KAI ANTROPOMÓRFICO 100% SVG que capture la silueta real del objeto con rostro y ojos expresivos en el estilo: "${selectedArtStyle.toUpperCase()}".
 
-REGLAS DE ARQUITECTURA SVG:
+PASO 1: ANÁLISIS DEL OBJETO REAL
+- Identifica el objeto exactamente con sus rasgos distintivos (ej: "Encendedor amarillo transparente", "Taza de cerámica negra", "Zapatilla deportiva azul").
+- Diseña un personaje antropomórfico (characterConcept) fusionando la silueta del objeto con anatomía viva (ojos expresivos integrados en la estructura del objeto, boca amigable, patitas o extremidades tiernas estilo Tamagotchi/Nintendo).
+- Asígnale un nombre épico (epicName) y una frase breve y carismática de saludo (personalityQuote) acorde a su naturaleza.
+- Extrae sus colores primario y secundario en formato hexadecimal.
+
+PASO 2: ARQUITECTURA SVG
 1. El SVG debe tener viewBox="0 0 160 170" y width="100%" height="100%".
 2. ${vectorDirective}
-3. El componente KAICompanion.tsx inyectará el color de --color-aura-activa al SVG.
 ${userPrompt ? `Contexto o pista del usuario: "${userPrompt}".` : ''}
 
 DEVOLUCIÓN OBLIGATORIA (Responde ÚNICAMENTE con un JSON válido):
 {
   "detectedObject": "Descripción exacta del objeto real identificado",
-  "characterConcept": "Diseño del personaje basado en el objeto",
+  "characterConcept": "Diseño detallado del personaje antropomórfico",
   "epicName": "Nombre creativo del compañero",
-  "personalityQuote": "Frase de despertar del compañero",
+  "personalityQuote": "Frase breve de despertar del compañero",
+  "primaryColor": "#hex",
+  "secondaryColor": "#hex",
   "artStyle": "${selectedArtStyle}",
   "mood": "playful",
   "svg": "<svg viewBox=\\"0 0 160 170\\" xmlns=\\"http://www.w3.org/2000/svg\\">...</svg>"
@@ -762,50 +783,10 @@ DEVOLUCIÓN OBLIGATORIA (Responde ÚNICAMENTE con un JSON válido):
   // Notificar al cliente que el Paso 1 (Visión) culminó exitosamente con el objeto detectado
   if (onProgress) {
     onProgress('vision', { detectedObject });
+    onProgress('generation', { detectedObject });
   }
 
-  // 4. PASO 2: EJECUCIÓN SEGÚN LA RAMA DEL ESTILO
-  if (isIllustration) {
-    console.log(`[Forja Neural] 🎨 Generando ilustración real para "${detectedObject}" en estilo "${artStyle}"...`);
-    if (onProgress) {
-      onProgress('generation', { detectedObject });
-    }
-    const apiKeyToUse = getEffectiveGeminiApiKey() || undefined;
-
-    const transparentWebP = await generateKaiIllustration({
-      characterConcept,
-      detectedObject,
-      artStyle,
-      apiKey: apiKeyToUse,
-    });
-
-    // Guardar en localStorage para no inflar el documento de Firestore
-    if (typeof window !== 'undefined') {
-      try {
-        window.localStorage.setItem('kai_custom_avatar_data', transparentWebP);
-      } catch (storageErr) {
-        console.warn('[Forja Neural] Aviso guardando en localStorage:', storageErr);
-      }
-    }
-
-    return {
-      name: epicName,
-      sourceType: 'image',
-      createdAt: new Date().toISOString(),
-      detectedObject,
-      characterConcept,
-      artStyle,
-      personalityQuote,
-      primaryColor,
-      secondaryColor,
-      mood: 'playful',
-      renderBranch: 'illustration',
-      imageUrl: transparentWebP,
-      storageRef: 'local:kai_custom_avatar_data',
-    };
-  }
-
-  // Rama Vectorial (100% SVG)
+  // Procesamiento del código SVG nativo generado directamente por Gemini
   const rawSvg = parsed.svg || parsed.svgContent || parsed.svg_code;
   let svgContent: string | undefined = undefined;
 
@@ -817,7 +798,7 @@ DEVOLUCIÓN OBLIGATORIA (Responde ÚNICAMENTE con un JSON válido):
     }
   }
 
-  // Validación estricta: NO permitir fallback a formas geométricas por defecto si no vino el SVG
+  // Validación estricta: NO permitir fallback a figuras geométricas si no vino el SVG
   if (!svgContent && (!Array.isArray(parsed.polygons) || parsed.polygons.length === 0)) {
     throw new Error(`La IA reconoció el objeto "${detectedObject}", pero no generó el código SVG para el estilo "${artStyle}". Por favor intenta de nuevo.`);
   }
