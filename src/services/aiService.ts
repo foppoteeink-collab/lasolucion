@@ -377,8 +377,12 @@ ${historyContext}
  * ══════════════════════════════════════════════════════════════════════════════
  */
 /**
- * Procesa la imagen en un lienzo <canvas> de 256x256 aplicando Chroma/Luminance Keying
- * sobre el fondo oscuro #030712 para dejar al personaje 100% recortado con fondo transparente (alpha = 0).
+/**
+ * Procesa la imagen en un lienzo <canvas> aplicando Chroma Keying con BFS Flood-Fill
+ * desde el perímetro exterior sobre el fondo oscuro #030712.
+ * Esto garantiza que el fondo exterior se vuelva 100% transparente (alpha = 0),
+ * pero CUALQUIER elemento oscuro INTERNO (pupilas, trazos negros de cartoon o sombras)
+ * se mantenga 100% intacto y nítido.
  */
 export async function processChromaKeyToWebP(imageSource: string): Promise<string> {
   if (typeof window === 'undefined') return imageSource;
@@ -389,44 +393,83 @@ export async function processChromaKeyToWebP(imageSource: string): Promise<strin
     img.onload = () => {
       try {
         const canvas = document.createElement('canvas');
-        canvas.width = 256;
-        canvas.height = 256;
+        const W = 384;
+        const H = 384;
+        canvas.width = W;
+        canvas.height = H;
         const ctx = canvas.getContext('2d');
         if (!ctx) {
           resolve(imageSource);
           return;
         }
 
-        ctx.clearRect(0, 0, 256, 256);
-        ctx.drawImage(img, 0, 0, 256, 256);
+        ctx.clearRect(0, 0, W, H);
+        ctx.drawImage(img, 0, 0, W, H);
 
-        const imgData = ctx.getImageData(0, 0, 256, 256);
+        const imgData = ctx.getImageData(0, 0, W, H);
         const data = imgData.data;
 
-        // Target background: pure dark #030712 (R:3, G:7, B:18)
-        for (let i = 0; i < data.length; i += 4) {
-          const r = data[i];
-          const g = data[i + 1];
-          const b = data[i + 2];
+        // BFS Flood-fill desde el perímetro exterior
+        const isBg = new Uint8Array(W * H);
+        const queue: number[] = [];
 
-          // Distancia euclidiana a #030712
+        const checkBgColor = (idx: number) => {
+          const r = data[idx * 4];
+          const g = data[idx * 4 + 1];
+          const b = data[idx * 4 + 2];
           const dr = r - 3;
           const dg = g - 7;
           const db = b - 18;
           const dist = Math.sqrt(dr * dr + dg * dg + db * db);
-          const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+          const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+          return dist < 45 || lum < 24;
+        };
 
-          if (dist < 34 || luminance < 18) {
-            data[i + 3] = 0; // Transparente total
-          } else if (dist < 52 || luminance < 30) {
-            // Suavizado / anti-aliasing en bordes
-            const factor = Math.min(1, Math.max(0, (dist - 34) / 18));
-            data[i + 3] = Math.round(data[i + 3] * factor);
+        // Sembrar píxeles de los 4 bordes exteriores
+        for (let x = 0; x < W; x++) {
+          const topIdx = x;
+          const btmIdx = (H - 1) * W + x;
+          if (checkBgColor(topIdx) && !isBg[topIdx]) { isBg[topIdx] = 1; queue.push(topIdx); }
+          if (checkBgColor(btmIdx) && !isBg[btmIdx]) { isBg[btmIdx] = 1; queue.push(btmIdx); }
+        }
+        for (let y = 0; y < H; y++) {
+          const lftIdx = y * W;
+          const rgtIdx = y * W + (W - 1);
+          if (checkBgColor(lftIdx) && !isBg[lftIdx]) { isBg[lftIdx] = 1; queue.push(lftIdx); }
+          if (checkBgColor(rgtIdx) && !isBg[rgtIdx]) { isBg[rgtIdx] = 1; queue.push(rgtIdx); }
+        }
+
+        // Propagación BFS
+        let qHead = 0;
+        while (qHead < queue.length) {
+          const curr = queue[qHead++];
+          const cx = curr % W;
+          const cy = Math.floor(curr / W);
+
+          const neighbors = [
+            cx > 0 ? curr - 1 : -1,
+            cx < W - 1 ? curr + 1 : -1,
+            cy > 0 ? curr - W : -1,
+            cy < H - 1 ? curr + W : -1,
+          ];
+
+          for (const n of neighbors) {
+            if (n >= 0 && !isBg[n] && checkBgColor(n)) {
+              isBg[n] = 1;
+              queue.push(n);
+            }
+          }
+        }
+
+        // Aplicar transparencia total a los píxeles alcanzados por el fondo
+        for (let i = 0; i < W * H; i++) {
+          if (isBg[i]) {
+            data[i * 4 + 3] = 0;
           }
         }
 
         ctx.putImageData(imgData, 0, 0);
-        const transparentWebP = canvas.toDataURL('image/webp', 0.85);
+        const transparentWebP = canvas.toDataURL('image/webp', 0.9);
         resolve(transparentWebP);
       } catch (err) {
         console.warn('[Forja Neural] Error procesando Chroma Key en canvas:', err);
@@ -448,31 +491,58 @@ async function generateKaiIllustration(params: {
   characterConcept: string;
   detectedObject: string;
   artStyle: KaiMultiverseStyle;
+  mood?: KaiTemperament;
   apiKey?: string;
 }): Promise<string> {
-  const { characterConcept, detectedObject, artStyle, apiKey } = params;
+  const { characterConcept, detectedObject, artStyle, mood = 'stoic', apiKey } = params;
 
   let styleDesc = '';
   switch (artStyle) {
-    case 'clay3d':
-      styleDesc = 'cute full body 3D Pixar character render, vinyl collectible toy mascot, smooth claymation tactile finish, soft studio lighting, cute expressive face';
+    case 'pixar':
+      styleDesc = 'adorable full body 3D Pixar character render, DreamWorks animated movie hero, rich tactile subsurface scattering, soft studio rim lighting, big soulful expressive eyes with bright catchlights, warm ambient occlusion, cute friendly face, ultra high resolution 3D render';
+      break;
+    case 'cartoon':
+      styleDesc = 'classic 90s Cartoon Network 2D character, Dexter laboratory and Samurai Jack inspired, bold black ink outlines, flat vibrant saturated colors, exaggerated geometric cartoon anatomy, expressive humorous face, retro 2D cartoon cel animation';
       break;
     case 'anime':
-      styleDesc = 'cute full body anime chibi mascot character, Studio Ghibli inspired, high quality anime cel-shaded illustration, vibrant colors, expressive sparkly eyes';
+      styleDesc = 'authentic Japanese anime mascot companion creature, Studio Trigger and Pokemon anime style, clean vibrant cel-shaded illustration, detailed anime eyes with glossy reflection highlights, spiky dynamic action features, vibrant rich colors';
       break;
-    case 'comic':
-      styleDesc = 'cute full body modern comic book superhero mascot, pop art style, bold black ink outlines, dynamic halftone pattern, vibrant graphic novel illustration';
+    case 'pop':
+      styleDesc = 'exclusive designer vinyl art toy collectible, Funko Pop and Superplastic style, glossy vinyl shine reflections, bold pop culture aesthetic, iconic oversized head, button eyes with shine, vibrant saturated pop art colors';
       break;
-    case 'crayon':
-      styleDesc = 'cute full body playful colorful crayon drawing of a friendly character, rich wax crayon texture, expressive childlike strokes, whimsical storybook art';
+    case 'doodle':
+      styleDesc = 'authentic hand-drawn ink doodle art character, Mr Doodle and Keith Haring sketchbook style, organic black marker contours, manual cross-hatching shade lines, colorful Posca marker accent splashes, quirky whimsical doodles floating';
       break;
-    case 'toon':
+    case 'clay3d':
     default:
-      styleDesc = 'cute full body classic animation toon character, vibrant flat colors, expressive cartoon eyes, rubber-hose style playful charm';
+      styleDesc = 'adorable claymation 3D stop-motion character, Wallace & Gromit and Aardman Studios style, soft tactile handmade modeling clay texture, gentle studio rim lighting, thumbprint clay details, cute clay ball eyes';
       break;
   }
 
-  const promptText = `Full body character design of ${characterConcept || detectedObject}, ${styleDesc}, isolated on a solid pure black background #030712, no floor shadows, no ground, no pedestal, center frame, high resolution concept art.`;
+  let moodDesc = '';
+  switch (mood) {
+    case 'stoic':
+      moodDesc = 'serious stoic expression, focused confident gaze, closed determined mouth';
+      break;
+    case 'mischievous':
+      moodDesc = 'playful mischievous smirk, one eye winking or sideways glance, witty confident charm';
+      break;
+    case 'fierce':
+      moodDesc = 'fierce combat warrior stance, intense energetic gaze, battle ready expression';
+      break;
+    case 'mystic':
+      moodDesc = 'mystical tranquil expression, serene half-closed eyes, wise cosmic aura';
+      break;
+    case 'zen':
+      moodDesc = 'peaceful relaxed zen face, sleepy calm eyes, meditative serenity';
+      break;
+    case 'cheerful':
+    default:
+      moodDesc = 'radiant cheerful smile, wide happy sparkling eyes, enthusiastic joyful expression';
+      break;
+  }
+
+  const promptText = `Full body character design of an anthropomorphic ${detectedObject} alive as a companion, ${characterConcept}, ${styleDesc}, ${moodDesc}, solid pure dark background #030712, no floor, no ground, no pedestal, center frame, character floating, high resolution concept art, sharp focus.`;
 
   // 1. Intentar endpoint Imagen 3 si hay API Key disponible
   if (apiKey) {
@@ -860,7 +930,7 @@ ${userPrompt ? `7. Contexto del usuario: "${userPrompt}".` : ''}
     onProgress('generation', { detectedObject });
   }
 
-  // Procesamiento del código SVG nativo generado directamente por Gemini
+  // Procesamiento del código SVG nativo (como respaldo estructural)
   const rawSvg = parsed.svg || parsed.svgContent || parsed.svg_code;
   let svgContent: string | undefined = undefined;
 
@@ -872,9 +942,31 @@ ${userPrompt ? `7. Contexto del usuario: "${userPrompt}".` : ''}
     }
   }
 
-  // Validación estricta: NO permitir fallback a figuras geométricas si no vino el SVG
-  if (!svgContent && (!Array.isArray(parsed.polygons) || parsed.polygons.length === 0)) {
-    throw new Error(`La IA reconoció el objeto "${detectedObject}", pero no generó el código SVG para el estilo "${artStyle}". Por favor intenta de nuevo.`);
+  // 4. Paso 2: Generar la ilustración de alta fidelidad con el motor de imagen (Imagen 3 / Flux)
+  let finalImageUrl: string | undefined = undefined;
+  try {
+    const rawIllustration = await generateKaiIllustration({
+      characterConcept,
+      detectedObject,
+      artStyle,
+      mood: (parsed.mood as KaiTemperament) || mood || 'stoic',
+      apiKey: apiKeyToTry,
+    });
+    if (rawIllustration) {
+      finalImageUrl = rawIllustration;
+      console.log(`[Forja Neural] ✓ Ilustración artística generada con éxito (${artStyle})`);
+    }
+  } catch (illusErr) {
+    console.warn('[Forja Neural] Aviso generando ilustración, usando SVG como fallback:', illusErr);
+  }
+
+  // Guardar en localStorage si es data URL para no saturar Firestore
+  if (finalImageUrl && finalImageUrl.startsWith('data:') && typeof window !== 'undefined') {
+    try {
+      window.localStorage.setItem('kai_custom_avatar_data', finalImageUrl);
+    } catch (e) {
+      console.warn('[Forja Neural] Storage aviso:', e);
+    }
   }
 
   return {
@@ -888,7 +980,9 @@ ${userPrompt ? `7. Contexto del usuario: "${userPrompt}".` : ''}
     primaryColor,
     secondaryColor,
     mood: (parsed.mood as KaiTemperament) || mood || 'stoic',
-    renderBranch: 'vector',
+    renderBranch: finalImageUrl ? 'illustration' : 'vector',
+    imageUrl: finalImageUrl,
+    storageRef: finalImageUrl && finalImageUrl.startsWith('data:') ? 'local:kai_custom_avatar_data' : undefined,
     svgContent,
     polygons: Array.isArray(parsed.polygons) ? parsed.polygons : undefined,
   };

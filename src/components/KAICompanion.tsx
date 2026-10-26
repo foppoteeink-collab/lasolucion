@@ -163,59 +163,35 @@ export function injectAuraColorIntoSvg(
   const auraVarFill = 'var(--color-aura-activa, currentColor)';
 
   switch (artStyle) {
-    case 'clay3d':
+    case 'pixar':
+    case 'cartoon':
     case 'anime':
+    case 'pop':
+    case 'doodle':
+    case 'clay3d':
     case 'comic':
     case 'crayon':
     case 'toon':
     case 'papercraft':
     case 'chrome':
-      // Estilos artísticos ricos con gradientes, sombreados y luces 3D:
-      // Preservar íntegramente los gradientes, trazados y sombras generadas por la IA
+    case 'low-poly':
+    case 'mystic-relic':
+    case 'mecha-chibi':
+    case 'sticker-pop':
+      // Estilos artísticos con sus propios colores, gradientes y texturas:
+      // Preservar 100% íntegros los colores originales del objeto y del arte
       return cleaned;
 
     case 'cyber-pixel':
     case 'pixel':
-      // Preservar la rica paleta de colores del pixel art generada por la IA
-      // y asegurar renderizado nítido de píxeles sin interpolación borrosa
       cleaned = cleaned.replace(/<svg\b([^>]*)>/i, (_m, attrs) => {
         if (!attrs.includes('shape-rendering')) return `<svg ${attrs} shape-rendering="crispEdges">`;
         return `<svg ${attrs}>`;
       });
       return cleaned;
 
-    case 'organic-flow':
-      // Regla Flujo Orgánico: exclusivamente curvas suaves, stroke-width="2", fill="none"
-      cleaned = cleaned.replace(/<path\b([^>]*)>/gi, (_match, attrs) => {
-        let mod = attrs
-          .replace(/\bstroke="[^"]*"/gi, '')
-          .replace(/\bfill="[^"]*"/gi, '')
-          .replace(/\bstroke-width="[^"]*"/gi, '');
-        return `<path ${mod.trim()} stroke="${auraVarStroke}" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">`;
-      });
-      break;
-
-    case 'low-poly':
-      // Regla Low Poly: Si los polígonos ya tienen colores asignados por la IA, preservarlos;
-      // si no tienen fill explícito, armonizarlos con el aura activa
-      let polyIndex = 0;
-      cleaned = cleaned.replace(/<polygon\b([^>]*)>/gi, (_match, attrs) => {
-        if (attrs.includes('fill=') && !attrs.includes('fill="none"')) {
-          return `<polygon ${attrs}>`;
-        }
-        let mod = attrs.replace(/\bfill="[^"]*"/gi, '').replace(/\bstroke="[^"]*"/gi, '');
-        if (!mod.includes('fill-opacity')) {
-          const pseudoOpacity = (0.2 + ((polyIndex * 0.19) % 0.65)).toFixed(2);
-          mod += ` fill-opacity="${pseudoOpacity}"`;
-        }
-        polyIndex++;
-        return `<polygon ${mod.trim()} fill="${auraVarFill}" stroke="none">`;
-      });
-      break;
-
     case 'neon-geometry':
-    default:
-      // Regla Geometría Neón (Default): <polygon> y <path> simétricos, stroke-width="2", fill="none"
+      // Solo para geometría neón explícita se armonizan trazos con el aura
       cleaned = cleaned.replace(/<polygon\b([^>]*)>/gi, (_match, attrs) => {
         let mod = attrs
           .replace(/\bstroke="[^"]*"/gi, '')
@@ -236,7 +212,11 @@ export function injectAuraColorIntoSvg(
           .replace(/\bstroke-width="[^"]*"/gi, '');
         return `<line ${mod.trim()} stroke="${auraVarStroke}" stroke-width="2" stroke-linecap="round">`;
       });
-      break;
+      return cleaned;
+
+    default:
+      // Si el diseño ya tiene colores propios, respetarlos siempre
+      return cleaned;
   }
 
   return cleaned;
@@ -473,7 +453,7 @@ export const KAICompanion: React.FC<KAICompanionProps> = ({
         ease: 'easeInOut',
       }}
     >
-      {/* 1. RENDERIZADO FORJA NEURAL: RAMA ILUSTRACIÓN REAL */}
+      {/* 1. RENDERIZADO FORJA NEURAL: RAMA ILUSTRACIÓN REAL (OPCIÓN A: ARTE HD + OJOS VIVOS) */}
       {effectiveShape === 'custom' && effectiveImageUrl ? (
         <motion.div
           className="w-full h-full flex items-center justify-center relative"
@@ -494,6 +474,50 @@ export const KAICompanion: React.FC<KAICompanionProps> = ({
               filter: `drop-shadow(0 0 16px ${effectiveAuraColor}80) drop-shadow(0 0 28px ${effectiveAuraColor}40)`,
             }}
           />
+
+          {/* Capa de Ojos Vivos Interactivos (Opción A): Destellos que siguen el dedo en móvil y ratón en PC */}
+          <svg
+            viewBox="0 0 160 170"
+            className="absolute inset-0 w-full h-full pointer-events-none overflow-visible"
+          >
+            <g
+              id="kai-live-illustration-gaze"
+              style={{
+                transform: `translate(${effectiveEyeOffset.x * 0.85}px, ${effectiveEyeOffset.y * 0.85}px)`,
+                transition: effectiveIsTracking
+                  ? 'transform 0.1s cubic-bezier(0.2, 0, 0, 1)'
+                  : 'transform 0.45s ease-out',
+              }}
+            >
+              {/* Reflejos de mirada viva sincronizados con puntero o dedo */}
+              <circle
+                cx="67"
+                cy="62"
+                r="3.2"
+                fill="#ffffff"
+                opacity="0.85"
+                style={{ filter: `drop-shadow(0 0 4px ${effectiveAuraColor})` }}
+              />
+              <circle
+                cx="93"
+                cy="62"
+                r="3.2"
+                fill="#ffffff"
+                opacity="0.85"
+                style={{ filter: `drop-shadow(0 0 4px ${effectiveAuraColor})` }}
+              />
+              <circle cx="68.2" cy="60.6" r="1.2" fill="#ffffff" />
+              <circle cx="94.2" cy="60.6" r="1.2" fill="#ffffff" />
+            </g>
+
+            {/* Onda de voz al hacer clic o interactuar */}
+            {effectiveIsSpeaking && (
+              <circle cx="80" cy="98" r="14" fill="none" stroke="#ffffff" strokeWidth="1.8" opacity="0.8">
+                <animate attributeName="r" from="6" to="28" dur="0.55s" repeatCount="indefinite" />
+                <animate attributeName="opacity" from="0.9" to="0" dur="0.55s" repeatCount="indefinite" />
+              </circle>
+            )}
+          </svg>
         </motion.div>
       ) : effectiveShape === 'custom' && renderedSvgHtml ? (
         /* 2. RENDERIZADO FORJA NEURAL: RAMA VECTORIAL VIVA */

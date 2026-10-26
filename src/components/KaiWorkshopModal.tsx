@@ -420,7 +420,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
             setLiveDetectedObject(data.detectedObject);
             setForgeProgressText(`¡Objeto identificado: "${data.detectedObject}"!`);
           } else if (stage === 'generation') {
-            setForgeProgressText(`Paso 2: Materializando manifestación visual (${selectedStyle.toUpperCase()})...`);
+            setForgeProgressText(`Paso 2: Generando ilustración artística en alta resolución (${selectedStyle.toUpperCase()})...`);
           }
         },
       });
