@@ -236,18 +236,18 @@ export const HoloCompanion: React.FC<HoloCompanionProps> = ({
     if (typeof size === 'number') return size / 100;
     switch (size) {
       case 'nano':
-        return 0.26;
+        return 0.32;
       case 'xs':
-        return 0.55;
+        return 0.65;
       case 'sm':
-        return 0.75;
+        return 0.88;
       case 'lg':
-        return 1.25;
+        return 1.45;
       case 'xl':
-        return 1.55;
+        return 1.80;
       case 'md':
       default:
-        return 1.0;
+        return 1.18;
     }
   }, [size]);
 

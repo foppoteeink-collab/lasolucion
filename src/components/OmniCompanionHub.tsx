@@ -400,7 +400,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
             >
               <HoloCompanion
                 archetype={archetype}
-                size={isMenuOpen ? 54 : 48}
+                size={isMenuOpen ? 64 : 56}
                 interactive={true}
                 onClick={handleCompanionClick}
                 auraState={auraState}

@@ -214,13 +214,13 @@ export const HunterAwakeningModal: React.FC<HunterAwakeningModalProps> = ({
                     Sintonización de tu Compañero Cuántico KAI
                   </h3>
                   <p className="text-[11px] sm:text-xs text-slate-300 font-sans leading-relaxed mt-0.5">
-                    Antes de ingresar al Sistema, debes elegir la geometría base de <strong>KAI</strong>. Todas las figuras están 100% desbloqueadas desde el Día 0 y evolucionarán con tus hábitos de 21 y 66 días:
+                    Te presentamos a <strong>KAI en su Forma Génesis: El Prisma Cuántico</strong>. Este núcleo cuántico de visión y foco te acompañará desde el Día 0. Luego, en el Taller Cuántico, podrás forjarle formas únicas a partir de cualquier objeto real con IA:
                   </p>
                 </div>
               </div>
 
-              {/* 6 Formas Oficiales Grid: Compacto y Proporcional (Tamaño Original) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {/* Forma Génesis Oficial: El Prisma */}
+              <div className="max-w-md mx-auto w-full">
                 {KAI_OFFICIAL_SHAPES.map((shape) => {
                   const isSelected = selectedKaiShape === shape.id;
                   return (

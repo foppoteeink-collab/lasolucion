@@ -143,7 +143,7 @@ export interface PlayerStats {
   hasClaimedTutorialReward?: boolean;
 }
 
-export type KaiShapeKey = 'prism' | 'octahedron' | 'wolf' | 'hound' | 'panther' | 'elephant' | 'custom';
+export type KaiShapeKey = 'prism' | 'custom';
 export type KaiMultiverseStyle =
   | 'neon-geometry'
   | 'cyber-pixel'

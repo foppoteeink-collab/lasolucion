@@ -220,18 +220,18 @@ export const KAICompanion: React.FC<KAICompanionProps> = ({
     }
     switch (size) {
       case 'nano':
-        return { widthPx: 38, heightPx: 40 };
+        return { widthPx: 46, heightPx: 49 };
       case 'xs':
-        return { widthPx: 64, heightPx: 68 };
+        return { widthPx: 76, heightPx: 81 };
       case 'sm':
-        return { widthPx: 96, heightPx: 102 };
+        return { widthPx: 112, heightPx: 119 };
       case 'lg':
-        return { widthPx: 180, heightPx: 191 };
+        return { widthPx: 210, heightPx: 223 };
       case 'xl':
-        return { widthPx: 230, heightPx: 244 };
+        return { widthPx: 265, heightPx: 281 };
       case 'md':
       default:
-        return { widthPx: 130, heightPx: 138 };
+        return { widthPx: 152, heightPx: 161 };
     }
   }, [size]);
 
