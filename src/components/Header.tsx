@@ -219,19 +219,7 @@ export const Header: React.FC<HeaderProps> = ({
               )}
             </button>
 
-            {/* Ritual Nocturno / Cierre de Jornada */}
-            {onOpenNightlyReflection && (
-              <button
-                onClick={() => { soundFX.playClick(); onOpenNightlyReflection(); }}
-                title="Cierre de Jornada / Reflexión Cuántica"
-                className="p-1.5 sm:p-2 rounded-xl bg-surface-card text-cyan-300 border border-cyan-500/30 hover:border-cyan-400 hover:bg-cyan-950/40 transition-all cursor-pointer flex items-center gap-1.5 shadow-[0_0_10px_rgba(0,240,255,0.15)]"
-              >
-                <Moon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-400" />
-                <span className="hidden lg:inline text-[10px] font-mono font-bold tracking-wider uppercase">Cierre</span>
-              </button>
-            )}
-
-            {/* 🌙 Sleep Status Pill — always visible, 3 states */}
+            {/* 🌙 Sleep Status Pill — Only shown when wake-up is pending or completed on larger screens */}
             <AnimatePresence mode="wait">
               {sleepState === 'pending' && (
                 <motion.button
@@ -241,7 +229,7 @@ export const Header: React.FC<HeaderProps> = ({
                   exit={{ opacity: 0, scale: 0.9 }}
                   onClick={() => { soundFX.playClick(); onRegisterWakeUp?.(); }}
                   title="Registrar hora de despertar"
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-amber-500/20 border border-amber-400/70 text-amber-300 hover:bg-amber-500/30 hover:border-amber-400 transition-all cursor-pointer shadow-[0_0_12px_rgba(251,191,36,0.4)] animate-pulse"
+                  className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-xl bg-amber-500/20 border border-amber-400/70 text-amber-300 hover:bg-amber-500/30 hover:border-amber-400 transition-all cursor-pointer shadow-[0_0_12px_rgba(251,191,36,0.4)] animate-pulse shrink-0"
                 >
                   <Sparkles className="w-3.5 h-3.5 shrink-0" />
                   <span className="text-[10px] font-black uppercase tracking-wider whitespace-nowrap">
@@ -261,7 +249,7 @@ export const Header: React.FC<HeaderProps> = ({
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.9 }}
                   title={`Sueño: ${todaySleep?.bedtime} → ${todaySleep?.wakeTime}`}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 cursor-default"
+                  className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 cursor-default shrink-0"
                 >
                   <Moon className="w-3.5 h-3.5 shrink-0" />
                   <span className="text-[10px] font-black uppercase tracking-wider whitespace-nowrap">
@@ -271,48 +259,10 @@ export const Header: React.FC<HeaderProps> = ({
                   </span>
                 </motion.div>
               )}
-              {sleepState === 'none' && (
-                <motion.div
-                  key="sleep-none"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  title="Sin registro de sueño — Finaliza la jornada para comenzar"
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-800/60 border border-slate-600/40 text-slate-500 cursor-default"
-                >
-                  <Moon className="w-3.5 h-3.5 shrink-0" />
-                  <span className="hidden sm:inline text-[10px] font-mono tracking-wider">--:--</span>
-                </motion.div>
-              )}
             </AnimatePresence>
 
-            {/* Settings (Mobile Only) */}
-            <button
-              onClick={() => { if(onGoToSettings) { soundFX.playClick(); onGoToSettings(); } }}
-              className="md:hidden p-1.5 rounded-xl bg-surface-card text-cyan-300 border border-cyan-500/30 hover:border-cyan-400 hover:bg-cyan-950/40 transition-all cursor-pointer"
-              title="Ajustes"
-            >
-              <Settings className="w-4 h-4" />
-            </button>
-
-            {/* Guía Táctica KAI (Tutorial del Sistema) */}
-            <button
-              type="button"
-              onClick={() => {
-                soundFX.playClick();
-                useUIStore.getState().openTacticalGuide(1);
-              }}
-              className="p-1.5 sm:p-2 rounded-xl bg-surface-card text-cyan-300 border border-cyan-500/30 hover:border-cyan-400 hover:bg-cyan-950/40 transition-all cursor-pointer flex items-center gap-1 group shadow-[0_0_10px_rgba(0,240,255,0.15)] active:scale-95"
-              title="Guía Táctica de KAI: Tutorial del Sistema"
-            >
-              <HelpCircle className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-cyan-400 group-hover:rotate-12 transition-transform" />
-              <span className="hidden xl:inline text-[10px] font-mono font-bold tracking-wider uppercase text-cyan-300">
-                Guía
-              </span>
-            </button>
-
             {/* Notifications */}
-            <div className="relative">
+            <div className="relative shrink-0">
               <button
                 onClick={() => {
                   soundFX.playClick();
@@ -481,6 +431,15 @@ export const Header: React.FC<HeaderProps> = ({
               )}
             </div>
 
+            {/* Settings Button */}
+            <button
+              onClick={() => { if(onGoToSettings) { soundFX.playClick(); onGoToSettings(); } }}
+              className="p-1.5 sm:p-2 rounded-xl bg-surface-card text-cyan-300 border border-cyan-500/30 hover:border-cyan-400 hover:bg-cyan-950/40 transition-all cursor-pointer shrink-0"
+              title="Configuración del Sistema"
+            >
+              <Settings className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+            </button>
+
             {/* Utility Buttons (Hidden on Mobile < md) */}
             <div className="hidden md:flex items-center gap-1.5 ml-1">
               {/* Sound Toggle */}
@@ -537,40 +496,6 @@ export const Header: React.FC<HeaderProps> = ({
                 NV.{stats.level}
               </div>
             </button>
-
-            {/* KAI Companion Mini-Pod */}
-            {onOpenKaiWorkshop && (
-              <button
-                type="button"
-                onClick={() => {
-                  soundFX.playClick();
-                  onOpenKaiWorkshop();
-                }}
-                className={`relative group shrink-0 p-0.5 rounded-xl border transition-all cursor-pointer flex items-center justify-center w-9 h-9 sm:w-11 sm:h-11 overflow-hidden ${
-                  isCustomKai
-                    ? 'bg-fuchsia-950/40 border-fuchsia-400/60 hover:border-fuchsia-300 shadow-[0_0_12px_rgba(217,70,239,0.3)] hover:shadow-[0_0_20px_rgba(217,70,239,0.5)]'
-                    : 'bg-[#030a16] border-cyan-500/40 hover:border-cyan-300 shadow-[0_0_12px_rgba(0,240,255,0.2)] hover:shadow-[0_0_20px_rgba(0,240,255,0.4)]'
-                }`}
-                title={`Compañero KAI: ${kaiDisplayName} • Toca para abrir Taller Cuántico`}
-              >
-                <div className="w-full h-full flex items-center justify-center pointer-events-none scale-105">
-                  <KaiVectorGraphics
-                    shapeId={stats.kaiShape || 'prism'}
-                    activeColor="var(--color-aura-activa, #00f0ff)"
-                    secondaryColor="#0284c7"
-                    glowFilterId="header-kai-pod"
-                    has21Days={has21Days}
-                    has66Days={has66Days}
-                    ascensionCrystalsCount={ascensionCrystals}
-                    customForm={stats.kaiCustomForm}
-                  />
-                </div>
-                {/* Micro Pip Indicator */}
-                <span className={`absolute bottom-0.5 right-0.5 w-1.5 h-1.5 rounded-full border border-black animate-pulse ${
-                  isCustomKai ? 'bg-fuchsia-400 shadow-[0_0_6px_#d946ef]' : 'bg-cyan-400 shadow-[0_0_6px_#00f0ff]'
-                }`} />
-              </button>
-            )}
             
             <div 
               onClick={() => { soundFX.playClick(); onOpenProfile?.(); }}

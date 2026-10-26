@@ -5,7 +5,7 @@ import {
   HardDrive, FileSpreadsheet, Cpu, CheckCircle2,
   Coins, Volume2, VolumeX, Target, Sun, Moon, Laptop, ArrowUpRight, CheckCheck,
   SlidersHorizontal, Smartphone, Share, PlusSquare, FlaskConical,
-  Compass, Eye, Layout, Bell, BellOff, BellRing, Zap, Flame, Timer, Palette
+  Compass, Eye, Layout, Bell, BellOff, BellRing, Zap, Flame, Timer, Palette, ChevronLeft
 } from 'lucide-react';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 import { GameSettings } from '../types';
@@ -49,7 +49,7 @@ interface SettingsViewProps {
 
 const EMPTY_TASK_LIST: any[] = [];
 
-type SettingsSubTab = 'general' | 'finances' | 'oracle' | 'simulator' | 'cloud' | 'backup' | 'danger';
+type SettingsSubTab = 'preferences' | 'gameplay' | 'finances' | 'data' | 'simulator';
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
   settings,
@@ -65,7 +65,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const cloudSync = propCloudSync || game?.cloudSync;
   const { soundEnabled, toggleSound, themeMode, navigationMode, setNavigationMode, zenMode, toggleZenMode } = useUIStore();
   
-  const [activeSubTab, setActiveSubTab] = useState<SettingsSubTab>('general');
+  const [activeSubTab, setActiveSubTab] = useState<SettingsSubTab>('preferences');
   const [currentCurrency, setCurrentCurrency] = useState<string>(getSavedCurrencySymbol);
   const [savingsTarget, setSavingsTarget] = useState<number>(getSavedSavingsTarget);
   const [audioTesting, setAudioTesting] = useState(false);
@@ -354,55 +354,38 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   };
 
   const tabsConfig = [
-    { id: 'general' as SettingsSubTab, label: 'General', icon: SlidersHorizontal, color: 'text-cyan-400' },
+    { id: 'preferences' as SettingsSubTab, label: 'Preferencias', icon: SlidersHorizontal, color: 'text-cyan-400' },
+    { id: 'gameplay' as SettingsSubTab, label: 'Juego & KAI', icon: Sparkles, color: 'text-purple-400' },
     { id: 'finances' as SettingsSubTab, label: 'Tesorería', icon: Coins, color: 'text-amber-400' },
-    { id: 'oracle' as SettingsSubTab, label: 'Oráculo IA', icon: Cpu, color: 'text-cyan-300' },
-    { id: 'simulator' as SettingsSubTab, label: 'Simulador', icon: FlaskConical, color: 'text-fuchsia-400' },
-    { id: 'cloud' as SettingsSubTab, label: 'Nube & Sesión', icon: Cloud, color: 'text-blue-400' },
-    { id: 'backup' as SettingsSubTab, label: 'Datos & Backup', icon: Database, color: 'text-emerald-400' },
-    { id: 'danger' as SettingsSubTab, label: 'Zona Crítica', icon: ShieldAlert, color: 'text-red-400' }
+    { id: 'data' as SettingsSubTab, label: 'Nube & Datos', icon: Database, color: 'text-emerald-400' }
   ];
 
   return (
     <div className="space-y-6 pb-20">
       {/* HEADER & SUB-TABS NAVIGATION */}
-      <div className="bg-[#00152b] rounded-2xl border border-slate-800 p-3 sm:p-4 shadow-[0_4px_20px_rgba(0,0,0,0.25)] space-y-3">
-        <div className="flex items-center justify-between px-1 flex-wrap gap-2">
-          <h2 className="text-white font-black text-lg flex items-center gap-2 uppercase tracking-wider">
+      <div className="bg-[#00152b] rounded-2xl border border-cyan-500/20 p-3 sm:p-4 shadow-[0_4px_20px_rgba(0,0,0,0.35)] space-y-3">
+        <div className="flex items-center justify-between px-1">
+          <h2 className="text-white font-black text-base sm:text-lg flex items-center gap-2 uppercase tracking-wider">
             <Settings className="w-5 h-5 text-cyan-400" />
             <span>Configuración del Sistema</span>
           </h2>
-          <div className="flex items-center gap-2">
+          {activeSubTab === 'simulator' && (
             <button
               type="button"
               onClick={() => {
                 soundFX.playClick();
-                setActiveSubTab('simulator');
+                setActiveSubTab('gameplay');
               }}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold bg-fuchsia-950/80 hover:bg-fuchsia-900 border border-fuchsia-500/50 text-fuchsia-300 shadow-[0_0_12px_rgba(217,70,239,0.3)] transition-all cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-mono font-bold bg-fuchsia-950/80 hover:bg-fuchsia-900 border border-fuchsia-500/50 text-fuchsia-300 transition-all cursor-pointer"
             >
-              <FlaskConical className="w-3.5 h-3.5 text-fuchsia-400" />
-              <span>SIMULADOR</span>
+              <ChevronLeft className="w-3.5 h-3.5" />
+              <span>Volver a Configuración</span>
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                soundFX.playClick();
-                setIsOracleOpen(true);
-              }}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-500/50 text-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.3)] transition-all cursor-pointer"
-            >
-              <Cpu className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
-              <span>ORÁCULO IA</span>
-            </button>
-            <span className="text-[11px] font-mono font-bold text-slate-400 bg-[#000e1f] px-2.5 py-1 rounded-lg border border-slate-800">
-              PANEL TÁCTICO
-            </span>
-          </div>
+          )}
         </div>
 
-        {/* SUB-TABS NAV BAR */}
-        <div className="flex items-center gap-1.5 p-1 bg-[#000d1c] rounded-xl border border-slate-800/80 overflow-x-auto no-scrollbar">
+        {/* SUB-TABS NAV BAR: Clean 4-segment responsive control */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 p-1.5 bg-[#000d1c] rounded-xl border border-slate-800/80">
           {tabsConfig.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeSubTab === tab.id;
@@ -414,63 +397,18 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   soundFX.playClick();
                   setActiveSubTab(tab.id);
                 }}
-                className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all cursor-pointer ${
+                className={`flex items-center justify-center gap-2 py-2.5 px-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
                   isActive
-                    ? tab.id === 'danger'
-                      ? 'bg-red-600 text-white shadow-[0_0_12px_rgba(239,68,68,0.4)]'
-                      : 'bg-[#00284d] text-white border border-cyan-500/50 shadow-[0_0_15px_rgba(0,240,255,0.2)]'
+                    ? 'bg-[#00284d] text-white border border-cyan-500/50 shadow-[0_0_15px_rgba(0,240,255,0.25)]'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-[#001830]'
                 }`}
               >
-                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-white' : tab.color}`} />
-                <span>{tab.label}</span>
+                <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-cyan-300' : tab.color}`} />
+                <span className="truncate">{tab.label}</span>
               </button>
             );
           })}
         </div>
-
-        {/* BARRA RÁPIDA DE SINCRONIZACIÓN ENTRE DISPOSITIVOS */}
-        <div className="bg-[#000d1c] border border-cyan-500/30 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <Cloud className="w-4 h-4 text-cyan-400 shrink-0" />
-            <div className="min-w-0">
-              <p className="text-xs font-black text-white uppercase tracking-wider truncate">
-                {user ? `Sincronización Nube (${user.email})` : 'Puente Directo Tablet ↔ Teléfono'}
-              </p>
-              <p className="text-[11px] text-slate-400 truncate">
-                1️⃣ En tu Tablet toca &quot;Subir datos&quot; · 2️⃣ En tu Teléfono toca &quot;Traer datos&quot;
-              </p>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={handleForceSync}
-              disabled={isForceSyncing || isPullingCloud}
-              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 bg-cyan-950/90 hover:bg-cyan-900 border border-cyan-400/60 text-cyan-200 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer disabled:opacity-50"
-            >
-              <Upload className={`w-3.5 h-3.5 ${isForceSyncing ? 'animate-bounce' : ''}`} />
-              <span>{isForceSyncing ? 'Subiendo...' : 'Subir datos'}</span>
-            </button>
-            <button
-              type="button"
-              onClick={handlePullFromCloud}
-              disabled={isPullingCloud || isForceSyncing}
-              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-2 bg-emerald-950/90 hover:bg-emerald-900 border border-emerald-400/60 text-emerald-200 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer disabled:opacity-50"
-            >
-              <Download className={`w-3.5 h-3.5 ${isPullingCloud ? 'animate-bounce' : ''}`} />
-              <span>{isPullingCloud ? 'Cargando...' : 'Traer datos'}</span>
-            </button>
-          </div>
-        </div>
-
-        {cloudActionToast && (
-          <div className="p-2.5 rounded-xl bg-emerald-950/90 border border-emerald-500/60 text-emerald-300 text-xs font-bold flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span>{cloudActionToast}</span>
-          </div>
-        )}
       </div>
 
       {/* NOTIFICACIÓN REACTIVA GLOBAL */}
@@ -486,109 +424,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
       {/* CONTENIDO PRINCIPAL POR SUB-PESTAÑA */}
       <div className="max-w-3xl mx-auto">
-        {/* ===================== TAB 1: GENERAL & UI ===================== */}
-        {activeSubTab === 'general' && (
+        {/* ===================== TAB 1: PREFERENCIAS & UI ===================== */}
+        {activeSubTab === 'preferences' && (
           <div className="space-y-6 animate-fade-in">
-            {/* PROTOCOLO DE INDUCCIÓN Y GUÍA TÁCTICA DE KAI */}
-            <div className="bg-[#00152b] p-5 sm:p-6 rounded-2xl border border-cyan-500/35 space-y-4 shadow-[0_0_20px_rgba(0,240,255,0.08)]">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-cyan-400" />
-                  <h3 className="text-xs font-black text-cyan-400 uppercase tracking-widest">
-                    Manual y Guía Táctica de KAI
-                  </h3>
-                </div>
-                <span className="text-[10px] font-mono font-bold text-cyan-300 bg-cyan-950/70 border border-cyan-500/40 px-2 py-0.5 rounded-full">
-                  6 Módulos
-                </span>
-              </div>
-
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Repasa en cualquier momento la inducción guiada paso a paso sobre Energía Vital (HP), la Ley 21/66 en tus Orbes, la creación de misiones en Bloques Maestros, el Modo Foco y la Tienda.
-              </p>
-
-              <div className="flex flex-wrap items-center gap-3 pt-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    soundFX.playClick();
-                    useUIStore.getState().openTacticalGuide(1);
-                  }}
-                  className="px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black font-anton text-xs uppercase tracking-wider transition-all cursor-pointer shadow-[0_0_12px_rgba(0,240,255,0.3)] active:scale-95 flex items-center gap-1.5"
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Repasar Guía Táctica</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    soundFX.playClick();
-                    usePlayerStore.getState().resetTutorialGuides();
-                    notificationService.triggerNotification(
-                      'Avisos Restablecidos 🔄',
-                      'Los avisos contextuales de KAI volverán a mostrarse cuando explores la app.',
-                      '🔄'
-                    );
-                  }}
-                  className="px-3.5 py-2 rounded-xl bg-surface-card hover:bg-white/10 border border-slate-700 text-slate-300 hover:text-white font-mono text-xs font-bold transition-all cursor-pointer active:scale-95 flex items-center gap-1.5"
-                >
-                  <RefreshCw className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>Restablecer Avisos</span>
-                </button>
-              </div>
-            </div>
-
-            {/* COMPAÑERO CUÁNTICO KAI: SELECCIÓN Y FORJA */}
-            <div className="bg-[#00152b] p-5 sm:p-6 rounded-2xl border border-cyan-500/35 space-y-4 shadow-[0_0_20px_rgba(0,240,255,0.08)]">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <Palette className="w-4 h-4 text-cyan-400" />
-                  <h3 className="text-xs font-black text-cyan-400 uppercase tracking-widest">
-                    Compañero Holográfico KAI
-                  </h3>
-                </div>
-                <span className="text-[10px] font-mono font-bold text-cyan-300 bg-cyan-950/70 border border-cyan-500/40 px-2 py-0.5 rounded-full">
-                  {stats.kaiShape === 'custom' ? 'Forja IA Activa' : '6 Formas Día 0'}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between gap-4 p-3.5 rounded-xl bg-black/40 border border-white/10">
-                <div className="flex items-center gap-3">
-                  <div className="w-14 h-14 rounded-xl bg-cyan-950/40 border border-cyan-400/40 p-1 flex items-center justify-center shrink-0">
-                    <KaiVectorGraphics
-                      shapeId={stats.kaiShape || 'prism'}
-                      activeColor="#00f0ff"
-                      customForm={stats.kaiCustomForm}
-                    />
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-mono text-slate-400 uppercase block">Figura Equipada:</span>
-                    <strong className="text-sm font-anton text-white tracking-wide uppercase">
-                      {stats.kaiShape === 'custom' ? (stats.kaiCustomForm?.name || 'Forja Neural IA') : (KAI_OFFICIAL_SHAPES.find(s => s.id === stats.kaiShape)?.name || 'El Prisma')}
-                    </strong>
-                    <span className="text-[10px] text-slate-400 block mt-0.5">
-                      {stats.kaiShape === 'custom' ? 'Compañero vectorizado con IA multimodal' : 'Geometría oficial desbloqueada'}
-                    </span>
-                  </div>
-                </div>
-
-                {onOpenKaiWorkshop && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundFX.playClick();
-                      onOpenKaiWorkshop();
-                    }}
-                    className="px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black font-anton text-xs uppercase tracking-wider transition-all cursor-pointer shadow-[0_0_12px_rgba(0,240,255,0.3)] active:scale-95 flex items-center gap-1.5 shrink-0"
-                  >
-                    <Palette className="w-3.5 h-3.5" />
-                    <span>Cambiar KAI</span>
-                  </button>
-                )}
-              </div>
-            </div>
-
             {/* ATMÓSFERA Y ENTORNO */}
             <div className="bg-[#00152b] p-5 sm:p-6 rounded-2xl border border-slate-800 space-y-5">
               <h3 className="text-xs font-black text-cyan-400 uppercase tracking-widest flex items-center gap-2">
@@ -957,9 +795,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 </button>
               </div>
             </div>
+          </div>
+        )}
 
+        {/* ===================== TAB 2: JUEGO & KAI ===================== */}
+        {activeSubTab === 'gameplay' && (
+          <div className="space-y-6 animate-fade-in">
             {/* MECÁNICAS RPG */}
-            <div className="bg-[#00152b] p-5 sm:p-6 rounded-2xl border border-slate-800 space-y-4">
+            <div className="bg-[#00152b] p-5 sm:p-6 rounded-2xl border border-purple-500/30 space-y-4 shadow-[0_0_20px_rgba(168,85,247,0.08)]">
               <h3 className="text-xs font-black text-purple-400 uppercase tracking-widest flex items-center gap-2">
                 <Sparkles className="w-4 h-4" /> Mecánicas RPG & Gamificación
               </h3>
@@ -1015,6 +858,165 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   className={`w-12 h-6 rounded-full relative transition-colors flex-shrink-0 cursor-pointer ${settings.strictMode ? 'bg-red-500' : 'bg-slate-700'}`}
                 >
                   <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-all ${settings.strictMode ? 'left-6.5 translate-x-[24px]' : 'left-0.5'}`}></div>
+                </button>
+              </div>
+            </div>
+
+            {/* COMPAÑERO CUÁNTICO KAI: SELECCIÓN Y FORJA */}
+            <div className="bg-[#00152b] p-5 sm:p-6 rounded-2xl border border-cyan-500/35 space-y-4 shadow-[0_0_20px_rgba(0,240,255,0.08)]">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Palette className="w-4 h-4 text-cyan-400" />
+                  <h3 className="text-xs font-black text-cyan-400 uppercase tracking-widest">
+                    Compañero Holográfico KAI
+                  </h3>
+                </div>
+                <span className="text-[10px] font-mono font-bold text-cyan-300 bg-cyan-950/70 border border-cyan-500/40 px-2 py-0.5 rounded-full">
+                  {stats.kaiShape === 'custom' ? 'Forja IA Activa' : '6 Formas Día 0'}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between gap-4 p-3.5 rounded-xl bg-black/40 border border-white/10">
+                <div className="flex items-center gap-3">
+                  <div className="w-14 h-14 rounded-xl bg-cyan-950/40 border border-cyan-400/40 p-1 flex items-center justify-center shrink-0">
+                    <KaiVectorGraphics
+                      shapeId={stats.kaiShape || 'prism'}
+                      activeColor="#00f0ff"
+                      customForm={stats.kaiCustomForm}
+                    />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-mono text-slate-400 uppercase block">Figura Equipada:</span>
+                    <strong className="text-sm font-anton text-white tracking-wide uppercase">
+                      {stats.kaiShape === 'custom' ? (stats.kaiCustomForm?.name || 'Forja Neural IA') : (KAI_OFFICIAL_SHAPES.find(s => s.id === stats.kaiShape)?.name || 'El Prisma')}
+                    </strong>
+                    <span className="text-[10px] text-slate-400 block mt-0.5">
+                      {stats.kaiShape === 'custom' ? 'Compañero vectorizado con IA multimodal' : 'Geometría oficial desbloqueada'}
+                    </span>
+                  </div>
+                </div>
+
+                {onOpenKaiWorkshop && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFX.playClick();
+                      onOpenKaiWorkshop();
+                    }}
+                    className="px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black font-anton text-xs uppercase tracking-wider transition-all cursor-pointer shadow-[0_0_12px_rgba(0,240,255,0.3)] active:scale-95 flex items-center gap-1.5 shrink-0"
+                  >
+                    <Palette className="w-3.5 h-3.5" />
+                    <span>Taller de KAI</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* PROTOCOLO DE INDUCCIÓN Y GUÍA TÁCTICA DE KAI */}
+            <div className="bg-[#00152b] p-5 sm:p-6 rounded-2xl border border-cyan-500/35 space-y-4 shadow-[0_0_20px_rgba(0,240,255,0.08)]">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-cyan-400" />
+                  <h3 className="text-xs font-black text-cyan-400 uppercase tracking-widest">
+                    Manual y Guía Táctica de KAI
+                  </h3>
+                </div>
+                <span className="text-[10px] font-mono font-bold text-cyan-300 bg-cyan-950/70 border border-cyan-500/40 px-2 py-0.5 rounded-full">
+                  6 Módulos
+                </span>
+              </div>
+
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Repasa en cualquier momento la inducción guiada paso a paso sobre Energía Vital (HP), la Ley 21/66 en tus Orbes, la creación de misiones en Bloques Maestros, el Modo Foco y la Tienda.
+              </p>
+
+              <div className="flex flex-wrap items-center gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFX.playClick();
+                    useUIStore.getState().openTacticalGuide(1);
+                  }}
+                  className="px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black font-anton text-xs uppercase tracking-wider transition-all cursor-pointer shadow-[0_0_12px_rgba(0,240,255,0.3)] active:scale-95 flex items-center gap-1.5"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Repasar Guía Táctica</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFX.playClick();
+                    usePlayerStore.getState().resetTutorialGuides();
+                    notificationService.triggerNotification(
+                      'Avisos Restablecidos 🔄',
+                      'Los avisos contextuales de KAI volverán a mostrarse cuando explores la app.',
+                      '🔄'
+                    );
+                  }}
+                  className="px-3.5 py-2 rounded-xl bg-surface-card hover:bg-white/10 border border-slate-700 text-slate-300 hover:text-white font-mono text-xs font-bold transition-all cursor-pointer active:scale-95 flex items-center gap-1.5"
+                >
+                  <RefreshCw className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Restablecer Avisos</span>
+                </button>
+              </div>
+            </div>
+
+            {/* LABORATORIO & HERRAMIENTAS TÁCTICAS */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Simulador */}
+              <div className="bg-[#00152b] p-5 rounded-2xl border border-fuchsia-500/40 space-y-3 shadow-[0_0_15px_rgba(217,70,239,0.1)] flex flex-col justify-between">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-fuchsia-400 uppercase tracking-widest flex items-center gap-1.5">
+                      <FlaskConical className="w-4 h-4 text-fuchsia-400" /> Simulador Táctico
+                    </span>
+                    <span className="text-[10px] font-mono text-fuchsia-300 bg-fuchsia-950/70 border border-fuchsia-500/40 px-2 py-0.5 rounded-full">
+                      Sandbox
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    Experimenta proyecciones de nivel, evolución de rachas y batallas sin alterar tus datos reales de juego.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFX.playClick();
+                    setActiveSubTab('simulator');
+                  }}
+                  className="w-full py-2.5 px-4 bg-fuchsia-950 hover:bg-fuchsia-900 border border-fuchsia-500/60 text-fuchsia-200 rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer"
+                >
+                  <FlaskConical className="w-3.5 h-3.5 text-fuchsia-400" />
+                  <span>Abrir Simulador</span>
+                </button>
+              </div>
+
+              {/* Oráculo IA */}
+              <div className="bg-[#00152b] p-5 rounded-2xl border border-cyan-500/40 space-y-3 shadow-[0_0_15px_rgba(0,240,255,0.1)] flex flex-col justify-between">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-cyan-400 uppercase tracking-widest flex items-center gap-1.5">
+                      <Cpu className="w-4 h-4 text-cyan-400 animate-pulse" /> Oráculo IA
+                    </span>
+                    <span className="text-[10px] font-mono text-cyan-300 bg-cyan-950/70 border border-cyan-500/40 px-2 py-0.5 rounded-full">
+                      Gemini
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    Asistente neural inteligente para balancear tus bloques maestros, sugerir hábitos y optimizar tu rutina.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFX.playClick();
+                    setIsOracleOpen(true);
+                  }}
+                  className="w-full py-2.5 px-4 bg-cyan-950 hover:bg-cyan-900 border border-cyan-500/60 text-cyan-200 rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer"
+                >
+                  <Cpu className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Consultar Oráculo</span>
                 </button>
               </div>
             </div>
@@ -1123,97 +1125,73 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </div>
         )}
 
-        {/* ===================== TAB: ORÁCULO IA ===================== */}
-        {activeSubTab === 'oracle' && (
+        {/* ===================== TAB 4: NUBE & DATOS ===================== */}
+        {activeSubTab === 'data' && (
           <div className="space-y-6 animate-fade-in">
-            <div className="bg-[#00152b] p-5 sm:p-6 rounded-2xl border border-slate-800 space-y-5">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-                <div>
-                  <h3 className="text-sm font-black text-white flex items-center gap-2 font-mono">
-                    <Cpu className="w-4 h-4 text-cyan-400 animate-pulse" />
-                    Núcleo Central // Compilador Neural (IA)
+            {/* FEEDBACK REACTIVO DE DATOS */}
+            {exportFeedback && (
+              <div className="p-3.5 bg-cyan-950/90 border border-cyan-500/80 text-cyan-300 rounded-xl text-xs font-black flex items-center gap-2 shadow-[0_0_15px_rgba(0,240,255,0.2)]">
+                <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0" />
+                <span>{exportFeedback}</span>
+              </div>
+            )}
+
+            {importStatus && (
+              <div className="p-3.5 bg-emerald-950/90 border border-emerald-500/80 text-emerald-300 rounded-xl text-xs font-black flex items-center gap-2 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
+                <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>{importStatus}</span>
+              </div>
+            )}
+
+            {/* 1. PUENTE DIRECTO TABLET ↔ TELÉFONO */}
+            <div className="bg-[#00152b] p-5 sm:p-6 rounded-2xl border border-cyan-500/40 space-y-4 shadow-[0_0_20px_rgba(0,240,255,0.1)]">
+              <div className="flex items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                <div className="flex items-center gap-2">
+                  <Cloud className="w-4 h-4 text-cyan-400 shrink-0" />
+                  <h3 className="text-xs font-black text-white uppercase tracking-widest">
+                    Puente Directo Tablet ↔ Teléfono
                   </h3>
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    Asistente de inteligencia artificial para diseño, balanceo y calibración de tu rutina y hábitos.
-                  </p>
                 </div>
-                <span className="text-[10px] font-mono text-cyan-400 bg-cyan-950/80 px-2.5 py-1 rounded-lg border border-cyan-700/60 flex items-center gap-1.5">
-                  <Sparkles className="w-3 h-3 text-cyan-300" />
-                  GEMINI AI
+                <span className="text-[10px] font-mono font-bold text-cyan-300 bg-cyan-950/80 px-2 py-0.5 rounded border border-cyan-700/60">
+                  SINCRONIZACIÓN RÁPIDA
                 </span>
               </div>
 
-              {/* TARJETA CYBERPUNK PRINCIPAL */}
-              <div className="bg-gradient-to-br from-cyan-950/60 via-[#001b33] to-[#000e1f] border border-cyan-500/40 p-5 sm:p-6 rounded-2xl shadow-[0_0_25px_rgba(6,182,212,0.15)] space-y-4">
-                <div className="flex items-start gap-3">
-                  <div className="p-3 rounded-xl bg-cyan-950/80 border border-cyan-500/50 text-cyan-300 shrink-0">
-                    <Cpu className="w-6 h-6 animate-pulse" />
-                  </div>
-                  <div className="space-y-1">
-                    <h4 className="text-sm font-bold text-white uppercase tracking-wider">
-                      Compilación & Asesoría Estratégica
-                    </h4>
-                    <p className="text-xs text-slate-300 leading-relaxed">
-                      El Oráculo analiza tus compromisos horarios, energía y metas personales para generar bloques y hábitos óptimos sin sobrecarga cognitiva.
-                    </p>
-                  </div>
-                </div>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                1️⃣ En tu <strong>Tablet</strong> toca &quot;Subir datos&quot; · 2️⃣ En tu <strong>Teléfono</strong> toca &quot;Traer datos&quot; para sincronizar tus misiones y rutinas al instante entre dispositivos.
+              </p>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                  <div className="p-3 rounded-xl bg-[#000f20]/80 border border-cyan-900/50 text-xs space-y-1">
-                    <div className="font-bold text-cyan-300 flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5 text-cyan-400" /> Diagnóstico
-                    </div>
-                    <p className="text-slate-400 text-[11px]">
-                      Evalúa tus hábitos actuales y balance de maestría.
-                    </p>
-                  </div>
-                  <div className="p-3 rounded-xl bg-[#000f20]/80 border border-cyan-900/50 text-xs space-y-1">
-                    <div className="font-bold text-cyan-300 flex items-center gap-1.5">
-                      <SlidersHorizontal className="w-3.5 h-3.5 text-cyan-400" /> Calibración
-                    </div>
-                    <p className="text-slate-400 text-[11px]">
-                      Ajusta horarios y frecuencias según tu semana real.
-                    </p>
-                  </div>
-                  <div className="p-3 rounded-xl bg-[#000f20]/80 border border-cyan-900/50 text-xs space-y-1">
-                    <div className="font-bold text-cyan-300 flex items-center gap-1.5">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-cyan-400" /> Inyección
-                    </div>
-                    <p className="text-slate-400 text-[11px]">
-                      Añade las nuevas rutinas directamente a tu juego.
-                    </p>
-                  </div>
-                </div>
-
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                 <button
                   type="button"
-                  onClick={() => {
-                    soundFX.playClick();
-                    setIsOracleOpen(true);
-                  }}
-                  className="w-full min-h-[46px] px-5 py-3 bg-gradient-to-r from-cyan-600 via-cyan-500 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-black font-black text-xs uppercase tracking-widest rounded-xl shadow-[0_0_20px_rgba(6,182,212,0.4)] flex items-center justify-center gap-2.5 transition-all cursor-pointer font-mono"
+                  onClick={handleForceSync}
+                  disabled={isForceSyncing || isPullingCloud}
+                  className="min-h-[44px] flex items-center justify-center gap-2 px-4 py-2.5 bg-cyan-950/90 hover:bg-cyan-900 border border-cyan-400/70 text-cyan-200 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer disabled:opacity-50 shadow-sm"
                 >
-                  <Cpu className="w-4 h-4 text-black" />
-                  <span>ABRIR NÚCLEO CENTRAL // ORÁCULO IA</span>
+                  <Upload className={`w-4 h-4 ${isForceSyncing ? 'animate-bounce' : ''}`} />
+                  <span>{isForceSyncing ? 'Subiendo datos...' : 'Subir datos a la nube'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handlePullFromCloud}
+                  disabled={isPullingCloud || isForceSyncing}
+                  className="min-h-[44px] flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-950/90 hover:bg-emerald-900 border border-emerald-400/70 text-emerald-200 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer disabled:opacity-50 shadow-sm"
+                >
+                  <Download className={`w-4 h-4 ${isPullingCloud ? 'animate-bounce' : ''}`} />
+                  <span>{isPullingCloud ? 'Cargando datos...' : 'Traer datos a este equipo'}</span>
                 </button>
               </div>
+
+              {cloudActionToast && (
+                <div className="p-3 rounded-xl bg-emerald-950/90 border border-emerald-500/60 text-emerald-300 text-xs font-bold flex items-center gap-2 animate-fade-in">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>{cloudActionToast}</span>
+                </div>
+              )}
             </div>
-          </div>
-        )}
 
-        {/* ===================== TAB: SIMULADOR DE ESCENARIOS ===================== */}
-        {activeSubTab === 'simulator' && (
-          <div className="animate-fade-in">
-            <ScenarioSimulatorPanel />
-          </div>
-        )}
-
-        {/* ===================== TAB 3: CUENTA & NUBE ===================== */}
-        {activeSubTab === 'cloud' && (
-          <div className="space-y-6 animate-fade-in">
+            {/* 2. ESTADO DE FIRESTORE & USUARIO */}
             <div className="bg-[#00152b] p-5 sm:p-6 rounded-2xl border border-slate-800 space-y-5">
-              {/* ESTADO HEADER */}
               <div className="flex items-center justify-between border-b border-slate-800 pb-4">
                 <h3 className="text-sm font-black text-white flex items-center gap-2">
                   <Cloud className="w-4 h-4 text-cyan-400" /> Sincronización en la Nube (Firestore)
@@ -1262,25 +1240,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2 shrink-0">
-                  <button 
-                    onClick={handleForceSync}
-                    disabled={isForceSyncing || isPullingCloud}
-                    className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-cyan-950/90 hover:bg-cyan-900 border border-cyan-400/60 text-cyan-200 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer disabled:opacity-50"
-                    title="Subir los datos de este dispositivo a la nube"
-                  >
-                    <Upload className={`w-3.5 h-3.5 ${isForceSyncing ? 'animate-bounce' : ''}`} />
-                    <span>{isForceSyncing ? 'Subiendo...' : 'Subir datos'}</span>
-                  </button>
-                  <button 
-                    onClick={handlePullFromCloud}
-                    disabled={isPullingCloud || isForceSyncing}
-                    className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-emerald-950/90 hover:bg-emerald-900 border border-emerald-400/60 text-emerald-200 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer disabled:opacity-50"
-                    title="Descargar los datos de la nube a este dispositivo"
-                  >
-                    <Download className={`w-3.5 h-3.5 ${isPullingCloud ? 'animate-bounce' : ''}`} />
-                    <span>{isPullingCloud ? 'Cargando...' : 'Traer datos'}</span>
-                  </button>
+                <div className="flex items-center gap-2 shrink-0">
                   {user ? (
                     <button 
                       onClick={() => signOut()}
@@ -1295,18 +1255,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer"
                     >
                       <LogIn className="w-3.5 h-3.5" />
-                      <span>Google</span>
+                      <span>Conectar Google</span>
                     </button>
                   )}
                 </div>
               </div>
-
-              {cloudActionToast && (
-                <div className="p-3 rounded-xl bg-emerald-950/90 border border-emerald-500/60 text-emerald-300 text-xs font-bold flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>{cloudActionToast}</span>
-                </div>
-              )}
 
               {/* RESUMEN CONCISO DE PROTECCIÓN */}
               <div className="p-3.5 rounded-xl bg-[#001224] border border-blue-900/40 text-xs text-slate-300 flex items-center justify-between gap-3">
@@ -1320,115 +1273,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   </span>
                 )}
               </div>
-
-              {/* RESPALDO EN GOOGLE DRIVE / NUBE DE GMAIL */}
-              <GoogleDriveSyncCard />
-
-              {/* SECCIÓN PWA INSTALABLE */}
-              <div className="pt-4 border-t border-slate-800/80 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Smartphone className="w-4 h-4 text-cyan-400" />
-                    <h4 className="text-xs font-black text-white uppercase tracking-wider font-mono">
-                      Aplicación Instalable PWA (Offline Ready)
-                    </h4>
-                  </div>
-                  {pwa.isInstalled ? (
-                    <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                      App Instalada
-                    </span>
-                  ) : (
-                    <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-cyan-950/80 text-cyan-300 border border-cyan-500/40">
-                      Instalable en Móvil
-                    </span>
-                  )}
-                </div>
-
-                <div className="bg-[#001020] border border-cyan-900/50 p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="space-y-1">
-                    <p className="text-xs font-bold text-slate-100">
-                      Instala La Solución en tu teléfono, tablet o escritorio
-                    </p>
-                    <p className="text-[11px] text-slate-400 leading-relaxed">
-                      Carga instantánea, funcionamiento sin conexión a internet y acceso directo desde tu pantalla de inicio.
-                    </p>
-                  </div>
-
-                  {pwa.isInstalled ? (
-                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 text-xs font-bold shrink-0">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                      <span>Ejecutando como App Nativa</span>
-                    </div>
-                  ) : pwa.isInstallable ? (
-                    <button
-                      onClick={async () => {
-                        soundFX.playClick();
-                        const ok = await pwa.install();
-                        if (ok) soundFX.playLevelUp();
-                      }}
-                      className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-xs rounded-xl shadow-[0_0_15px_rgba(0,240,255,0.3)] transition-all cursor-pointer shrink-0"
-                    >
-                      <Download className="w-4 h-4" />
-                      Instalar Ahora
-                    </button>
-                  ) : pwa.isIOS ? (
-                    <button
-                      onClick={() => {
-                        soundFX.playClick();
-                        setShowIOSInstructions(!showIOSInstructions);
-                      }}
-                      className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-900/80 hover:bg-blue-800 text-cyan-300 border border-cyan-500/40 text-xs font-bold rounded-xl transition-all cursor-pointer shrink-0"
-                    >
-                      <Share className="w-3.5 h-3.5" />
-                      Instrucciones iOS
-                    </button>
-                  ) : (
-                    <div className="text-[11px] font-mono text-slate-400 bg-slate-900/80 px-3 py-1.5 rounded-lg border border-slate-800 shrink-0">
-                      Usa el menú del navegador → "Agregar a pantalla de inicio"
-                    </div>
-                  )}
-                </div>
-
-                {showIOSInstructions && (
-                  <div className="p-4 rounded-xl bg-slate-900/90 border border-cyan-500/40 text-xs text-slate-300 space-y-2.5 animate-in fade-in">
-                    <p className="font-bold text-cyan-300 flex items-center gap-1.5">
-                      <Smartphone className="w-4 h-4" /> Pasos para instalar en Safari iOS:
-                    </p>
-                    <ol className="list-decimal list-inside space-y-1.5 text-[11px] text-slate-300">
-                      <li>Toca el botón <strong className="text-white">Compartir</strong> <Share className="w-3.5 h-3.5 inline text-cyan-400" /> en la barra inferior de Safari.</li>
-                      <li>Desplázate hacia abajo y presiona <strong className="text-white">"Agregar a inicio"</strong> <PlusSquare className="w-3.5 h-3.5 inline text-cyan-400" />.</li>
-                      <li>Presiona <strong className="text-cyan-300">"Agregar"</strong> en la esquina superior derecha.</li>
-                    </ol>
-                  </div>
-                )}
-              </div>
             </div>
-          </div>
-        )}
 
-        {/* ===================== TAB 4: DATOS & BACKUP ===================== */}
-        {activeSubTab === 'backup' && (
-          <div className="space-y-6 animate-fade-in">
-            {/* FEEDBACK DE EXPORTACIÓN / IMPORTACIÓN */}
-            {exportFeedback && (
-              <div className="p-3.5 bg-cyan-950/90 border border-cyan-500/80 text-cyan-300 rounded-xl text-xs font-black flex items-center gap-2 shadow-[0_0_15px_rgba(0,240,255,0.2)]">
-                <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0" />
-                <span>{exportFeedback}</span>
-              </div>
-            )}
-
-            {importStatus && (
-              <div className="p-3.5 bg-emerald-950/90 border border-emerald-500/80 text-emerald-300 rounded-xl text-xs font-black flex items-center gap-2 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
-                <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>{importStatus}</span>
-              </div>
-            )}
-
-            {/* RESPALDO EN GOOGLE DRIVE / NUBE DE GMAIL */}
-            <GoogleDriveSyncCard />
-
-            {/* RESPALDO TOTAL LOCAL */}
+            {/* 3. RESPALDO LOCAL JSON & CSV */}
             <div className="bg-[#00152b] p-5 sm:p-6 rounded-2xl border border-slate-800 space-y-4">
               <div className="flex items-start gap-3">
                 <div className="p-2.5 rounded-xl bg-[#002244] border border-cyan-700/60 text-cyan-300 shrink-0">
@@ -1474,7 +1321,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
             </div>
 
-            {/* PLANTILLAS DE HORARIOS */}
+            {/* 4. PLANTILLAS DE HORARIOS */}
             <div className="bg-[#00152b] p-5 sm:p-6 rounded-2xl border border-slate-800 space-y-4">
               <div className="flex items-start gap-3">
                 <div className="p-2.5 rounded-xl bg-emerald-950 border border-emerald-700/60 text-emerald-400 shrink-0">
@@ -1511,38 +1358,90 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
             </div>
 
-            {/* NÚCLEO CENTRAL / ORÁCULO IA */}
-            <div className="bg-gradient-to-r from-cyan-950/40 via-slate-900/60 to-[#03070d] border border-cyan-500/30 p-5 rounded-2xl shadow-[0_0_20px_rgba(6,182,212,0.1)] space-y-3">
-              <div className="flex items-center justify-between">
-                <h4 className="text-xs font-black text-cyan-300 uppercase tracking-widest flex items-center gap-2 font-mono">
-                  <Cpu className="w-4 h-4 text-cyan-400 animate-pulse" />
-                  Núcleo Central // Compilador Neural (IA)
-                </h4>
-                <span className="text-[10px] font-mono text-cyan-400 bg-cyan-950/80 px-2 py-0.5 rounded border border-cyan-700/60">
-                  ORÁCULO
-                </span>
-              </div>
-              <p className="text-xs text-slate-300 leading-relaxed font-sans">
-                Transfiere al Núcleo Central tus parámetros de tiempo y compromisos semanales para generar y calibrar subrutinas de hábitos con asistencia de IA.
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  soundFX.playClick();
-                  setIsOracleOpen(true);
-                }}
-                className="w-full min-h-[44px] px-4 py-2.5 bg-cyan-600/20 hover:bg-cyan-500/30 text-cyan-300 hover:text-white font-black text-xs uppercase tracking-wider rounded-xl border border-cyan-500/40 hover:border-cyan-400 flex items-center justify-center gap-2 transition-all cursor-pointer font-mono"
-              >
-                <Cpu className="w-4 h-4 text-cyan-400" />
-                <span>Conectar con Núcleo Central</span>
-              </button>
-            </div>
-          </div>
-        )}
+            {/* 5. GOOGLE DRIVE SYNC CARD */}
+            <GoogleDriveSyncCard />
 
-        {/* ===================== TAB 5: ZONA CRÍTICA ===================== */}
-        {activeSubTab === 'danger' && (
-          <div className="space-y-6 animate-fade-in">
+            {/* 6. APLICACIÓN INSTALABLE PWA */}
+            <div className="bg-[#00152b] p-5 sm:p-6 rounded-2xl border border-slate-800 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Smartphone className="w-4 h-4 text-cyan-400" />
+                  <h4 className="text-xs font-black text-white uppercase tracking-wider font-mono">
+                    Aplicación Instalable PWA (Offline Ready)
+                  </h4>
+                </div>
+                {pwa.isInstalled ? (
+                  <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                    App Instalada
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-cyan-950/80 text-cyan-300 border border-cyan-500/40">
+                    Instalable en Móvil
+                  </span>
+                )}
+              </div>
+
+              <div className="bg-[#001020] border border-cyan-900/50 p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <p className="text-xs font-bold text-slate-100">
+                    Instala La Solución en tu teléfono, tablet o escritorio
+                  </p>
+                  <p className="text-[11px] text-slate-400 leading-relaxed">
+                    Carga instantánea, funcionamiento sin conexión a internet y acceso directo desde tu pantalla de inicio.
+                  </p>
+                </div>
+
+                {pwa.isInstalled ? (
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 text-xs font-bold shrink-0">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    <span>Ejecutando como App Nativa</span>
+                  </div>
+                ) : pwa.isInstallable ? (
+                  <button
+                    onClick={async () => {
+                      soundFX.playClick();
+                      const ok = await pwa.install();
+                      if (ok) soundFX.playLevelUp();
+                    }}
+                    className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-xs rounded-xl shadow-[0_0_15px_rgba(0,240,255,0.3)] transition-all cursor-pointer shrink-0"
+                  >
+                    <Download className="w-4 h-4" />
+                    Instalar Ahora
+                  </button>
+                ) : pwa.isIOS ? (
+                  <button
+                    onClick={() => {
+                      soundFX.playClick();
+                      setShowIOSInstructions(!showIOSInstructions);
+                    }}
+                    className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-900/80 hover:bg-blue-800 text-cyan-300 border border-cyan-500/40 text-xs font-bold rounded-xl transition-all cursor-pointer shrink-0"
+                  >
+                    <Share className="w-3.5 h-3.5" />
+                    Instrucciones iOS
+                  </button>
+                ) : (
+                  <div className="text-[11px] font-mono text-slate-400 bg-slate-900/80 px-3 py-1.5 rounded-lg border border-slate-800 shrink-0">
+                    Usa el menú del navegador → "Agregar a pantalla de inicio"
+                  </div>
+                )}
+              </div>
+
+              {showIOSInstructions && (
+                <div className="p-4 rounded-xl bg-slate-900/90 border border-cyan-500/40 text-xs text-slate-300 space-y-2.5 animate-in fade-in">
+                  <p className="font-bold text-cyan-300 flex items-center gap-1.5">
+                    <Smartphone className="w-4 h-4" /> Pasos para instalar en Safari iOS:
+                  </p>
+                  <ol className="list-decimal list-inside space-y-1.5 text-[11px] text-slate-300">
+                    <li>Toca el botón <strong className="text-white">Compartir</strong> <Share className="w-3.5 h-3.5 inline text-cyan-400" /> en la barra inferior de Safari.</li>
+                    <li>Desplázate hacia abajo y presiona <strong className="text-white">"Agregar a inicio"</strong> <PlusSquare className="w-3.5 h-3.5 inline text-cyan-400" />.</li>
+                    <li>Presiona <strong className="text-cyan-300">"Agregar"</strong> en la esquina superior derecha.</li>
+                  </ol>
+                </div>
+              )}
+            </div>
+
+            {/* 7. ZONA CRÍTICA */}
             <div className="bg-[#1a0505] p-6 rounded-2xl border border-red-900/60 space-y-4">
               <div className="flex items-start gap-3">
                 <div className="p-3 rounded-2xl bg-red-950/80 border border-red-700 text-red-400 shrink-0">
@@ -1582,6 +1481,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 </button>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* ===================== TAB 5: SIMULADOR DE ESCENARIOS ===================== */}
+        {activeSubTab === 'simulator' && (
+          <div className="animate-fade-in space-y-4">
+            <ScenarioSimulatorPanel />
           </div>
         )}
       </div>
