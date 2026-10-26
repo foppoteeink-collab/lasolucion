@@ -298,7 +298,11 @@ export const KaiVectorGraphics: React.FC<KaiVectorGraphicsProps> = ({
         // Si el resultado de la forja incluye código SVG puro (arquitectura 100% SVG)
         if (customForm.svgContent) {
           const artStyle = customForm.artStyle || 'neon-geometry';
-          const processed = injectAuraColorIntoSvg(customForm.svgContent, artStyle, lineColor);
+          const processed = injectAuraColorIntoSvg(customForm.svgContent, artStyle, lineColor, {
+            eyeOffset,
+            isTracking: isTrackingMouse,
+            isSpeaking: justClicked,
+          });
           const innerMatch = processed.match(/<svg[^>]*>([\s\S]*?)<\/svg>/i);
           const innerContent = innerMatch ? innerMatch[1] : processed;
           return (

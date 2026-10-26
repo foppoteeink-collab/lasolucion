@@ -130,20 +130,17 @@ export const Header: React.FC<HeaderProps> = ({
     if (isKaiPulsing) return;
     
     const cycleColors = [
-      '#ffffff',
+      '#00f0ff', // Cian Neón
       '#00f0ff',
+      '#10e29d', // Verde Esmeralda Neón
+      '#10e29d',
       '#00f0ff',
-      '#3b82f6',
-      '#10b981',
-      '#f59e0b',
-      '#00f0ff',
-      '#ffffff',
     ];
     let i = 0;
     const interval = setInterval(() => {
       i = (i + 1) % cycleColors.length;
       setRainbowColor(cycleColors[i]);
-    }, 1250); // 8 colors * 1.25s = 10s cycle
+    }, 2000);
     
     return () => clearInterval(interval);
   }, [isKaiPulsing]);

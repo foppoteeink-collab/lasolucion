@@ -1,9 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion } from 'motion/react';
 import { KaiCustomForm, KaiMultiverseStyle, KaiShapeKey } from '../types';
 import { KaiVectorGraphics } from './KaiVectorGraphics';
 import { KaiCosmeticEffects } from './KaiCosmeticEffects';
 import { usePlayerStore } from '../store/usePlayerStore';
+import { soundFX } from '../utils/audio';
 
 export interface KAICompanionProps {
   customForm?: KaiCustomForm | null;
@@ -16,21 +17,25 @@ export interface KAICompanionProps {
   showHUD?: boolean;
   auraState?: 'normal' | 'focus_trance' | 'victory' | 'warning_amber';
   glowFilterId?: string;
+  eyeOffset?: { x: number; y: number };
+  isTrackingMouse?: boolean;
+  isSpeaking?: boolean;
 }
 
 /**
  * Inyecta el color de la variable --color-aura-activa al atributo stroke o fill
- * del código SVG devuelto por la Forja Neural según el estilo seleccionado:
- *
- * 1. "Geometría Neón": stroke="var(--color-aura-activa)", stroke-width="2", fill="none"
- * 2. "Cyber-Pixel": fill="var(--color-aura-activa)", shape-rendering="crispEdges"
- * 3. "Flujo Orgánico": stroke="var(--color-aura-activa)", stroke-width="2", fill="none"
- * 4. "Low Poly": fill="var(--color-aura-activa)", stroke="none", preservando fill-opacity
+ * del código SVG devuelto por la Forja Neural e inserta el motor de animación orgánica
+ * viva (parpadeo natural, respiración corporal squash & stretch, flotación de extremidades y seguimiento ocular).
  */
 export function injectAuraColorIntoSvg(
   rawSvg: string,
   artStyle: KaiMultiverseStyle = 'neon-geometry',
-  auraColor: string = '#00f0ff'
+  auraColor: string = '#00f0ff',
+  options?: {
+    eyeOffset?: { x: number; y: number };
+    isTracking?: boolean;
+    isSpeaking?: boolean;
+  }
 ): string {
   if (!rawSvg || typeof rawSvg !== 'string') return '';
 
@@ -48,14 +53,106 @@ export function injectAuraColorIntoSvg(
     cleaned = `<svg viewBox="0 0 160 170" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">${cleaned}</svg>`;
   }
 
-  // Asegurar atributos estándar en <svg>
+  const eyeX = options?.eyeOffset?.x !== undefined ? options.eyeOffset.x.toFixed(2) : '0';
+  const eyeY = options?.eyeOffset?.y !== undefined ? options.eyeOffset.y.toFixed(2) : '0';
+  const isTracking = Boolean(options?.isTracking);
+  const isSpeaking = Boolean(options?.isSpeaking);
+
+  // Inyectar etiquetas de clases heurísticas si la IA no proporcionó los IDs semánticos
+  if (!cleaned.includes('kai-eyes') && !cleaned.includes('id="kai-eyes"')) {
+    cleaned = cleaned.replace(/(<(?:g|circle|ellipse)\b[^>]*?(?:id|class)=["'][^"']*(?:eye|ojo)[^"']*["'][^>]*>)/gi, (m) => {
+      if (!m.includes('class=')) return m.replace(/>$/, ' class="kai-eyes">');
+      return m.replace(/class=["']([^"']*)["']/i, 'class="$1 kai-eyes"');
+    });
+    cleaned = cleaned.replace(/(<(?:circle|ellipse)\b[^>]*?(?:id|class)=["'][^"']*(?:pupil|pupila|iris)[^"']*["'][^>]*>)/gi, (m) => {
+      if (!m.includes('class=')) return m.replace(/>$/, ' class="kai-pupil">');
+      return m.replace(/class=["']([^"']*)["']/i, 'class="$1 kai-pupil"');
+    });
+  }
+
+  if (!cleaned.includes('kai-mouth') && !cleaned.includes('id="kai-mouth"')) {
+    cleaned = cleaned.replace(/(<(?:g|path|line)\b[^>]*?(?:id|class)=["'][^"']*(?:mouth|boca|smile|sonrisa)[^"']*["'][^>]*>)/gi, (m) => {
+      if (!m.includes('class=')) return m.replace(/>$/, ' class="kai-mouth">');
+      return m.replace(/class=["']([^"']*)["']/i, 'class="$1 kai-mouth"');
+    });
+  }
+
+  const livingStyles = `
+<style>
+  @keyframes kai-live-body {
+    0%, 100% { transform: translateY(0px) scale(1, 1); }
+    50% { transform: translateY(-3px) scale(0.985, 1.02); }
+  }
+  @keyframes kai-live-blink {
+    0%, 82% { transform: scaleY(1); }
+    84% { transform: scaleY(0.06); }
+    86% { transform: scaleY(1); }
+    89% { transform: scaleY(0.2); }
+    91% { transform: scaleY(1); }
+    100% { transform: scaleY(1); }
+  }
+  @keyframes kai-live-gaze {
+    0%, 35% { transform: translate(0px, 0px); }
+    40%, 60% { transform: translate(2.5px, -1.2px); }
+    65%, 85% { transform: translate(-2.5px, 0.8px); }
+    90%, 100% { transform: translate(0px, 0px); }
+  }
+  @keyframes kai-live-mouth-breath {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.06, 0.94); }
+  }
+  @keyframes kai-live-mouth-talk {
+    0%, 100% { transform: scale(1); }
+    20% { transform: scale(1.25, 1.45) translateY(1.5px); }
+    40% { transform: scale(0.85, 0.8); }
+    60% { transform: scale(1.2, 1.3) translateY(1.2px); }
+    80% { transform: scale(0.95, 0.9); }
+  }
+  @keyframes kai-live-hand-l {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(3.5px) rotate(-4.5deg); }
+  }
+  @keyframes kai-live-hand-r {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(3.5px) rotate(4.5deg); }
+  }
+
+  #kai-body, .kai-body, [data-kai="body"] {
+    transform-origin: 80px 145px;
+    animation: kai-live-body 4.4s infinite ease-in-out;
+  }
+  #kai-eyes, .kai-eyes, [data-kai="eyes"] {
+    transform-origin: 80px 75px;
+    animation: kai-live-blink 4.6s infinite ease-in-out;
+  }
+  #kai-pupils, .kai-pupil, [data-kai="pupils"], [data-kai="pupil"] {
+    ${isTracking
+      ? `transform: translate(${eyeX}px, ${eyeY}px) !important; transition: transform 0.12s cubic-bezier(0.2, 0, 0, 1) !important;`
+      : `animation: kai-live-gaze 5.2s infinite ease-in-out;`
+    }
+  }
+  #kai-mouth, .kai-mouth, [data-kai="mouth"] {
+    transform-origin: 80px 105px;
+    animation: ${isSpeaking ? 'kai-live-mouth-talk 0.35s infinite ease-in-out' : 'kai-live-mouth-breath 4.2s infinite ease-in-out'};
+  }
+  #kai-left-hand, .kai-left-hand, [data-kai="left-hand"] {
+    transform-origin: 35px 95px;
+    animation: kai-live-hand-l 3.6s infinite ease-in-out;
+  }
+  #kai-right-hand, .kai-right-hand, [data-kai="right-hand"] {
+    transform-origin: 125px 95px;
+    animation: kai-live-hand-r 3.6s infinite ease-in-out -1.2s;
+  }
+</style>`;
+
+  // Asegurar atributos estándar en <svg> e inyectar livingStyles
   cleaned = cleaned.replace(/<svg\b([^>]*)>/i, (_match, attrs) => {
     let newAttrs = attrs;
     if (!newAttrs.includes('viewBox')) newAttrs += ' viewBox="0 0 160 170"';
     if (!newAttrs.includes('xmlns')) newAttrs += ' xmlns="http://www.w3.org/2000/svg"';
     if (!newAttrs.includes('width')) newAttrs += ' width="100%"';
     if (!newAttrs.includes('height')) newAttrs += ' height="100%"';
-    return `<svg ${newAttrs.trim()}>`;
+    return `<svg ${newAttrs.trim()}>${livingStyles}`;
   });
 
   // Eliminar rectángulos de fondo opacos que cubran todo el canvas para garantizar fondo transparente
@@ -200,8 +297,95 @@ export const KAICompanion: React.FC<KAICompanionProps> = ({
   interactive = true,
   onClick,
   auraState = 'normal',
+  eyeOffset: propEyeOffset,
+  isTrackingMouse: propIsTrackingMouse,
+  isSpeaking: propIsSpeaking,
 }) => {
   const stats = usePlayerStore((s) => s.stats);
+
+  const [internalEyeOffset, setInternalEyeOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [internalIsTracking, setInternalIsTracking] = useState(false);
+  const [justClicked, setJustClicked] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const pointerTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Escuchar cursor de ratón en escritorio y toques/taps de dedos en teléfonos
+  useEffect(() => {
+    if (!interactive || typeof window === 'undefined') return;
+
+    const updatePointerPosition = (clientX: number, clientY: number) => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const eyeCenterX = rect.left + rect.width / 2;
+      const eyeCenterY = rect.top + rect.height * 0.52;
+
+      const deltaX = clientX - eyeCenterX;
+      const deltaY = clientY - eyeCenterY;
+      const distance = Math.hypot(deltaX, deltaY);
+
+      setInternalIsTracking(true);
+      const maxRadiusX = 8.5;
+      const maxRadiusY = 5.0;
+
+      const angle = Math.atan2(deltaY, deltaX);
+      const intensity = Math.min(Math.max(distance / 200, 0.35), 1);
+
+      setInternalEyeOffset({
+        x: Math.cos(angle) * maxRadiusX * intensity,
+        y: Math.sin(angle) * maxRadiusY * intensity,
+      });
+
+      if (pointerTimeoutRef.current) clearTimeout(pointerTimeoutRef.current);
+      pointerTimeoutRef.current = setTimeout(() => {
+        setInternalIsTracking(false);
+        setInternalEyeOffset({ x: 0, y: 0 });
+      }, 2600);
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      updatePointerPosition(e.clientX, e.clientY);
+    };
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches && e.touches[0]) {
+        updatePointerPosition(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches && e.touches[0]) {
+        updatePointerPosition(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    };
+
+    const handlePointerDown = (e: PointerEvent) => {
+      updatePointerPosition(e.clientX, e.clientY);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
+    window.addEventListener('pointerdown', handlePointerDown, { passive: true });
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('pointerdown', handlePointerDown);
+      if (pointerTimeoutRef.current) clearTimeout(pointerTimeoutRef.current);
+    };
+  }, [interactive]);
+
+  const effectiveEyeOffset = propEyeOffset || internalEyeOffset;
+  const effectiveIsTracking = propIsTrackingMouse !== undefined ? propIsTrackingMouse : internalIsTracking;
+  const effectiveIsSpeaking = propIsSpeaking || justClicked;
+
+  const handleClick = (e: React.MouseEvent) => {
+    soundFX.playClick();
+    setJustClicked(true);
+    setTimeout(() => setJustClicked(false), 1400);
+    if (onClick) onClick();
+  };
 
   const effectiveShape: KaiShapeKey = shapeId || stats?.kaiShape || 'prism';
   const effectiveCustomForm = customForm !== undefined ? customForm : stats?.kaiCustomForm;
@@ -247,7 +431,7 @@ export const KAICompanion: React.FC<KAICompanionProps> = ({
     return null;
   }, [effectiveShape, effectiveCustomForm]);
 
-  // Procesamiento SVG con inyección de --color-aura-activa (rama vectorial)
+  // Procesamiento SVG con inyección de --color-aura-activa y motor de vida orgánica
   const renderedSvgHtml = useMemo(() => {
     if (effectiveShape !== 'custom' || !effectiveCustomForm || effectiveImageUrl) return null;
 
@@ -256,11 +440,16 @@ export const KAICompanion: React.FC<KAICompanionProps> = ({
       buildSvgFromCustomForm(effectiveCustomForm);
 
     const artStyle = effectiveCustomForm.artStyle || 'neon-geometry';
-    return injectAuraColorIntoSvg(baseSvg, artStyle, effectiveAuraColor);
-  }, [effectiveShape, effectiveCustomForm, effectiveImageUrl, effectiveAuraColor]);
+    return injectAuraColorIntoSvg(baseSvg, artStyle, effectiveAuraColor, {
+      eyeOffset: effectiveEyeOffset,
+      isTracking: effectiveIsTracking,
+      isSpeaking: effectiveIsSpeaking,
+    });
+  }, [effectiveShape, effectiveCustomForm, effectiveImageUrl, effectiveAuraColor, effectiveEyeOffset, effectiveIsTracking, effectiveIsSpeaking]);
 
   return (
     <motion.div
+      ref={containerRef}
       style={
         {
           '--color-aura-activa': effectiveAuraColor,
@@ -272,17 +461,19 @@ export const KAICompanion: React.FC<KAICompanionProps> = ({
       className={`relative select-none flex items-center justify-center ${
         interactive ? 'cursor-pointer' : ''
       } ${className}`}
-      onClick={onClick}
+      onClick={handleClick}
       animate={{
-        y: [0, -5, 0],
+        y: [0, -6, 0],
+        scaleY: [1, 1.025, 1],
+        scaleX: [1, 0.985, 1],
       }}
       transition={{
-        duration: 4.8,
+        duration: 4.4,
         repeat: Infinity,
         ease: 'easeInOut',
       }}
     >
-      {/* 1. RENDERIZADO FORJA NEURAL: RAMA ILUSTRACIÓN REAL (3D VINYL, ANIME, CÓMIC, CRAYÓN) */}
+      {/* 1. RENDERIZADO FORJA NEURAL: RAMA ILUSTRACIÓN REAL */}
       {effectiveShape === 'custom' && effectiveImageUrl ? (
         <motion.div
           className="w-full h-full flex items-center justify-center relative"
@@ -305,7 +496,7 @@ export const KAICompanion: React.FC<KAICompanionProps> = ({
           />
         </motion.div>
       ) : effectiveShape === 'custom' && renderedSvgHtml ? (
-        /* 2. RENDERIZADO FORJA NEURAL: RAMA VECTORIAL (GEOMETRÍA NEÓN, CYBER-PIXEL, FLUJO, LOW-POLY) */
+        /* 2. RENDERIZADO FORJA NEURAL: RAMA VECTORIAL VIVA */
         <div
           className="w-full h-full flex items-center justify-center transition-all duration-300 [&>svg]:w-full [&>svg]:h-full [&>svg]:overflow-visible"
           style={{
@@ -314,7 +505,7 @@ export const KAICompanion: React.FC<KAICompanionProps> = ({
           dangerouslySetInnerHTML={{ __html: renderedSvgHtml }}
         />
       ) : (
-        /* 3. RENDERIZADO FORMAS BASE OFICIALES (PRISMA, OCTAEDRO, LOBO, ETC.) */
+        /* 3. RENDERIZADO FORMA BASE GÉNESIS (EL PRISMA) */
         <div className="w-full h-full flex items-center justify-center">
           <KaiVectorGraphics
             shapeId={effectiveShape}
@@ -322,6 +513,9 @@ export const KAICompanion: React.FC<KAICompanionProps> = ({
             secondaryColor={effectiveAuraColor}
             customForm={effectiveCustomForm}
             glowFilterId="kai-companion-aura-glow"
+            eyeOffset={effectiveEyeOffset}
+            isTrackingMouse={effectiveIsTracking}
+            justClicked={effectiveIsSpeaking}
           />
         </div>
       )}

@@ -255,29 +255,27 @@ export const HoloCompanion: React.FC<HoloCompanionProps> = ({
   const svgWidth = Math.round(160 * scaleMultiplier);
   const svgHeight = Math.round(170 * scaleMultiplier);
 
-  // Detector global del cursor para el seguimiento del ojo (solo en pantallas con ratón/trackpad para no trabar el touch en móvil/tablet)
+  // Detector del cursor y toques de dedos (teléfonos y escritorio) para el seguimiento del ojo
   useEffect(() => {
     if (!interactive || typeof window === 'undefined') return;
-    const hasFinePointer = window.matchMedia && window.matchMedia('(pointer: fine)').matches;
-    if (!hasFinePointer) return;
 
-    const handleMouseMove = (e: MouseEvent) => {
+    const updatePointerPosition = (clientX: number, clientY: number) => {
       if (!containerRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
       const eyeCenterX = rect.left + rect.width / 2;
       const eyeCenterY = rect.top + rect.height * 0.52;
 
-      const deltaX = e.clientX - eyeCenterX;
-      const deltaY = e.clientY - eyeCenterY;
+      const deltaX = clientX - eyeCenterX;
+      const deltaY = clientY - eyeCenterY;
       const distance = Math.hypot(deltaX, deltaY);
 
-      if (distance < 900) {
+      if (distance < 1200) {
         setIsTrackingMouse(true);
         const maxRadiusX = 8.5;
-        const maxRadiusY = 4.2;
+        const maxRadiusY = 5.0;
 
         const angle = Math.atan2(deltaY, deltaX);
-        const intensity = Math.min(distance / 250, 1);
+        const intensity = Math.min(Math.max(distance / 200, 0.35), 1);
 
         setEyeOffset({
           x: Math.cos(angle) * maxRadiusX * intensity,
@@ -288,13 +286,40 @@ export const HoloCompanion: React.FC<HoloCompanionProps> = ({
         mouseTimeoutRef.current = setTimeout(() => {
           setIsTrackingMouse(false);
           setEyeOffset({ x: 0, y: 0 });
-        }, 2200);
+        }, 2600);
       }
     };
 
+    const handleMouseMove = (e: MouseEvent) => {
+      updatePointerPosition(e.clientX, e.clientY);
+    };
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches && e.touches[0]) {
+        updatePointerPosition(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches && e.touches[0]) {
+        updatePointerPosition(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    };
+
+    const handlePointerDown = (e: PointerEvent) => {
+      updatePointerPosition(e.clientX, e.clientY);
+    };
+
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
+    window.addEventListener('pointerdown', handlePointerDown, { passive: true });
+
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('pointerdown', handlePointerDown);
       if (mouseTimeoutRef.current) clearTimeout(mouseTimeoutRef.current);
     };
   }, [interactive]);

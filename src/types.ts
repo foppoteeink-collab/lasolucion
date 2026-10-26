@@ -163,6 +163,18 @@ export type KaiMultiverseStyle =
   | 'comic'
   | 'crayon';
 
+export type KaiTemperament =
+  | 'stoic'
+  | 'mischievous'
+  | 'fierce'
+  | 'mystic'
+  | 'cheerful'
+  | 'zen'
+  | 'happy'
+  | 'determined'
+  | 'curious'
+  | 'playful';
+
 export interface KaiCustomForm {
   id?: string; // ID único de la reliquia en la Bóveda
   name: string;
@@ -174,7 +186,7 @@ export interface KaiCustomForm {
   personalityQuote?: string;
   primaryColor?: string;
   secondaryColor?: string;
-  mood?: 'happy' | 'determined' | 'curious' | 'fierce' | 'playful';
+  mood?: KaiTemperament;
   svgContent?: string; // 100% Código SVG devuelto por la IA
   imageUrl?: string;
   storageRef?: string;

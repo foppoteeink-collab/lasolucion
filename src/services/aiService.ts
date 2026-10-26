@@ -2,7 +2,7 @@ import { getGenerativeModel } from 'firebase/ai';
 import { firebaseAI, firebaseConfig } from '../firebase';
 import { autoArrangeSchedule, cleanScheduleTitle } from '../utils/timeUtils';
 import { generateProceduralSchedule, generateProceduralAnalysis } from '../utils/proceduralHeuristics';
-import { KaiCustomForm, KaiMultiverseStyle } from '../types';
+import { KaiCustomForm, KaiMultiverseStyle, KaiTemperament } from '../types';
 
 export function getEffectiveGeminiApiKey(): string | null {
   if (typeof window !== 'undefined') {
@@ -525,9 +525,10 @@ export async function forgeKaiFromImage(params: {
   mimeType?: string;
   promptDescription?: string;
   artStyle?: KaiMultiverseStyle;
+  mood?: KaiTemperament;
   onProgress?: (stage: 'vision' | 'generation', data?: { detectedObject?: string }) => void;
 }): Promise<KaiCustomForm | null> {
-  const { imageBase64, mimeType = 'image/jpeg', promptDescription = '', artStyle = 'clay3d', onProgress } = params;
+  const { imageBase64, mimeType = 'image/jpeg', promptDescription = '', artStyle = 'clay3d', mood = 'stoic', onProgress } = params;
 
   if (!imageBase64 || typeof imageBase64 !== 'string') {
     throw new Error('Falta la imagen a procesar en la Forja Neural.');
@@ -548,7 +549,7 @@ export async function forgeKaiFromImage(params: {
   cleanBase64 = cleanBase64.trim().replace(/[\r\n\s]+/g, '');
 
   // 2. Construcción de directiva del prompt unificado 100% SVG
-  function buildMultiversePrompt(selectedArtStyle: KaiMultiverseStyle, userPrompt: string): string {
+  function buildMultiversePrompt(selectedArtStyle: KaiMultiverseStyle, userPrompt: string, selectedMood: KaiTemperament = 'stoic'): string {
     let vectorDirective = '';
     switch (selectedArtStyle) {
       case 'clay3d':
@@ -642,23 +643,83 @@ REGLAS ESTRICTAS DE SVG:
         break;
     }
 
+    let moodDirective = '';
+    switch (selectedMood) {
+      case 'stoic':
+      case 'determined':
+        moodDirective = `TEMPERAMENTO / EXPRESIÓN REQUERIDA: "Estoico / Firme y Determinado".
+- ¡PROHIBIDO ponerle sonrisa feliz o infantil!
+- Ojos: Mirada seria, profunda, concentrada y protectora, con ceño firme o cejas rectas de guerrero.
+- Boca: Línea recta, horizontal o ligeramente cerrada con determinación serena (cero sonrisas de caricatura).
+- Frase (personalityQuote): De pocas palabras, sabia, firme y protectora de hábitos (ej: "La disciplina no negocia.", "Mantén el enfoque.", "Estoy en guardia.").`;
+        break;
+
+      case 'mischievous':
+      case 'playful':
+        moodDirective = `TEMPERAMENTO / EXPRESIÓN REQUERIDA: "Pícaro y Astuto".
+- Ojos: Mirada de reojo perspicaz, una ceja ligeramente arqueada o levantada con picardía.
+- Boca: Media sonrisa ladeada y sutil (smirk), desafiante y cool.
+- Frase (personalityQuote): Desafiante, ingeniosa y motivadora con chispa de humor inteligente.`;
+        break;
+
+      case 'fierce':
+        moodDirective = `TEMPERAMENTO / EXPRESIÓN REQUERIDA: "Feroz y Táctico".
+- Ojos: Ojos afilados, intensos, ceño angular de combate o visor táctico de pulso rápido.
+- Boca: Boca en tensión de combate (línea en zigzag, mueca feroz o colmillos/dientes de batalla anime).
+- Frase (personalityQuote): Enérgica, combativa, imparable (ej: "¡Aplastemos esa meta!", "No hay tregua para la pereza.").`;
+        break;
+
+      case 'mystic':
+      case 'curious':
+        moodDirective = `TEMPERAMENTO / EXPRESIÓN REQUERIDA: "Místico y Sabio".
+- Ojos: Ojos semi-cerrados serenos, pupilas etéreas o gema central mística, calma cósmica.
+- Boca: Línea suave y pacífica en reposo neutral, en perfecta armonía zen.
+- Frase (personalityQuote): Enigmática, cósmica y profunda, inspirada en la sabiduría ancestral.`;
+        break;
+
+      case 'zen':
+        moodDirective = `TEMPERAMENTO / EXPRESIÓN REQUERIDA: "Zen y Lánguido / Dormilón".
+- Ojos: Párpados pesados o líneas curvadas de descanso pacífico, ojos entreabiertos relajados.
+- Boca: Pequeño bostezo o expresión de tranquilidad absoluta.
+- Frase (personalityQuote): Relajada, pacífica (ej: "Sin prisa pero sin pausa...", "Respira hondo.").`;
+        break;
+
+      case 'cheerful':
+      case 'happy':
+      default:
+        moodDirective = `TEMPERAMENTO / EXPRESIÓN REQUERIDA: "Alegre y Radiante".
+- Ojos: Ojos grandes abiertos y llenos de destellos circulares luminosos y expresivos.
+- Boca: Sonrisa vivaz, abierta y juguetona.
+- Frase (personalityQuote): Positiva, animada y llena de energía motivacional.`;
+        break;
+    }
+
     return `
 ERES EL OJO CLÍNICO Y MOTOR MULTIMODAL DE LA FORJA NEURAL DE "LA SOLUCIÓN".
 Tu misión es escanear la foto adjunta, identificar con máxima precisión qué objeto real u elemento aparece en ella, y generar un COMPAÑERO KAI ANTROPOMÓRFICO 100% SVG que capture la silueta real del objeto con rostro y ojos expresivos en el estilo: "${selectedArtStyle.toUpperCase()}".
 
 PASO 1: ANÁLISIS DEL OBJETO REAL
 - Identifica el objeto exactamente con sus rasgos distintivos (ej: "Encendedor amarillo transparente", "Taza de cerámica negra", "Zapatilla deportiva azul").
-- Diseña un personaje antropomórfico (characterConcept) fusionando la silueta del objeto con anatomía viva (ojos expresivos integrados en la estructura del objeto, boca amigable, patitas o extremidades tiernas estilo Tamagotchi/Nintendo).
-- Asígnale un nombre épico (epicName) y una frase breve y carismática de saludo (personalityQuote) acorde a su naturaleza.
+- Diseña un personaje antropomórfico (characterConcept) fusionando la silueta del objeto con anatomía viva (ojos expresivos integrados en la estructura del objeto, boca/expresión acorde al temperamento, patitas o extremidades vivas).
+- Asígnale un nombre creativo (epicName) y una frase breve de despertar (personalityQuote) acorde al temperamento seleccionado.
 - Extrae sus colores primario y secundario en formato hexadecimal.
 
 PASO 2: ARQUITECTURA SVG (REGLAS OBLIGATORIAS)
 1. El SVG debe tener viewBox="0 0 160 170" y width="100%" height="100%".
 2. FONDO 100% TRANSPARENTE: ¡ESTRICTAMENTE PROHIBIDO incluir rectángulos de fondo, fondos negros o tarjetas sólidas como <rect width="160" height="170" ... /> o <rect width="100%" height="100%" ... />! El fondo DEBE ser 100% transparente para que el personaje flote libremente.
 3. CENTRADO Y PROPORCIONES: Centra el personaje horizontalmente en x=80 y verticalmente entre y=20 e y=148, dejando margen de respiración para que no toque los bordes del viewBox.
-4. EXPRESIÓN Y CARISMA: Los ojos deben ser GRANDES y prominentes (mínimo 10-14px de radio) con destellos blancos especulares. Boca con sonrisa alegre o pícara.
-5. SOMBRA DE FLOTACIÓN: Puedes incluir una elipse de sombra suave en la base (<ellipse cx="80" cy="155" rx="30" ry="6" fill="#000000" opacity="0.25" />) para que flote sobre el pedestal.
-6. ${vectorDirective}
+4. EXPRESIÓN Y TEMPERAMENTO EXACTO:
+${moodDirective}
+5. ESTRUCTURA SEMÁNTICA PARA ANIMACIÓN ORGÁNICA:
+Organiza obligatoriamente las partes del personaje en grupos <g> identificados para que el motor cuántico de vida pueda animar ojos, respiración y extremidades de forma 100% fluida:
+- <g id="kai-body">: cuerpo, torso y estructura base del objeto.
+- <g id="kai-eyes">: contiene ambos ojos.
+  - Dentro de este, agrupa las pupilas en <g id="kai-pupils"> (para que puedan mirar al cursor y al dedo en móviles).
+- <g id="kai-mouth">: la boca o visor del personaje (para animar respiración y habla al interactuar).
+- <g id="kai-left-hand">: mano, brazo, aleta o extremidad izquierda (si tiene).
+- <g id="kai-right-hand">: mano, brazo, aleta o extremidad derecha (si tiene).
+6. SOMBRA DE FLOTACIÓN: Puedes incluir una elipse de sombra suave en la base (<ellipse cx="80" cy="155" rx="30" ry="6" fill="#000000" opacity="0.25" />) para que flote sobre el pedestal.
+7. ${vectorDirective}
 ${userPrompt ? `Contexto o pista del usuario: "${userPrompt}".` : ''}
 
 DEVOLUCIÓN OBLIGATORIA (Responde ÚNICAMENTE con un JSON válido):
@@ -670,13 +731,13 @@ DEVOLUCIÓN OBLIGATORIA (Responde ÚNICAMENTE con un JSON válido):
   "primaryColor": "#hex",
   "secondaryColor": "#hex",
   "artStyle": "${selectedArtStyle}",
-  "mood": "playful",
+  "mood": "${selectedMood}",
   "svg": "<svg viewBox=\\"0 0 160 170\\" xmlns=\\"http://www.w3.org/2000/svg\\">...</svg>"
 }
 `;
   }
 
-  const systemInstructions = buildMultiversePrompt(artStyle, promptDescription);
+  const systemInstructions = buildMultiversePrompt(artStyle, promptDescription, mood);
   let jsonResult: string | null = null;
   let lastErrorMessage = '';
 
@@ -827,7 +888,7 @@ DEVOLUCIÓN OBLIGATORIA (Responde ÚNICAMENTE con un JSON válido):
     personalityQuote,
     primaryColor,
     secondaryColor,
-    mood: 'playful',
+    mood: (parsed.mood as KaiTemperament) || mood || 'stoic',
     renderBranch: 'vector',
     svgContent,
     polygons: Array.isArray(parsed.polygons) ? parsed.polygons : undefined,

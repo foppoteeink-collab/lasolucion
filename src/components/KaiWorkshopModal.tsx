@@ -27,10 +27,55 @@ import { useTaskStore } from '../store/useTaskStore';
 import { KAI_OFFICIAL_SHAPES, KAI_AURAS_REGISTRY, KAI_MULTIVERSE_STYLES, KaiShapeDefinition } from '../data/kaiShapes';
 import { KaiVectorGraphics } from './KaiVectorGraphics';
 import { KAICompanion } from './KAICompanion';
-import { KaiShapeKey, KaiCustomForm, KaiMultiverseStyle } from '../types';
+import { KaiShapeKey, KaiCustomForm, KaiMultiverseStyle, KaiTemperament } from '../types';
 import { soundFX } from '../utils/audio';
 import { triggerShockwave } from '../utils/celebration';
 import { forgeKaiFromImage } from '../services/aiService';
+
+export const KAI_TEMPERAMENTS = [
+  {
+    id: 'stoic' as KaiTemperament,
+    label: 'Estoico',
+    fullName: 'Estoico / Firme',
+    icon: '🛡️',
+    description: 'Mirada seria, ceño de guerrero y boca recta determinada. Sin sonrisas tontas.',
+  },
+  {
+    id: 'mischievous' as KaiTemperament,
+    label: 'Pícaro',
+    fullName: 'Pícaro / Astuto',
+    icon: '😼',
+    description: 'Media sonrisa ladeada, mirada de reojo y actitud desafiante.',
+  },
+  {
+    id: 'fierce' as KaiTemperament,
+    label: 'Feroz',
+    fullName: 'Feroz / Táctico',
+    icon: '⚡',
+    description: 'Mirada afilada e intensa, visor de combate y postura de batalla.',
+  },
+  {
+    id: 'mystic' as KaiTemperament,
+    label: 'Místico',
+    fullName: 'Místico / Sabio',
+    icon: '🧘',
+    description: 'Ojos serenos semi-cerrados, calma zen y sabiduría cósmica.',
+  },
+  {
+    id: 'cheerful' as KaiTemperament,
+    label: 'Alegre',
+    fullName: 'Alegre / Radiante',
+    icon: '🌟',
+    description: 'Sonrisa vivaz y ojos brillantes llenos de entusiasmo.',
+  },
+  {
+    id: 'zen' as KaiTemperament,
+    label: 'Dormilón',
+    fullName: 'Zen / Dormilón',
+    icon: '🥱',
+    description: 'Párpados pesados, actitud lánguida y pacífica.',
+  },
+];
 
 interface KaiWorkshopModalProps {
   isOpen: boolean;
@@ -209,6 +254,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
   const [capturedImageBase64, setCapturedImageBase64] = useState<string | null>(null);
   const [forgePrompt, setForgePrompt] = useState<string>('');
   const [selectedStyle, setSelectedStyle] = useState<KaiMultiverseStyle>('neon-geometry');
+  const [selectedMood, setSelectedMood] = useState<KaiTemperament>('stoic');
   const [isForging, setIsForging] = useState(false);
   const [forgedResult, setForgedResult] = useState<KaiCustomForm | null>(null);
   const [liveDetectedObject, setLiveDetectedObject] = useState<string | null>(null);
@@ -323,6 +369,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
         imageBase64: capturedImageBase64,
         promptDescription: forgePrompt.trim(),
         artStyle: selectedStyle,
+        mood: selectedMood,
         onProgress: (stage, data) => {
           if (stage === 'vision' && data?.detectedObject) {
             setLiveDetectedObject(data.detectedObject);
@@ -1139,10 +1186,50 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                     )}
                   </div>
 
-                  {/* Input Limpio Sin Sugerencias Rápidas */}
+                  {/* Selector de Temperamento & Expresión Facial */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold uppercase text-slate-400 block tracking-wide">
+                        2. Expresión & Temperamento
+                      </span>
+                      <span className="text-[10px] font-mono text-fuchsia-300 font-bold">
+                        {KAI_TEMPERAMENTS.find(m => m.id === selectedMood)?.fullName || 'Estoico'}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {KAI_TEMPERAMENTS.map((t) => {
+                        const isChosen = selectedMood === t.id;
+                        return (
+                          <button
+                            key={t.id}
+                            type="button"
+                            onClick={() => { soundFX.playClick(); setSelectedMood(t.id); }}
+                            className={`p-2 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                              isChosen
+                                ? 'bg-fuchsia-950/70 border-fuchsia-400 ring-1 ring-fuchsia-400/50 shadow-[0_0_12px_rgba(217,70,239,0.25)]'
+                                : 'bg-[#080d1a] border-white/10 hover:border-white/20 hover:bg-white/5'
+                            }`}
+                          >
+                            <div className="flex items-center gap-1.5 mb-0.5">
+                              <span className="text-sm">{t.icon}</span>
+                              <span className={`text-[11px] font-bold truncate ${isChosen ? 'text-white' : 'text-slate-300'}`}>
+                                {t.label}
+                              </span>
+                            </div>
+                            <span className="text-[9px] text-slate-400 font-mono truncate block">
+                              {t.id === 'stoic' ? 'Sin sonrisas' : t.id === 'fierce' ? 'Modo combate' : t.id === 'mischievous' ? 'Smirk astuto' : t.id === 'mystic' ? 'Calma zen' : t.id === 'zen' ? 'Relajado' : 'Sonriente'}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Input Limpio de Nombre o Detalle */}
                   <div className="space-y-1.5">
                     <label className="text-[11px] font-bold text-slate-400 flex items-center justify-between">
-                      <span>2. Nombre o Detalle</span>
+                      <span>3. Nombre o Detalle</span>
                       <span className="text-[10px] text-slate-500 font-normal">Opcional</span>
                     </label>
                     <input
