@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { FinancialTransaction, TaskItem } from '../types';
-import { formatMoney, getSavedCurrencySymbol } from '../utils/finance';
+import { formatMoney, getSavedCurrencySymbol, getSavedSavingsTarget } from '../utils/finance';
 import { TrendingUp, TrendingDown, Download, Search, Percent, ArrowUpRight, ArrowDownRight, Calendar, Receipt, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import { getTodayDateString } from '../utils/date';
 
@@ -51,6 +51,7 @@ export const FinanceDashboard: React.FC<FinanceDashboardProps> = ({ expenses, se
   };
 
   const [currencySymbol, setCurrencySymbol] = useState<string>(getSavedCurrencySymbol);
+  const [savingsTarget, setSavingsTarget] = useState<number>(getSavedSavingsTarget);
   const [financeSearchTerm, setFinanceSearchTerm] = useState('');
   const [financeTypeFilter, setFinanceTypeFilter] = useState<'all' | 'income' | 'expense'>('all');
   const [financeViewType, setFinanceViewType] = useState<'month' | 'quarter' | 'semester' | 'year' | 'all'>('month');
@@ -62,8 +63,18 @@ export const FinanceDashboard: React.FC<FinanceDashboardProps> = ({ expenses, se
         setCurrencySymbol(customEvent.detail);
       }
     };
+    const targetHandler = (e: Event) => {
+      const customEvent = e as CustomEvent<number>;
+      if (typeof customEvent.detail === 'number') {
+        setSavingsTarget(customEvent.detail);
+      }
+    };
     window.addEventListener('taskquest:currency-change', handler);
-    return () => window.removeEventListener('taskquest:currency-change', handler);
+    window.addEventListener('taskquest:savings-target-change', targetHandler);
+    return () => {
+      window.removeEventListener('taskquest:currency-change', handler);
+      window.removeEventListener('taskquest:savings-target-change', targetHandler);
+    };
   }, []);
 
   const deleteExpense = (id: string) => {
@@ -453,11 +464,22 @@ export const FinanceDashboard: React.FC<FinanceDashboardProps> = ({ expenses, se
                   <p className="text-xs font-black text-white uppercase tracking-wider capitalize truncate max-w-[200px]" title={summary.label}>
                     {summary.label}
                   </p>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-md font-mono font-bold ${
-                    summary.balance >= 0 ? 'bg-emerald-900/50 text-emerald-300 border border-emerald-700/50' : 'bg-red-900/50 text-red-300 border border-red-700/50'
-                  }`}>
-                    {summary.savingsRate}% ahorro
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span className={`text-[10px] px-2 py-0.5 rounded-md font-mono font-bold ${
+                      summary.balance >= 0 ? 'bg-emerald-900/50 text-emerald-300 border border-emerald-700/50' : 'bg-red-900/50 text-red-300 border border-red-700/50'
+                    }`}>
+                      {summary.savingsRate}% ahorro
+                    </span>
+                    {savingsTarget > 0 && (
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded font-mono ${
+                        summary.savingsRate >= savingsTarget 
+                          ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' 
+                          : 'bg-amber-500/10 text-amber-400/80 border border-amber-500/30'
+                      }`} title={`Meta de ahorro configurada: ${savingsTarget}%`}>
+                        {summary.savingsRate >= savingsTarget ? '✓ Meta' : `Meta ${savingsTarget}%`}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div className="space-y-1 text-xs">

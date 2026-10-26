@@ -72,6 +72,7 @@ export interface WeeklyStatsProps {
   cloudSync?: CloudSyncResult;
   onOpenAwakening?: () => void;
   onOpenKaiWorkshop?: () => void;
+  onOpenSkills?: () => void;
 }
 
 type TimeRange = 'semanal' | 'mensual' | 'anual';
@@ -158,7 +159,8 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
   setExpenses,
   cloudSync,
   onOpenAwakening,
-  onOpenKaiWorkshop
+  onOpenKaiWorkshop,
+  onOpenSkills
 }) => {
   const [activeSubTab, setActiveSubTab] = useState<StatsSubTab>('hero');
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -831,6 +833,18 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
                         className="px-2 py-0.5 rounded-lg bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-500/60 text-[10px] font-anton uppercase text-cyan-300 hover:text-white transition-all cursor-pointer shadow-[0_0_8px_rgba(0,240,255,0.2)] active:scale-95"
                       >
                         🎨 Taller KAI
+                      </button>
+                    )}
+                    {onOpenSkills && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          soundFX.playClick();
+                          onOpenSkills();
+                        }}
+                        className="px-2 py-0.5 rounded-lg bg-purple-950/80 hover:bg-purple-900 border border-purple-500/60 text-[10px] font-anton uppercase text-purple-300 hover:text-white transition-all cursor-pointer shadow-[0_0_8px_rgba(168,85,247,0.2)] active:scale-95"
+                      >
+                        ⚡ Lab Talentos
                       </button>
                     )}
                     <button

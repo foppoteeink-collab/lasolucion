@@ -11,7 +11,8 @@ import {
   Sparkles,
   BrainCircuit,
   Settings,
-  Palette
+  Palette,
+  FlaskConical
 } from 'lucide-react';
 import { HoloCompanion, CompanionAuraState } from './HoloCompanion';
 import { SatelliteKaiHub, SatelliteHubItem } from './SatelliteKaiHub';
@@ -171,6 +172,16 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
         glowColor: 'rgba(16, 185, 129, 0.45)',
         liveStat: `${stats.coins || 0} Monedas`,
         action: () => setActiveTab('shop'),
+      },
+      {
+        id: 'skills',
+        label: 'Lab Habilidades',
+        categoryBadge: 'MAESTRÍA',
+        icon: <FlaskConical className="w-5 h-5" />,
+        accentColor: '#8b5cf6',
+        glowColor: 'rgba(139, 92, 246, 0.45)',
+        liveStat: 'Árbol de talentos',
+        action: () => setActiveTab('skills'),
       },
       {
         id: 'stats',

@@ -32,7 +32,6 @@ const NeuralAnalysisModal = lazy(() => import('./NeuralAnalysisModal').then(m =>
 const HunterAwakeningModal = lazy(() => import('./HunterAwakeningModal').then(m => ({ default: m.HunterAwakeningModal })));
 const DailyRewardsModal = lazy(() => import('./DailyRewardsModal').then(m => ({ default: m.DailyRewardsModal })));
 const LevelUpModal = lazy(() => import('./LevelUpModal').then(m => ({ default: m.LevelUpModal })));
-const NightlyReflectionModal = lazy(() => import('./NightlyReflectionModal').then(m => ({ default: m.NightlyReflectionModal })));
 const NightlyTunnel = lazy(() => import('./NightlyTunnel').then(m => ({ default: m.NightlyTunnel })));
 const SurpriseBossModal = lazy(() => import('./SurpriseBossModal').then(m => ({ default: m.SurpriseBossModal })));
 const HunterCollapseModal = lazy(() => import('./HunterCollapseModal').then(m => ({ default: m.HunterCollapseModal })));
@@ -227,13 +226,19 @@ export function AppLayout() {
       }
     };
 
+    const handleNotificationClick = () => {
+      setActiveTab('dashboard');
+    };
+
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('focus', checkDateChange);
+    window.addEventListener('lasolucion:notification-click', handleNotificationClick);
 
     return () => {
       clearInterval(intervalId);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('focus', checkDateChange);
+      window.removeEventListener('lasolucion:notification-click', handleNotificationClick);
     };
   }, []);
   return (
@@ -535,6 +540,7 @@ export function AppLayout() {
                   cloudSync={cloudSync}
                   onOpenAwakening={() => setIsAwakeningOpen(true)}
                   onOpenKaiWorkshop={() => setIsKaiWorkshopOpen(true)}
+                  onOpenSkills={() => setActiveTab('skills')}
                 />
               </Suspense>
             </motion.div>
