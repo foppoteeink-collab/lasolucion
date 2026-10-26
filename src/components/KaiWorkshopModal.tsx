@@ -314,96 +314,83 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
     <div className="fixed inset-0 z-[120] bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-fadeIn">
       <div className="relative w-full max-w-4xl max-h-[92vh] bg-[#030712] border border-cyan-500/40 rounded-3xl shadow-[0_0_50px_rgba(0,240,255,0.2)] flex flex-col overflow-hidden text-white">
         
-        {/* ─── ENCABEZADO CYBERNETIC ─── */}
-        <div className="p-4 sm:p-5 border-b border-white/10 flex items-center justify-between bg-gradient-to-r from-[#030712] via-[#061326] to-[#030712]">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-2xl bg-cyan-500/10 border border-cyan-400/40 text-cyan-300 shadow-[0_0_15px_rgba(0,240,255,0.3)]">
-              <Sparkles className="w-6 h-6 animate-pulse" />
+        {/* ─── ENCABEZADO MINIMALISTA ─── */}
+        <div className="px-5 py-3.5 border-b border-white/10 flex items-center justify-between bg-[#040814]/90 backdrop-blur-md">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-400/30 text-cyan-400">
+              <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-base sm:text-lg font-black uppercase tracking-wider text-white">
-                  Taller Cuántico de KAI
-                </h2>
-                <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-400/40">
-                  {stats.kaiShape === 'custom' ? 'FORJA IA ACTIVA' : '6 FORMAS DÍA 0'}
+              <h2 className="text-sm sm:text-base font-bold text-white tracking-wide flex items-center gap-2">
+                <span>Taller de KAI</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono text-cyan-300 bg-cyan-950/60 border border-cyan-500/30 font-normal">
+                  Activo: {stats.kaiShape === 'custom' ? (stats.kaiCustomForm?.name || 'Forja IA') : (KAI_OFFICIAL_SHAPES.find(s => s.id === stats.kaiShape)?.name || 'El Prisma')}
                 </span>
-              </div>
-              <p className="text-xs text-slate-400">
-                Personaliza la forma, auras elementales y accesorios holográficos de tu compañero.
-              </p>
+              </h2>
             </div>
           </div>
 
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* ─── BARRA DE PESTAÑAS ─── */}
-        <div className="flex border-b border-white/10 bg-black/40 overflow-x-auto scrollbar-none px-4 pt-2 gap-2">
+        <div className="flex border-b border-white/10 bg-black/40 overflow-x-auto scrollbar-none px-4 pt-1.5 gap-1.5">
+          <button
+            type="button"
+            onClick={() => { soundFX.playClick(); setActiveTab('forge'); }}
+            className={`px-3.5 py-2 text-xs font-semibold rounded-t-xl flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
+              activeTab === 'forge'
+                ? 'border-b-2 border-fuchsia-400 text-fuchsia-300 bg-fuchsia-950/30'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Camera className="w-3.5 h-3.5 text-fuchsia-400" />
+            <span>Forja Neural (IA)</span>
+          </button>
+
           <button
             type="button"
             onClick={() => { soundFX.playClick(); setActiveTab('shapes'); }}
-            className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+            className={`px-3.5 py-2 text-xs font-semibold rounded-t-xl flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
               activeTab === 'shapes'
-                ? 'border-cyan-400 text-cyan-300 bg-cyan-950/20'
-                : 'border-transparent text-slate-400 hover:text-white'
+                ? 'border-b-2 border-cyan-400 text-cyan-300 bg-cyan-950/30'
+                : 'text-slate-400 hover:text-white'
             }`}
           >
-            <Layers className="w-4 h-4" />
-            <span>Formas Base (6)</span>
+            <Layers className="w-3.5 h-3.5" />
+            <span>Formas Base</span>
           </button>
 
           <button
             type="button"
             onClick={() => { soundFX.playClick(); setActiveTab('evolution'); }}
-            className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+            className={`px-3.5 py-2 text-xs font-semibold rounded-t-xl flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
               activeTab === 'evolution'
-                ? 'border-amber-400 text-amber-300 bg-amber-950/20'
-                : 'border-transparent text-slate-400 hover:text-white'
+                ? 'border-b-2 border-amber-400 text-amber-300 bg-amber-950/30'
+                : 'text-slate-400 hover:text-white'
             }`}
           >
-            <Crown className="w-4 h-4" />
-            <span>Evolución (21d / 66d)</span>
-            {has66Days && (
-              <span className="px-1.5 py-0.2 rounded-full text-[9px] font-mono bg-amber-500/30 text-amber-200 border border-amber-400/50">
-                Grado {ascensionGrade}
-              </span>
-            )}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => { soundFX.playClick(); setActiveTab('forge'); }}
-            className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
-              activeTab === 'forge'
-                ? 'border-fuchsia-400 text-fuchsia-300 bg-fuchsia-950/20'
-                : 'border-transparent text-slate-400 hover:text-white'
-            }`}
-          >
-            <Camera className="w-4 h-4 text-fuchsia-400 animate-pulse" />
-            <span>📸 Forja Neural (IA)</span>
-            <span className="px-1.5 py-0.2 rounded-full text-[9px] font-mono bg-fuchsia-500/30 text-fuchsia-200 border border-fuchsia-400/50">
-              {forgeCharges} Carga{forgeCharges !== 1 ? 's' : ''}
-            </span>
+            <Crown className="w-3.5 h-3.5" />
+            <span>Evolución</span>
           </button>
 
           <button
             type="button"
             onClick={() => { soundFX.playClick(); setActiveTab('armory'); }}
-            className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+            className={`px-3.5 py-2 text-xs font-semibold rounded-t-xl flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
               activeTab === 'armory'
-                ? 'border-purple-400 text-purple-300 bg-purple-950/20'
-                : 'border-transparent text-slate-400 hover:text-white'
+                ? 'border-b-2 border-purple-400 text-purple-300 bg-purple-950/30'
+                : 'text-slate-400 hover:text-white'
             }`}
           >
-            <Shield className="w-4 h-4" />
-            <span>Armería & Efectos</span>
+            <Shield className="w-3.5 h-3.5" />
+            <span>Armería</span>
           </button>
         </div>
 
@@ -415,41 +402,31 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
           {/* ═══════════════════════════════════════════════════════════════ */}
           {activeTab === 'shapes' && (
             <div className="space-y-5">
-              <div className="p-3.5 rounded-2xl bg-cyan-950/40 border border-cyan-400/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-[0_0_15px_rgba(0,240,255,0.15)]">
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">
-                    {stats.kaiShape === 'custom' ? '✨' : (KAI_OFFICIAL_SHAPES.find(s => s.id === stats.kaiShape)?.icon || '🔺')}
-                  </span>
-                  <div>
-                    <span className="text-[10px] font-mono uppercase text-cyan-300 font-bold block">
-                      KAI Equipado Actualmente:
-                    </span>
-                    <strong className="text-sm font-anton text-white tracking-wide uppercase">
-                      {stats.kaiShape === 'custom' ? (stats.kaiCustomForm?.name || 'Forja Neural IA') : (KAI_OFFICIAL_SHAPES.find(s => s.id === stats.kaiShape)?.name || 'El Prisma')}
-                    </strong>
-                  </div>
-                </div>
-                <div className="text-[10px] font-mono text-slate-300 bg-black/40 border border-white/10 px-3 py-1.5 rounded-xl">
-                  ✓ Puedes cambiar de KAI cuantas veces quieras tocando <strong className="text-cyan-300">"Equipar"</strong>.
-                </div>
+              <div className="flex items-center justify-between pb-1 border-b border-white/5">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  Formas Base Disponibles
+                </span>
+                <span className="text-[10px] font-mono text-cyan-300">
+                  6 Formas Clásicas
+                </span>
               </div>
 
               {/* Grid 3x2 de Formas Oficiales */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {KAI_OFFICIAL_SHAPES.map((shape) => {
                   const isSelected = stats.kaiShape === shape.id;
                   return (
                     <div
                       key={shape.id}
                       onClick={() => handleSelectShape(shape.id)}
-                      className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between group relative overflow-hidden ${
+                      className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between group relative overflow-hidden ${
                         isSelected
                           ? 'bg-cyan-950/40 border-cyan-400 shadow-[0_0_20px_rgba(0,240,255,0.25)] ring-1 ring-cyan-400/60'
                           : 'bg-[#040814] border-white/10 hover:border-cyan-500/40 hover:bg-[#061022]'
                       }`}
                     >
-                      <div className="flex items-start justify-between gap-3 mb-3">
-                        <div className="w-16 h-16 shrink-0 relative flex items-center justify-center bg-black/50 rounded-xl border border-white/5 p-1">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="w-14 h-14 shrink-0 relative flex items-center justify-center bg-black/50 rounded-xl border border-white/5 p-1">
                           <KaiVectorGraphics
                             shapeId={shape.id}
                             activeColor={isSelected ? '#00f0ff' : '#94a3b8'}
@@ -464,26 +441,18 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
                             <span className="text-sm">{shape.icon}</span>
-                            <h4 className="text-sm font-bold text-white truncate">{shape.name}</h4>
+                            <h4 className="text-xs font-bold text-white truncate">{shape.name}</h4>
                           </div>
-                          <span className="text-[9px] font-mono text-cyan-300 font-bold block mt-0.5">
+                          <span className="text-[9px] font-mono text-cyan-300 block mt-0.5">
                             {shape.codename}
                           </span>
-                          <span className="inline-block mt-1 px-1.5 py-0.2 rounded text-[9px] font-mono bg-white/5 border border-white/10 text-slate-300">
+                          <span className="inline-block mt-1 px-1.5 py-0.2 rounded text-[9px] font-mono bg-white/5 border border-white/10 text-slate-400">
                             {shape.themeTrait}
                           </span>
                         </div>
                       </div>
 
-                      <p className="text-[11px] text-slate-300 leading-relaxed mb-3 line-clamp-2">
-                        {shape.description}
-                      </p>
-
-                      <div className="pt-2 border-t border-white/5 flex items-center justify-between">
-                        <span className="text-[10px] font-mono text-slate-400">
-                          Afinidad: <strong className="text-white">{shape.archetypeMatch.split('/')[0]}</strong>
-                        </span>
-
+                      <div className="pt-2.5 mt-2.5 border-t border-white/5 flex items-center justify-end">
                         {isSelected ? (
                           <span className="text-[10px] font-mono font-black text-cyan-300 bg-cyan-900/60 border border-cyan-400 px-2.5 py-0.5 rounded-lg flex items-center gap-1">
                             <Check className="w-3 h-3 text-cyan-300" />
@@ -496,7 +465,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                               e.stopPropagation();
                               handleSelectShape(shape.id);
                             }}
-                            className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-cyan-500 hover:text-black font-mono text-[10px] font-bold text-slate-200 transition-all cursor-pointer"
+                            className="px-3 py-1 rounded-lg bg-white/10 hover:bg-cyan-500 hover:text-black font-mono text-[10px] font-bold text-slate-200 transition-all cursor-pointer"
                           >
                             Equipar
                           </button>
@@ -510,14 +479,14 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                 {stats.kaiCustomForm && (
                   <div
                     onClick={() => handleSelectShape('custom')}
-                    className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between group relative overflow-hidden ${
+                    className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between group relative overflow-hidden ${
                       stats.kaiShape === 'custom'
                         ? 'bg-fuchsia-950/40 border-fuchsia-400 shadow-[0_0_20px_rgba(217,70,239,0.3)] ring-1 ring-fuchsia-400/60'
                         : 'bg-[#040814] border-fuchsia-500/30 hover:border-fuchsia-500/60'
                     }`}
                   >
-                    <div className="flex items-start justify-between gap-3 mb-3">
-                      <div className="w-16 h-16 shrink-0 relative flex items-center justify-center bg-black/50 rounded-xl border border-fuchsia-500/30 p-1">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="w-14 h-14 shrink-0 relative flex items-center justify-center bg-black/50 rounded-xl border border-fuchsia-500/30 p-1">
                         <KaiVectorGraphics
                           shapeId="custom"
                           activeColor="#e879f9"
@@ -533,26 +502,18 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5">
                           <span className="text-sm">✨</span>
-                          <h4 className="text-sm font-bold text-fuchsia-200 truncate">{stats.kaiCustomForm.name}</h4>
+                          <h4 className="text-xs font-bold text-fuchsia-200 truncate">{stats.kaiCustomForm.name}</h4>
                         </div>
-                        <span className="text-[9px] font-mono text-fuchsia-400 font-bold block mt-0.5">
+                        <span className="text-[9px] font-mono text-fuchsia-400 block mt-0.5">
                           FORJA NEURAL IA
                         </span>
                         <span className="inline-block mt-1 px-1.5 py-0.2 rounded text-[9px] font-mono bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/40">
-                          {stats.kaiCustomForm.svgContent ? '100% SVG Vectorial' : `${stats.kaiCustomForm.lines?.length || 0} trazos`}
+                          {stats.kaiCustomForm.detectedObject || 'Personalizado'}
                         </span>
                       </div>
                     </div>
 
-                    <p className="text-[11px] text-slate-300 leading-relaxed mb-3">
-                      Compañero único vectorizado por Gemini a partir de tu fotografía personal.
-                    </p>
-
-                    <div className="pt-2 border-t border-fuchsia-500/20 flex items-center justify-between">
-                      <span className="text-[10px] font-mono text-fuchsia-300">
-                        Creación Personal
-                      </span>
-
+                    <div className="pt-2.5 mt-2.5 border-t border-fuchsia-500/20 flex items-center justify-end">
                       {stats.kaiShape === 'custom' ? (
                         <span className="text-[10px] font-mono font-black text-fuchsia-300 bg-fuchsia-900/60 border border-fuchsia-400 px-2.5 py-0.5 rounded-lg flex items-center gap-1">
                           <Check className="w-3 h-3 text-fuchsia-300" />
@@ -565,7 +526,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                             e.stopPropagation();
                             handleSelectShape('custom');
                           }}
-                          className="px-2.5 py-1 rounded-lg bg-fuchsia-500/20 hover:bg-fuchsia-500 hover:text-black font-mono text-[10px] font-bold text-fuchsia-200 transition-all cursor-pointer border border-fuchsia-500/40"
+                          className="px-3 py-1 rounded-lg bg-fuchsia-500/20 hover:bg-fuchsia-500 hover:text-black font-mono text-[10px] font-bold text-fuchsia-200 transition-all cursor-pointer border border-fuchsia-500/40"
                         >
                           Equipar
                         </button>
@@ -600,18 +561,18 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
 
                   <div>
                     <span className="text-[10px] font-mono text-amber-400 font-bold uppercase tracking-wider block">
-                      Estado de Ascensión Cuántica
+                      Ascensión Cuántica
                     </span>
-                    <h3 className="text-lg font-black text-white uppercase tracking-wider flex items-center gap-2">
-                      <span>KAI {has66Days ? `Ascensión Grado ${ascensionGrade}` : (has21Days ? 'Guardián de Neuroplasticidad' : 'Forma Esencial')}</span>
+                    <h3 className="text-base font-bold text-white tracking-wide flex items-center gap-2">
+                      <span>KAI {has66Days ? `Grado ${ascensionGrade}` : (has21Days ? 'Guardián 21d' : 'Forma Inicial')}</span>
                       {has66Days && <Crown className="w-4 h-4 text-amber-400" />}
                     </h3>
-                    <p className="text-xs text-slate-300 mt-1 max-w-md">
+                    <p className="text-xs text-slate-400 mt-0.5 max-w-md">
                       {has66Days
-                        ? `Posees ${habits66Count} hábito(s) con automatización basal completa de 66 días. Cada nuevo hábito agrega un Cristal Orbital y sube tu Grado de Ascensión.`
+                        ? `${habits66Count} hábitos dominados a 66 días. Cristales orbitales activos.`
                         : has21Days
-                        ? 'Has quebrado la barrera de inercia de 21 días. El Anillo Orbital y las Auras Elementales están activos.'
-                        : 'Cumple tu primer hábito durante 21 días consecutivos para despertar el Aura Elemental de KAI.'}
+                        ? 'Inercia de 21 días superada. Auras desbloqueadas.'
+                        : 'Alcanza 21 días de racha en un hábito para despertar auras.'}
                     </p>
                   </div>
                 </div>
@@ -710,50 +671,26 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
           {/* ═══════════════════════════════════════════════════════════════ */}
           {/* TAB 3: 📸 FORJA NEURAL POR FOTO (IA MULTIMODAL) */}
           {/* ═══════════════════════════════════════════════════════════════ */}
+          {/* ═══════════════════════════════════════════════════════════════ */}
+          {/* TAB 3: 📸 FORJA NEURAL POR FOTO (IA MULTIMODAL) */}
+          {/* ═══════════════════════════════════════════════════════════════ */}
           {activeTab === 'forge' && (
-            <div className="space-y-6">
-              {/* Explicación de la innovación */}
-              <div className="p-5 rounded-3xl bg-gradient-to-r from-fuchsia-950/40 via-[#0a0518] to-[#030712] border border-fuchsia-500/40 shadow-[0_0_30px_rgba(217,70,239,0.15)] flex flex-col md:flex-row items-center justify-between gap-5">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-base font-black uppercase text-white tracking-wider flex items-center gap-2">
-                      <Camera className="w-5 h-5 text-fuchsia-400 animate-pulse" />
-                      Forja Neural Híbrida // Da Vida a Cualquier Objeto
-                    </h3>
-                  </div>
-                  <p className="text-xs text-slate-300 max-w-xl leading-relaxed">
-                    Escanea cualquier objeto real y elige su estilo de forja. Gemini Vision identificará el objeto con precisión para darle vida en estilo <strong>Ilustración Real (3D Pixar, Anime, Cómic, Crayón)</strong> o <strong>Vectorial (Neón, Pixel Art)</strong> sincronizado a tu aura.
-                  </p>
-                </div>
-
-                <div className="p-3.5 rounded-2xl bg-black/60 border border-fuchsia-500/40 text-center shrink-0 min-w-[140px]">
-                  <span className="text-[10px] font-mono text-fuchsia-300 font-bold uppercase block">
-                    Modo Pruebas Libre
-                  </span>
-                  <span className="text-xl font-black text-fuchsia-200 font-mono">
-                    ∞ ILIMITADO
-                  </span>
-                  <span className="text-[9px] text-emerald-400 block font-mono mt-0.5">
-                    ✓ 8 Estilos Multiverso
-                  </span>
-                </div>
-              </div>
-
-              {/* ─── SELECTOR DE ESTILOS DEL MULTIVERSO KAI ─── */}
-              <div className="space-y-2.5">
+            <div className="space-y-4">
+              {/* Selector de Estilos Minimalista */}
+              <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-black uppercase text-white tracking-wider flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-fuchsia-400" />
-                    <span>Selecciona el Estilo de Forja:</span>
-                  </h4>
-                  <span className="text-[10px] font-mono text-fuchsia-300">
-                    Estilo Activo: <strong className="text-white">{KAI_MULTIVERSE_STYLES.find(s => s.id === selectedStyle)?.name}</strong>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                    Estilo de Personaje
+                  </span>
+                  <span className="text-[10px] font-mono font-bold text-fuchsia-300">
+                    {KAI_MULTIVERSE_STYLES.find(s => s.id === selectedStyle)?.name}
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {KAI_MULTIVERSE_STYLES.map((style) => {
                     const isSelected = selectedStyle === style.id;
+                    const shortName = style.name.split('/')[0].trim();
                     return (
                       <button
                         key={style.id}
@@ -762,54 +699,22 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                           soundFX.playClick();
                           setSelectedStyle(style.id);
                         }}
-                        className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between ${
+                        className={`p-2 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-2.5 ${
                           isSelected
-                            ? 'bg-gradient-to-b from-fuchsia-950/70 to-[#0f0728] border-fuchsia-400 shadow-[0_0_20px_rgba(217,70,239,0.35)] scale-[1.02]'
-                            : 'bg-[#040814]/80 border-white/10 hover:border-white/30 hover:bg-white/5 opacity-80 hover:opacity-100'
+                            ? 'bg-fuchsia-950/60 border-fuchsia-400 shadow-[0_0_15px_rgba(217,70,239,0.3)] ring-1 ring-fuchsia-400/50'
+                            : 'bg-[#040814] border-white/10 hover:border-white/20 hover:bg-white/5'
                         }`}
                       >
-                        {isSelected && (
-                          <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-fuchsia-400 shadow-[0_0_8px_#d946ef] animate-ping" />
-                        )}
-                        <div className="space-y-2">
-                          {/* Mini SVG Preview & Badge */}
-                          <div className="flex items-center justify-between">
-                            <div className="p-1 rounded-xl bg-black/60 border border-white/10 flex items-center justify-center">
-                              {renderStyleMiniPreview(style.id)}
-                            </div>
-                            <span className={`text-[8px] font-mono font-bold uppercase px-2 py-0.5 rounded-full ${
-                              isSelected ? 'bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/40' : 'bg-white/5 text-slate-400'
-                            }`}>
-                              {style.badge}
-                            </span>
-                          </div>
-
-                          <div>
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-sm">{style.icon}</span>
-                              <div className="text-xs font-bold text-white leading-tight">
-                                {style.name}
-                              </div>
-                            </div>
-                            <p className="text-[10px] text-slate-400 leading-snug line-clamp-2 mt-1">
-                              {style.tagline}
-                            </p>
-                          </div>
+                        <div className="w-8 h-8 shrink-0 rounded-lg bg-black/60 border border-white/10 flex items-center justify-center p-0.5">
+                          {renderStyleMiniPreview(style.id)}
                         </div>
-
-                        <div className="mt-3 pt-2 border-t border-white/5 flex items-center justify-between">
-                          <span className="text-[9px] font-mono font-bold text-slate-400">
-                            {isSelected ? '✓ Activo' : 'Elegir'}
-                          </span>
-                          <div className="flex -space-x-1">
-                            {[style.palette.primary, style.palette.secondary, style.palette.accent].map((col, i) => (
-                              <span
-                                key={i}
-                                className="w-2.5 h-2.5 rounded-full border border-black/40"
-                                style={{ backgroundColor: col }}
-                              />
-                            ))}
+                        <div className="min-w-0 flex-1">
+                          <div className={`text-xs font-bold truncate ${isSelected ? 'text-white' : 'text-slate-300'}`}>
+                            {shortName}
                           </div>
+                          <span className="text-[9px] font-mono text-slate-500 block truncate">
+                            {style.badge.replace('VECTOR // ', '').replace('ILUSTRACIÓN ', '').replace('VECTOR ', '')}
+                          </span>
                         </div>
                       </button>
                     );
@@ -817,10 +722,10 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                 </div>
               </div>
 
-              {/* Selector de Entrada (Cámara o Archivo) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {/* Panel Izquierdo: Captura de Imagen */}
-                <div className="p-5 rounded-2xl bg-[#040814] border border-white/10 space-y-4 flex flex-col justify-between">
+              {/* Área Principal de Creación (2 Columnas) */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Columna Izquierda: Captura y Parámetros */}
+                <div className="p-4 rounded-2xl bg-[#040814] border border-white/10 space-y-3.5 flex flex-col justify-between">
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -830,29 +735,23 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                     className="hidden"
                   />
 
-                  <div>
-                    <span className="text-xs font-bold uppercase text-slate-300 block mb-2 tracking-wide">
-                      1. Captura o sube la imagen
+                  {/* Zona de Imagen */}
+                  <div className="space-y-1.5">
+                    <span className="text-[11px] font-bold uppercase text-slate-400 block tracking-wide">
+                      1. Foto del Objeto
                     </span>
 
                     {capturedImageBase64 ? (
                       <div className="space-y-2">
                         <div 
                           onClick={() => fileInputRef.current?.click()}
-                          className="relative rounded-xl overflow-hidden border border-fuchsia-500/40 bg-black aspect-video flex items-center justify-center cursor-pointer group"
+                          className="relative rounded-xl overflow-hidden border border-fuchsia-500/40 bg-black aspect-video flex items-center justify-center cursor-pointer group max-h-48"
                           title="Toca para cambiar la foto"
                         >
                           <img src={capturedImageBase64} alt="Captura" className="max-h-full max-w-full object-contain" />
-                          <button
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); setCapturedImageBase64(null); setForgedResult(null); }}
-                            className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/80 text-white hover:bg-rose-950 transition-colors cursor-pointer"
-                            title="Quitar imagen"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-xs font-mono text-white transition-opacity">
-                            📷 Toca para elegir otra foto
+                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center text-xs font-mono text-white transition-opacity gap-1.5">
+                            <Camera className="w-4 h-4 text-fuchsia-400" />
+                            <span>Cambiar foto</span>
                           </div>
                         </div>
 
@@ -860,15 +759,15 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                           <button
                             type="button"
                             onClick={() => fileInputRef.current?.click()}
-                            className="flex-1 py-1.5 px-3 rounded-xl bg-fuchsia-950/60 hover:bg-fuchsia-900 border border-fuchsia-500/40 text-[10px] font-mono font-bold text-fuchsia-200 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                            className="flex-1 py-1.5 px-3 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-mono font-medium text-slate-300 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                           >
-                            <Camera className="w-3.5 h-3.5 text-fuchsia-400" />
-                            <span>Cambiar Foto / Subir Otra</span>
+                            <Camera className="w-3 h-3 text-fuchsia-400" />
+                            <span>Cambiar</span>
                           </button>
                           <button
                             type="button"
                             onClick={() => { setCapturedImageBase64(null); setForgedResult(null); }}
-                            className="py-1.5 px-3 rounded-xl bg-rose-950/60 hover:bg-rose-900 border border-rose-500/40 text-[10px] font-mono text-rose-300 transition-colors cursor-pointer"
+                            className="py-1.5 px-3 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 border border-rose-500/30 text-[10px] font-mono text-rose-300 transition-colors cursor-pointer"
                           >
                             Quitar
                           </button>
@@ -877,146 +776,119 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                     ) : (
                       <div
                         onClick={() => fileInputRef.current?.click()}
-                        className="border-2 border-dashed border-fuchsia-500/30 hover:border-fuchsia-400 rounded-xl p-8 text-center cursor-pointer bg-fuchsia-950/10 hover:bg-fuchsia-950/20 transition-all flex flex-col items-center justify-center gap-2"
+                        className="border border-dashed border-fuchsia-500/30 hover:border-fuchsia-400/80 rounded-xl p-5 text-center cursor-pointer bg-fuchsia-950/10 hover:bg-fuchsia-950/20 transition-all flex flex-col items-center justify-center gap-2"
                       >
-                        <Camera className="w-8 h-8 text-fuchsia-400 animate-bounce" />
-                        <span className="text-xs font-bold text-fuchsia-200">
-                          Toca aquí para Tomar Foto o Subir Archivo
-                        </span>
-                        <span className="text-[10px] text-slate-400">
-                          (La imagen se comprime en tu teléfono al instante)
-                        </span>
+                        <div className="w-9 h-9 rounded-full bg-fuchsia-500/10 border border-fuchsia-500/30 flex items-center justify-center text-fuchsia-400">
+                          <Camera className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <span className="text-xs font-bold text-white block">
+                            Tomar o subir foto
+                          </span>
+                          <span className="text-[10px] text-slate-400 block mt-0.5">
+                            Cualquier objeto real (manzana, taza, tenis...)
+                          </span>
+                        </div>
                       </div>
                     )}
                   </div>
 
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-300 block mb-1">
-                      Contexto o Nombre Opcional (Ayuda a la IA):
+                  {/* Input Limpio Sin Sugerencias Rápidas */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold text-slate-400 flex items-center justify-between">
+                      <span>2. Nombre o Detalle</span>
+                      <span className="text-[10px] text-slate-500 font-normal">Opcional</span>
                     </label>
                     <input
                       type="text"
                       value={forgePrompt}
                       onChange={(e) => setForgePrompt(e.target.value)}
-                      placeholder="Ej. Mis auriculares Sony de estudio, mi encendedor Zippo..."
-                      className="w-full px-3 py-2 rounded-xl bg-black/60 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-fuchsia-400"
+                      placeholder="Ej: Manzana roja crujiente, encendedor..."
+                      className="w-full px-3 py-2 rounded-xl bg-black/60 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-fuchsia-400/80 transition-colors"
                     />
-
-                    {/* Chips de Selección Rápida de Objeto */}
-                    <div className="flex flex-wrap gap-1.5 pt-1.5">
-                      <span className="text-[10px] text-slate-400 w-full font-mono">
-                        Sugerencias rápidas (toca una si deseas guiar a la IA):
-                      </span>
-                      {[
-                        { label: '🔥 Encendedor', value: 'Encendedor Zippo' },
-                        { label: '🕶️ Gafas de Sol', value: 'Gafas de Sol Solaris' },
-                        { label: '🎧 Audífonos', value: 'Audífonos de Diadema' },
-                        { label: '⌚ Reloj', value: 'Reloj Cronómetro' },
-                        { label: '📱 Móvil / Gadget', value: 'Monolito Gadget' },
-                        { label: '☕ Taza / Vaso', value: 'Taza de Café' },
-                        { label: '🏋️ Mancuerna', value: 'Mancuerna Gym' },
-                        { label: '🐺 Mascota', value: 'Mascota Cyber' },
-                      ].map((chip) => (
-                        <button
-                          key={chip.label}
-                          type="button"
-                          onClick={() => setForgePrompt(chip.value)}
-                          className={`px-2 py-0.5 rounded-lg text-[10px] font-mono transition-all cursor-pointer border ${
-                            forgePrompt === chip.value
-                              ? 'bg-fuchsia-600 text-white border-fuchsia-400 shadow-[0_0_10px_rgba(217,70,239,0.5)]'
-                              : 'bg-white/5 hover:bg-white/10 text-slate-300 border-white/10'
-                          }`}
-                        >
-                          {chip.label}
-                        </button>
-                      ))}
-                    </div>
                   </div>
 
                   {forgeError && (
-                    <div className="p-3 rounded-xl bg-rose-950/40 border border-rose-500/40 text-xs text-rose-300 flex items-center gap-2">
+                    <div className="p-2.5 rounded-xl bg-rose-950/40 border border-rose-500/40 text-xs text-rose-300 flex items-center gap-2">
                       <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
-                      <span>{forgeError}</span>
+                      <span className="text-[11px]">{forgeError}</span>
                     </div>
                   )}
 
+                  {/* Botón Principal */}
                   <button
                     type="button"
                     onClick={handleRunNeuralForge}
                     disabled={!capturedImageBase64 || isForging}
-                    className="w-full py-3.5 rounded-xl bg-gradient-to-r from-fuchsia-600 via-purple-600 to-cyan-500 hover:opacity-95 disabled:opacity-40 text-white font-black text-xs uppercase tracking-wider shadow-[0_0_25px_rgba(217,70,239,0.4)] transition-all cursor-pointer flex items-center justify-center gap-2"
+                    className="w-full py-3 rounded-xl bg-gradient-to-r from-fuchsia-600 via-purple-600 to-cyan-500 hover:opacity-95 disabled:opacity-30 text-white font-black text-xs uppercase tracking-wider shadow-[0_0_20px_rgba(217,70,239,0.35)] transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-[0.99]"
                   >
                     {isForging ? (
                       <>
-                        <Loader2 className="w-4 h-4 animate-spin text-cyan-300" />
-                        <span className="truncate">{forgeProgressText || 'Materializando Personaje con IA...'}</span>
+                        <Loader2 className="w-4 h-4 animate-spin text-white" />
+                        <span className="truncate">{forgeProgressText || 'Materializando con IA...'}</span>
                       </>
                     ) : (
                       <>
                         <Zap className="w-4 h-4 fill-white" />
-                        <span>Dar Vida al Personaje con IA (Forja Cuántica)</span>
+                        <span>Dar Vida al Personaje</span>
                       </>
                     )}
                   </button>
                 </div>
 
-                {/* Panel Derecho: Previsualización Vectorial Holográfica / Escenario de Revelación */}
-                <div className="p-5 rounded-2xl bg-gradient-to-b from-[#040814] via-[#060c20] to-[#040814] border border-white/10 space-y-4 flex flex-col items-center justify-between relative overflow-hidden">
+                {/* Columna Derecha: Escenario Holográfico */}
+                <div className="p-4 rounded-2xl bg-gradient-to-b from-[#040814] via-[#060c20] to-[#040814] border border-white/10 space-y-3 flex flex-col items-center justify-between relative overflow-hidden min-h-[300px]">
                   
-                  {/* Luz ambiental holográfica de fondo */}
-                  <div className="absolute inset-0 bg-radial from-fuchsia-600/10 via-transparent to-transparent pointer-events-none blur-2xl" />
+                  {/* Luz de fondo sutil */}
+                  <div className="absolute inset-0 bg-radial from-fuchsia-600/10 via-transparent to-transparent pointer-events-none blur-xl" />
 
+                  {/* Header de la columna derecha */}
                   <div className="w-full flex items-center justify-between z-10">
-                    <span className="text-xs font-bold uppercase text-slate-300 tracking-wide flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5 text-fuchsia-400" />
-                      <span>{forgedResult ? 'Escenario de Revelación' : isForging ? 'Escaneo Cuántico en Progreso' : 'Previsualización Holográfica'}</span>
+                    <span className="text-[11px] font-bold uppercase text-slate-400 tracking-wide flex items-center gap-1.5">
+                      <Sparkles className="w-3 h-3 text-fuchsia-400" />
+                      <span>{forgedResult ? 'Compañero Revelado' : 'Pedestal Holográfico'}</span>
                     </span>
                     {forgedResult ? (
-                      <span className="text-[10px] font-mono text-emerald-300 font-bold bg-emerald-950/80 border border-emerald-400/60 px-2.5 py-0.5 rounded-full shadow-[0_0_12px_rgba(16,185,129,0.3)] animate-pulse">
-                        ✨ ¡Compañero Convocado!
+                      <span className="text-[9px] font-mono text-emerald-300 font-bold bg-emerald-950/80 border border-emerald-400/50 px-2 py-0.5 rounded-full">
+                        ✨ ¡Listo!
                       </span>
                     ) : isForging ? (
-                      <span className="text-[10px] font-mono text-cyan-300 font-bold bg-cyan-950/80 border border-cyan-400/60 px-2.5 py-0.5 rounded-full shadow-[0_0_12px_rgba(0,240,255,0.3)] animate-pulse">
+                      <span className="text-[9px] font-mono text-cyan-300 font-bold bg-cyan-950/80 border border-cyan-400/50 px-2 py-0.5 rounded-full animate-pulse">
                         ⚡ Forjando...
-                      </span>
-                    ) : stats.kaiCustomForm ? (
-                      <span className="text-[10px] font-mono text-fuchsia-300 font-bold bg-fuchsia-950/60 border border-fuchsia-500/40 px-2 py-0.5 rounded">
-                        KAI Guardado en Arsenal
                       </span>
                     ) : null}
                   </div>
 
-                  {/* Escenario Holográfico */}
-                  <div className="w-56 h-56 relative flex items-center justify-center p-2 z-10">
-                    {/* Anillos concéntricos del pedestal holográfico */}
-                    <div className="absolute inset-0 rounded-full border border-fuchsia-500/20 animate-ping opacity-30" />
-                    <div className="absolute inset-2 rounded-full border border-dashed border-fuchsia-400/40 animate-[spin_20s_linear_infinite]" />
-                    <div className="absolute inset-5 rounded-full border border-dotted border-cyan-400/40 animate-[spin_12s_linear_infinite_reverse]" />
-                    <div className="absolute bottom-2 w-32 h-6 bg-fuchsia-500/20 blur-md rounded-full pointer-events-none" />
+                  {/* Pedestal Holográfico Central */}
+                  <div className="w-48 h-48 relative flex items-center justify-center p-2 z-10 my-auto">
+                    <div className="absolute inset-0 rounded-full border border-fuchsia-500/20 animate-ping opacity-25" />
+                    <div className="absolute inset-2 rounded-full border border-dashed border-fuchsia-400/30 animate-[spin_20s_linear_infinite]" />
+                    <div className="absolute inset-5 rounded-full border border-dotted border-cyan-400/30 animate-[spin_12s_linear_infinite_reverse]" />
+                    <div className="absolute bottom-1 w-28 h-4 bg-fuchsia-500/15 blur-md rounded-full pointer-events-none" />
 
                     {isForging ? (
-                      <div className="text-center p-3 text-cyan-300 space-y-2.5 z-10 animate-pulse flex flex-col items-center">
-                        <div className="w-14 h-14 rounded-full bg-cyan-950/70 border-2 border-cyan-400 flex items-center justify-center shadow-[0_0_25px_rgba(0,240,255,0.5)]">
-                          <Loader2 className="w-7 h-7 text-cyan-300 animate-spin" />
+                      <div className="text-center p-3 text-cyan-300 space-y-2 z-10 animate-pulse flex flex-col items-center">
+                        <div className="w-12 h-12 rounded-full bg-cyan-950/70 border border-cyan-400 flex items-center justify-center shadow-[0_0_20px_rgba(0,240,255,0.4)]">
+                          <Loader2 className="w-6 h-6 text-cyan-300 animate-spin" />
                         </div>
-                        <div className="space-y-1 max-w-[190px]">
+                        <div className="space-y-0.5 max-w-[180px]">
                           <span className="text-xs font-bold text-white block truncate">
                             {liveDetectedObject ? `🎯 "${liveDetectedObject}"` : 'Escaneando objeto...'}
                           </span>
-                          <span className="text-[10px] text-cyan-300/90 font-mono block leading-tight">
-                            {forgeProgressText || 'Procesando con IA cuántica'}
+                          <span className="text-[9px] text-cyan-300/80 font-mono block leading-tight">
+                            {forgeProgressText || 'Procesando con IA'}
                           </span>
                         </div>
                       </div>
                     ) : forgeError ? (
-                      <div className="text-center p-3 text-rose-300 space-y-2 z-10 max-w-[210px] flex flex-col items-center">
-                        <div className="w-12 h-12 rounded-2xl bg-rose-950/70 border border-rose-500/60 flex items-center justify-center shadow-[0_0_20px_rgba(244,63,94,0.4)]">
-                          <AlertCircle className="w-6 h-6 text-rose-400" />
+                      <div className="text-center p-3 text-rose-300 space-y-2 z-10 max-w-[200px] flex flex-col items-center">
+                        <div className="w-10 h-10 rounded-xl bg-rose-950/70 border border-rose-500/50 flex items-center justify-center">
+                          <AlertCircle className="w-5 h-5 text-rose-400" />
                         </div>
                         <span className="text-xs font-bold text-rose-200 block">
-                          Fallo de Conexión IA
+                          No se pudo completar
                         </span>
-                        <span className="text-[9px] text-rose-300/80 font-mono block line-clamp-3">
+                        <span className="text-[9px] text-rose-300/80 font-mono block line-clamp-2">
                           {forgeError}
                         </span>
                       </div>
@@ -1026,113 +898,99 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                         initial={{ scale: 0.5, opacity: 0, y: 15 }}
                         animate={{ scale: 1, opacity: 1, y: 0 }}
                         transition={{ type: "spring", stiffness: 220, damping: 18 }}
-                        className="relative z-10 w-44 h-44 flex items-center justify-center"
+                        className="relative z-10 w-40 h-40 flex items-center justify-center"
                       >
                         <KAICompanion
                           customForm={forgedResult}
                           shapeId="custom"
-                          size={155}
+                          size={145}
                         />
                       </motion.div>
                     ) : stats.kaiCustomForm ? (
-                      <div className="w-44 h-44 flex items-center justify-center">
+                      <div className="w-40 h-40 flex items-center justify-center">
                         <KAICompanion
                           customForm={stats.kaiCustomForm}
                           shapeId="custom"
-                          size={155}
+                          size={145}
                         />
                       </div>
                     ) : (
-                      <div className="text-center p-4 text-slate-500 space-y-3 z-10">
-                        <div className="w-12 h-12 mx-auto rounded-2xl bg-fuchsia-950/40 border border-fuchsia-500/30 flex items-center justify-center">
-                          <Sparkles className="w-6 h-6 text-fuchsia-400 animate-pulse" />
+                      <div className="text-center p-4 text-slate-500 space-y-2 z-10">
+                        <div className="w-10 h-10 mx-auto rounded-xl bg-fuchsia-950/30 border border-fuchsia-500/20 flex items-center justify-center">
+                          <Sparkles className="w-5 h-5 text-fuchsia-400/60" />
                         </div>
                         <span className="text-[11px] block leading-relaxed text-slate-400">
-                          Sube o toma una foto de cualquier objeto y toca <strong>"Dar Vida al Personaje"</strong> para materializar a tu compañero.
+                          Sube una foto y toca <strong>Dar Vida</strong>
                         </span>
                       </div>
                     )}
                   </div>
 
-                  {/* Diálogo / Voz & Badges de Revelación */}
+                  {/* Diálogo & Acción de Equipar */}
                   {forgedResult ? (
                     <motion.div 
-                      initial={{ opacity: 0, y: 10 }}
+                      initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="w-full space-y-3 z-10"
+                      className="w-full space-y-2.5 z-10"
                     >
-                      {/* Bocadillo de Diálogo / Speech Bubble */}
-                      <div className="relative p-3 rounded-2xl bg-gradient-to-r from-fuchsia-950/90 via-[#180933] to-cyan-950/90 border-2 border-fuchsia-400/60 shadow-[0_0_25px_rgba(217,70,239,0.3)] text-center">
-                        {/* Triángulo del bocadillo apuntando arriba hacia la mascota */}
-                        <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-3.5 h-3.5 bg-[#180933] border-t-2 border-l-2 border-fuchsia-400/60 rotate-45" />
-                        
-                        <div className="flex items-center justify-center gap-1.5 mb-1">
-                          <span className="text-xs">💬</span>
-                          <span className="text-[10px] font-mono uppercase tracking-widest text-fuchsia-300 font-black">
-                            {forgedResult.name} te saluda:
+                      {/* Cita carismática */}
+                      <div className="p-2.5 rounded-xl bg-black/60 border border-fuchsia-500/30 text-center relative">
+                        <div className="flex items-center justify-center gap-1.5 mb-0.5">
+                          <span className="text-[10px] font-mono uppercase text-fuchsia-300 font-bold">
+                            💬 {forgedResult.name}:
                           </span>
                         </div>
-                        <p className="text-xs sm:text-sm text-white italic font-bold tracking-wide leading-relaxed">
-                          "{forgedResult.personalityQuote || '¡Saludos, Operador! He despertado con forma y voluntad propia.'}"
+                        <p className="text-xs text-white italic font-medium leading-relaxed">
+                          "{forgedResult.personalityQuote || '¡He despertado con forma y voluntad propia!'}"
                         </p>
                       </div>
 
-                      {/* Badges de ADN del Personaje */}
+                      {/* Badges de ADN */}
                       <div className="flex flex-wrap items-center justify-center gap-1.5">
                         {forgedResult.detectedObject && (
-                          <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-400/50 text-[10px] font-mono text-cyan-300 font-bold shadow-[0_0_10px_rgba(0,240,255,0.2)]">
-                            <span>🎯 Objeto:</span>
-                            <span className="text-white">{forgedResult.detectedObject}</span>
-                          </div>
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-cyan-950/70 border border-cyan-400/40 text-[10px] font-mono text-cyan-300 font-medium">
+                            🎯 {forgedResult.detectedObject}
+                          </span>
                         )}
                         {forgedResult.artStyle && (
-                          <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-fuchsia-950/80 border border-fuchsia-400/50 text-[10px] font-mono text-fuchsia-200 font-bold shadow-[0_0_10px_rgba(217,70,239,0.2)]">
-                            <span>{KAI_MULTIVERSE_STYLES.find(s => s.id === forgedResult.artStyle)?.icon || '🎨'}</span>
-                            <span className="uppercase">{forgedResult.artStyle}</span>
-                          </div>
-                        )}
-                        <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-400/50 text-[10px] font-mono text-emerald-300 font-bold">
-                          <span>
-                            {forgedResult.renderBranch === 'illustration' || ['clay3d', 'anime', 'comic', 'crayon', 'toon'].includes(forgedResult.artStyle || '')
-                              ? '✨ Ilustración IA Transparente'
-                              : '⚡ 100% SVG Vectorial'}
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-fuchsia-950/70 border border-fuchsia-400/40 text-[10px] font-mono text-fuchsia-200 uppercase font-medium">
+                            {KAI_MULTIVERSE_STYLES.find(s => s.id === forgedResult.artStyle)?.icon || '🎨'} {forgedResult.artStyle}
                           </span>
-                        </div>
+                        )}
                       </div>
+
+                      {/* Botón Adoptar */}
+                      <button
+                        type="button"
+                        onClick={handleEquipCustomForm}
+                        className="w-full py-2.5 rounded-xl bg-gradient-to-r from-fuchsia-600 to-cyan-500 hover:opacity-95 text-white font-black uppercase tracking-wider text-xs shadow-[0_0_20px_rgba(217,70,239,0.4)] transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-95"
+                      >
+                        <Check className="w-4 h-4 stroke-[3]" />
+                        <span>¡Adoptar & Equipar!</span>
+                      </button>
                     </motion.div>
                   ) : stats.kaiCustomForm ? (
-                    <div className="w-full space-y-2.5 z-10 text-center">
-                      <div className="flex flex-wrap items-center justify-center gap-1.5 mb-1">
+                    <div className="w-full space-y-2 z-10 text-center">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <span className="text-xs font-bold text-white">{stats.kaiCustomForm.name}</span>
                         {stats.kaiCustomForm.detectedObject && (
-                          <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-fuchsia-950/80 border border-fuchsia-400/50 text-[10px] font-mono text-fuchsia-300 font-bold">
-                            <span>🎯 Objeto:</span>
-                            <span className="text-white">{stats.kaiCustomForm.detectedObject}</span>
-                          </div>
-                        )}
-                        {stats.kaiCustomForm.artStyle && (
-                          <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-purple-950/80 border border-purple-400/50 text-[10px] font-mono text-purple-200 font-bold">
-                            <span>{KAI_MULTIVERSE_STYLES.find(s => s.id === stats.kaiCustomForm.artStyle)?.icon || '🎨'}</span>
-                            <span className="uppercase">{stats.kaiCustomForm.artStyle}</span>
-                          </div>
+                          <span className="text-[10px] font-mono text-fuchsia-300">({stats.kaiCustomForm.detectedObject})</span>
                         )}
                       </div>
 
-                      <h4 className="text-sm font-bold text-white">{stats.kaiCustomForm.name}</h4>
-
-                      {stats.kaiCustomForm.personalityQuote && (
-                        <div className="w-full p-2.5 rounded-xl bg-gradient-to-r from-fuchsia-950/60 via-purple-950/40 to-cyan-950/60 border border-fuchsia-500/30 text-center shadow-[0_0_15px_rgba(217,70,239,0.15)]">
-                          <span className="text-[9px] font-mono text-fuchsia-300 uppercase tracking-widest block font-bold mb-0.5">
-                            💬 Personalidad & Voz del Personaje:
-                          </span>
-                          <p className="text-xs text-white italic font-medium leading-relaxed">
-                            "{stats.kaiCustomForm.personalityQuote}"
-                          </p>
-                        </div>
+                      {stats.kaiShape === 'custom' ? (
+                        <span className="inline-block py-1 px-3 rounded-lg bg-fuchsia-950/60 border border-fuchsia-500/40 text-[10px] font-mono text-fuchsia-300 font-bold">
+                          ✓ Equipado en tu Interfaz
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleSelectShape('custom')}
+                          className="w-full py-2 rounded-xl bg-fuchsia-600 hover:bg-fuchsia-500 text-white font-bold text-xs transition-colors cursor-pointer"
+                        >
+                          Equipar este KAI
+                        </button>
                       )}
-
-                      <p className="text-[10px] font-mono text-emerald-400">
-                        {stats.kaiShape === 'custom' ? '✓ Actualmente Equipado en tu Interfaz' : 'Guardado en tu Arsenal'}
-                      </p>
                     </div>
                   ) : null}
 
@@ -1141,52 +999,11 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                     <motion.div
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      className="w-full p-2.5 rounded-xl bg-emerald-950/90 border border-emerald-400 text-center font-mono text-xs font-bold text-emerald-300 shadow-[0_0_20px_rgba(16,185,129,0.4)] z-10"
+                      className="w-full p-2 rounded-xl bg-emerald-950/90 border border-emerald-400 text-center font-mono text-[11px] font-bold text-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.4)] z-10"
                     >
-                      🎉 ¡Compañero Adoptado y Equipado en toda la App!
+                      🎉 ¡Compañero Equipado en toda la App!
                     </motion.div>
                   )}
-
-                  {/* Acciones de Equipado */}
-                  <div className="w-full z-10">
-                    {forgedResult ? (
-                      <button
-                        type="button"
-                        onClick={handleEquipCustomForm}
-                        className="w-full py-3.5 rounded-xl bg-gradient-to-r from-fuchsia-600 via-purple-600 to-cyan-400 hover:opacity-95 text-black font-anton uppercase tracking-widest text-xs sm:text-sm shadow-[0_0_25px_rgba(217,70,239,0.5)] transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-95"
-                      >
-                        <Check className="w-4 h-4 stroke-[3]" />
-                        <span>¡Adoptar & Equipar a Mi Compañero!</span>
-                      </button>
-                    ) : stats.kaiCustomForm ? (
-                      <div className="w-full space-y-2">
-                        {stats.kaiShape === 'custom' ? (
-                          <div className="space-y-2">
-                            <div className="py-2 px-3 rounded-xl bg-fuchsia-950/60 border border-fuchsia-500/40 text-center font-mono text-[10px] text-fuchsia-300 font-bold flex items-center justify-center gap-1.5">
-                              <Check className="w-3.5 h-3.5 text-fuchsia-300" />
-                              <span>Compañero IA Activo</span>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => handleSelectShape('prism')}
-                              className="w-full py-2 rounded-xl bg-white/10 hover:bg-cyan-500 hover:text-black font-mono text-[10px] font-bold text-slate-200 transition-all cursor-pointer border border-white/10"
-                            >
-                              ↩️ Volver a El Prisma Oficial
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => handleSelectShape('custom')}
-                            className="w-full py-3 rounded-xl bg-fuchsia-500 hover:bg-fuchsia-400 text-black font-black text-xs uppercase tracking-wider shadow-[0_0_15px_rgba(217,70,239,0.3)] transition-all cursor-pointer flex items-center justify-center gap-2"
-                          >
-                            <Check className="w-4 h-4 stroke-[3]" />
-                            <span>Equipar Mi KAI IA Guardado</span>
-                          </button>
-                        )}
-                      </div>
-                    ) : null}
-                  </div>
                 </div>
               </div>
             </div>
