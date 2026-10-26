@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { motion } from 'motion/react';
 import { KaiCustomForm, KaiMultiverseStyle, KaiShapeKey } from '../types';
 import { KaiVectorGraphics } from './KaiVectorGraphics';
+import { KaiCosmeticEffects } from './KaiCosmeticEffects';
 import { usePlayerStore } from '../store/usePlayerStore';
 
 export interface KAICompanionProps {
@@ -324,6 +325,12 @@ export const KAICompanion: React.FC<KAICompanionProps> = ({
           />
         </div>
       )}
+
+      {/* 4. EFECTOS COSMÉTICOS Y RELIQUIAS DE ARMERÍA */}
+      <KaiCosmeticEffects
+        effectId={stats?.kaiParticleEffect || 'none'}
+        activeColor={effectiveAuraColor}
+      />
     </motion.div>
   );
 };

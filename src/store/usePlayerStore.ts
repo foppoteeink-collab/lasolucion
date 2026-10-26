@@ -67,6 +67,7 @@ const INITIAL_PLAYER_STATS: PlayerStats = {
   kaiAuraColor: '#00f0ff',
   kaiParticleEffect: 'none',
   kaiCustomForm: null,
+  kaiVault: [],
   kaiNeuralForgeCharges: 9999, // Modo Libre: Cargas ilimitadas para pruebas de IA
   frozenHabits: {},
   synapticBoosters: 0,

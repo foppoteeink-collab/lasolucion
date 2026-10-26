@@ -135,6 +135,7 @@ export interface PlayerStats {
   kaiAuraColor?: string;
   kaiParticleEffect?: string;
   kaiCustomForm?: KaiCustomForm | null;
+  kaiVault?: KaiCustomForm[];
   kaiNeuralForgeCharges?: number;
   ascensionCrystals?: number;
   frozenHabits?: Record<string, { frozenUntil: string; daysRemaining: number }>;
@@ -145,20 +146,25 @@ export interface PlayerStats {
 
 export type KaiShapeKey = 'prism' | 'custom';
 export type KaiMultiverseStyle =
-  | 'neon-geometry'
-  | 'cyber-pixel'
-  | 'organic-flow'
-  | 'low-poly'
+  | 'mecha-chibi'
+  | 'mystic-relic'
+  | 'sticker-pop'
   | 'toon'
   | 'clay3d'
   | 'chrome'
   | 'papercraft'
+  | 'cyber-pixel'
+  // Compatibilidad con registros previos
+  | 'neon-geometry'
+  | 'organic-flow'
+  | 'low-poly'
   | 'pixel'
   | 'anime'
   | 'comic'
   | 'crayon';
 
 export interface KaiCustomForm {
+  id?: string; // ID único de la reliquia en la Bóveda
   name: string;
   sourceType: 'image' | 'prompt';
   createdAt: string;
@@ -169,10 +175,12 @@ export interface KaiCustomForm {
   primaryColor?: string;
   secondaryColor?: string;
   mood?: 'happy' | 'determined' | 'curious' | 'fierce' | 'playful';
-  svgContent?: string; // 100% Código SVG devuelto por la IA para rama vectorial
-  imageUrl?: string; // DataURL WebP transparente (256x256) para rama de ilustración real
-  storageRef?: string; // Referencia local para no inflar el documento de Firestore
+  svgContent?: string; // 100% Código SVG devuelto por la IA
+  imageUrl?: string;
+  storageRef?: string;
   renderBranch?: 'vector' | 'illustration';
+  habitIdLinked?: string; // Hábito que custodia este KAI
+  habitTitleLinked?: string;
   lines?: Array<{ x1: number; y1: number; x2: number; y2: number }>;
   polygons?: Array<{ points: string; fill?: string; fillOpacity?: number }>;
   coreEye?: { cx: number; cy: number; r: number };

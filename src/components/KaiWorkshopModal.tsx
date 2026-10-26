@@ -16,10 +16,14 @@ import {
   Award,
   AlertCircle,
   HelpCircle,
-  Loader2
+  Loader2,
+  Landmark,
+  Trash2,
+  Link
 } from 'lucide-react';
 import { usePlayerStore } from '../store/usePlayerStore';
 import { useAppStore } from '../store/useAppStore';
+import { useTaskStore } from '../store/useTaskStore';
 import { KAI_OFFICIAL_SHAPES, KAI_AURAS_REGISTRY, KAI_MULTIVERSE_STYLES, KaiShapeDefinition } from '../data/kaiShapes';
 import { KaiVectorGraphics } from './KaiVectorGraphics';
 import { KAICompanion } from './KAICompanion';
@@ -34,7 +38,7 @@ interface KaiWorkshopModalProps {
   onOpenShop?: () => void;
 }
 
-type WorkshopTab = 'shapes' | 'evolution' | 'forge' | 'armory';
+type WorkshopTab = 'forge' | 'vault' | 'shapes' | 'evolution' | 'armory';
 
 const renderStyleMiniPreview = (styleId: KaiMultiverseStyle) => {
   switch (styleId) {
@@ -81,26 +85,62 @@ const renderStyleMiniPreview = (styleId: KaiMultiverseStyle) => {
           <path d="M21,27 Q24,30 28,27" fill="none" stroke="#000" strokeWidth="1.5" strokeLinecap="round" />
         </svg>
       );
-    case 'crayon':
-      return (
-        <svg viewBox="0 0 50 50" className="w-10 h-10 drop-shadow-[0_0_8px_rgba(16,185,129,0.6)]">
-          <path d="M12,14 Q25,8 38,14 Q44,26 38,38 Q25,44 12,38 Q6,26 12,14 Z" fill="none" stroke="#10b981" strokeWidth="3" strokeDasharray="3,3" strokeLinecap="round" />
-          <circle cx="20" cy="24" r="2" fill="#f59e0b" />
-          <circle cx="30" cy="24" r="2" fill="#f59e0b" />
-          <path d="M20,31 Q25,35 30,31" fill="none" stroke="#ec4899" strokeWidth="2.5" strokeLinecap="round" />
-        </svg>
-      );
+    case 'mecha-chibi':
     case 'neon-geometry':
       return (
-        <svg viewBox="0 0 50 50" className="w-10 h-10 text-cyan-400 drop-shadow-[0_0_8px_rgba(0,240,255,0.6)]">
-          <polygon points="25,5 45,16 45,38 25,48 5,38 5,16" fill="none" stroke="currentColor" strokeWidth="2" />
-          <polygon points="25,14 37,21 37,33 25,40 13,33 13,21" fill="none" stroke="#38bdf8" strokeWidth="1" opacity="0.6" />
-          <circle cx="21" cy="24" r="2" fill="#00f0ff" />
-          <circle cx="29" cy="24" r="2" fill="#00f0ff" />
-          <path d="M22,31 Q25,34 28,31" fill="none" stroke="#00f0ff" strokeWidth="1.5" strokeLinecap="round" />
+        <svg viewBox="0 0 50 50" className="w-10 h-10 drop-shadow-[0_0_8px_rgba(0,240,255,0.6)]">
+          {/* Antenas mecha */}
+          <line x1="16" y1="12" x2="10" y2="6" stroke="#00f0ff" strokeWidth="2" strokeLinecap="round" />
+          <line x1="34" y1="12" x2="40" y2="6" stroke="#00f0ff" strokeWidth="2" strokeLinecap="round" />
+          {/* Cabeza mecha */}
+          <rect x="12" y="12" width="26" height="24" rx="4" fill="#0f172a" stroke="#00f0ff" strokeWidth="2" />
+          {/* Visor cibernético */}
+          <rect x="16" y="18" width="18" height="6" rx="2" fill="#00f0ff" />
+          <line x1="18" y1="21" x2="32" y2="21" stroke="#ffffff" strokeWidth="1" />
+          {/* Placa y propulsores */}
+          <rect x="20" y="38" width="10" height="4" rx="1" fill="#0284c7" />
+          <circle cx="21" cy="30" r="1.5" fill="#38bdf8" />
+          <circle cx="29" cy="30" r="1.5" fill="#38bdf8" />
+        </svg>
+      );
+    case 'mystic-relic':
+    case 'organic-flow':
+      return (
+        <svg viewBox="0 0 50 50" className="w-10 h-10 drop-shadow-[0_0_8px_rgba(168,85,247,0.7)]">
+          {/* Piedra de obsidiana */}
+          <polygon points="25,4 43,15 39,40 25,47 11,40 7,15" fill="#1e1035" stroke="#a855f7" strokeWidth="2" strokeLinejoin="round" />
+          {/* Runas mágicas */}
+          <path d="M16,18 L21,24 L17,32" fill="none" stroke="#c084fc" strokeWidth="1.4" strokeLinecap="round" opacity="0.8" />
+          <path d="M34,18 L29,24 L33,32" fill="none" stroke="#c084fc" strokeWidth="1.4" strokeLinecap="round" opacity="0.8" />
+          {/* Ojo etéreo central */}
+          <circle cx="25" cy="25" r="5" fill="#030712" stroke="#a855f7" strokeWidth="1.5" />
+          <circle cx="25" cy="25" r="2.5" fill="#c084fc" />
+          <circle cx="26" cy="24" r="0.9" fill="#ffffff" />
+        </svg>
+      );
+    case 'sticker-pop':
+    case 'crayon':
+      return (
+        <svg viewBox="0 0 50 50" className="w-10 h-10 drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]">
+          {/* Borde troquelado blanco */}
+          <circle cx="25" cy="25" r="18" fill="#ffffff" />
+          {/* Cuerpo sticker saturado */}
+          <circle cx="25" cy="25" r="15" fill="#10b981" />
+          {/* Brillo vinilo glossy */}
+          <path d="M16,14 Q25,10 33,14 Q25,18 16,14 Z" fill="#ffffff" opacity="0.6" />
+          {/* Ojos pop art */}
+          <ellipse cx="20" cy="24" rx="2.5" ry="4" fill="#030712" />
+          <circle cx="19" cy="22" r="1" fill="#ffffff" />
+          <ellipse cx="30" cy="24" rx="2.5" ry="4" fill="#030712" />
+          <circle cx="29" cy="22" r="1" fill="#ffffff" />
+          {/* Sonrisa */}
+          <path d="M20,31 Q25,36 30,31" fill="none" stroke="#030712" strokeWidth="2" strokeLinecap="round" />
+          {/* Estrellita pop */}
+          <polygon points="38,10 40,14 44,14 41,17 42,21 38,18 34,21 35,17 32,14 36,14" fill="#facc15" />
         </svg>
       );
     case 'cyber-pixel':
+    case 'pixel':
       return (
         <svg viewBox="0 0 48 48" className="w-10 h-10 drop-shadow-[0_0_8px_rgba(16,185,129,0.6)]">
           <rect x="12" y="8" width="6" height="6" fill="#10b981" />
@@ -111,15 +151,6 @@ const renderStyleMiniPreview = (styleId: KaiMultiverseStyle) => {
           <rect x="20" y="28" width="8" height="3" fill="#040814" />
           <rect x="8" y="34" width="8" height="6" fill="#059669" />
           <rect x="32" y="34" width="8" height="6" fill="#059669" />
-        </svg>
-      );
-    case 'organic-flow':
-      return (
-        <svg viewBox="0 0 50 50" className="w-10 h-10 text-fuchsia-400 drop-shadow-[0_0_8px_rgba(236,72,153,0.6)]">
-          <path d="M25,6 C13,6 8,18 8,28 C8,40 16,46 25,46 C34,46 42,40 42,28 C42,18 37,6 25,6 Z" fill="none" stroke="currentColor" strokeWidth="2" />
-          <path d="M18,22 C20,19 22,19 24,22" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
-          <path d="M26,22 C28,19 30,19 32,22" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
-          <path d="M20,32 C23,37 27,37 30,32" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
         </svg>
       );
     case 'low-poly':
@@ -144,6 +175,33 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
 }) => {
   const { stats, setStats } = usePlayerStore();
   const habitMastery = useAppStore((state) => state.habitMastery);
+  const customHabits = useTaskStore((state) => state.customHabits);
+
+  const habitList = useMemo(() => {
+    const list: { id: string; title: string; streak: number }[] = [];
+    const addedIds = new Set<string>();
+
+    (customHabits || []).forEach((h) => {
+      addedIds.add(h.id);
+      list.push({
+        id: h.id,
+        title: h.title,
+        streak: habitMastery?.[h.id]?.currentStreak || 0,
+      });
+    });
+
+    Object.entries(habitMastery || {}).forEach(([id, mastery]) => {
+      if (!addedIds.has(id)) {
+        list.push({
+          id,
+          title: `Hábito #${id.slice(-4)}`,
+          streak: mastery?.currentStreak || 0,
+        });
+      }
+    });
+
+    return list;
+  }, [customHabits, habitMastery]);
 
   const [activeTab, setActiveTab] = useState<WorkshopTab>('shapes');
 
@@ -297,17 +355,85 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
     }
   };
 
-  const handleEquipCustomForm = () => {
-    if (!forgedResult) return;
+  const handleEquipCustomForm = (targetForm?: KaiCustomForm) => {
+    const formToEquip = targetForm || forgedResult;
+    if (!formToEquip) return;
     soundFX.playFanfare();
     triggerShockwave({ color: 'gold', intensity: 'epic' });
-    setStats((prev) => ({
-      ...prev,
-      kaiCustomForm: forgedResult,
-      kaiShape: 'custom',
-    }));
+
+    const entryWithId: KaiCustomForm = {
+      ...formToEquip,
+      id: formToEquip.id || `relic_${Date.now()}`,
+      createdAt: formToEquip.createdAt || new Date().toISOString(),
+    };
+
+    setStats((prev) => {
+      const currentVault = prev.kaiVault ? [...prev.kaiVault] : [];
+      if (prev.kaiCustomForm && !currentVault.some(v => v.id === prev.kaiCustomForm?.id || v.name === prev.kaiCustomForm?.name)) {
+        currentVault.push(prev.kaiCustomForm);
+      }
+      const existingIdx = currentVault.findIndex(v => v.id === entryWithId.id || (v.name === entryWithId.name && v.detectedObject === entryWithId.detectedObject));
+      if (existingIdx >= 0) {
+        currentVault[existingIdx] = entryWithId;
+      } else {
+        currentVault.unshift(entryWithId);
+      }
+      return {
+        ...prev,
+        kaiCustomForm: entryWithId,
+        kaiShape: 'custom',
+        kaiVault: currentVault,
+      };
+    });
     setEquippedFeedback(true);
     setTimeout(() => setEquippedFeedback(false), 4500);
+  };
+
+  const handleLinkHabitToRelic = (relicId: string, habitId: string, habitTitle: string) => {
+    soundFX.playClick();
+    setStats((prev) => {
+      const updatedVault = (prev.kaiVault || []).map(r => {
+        if (r.id === relicId) {
+          return {
+            ...r,
+            habitIdLinked: habitId || undefined,
+            habitTitleLinked: habitTitle || undefined,
+          };
+        }
+        return r;
+      });
+      const updatedCustom = prev.kaiCustomForm?.id === relicId
+        ? { ...prev.kaiCustomForm, habitIdLinked: habitId || undefined, habitTitleLinked: habitTitle || undefined }
+        : prev.kaiCustomForm;
+      return {
+        ...prev,
+        kaiVault: updatedVault,
+        kaiCustomForm: updatedCustom,
+      };
+    });
+  };
+
+  const handleDeleteRelic = (relicId: string) => {
+    soundFX.playClick();
+    setStats((prev) => {
+      const updatedVault = (prev.kaiVault || []).filter(r => r.id !== relicId);
+      let updatedCustom = prev.kaiCustomForm;
+      let updatedShape = prev.kaiShape;
+      if (prev.kaiCustomForm?.id === relicId) {
+        if (updatedVault.length > 0) {
+          updatedCustom = updatedVault[0];
+        } else {
+          updatedCustom = null;
+          updatedShape = 'prism';
+        }
+      }
+      return {
+        ...prev,
+        kaiVault: updatedVault,
+        kaiCustomForm: updatedCustom,
+        kaiShape: updatedShape,
+      };
+    });
   };
 
   return (
@@ -356,6 +482,24 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
 
           <button
             type="button"
+            onClick={() => { soundFX.playClick(); setActiveTab('vault'); }}
+            className={`px-3.5 py-2 text-xs font-semibold rounded-t-xl flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
+              activeTab === 'vault'
+                ? 'border-b-2 border-emerald-400 text-emerald-300 bg-emerald-950/30'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Landmark className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Bóveda / Museo</span>
+            {((stats.kaiVault?.length || 0) > 0 || stats.kaiCustomForm) && (
+              <span className="px-1.5 py-0.2 rounded-full text-[9px] font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                {stats.kaiVault?.length || (stats.kaiCustomForm ? 1 : 0)}
+              </span>
+            )}
+          </button>
+
+          <button
+            type="button"
             onClick={() => { soundFX.playClick(); setActiveTab('shapes'); }}
             className={`px-3.5 py-2 text-xs font-semibold rounded-t-xl flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
               activeTab === 'shapes'
@@ -397,6 +541,205 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
         {/* ─── CONTENIDO DE PESTAÑAS ─── */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 scrollbar-thin scrollbar-thumb-cyan-800">
           
+          {/* ═══════════════════════════════════════════════════════════════ */}
+          {/* TAB: 🏛️ BÓVEDA / MUSEO DE KAI (RELIQUIAS & GUARDIANES DE HÁBITOS) */}
+          {/* ═══════════════════════════════════════════════════════════════ */}
+          {activeTab === 'vault' && (() => {
+            const vaultItems: KaiCustomForm[] = [];
+            const idsSeen = new Set<string>();
+
+            if (stats.kaiVault && stats.kaiVault.length > 0) {
+              for (const item of stats.kaiVault) {
+                const key = item.id || item.name;
+                if (!idsSeen.has(key)) {
+                  idsSeen.add(key);
+                  vaultItems.push(item);
+                }
+              }
+            }
+
+            if (stats.kaiCustomForm) {
+              const key = stats.kaiCustomForm.id || stats.kaiCustomForm.name;
+              if (!idsSeen.has(key)) {
+                idsSeen.add(key);
+                vaultItems.unshift(stats.kaiCustomForm);
+              }
+            }
+
+            return (
+              <div className="space-y-5">
+                {/* Cabecera del Museo */}
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-950/40 via-[#041018] to-emerald-950/40 border border-emerald-500/30 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
+                      <Landmark className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-xs sm:text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                        <span>Museo & Bóveda de KAI</span>
+                        <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                          {vaultItems.length} {vaultItems.length === 1 ? 'Reliquia' : 'Reliquias'}
+                        </span>
+                      </h3>
+                      <p className="text-[11px] text-slate-300 mt-0.5">
+                        Salón de la fama de tus compañeros vivos. Puedes vincular cada KAI a un hábito para que sea su guardián personal.
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => { soundFX.playClick(); setActiveTab('forge'); }}
+                    className="px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500 hover:text-black border border-emerald-400 text-emerald-200 text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5"
+                  >
+                    <Camera className="w-3.5 h-3.5" />
+                    <span>Forjar Nuevo</span>
+                  </button>
+                </div>
+
+                {/* Si no hay reliquias aún */}
+                {vaultItems.length === 0 ? (
+                  <div className="p-8 text-center rounded-2xl border border-dashed border-white/10 bg-white/[0.02] space-y-3 max-w-md mx-auto">
+                    <div className="w-12 h-12 mx-auto rounded-2xl bg-emerald-950/40 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                      <Landmark className="w-6 h-6" />
+                    </div>
+                    <h4 className="text-sm font-bold text-white">Tu Bóveda está vacía</h4>
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      Escanea tu primer objeto real en la Forja Neural para darle vida a un compañero y consagrarlo como guardián de tus hábitos.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => { soundFX.playClick(); setActiveTab('forge'); }}
+                      className="px-4 py-2 rounded-xl bg-gradient-to-r from-fuchsia-600 to-cyan-500 text-white font-bold text-xs uppercase tracking-wider transition-all cursor-pointer"
+                    >
+                      Ir a la Forja Neural
+                    </button>
+                  </div>
+                ) : (
+                  /* Grid de Reliquias */
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {vaultItems.map((relic, idx) => {
+                      const relicId = relic.id || `relic_${idx}`;
+                      const isEquipped = stats.kaiShape === 'custom' && (stats.kaiCustomForm?.id === relicId || stats.kaiCustomForm?.name === relic.name);
+                      const linkedHabit = habitList.find(h => h.id === relic.habitIdLinked || h.title === relic.habitTitleLinked);
+
+                      return (
+                        <div
+                          key={relicId}
+                          className={`p-4 rounded-2xl border transition-all flex flex-col justify-between group relative overflow-hidden ${
+                            isEquipped
+                              ? 'bg-emerald-950/30 border-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.25)] ring-1 ring-emerald-400/50'
+                              : 'bg-[#040814] border-white/10 hover:border-emerald-500/30 hover:bg-[#05111b]'
+                          }`}
+                        >
+                          <div>
+                            <div className="flex items-center gap-3 mb-3">
+                              <div className="w-16 h-16 shrink-0 relative flex items-center justify-center bg-black/60 rounded-xl border border-white/5 p-1 overflow-hidden">
+                                <KAICompanion
+                                  customForm={relic}
+                                  shapeId="custom"
+                                  size={60}
+                                  interactive={false}
+                                />
+                              </div>
+
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center justify-between gap-1">
+                                  <h4 className="text-sm font-bold text-white truncate">{relic.name}</h4>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteRelic(relicId)}
+                                    title="Retirar de la Bóveda"
+                                    className="p-1 rounded text-slate-500 hover:text-rose-400 hover:bg-rose-950/30 transition-colors cursor-pointer"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                                <span className="text-[10px] font-mono text-emerald-400 block truncate">
+                                  🎯 {relic.detectedObject || 'Objeto Forjado'}
+                                </span>
+                                <span className="inline-block mt-1 px-1.5 py-0.2 rounded text-[9px] font-mono bg-white/5 border border-white/10 text-slate-400 uppercase">
+                                  {relic.artStyle || 'Multiverso'}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Frase de Personalidad */}
+                            {relic.personalityQuote && (
+                              <p className="text-[10px] text-slate-300 italic bg-black/40 px-2.5 py-1.5 rounded-lg border border-white/5 line-clamp-2 mb-3">
+                                "{relic.personalityQuote}"
+                              </p>
+                            )}
+
+                            {/* Selector de Hábito Custodiado */}
+                            <div className="space-y-1 mb-3 pt-2 border-t border-white/5">
+                              <label className="text-[9px] font-mono uppercase text-slate-400 flex items-center gap-1 font-bold">
+                                <Link className="w-3 h-3 text-cyan-400" />
+                                <span>Hábito que Custodia:</span>
+                              </label>
+
+                              {habitList.length > 0 ? (
+                                <select
+                                  value={relic.habitIdLinked || ''}
+                                  onChange={(e) => {
+                                    const selectedId = e.target.value;
+                                    const matched = habitList.find(h => h.id === selectedId);
+                                    handleLinkHabitToRelic(relicId, selectedId, matched?.title || '');
+                                  }}
+                                  className="w-full bg-[#0a121f] border border-white/10 text-white rounded-lg px-2 py-1 text-[10px] font-mono focus:border-emerald-400 focus:outline-none cursor-pointer"
+                                >
+                                  <option value="">(Sin vincular a hábito)</option>
+                                  {habitList.map((h) => (
+                                    <option key={h.id} value={h.id}>
+                                      {h.title} ({h.streak || 0}d racha)
+                                    </option>
+                                  ))}
+                                </select>
+                              ) : (
+                                <span className="text-[10px] text-slate-500 font-mono block">
+                                  Crea hábitos en la app para vincular este KAI.
+                                </span>
+                              )}
+
+                              {linkedHabit && (
+                                <div className="flex items-center gap-1.5 text-[9px] font-mono text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 mt-1">
+                                  <Flame className="w-3 h-3 text-amber-400" />
+                                  <span>Racha protegida: {linkedHabit.streak || 0} días</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Botón de Equipar */}
+                          <div className="pt-2.5 border-t border-white/5 flex items-center justify-between">
+                            <span className="text-[9px] font-mono text-slate-500">
+                              {relic.createdAt ? new Date(relic.createdAt).toLocaleDateString() : 'Activo'}
+                            </span>
+
+                            {isEquipped ? (
+                              <span className="text-[10px] font-mono font-bold text-emerald-300 bg-emerald-950/70 border border-emerald-400/50 px-2.5 py-0.5 rounded-lg flex items-center gap-1">
+                                <Check className="w-3 h-3" />
+                                Activo
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => handleEquipCustomForm(relic)}
+                                className="px-3 py-1 rounded-lg bg-emerald-500/20 border border-emerald-400/40 hover:bg-emerald-500 hover:text-black font-mono text-[10px] font-bold text-emerald-200 transition-all cursor-pointer"
+                              >
+                                Equipar
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
           {/* ═══════════════════════════════════════════════════════════════ */}
           {/* TAB 1: FORMA GÉNESIS (EL PRISMA) */}
           {/* ═══════════════════════════════════════════════════════════════ */}
@@ -965,7 +1308,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                       {/* Botón Adoptar */}
                       <button
                         type="button"
-                        onClick={handleEquipCustomForm}
+                        onClick={() => handleEquipCustomForm()}
                         className="w-full py-2.5 rounded-xl bg-gradient-to-r from-fuchsia-600 to-cyan-500 hover:opacity-95 text-white font-black uppercase tracking-wider text-xs shadow-[0_0_20px_rgba(217,70,239,0.4)] transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-95"
                       >
                         <Check className="w-4 h-4 stroke-[3]" />
@@ -1044,11 +1387,13 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
               {/* Grid de Efectos */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
-                  { id: 'none', name: 'Sin Efecto', icon: '⚪', desc: 'Presencia holográfica pura y minimalista.' },
-                  { id: 'wings', name: 'Alas Tácticas', icon: '🪽', desc: 'Alas cibernéticas angulares en ambos lados.' },
-                  { id: 'solar', name: 'Llamarada Solar', icon: '☀️', desc: 'Anillo coronal radiante en rotación lenta.' },
-                  { id: 'matrix', name: 'Código Matrix', icon: '🟩', desc: 'Lluvia digital sutil de datos binarios.' },
-                  { id: 'quantum_pulse', name: 'Pulso Cuántico', icon: '🌊', desc: 'Ondas armónicas continuas expansivas.' },
+                  { id: 'none', name: 'Presencia Pura', icon: '⚪', badge: 'CANÓNICO', desc: 'Silueta limpia y minimalista sin accesorios.' },
+                  { id: 'plasma_lightning', name: 'Rayos de Plasma', icon: '⚡', badge: 'ALTO VOLTAJE', desc: 'Arcos eléctricos crepitando con resplandor neón en tiempo real.' },
+                  { id: 'wings', name: 'Alas Cibernéticas', icon: '🪽', badge: 'AERO TÁCTICO', desc: 'Alas biomecánicas holográficas desplegadas a ambos lados.' },
+                  { id: 'hex_shield', name: 'Escudo Hexagonal', icon: '🛡️', badge: 'CAMPO FUERZA', desc: 'Cúpula protectora con rejilla de colmena giratoria.' },
+                  { id: 'solar', name: 'Corona & Orbes', icon: '👑', badge: 'ASCENSIÓN', desc: 'Corona dorada con 3 orbes de energía en órbita continua.' },
+                  { id: 'hud_visor', name: 'Visor HUD Militar', icon: '🎯', badge: 'CYBER TÁCTICO', desc: 'Retícula de combate con escáner láser horizontal activo.' },
+                  { id: 'matrix', name: 'Tormenta Digital', icon: '🟩', badge: 'MATRIX', desc: 'Cascatas de código binario fluyendo alrededor de tu compañero.' },
                 ].map((item) => {
                   const isEquipped = (stats.kaiParticleEffect || 'none') === item.id;
                   return (
@@ -1062,7 +1407,12 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                       }`}
                     >
                       <div>
-                        <span className="text-2xl block mb-2">{item.icon}</span>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-2xl">{item.icon}</span>
+                          <span className="text-[8px] font-mono text-cyan-300 bg-cyan-950/70 border border-cyan-500/30 px-1.5 py-0.5 rounded font-bold tracking-wider">
+                            {item.badge}
+                          </span>
+                        </div>
                         <h4 className="text-xs font-bold text-white">{item.name}</h4>
                         <p className="text-[10px] text-slate-400 mt-1 leading-snug">{item.desc}</p>
                       </div>

@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { soundFX } from '../utils/audio';
 import { KaiVectorGraphics } from './KaiVectorGraphics';
+import { KaiCosmeticEffects } from './KaiCosmeticEffects';
 import { KaiShapeKey, KaiCustomForm } from '../types';
 import { usePlayerStore } from '../store/usePlayerStore';
 import { useAppStore } from '../store/useAppStore';
@@ -402,51 +403,12 @@ export const HoloCompanion: React.FC<HoloCompanionProps> = ({
           )}
         </AnimatePresence>
 
-        {/* CAPA DE PARTÍCULAS / ALAS HOLOGRÁFICAS (SI ESTÁN EQUIPADAS EN ARMERÍA) */}
-        {effectiveParticle === 'wings' && (
-          <div className="absolute inset-0 -z-10 flex items-center justify-center pointer-events-none">
-            <svg viewBox="0 0 160 120" className="w-[140%] h-[140%] -translate-y-2 opacity-75 animate-pulse" fill="none">
-              <polygon points="40,50 10,25 25,65 35,70" stroke={activeColor} strokeWidth="1.6" strokeDasharray="3 3" fill={`${activeColor}15`} />
-              <polygon points="120,50 150,25 135,65 125,70" stroke={activeColor} strokeWidth="1.6" strokeDasharray="3 3" fill={`${activeColor}15`} />
-              <line x1="20" y1="40" x2="35" y2="45" stroke="#ffffff" strokeWidth="1" />
-              <line x1="140" y1="40" x2="125" y2="45" stroke="#ffffff" strokeWidth="1" />
-            </svg>
-          </div>
-        )}
-
-        {effectiveParticle === 'matrix' && (
-          <div className="absolute inset-0 -z-10 flex items-center justify-center pointer-events-none overflow-hidden opacity-60">
-            <div className="text-[7px] font-mono font-bold text-emerald-400 tracking-tighter leading-none select-none opacity-40 animate-pulse">
-              01010101<br />10101010<br />01100101
-            </div>
-          </div>
-        )}
-
-        {effectiveParticle === 'solar' && (
-          <div
-            className="absolute rounded-full pointer-events-none -z-10 animate-spin"
-            style={{
-              width: `${Math.round(95 * scaleMultiplier)}px`,
-              height: `${Math.round(95 * scaleMultiplier)}px`,
-              border: `2px dashed ${activeColor}`,
-              animationDuration: '10s',
-              opacity: 0.7,
-            }}
-          />
-        )}
-
-        {effectiveParticle === 'quantum_pulse' && (
-          <div
-            className="absolute rounded-full pointer-events-none -z-10 animate-ping"
-            style={{
-              width: `${Math.round(80 * scaleMultiplier)}px`,
-              height: `${Math.round(80 * scaleMultiplier)}px`,
-              border: `1.5px solid ${activeColor}`,
-              animationDuration: '3s',
-              opacity: 0.5,
-            }}
-          />
-        )}
+        {/* CAPA DE PARTÍCULAS Y RELIQUIAS DE ARMERÍA DE ALTO IMPACTO */}
+        <KaiCosmeticEffects
+          effectId={effectiveParticle}
+          activeColor={activeColor}
+          scale={scaleMultiplier}
+        />
 
         {/* RENDERIZADO VECTORIAL MULTI-FORMA: 6 FORMAS BASE + FORJA NEURAL IA */}
         <div

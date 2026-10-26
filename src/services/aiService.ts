@@ -580,56 +580,65 @@ REGLAS ESTRICTAS DE SVG:
 - Ojos expresivos con contorno negro marcado y cejas dinámicas.`;
         break;
 
-      case 'crayon':
+      case 'mecha-chibi':
+      case 'neon-geometry':
         vectorDirective = `
-ESTILO OBLIGATORIO: "Crayón Infantil".
+ESTILO OBLIGATORIO: "Mecha Chibi / Bot Táctico".
 REGLAS ESTRICTAS DE SVG:
-- Genera código SVG con trazos discontinuos (stroke-dasharray="3,3" o "4,2") y líneas orgánicas a mano alzada.
-- Colores cera saturados y cálidos, expresión dulce y carismática estilo cuento ilustrado para niños.`;
+- Convierte el objeto detectado en un pequeño robot compañero de combate táctico (estilo Gundam Chibi / Wall-E / Medabots).
+- El cuerpo principal conserva la silueta y colores del objeto pero reforzado con placas de armadura cibernética y remaches tecnológicos.
+- Cabeza/Visor: Un visor frontal brillante de energía (#00f0ff o #38bdf8) con retícula táctica y ojos cibernéticos luminosos.
+- Detalles mecha: pequeñas antenas, micro-ranuras de ventilación, placas biseladas y pequeños propulsores de plasma en la base.
+- Trazo y acabado: Contornos tecnológicos limpios (stroke="#0f172a" stroke-width="2"), sombreado metálico y brillos de filo de placa.`;
         break;
 
-      case 'toon':
+      case 'mystic-relic':
+      case 'organic-flow':
         vectorDirective = `
-ESTILO OBLIGATORIO: "Toon Clásico".
+ESTILO OBLIGATORIO: "Reliquia Mística / Runas Arcanas".
 REGLAS ESTRICTAS DE SVG:
-- Genera código SVG con estilo animación clásica rubber-hose: curvas elásticas, ojos cartoon grandes con pupilas recortadas, colores planos vivos, guantecitos blancos y botitas.`;
+- Transforma el objeto detectado en un artefacto mágico ancestral esculpido en piedra o cristal de obsidiana púrpura/índigo (#1e1b4b, #2e1065, #0f172a).
+- A lo largo de la superficie del objeto, talla grietas luminosas y runas arcanas resplandecientes en violeta eléctrico o cian (#a855f7, #c084fc, #00f0ff) con efecto de brillo mágico.
+- En el centro del objeto, un ojo etéreo o gema viva mística que todo lo ve, con pupilas concéntricas de fuego arcano.
+- Partículas o fragmentos de cristal flotando y levitando alrededor del objeto.`;
+        break;
+
+      case 'sticker-pop':
+      case 'crayon':
+        vectorDirective = `
+ESTILO OBLIGATORIO: "Sticker Pop / Vinilo Urbano".
+REGLAS ESTRICTAS DE SVG:
+- Transforma el objeto en una calcomanía/sticker de vinilo coleccionable troquelada (die-cut).
+- Contorno OBLIGATORIO: Todo el personaje debe estar rodeado por un borde blanco grueso troquelado (stroke="#ffffff" stroke-width="6" con stroke-linejoin="round") y una sombra de relieve inferior (<feDropShadow dx="0" dy="4" stdDeviation="3" flood-opacity="0.35" />).
+- Colores planos vibrantes y ultra saturados con sombreado cel-shading de 2 tonos y reflejos de vinilo glossy curvos blancos.
+- Rostro súper expresivo: ojos gigantes sonrientes con pupilas de dibujo animado y expresión alegre o pícara.`;
         break;
 
       case 'cyber-pixel':
       case 'pixel':
         vectorDirective = `
-ESTILO OBLIGATORIO: "Cyber-Pixel (8-Bit)".
+ESTILO OBLIGATORIO: "Pixel Art 16-Bit / Arcade".
 REGLAS ESTRICTAS DE SVG:
-- Genera únicamente elementos <rect> alineados en una cuadrícula de 8x8px simulando pixel art retro tipo Super Nintendo / GameBoy Advance.
-- Cada elemento DEBE ser un <rect x="..." y="..." width="8" height="8" fill="#hex" /> donde x e y son múltiplos de 8 (entre 16 y 144).
-- Usa una paleta rica de colores: contornos oscuros (#1e293b o #0f172a), colores base del objeto detectado, sombras (#hex más oscuro), brillos (#ffffff) y ojos pixelados vivaces.
-- ¡ESTRICTAMENTE PROHIBIDO cualquier elemento que no sea <rect>!`;
-        break;
-
-      case 'organic-flow':
-        vectorDirective = `
-ESTILO OBLIGATORIO: "Flujo Orgánico".
-REGLAS ESTRICTAS DE SVG:
-- Genera exclusivamente curvas Bezier suaves (C y S en los paths) trazando la silueta del objeto detectado, sin ángulos rectos, stroke-width='2', fill='none'.
-- Cada elemento DEBE ser un <path d="..." stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />.`;
+- Genera bloques y cuadrícula de píxeles nítidos simulando un sprite de videojuego RPG retro de 16 bits.
+- Cada elemento debe ser un <rect x="..." y="..." width="6" height="6" fill="#hex" /> o cuadrícula simétrica alineada a múltiplos de 6.
+- Paleta retro con contornos oscuros, luces nítidas de pixel y ojos grandes brillantes estilo videojuego clásico.`;
         break;
 
       case 'low-poly':
         vectorDirective = `
-ESTILO OBLIGATORIO: "Low Poly".
+ESTILO OBLIGATORIO: "Low Poly 3D".
 REGLAS ESTRICTAS DE SVG:
 - Genera polígonos cerrados triangulares y facetados formando el volumen 3D del objeto detectado.
-- Asigna a cada faceta un color armonizado fill="#hex" con fill-opacity entre 0.25 y 0.95 para simular iluminación tridimensional de piedra preciosa/escultura geométrica.
-- Cada elemento DEBE ser un <polygon points="x1,y1 x2,y2 x3,y3" fill="#hex" fill-opacity="0.xx" stroke="none" />.`;
+- Asigna a cada faceta un color armonizado fill="#hex" con fill-opacity entre 0.3 y 0.95 para simular iluminación tridimensional de escultura de cristal.
+- Cada faceta debe ser un <polygon points="x1,y1 x2,y2 x3,y3" fill="#hex" fill-opacity="0.xx" stroke="none" />.`;
         break;
 
-      case 'neon-geometry':
       default:
         vectorDirective = `
-ESTILO OBLIGATORIO: "Geometría Neón".
+ESTILO OBLIGATORIO: "3D Vinyl / Pixar".
 REGLAS ESTRICTAS DE SVG:
-- Genera <polygon> y <path> simétricos trazando la silueta reconocible del objeto detectado + ojos expresivos, stroke-width='2', fill='none'.
-- Líneas rectas afiladas, limpias y simétricas respecto al eje central x = 80.`;
+- Genera código SVG con volumen 3D suave simulando una figura coleccionable de vinilo Pixar/Nintendo basada en el objeto.
+- Grandes ojos brillantes expresivos, destellos especulares y extremidades tiernas.`;
         break;
     }
 
