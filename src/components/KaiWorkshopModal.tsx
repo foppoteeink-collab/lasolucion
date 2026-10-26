@@ -89,74 +89,75 @@ const renderStyleMiniPreview = (styleId: KaiMultiverseStyle) => {
   switch (styleId) {
     case 'clay3d':
       return (
-        <svg viewBox="0 0 50 50" className="w-10 h-10 drop-shadow-[0_0_8px_rgba(217,70,239,0.6)]">
+        <svg viewBox="0 0 50 50" className="w-10 h-10 drop-shadow-[0_0_8px_rgba(6,182,212,0.6)]">
           <defs>
             <radialGradient id="mini-clay3d-grad" cx="35%" cy="30%" r="65%">
-              <stop offset="0%" stopColor="#f472b6" />
-              <stop offset="60%" stopColor="#d946ef" />
-              <stop offset="100%" stopColor="#701a75" />
+              <stop offset="0%" stopColor="#22d3ee" />
+              <stop offset="60%" stopColor="#0891b2" />
+              <stop offset="100%" stopColor="#0e7490" />
             </radialGradient>
           </defs>
-          <circle cx="25" cy="25" r="18" fill="url(#mini-clay3d-grad)" />
-          <ellipse cx="20" cy="18" rx="6" ry="3" fill="#ffffff" opacity="0.6" />
-          <circle cx="19" cy="25" r="3" fill="#ffffff" />
-          <circle cx="31" cy="25" r="3" fill="#ffffff" />
-          <circle cx="19" cy="25" r="1.5" fill="#0f172a" />
-          <circle cx="31" cy="25" r="1.5" fill="#0f172a" />
-          <path d="M21,31 Q25,35 29,31" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" />
+          <rect x="8" y="8" width="34" height="34" rx="8" fill="#0f172a" stroke="#06b6d4" strokeWidth="1.8" />
+          <path d="M12,12 L38,12 L35,22 L15,22 Z" fill="#1e293b" opacity="0.6" />
+          {/* Visor ahumado estilizado */}
+          <rect x="14" y="20" width="22" height="7" rx="3.5" fill="#030712" stroke="#22d3ee" strokeWidth="1.4" />
+          <line x1="17" y1="23.5" x2="33" y2="23.5" stroke="#ffffff" strokeWidth="1.2" strokeLinecap="round" />
+          {/* Línea de mandíbula táctica */}
+          <line x1="20" y1="33" x2="30" y2="33" stroke="#22d3ee" strokeWidth="1.6" strokeLinecap="round" />
         </svg>
       );
     case 'anime':
       return (
-        <svg viewBox="0 0 50 50" className="w-10 h-10 drop-shadow-[0_0_8px_rgba(56,189,248,0.6)]">
-          <circle cx="25" cy="25" r="18" fill="#0f172a" stroke="#38bdf8" strokeWidth="2" />
-          <ellipse cx="18" cy="24" rx="3.5" ry="5.5" fill="#38bdf8" />
-          <circle cx="17" cy="22" r="1.5" fill="#ffffff" />
-          <ellipse cx="32" cy="24" rx="3.5" ry="5.5" fill="#38bdf8" />
-          <circle cx="31" cy="22" r="1.5" fill="#ffffff" />
-          <path d="M22,33 Q25,36 28,33" fill="none" stroke="#f472b6" strokeWidth="1.8" strokeLinecap="round" />
-          <ellipse cx="13" cy="28" rx="2.5" ry="1.2" fill="#f43f5e" opacity="0.7" />
-          <ellipse cx="37" cy="28" rx="2.5" ry="1.2" fill="#f43f5e" opacity="0.7" />
+        <svg viewBox="0 0 50 50" className="w-10 h-10 drop-shadow-[0_0_8px_rgba(99,102,241,0.7)]">
+          <polygon points="25,6 40,16 36,38 25,44 14,38 10,16" fill="#090d16" stroke="#6366f1" strokeWidth="2" strokeLinejoin="round" />
+          {/* Ojos afilados de cazador (Shonen) */}
+          <polygon points="15,22 22,24 16,27" fill="#818cf8" />
+          <polygon points="35,22 28,24 34,27" fill="#818cf8" />
+          <circle cx="18.5" cy="24.5" r="1.5" fill="#ffffff" />
+          <circle cx="31.5" cy="24.5" r="1.5" fill="#ffffff" />
+          {/* Ceño de combate */}
+          <line x1="14" y1="20" x2="23" y2="23" stroke="#c084fc" strokeWidth="1.4" strokeLinecap="round" />
+          <line x1="36" y1="20" x2="27" y2="23" stroke="#c084fc" strokeWidth="1.4" strokeLinecap="round" />
+          {/* Boca determinada */}
+          <line x1="22" y1="33" x2="28" y2="33" stroke="#818cf8" strokeWidth="1.4" strokeLinecap="round" />
         </svg>
       );
     case 'comic':
       return (
         <svg viewBox="0 0 50 50" className="w-10 h-10 drop-shadow-[0_0_8px_rgba(249,115,22,0.6)]">
-          <polygon points="25,4 32,18 47,15 36,26 43,40 28,34 20,46 17,31 4,28 16,18 10,6" fill="#f97316" stroke="#000000" strokeWidth="2" strokeLinejoin="round" />
-          <circle cx="20" cy="22" r="2.5" fill="#ffffff" stroke="#000" strokeWidth="1" />
-          <circle cx="29" cy="22" r="2.5" fill="#ffffff" stroke="#000" strokeWidth="1" />
-          <circle cx="20" cy="22" r="1" fill="#000" />
-          <circle cx="29" cy="22" r="1" fill="#000" />
-          <path d="M21,27 Q24,30 28,27" fill="none" stroke="#000" strokeWidth="1.5" strokeLinecap="round" />
+          <polygon points="25,4 42,14 46,36 34,46 16,46 4,36 8,14" fill="#050811" stroke="#f97316" strokeWidth="2" strokeLinejoin="round" />
+          {/* Sombras duras de alto contraste */}
+          <polygon points="25,4 42,14 46,36 34,46 25,25" fill="#f97316" opacity="0.3" />
+          {/* Mirada angular neo-noir */}
+          <polygon points="14,22 22,25 16,27" fill="#ffffff" stroke="#f97316" strokeWidth="1" />
+          <polygon points="36,22 28,25 34,27" fill="#ffffff" stroke="#f97316" strokeWidth="1" />
+          <line x1="20" y1="34" x2="30" y2="34" stroke="#ffffff" strokeWidth="1.8" strokeLinecap="round" />
         </svg>
       );
     case 'mecha-chibi':
     case 'neon-geometry':
       return (
-        <svg viewBox="0 0 50 50" className="w-10 h-10 drop-shadow-[0_0_8px_rgba(0,240,255,0.6)]">
-          {/* Antenas mecha */}
-          <line x1="16" y1="12" x2="10" y2="6" stroke="#00f0ff" strokeWidth="2" strokeLinecap="round" />
-          <line x1="34" y1="12" x2="40" y2="6" stroke="#00f0ff" strokeWidth="2" strokeLinecap="round" />
-          {/* Cabeza mecha */}
-          <rect x="12" y="12" width="26" height="24" rx="4" fill="#0f172a" stroke="#00f0ff" strokeWidth="2" />
-          {/* Visor cibernético */}
-          <rect x="16" y="18" width="18" height="6" rx="2" fill="#00f0ff" />
-          <line x1="18" y1="21" x2="32" y2="21" stroke="#ffffff" strokeWidth="1" />
-          {/* Placa y propulsores */}
-          <rect x="20" y="38" width="10" height="4" rx="1" fill="#0284c7" />
-          <circle cx="21" cy="30" r="1.5" fill="#38bdf8" />
-          <circle cx="29" cy="30" r="1.5" fill="#38bdf8" />
+        <svg viewBox="0 0 50 50" className="w-10 h-10 drop-shadow-[0_0_8px_rgba(0,240,255,0.7)]">
+          {/* Chasis blindado mecha militar */}
+          <polygon points="12,12 38,12 42,32 34,42 16,42 8,32" fill="#090e17" stroke="#00f0ff" strokeWidth="2" strokeLinejoin="round" />
+          {/* Visor láser panorámico horizontal */}
+          <rect x="13" y="20" width="24" height="6" rx="2" fill="#00f0ff" />
+          <line x1="15" y1="23" x2="35" y2="23" stroke="#ffffff" strokeWidth="1.2" />
+          {/* Ranuras de ventilación y micro-propulsores */}
+          <line x1="18" y1="32" x2="32" y2="32" stroke="#0284c7" strokeWidth="1.5" />
+          <line x1="20" y1="36" x2="30" y2="36" stroke="#0284c7" strokeWidth="1.5" />
+          <circle cx="25" cy="16" r="1.5" fill="#ffffff" />
         </svg>
       );
     case 'mystic-relic':
     case 'organic-flow':
       return (
         <svg viewBox="0 0 50 50" className="w-10 h-10 drop-shadow-[0_0_8px_rgba(168,85,247,0.7)]">
-          {/* Piedra de obsidiana */}
-          <polygon points="25,4 43,15 39,40 25,47 11,40 7,15" fill="#1e1035" stroke="#a855f7" strokeWidth="2" strokeLinejoin="round" />
-          {/* Runas mágicas */}
-          <path d="M16,18 L21,24 L17,32" fill="none" stroke="#c084fc" strokeWidth="1.4" strokeLinecap="round" opacity="0.8" />
-          <path d="M34,18 L29,24 L33,32" fill="none" stroke="#c084fc" strokeWidth="1.4" strokeLinecap="round" opacity="0.8" />
+          {/* Monolito de obsidiana */}
+          <polygon points="25,4 43,15 39,40 25,47 11,40 7,15" fill="#0d071a" stroke="#a855f7" strokeWidth="2" strokeLinejoin="round" />
+          {/* Runas mágicas geométricas */}
+          <path d="M16,18 L21,24 L17,32" fill="none" stroke="#c084fc" strokeWidth="1.4" strokeLinecap="round" opacity="0.85" />
+          <path d="M34,18 L29,24 L33,32" fill="none" stroke="#c084fc" strokeWidth="1.4" strokeLinecap="round" opacity="0.85" />
           {/* Ojo etéreo central */}
           <circle cx="25" cy="25" r="5" fill="#030712" stroke="#a855f7" strokeWidth="1.5" />
           <circle cx="25" cy="25" r="2.5" fill="#c084fc" />
@@ -166,22 +167,17 @@ const renderStyleMiniPreview = (styleId: KaiMultiverseStyle) => {
     case 'sticker-pop':
     case 'crayon':
       return (
-        <svg viewBox="0 0 50 50" className="w-10 h-10 drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]">
-          {/* Borde troquelado blanco */}
-          <circle cx="25" cy="25" r="18" fill="#ffffff" />
-          {/* Cuerpo sticker saturado */}
-          <circle cx="25" cy="25" r="15" fill="#10b981" />
-          {/* Brillo vinilo glossy */}
-          <path d="M16,14 Q25,10 33,14 Q25,18 16,14 Z" fill="#ffffff" opacity="0.6" />
-          {/* Ojos pop art */}
-          <ellipse cx="20" cy="24" rx="2.5" ry="4" fill="#030712" />
-          <circle cx="19" cy="22" r="1" fill="#ffffff" />
-          <ellipse cx="30" cy="24" rx="2.5" ry="4" fill="#030712" />
-          <circle cx="29" cy="22" r="1" fill="#ffffff" />
-          {/* Sonrisa */}
-          <path d="M20,31 Q25,36 30,31" fill="none" stroke="#030712" strokeWidth="2" strokeLinecap="round" />
-          {/* Estrellita pop */}
-          <polygon points="38,10 40,14 44,14 41,17 42,21 38,18 34,21 35,17 32,14 36,14" fill="#facc15" />
+        <svg viewBox="0 0 50 50" className="w-10 h-10 drop-shadow-[0_4px_8px_rgba(0,0,0,0.6)]">
+          {/* Borde troquelado blanco grueso */}
+          <polygon points="25,5 44,16 41,39 25,46 9,39 6,16" fill="#ffffff" stroke="#ffffff" strokeWidth="4" strokeLinejoin="round" />
+          {/* Cuerpo streetwear Tokyo */}
+          <polygon points="25,5 44,16 41,39 25,46 9,39 6,16" fill="#0f172a" stroke="#10b981" strokeWidth="2" strokeLinejoin="round" />
+          {/* Lentes de sol cyberpunk reflectantes */}
+          <polygon points="14,20 23,22 23,26 15,26" fill="#10b981" />
+          <polygon points="36,20 27,22 27,26 35,26" fill="#10b981" />
+          <line x1="23" y1="23" x2="27" y2="23" stroke="#10b981" strokeWidth="1.5" />
+          {/* Marca técnica */}
+          <line x1="18" y1="34" x2="32" y2="34" stroke="#f59e0b" strokeWidth="1.5" />
         </svg>
       );
     case 'cyber-pixel':

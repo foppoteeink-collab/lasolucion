@@ -554,92 +554,94 @@ export async function forgeKaiFromImage(params: {
     switch (selectedArtStyle) {
       case 'clay3d':
         vectorDirective = `
-ESTILO OBLIGATORIO: "3D Vinyl / Pixar".
+ESTILO OBLIGATORIO: "Cyber-Vinyl / Designer Art Toy (Neo-Tokyo)".
 REGLAS ESTRICTAS DE SVG:
-- Genera código SVG con volumen 3D suave simulando una figura coleccionable de vinilo Pixar/Nintendo basada en la silueta y colores reales del objeto.
-- En <defs>, incluye <radialGradient> y <linearGradient> con luces suaves y brillos especulares (highlights blancos con opacidad).
-- Incluye <filter id="clayShadow"><feDropShadow dx="0" dy="5" stdDeviation="3.5" flood-color="#000000" flood-opacity="0.35" /></filter> para dar profundidad.
-- Diseña grandes ojos brillantes estilo Pixar con destellos radiales y pupilas con doble reflejo blanco.
-- Agrega zapatitos o extremidades tiernas de vinilo glossy y mejillas sonrojadas.`;
+- Transforma el objeto en una figura coleccionable de diseñador de vanguardia (estilo Neo-Tokyo Art Toy / Kidrobot / Coarse Toys).
+- Textura y acabado: Superficie de vinilo mate premium (#0f172a, #1e1b4b combinado con los colores reales del objeto) con acentos de laca brillante reflectante.
+- Luces en <defs>: Gradientes radiales y lineales con destellos especulares nítidos y filtro <feDropShadow dx="0" dy="6" stdDeviation="4" flood-color="#000000" flood-opacity="0.5" /> para volumen imponente.
+- Rostro y Ojos: Ojos estilizados en cristal acrílico ahumado o visores angulares con filo reflectante. ¡CERO MEJILLAS SONROJADAS ROSAS!
+- Silueta: Postura sólida, elegante y moderna, con articulaciones mecánicas limpias o pedestal flotante.`;
         break;
 
       case 'anime':
         vectorDirective = `
-ESTILO OBLIGATORIO: "Anime / Chibi".
+ESTILO OBLIGATORIO: "Familiar de Cazador / Shonen Oscuro".
 REGLAS ESTRICTAS DE SVG:
-- Genera código SVG con técnica cel-shading manga: contornos limpios oscuros (stroke="#1e293b" stroke-width="1.8").
-- Grandes ojos brillantes anime estilo kawaii/Ghibli con destellos circulares blancos múltiples.
-- Mejillas sonrojadas (<ellipse opacity="0.5" fill="#f43f5e" />), colores planos vibrantes del objeto y expresión tierna.`;
+- Transforma el objeto en un espíritu familiar guerrero de combate (estilo Solo Leveling / Persona 5 / Jujutsu Kaisen).
+- Trazo de tinta dinámico con cortes de pluma angulares (stroke="#090d16" stroke-width="2.2" stroke-linecap="round").
+- Ojos: Afilados, rasgados y penetrantes, con fuego espectral o energía eléctrica pura (#00f0ff o #a855f7) y ceño de cazador enfocado.
+- Sombreado: Cel-shading agresivo de 2 tonos con sombras duras angulares que resaltan la musculatura y aristas del objeto.
+- Aura: Trazos dinámicos de energía oscura o relámpagos envolviendo sutilmente el cuerpo del personaje.`;
         break;
 
       case 'comic':
         vectorDirective = `
-ESTILO OBLIGATORIO: "Cómic Moderno (Pop Art)".
+ESTILO OBLIGATORIO: "Cyber-Noir / Novela Gráfica Madura".
 REGLAS ESTRICTAS DE SVG:
-- Genera código SVG con entintado negro audaz (stroke="#000000" stroke-width="2.5" a "3").
-- Colores primarios saturados, sombras gráficas dinámicas de corte duro y estética superheroica de novela gráfica moderna.
-- Ojos expresivos con contorno negro marcado y cejas dinámicas.`;
+- Genera código SVG con estética de cómic neo-noir maduro de alto contraste (estilo Spider-Verse / Batman Beyond).
+- Entintado negro pesado: Bloques sólidos de sombra negra pura (fill="#000000") cortados con luces afiladas.
+- Tramas de semitono o líneas paralelas diagonales de sombreado técnico.
+- Expresión intensa y enigmática, con ceño protector afilado o reflejos angulares en visor.`;
         break;
 
       case 'mecha-chibi':
       case 'neon-geometry':
         vectorDirective = `
-ESTILO OBLIGATORIO: "Mecha Chibi / Bot Táctico".
+ESTILO OBLIGATORIO: "Dron Táctico / Mecha Spec-Ops".
 REGLAS ESTRICTAS DE SVG:
-- Convierte el objeto detectado en un pequeño robot compañero de combate táctico (estilo Gundam Chibi / Wall-E / Medabots).
-- El cuerpo principal conserva la silueta y colores del objeto pero reforzado con placas de armadura cibernética y remaches tecnológicos.
-- Cabeza/Visor: Un visor frontal brillante de energía (#00f0ff o #38bdf8) con retícula táctica y ojos cibernéticos luminosos.
-- Detalles mecha: pequeñas antenas, micro-ranuras de ventilación, placas biseladas y pequeños propulsores de plasma en la base.
-- Trazo y acabado: Contornos tecnológicos limpios (stroke="#0f172a" stroke-width="2"), sombreado metálico y brillos de filo de placa.`;
+- Convierte el objeto en una unidad robótica autónoma de reconocimiento y asalto (estilo Armored Core / Metal Gear).
+- Chasis blindado: Placas angulares biseladas de titanio y fibra de carbono (#030712, #0f172a, #1e293b con líneas de acento de los colores del objeto).
+- Visor Óptico: Visor horizontal panorámico de energía láser (#00f0ff, #38bdf8 o #f59e0b) con retícula táctica interior de micro-puntos.
+- Detalles mecha: Ranuras de ventilación biseladas, remaches hexagonales y micro-propulsores de plasma en la base.
+- ¡PROHIBIDO aspect de juguete infantil! Debe lucir como equipamiento militar futurista de élite.`;
         break;
 
       case 'mystic-relic':
       case 'organic-flow':
         vectorDirective = `
-ESTILO OBLIGATORIO: "Reliquia Mística / Runas Arcanas".
+ESTILO OBLIGATORIO: "Monolito Arcano / Runas del Abismo".
 REGLAS ESTRICTAS DE SVG:
-- Transforma el objeto detectado en un artefacto mágico ancestral esculpido en piedra o cristal de obsidiana púrpura/índigo (#1e1b4b, #2e1065, #0f172a).
-- A lo largo de la superficie del objeto, talla grietas luminosas y runas arcanas resplandecientes en violeta eléctrico o cian (#a855f7, #c084fc, #00f0ff) con efecto de brillo mágico.
-- En el centro del objeto, un ojo etéreo o gema viva mística que todo lo ve, con pupilas concéntricas de fuego arcano.
-- Partículas o fragmentos de cristal flotando y levitando alrededor del objeto.`;
+- Transforma el objeto en un artefacto milenario de poder arcano ancestral (estilo Zonai / Elden Ring / Hollow Knight).
+- Material: Esculpido en piedra volcánica de obsidiana púrpura oscura (#030712, #180d2b, #0f172a).
+- Runas Luminosas: A lo largo de la silueta, talla grietas rúnicas geométricas que emiten resplandor violeta o cian (#c084fc, #00f0ff).
+- Núcleo: En el centro, un ojo etéreo o gema viva mística con pupilas concéntricas de fuego arcano y fragmentos de roca levitando alrededor.`;
         break;
 
       case 'sticker-pop':
       case 'crayon':
         vectorDirective = `
-ESTILO OBLIGATORIO: "Sticker Pop / Vinilo Urbano".
+ESTILO OBLIGATORIO: "Streetwear Cyber-Pop / Hypebeast Tokyo".
 REGLAS ESTRICTAS DE SVG:
-- Transforma el objeto en una calcomanía/sticker de vinilo coleccionable troquelada (die-cut).
-- Contorno OBLIGATORIO: Todo el personaje debe estar rodeado por un borde blanco grueso troquelado (stroke="#ffffff" stroke-width="6" con stroke-linejoin="round") y una sombra de relieve inferior (<feDropShadow dx="0" dy="4" stdDeviation="3" flood-opacity="0.35" />).
-- Colores planos vibrantes y ultra saturados con sombreado cel-shading de 2 tonos y reflejos de vinilo glossy curvos blancos.
-- Rostro súper expresivo: ojos gigantes sonrientes con pupilas de dibujo animado y expresión alegre o pícara.`;
+- Transforma el objeto en una ilustración gráfica urbana de vanguardia (estilo Tokyo Streetwear / Cyberpunk 2077).
+- Borde blanco grueso troquelado (stroke="#ffffff" stroke-width="5" con sombra inferior nítida).
+- Paleta: Negro carbón de fondo con acentos hiper-saturados de neón y cel-shading de precisión.
+- Ojos: Mirada afilada y desafiante, lentes oscuros reflectantes o marcas técnicas y glifos cyberpunk (ej: "KAI-01", "DANGER").`;
         break;
 
       case 'cyber-pixel':
       case 'pixel':
         vectorDirective = `
-ESTILO OBLIGATORIO: "Pixel Art 16-Bit / Arcade".
+ESTILO OBLIGATORIO: "Neo-Arcade / 16-Bit Cyber-Ninja".
 REGLAS ESTRICTAS DE SVG:
-- Genera bloques y cuadrícula de píxeles nítidos simulando un sprite de videojuego RPG retro de 16 bits.
-- Cada elemento debe ser un <rect x="..." y="..." width="6" height="6" fill="#hex" /> o cuadrícula simétrica alineada a múltiplos de 6.
-- Paleta retro con contornos oscuros, luces nítidas de pixel y ojos grandes brillantes estilo videojuego clásico.`;
+- Genera un sprite pixel-art de alta precisión para videojuegos oscuros de acción (estilo Hyper Light Drifter / Dead Cells).
+- Cada elemento debe alinearse a una cuadrícula nítida de píxeles (shape-rendering="crispEdges").
+- Paleta oscura de combate con contrastes eléctricos de neón y ojos afilados luminosos en píxeles.`;
         break;
 
       case 'low-poly':
         vectorDirective = `
-ESTILO OBLIGATORIO: "Low Poly 3D".
+ESTILO OBLIGATORIO: "Prisma Poligonal / Escultura Cuántica".
 REGLAS ESTRICTAS DE SVG:
-- Genera polígonos cerrados triangulares y facetados formando el volumen 3D del objeto detectado.
-- Asigna a cada faceta un color armonizado fill="#hex" con fill-opacity entre 0.3 y 0.95 para simular iluminación tridimensional de escultura de cristal.
-- Cada faceta debe ser un <polygon points="x1,y1 x2,y2 x3,y3" fill="#hex" fill-opacity="0.xx" stroke="none" />.`;
+- Escultura facetada 3D de corte matemático simulando cristal o cuarzo ahumado.
+- Facetas triangulares y trapezoidales cerradas (<polygon ...>) con variaciones precisas de opacidad y reflejos especulares de filo.
+- Volumen tridimensional estilizado y monocromo con acentos lumínicos nítidos.`;
         break;
 
       default:
         vectorDirective = `
-ESTILO OBLIGATORIO: "3D Vinyl / Pixar".
+ESTILO OBLIGATORIO: "Cyber-Vinyl Art Toy".
 REGLAS ESTRICTAS DE SVG:
-- Genera código SVG con volumen 3D suave simulando una figura coleccionable de vinilo Pixar/Nintendo basada en el objeto.
-- Grandes ojos brillantes expresivos, destellos especulares y extremidades tiernas.`;
+- Figura coleccionable urbana de diseñador con acabado vinilo mate oscuro, cortes biselados y ojos afilados estilizados.`;
         break;
     }
 
@@ -647,61 +649,70 @@ REGLAS ESTRICTAS DE SVG:
     switch (selectedMood) {
       case 'stoic':
       case 'determined':
-        moodDirective = `TEMPERAMENTO / EXPRESIÓN REQUERIDA: "Estoico / Firme y Determinado".
-- ¡PROHIBIDO ponerle sonrisa feliz o infantil!
-- Ojos: Mirada seria, profunda, concentrada y protectora, con ceño firme o cejas rectas de guerrero.
-- Boca: Línea recta, horizontal o ligeramente cerrada con determinación serena (cero sonrisas de caricatura).
-- Frase (personalityQuote): De pocas palabras, sabia, firme y protectora de hábitos (ej: "La disciplina no negocia.", "Mantén el enfoque.", "Estoy en guardia.").`;
+        moodDirective = `TEMPERAMENTO REQUERIDO: "Estoico / Firme y Guardián".
+- Ojos: Mirada afilada, profunda, concentrada y protectora, con ceño firme o visor horizontal láser en reposo.
+- Boca: Línea recta o mandíbula blindada cerrada con determinación serena (cero sonrisas).
+- Frase (personalityQuote): De pocas palabras, sabia, firme y protectora de hábitos (ej: "La disciplina no negocia.", "Mantén el enfoque.", "En guardia.").`;
         break;
 
       case 'mischievous':
       case 'playful':
-        moodDirective = `TEMPERAMENTO / EXPRESIÓN REQUERIDA: "Pícaro y Astuto".
-- Ojos: Mirada de reojo perspicaz, una ceja ligeramente arqueada o levantada con picardía.
-- Boca: Media sonrisa ladeada y sutil (smirk), desafiante y cool.
-- Frase (personalityQuote): Desafiante, ingeniosa y motivadora con chispa de humor inteligente.`;
+        moodDirective = `TEMPERAMENTO REQUERIDO: "Pícaro y Astuto (Anti-Héroe)".
+- Ojos: Mirada de reojo perspicaz, ceja angular alzada con actitud cool y calculadora.
+- Boca: Media sonrisa ladeada sutil y desafiante (smirk).
+- Frase (personalityQuote): Confiada, ingeniosa y motivadora con humor afilado.`;
         break;
 
       case 'fierce':
-        moodDirective = `TEMPERAMENTO / EXPRESIÓN REQUERIDA: "Feroz y Táctico".
-- Ojos: Ojos afilados, intensos, ceño angular de combate o visor táctico de pulso rápido.
-- Boca: Boca en tensión de combate (línea en zigzag, mueca feroz o colmillos/dientes de batalla anime).
+        moodDirective = `TEMPERAMENTO REQUERIDO: "Feroz / Modo Combate".
+- Ojos: Ojos afilados en ángulo agresivo, pupilas en hendidura o visor táctico de sobrecarga.
+- Boca: Mandíbula de combate o dientes afilados de batalla estilo anime oscuro.
 - Frase (personalityQuote): Enérgica, combativa, imparable (ej: "¡Aplastemos esa meta!", "No hay tregua para la pereza.").`;
         break;
 
       case 'mystic':
       case 'curious':
-        moodDirective = `TEMPERAMENTO / EXPRESIÓN REQUERIDA: "Místico y Sabio".
-- Ojos: Ojos semi-cerrados serenos, pupilas etéreas o gema central mística, calma cósmica.
-- Boca: Línea suave y pacífica en reposo neutral, en perfecta armonía zen.
-- Frase (personalityQuote): Enigmática, cósmica y profunda, inspirada en la sabiduría ancestral.`;
+        moodDirective = `TEMPERAMENTO REQUERIDO: "Místico y Trascendental".
+- Ojos: Ojos semicerrados en calma cósmica o tercer ojo de energía etérea.
+- Boca: En reposo neutral pacífico y enigmático.
+- Frase (personalityQuote): Profunda, inspirada en secretos del universo y neuroplasticidad.`;
         break;
 
       case 'zen':
-        moodDirective = `TEMPERAMENTO / EXPRESIÓN REQUERIDA: "Zen y Lánguido / Dormilón".
-- Ojos: Párpados pesados o líneas curvadas de descanso pacífico, ojos entreabiertos relajados.
-- Boca: Pequeño bostezo o expresión de tranquilidad absoluta.
-- Frase (personalityQuote): Relajada, pacífica (ej: "Sin prisa pero sin pausa...", "Respira hondo.").`;
+        moodDirective = `TEMPERAMENTO REQUERIDO: "Zen y Lánguido / Serenidad Absoluta".
+- Ojos: Líneas horizontales de calma y concentración profunda en meditación.
+- Boca: Línea fina neutral en descanso.
+- Frase (personalityQuote): Calma, sin prisa pero sin pausa, fluidez mental.`;
         break;
 
       case 'cheerful':
       case 'happy':
       default:
-        moodDirective = `TEMPERAMENTO / EXPRESIÓN REQUERIDA: "Alegre y Radiante".
-- Ojos: Ojos grandes abiertos y llenos de destellos circulares luminosos y expresivos.
-- Boca: Sonrisa vivaz, abierta y juguetona.
-- Frase (personalityQuote): Positiva, animada y llena de energía motivacional.`;
+        moodDirective = `TEMPERAMENTO REQUERIDO: "Carismático y Confiado".
+- Ojos: Ojos abiertos afilados con destellos de confianza y determinación radiante.
+- Boca: Sonrisa confiada de guerrero que sabe que va a ganar.
+- Frase (personalityQuote): Motivación épica y victoriosa.`;
         break;
     }
 
     return `
 ERES EL OJO CLÍNICO Y MOTOR MULTIMODAL DE LA FORJA NEURAL DE "LA SOLUCIÓN".
-Tu misión es escanear la foto adjunta, identificar con máxima precisión qué objeto real u elemento aparece en ella, y generar un COMPAÑERO KAI ANTROPOMÓRFICO 100% SVG que capture la silueta real del objeto con rostro y ojos expresivos en el estilo: "${selectedArtStyle.toUpperCase()}".
+Tu misión es escanear la foto adjunta, identificar con máxima precisión qué objeto real u elemento aparece en ella, y generar un COMPAÑERO KAI ANTROPOMÓRFICO 100% SVG que capture la silueta real del objeto con presencia estilizada, madura e imponente en el estilo: "${selectedArtStyle.toUpperCase()}".
+
+🚨 DIRECTIVA SUPREMA DE ESTÉTICA MADURA & ANIME/SCI-FI (CERO INFANTILISMO):
+- ¡ESTRICTAMENTE PROHIBIDO cualquier aspecto infantil, caricaturesco o de guardería!
+- NO generes personajes tipo "chibi", peluches de bebé, bebés cabezones ni "tiernos".
+- NO dibujes mejillas sonrojadas rosadas ni círculos de rubor (<ellipse fill="#f43f5e" ... />).
+- NO dibujes ojos redondos vacíos de bebé ni pupilas de caricatura infantil.
+- NO dibujes zapatitos redondos de payaso ni extremidades rechonchas de osito.
+- ✅ OBLIGATORIO: Estética MADURA, ESTILIZADA, AFILADA y ÉPICA de videojuego / anime shonen / sci-fi táctico (estilo Solo Leveling, Persona 5, Armored Core, Cyberpunk 2077, Zonai Relics).
+- Ojos: Afilados, rasgados, angulares con ceño penetrante o visores láser/ópticos horizontales.
+- Silueta: Estilizada, aerodinámica, cortes limpios, placas blindadas o facetas geométricas.
 
 PASO 1: ANÁLISIS DEL OBJETO REAL
 - Identifica el objeto exactamente con sus rasgos distintivos (ej: "Encendedor amarillo transparente", "Taza de cerámica negra", "Zapatilla deportiva azul").
-- Diseña un personaje antropomórfico (characterConcept) fusionando la silueta del objeto con anatomía viva (ojos expresivos integrados en la estructura del objeto, boca/expresión acorde al temperamento, patitas o extremidades vivas).
-- Asígnale un nombre creativo (epicName) y una frase breve de despertar (personalityQuote) acorde al temperamento seleccionado.
+- Diseña un personaje antropomórfico estilizado (characterConcept) fusionando la silueta del objeto con anatomía viva imponente (ojos afilados o visor integrados en la estructura del objeto, placas estilizadas, núcleo de energía).
+- Asígnale un nombre creativo y épico (epicName) y una frase breve de despertar (personalityQuote) acorde al temperamento seleccionado.
 - Extrae sus colores primario y secundario en formato hexadecimal.
 
 PASO 2: ARQUITECTURA SVG (REGLAS OBLIGATORIAS)
@@ -713,19 +724,19 @@ ${moodDirective}
 5. ESTRUCTURA SEMÁNTICA PARA ANIMACIÓN ORGÁNICA:
 Organiza obligatoriamente las partes del personaje en grupos <g> identificados para que el motor cuántico de vida pueda animar ojos, respiración y extremidades de forma 100% fluida:
 - <g id="kai-body">: cuerpo, torso y estructura base del objeto.
-- <g id="kai-eyes">: contiene ambos ojos.
-  - Dentro de este, agrupa las pupilas en <g id="kai-pupils"> (para que puedan mirar al cursor y al dedo en móviles).
-- <g id="kai-mouth">: la boca o visor del personaje (para animar respiración y habla al interactuar).
+- <g id="kai-eyes">: contiene ambos ojos (afilados/estilizados).
+  - Dentro de este, agrupa las pupilas o sensores en <g id="kai-pupils"> (para que puedan mirar al cursor y al dedo en móviles).
+- <g id="kai-mouth">: la boca, visor o mandíbula del personaje (para animar respiración y habla al interactuar).
 - <g id="kai-left-hand">: mano, brazo, aleta o extremidad izquierda (si tiene).
 - <g id="kai-right-hand">: mano, brazo, aleta o extremidad derecha (si tiene).
-6. SOMBRA DE FLOTACIÓN: Puedes incluir una elipse de sombra suave en la base (<ellipse cx="80" cy="155" rx="30" ry="6" fill="#000000" opacity="0.25" />) para que flote sobre el pedestal.
+6. SOMBRA DE FLOTACIÓN: Puedes incluir una elipse de sombra suave en la base (<ellipse cx="80" cy="155" rx="30" ry="6" fill="#000000" opacity="0.3" />) para que flote sobre el pedestal.
 7. ${vectorDirective}
 ${userPrompt ? `Contexto o pista del usuario: "${userPrompt}".` : ''}
 
 DEVOLUCIÓN OBLIGATORIA (Responde ÚNICAMENTE con un JSON válido):
 {
   "detectedObject": "Descripción exacta del objeto real identificado",
-  "characterConcept": "Diseño detallado del personaje antropomórfico",
+  "characterConcept": "Diseño detallado del personaje antropomórfico estilizado",
   "epicName": "Nombre creativo del compañero",
   "personalityQuote": "Frase breve de despertar del compañero",
   "primaryColor": "#hex",
