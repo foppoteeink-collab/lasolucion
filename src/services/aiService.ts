@@ -3,7 +3,16 @@ import { firebaseAI, firebaseConfig } from '../firebase';
 import { autoArrangeSchedule, cleanScheduleTitle } from '../utils/timeUtils';
 import { generateProceduralSchedule, generateProceduralAnalysis } from '../utils/proceduralHeuristics';
 import { KaiCustomForm, KaiMultiverseStyle } from '../types';
-import { synthesizeKaiFromImageSilhouette } from '../utils/kaiSilhouetteSynthesizer';
+
+export function getEffectiveGeminiApiKey(): string | null {
+  if (typeof window !== 'undefined') {
+    const custom = window.localStorage.getItem('lasolucion_gemini_api_key');
+    if (custom && custom.trim()) return custom.trim();
+  }
+  const envKey = (import.meta as any).env?.VITE_GEMINI_API_KEY || (import.meta as any).env?.GEMINI_API_KEY;
+  if (envKey && String(envKey).trim()) return String(envKey).trim();
+  return null;
+}
 
 interface RateLimitState {
   lastCallTimestamp: number;
@@ -59,44 +68,21 @@ async function fetchGeminiPrompt(promptText: string, modelName: string = 'gemini
 
   const sanitizedPrompt = promptText.trim().slice(0, 4000);
   const preferredModel =
-    modelName === 'gemini-3.8-flash' || !modelName ? 'gemini-2.5-flash' : modelName;
+    modelName && !['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'].includes(modelName)
+      ? modelName
+      : 'gemini-3.5-flash-lite';
 
   const candidateModels = Array.from(
-    new Set([preferredModel, 'gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash-lite'])
+    new Set([preferredModel, 'gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-3.8-flash', 'gemini-flash-latest'])
   );
 
-  // 1. Primary: Official Firebase AI Logic SDK
-  if (firebaseAI) {
-    for (const modelToTry of candidateModels) {
-      try {
-        const model = getGenerativeModel(firebaseAI, {
-          model: modelToTry,
-          generationConfig: {
-            temperature: 0.35,
-            maxOutputTokens: 8192,
-          },
-        });
-        const result = await model.generateContent(sanitizedPrompt);
-        const text = result.response.text();
-        if (text && text.trim()) {
-          console.log(`[Firebase AI Logic] ✓ Response from ${modelToTry}`);
-          return text;
-        }
-      } catch (err: any) {
-        console.warn(`[Firebase AI Logic] (${modelToTry}) unavailable:`, err?.message || err);
-      }
-    }
-  }
-
-  // 2. Secondary: Direct Gemini Developer API
-  const customKey =
-    typeof window !== 'undefined' ? window.localStorage.getItem('lasolucion_gemini_api_key') : null;
-  const apiKeyToTry = customKey || firebaseConfig?.apiKey;
+  // 1. Primary: Direct Gemini Developer API (using active key)
+  const apiKeyToTry = getEffectiveGeminiApiKey();
   if (apiKeyToTry) {
     for (const modelToTry of candidateModels) {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        const timeoutId = setTimeout(() => controller.abort(), 12000);
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelToTry}:generateContent?key=${apiKeyToTry}`;
         const res = await fetch(url, {
           method: 'POST',
@@ -118,6 +104,29 @@ async function fetchGeminiPrompt(promptText: string, modelName: string = 'gemini
         }
       } catch (err) {
         // try next model
+      }
+    }
+  }
+
+  // 2. Secondary: Official Firebase AI Logic SDK fallback
+  if (firebaseAI) {
+    for (const modelToTry of candidateModels) {
+      try {
+        const model = getGenerativeModel(firebaseAI, {
+          model: modelToTry,
+          generationConfig: {
+            temperature: 0.35,
+            maxOutputTokens: 8192,
+          },
+        });
+        const result = await model.generateContent(sanitizedPrompt);
+        const text = result.response.text();
+        if (text && text.trim()) {
+          console.log(`[Firebase AI Logic] ✓ Response from ${modelToTry}`);
+          return text;
+        }
+      } catch (err: any) {
+        console.warn(`[Firebase AI Logic] (${modelToTry}) unavailable:`, err?.message || err);
       }
     }
   }
@@ -516,8 +525,9 @@ export async function forgeKaiFromImage(params: {
   mimeType?: string;
   promptDescription?: string;
   artStyle?: KaiMultiverseStyle;
+  onProgress?: (stage: 'vision' | 'generation', data?: { detectedObject?: string }) => void;
 }): Promise<KaiCustomForm | null> {
-  const { imageBase64, mimeType = 'image/jpeg', promptDescription = '', artStyle = 'clay3d' } = params;
+  const { imageBase64, mimeType = 'image/jpeg', promptDescription = '', artStyle = 'clay3d', onProgress } = params;
 
   if (!imageBase64 || typeof imageBase64 !== 'string') {
     throw new Error('Falta la imagen a procesar en la Forja Neural.');
@@ -635,11 +645,55 @@ DEVOLUCIÓN OBLIGATORIA (Responde ÚNICAMENTE con un JSON válido):
   let jsonResult: string | null = null;
   let lastErrorMessage = '';
 
-  // Cadena de modelos activos vigentes (2026) con timeout ampliado a 25000ms
-  const CANDIDATE_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash-lite'];
+  // Cadena de modelos multimodales activos vigentes (2026) con timeout de 25000ms
+  const CANDIDATE_MODELS = ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-3.8-flash', 'gemini-flash-latest'];
 
-  // 1. Intento primario: Firebase AI Logic SDK
-  if (firebaseAI) {
+  // 1. Intento primario: Direct Gemini Developer API (utiliza la clave autorizada para generativelanguage)
+  const apiKeyToTry = getEffectiveGeminiApiKey();
+  if (apiKeyToTry) {
+    for (const modelName of CANDIDATE_MODELS) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 25000);
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKeyToTry}`;
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  { inline_data: { mime_type: effectiveMime, data: cleanBase64 } },
+                  { text: systemInstructions },
+                ],
+              },
+            ],
+            generationConfig: { temperature: 0.25, maxOutputTokens: 2048 },
+          }),
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+
+        if (res.ok) {
+          const data = await res.json();
+          const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (text && text.trim()) {
+            jsonResult = text.trim();
+            console.log(`[Gemini API Multimodal] ✓ Respuesta exitosa con ${modelName}`);
+            break;
+          }
+        } else {
+          const errData = await res.json().catch(() => null);
+          lastErrorMessage = errData?.error?.message || `HTTP ${res.status}`;
+        }
+      } catch (fetchErr: any) {
+        lastErrorMessage = fetchErr?.message || String(fetchErr);
+      }
+    }
+  }
+
+  // 2. Intento secundario: Firebase AI Logic SDK si el directo no respondió
+  if (!jsonResult && firebaseAI) {
     for (const modelName of CANDIDATE_MODELS) {
       try {
         const model = getGenerativeModel(firebaseAI, {
@@ -667,55 +721,6 @@ DEVOLUCIÓN OBLIGATORIA (Responde ÚNICAMENTE con un JSON válido):
       } catch (err: any) {
         lastErrorMessage = err?.message || String(err);
         console.warn(`[Firebase AI Logic Multimodal] (${modelName}) error:`, lastErrorMessage);
-      }
-    }
-  }
-
-  // 2. Intento secundario: Direct Gemini Developer API (25s timeout)
-  if (!jsonResult) {
-    const customKey =
-      typeof window !== 'undefined' ? window.localStorage.getItem('lasolucion_gemini_api_key') : null;
-    const apiKeyToTry = customKey || firebaseConfig?.apiKey;
-
-    if (apiKeyToTry) {
-      for (const modelName of CANDIDATE_MODELS) {
-        try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 25000);
-          const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKeyToTry}`;
-          const res = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [
-                {
-                  parts: [
-                    { inline_data: { mime_type: effectiveMime, data: cleanBase64 } },
-                    { text: systemInstructions },
-                  ],
-                },
-              ],
-              generationConfig: { temperature: 0.25, maxOutputTokens: 2048 },
-            }),
-            signal: controller.signal,
-          });
-          clearTimeout(timeoutId);
-
-          if (res.ok) {
-            const data = await res.json();
-            const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (text && text.trim()) {
-              jsonResult = text.trim();
-              console.log(`[Gemini API Multimodal] ✓ Respuesta exitosa con ${modelName}`);
-              break;
-            }
-          } else {
-            const errData = await res.json().catch(() => null);
-            lastErrorMessage = errData?.error?.message || `HTTP ${res.status}`;
-          }
-        } catch (fetchErr: any) {
-          lastErrorMessage = fetchErr?.message || String(fetchErr);
-        }
       }
     }
   }
@@ -754,11 +759,18 @@ DEVOLUCIÓN OBLIGATORIA (Responde ÚNICAMENTE con un JSON válido):
   const primaryColor = parsed.primaryColor || '#00f0ff';
   const secondaryColor = parsed.secondaryColor || '#ec4899';
 
+  // Notificar al cliente que el Paso 1 (Visión) culminó exitosamente con el objeto detectado
+  if (onProgress) {
+    onProgress('vision', { detectedObject });
+  }
+
   // 4. PASO 2: EJECUCIÓN SEGÚN LA RAMA DEL ESTILO
   if (isIllustration) {
     console.log(`[Forja Neural] 🎨 Generando ilustración real para "${detectedObject}" en estilo "${artStyle}"...`);
-    const customKey = typeof window !== 'undefined' ? window.localStorage.getItem('lasolucion_gemini_api_key') : null;
-    const apiKeyToUse = customKey || firebaseConfig?.apiKey;
+    if (onProgress) {
+      onProgress('generation', { detectedObject });
+    }
+    const apiKeyToUse = getEffectiveGeminiApiKey() || undefined;
 
     const transparentWebP = await generateKaiIllustration({
       characterConcept,
@@ -803,6 +815,11 @@ DEVOLUCIÓN OBLIGATORIA (Responde ÚNICAMENTE con un JSON válido):
     if (!svgContent.startsWith('<svg')) {
       svgContent = `<svg viewBox="0 0 160 170" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">${svgContent}</svg>`;
     }
+  }
+
+  // Validación estricta: NO permitir fallback a formas geométricas por defecto si no vino el SVG
+  if (!svgContent && (!Array.isArray(parsed.polygons) || parsed.polygons.length === 0)) {
+    throw new Error(`La IA reconoció el objeto "${detectedObject}", pero no generó el código SVG para el estilo "${artStyle}". Por favor intenta de nuevo.`);
   }
 
   return {

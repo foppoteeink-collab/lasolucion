@@ -153,6 +153,8 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
   const [selectedStyle, setSelectedStyle] = useState<KaiMultiverseStyle>('neon-geometry');
   const [isForging, setIsForging] = useState(false);
   const [forgedResult, setForgedResult] = useState<KaiCustomForm | null>(null);
+  const [liveDetectedObject, setLiveDetectedObject] = useState<string | null>(null);
+  const [forgeProgressText, setForgeProgressText] = useState<string>('');
   const [forgeError, setForgeError] = useState<string | null>(null);
   const [equippedFeedback, setEquippedFeedback] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -253,19 +255,31 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
 
     soundFX.playClick();
     setIsForging(true);
+    setForgedResult(null);
+    setLiveDetectedObject(null);
     setForgeError(null);
+    setForgeProgressText('Paso 1: Analizando imagen con IA cuántica (Gemini Vision)...');
 
     try {
       const customForm = await forgeKaiFromImage({
         imageBase64: capturedImageBase64,
         promptDescription: forgePrompt.trim(),
         artStyle: selectedStyle,
+        onProgress: (stage, data) => {
+          if (stage === 'vision' && data?.detectedObject) {
+            setLiveDetectedObject(data.detectedObject);
+            setForgeProgressText(`¡Objeto identificado: "${data.detectedObject}"!`);
+          } else if (stage === 'generation') {
+            setForgeProgressText(`Paso 2: Materializando manifestación visual (${selectedStyle.toUpperCase()})...`);
+          }
+        },
       });
 
       if (customForm) {
         soundFX.playFanfare();
         triggerShockwave({ color: 'violet', intensity: 'epic' });
         setForgedResult(customForm);
+        setLiveDetectedObject(customForm.detectedObject || null);
 
         // Registrar forma conservando modo libre
         setStats((prev) => ({
@@ -935,7 +949,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                     {isForging ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin text-cyan-300" />
-                        <span>Sintetizando Vector y Dando Vida al Personaje...</span>
+                        <span className="truncate">{forgeProgressText || 'Materializando Personaje con IA...'}</span>
                       </>
                     ) : (
                       <>
@@ -955,11 +969,15 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                   <div className="w-full flex items-center justify-between z-10">
                     <span className="text-xs font-bold uppercase text-slate-300 tracking-wide flex items-center gap-1.5">
                       <Sparkles className="w-3.5 h-3.5 text-fuchsia-400" />
-                      <span>{forgedResult ? 'Escenario de Revelación' : 'Previsualización Holográfica'}</span>
+                      <span>{forgedResult ? 'Escenario de Revelación' : isForging ? 'Escaneo Cuántico en Progreso' : 'Previsualización Holográfica'}</span>
                     </span>
                     {forgedResult ? (
                       <span className="text-[10px] font-mono text-emerald-300 font-bold bg-emerald-950/80 border border-emerald-400/60 px-2.5 py-0.5 rounded-full shadow-[0_0_12px_rgba(16,185,129,0.3)] animate-pulse">
                         ✨ ¡Compañero Convocado!
+                      </span>
+                    ) : isForging ? (
+                      <span className="text-[10px] font-mono text-cyan-300 font-bold bg-cyan-950/80 border border-cyan-400/60 px-2.5 py-0.5 rounded-full shadow-[0_0_12px_rgba(0,240,255,0.3)] animate-pulse">
+                        ⚡ Forjando...
                       </span>
                     ) : stats.kaiCustomForm ? (
                       <span className="text-[10px] font-mono text-fuchsia-300 font-bold bg-fuchsia-950/60 border border-fuchsia-500/40 px-2 py-0.5 rounded">
@@ -976,7 +994,33 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                     <div className="absolute inset-5 rounded-full border border-dotted border-cyan-400/40 animate-[spin_12s_linear_infinite_reverse]" />
                     <div className="absolute bottom-2 w-32 h-6 bg-fuchsia-500/20 blur-md rounded-full pointer-events-none" />
 
-                    {forgedResult ? (
+                    {isForging ? (
+                      <div className="text-center p-3 text-cyan-300 space-y-2.5 z-10 animate-pulse flex flex-col items-center">
+                        <div className="w-14 h-14 rounded-full bg-cyan-950/70 border-2 border-cyan-400 flex items-center justify-center shadow-[0_0_25px_rgba(0,240,255,0.5)]">
+                          <Loader2 className="w-7 h-7 text-cyan-300 animate-spin" />
+                        </div>
+                        <div className="space-y-1 max-w-[190px]">
+                          <span className="text-xs font-bold text-white block truncate">
+                            {liveDetectedObject ? `🎯 "${liveDetectedObject}"` : 'Escaneando objeto...'}
+                          </span>
+                          <span className="text-[10px] text-cyan-300/90 font-mono block leading-tight">
+                            {forgeProgressText || 'Procesando con IA cuántica'}
+                          </span>
+                        </div>
+                      </div>
+                    ) : forgeError ? (
+                      <div className="text-center p-3 text-rose-300 space-y-2 z-10 max-w-[210px] flex flex-col items-center">
+                        <div className="w-12 h-12 rounded-2xl bg-rose-950/70 border border-rose-500/60 flex items-center justify-center shadow-[0_0_20px_rgba(244,63,94,0.4)]">
+                          <AlertCircle className="w-6 h-6 text-rose-400" />
+                        </div>
+                        <span className="text-xs font-bold text-rose-200 block">
+                          Fallo de Conexión IA
+                        </span>
+                        <span className="text-[9px] text-rose-300/80 font-mono block line-clamp-3">
+                          {forgeError}
+                        </span>
+                      </div>
+                    ) : forgedResult ? (
                       <motion.div
                         key={forgedResult.name}
                         initial={{ scale: 0.5, opacity: 0, y: 15 }}
