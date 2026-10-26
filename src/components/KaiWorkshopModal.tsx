@@ -22,6 +22,7 @@ import { usePlayerStore } from '../store/usePlayerStore';
 import { useAppStore } from '../store/useAppStore';
 import { KAI_OFFICIAL_SHAPES, KAI_AURAS_REGISTRY, KAI_MULTIVERSE_STYLES, KaiShapeDefinition } from '../data/kaiShapes';
 import { KaiVectorGraphics } from './KaiVectorGraphics';
+import { KAICompanion } from './KAICompanion';
 import { KaiShapeKey, KaiCustomForm, KaiMultiverseStyle } from '../types';
 import { soundFX } from '../utils/audio';
 import { triggerShockwave } from '../utils/celebration';
@@ -37,6 +38,58 @@ type WorkshopTab = 'shapes' | 'evolution' | 'forge' | 'armory';
 
 const renderStyleMiniPreview = (styleId: KaiMultiverseStyle) => {
   switch (styleId) {
+    case 'clay3d':
+      return (
+        <svg viewBox="0 0 50 50" className="w-10 h-10 drop-shadow-[0_0_8px_rgba(217,70,239,0.6)]">
+          <defs>
+            <radialGradient id="mini-clay3d-grad" cx="35%" cy="30%" r="65%">
+              <stop offset="0%" stopColor="#f472b6" />
+              <stop offset="60%" stopColor="#d946ef" />
+              <stop offset="100%" stopColor="#701a75" />
+            </radialGradient>
+          </defs>
+          <circle cx="25" cy="25" r="18" fill="url(#mini-clay3d-grad)" />
+          <ellipse cx="20" cy="18" rx="6" ry="3" fill="#ffffff" opacity="0.6" />
+          <circle cx="19" cy="25" r="3" fill="#ffffff" />
+          <circle cx="31" cy="25" r="3" fill="#ffffff" />
+          <circle cx="19" cy="25" r="1.5" fill="#0f172a" />
+          <circle cx="31" cy="25" r="1.5" fill="#0f172a" />
+          <path d="M21,31 Q25,35 29,31" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      );
+    case 'anime':
+      return (
+        <svg viewBox="0 0 50 50" className="w-10 h-10 drop-shadow-[0_0_8px_rgba(56,189,248,0.6)]">
+          <circle cx="25" cy="25" r="18" fill="#0f172a" stroke="#38bdf8" strokeWidth="2" />
+          <ellipse cx="18" cy="24" rx="3.5" ry="5.5" fill="#38bdf8" />
+          <circle cx="17" cy="22" r="1.5" fill="#ffffff" />
+          <ellipse cx="32" cy="24" rx="3.5" ry="5.5" fill="#38bdf8" />
+          <circle cx="31" cy="22" r="1.5" fill="#ffffff" />
+          <path d="M22,33 Q25,36 28,33" fill="none" stroke="#f472b6" strokeWidth="1.8" strokeLinecap="round" />
+          <ellipse cx="13" cy="28" rx="2.5" ry="1.2" fill="#f43f5e" opacity="0.7" />
+          <ellipse cx="37" cy="28" rx="2.5" ry="1.2" fill="#f43f5e" opacity="0.7" />
+        </svg>
+      );
+    case 'comic':
+      return (
+        <svg viewBox="0 0 50 50" className="w-10 h-10 drop-shadow-[0_0_8px_rgba(249,115,22,0.6)]">
+          <polygon points="25,4 32,18 47,15 36,26 43,40 28,34 20,46 17,31 4,28 16,18 10,6" fill="#f97316" stroke="#000000" strokeWidth="2" strokeLinejoin="round" />
+          <circle cx="20" cy="22" r="2.5" fill="#ffffff" stroke="#000" strokeWidth="1" />
+          <circle cx="29" cy="22" r="2.5" fill="#ffffff" stroke="#000" strokeWidth="1" />
+          <circle cx="20" cy="22" r="1" fill="#000" />
+          <circle cx="29" cy="22" r="1" fill="#000" />
+          <path d="M21,27 Q24,30 28,27" fill="none" stroke="#000" strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
+      );
+    case 'crayon':
+      return (
+        <svg viewBox="0 0 50 50" className="w-10 h-10 drop-shadow-[0_0_8px_rgba(16,185,129,0.6)]">
+          <path d="M12,14 Q25,8 38,14 Q44,26 38,38 Q25,44 12,38 Q6,26 12,14 Z" fill="none" stroke="#10b981" strokeWidth="3" strokeDasharray="3,3" strokeLinecap="round" />
+          <circle cx="20" cy="24" r="2" fill="#f59e0b" />
+          <circle cx="30" cy="24" r="2" fill="#f59e0b" />
+          <path d="M20,31 Q25,35 30,31" fill="none" stroke="#ec4899" strokeWidth="2.5" strokeLinecap="round" />
+        </svg>
+      );
     case 'neon-geometry':
       return (
         <svg viewBox="0 0 50 50" className="w-10 h-10 text-cyan-400 drop-shadow-[0_0_8px_rgba(0,240,255,0.6)]">
@@ -70,6 +123,7 @@ const renderStyleMiniPreview = (styleId: KaiMultiverseStyle) => {
         </svg>
       );
     case 'low-poly':
+    default:
       return (
         <svg viewBox="0 0 50 50" className="w-10 h-10 drop-shadow-[0_0_8px_rgba(245,158,11,0.6)]">
           <polygon points="25,6 12,20 25,28" fill="#f59e0b" fillOpacity="0.85" />
@@ -222,7 +276,8 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
         setForgeError('No se pudo procesar la silueta. Intenta con un objeto con fondo más despejado.');
       }
     } catch (err: any) {
-      setForgeError('Error de conexión con el motor neural. Inténtalo de nuevo.');
+      console.error('[Forja Neural] Error procesando:', err);
+      setForgeError(err?.message || 'Error de conexión con el motor neural. Inténtalo de nuevo.');
     } finally {
       setIsForging(false);
     }
@@ -649,12 +704,11 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                   <div className="flex items-center gap-2">
                     <h3 className="text-base font-black uppercase text-white tracking-wider flex items-center gap-2">
                       <Camera className="w-5 h-5 text-fuchsia-400 animate-pulse" />
-                      Forja Neural Multi-Estilo (100% SVG) // Da Vida a Cualquier Objeto
+                      Forja Neural Híbrida // Da Vida a Cualquier Objeto
                     </h3>
                   </div>
                   <p className="text-xs text-slate-300 max-w-xl leading-relaxed">
-                    Escanea cualquier objeto del mundo real y elige tu estilo de forja. El backend inyecta una regla vectorial estricta a Gemini Flash, 
-                    garantizando <strong>código SVG 100% nativo con inyección del token <code className="text-cyan-300">--color-aura-activa</code></strong> sincronizado a tu interfaz.
+                    Escanea cualquier objeto real y elige su estilo de forja. Gemini Vision identificará el objeto con precisión para darle vida en estilo <strong>Ilustración Real (3D Pixar, Anime, Cómic, Crayón)</strong> o <strong>Vectorial (Neón, Pixel Art)</strong> sincronizado a tu aura.
                   </p>
                 </div>
 
@@ -666,7 +720,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                     ∞ ILIMITADO
                   </span>
                   <span className="text-[9px] text-emerald-400 block font-mono mt-0.5">
-                    ✓ 4 Estilos 100% SVG
+                    ✓ 8 Estilos Multiverso
                   </span>
                 </div>
               </div>
@@ -676,7 +730,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                 <div className="flex items-center justify-between">
                   <h4 className="text-xs font-black uppercase text-white tracking-wider flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-fuchsia-400" />
-                    <span>Selecciona el Estilo de Forja Vectorial:</span>
+                    <span>Selecciona el Estilo de Forja:</span>
                   </h4>
                   <span className="text-[10px] font-mono text-fuchsia-300">
                     Estilo Activo: <strong className="text-white">{KAI_MULTIVERSE_STYLES.find(s => s.id === selectedStyle)?.name}</strong>
@@ -930,28 +984,18 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                         transition={{ type: "spring", stiffness: 220, damping: 18 }}
                         className="relative z-10 w-44 h-44 flex items-center justify-center"
                       >
-                        <KaiVectorGraphics
-                          shapeId="custom"
-                          activeColor="var(--color-aura-activa, #e879f9)"
-                          secondaryColor="#a21caf"
-                          glowFilterId="forge-result-stage"
-                          has21Days={has21Days}
-                          has66Days={has66Days}
-                          ascensionCrystalsCount={ascensionCrystals}
+                        <KAICompanion
                           customForm={forgedResult}
+                          shapeId="custom"
+                          size={155}
                         />
                       </motion.div>
                     ) : stats.kaiCustomForm ? (
                       <div className="w-44 h-44 flex items-center justify-center">
-                        <KaiVectorGraphics
-                          shapeId="custom"
-                          activeColor="var(--color-aura-activa, #e879f9)"
-                          secondaryColor="#a21caf"
-                          glowFilterId="forge-saved-result"
-                          has21Days={has21Days}
-                          has66Days={has66Days}
-                          ascensionCrystalsCount={ascensionCrystals}
+                        <KAICompanion
                           customForm={stats.kaiCustomForm}
+                          shapeId="custom"
+                          size={155}
                         />
                       </div>
                     ) : (
@@ -1004,7 +1048,11 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                           </div>
                         )}
                         <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-400/50 text-[10px] font-mono text-emerald-300 font-bold">
-                          <span>⚡ 100% SVG Vectorial</span>
+                          <span>
+                            {forgedResult.renderBranch === 'illustration' || ['clay3d', 'anime', 'comic', 'crayon', 'toon'].includes(forgedResult.artStyle || '')
+                              ? '✨ Ilustración IA Transparente'
+                              : '⚡ 100% SVG Vectorial'}
+                          </span>
                         </div>
                       </div>
                     </motion.div>

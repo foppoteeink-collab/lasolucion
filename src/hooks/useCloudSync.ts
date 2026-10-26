@@ -42,8 +42,17 @@ export interface CloudSyncResult {
   isOnline: boolean;
 }
 
-const sanitizeForFirestore = (obj: any) => {
-  return JSON.parse(JSON.stringify(obj));
+const sanitizeForFirestore = (obj: any): any => {
+  const clone = JSON.parse(JSON.stringify(obj));
+
+  // Blindaje de persistencia en Firestore (Regla 4):
+  // Previene que strings DataURL base64 pesados inflen el documento o violen el límite de 20,000 caracteres
+  if (clone?.stats?.kaiCustomForm?.imageUrl && typeof clone.stats.kaiCustomForm.imageUrl === 'string' && clone.stats.kaiCustomForm.imageUrl.length > 1500) {
+    clone.stats.kaiCustomForm.storageRef = clone.stats.kaiCustomForm.storageRef || 'local:kai_custom_avatar_data';
+    delete clone.stats.kaiCustomForm.imageUrl;
+  }
+
+  return clone;
 };
 
 /* ============================================================================
@@ -133,9 +142,17 @@ export function mergePlayerStats(local: PlayerStats, remote: PlayerStats): Playe
     // CRITICAL: Protect user's local KAI equipment & customization choices from stale remote snapshots
     kaiShape: local.kaiShape || remote.kaiShape || 'prism',
     kaiAuraColor: local.kaiAuraColor || remote.kaiAuraColor || '#00f0ff',
-    kaiParticleEffect: local.kaiParticleEffect || remote.kaiParticleEffect || 'none',
-    kaiCustomForm: local.kaiCustomForm || remote.kaiCustomForm || null,
-    kaiNeuralForgeCharges: Math.max(local.kaiNeuralForgeCharges ?? 9999, remote.kaiNeuralForgeCharges ?? 9999),
+    kaiCustomForm: (() => {
+      const merged = local.kaiCustomForm || remote.kaiCustomForm || null;
+      if (merged && !merged.imageUrl && merged.storageRef && typeof window !== 'undefined') {
+        const key = merged.storageRef.replace('local:', '');
+        const stored = window.localStorage.getItem(key);
+        if (stored) {
+          return { ...merged, imageUrl: stored };
+        }
+      }
+      return merged;
+    })(),
     hasCompletedAwakening: local.hasCompletedAwakening || remote.hasCompletedAwakening || false,
     level,
     currentXp,

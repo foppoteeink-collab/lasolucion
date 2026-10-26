@@ -136,6 +136,7 @@ export interface PlayerStats {
   kaiParticleEffect?: string;
   kaiCustomForm?: KaiCustomForm | null;
   kaiNeuralForgeCharges?: number;
+  ascensionCrystals?: number;
   frozenHabits?: Record<string, { frozenUntil: string; daysRemaining: number }>;
   synapticBoosters?: number;
   seenTutorialGuides?: Record<string, boolean>;
@@ -152,19 +153,26 @@ export type KaiMultiverseStyle =
   | 'clay3d'
   | 'chrome'
   | 'papercraft'
-  | 'pixel';
+  | 'pixel'
+  | 'anime'
+  | 'comic'
+  | 'crayon';
 
 export interface KaiCustomForm {
   name: string;
   sourceType: 'image' | 'prompt';
   createdAt: string;
   detectedObject?: string;
+  characterConcept?: string;
   artStyle?: KaiMultiverseStyle;
   personalityQuote?: string;
   primaryColor?: string;
   secondaryColor?: string;
   mood?: 'happy' | 'determined' | 'curious' | 'fierce' | 'playful';
-  svgContent?: string; // 100% Código SVG devuelto por la IA o el sintetizador
+  svgContent?: string; // 100% Código SVG devuelto por la IA para rama vectorial
+  imageUrl?: string; // DataURL WebP transparente (256x256) para rama de ilustración real
+  storageRef?: string; // Referencia local para no inflar el documento de Firestore
+  renderBranch?: 'vector' | 'illustration';
   lines?: Array<{ x1: number; y1: number; x2: number; y2: number }>;
   polygons?: Array<{ points: string; fill?: string; fillOpacity?: number }>;
   coreEye?: { cx: number; cy: number; r: number };

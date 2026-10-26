@@ -132,7 +132,7 @@ async function fetchGeminiPrompt(promptText: string, modelName: string = 'gemini
       const res = await fetch('/.netlify/functions/oraculo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: promptText, model: targetModel }),
+        body: JSON.stringify({ prompt: promptText, model: preferredModel }),
         signal: controller.signal,
       });
       clearTimeout(timeoutId);
@@ -367,100 +367,278 @@ ${historyContext}
  * geométrico simétrico (viewBox="0 0 120 120") con líneas neón y núcleo de luz.
  * ══════════════════════════════════════════════════════════════════════════════
  */
+/**
+ * Procesa la imagen en un lienzo <canvas> de 256x256 aplicando Chroma/Luminance Keying
+ * sobre el fondo oscuro #030712 para dejar al personaje 100% recortado con fondo transparente (alpha = 0).
+ */
+export async function processChromaKeyToWebP(imageSource: string): Promise<string> {
+  if (typeof window === 'undefined') return imageSource;
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 256;
+        canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(imageSource);
+          return;
+        }
+
+        ctx.clearRect(0, 0, 256, 256);
+        ctx.drawImage(img, 0, 0, 256, 256);
+
+        const imgData = ctx.getImageData(0, 0, 256, 256);
+        const data = imgData.data;
+
+        // Target background: pure dark #030712 (R:3, G:7, B:18)
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+
+          // Distancia euclidiana a #030712
+          const dr = r - 3;
+          const dg = g - 7;
+          const db = b - 18;
+          const dist = Math.sqrt(dr * dr + dg * dg + db * db);
+          const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+
+          if (dist < 34 || luminance < 18) {
+            data[i + 3] = 0; // Transparente total
+          } else if (dist < 52 || luminance < 30) {
+            // Suavizado / anti-aliasing en bordes
+            const factor = Math.min(1, Math.max(0, (dist - 34) / 18));
+            data[i + 3] = Math.round(data[i + 3] * factor);
+          }
+        }
+
+        ctx.putImageData(imgData, 0, 0);
+        const transparentWebP = canvas.toDataURL('image/webp', 0.85);
+        resolve(transparentWebP);
+      } catch (err) {
+        console.warn('[Forja Neural] Error procesando Chroma Key en canvas:', err);
+        resolve(imageSource);
+      }
+    };
+    img.onerror = () => {
+      console.warn('[Forja Neural] Error cargando imagen para Chroma Key, preservando fuente');
+      resolve(imageSource);
+    };
+    img.src = imageSource;
+  });
+}
+
+/**
+ * Genera la ilustración del personaje según su estilo utilizando Imagen 3 o motor de alta resolución
+ */
+async function generateKaiIllustration(params: {
+  characterConcept: string;
+  detectedObject: string;
+  artStyle: KaiMultiverseStyle;
+  apiKey?: string;
+}): Promise<string> {
+  const { characterConcept, detectedObject, artStyle, apiKey } = params;
+
+  let styleDesc = '';
+  switch (artStyle) {
+    case 'clay3d':
+      styleDesc = 'cute full body 3D Pixar character render, vinyl collectible toy mascot, smooth claymation tactile finish, soft studio lighting, cute expressive face';
+      break;
+    case 'anime':
+      styleDesc = 'cute full body anime chibi mascot character, Studio Ghibli inspired, high quality anime cel-shaded illustration, vibrant colors, expressive sparkly eyes';
+      break;
+    case 'comic':
+      styleDesc = 'cute full body modern comic book superhero mascot, pop art style, bold black ink outlines, dynamic halftone pattern, vibrant graphic novel illustration';
+      break;
+    case 'crayon':
+      styleDesc = 'cute full body playful colorful crayon drawing of a friendly character, rich wax crayon texture, expressive childlike strokes, whimsical storybook art';
+      break;
+    case 'toon':
+    default:
+      styleDesc = 'cute full body classic animation toon character, vibrant flat colors, expressive cartoon eyes, rubber-hose style playful charm';
+      break;
+  }
+
+  const promptText = `Full body character design of ${characterConcept || detectedObject}, ${styleDesc}, isolated on a solid pure black background #030712, no floor shadows, no ground, no pedestal, center frame, high resolution concept art.`;
+
+  // 1. Intentar endpoint Imagen 3 si hay API Key disponible
+  if (apiKey) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 16000);
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          instances: [{ prompt: promptText }],
+          parameters: { sampleCount: 1, aspectRatio: '1:1' },
+        }),
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const data = await res.json();
+        const base64Bytes = data.predictions?.[0]?.bytesBase64Encoded;
+        if (base64Bytes) {
+          const rawDataUrl = `data:image/jpeg;base64,${base64Bytes}`;
+          return await processChromaKeyToWebP(rawDataUrl);
+        }
+      }
+    } catch (imagenErr) {
+      console.warn('[Forja Neural] Imagen 3 API unavailable, utilizando motor de ilustración alternativo:', imagenErr);
+    }
+  }
+
+  // 2. Motor de ilustración de alta resolución con seed único (Pollinations / Flux)
+  const seed = Math.floor(Math.random() * 999999);
+  const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(promptText)}?width=512&height=512&seed=${seed}&nologo=true`;
+
+  return await processChromaKeyToWebP(pollinationsUrl);
+}
+
+/**
+ * ══════════════════════════════════════════════════════════════════════════════
+ * 📸 FORJA NEURAL KAI // PIPELINE MULTIMODAL HÍBRIDO (OPCIÓN C)
+ * Paso 1: Reconocimiento exacto del objeto con Gemini Vision (2026).
+ * Paso 2: Según el estilo elegido:
+ *   - Rama Ilustración Real (3D Vinyl, Anime, Cómic, Crayón): Generación + Chroma Key WebP.
+ *   - Rama Vectorial (Geometría Neón, Cyber-Pixel, Flujo, Low Poly): SVG nativo estructurado.
+ * ══════════════════════════════════════════════════════════════════════════════
+ */
 export async function forgeKaiFromImage(params: {
   imageBase64: string;
   mimeType?: string;
   promptDescription?: string;
   artStyle?: KaiMultiverseStyle;
 }): Promise<KaiCustomForm | null> {
-  const { imageBase64, mimeType = 'image/jpeg', promptDescription = '', artStyle = 'toon' } = params;
+  const { imageBase64, mimeType = 'image/jpeg', promptDescription = '', artStyle = 'clay3d' } = params;
 
   if (!imageBase64 || typeof imageBase64 !== 'string') {
-    return null;
+    throw new Error('Falta la imagen a procesar en la Forja Neural.');
   }
 
-  // Limpiar encabezado data:image/... si está presente
-  const cleanBase64 = imageBase64.includes(',') ? imageBase64.split(',')[1] : imageBase64;
-
-  function buildMultiversePrompt(selectedArtStyle: KaiMultiverseStyle, userPrompt: string): string {
-    let styleDirective = '';
-
-    switch (selectedArtStyle) {
-      case 'cyber-pixel':
-      case 'pixel':
-        styleDirective = `
-ESTILO OBLIGATORIO: "Cyber-Pixel".
-REGLA ESTRICTA DE ARQUITECTURA SVG:
-Genera únicamente elementos <rect> alineados en una cuadrícula de 8x8px simulando pixel art de 8-bits.
-- Cada elemento DEBE ser un <rect x="..." y="..." width="8" height="8" /> donde x e y son estrictamente múltiplos de 8 (16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144).
-- ¡ESTRICTAMENTE PROHIBIDO cualquier elemento que no sea <rect>! No uses paths, ni polygons, ni circles.
-- Compón el personaje / objeto mediante rectángulos de 8x8 contiguos que formen la figura de la entidad con ojos y silueta reconocible.`;
-        break;
-
-      case 'organic-flow':
-        styleDirective = `
-ESTILO OBLIGATORIO: "Flujo Orgánico".
-REGLA ESTRICTA DE ARQUITECTURA SVG:
-Genera exclusivamente curvas Bezier suaves (C y S en los paths), sin ángulos rectos, fill='none'.
-- Cada elemento DEBE ser un <path d="..." stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" /> compuesto exclusivamente por comandos Bezier suaves (M, C, S y Z).
-- ¡ESTRICTAMENTE PROHIBIDO ángulos rectos de 90 grados o polígonos duros!
-- Curvas continuas, orgánicas y fluidas que capturen la esencia biológica o aerodinámica del objeto.`;
-        break;
-
-      case 'low-poly':
-        styleDirective = `
-ESTILO OBLIGATORIO: "Low Poly".
-REGLA ESTRICTA DE ARQUITECTURA SVG:
-Genera polígonos cerrados asignando a cada uno un atributo fill-opacity aleatorio entre 0.1 y 0.9 para simular volumen, sin trazos exteriores.
-- Cada elemento DEBE ser un <polygon points="x1,y1 x2,y2 x3,y3 ..." fill-opacity="0.xx" stroke="none" />
-- Asigna a cada faceta poligonal un 'fill-opacity' aleatorio entre 0.1 y 0.9 (ej: 0.15, 0.4, 0.7, 0.85, 0.3) simulando iluminación y volumen tridimensional 3D.
-- ¡ESTRICTAMENTE PROHIBIDO trazos exteriores (stroke="none")!
-- Genera entre 14 y 32 polígonos contiguos que formen la escultura 3D facetada del objeto.`;
-        break;
-
-      case 'neon-geometry':
-      default:
-        styleDirective = `
-ESTILO OBLIGATORIO: "Geometría Neón" (Default).
-REGLA ESTRICTA DE ARQUITECTURA SVG:
-Genera <polygon> y <path> con líneas rectas simétricas, stroke-width='2', fill='none'.
-- Líneas rectas afiladas, limpias y simétricas respecto al eje central x = 80.
-- Todos los elementos deben tener stroke-width="2" y fill="none".
-- Estética cyberpunk wireframe pura y futurista.`;
-        break;
+  // 1. Limpieza rigurosa del string base64 y extracción de MIME type
+  let cleanBase64 = imageBase64;
+  let effectiveMime = mimeType || 'image/jpeg';
+  if (imageBase64.includes(',')) {
+    const parts = imageBase64.split(',');
+    const meta = parts[0];
+    cleanBase64 = parts[1];
+    const mimeMatch = meta.match(/data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64/);
+    if (mimeMatch) {
+      effectiveMime = mimeMatch[1];
     }
+  }
+  cleanBase64 = cleanBase64.trim().replace(/[\r\n\s]+/g, '');
 
-    return `
-ERES EL MOTOR ARQUITECTÓNICO DE LA FORJA NEURAL DE "LA SOLUCIÓN".
-Tu misión es escanear la foto y transformarla en un COMPAÑERO KAI VECTORIAL 100% SVG.
+  const isIllustration = ['clay3d', 'anime', 'comic', 'crayon', 'toon'].includes(artStyle);
 
-DIRECTIVAS CRÍTICAS DE ARQUITECTURA:
-1. EXIGE SIEMPRE UN JSON CON CÓDIGO SVG EN LA PROPIEDAD "svg".
-2. ¡ESTRICTAMENTE PROHIBIDO GENERAR IMÁGENES RENDERIZADAS (NO BITMAPS, NO PNG, NO JPEG, NO WEBP, NO DATA-URLS RASTERIZADAS)!
-3. El SVG debe tener viewBox="0 0 160 170" y width="100%" height="100%".
-4. ${styleDirective}
-5. Coordenadas válidas en el lienzo: x entre 16 y 144, y entre 20 y 150.
-6. El componente KAICompanion.tsx inyectará el color de la variable --color-aura-activa al atributo stroke o fill del SVG devuelto, integrándolo perfectamente a la interfaz sin importar el estilo elegido.
+  // 2. Construcción de directiva del prompt según la rama
+  function buildMultiversePrompt(selectedArtStyle: KaiMultiverseStyle, userPrompt: string): string {
+    if (isIllustration) {
+      return `
+ERES EL OJO CLÍNICO Y MOTOR MULTIMODAL DE LA FORJA NEURAL DE "LA SOLUCIÓN".
+Tu misión es escanear la foto adjunta, identificar con máxima precisión qué objeto real u elemento aparece en ella, y diseñar un personaje antropomórfico carismático basado en ese objeto para el estilo visual: "${selectedArtStyle.toUpperCase()}".
+
+PASO 1: ANÁLISIS DEL OBJETO REAL
+- Identifica el objeto exactamente con sus rasgos distintivos (ej: "Taza de cerámica negra con borde blanco", "Zapatilla deportiva azul con suela gruesa", "Manzana roja con hoja verde").
+- Describe el diseño del personaje antropomórfico (characterConcept): fusiona la silueta del objeto con rasgos vivos de mascota virtual (ojos grandes expresivos integrados en la estructura del objeto, boca amigable, patitas o extremidades tiernas estilo Tamagotchi/Nintendo).
+- Asígnale un nombre épico (epicName) y una frase de despertar o saludo (personalityQuote) acorde a su naturaleza.
+- Extrae sus colores primario y secundario en formato hexadecimal.
 ${userPrompt ? `Contexto o pista del usuario: "${userPrompt}".` : ''}
 
 DEVOLUCIÓN OBLIGATORIA (Responde ÚNICAMENTE con un JSON válido):
 {
-  "detectedObject": "Nombre del objeto detectado",
-  "name": "Nombre Creativo del Compañero",
+  "detectedObject": "Descripción exacta del objeto real identificado",
+  "characterConcept": "Diseño detallado del personaje antropomórfico basado en el objeto",
+  "epicName": "Nombre creativo del compañero",
   "personalityQuote": "Frase breve de despertar del compañero",
+  "primaryColor": "#hex",
+  "secondaryColor": "#hex",
+  "element": "fuego | agua | tierra | aire | plasma | luz",
+  "artStyle": "${selectedArtStyle}",
+  "mood": "playful"
+}
+`;
+    }
+
+    // Rama Vectorial (Geometría Neón, Cyber-Pixel, Flujo Orgánico, Low Poly)
+    let vectorDirective = '';
+    switch (selectedArtStyle) {
+      case 'cyber-pixel':
+      case 'pixel':
+        vectorDirective = `
+ESTILO OBLIGATORIO: "Cyber-Pixel (8-Bit)".
+REGLAS ESTRICTAS DE SVG:
+- Genera únicamente elementos <rect> alineados en una cuadrícula de 8x8px simulando pixel art retro.
+- Cada elemento DEBE ser un <rect x="..." y="..." width="8" height="8" /> donde x e y son múltiplos de 8 (entre 16 y 144).
+- Compón la silueta exacta del objeto detectado con sus colores reales y agrégale ojos grandes pixelados de 8x8 en el rostro.
+- ¡ESTRICTAMENTE PROHIBIDO cualquier elemento que no sea <rect>!`;
+        break;
+
+      case 'organic-flow':
+        vectorDirective = `
+ESTILO OBLIGATORIO: "Flujo Orgánico".
+REGLAS ESTRICTAS DE SVG:
+- Genera exclusivamente curvas Bezier suaves (C y S en los paths) trazando la silueta del objeto detectado, sin ángulos rectos, fill='none'.
+- Cada elemento DEBE ser un <path d="..." stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />.`;
+        break;
+
+      case 'low-poly':
+        vectorDirective = `
+ESTILO OBLIGATORIO: "Low Poly".
+REGLAS ESTRICTAS DE SVG:
+- Genera polígonos cerrados asignando a cada faceta un atributo fill-opacity entre 0.15 y 0.9 para simular volumen 3D del objeto detectado, stroke="none".
+- Cada elemento DEBE ser un <polygon points="x1,y1 x2,y2 x3,y3 ..." fill-opacity="0.xx" stroke="none" />.`;
+        break;
+
+      case 'neon-geometry':
+      default:
+        vectorDirective = `
+ESTILO OBLIGATORIO: "Geometría Neón".
+REGLAS ESTRICTAS DE SVG:
+- Genera <polygon> y <path> simétricos trazando la silueta reconocible del objeto detectado + ojos expresivos, stroke-width='2', fill='none'.
+- Líneas rectas afiladas, limpias y simétricas respecto al eje central x = 80.`;
+        break;
+    }
+
+    return `
+ERES EL OJO CLÍNICO Y MOTOR MULTIMODAL DE LA FORJA NEURAL DE "LA SOLUCIÓN".
+Tu misión es escanear la foto, identificar con máxima precisión el objeto real, y generar un COMPAÑERO KAI VECTORIAL 100% SVG que capture la silueta real del objeto con rostro y ojos expresivos.
+
+REGLAS DE ARQUITECTURA SVG:
+1. El SVG debe tener viewBox="0 0 160 170" y width="100%" height="100%".
+2. ${vectorDirective}
+3. El componente KAICompanion.tsx inyectará el color de --color-aura-activa al SVG.
+${userPrompt ? `Contexto o pista del usuario: "${userPrompt}".` : ''}
+
+DEVOLUCIÓN OBLIGATORIA (Responde ÚNICAMENTE con un JSON válido):
+{
+  "detectedObject": "Descripción exacta del objeto real identificado",
+  "characterConcept": "Diseño del personaje basado en el objeto",
+  "epicName": "Nombre creativo del compañero",
+  "personalityQuote": "Frase de despertar del compañero",
   "artStyle": "${selectedArtStyle}",
   "mood": "playful",
-  "svg": "<svg viewBox=\\"0 0 160 170\\" xmlns=\\"http://www.w3.org/2000/svg\\">...elementos SVG según la regla estricta...</svg>"
+  "svg": "<svg viewBox=\\"0 0 160 170\\" xmlns=\\"http://www.w3.org/2000/svg\\">...</svg>"
 }
 `;
   }
 
   const systemInstructions = buildMultiversePrompt(artStyle, promptDescription);
-
   let jsonResult: string | null = null;
-  const CANDIDATE_MODELS = ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash-lite'];
+  let lastErrorMessage = '';
 
-  // 1. Firebase AI Logic SDK (Multimodal)
+  // Cadena de modelos activos vigentes (2026) con timeout ampliado a 25000ms
+  const CANDIDATE_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash-lite'];
+
+  // 1. Intento primario: Firebase AI Logic SDK
   if (firebaseAI) {
     for (const modelName of CANDIDATE_MODELS) {
       try {
@@ -475,7 +653,7 @@ DEVOLUCIÓN OBLIGATORIA (Responde ÚNICAMENTE con un JSON válido):
         const imagePart = {
           inlineData: {
             data: cleanBase64,
-            mimeType,
+            mimeType: effectiveMime,
           },
         };
 
@@ -483,16 +661,17 @@ DEVOLUCIÓN OBLIGATORIA (Responde ÚNICAMENTE con un JSON válido):
         const text = result.response.text();
         if (text && text.trim()) {
           jsonResult = text.trim();
-          console.log(`[Firebase AI Logic] ✓ Forja Neural procesada con éxito usando ${modelName}`);
+          console.log(`[Firebase AI Logic] ✓ Objeto analizado con éxito usando ${modelName}`);
           break;
         }
       } catch (err: any) {
-        console.warn(`[Firebase AI Logic Multimodal] (${modelName}) no disponible:`, err?.message || err);
+        lastErrorMessage = err?.message || String(err);
+        console.warn(`[Firebase AI Logic Multimodal] (${modelName}) error:`, lastErrorMessage);
       }
     }
   }
 
-  // 2. Secondary: Direct Gemini Developer API
+  // 2. Intento secundario: Direct Gemini Developer API (25s timeout)
   if (!jsonResult) {
     const customKey =
       typeof window !== 'undefined' ? window.localStorage.getItem('lasolucion_gemini_api_key') : null;
@@ -502,7 +681,7 @@ DEVOLUCIÓN OBLIGATORIA (Responde ÚNICAMENTE con un JSON válido):
       for (const modelName of CANDIDATE_MODELS) {
         try {
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 9000);
+          const timeoutId = setTimeout(() => controller.abort(), 25000);
           const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKeyToTry}`;
           const res = await fetch(url, {
             method: 'POST',
@@ -511,7 +690,7 @@ DEVOLUCIÓN OBLIGATORIA (Responde ÚNICAMENTE con un JSON válido):
               contents: [
                 {
                   parts: [
-                    { inline_data: { mime_type: mimeType, data: cleanBase64 } },
+                    { inline_data: { mime_type: effectiveMime, data: cleanBase64 } },
                     { text: systemInstructions },
                   ],
                 },
@@ -530,102 +709,117 @@ DEVOLUCIÓN OBLIGATORIA (Responde ÚNICAMENTE con un JSON válido):
               console.log(`[Gemini API Multimodal] ✓ Respuesta exitosa con ${modelName}`);
               break;
             }
+          } else {
+            const errData = await res.json().catch(() => null);
+            lastErrorMessage = errData?.error?.message || `HTTP ${res.status}`;
           }
-        } catch (err) {
-          // Intentar siguiente modelo
+        } catch (fetchErr: any) {
+          lastErrorMessage = fetchErr?.message || String(fetchErr);
         }
       }
     }
   }
 
-  // Parsear y sanitizar JSON devuelto por la IA
-  if (jsonResult) {
-    try {
-      let rawJson = jsonResult;
-      const fenceMatch = rawJson.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-      if (fenceMatch) {
-        rawJson = fenceMatch[1];
-      }
-      const firstBrace = rawJson.indexOf('{');
-      const lastBrace = rawJson.lastIndexOf('}');
-      if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-        rawJson = rawJson.substring(firstBrace, lastBrace + 1);
-      }
-
-      const parsed = JSON.parse(rawJson.trim());
-
-      const rawSvg = parsed.svg || parsed.svgContent || parsed.svg_code;
-
-      if (parsed && (rawSvg || (Array.isArray(parsed.lines) && parsed.lines.length >= 4))) {
-        let svgContent: string | undefined = undefined;
-
-        if (typeof rawSvg === 'string' && rawSvg.trim()) {
-          svgContent = rawSvg.trim();
-          svgContent = svgContent.replace(/^```(?:svg|xml|html)?\s*/i, '').replace(/\s*```$/i, '').trim();
-          if (!svgContent.startsWith('<svg')) {
-            svgContent = `<svg viewBox="0 0 160 170" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">${svgContent}</svg>`;
-          }
-        }
-
-        const safeLines = Array.isArray(parsed.lines)
-          ? parsed.lines
-              .filter(
-                (l: any) =>
-                  typeof l.x1 === 'number' &&
-                  typeof l.y1 === 'number' &&
-                  typeof l.x2 === 'number' &&
-                  typeof l.y2 === 'number'
-              )
-              .map((l: any) => ({
-                x1: Math.max(16, Math.min(144, Math.round(l.x1))),
-                y1: Math.max(16, Math.min(144, Math.round(l.y1))),
-                x2: Math.max(16, Math.min(144, Math.round(l.x2))),
-                y2: Math.max(16, Math.min(144, Math.round(l.y2))),
-              }))
-          : undefined;
-
-        console.log('[Forja Neural] ✓ Geometría 100% SVG generada exitosamente por IA');
-        return {
-          name: (parsed.name || (promptDescription ? `KAI ${promptDescription.slice(0, 16)}` : 'Compañero Forja Neural')).slice(0, 32),
-          sourceType: 'image',
-          createdAt: new Date().toISOString(),
-          detectedObject: parsed.detectedObject ? String(parsed.detectedObject).slice(0, 24) : undefined,
-          artStyle,
-          personalityQuote: parsed.personalityQuote || `¡He despertado en el Multiverso bajo el estilo ${artStyle.toUpperCase()}!`,
-          mood: parsed.mood || 'playful',
-          svgContent,
-          lines: safeLines,
-          polygons: Array.isArray(parsed.polygons) ? parsed.polygons : undefined,
-          coreEye:
-            parsed.coreEye && typeof parsed.coreEye.cx === 'number'
-              ? {
-                  cx: Math.max(30, Math.min(130, Math.round(parsed.coreEye.cx))),
-                  cy: Math.max(40, Math.min(120, Math.round(parsed.coreEye.cy))),
-                  r: Math.max(6, Math.min(14, Math.round(parsed.coreEye.r || 8))),
-                }
-              : { cx: 80, cy: 85, r: 8 },
-          dualEyes: parsed.dualEyes,
-          mouth: parsed.mouth,
-        };
-      }
-    } catch (parseErr) {
-      console.warn('[Forja Neural] Error parseando JSON de Gemini:', parseErr);
-    }
+  // Si la IA no respondió o falló, mostrar el error real para depuración (NO fallback ciego silencioso)
+  if (!jsonResult) {
+    throw new Error(
+      lastErrorMessage
+        ? `Error en Gemini Vision: ${lastErrorMessage}`
+        : 'No se pudo conectar con Gemini Vision para analizar la imagen. Por favor verifica tu conexión o clave de API.'
+    );
   }
 
-  // 3. Sintetizador de Silueta de la Imagen (Garantiza diseño único para cada foto)
-  console.log(`[Forja Neural] Sintetizando personaje Multiverse (${artStyle}) a partir de la foto...`);
+  // 3. Procesar respuesta JSON de la IA
+  let parsed: any = null;
   try {
-    const bespokeForm = await synthesizeKaiFromImageSilhouette({
-      imageBase64: cleanBase64,
-      promptDescription,
-      artStyle,
-    });
-    return bespokeForm;
-  } catch (synthErr) {
-    console.error('[Forja Neural] Error en síntesis de silueta:', synthErr);
-    return null;
+    let rawJson = jsonResult;
+    const fenceMatch = rawJson.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+    if (fenceMatch) {
+      rawJson = fenceMatch[1];
+    }
+    const firstBrace = rawJson.indexOf('{');
+    const lastBrace = rawJson.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+      rawJson = rawJson.substring(firstBrace, lastBrace + 1);
+    }
+    parsed = JSON.parse(rawJson.trim());
+  } catch (parseErr) {
+    throw new Error('La IA reconoció el objeto pero devolvió un formato no válido. Intenta nuevamente.');
   }
+
+  const detectedObject = parsed.detectedObject ? String(parsed.detectedObject).trim() : 'Objeto Escaneado';
+  const characterConcept = parsed.characterConcept ? String(parsed.characterConcept).trim() : `${detectedObject} con vida propia`;
+  const epicName = (parsed.epicName || parsed.name || (promptDescription ? `KAI ${promptDescription.slice(0, 16)}` : `KAI ${detectedObject.slice(0, 16)}`)).slice(0, 32);
+  const personalityQuote = parsed.personalityQuote || `¡He despertado del mundo real en el Multiverso bajo el estilo ${artStyle.toUpperCase()}!`;
+  const primaryColor = parsed.primaryColor || '#00f0ff';
+  const secondaryColor = parsed.secondaryColor || '#ec4899';
+
+  // 4. PASO 2: EJECUCIÓN SEGÚN LA RAMA DEL ESTILO
+  if (isIllustration) {
+    console.log(`[Forja Neural] 🎨 Generando ilustración real para "${detectedObject}" en estilo "${artStyle}"...`);
+    const customKey = typeof window !== 'undefined' ? window.localStorage.getItem('lasolucion_gemini_api_key') : null;
+    const apiKeyToUse = customKey || firebaseConfig?.apiKey;
+
+    const transparentWebP = await generateKaiIllustration({
+      characterConcept,
+      detectedObject,
+      artStyle,
+      apiKey: apiKeyToUse,
+    });
+
+    // Guardar en localStorage para no inflar el documento de Firestore
+    if (typeof window !== 'undefined') {
+      try {
+        window.localStorage.setItem('kai_custom_avatar_data', transparentWebP);
+      } catch (storageErr) {
+        console.warn('[Forja Neural] Aviso guardando en localStorage:', storageErr);
+      }
+    }
+
+    return {
+      name: epicName,
+      sourceType: 'image',
+      createdAt: new Date().toISOString(),
+      detectedObject,
+      characterConcept,
+      artStyle,
+      personalityQuote,
+      primaryColor,
+      secondaryColor,
+      mood: 'playful',
+      renderBranch: 'illustration',
+      imageUrl: transparentWebP,
+      storageRef: 'local:kai_custom_avatar_data',
+    };
+  }
+
+  // Rama Vectorial (100% SVG)
+  const rawSvg = parsed.svg || parsed.svgContent || parsed.svg_code;
+  let svgContent: string | undefined = undefined;
+
+  if (typeof rawSvg === 'string' && rawSvg.trim()) {
+    svgContent = rawSvg.trim();
+    svgContent = svgContent.replace(/^```(?:svg|xml|html)?\s*/i, '').replace(/\s*```$/i, '').trim();
+    if (!svgContent.startsWith('<svg')) {
+      svgContent = `<svg viewBox="0 0 160 170" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">${svgContent}</svg>`;
+    }
+  }
+
+  return {
+    name: epicName,
+    sourceType: 'image',
+    createdAt: new Date().toISOString(),
+    detectedObject,
+    characterConcept,
+    artStyle,
+    personalityQuote,
+    primaryColor,
+    secondaryColor,
+    mood: 'playful',
+    renderBranch: 'vector',
+    svgContent,
+    polygons: Array.isArray(parsed.polygons) ? parsed.polygons : undefined,
+  };
 }
 
 

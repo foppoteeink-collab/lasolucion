@@ -218,9 +218,20 @@ export const KAICompanion: React.FC<KAICompanionProps> = ({
     }
   }, [size]);
 
-  // Procesamiento SVG con inyección de --color-aura-activa
-  const renderedSvgHtml = useMemo(() => {
+  // Obtener URL de imagen si es una rama de ilustración real (o hidratar de localStorage)
+  const effectiveImageUrl = useMemo(() => {
     if (effectiveShape !== 'custom' || !effectiveCustomForm) return null;
+    if (effectiveCustomForm.imageUrl) return effectiveCustomForm.imageUrl;
+    if (effectiveCustomForm.storageRef && typeof window !== 'undefined') {
+      const storageKey = effectiveCustomForm.storageRef.replace('local:', '');
+      return window.localStorage.getItem(storageKey) || null;
+    }
+    return null;
+  }, [effectiveShape, effectiveCustomForm]);
+
+  // Procesamiento SVG con inyección de --color-aura-activa (rama vectorial)
+  const renderedSvgHtml = useMemo(() => {
+    if (effectiveShape !== 'custom' || !effectiveCustomForm || effectiveImageUrl) return null;
 
     const baseSvg =
       effectiveCustomForm.svgContent ||
@@ -228,7 +239,7 @@ export const KAICompanion: React.FC<KAICompanionProps> = ({
 
     const artStyle = effectiveCustomForm.artStyle || 'neon-geometry';
     return injectAuraColorIntoSvg(baseSvg, artStyle, effectiveAuraColor);
-  }, [effectiveShape, effectiveCustomForm, effectiveAuraColor]);
+  }, [effectiveShape, effectiveCustomForm, effectiveImageUrl, effectiveAuraColor]);
 
   return (
     <motion.div
@@ -253,8 +264,30 @@ export const KAICompanion: React.FC<KAICompanionProps> = ({
         ease: 'easeInOut',
       }}
     >
-      {/* 1. RENDERIZADO FORJA NEURAL: 100% SVG NATIVO CON AURA ACTIVA */}
-      {effectiveShape === 'custom' && renderedSvgHtml ? (
+      {/* 1. RENDERIZADO FORJA NEURAL: RAMA ILUSTRACIÓN REAL (3D VINYL, ANIME, CÓMIC, CRAYÓN) */}
+      {effectiveShape === 'custom' && effectiveImageUrl ? (
+        <motion.div
+          className="w-full h-full flex items-center justify-center relative"
+          animate={{
+            scale: [1, 1.025, 1],
+          }}
+          transition={{
+            duration: 3.2,
+            repeat: Infinity,
+            ease: 'easeInOut',
+          }}
+        >
+          <img
+            src={effectiveImageUrl}
+            alt={effectiveCustomForm?.name || 'Compañero KAI'}
+            className="w-full h-full object-contain pointer-events-none select-none transition-all duration-300"
+            style={{
+              filter: `drop-shadow(0 0 16px ${effectiveAuraColor}80) drop-shadow(0 0 28px ${effectiveAuraColor}40)`,
+            }}
+          />
+        </motion.div>
+      ) : effectiveShape === 'custom' && renderedSvgHtml ? (
+        /* 2. RENDERIZADO FORJA NEURAL: RAMA VECTORIAL (GEOMETRÍA NEÓN, CYBER-PIXEL, FLUJO, LOW-POLY) */
         <div
           className="w-full h-full flex items-center justify-center transition-all duration-300 [&>svg]:w-full [&>svg]:h-full [&>svg]:overflow-visible"
           style={{
@@ -263,7 +296,7 @@ export const KAICompanion: React.FC<KAICompanionProps> = ({
           dangerouslySetInnerHTML={{ __html: renderedSvgHtml }}
         />
       ) : (
-        /* 2. RENDERIZADO FORMAS BASE OFICIALES (PRISMA, OCTAEDRO, LOBO, ETC.) */
+        /* 3. RENDERIZADO FORMAS BASE OFICIALES (PRISMA, OCTAEDRO, LOBO, ETC.) */
         <div className="w-full h-full flex items-center justify-center">
           <KaiVectorGraphics
             shapeId={effectiveShape}
