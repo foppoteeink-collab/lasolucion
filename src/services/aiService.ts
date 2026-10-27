@@ -432,11 +432,56 @@ export async function forgeKaiFromImage(params: {
 
       case 'cartoon':
         vectorDirective = `
-📺 ESTILO: "CARTOON NETWORK CLÁSICO (DEXTER / SAMURAI JACK / HORA DE AVENTURA / CHICAS SUPERPODEROSAS)"
-- LÍNEAS: Contorno negro MUY GRUESO y marcado en TODOS los elementos (stroke="#050505" stroke-width="3.5" a "5" stroke-linejoin="round" stroke-linecap="round"). Las líneas son el ADN de este estilo.
-- COLOR: Zonas de color PLANO, súper saturadas y vibrantes (sin degradados difusos). Usa fill de color sólido puro para el cuerpo, con una sombra dura de corte limpio en color más oscuro (estilo cel-shading en bloque).
-- GEOMETRÍA: Exagerada, dinámica y caricaturesca. Siluetas con formas geométricas marcadas, proporciones exageradas de caricatura (cabeza grande si tiene cabeza, cuerpo compacto).
-- EXPRESIÓN: Cejas gruesas flotantes, ojos caricaturescos grandes y audaces, sonrisas o muecas muy expresivas llenas de carisma cómico o actitud.`;
+📺 ESTILO: "CARTOON NETWORK CLÁSICO (EL GRAN PANTHEON DE ANIMACIÓN TRADICIONAL CN)"
+Inspiración visual directa: Dexter, Las Chicas Superpoderosas, Samurai Jack, Coraje el Perro Cobarde, Ed Edd n Eddy, Billy y Mandy, Chowder, Hora de Aventura, KND (Los Chicos del Barrio), Mansión Foster, Un Show Más (Mordecai y Rigby), Gumball y Darwin, Johnny Bravo, Steven Universe, Teen Titans Go, Flapjack, Escandalosos y Mao Mao.
+
+1. PRINCIPIO UNIVERSAL DE ANIMACIÓN (EL OBJETO COBRA VIDA):
+- CUALQUIERA que sea el objeto presente en la fotografía, su estructura física, proporciones y contorno real constituyen el cuerpo del personaje.
+- NO alteres ni reemplaces la silueta natural del objeto por figuras geométricas genéricas.
+- Dota al objeto de vida antropomórfica integrando rostro, ojos y extremidades de forma orgánica que nazcan de su propia anatomía, manteniendo intactas y reconocibles todas sus características físicas, relieves y partes funcionales.
+- Al ver el personaje, debe ser evidente e inconfundible qué objeto real fue fotografiado.
+
+2. CATÁLOGO DE EXTREMIDADES SUPERIORES (BRAZOS Y MANOS):
+- Brazos "Manguera de Goma / Rubber-Hose" (Jake, Finn, Coraje): Curvados, elásticos, sin codos rígidos, con manitas simples de 3 o 4 deditos o manoplas redondeadas.
+- Brazos de "Científico con Guantes de Hule" (Dexter): Brazos estilizados que terminan en guantes de laboratorio con pliegues en la muñeca.
+- Brazos "Hipermusculosos Geométricos" (Johnny Bravo): Bíceps en trapecio, muñecas estrechas y puños angulares.
+- Brazos "Alas con Dedos de Pluma" (Mordecai): Brazos que terminan en plumas afiladas que gesticulan como dedos hábiles.
+- Brazos "Patitas de Animal / Garras Amigables" (Rigby, Coraje, Gumball, Darwin): Extremidades ágiles con almohadillas o 3 garras redondeadas.
+- Brazos "Robóticos / Cyborg" (Cyborg de Teen Titans, Robot de Dexter): Segmentos con juntas circulares, pernos y pinzas de armadura.
+- Brazos de "Palillo Minimalista" (Mac, Mandy, Flapjack): Brazos ultra-delgados que contrastan cómicamente con manos expresivas.
+- Brazos "Regordetes con Pliegues" (Chowder, Clarence, Tío Grandpa): Brazos gorditos con muñecas acojinadas.
+- Brazos con "Mangas Holgadas Gigantes" (Samurai Jack, Ed): Mangas caídas donde las manos asoman apenas.
+- Brazos "Vendados de Combate" (Chris McLean, Mao Mao): Muñequeras o vendajes blancos enrollados en los antebrazos.
+
+3. CATÁLOGO DE EXTREMIDADES INFERIORES Y CALZADO:
+- Botas "Tácticas de Suela Gruesa" (Numbuh 1 de KND, Robin): Botas marrones o negras con suela ancha y cordones cruzados visibles.
+- Tenis "Deportivos / Skater Bicolor" (Darwin, Ben 10): Zapatillas deportivas con puntera de goma blanca y calcetines doblados.
+- Zapatos "Mary Jane / Escolar Elegante" (Mandy): Zapatitos negros redondeados con correa y calcetitas blancas.
+- Zapatitos "Puntiagudos de Laboratorio" (Dexter): Zapatos triangulares negros minúsculos que salen directamente de la base.
+- Proporción "Clown / Piernas de Popote con Zapatones" (Numbuh 1, Mac): Piernas delgadísimas que rematan en zapatos descomunales.
+- Patas "Animales Articuladas" (Rigby, Gumball, Coraje): Patas ágiles articuladas hacia atrás.
+- Base "Espectral / Deslizante sin Piernas" (Puro Hueso, Bloo): Túnica negra desgarrada en la base o silueta fantasmagórica que flota.
+- Pantalones "Acampanados / Baggy Caídos de los 90s" (Ed Edd n Eddy): Pantalones holgados que cubren los tobillos.
+
+4. CATÁLOGO VISUAL DE OJOS Y MIRADAS CN:
+- Ojos "Powerpuff / Gumball": Grandes círculos u óvalos blancos expresivos juntos en el centro, con pupilas negras de botón o con anillo de color brillante y destello gráfico blanco.
+- Ojos "Mandy / Samurai Jack": Ceño negro grueso en V afilada que corta los ojos por la parte superior (mirada determinada, seria o rebelde).
+- Ojos "Dexter / Numbuh 1 / Johnny Bravo": Gafas oscuras estilizadas o lentes de montura gruesa con reflejo blanco diagonal.
+- Ojos "Hora de Aventura / Finn / Jake / Escandalosos": Dos puntos o píldoras negras minimalistas llenos de carisma y simplicidad.
+- Ojos "Coraje / Billy / Ed": Ojos saltones ligeramente asimétricos con pupilas desorbitadas (asombro cómico).
+- Ojos "Regular Show / Rigby / Mordecai": Óvalos negros con círculos oscuros de ojeras o marcas de contorno.
+
+5. CATÁLOGO VISUAL DE BOCAS Y EXPRESIVIDAD:
+- Sonrisa cómica abierta con lengua plana rosada y diente solitario caricaturesco (estilo Chowder, Flapjack o Darwin).
+- O mueca ladeada sarcástica / confiada trazada en una sola línea angular negra (estilo Dexter o Mandy).
+- O boca elástica y limpia de un solo trazo curvo expresivo (estilo Jake o Bloo).
+- O pico / hocico geométrico integrado a la silueta del objeto (estilo Mordecai o Rigby).
+- O mandíbula abierta de grito cómico o susto (estilo Coraje).
+
+6. TÉCNICA VECTORIAL Y PALETA DE COLOR OBLIGATORIA:
+- CONTORNO DE TINTA NEGRA PURO: stroke="#000000" con grosor uniforme y audaz (stroke-width="3.8" a "4.5"), stroke-linejoin="round" y stroke-linecap="round" en cada silueta y detalle.
+- PALETA DE COLOR BASADA EN LA FOTO: Utiliza estrictamente los colores REALES del objeto fotografiado.
+- COLOR EN BLOQUE PLANO (CEL-SHADING): ¡PROHIBIDO cualquier degradado difuso, sombras borrosas o efectos de render 3D! Colores planos y sólidos súper saturados. Sombras duras de corte recto en un tono 20% más oscuro.`;
         break;
 
       case 'anime':
