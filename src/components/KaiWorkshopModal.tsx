@@ -1281,7 +1281,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                       type="text"
                       value={forgePrompt}
                       onChange={(e) => setForgePrompt(e.target.value)}
-                      placeholder="Ej: Manzana roja crujiente, encendedor..."
+                      placeholder="Ej: Detalle adicional o rasgo especial (opcional)..."
                       className="w-full px-3 py-2 rounded-xl bg-black/60 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-fuchsia-400/80 transition-colors"
                     />
                   </div>

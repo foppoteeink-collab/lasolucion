@@ -448,7 +448,7 @@ Inspiración visual directa: Dexter, Las Chicas Superpoderosas, Samurai Jack, Co
 - Brazos "Alas con Dedos de Pluma" (Mordecai): Brazos que terminan en plumas afiladas que gesticulan como dedos hábiles.
 - Brazos "Patitas de Animal / Garras Amigables" (Rigby, Coraje, Gumball, Darwin): Extremidades ágiles con almohadillas o 3 garras redondeadas.
 - Brazos "Robóticos / Cyborg" (Cyborg de Teen Titans, Robot de Dexter): Segmentos con juntas circulares, pernos y pinzas de armadura.
-- Brazos de "Palillo Minimalista" (Mac, Mandy, Flapjack): Brazos ultra-delgados que contrastan cómicamente con manos expresivas.
+- Brazos "Expresivos Tradicionales CN" (Coraje, Finn, Dexter): Brazos dinámicos y estilizados con mangas marcadas y manos de cuatro dedos expresivas con volumen.
 - Brazos "Regordetes con Pliegues" (Chowder, Clarence, Tío Grandpa): Brazos gorditos con muñecas acojinadas.
 - Brazos con "Mangas Holgadas Gigantes" (Samurai Jack, Ed): Mangas caídas donde las manos asoman apenas.
 - Brazos "Vendados de Combate" (Chris McLean, Mao Mao): Muñequeras o vendajes blancos enrollados en los antebrazos.
@@ -458,7 +458,7 @@ Inspiración visual directa: Dexter, Las Chicas Superpoderosas, Samurai Jack, Co
 - Tenis "Deportivos / Skater Bicolor" (Darwin, Ben 10): Zapatillas deportivas con puntera de goma blanca y calcetines doblados.
 - Zapatos "Mary Jane / Escolar Elegante" (Mandy): Zapatitos negros redondeados con correa y calcetitas blancas.
 - Zapatitos "Puntiagudos de Laboratorio" (Dexter): Zapatos triangulares negros minúsculos que salen directamente de la base.
-- Proporción "Clown / Piernas de Popote con Zapatones" (Numbuh 1, Mac): Piernas delgadísimas que rematan en zapatos descomunales.
+- Piernas "Atléticas de Acción" (Robin, Ben 10): Piernas firmes con pantalones estilizados y calzado de buen apoyo.
 - Patas "Animales Articuladas" (Rigby, Gumball, Coraje): Patas ágiles articuladas hacia atrás.
 - Base "Espectral / Deslizante sin Piernas" (Puro Hueso, Bloo): Túnica negra desgarrada en la base o silueta fantasmagórica que flota.
 - Pantalones "Acampanados / Baggy Caídos de los 90s" (Ed Edd n Eddy): Pantalones holgados que cubren los tobillos.
@@ -621,48 +621,42 @@ Inspiración visual directa: Dexter, Las Chicas Superpoderosas, Samurai Jack, Co
     switch (selectedMood) {
       case 'stoic':
       case 'determined':
-        moodDirective = `EXPRESIÓN FACIAL REQUERIDA — "Estoico / Serio y Firme":
-- Ojos: Mirada directa, seria y concentrada. Ceño ligeramente fruncido o firme pero tranquilo.
-- Boca: Línea recta o mandíbula cerrada con determinación serena. Sin sonrisas.
+        moodDirective = `TEMPERAMENTO Y ESPÍRITU — "Estoico / Firme":
+- Actitud: Disciplinado, imperturbable, en guardia y enfocado. Su presencia transmite calma y poder contenido.
 - Frase (personalityQuote): Breve, sabia, firme (ej: "La disciplina no negocia.", "En guardia.", "Enfocado.").`;
         break;
 
       case 'mischievous':
       case 'playful':
-        moodDirective = `EXPRESIÓN FACIAL REQUERIDA — "Pícaro / Astuto y Travieso":
-- Ojos: Uno ligeramente más cerrado (guiño o mirada de reojo), ceja levantada con actitud cool.
-- Boca: Media sonrisa ladeada astuta (smirk). Solo en un lado de la boca.
+        moodDirective = `TEMPERAMENTO Y ESPÍRITU — "Pícaro / Astuto y Travieso":
+- Actitud: Confiado, rebelde, dinámico y lleno de picardía audaz.
 - Frase (personalityQuote): Ingeniosa, confiada y con humor (ej: "¿Me buscabas?", "Nadie me para.", "Sigamos.").`;
         break;
 
       case 'fierce':
-        moodDirective = `EXPRESIÓN FACIAL REQUERIDA — "Feroz / Modo Batalla":
-- Ojos: Ojos muy abiertos o muy entrecerrados en ángulo agresivo, con energía de combate.
-- Boca: Abierta mostrando dientes (anime), mandíbula de batalla o grito de guerra.
+        moodDirective = `TEMPERAMENTO Y ESPÍRITU — "Feroz / Modo Batalla":
+- Actitud: Combativo, electrizante, imparable e impulsado por adrenalina pura de batalla.
 - Frase (personalityQuote): Enérgica e imparable (ej: "¡Aplastemos esa meta!", "¡Sin rendirse!", "¡Modo bestia!").`;
         break;
 
       case 'mystic':
       case 'curious':
-        moodDirective = `EXPRESIÓN FACIAL REQUERIDA — "Místico / Enigmático y Sabio":
-- Ojos: Ojos semicerrados en calma profunda o uno de los ojos es un orbe de energía etérea.
-- Boca: Neutral, serena, ligeramente curvada en una sonrisa enigmática y pacífica.
+        moodDirective = `TEMPERAMENTO Y ESPÍRITU — "Místico / Enigmático y Sabio":
+- Actitud: Misterioso, intuitivo, sereno y conectado con una fuerza arcana superior.
 - Frase (personalityQuote): Profunda y misteriosa (ej: "El camino se revela solo.", "Observa. Aprende. Trasciende.").`;
         break;
 
       case 'zen':
-        moodDirective = `EXPRESIÓN FACIAL REQUERIDA — "Zen / Lánguido y Pacífico":
-- Ojos: Párpados caídos a la mitad, expresión de calma absoluta y meditación profunda.
-- Boca: Línea fina neutral, completamente en reposo.
+        moodDirective = `TEMPERAMENTO Y ESPÍRITU — "Zen / Pacífico y Relajado":
+- Actitud: Calma profunda, armonía total, sin prisa y en equilibrio mental absoluto.
 - Frase (personalityQuote): Serena y sin prisa (ej: "Fluye.", "Respira.", "El momento es ahora.").`;
         break;
 
       case 'cheerful':
       case 'happy':
       default:
-        moodDirective = `EXPRESIÓN FACIAL REQUERIDA — "Alegre / Radiante y Confiado":
-- Ojos: Bien abiertos y brillantes, llenos de vida y entusiasmo. Destellos de luz vivos.
-- Boca: Sonrisa amplia y genuina, llena de energía positiva.
+        moodDirective = `TEMPERAMENTO Y ESPÍRITU — "Alegre / Radiante y Positivo":
+- Actitud: Entusiasta, leal, optimista y lleno de vitalidad contagiosa.
 - Frase (personalityQuote): Motivadora y victoriosa (ej: "¡Hoy es nuestro día!", "¡Vamos a lograrlo!", "¡Imparable!").`;
         break;
     }
@@ -690,20 +684,20 @@ ${vectorDirective}
 ${moodDirective}
 
 =======================================================
-📐 ARQUITECTURA SVG OBLIGATORIA:
+📐 ARQUITECTURA VECTORIAL SVG (FIGURA ARTÍSTICA COMPLETA Y LIBRE):
 =======================================================
 1. viewBox="0 0 160 170" y width="100%" height="100%".
-2. FONDO 100% TRANSPARENTE: ¡PROHIBIDO cualquier <rect> de fondo sólido o negro! El personaje FLOTA libremente.
-3. Centra el personaje en x=80, entre y=20 e y=148, con margen libre en bordes.
-4. GRUPOS SEMÁNTICOS PARA ANIMACIÓN VIVA (OBLIGATORIO - el motor de animación los necesita):
-   - <g id="kai-body"> → cuerpo, torso, forma principal del objeto con sus colores reales
-   - <g id="kai-eyes"> → ambos ojos completos (globo ocular + iris)
-   - <g id="kai-pupils"> → SOLO las pupilas o puntos centrales (seguirán el ratón y el dedo del usuario)
-   - <g id="kai-mouth"> → boca (se animará al interactuar)
-   - <g id="kai-left-hand"> → mano/brazo izquierdo (opcional)
-   - <g id="kai-right-hand"> → mano/brazo derecho (opcional)
-5. El objeto fotografiado DEBE ser plenamente reconocible en el diseño final.
-6. Sombra de flotación en la base: <ellipse cx="80" cy="155" rx="28" ry="5" fill="#000000" opacity="0.25"/>
+2. FONDO 100% TRANSPARENTE: ¡PROHIBIDO cualquier <rect> o círculo de fondo sólido! El personaje FLOTA libremente sobre el fondo oscuro de la app.
+3. Centra la figura completa en x=80, entre y=20 e y=148, ocupando el lienzo con una pose equilibrada y firme.
+4. UNIFICACIÓN ANATÓMICA (CERO ATADURAS):
+   - Dibuja el rostro, ojos, expresión y extremidades de forma INTEGRADA y orgánica como una ilustración completa.
+   - ¡NO fragmentes los ojos ni la boca en partes mecánicas aisladas! Diseña los ojos y boca con la técnica y estética del estilo seleccionado (iris detallado, destellos, ceño, pestañas y sombreado cel-shaded real).
+   - Envuelve a todo el personaje en un grupo principal <g id="kai-body"> para que levite y respire de forma armoniosa en la interfaz.
+5. 🚫 PROHIBICIÓN TOTAL DE "BRAZOS DE ALAMBRE / PALO Y BOLITA":
+   - ¡ESTRICTAMENTE PROHIBIDO dibujar extremidades como simples líneas negras con un círculo blanco pegado en la punta!
+   - Cada extremidad (brazo, mano, garra o pata) DEBE tener volumen real, silueta dibujada con <path fill="..." stroke="...">, músculos, mangas, guanteletes o garras con masa anatómica tridimensional.
+6. El objeto fotografiado DEBE ser plenamente reconocible en el cuerpo del personaje.
+7. Sombra de flotación suave en la base: <ellipse cx="80" cy="155" rx="28" ry="5" fill="#000000" opacity="0.25"/>
 ${userPrompt ? `7. Contexto del usuario: "${userPrompt}".` : ''}
 
 =======================================================
