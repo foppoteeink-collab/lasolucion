@@ -113,6 +113,12 @@ export function mergePlayerStats(local: PlayerStats, remote: PlayerStats): Playe
     ...(local.phaseHistory || {}),
   };
 
+  // Union of intentional Rest/Recovery Days across devices (Ley 21/66 protection)
+  const restDays = {
+    ...(remote.restDays || {}),
+    ...(local.restDays || {}),
+  };
+
   // RPG Attributes: take maximum of each attribute to preserve offline stat gains
   const attributes = {
     disciplina: Math.max(local.attributes?.disciplina || 0, remote.attributes?.disciplina || 0),
@@ -166,6 +172,7 @@ export function mergePlayerStats(local: PlayerStats, remote: PlayerStats): Playe
     finalizedDays,
     sleepLogs,
     phaseHistory,
+    restDays,
     attributes,
     rankTitle: (() => {
       const finalLevel = Math.max(local.level || 1, remote.level || 1);

@@ -9,6 +9,8 @@ import {
   safeGetItem 
 } from './storage';
 import { getTodayDateString } from './date';
+import { usePlayerStore } from '../store/usePlayerStore';
+import { useTaskStore } from '../store/useTaskStore';
 
 export interface ComprehensiveUserDataExport {
   app: string;
@@ -17,6 +19,7 @@ export interface ComprehensiveUserDataExport {
   timestamp: number;
   stats: PlayerStats;
   tasks: TaskItem[];
+  allTasksByDate?: Record<string, TaskItem[]>;
   reflections: Record<string, string>;
   habitMastery: Record<string, HabitMasteryRecord>;
   customHabits: CustomHabit[];
@@ -31,6 +34,7 @@ export interface ComprehensiveUserDataExport {
 export const exportUserData = (contextData?: {
   stats?: PlayerStats;
   tasks?: TaskItem[];
+  allTasksByDate?: Record<string, TaskItem[]>;
   reflections?: Record<string, string>;
   habitMastery?: Record<string, HabitMasteryRecord>;
   customHabits?: CustomHabit[];
@@ -39,20 +43,31 @@ export const exportUserData = (contextData?: {
   const todayStr = getTodayDateString();
   const timestamp = Date.now();
 
-  // Load from context if provided, otherwise fallback to safe local storage
-  const stats = contextData?.stats || loadSavedStats();
-  const tasks = contextData?.tasks || loadSavedTasks();
+  // Load from context if provided, otherwise fallback to safe live Zustand state or local storage
+  const stats = contextData?.stats || usePlayerStore.getState().stats || loadSavedStats();
+  const allTasksByDate = contextData?.allTasksByDate || useTaskStore.getState().tasksByDate;
+  const tasks = contextData?.tasks || (allTasksByDate ? allTasksByDate[todayStr] : undefined) || loadSavedTasks();
   const reflections = contextData?.reflections || loadDailyReflections();
   const habitMastery = contextData?.habitMastery || loadHabitMastery();
-  const customHabits = contextData?.customHabits || loadCustomHabits();
+  const customHabits = contextData?.customHabits || useTaskStore.getState().customHabits || loadCustomHabits();
   const settings = contextData?.settings || loadGameSettings();
 
-  // Extract raw local storage keys for full fail-safe recovery
+  // Extract raw local storage keys for full fail-safe recovery including Zustand modern keys
   const rawLocalStorage: Record<string, any> = {};
   if (typeof window !== 'undefined' && window.localStorage) {
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      if (key && (key.startsWith('taskquest') || key.startsWith('solucion') || key.startsWith('la_solucion') || key === 'habitMastery' || key === 'gameSettings')) {
+      if (
+        key &&
+        (key.startsWith('taskquest') ||
+          key.startsWith('solucion') ||
+          key.startsWith('la-solucion') ||
+          key.startsWith('la_solucion') ||
+          key.startsWith('quantum-os') ||
+          key.startsWith('lasolucion') ||
+          key === 'habitMastery' ||
+          key === 'gameSettings')
+      ) {
         try {
           const item = localStorage.getItem(key);
           rawLocalStorage[key] = item ? JSON.parse(item) : null;
@@ -70,6 +85,7 @@ export const exportUserData = (contextData?: {
     timestamp,
     stats,
     tasks,
+    allTasksByDate,
     reflections,
     habitMastery,
     customHabits,

@@ -1,69 +1,65 @@
-import React from 'react';
-import { motion } from 'motion/react';
-import logoImg from '../assets/logo-letters-only.png';
+import React, { useEffect, useRef } from 'react';
+import { mountTiposElement } from '../utils/tiposEngine';
 
 export interface MainLogoProps {
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'massive';
   className?: string;
   forceColor?: string;
   speed?: 'normal' | 'fast';
+  as?: 'h1' | 'div' | 'span';
 }
 
 export const MainLogo: React.FC<MainLogoProps> = ({
   size = 'md',
   className = '',
   forceColor,
-  speed = 'normal',
+  as = 'h1',
 }) => {
-  // Dimensiones calibradas: Ágil y proporcionado en móvil, imponente en pantallas grandes
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  // Calibración tipográfica responsiva para mobile, tablet y desktop
   const sizeClasses = {
-    sm: 'h-[22px] sm:h-[26px]',
-    md: 'h-[26px] sm:h-[32px] lg:h-[38px]',
-    lg: 'h-[40px] sm:h-[48px]',
-    xl: 'h-[52px] sm:h-[64px]',
-    massive: 'h-[70px] sm:h-[88px]',
+    sm: 'text-base sm:text-lg tracking-wider',
+    md: 'text-[19px] sm:text-2xl lg:text-[26px] tracking-wider',
+    lg: 'text-2xl sm:text-3xl tracking-widest',
+    xl: 'text-3xl sm:text-4xl tracking-widest',
+    massive: 'text-4xl sm:text-5xl tracking-widest',
   };
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const instance = mountTiposElement(containerRef.current);
+
+    return () => {
+      instance.destroy();
+    };
+  }, []);
 
   return (
     <div
-      id="main-logo-container"
-      className={`relative inline-flex items-center justify-center select-none shrink-0 group transition-transform duration-200 hover:scale-[1.03] ${speed === 'fast' ? 'focus-in-contract-fast' : 'focus-in-contract'} ${sizeClasses[size]} ${className}`}
-      style={{ aspectRatio: '864 / 129' }}
-      role="img"
+      className={`relative inline-flex items-center justify-center select-none group cursor-pointer focus-in-contract ${className}`}
+      role="banner"
       aria-label="La Solución"
     >
-      {/* Resplandor ambiental suave de fondo en onda fluida Cian ⇄ Esmeralda */}
-      <motion.div
-        className="absolute inset-0 pointer-events-none -z-10 rounded-full opacity-40 blur-md transition-opacity duration-300 group-hover:opacity-70"
-        animate={{
+      {/* Halo de plasma reactivo de fondo */}
+      <div 
+        className="absolute -inset-x-3 -inset-y-1.5 pointer-events-none -z-10 rounded-full opacity-30 blur-lg transition-opacity duration-300 group-hover:opacity-75"
+        style={{
           background: forceColor
-            ? forceColor
-            : [
-                'linear-gradient(90deg, rgba(34,211,238,0.35) 0%, rgba(52,211,153,0.15) 100%)',
-                'linear-gradient(90deg, rgba(52,211,153,0.3) 0%, rgba(34,211,238,0.3) 100%)',
-                'linear-gradient(90deg, rgba(34,211,238,0.15) 0%, rgba(52,211,153,0.35) 100%)',
-                'linear-gradient(90deg, rgba(34,211,238,0.35) 0%, rgba(52,211,153,0.15) 100%)',
-              ],
-        }}
-        transition={{
-          duration: speed === 'fast' ? 3.5 : 6,
-          repeat: Infinity,
-          ease: 'easeInOut',
+            ? `radial-gradient(circle, ${forceColor}40 0%, transparent 70%)`
+            : 'radial-gradient(circle, rgba(0,240,255,0.35) 0%, rgba(16,226,157,0.15) 50%, transparent 80%)'
         }}
       />
 
-      {/* Letras originales recortadas: 100% transparentes, sin recuadro negro, sin partículas */}
-      <img
-        src={logoImg}
-        alt="La Solución"
-        className="w-full h-full object-contain pointer-events-none filter drop-shadow-[0_2px_8px_rgba(34,211,238,0.35)] group-hover:drop-shadow-[0_4px_14px_rgba(52,211,153,0.5)] transition-all duration-300"
-        style={forceColor ? { filter: `drop-shadow(0 0 10px ${forceColor}80)` } : undefined}
-      />
-
-      {/* Sutil haz de luz interactivo al pasar el cursor */}
-      <div className="absolute inset-0 pointer-events-none rounded-xl overflow-hidden">
-        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-r from-transparent via-cyan-400/15 to-transparent -skew-x-12 translate-x-[-100%] group-hover:translate-x-[200%] transition-transform duration-1000 ease-out" />
-      </div>
+      {/* Titular Tipográfico Kinético Moxen con atributo data-tipos */}
+      <h1
+        ref={containerRef as any}
+        data-tipos
+        data-tipos-text="LA SOLUCIÓN"
+        className={`font-black uppercase leading-none text-cyan-300 ${sizeClasses[size]}`}
+      >
+        LA SOLUCIÓN
+      </h1>
     </div>
   );
 };

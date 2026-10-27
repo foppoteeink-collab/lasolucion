@@ -27,6 +27,7 @@ import { getTodayDateString } from '../utils/date';
 import { OracleModal } from './OracleModal';
 import { ScenarioSimulatorPanel } from './ScenarioSimulatorPanel';
 import { GoogleDriveSyncCard } from './GoogleDriveSyncCard';
+import { restoreAppState } from '../services/googleDriveService';
 import { KAI_OFFICIAL_SHAPES } from '../data/kaiShapes';
 import { KaiVectorGraphics } from './KaiVectorGraphics';
 import { 
@@ -232,8 +233,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     try {
       soundFX.playClick();
       const exportPayload = exportUserData({
-        stats: game?.stats,
+        stats: game?.stats || usePlayerStore.getState().stats,
         tasks: game?.tasks,
+        allTasksByDate: game?.tasksByDate || useTaskStore.getState().tasksByDate,
         reflections: game?.reflections,
         habitMastery: game?.habitMastery,
         customHabits: game?.customHabits,
@@ -241,7 +243,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       });
 
       soundFX.playSuccess();
-      setExportFeedback(`✓ Respaldo JSON generado exitosamente (${exportPayload.tasks.length} misiones)`);
+      const totalTaskCount = exportPayload.allTasksByDate
+        ? Object.values(exportPayload.allTasksByDate).reduce((acc, list) => acc + (list?.length || 0), 0)
+        : exportPayload.tasks.length;
+      setExportFeedback(`✓ Respaldo JSON generado exitosamente (${totalTaskCount} misiones totales)`);
       setTimeout(() => setExportFeedback(null), 4500);
     } catch (err) {
       console.error('Error al exportar:', err);
@@ -278,12 +283,27 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         }
 
         let importedKeys = 0;
+
+        // 1. If rawLocalStorage snapshot is present, restore raw keys first
+        if (parsed.rawLocalStorage && typeof parsed.rawLocalStorage === 'object') {
+          Object.entries(parsed.rawLocalStorage).forEach(([key, val]) => {
+            if (val !== undefined && val !== null) {
+              safeSetItem(key, typeof val === 'string' ? val : JSON.stringify(val));
+              importedKeys++;
+            }
+          });
+        }
+
+        // 2. Restore any top-level key/value entries
         Object.entries(parsed).forEach(([key, val]) => {
-          if (val !== undefined && val !== null) {
+          if (key !== 'rawLocalStorage' && val !== undefined && val !== null) {
             safeSetItem(key, typeof val === 'string' ? val : JSON.stringify(val));
             importedKeys++;
           }
         });
+
+        // 3. Inject directly into live Zustand stores in memory
+        restoreAppState(parsed);
 
         soundFX.playLevelUp();
         setImportStatus(`¡Copia restaurada con éxito! (${importedKeys} registros)`);
@@ -291,6 +311,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           window.location.reload();
         }, 1200);
       } catch (err) {
+        console.error('Error al importar:', err);
         setImportStatus('⚠️ Formato de copia de seguridad inválido.');
         setTimeout(() => setImportStatus(null), 4500);
       }
