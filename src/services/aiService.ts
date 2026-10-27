@@ -376,210 +376,7 @@ ${historyContext}
  * geométrico simétrico (viewBox="0 0 120 120") con líneas neón y núcleo de luz.
  * ══════════════════════════════════════════════════════════════════════════════
  */
-/**
-/**
- * Procesa la imagen en un lienzo <canvas> aplicando Chroma Keying con BFS Flood-Fill
- * desde el perímetro exterior sobre el fondo oscuro #030712.
- * Esto garantiza que el fondo exterior se vuelva 100% transparente (alpha = 0),
- * pero CUALQUIER elemento oscuro INTERNO (pupilas, trazos negros de cartoon o sombras)
- * se mantenga 100% intacto y nítido.
- */
-export async function processChromaKeyToWebP(imageSource: string): Promise<string> {
-  if (typeof window === 'undefined') return imageSource;
 
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => {
-      try {
-        const canvas = document.createElement('canvas');
-        const W = 384;
-        const H = 384;
-        canvas.width = W;
-        canvas.height = H;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          resolve(imageSource);
-          return;
-        }
-
-        ctx.clearRect(0, 0, W, H);
-        ctx.drawImage(img, 0, 0, W, H);
-
-        const imgData = ctx.getImageData(0, 0, W, H);
-        const data = imgData.data;
-
-        // BFS Flood-fill desde el perímetro exterior
-        const isBg = new Uint8Array(W * H);
-        const queue: number[] = [];
-
-        const checkBgColor = (idx: number) => {
-          const r = data[idx * 4];
-          const g = data[idx * 4 + 1];
-          const b = data[idx * 4 + 2];
-          const dr = r - 3;
-          const dg = g - 7;
-          const db = b - 18;
-          const dist = Math.sqrt(dr * dr + dg * dg + db * db);
-          const lum = 0.299 * r + 0.587 * g + 0.114 * b;
-          return dist < 45 || lum < 24;
-        };
-
-        // Sembrar píxeles de los 4 bordes exteriores
-        for (let x = 0; x < W; x++) {
-          const topIdx = x;
-          const btmIdx = (H - 1) * W + x;
-          if (checkBgColor(topIdx) && !isBg[topIdx]) { isBg[topIdx] = 1; queue.push(topIdx); }
-          if (checkBgColor(btmIdx) && !isBg[btmIdx]) { isBg[btmIdx] = 1; queue.push(btmIdx); }
-        }
-        for (let y = 0; y < H; y++) {
-          const lftIdx = y * W;
-          const rgtIdx = y * W + (W - 1);
-          if (checkBgColor(lftIdx) && !isBg[lftIdx]) { isBg[lftIdx] = 1; queue.push(lftIdx); }
-          if (checkBgColor(rgtIdx) && !isBg[rgtIdx]) { isBg[rgtIdx] = 1; queue.push(rgtIdx); }
-        }
-
-        // Propagación BFS
-        let qHead = 0;
-        while (qHead < queue.length) {
-          const curr = queue[qHead++];
-          const cx = curr % W;
-          const cy = Math.floor(curr / W);
-
-          const neighbors = [
-            cx > 0 ? curr - 1 : -1,
-            cx < W - 1 ? curr + 1 : -1,
-            cy > 0 ? curr - W : -1,
-            cy < H - 1 ? curr + W : -1,
-          ];
-
-          for (const n of neighbors) {
-            if (n >= 0 && !isBg[n] && checkBgColor(n)) {
-              isBg[n] = 1;
-              queue.push(n);
-            }
-          }
-        }
-
-        // Aplicar transparencia total a los píxeles alcanzados por el fondo
-        for (let i = 0; i < W * H; i++) {
-          if (isBg[i]) {
-            data[i * 4 + 3] = 0;
-          }
-        }
-
-        ctx.putImageData(imgData, 0, 0);
-        const transparentWebP = canvas.toDataURL('image/webp', 0.9);
-        resolve(transparentWebP);
-      } catch (err) {
-        console.warn('[Forja Neural] Error procesando Chroma Key en canvas:', err);
-        resolve(imageSource);
-      }
-    };
-    img.onerror = () => {
-      console.warn('[Forja Neural] Error cargando imagen para Chroma Key, preservando fuente');
-      resolve(imageSource);
-    };
-    img.src = imageSource;
-  });
-}
-
-/**
- * Genera la ilustración del personaje según su estilo utilizando Imagen 3 o motor de alta resolución
- */
-async function generateKaiIllustration(params: {
-  characterConcept: string;
-  detectedObject: string;
-  artStyle: KaiMultiverseStyle;
-  mood?: KaiTemperament;
-  apiKey?: string;
-}): Promise<string> {
-  const { characterConcept, detectedObject, artStyle, mood = 'stoic', apiKey } = params;
-
-  let styleDesc = '';
-  switch (artStyle) {
-    case 'pixar':
-      styleDesc = 'adorable full body 3D Pixar character render, DreamWorks animated movie hero, rich tactile subsurface scattering, soft studio rim lighting, big soulful expressive eyes with bright catchlights, warm ambient occlusion, cute friendly face, ultra high resolution 3D render';
-      break;
-    case 'cartoon':
-      styleDesc = 'classic 90s Cartoon Network 2D character, Dexter laboratory and Samurai Jack inspired, bold black ink outlines, flat vibrant saturated colors, exaggerated geometric cartoon anatomy, expressive humorous face, retro 2D cartoon cel animation';
-      break;
-    case 'anime':
-      styleDesc = 'authentic Japanese anime mascot companion creature, Studio Trigger and Pokemon anime style, clean vibrant cel-shaded illustration, detailed anime eyes with glossy reflection highlights, spiky dynamic action features, vibrant rich colors';
-      break;
-    case 'pop':
-      styleDesc = 'exclusive designer vinyl art toy collectible, Funko Pop and Superplastic style, glossy vinyl shine reflections, bold pop culture aesthetic, iconic oversized head, button eyes with shine, vibrant saturated pop art colors';
-      break;
-    case 'doodle':
-      styleDesc = 'authentic hand-drawn ink doodle art character, Mr Doodle and Keith Haring sketchbook style, organic black marker contours, manual cross-hatching shade lines, colorful Posca marker accent splashes, quirky whimsical doodles floating';
-      break;
-    case 'clay3d':
-    default:
-      styleDesc = 'adorable claymation 3D stop-motion character, Wallace & Gromit and Aardman Studios style, soft tactile handmade modeling clay texture, gentle studio rim lighting, thumbprint clay details, cute clay ball eyes';
-      break;
-  }
-
-  let moodDesc = '';
-  switch (mood) {
-    case 'stoic':
-      moodDesc = 'serious stoic expression, focused confident gaze, closed determined mouth';
-      break;
-    case 'mischievous':
-      moodDesc = 'playful mischievous smirk, one eye winking or sideways glance, witty confident charm';
-      break;
-    case 'fierce':
-      moodDesc = 'fierce combat warrior stance, intense energetic gaze, battle ready expression';
-      break;
-    case 'mystic':
-      moodDesc = 'mystical tranquil expression, serene half-closed eyes, wise cosmic aura';
-      break;
-    case 'zen':
-      moodDesc = 'peaceful relaxed zen face, sleepy calm eyes, meditative serenity';
-      break;
-    case 'cheerful':
-    default:
-      moodDesc = 'radiant cheerful smile, wide happy sparkling eyes, enthusiastic joyful expression';
-      break;
-  }
-
-  const promptText = `Full body character design of an anthropomorphic ${detectedObject} alive as a companion, ${characterConcept}, ${styleDesc}, ${moodDesc}, solid pure dark background #030712, no floor, no ground, no pedestal, center frame, character floating, high resolution concept art, sharp focus.`;
-
-  // 1. Intentar endpoint Imagen 3 si hay API Key disponible
-  if (apiKey) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 16000);
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`;
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          instances: [{ prompt: promptText }],
-          parameters: { sampleCount: 1, aspectRatio: '1:1' },
-        }),
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-
-      if (res.ok) {
-        const data = await res.json();
-        const base64Bytes = data.predictions?.[0]?.bytesBase64Encoded;
-        if (base64Bytes) {
-          const rawDataUrl = `data:image/jpeg;base64,${base64Bytes}`;
-          return await processChromaKeyToWebP(rawDataUrl);
-        }
-      }
-    } catch (imagenErr) {
-      console.warn('[Forja Neural] Imagen 3 API unavailable, utilizando motor de ilustración alternativo:', imagenErr);
-    }
-  }
-
-  // 2. Motor de ilustración de alta resolución con seed único (Pollinations / Flux)
-  const seed = Math.floor(Math.random() * 999999);
-  const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(promptText)}?width=512&height=512&seed=${seed}&nologo=true`;
-
-  return await processChromaKeyToWebP(pollinationsUrl);
-}
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════
@@ -760,7 +557,16 @@ export async function forgeKaiFromImage(params: {
 
     return `
 ERES UN DIRECTOR DE ARTE DE ÉLITE Y MAESTRO EN GENERACIÓN VECTORIAL SVG.
-Tu tarea: analizar la foto adjunta, identificar con precisión el OBJETO que contiene, y transmutarlo en un COMPAÑERO VIVO KAI en formato SVG puro, con el estilo artístico especificado abajo. El resultado DEBE verse radicalmente diferente según el estilo.
+Tu misión: analizar la foto adjunta, identificar con precisión el OBJETO real que contiene, y transformarlo en un COMPAÑERO VIVO KAI antropomórfico en formato SVG puro, aplicando con máxima fidelidad el estilo artístico especificado abajo.
+
+🚨 DIRECTIVA CRÍTICA DE COLORES REALES (CERO COLORES DE LA APP):
+- DEBES USAR OBLIGATORIAMENTE LOS COLORES REALES DEL OBJETO FOTOGRAFIADO:
+  * Si la foto es una manzana roja → el personaje DEBE ser rojo manzana, con toques amarillos/verdes reales y tallo marrón o verde.
+  * Si es un encendedor amarillo → el personaje DEBE ser amarillo brillante con los metales plateados del encendedor.
+  * Si es un zapato azul → el cuerpo DEBE ser azul con detalles blancos o de suela.
+- ¡ESTRICTAMENTE PROHIBIDO usar los colores cian, turquesa (#00f0ff, #38bdf8), violeta (#a855f7) de la aplicación!
+- ¡ESTRICTAMENTE PROHIBIDO convertir el objeto en un robot cyberpunk o bloque oscuro genérico a menos que el objeto sea realmente un dispositivo electrónico!
+- El personaje debe capturar la forma reconocible del objeto y verse cálido, profesional y con identidad propia.
 
 =======================================================
 🎨 DIRECTIVA DE ESTILO (APLICA ESTE ESTILO CON MÁXIMA FIDELIDAD):
@@ -779,14 +585,14 @@ ${moodDirective}
 2. FONDO 100% TRANSPARENTE: ¡PROHIBIDO cualquier <rect> de fondo sólido o negro! El personaje FLOTA libremente.
 3. Centra el personaje en x=80, entre y=20 e y=148, con margen libre en bordes.
 4. GRUPOS SEMÁNTICOS PARA ANIMACIÓN VIVA (OBLIGATORIO - el motor de animación los necesita):
-   - <g id="kai-body"> → cuerpo, torso, forma principal del objeto
-   - <g id="kai-eyes"> → ambos ojos completos (globo + iris)
+   - <g id="kai-body"> → cuerpo, torso, forma principal del objeto con sus colores reales
+   - <g id="kai-eyes"> → ambos ojos completos (globo ocular + iris)
    - <g id="kai-pupils"> → SOLO las pupilas o puntos centrales (seguirán el ratón y el dedo del usuario)
    - <g id="kai-mouth"> → boca (se animará al interactuar)
    - <g id="kai-left-hand"> → mano/brazo izquierdo (opcional)
    - <g id="kai-right-hand"> → mano/brazo derecho (opcional)
-5. El objeto fotografiado DEBE ser reconocible en el diseño final: sus colores, forma y textura se integran en el personaje.
-6. Sombra de flotación opcional: <ellipse cx="80" cy="155" rx="28" ry="5" fill="#000" opacity="0.25"/>
+5. El objeto fotografiado DEBE ser plenamente reconocible en el diseño final.
+6. Sombra de flotación en la base: <ellipse cx="80" cy="155" rx="28" ry="5" fill="#000000" opacity="0.25"/>
 ${userPrompt ? `7. Contexto del usuario: "${userPrompt}".` : ''}
 
 =======================================================
@@ -942,31 +748,9 @@ ${userPrompt ? `7. Contexto del usuario: "${userPrompt}".` : ''}
     }
   }
 
-  // 4. Paso 2: Generar la ilustración de alta fidelidad con el motor de imagen (Imagen 3 / Flux)
-  let finalImageUrl: string | undefined = undefined;
-  try {
-    const rawIllustration = await generateKaiIllustration({
-      characterConcept,
-      detectedObject,
-      artStyle,
-      mood: (parsed.mood as KaiTemperament) || mood || 'stoic',
-      apiKey: apiKeyToTry,
-    });
-    if (rawIllustration) {
-      finalImageUrl = rawIllustration;
-      console.log(`[Forja Neural] ✓ Ilustración artística generada con éxito (${artStyle})`);
-    }
-  } catch (illusErr) {
-    console.warn('[Forja Neural] Aviso generando ilustración, usando SVG como fallback:', illusErr);
-  }
-
-  // Guardar en localStorage si es data URL para no saturar Firestore
-  if (finalImageUrl && finalImageUrl.startsWith('data:') && typeof window !== 'undefined') {
-    try {
-      window.localStorage.setItem('kai_custom_avatar_data', finalImageUrl);
-    } catch (e) {
-      console.warn('[Forja Neural] Storage aviso:', e);
-    }
+  // Validación estricta: asegurar que vino el SVG
+  if (!svgContent && (!Array.isArray(parsed.polygons) || parsed.polygons.length === 0)) {
+    throw new Error(`La IA reconoció el objeto "${detectedObject}", pero no generó el diseño para el estilo "${artStyle}". Por favor intenta de nuevo.`);
   }
 
   return {
@@ -980,9 +764,7 @@ ${userPrompt ? `7. Contexto del usuario: "${userPrompt}".` : ''}
     primaryColor,
     secondaryColor,
     mood: (parsed.mood as KaiTemperament) || mood || 'stoic',
-    renderBranch: finalImageUrl ? 'illustration' : 'vector',
-    imageUrl: finalImageUrl,
-    storageRef: finalImageUrl && finalImageUrl.startsWith('data:') ? 'local:kai_custom_avatar_data' : undefined,
+    renderBranch: 'vector',
     svgContent,
     polygons: Array.isArray(parsed.polygons) ? parsed.polygons : undefined,
   };
