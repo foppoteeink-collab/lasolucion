@@ -486,12 +486,79 @@ Inspiración visual directa: Dexter, Las Chicas Superpoderosas, Samurai Jack, Co
 
       case 'anime':
         vectorDirective = `
-⚔️ ESTILO: "ANIME JAPONÉS SHONEN AUTÉNTICO (POKÉMON / DIGIMON / DRAGON BALL / STUDIO TRIGGER)"
-- TRAZO: Tinta estilizada y limpia (stroke="#111827" stroke-width="2" con puntas afiladas naturales).
-- OJOS DE ANIME AUTÉNTICOS: Contorno superior rasgado y GRUESO, pestañas o marcas superiores marcadas. Iris elíptico vertical con degradado interno (color brillante en la parte superior, más oscuro abajo). Destello blanco especular grande en el iris. Son ojos de anime reconocibles, NO ojos realistas ni de caricatura occidental.
-- RASGOS CARACTERÍSTICOS: Mechones, cuernos o crestas de energía afiladas en puntas (*spiky*), opcional: cola, orejas de criatura o marcas de energía.
-- SOMBREADO: Cel-shading clásico japonés de DOS tonos nítidos: el color base del objeto y un color de sombra más oscuro con borde anguloso afilado.
-- ACTITUD: Criatura compañera adorable pero con carácter. Personalidad visible en la postura.`;
+⚔️ ESTILO: "ANIME JAPONÉS SHONEN CLÁSICO Y MODERNO (ILUSTRACIÓN VECTORIAL CEL-SHADED)"
+
+1. PRINCIPIO UNIVERSAL DE ANIMACIÓN SHONEN (CERO CONDICIONAMIENTO):
+- CUALQUIERA que sea el objeto presente en la fotografía, su estructura física, contorno real, volumen y partes constituyen la anatomía viva del personaje.
+- NO alteres ni reemplaces la silueta natural del objeto por figuras geométricas genéricas ni lo encasilles en moldes predefinidos.
+- Dota al objeto de vida orgánica integrando rostro, ojos expresivos y extremidades que nazcan armónicamente de su propia masa y proporciones físicas.
+- Mantén intactas y reconocibles todas sus piezas, materiales y relieves originales: si tiene hendiduras, botones, tapas, ranuras o aristas, se respetan e integran con el trazo de tinta y sombreado cel-shaded del anime.
+- Al ver el personaje, debe ser evidente e inconfundible qué objeto real fue fotografiado.
+
+2. CATÁLOGO ROBUSTO DE EXTREMIDADES SUPERIORES (BRAZOS, GARRAS Y MANOS):
+- Brazos "Guanteletes Shinobi / Marciales": Muñequeras de tela enrollada, guantes sin dedos con placas metálicas en el dorso y nudillos reforzados.
+- Brazos "Garra Afilada de Bestia Ancestral": 3 o 4 garras curvadas de marfil o filo blanco cel-shaded, con almohadillas en las palmas o escamas triangulares.
+- Brazos "Placas de Armadura Biselada / Cyborg": Hombreras angulares con remaches, juntas esféricas en codos y muñecas, y antebrazo blindado.
+- Brazos "Manga Larga de Haori / Túnica Marcial": Mangas anchas tradicionales con dobladillo geométrico de donde solo asoman las puntas de los dedos o puños tensos.
+- Brazos "Alas Cuchilla / Filos Aerodinámicos": Extremidades con plumas afiladas o membranas que actúan como alas y como brazos gesticulares ágiles.
+- Brazos "Guantes de Boxeo / Impacto Redondeado": Guantes de cuero acolchados con costuras cruzadas y brillo especular de impacto.
+- Brazos "Cañones de Muñeca / Gauntlet Mecánico": Antebrazo robusto que termina en cañón cilíndrico o garra hidráulica de tres puntas.
+- Brazos "Vendajes Deshilachados de Entrenamiento": Tiras de tela elástica blanca que envuelven todo el antebrazo con extremos sueltos ondeando al viento.
+- Brazos "Mano Abierta de Invocación / Postura de Energía": Dedos estilizados en arco listos para canalizar un ataque, con líneas de tensión anime.
+- Brazos "Puños Tensos Cerrados con Nudillos Marcados": Puño cerrado con pulgar bloqueando los nudillos, trazos afilados de fuerza y líneas de esfuerzo estilizadas.
+- Brazos "Mini-Garras Chibi Tiernas pero Temibles": Extremidades cortas y robustas rematadas en 3 garritas blancas que denotan ferocidad contenida.
+- Brazos "Zarcillos / Filamentos de Energía": Lazos flexibles o zarcillos que fluyen desde los hombros como látigos de energía cel-shaded.
+
+3. CATÁLOGO ROBUSTO DE EXTREMIDADES INFERIORES, PATAS Y CALZADO:
+- Botas "De Combate Saiyan / Armadura Pesada": Botas altas blancas o contrastadas con punteras reforzadas, líneas elásticas verticales y suelas de amortiguación gruesa.
+- Botas "Ninja / Shinobi": Calzado de tela ajustada con empeine descubierto, puntera dividida para los dedos o caña atada con cordones cruzados.
+- Patas "Bípedas de Bestia / Dragón Digitígradas": Muslos musculosos, corvejones articulados hacia atrás y patas con 3 garras delanteras y 1 espolón trasero de equilibrio.
+- Patas "Cuadrúpedas de Felino / Lobo de Batalla": Cuatro patas ágiles con pezuñas o garras retráctiles y mechones de pelaje afilado en los tobillos.
+- Patas "Chibi Compactas de Gran Estabilidad": Patitas cortas, redondeadas y firmes, con almohadillas planas para poses sentadas o en cuclillas.
+- Zapatillas "Sneakers Urbanas Estilo Shonen": Tenis de bota alta con suela de goma blanca gruesa, lengüeta gigante alzada y cordones sueltos dinámicos.
+- Piernas con "Pantalón Gi Plisado / Hakama Marcial": Pantalón holgado de tela pesada recogido en los tobillos con polainas o cintas negras.
+- Base "Vórtice de Energía / Nube Voladora / Flotación": El objeto levita sin piernas; su parte inferior se disuelve en una estela cónica de fuego, nube condensada o humo fantasmagórico cel-shaded.
+- Patas "Insectoides / Exoesqueleto Quitinoso": Patas segmentadas delgadas pero firmes con espinas laterales y ganchos terminales afilados.
+- Calzado "Sandalias Tradicionales Zori / Geta": Suela de madera o paja con correas en V de color vibrante y calcetines tabi blancos.
+
+4. CATÁLOGO ROBUSTO DE OJOS Y MIRADAS ANIME SHONEN:
+- Mirada "Determinada / Héroe Shonen": Párpado superior grueso y angulado en diagonal descendente hacia el centro, iris elíptico vertical con degradado bicolor interno (tono claro arriba, tono oscuro abajo) y un destello especular blanco circular nítido.
+- Mirada "Ojos Rasgados Fieros / Saiyan / Rival": Líneas de ceño en V agresiva, sombra triangular dura debajo de las cejas, pupilas contraídas en pequeños puntos y párpado inferior tenso.
+- Mirada "Ojos Chibi Gigantes / Gran Expresividad": Grandes globos oculares con iris enorme y doble reflejo circular blanco (uno grande arriba, uno pequeño abajo), pupilas negras profundas y brillo de determinación joven.
+- Mirada "Pupila de Rendija / Ojo de Bestia": Iris dorado, carmesí o esmeralda con una pupila vertical fina como de reptil o felino despertado.
+- Mirada "Ocular Místico / Patrones Concéntricos / Runas": Iris con círculos concéntricos, aspas geométricas o tomoes ninja de poder visual.
+- Mirada "Ojos Entrecerrados / Sabio / Sonrisa Astuta": Dos arcos horizontales afilados con pestañas angulares que ocultan los ojos en una expresión de calma imperturbable.
+- Mirada "Ojo Único / Sensor Ciclópeo": Un solo ojo central dominante o visor óptico horizontal con brillo de escaneo cel-shaded.
+- Mirada "Gafas de Combate / Visor Táctico": Gafas de piloto sobre la frente o visor translúcido con reflejo diagonal blanco y montura técnica.
+- Mirada "En Blanco / Furia Berserker": Ojos sin pupila, completamente blancos con contorno afilado y venas de energía en los bordes.
+
+5. CATÁLOGO ROBUSTO DE BOCAS Y EXPRESIVIDAD SHONEN:
+- Mueca "Smirk Confiado": Sonrisa ladeada en una sola comisura mostrando un colmillito blanco triangular superior (actitud de rival confiado).
+- Sonrisa "Gran Protagonista Shonen": Boca amplia abierta en D horizontal, con hilera superior de dientes lisos y lengua plana de color coral.
+- Boca "Grito de Batalla / Rugido": Boca abierta triangular o poligonal con mandíbula tensa, interior oscuro y colmillos superiores e inferiores afilados.
+- Mueca "Línea Firme / Concentración Absoluta": Trazo recto horizontal con una pequeña muesca angular hacia abajo en el centro y una línea mínima bajo la boca indicando el labio inferior.
+- Mandíbula "Dientes de Tiburón / Monstruo Feroz": Fila completa de dientes triangulares entrelazados como una sierra blanca continua.
+- Mueca "Mordiendo una Paja / Hoja / Hilo": Boca cerrada con una ramita verde o hilo de combate asomando entre los labios.
+- Boquita "Chibi Adorable en Forma de W (Gatuna / Bicho)": Línea curvada en forma de :3 o W invertida con mejillas sonrojadas.
+- Máscara / Protector Facial de Tela: La boca está cubierta por una máscara ninja ajustada al rostro o cuello alto alzado hasta la nariz.
+
+6. CATÁLOGO ROBUSTO DE RASGOS, CABELLO Y ACCESORIOS SHONEN:
+- Mechones "Spiky / Cabello Picudo": 3 a 7 mechones triangulares afilados que desafían la gravedad, con sombras de corte recto cel-shaded en cada punta.
+- Cuernos y Crestas: Un par de cuernos curvados hacia atrás (tipo dragón o demonio) o un cuerno central afilado de combate tipo escarabajo rinoceronte.
+- Bandana / Cinta de la Frente: Tira de tela con placa metálica o broche grabado en el centro, y dos lazos largos flotando dinámicamente hacia atrás.
+- Orejas Puntiagudas / Aletas: Orejas largas élficas, aletas laterales membranosas o alas auditivas de plumas.
+- Marcas Faciales / Tatuajes de Batalla: Rayas horizontales de guerrero en las mejillas, marcas de maldición tribales, lágrimas o cicatrices finas cruzando un ojo.
+- Cola Dinámica: Cola de lagarto gruesa, cola con punta de llama viva cel-shaded, cola peluda con punta blanca o cola segmentada con púas.
+- Bufanda / Capa Larga Rasgada: Bufanda roja o negra ondeando dramáticamente hacia un costado, con bordes deshilachados.
+- Joyería de Poder: Pendientes colgantes geométricos (estilo potara o hanafuda), cuentas de oración budistas gigantes o collares de garras.
+- Aureola / Halo de Energía en Suspensión: Anillo circular u ovalado de energía flotando detrás de la cabeza o alrededor del cuello.
+- Fragmentos de Aura / Chispas de Ki Cel-Shaded: 2 o 3 pequeños rombos o triángulos flotando alrededor del cuerpo con opacidad 0.7, simulando energía liberada.
+
+7. TÉCNICA VECTORIAL Y PALETA OBLIGATORIA:
+- CONTORNO DE TINTA ANIME: stroke="#111827" o "#0f172a", grosor controlado (stroke-width="2.5" a "3.5"), stroke-linejoin="round" y remates afilados.
+- PALETA DE COLOR BASADA EN LA FOTO: Utiliza estrictamente los colores originales del objeto fotografiado como tono base.
+- CEL-SHADING DE ALTO CONTRASTE (2 A 3 TONOS): Color base del objeto + sombra plana 25% más oscura cortada con aristas angulares afiladas (cero gradientes difusos ni blur).
+- LUCES ESPECULARES AFILADAS: Pequeñas líneas blancas biseladas o triángulos de reflejo (opacity="0.75") en las crestas y bordes superiores.`;
         break;
 
       case 'pop':
@@ -606,12 +673,11 @@ Tu misión: analizar la foto adjunta, identificar con precisión el OBJETO real 
 
 🚨 DIRECTIVA CRÍTICA DE COLORES REALES (CERO COLORES DE LA APP):
 - DEBES USAR OBLIGATORIAMENTE LOS COLORES REALES DEL OBJETO FOTOGRAFIADO:
-  * Si la foto es una manzana roja → el personaje DEBE ser rojo manzana, con toques amarillos/verdes reales y tallo marrón o verde.
-  * Si es un encendedor amarillo → el personaje DEBE ser amarillo brillante con los metales plateados del encendedor.
-  * Si es un zapato azul → el cuerpo DEBE ser azul con detalles blancos o de suela.
+  * Identifica y extrae con precisión los tonos exactos, gradientes y acentos cromáticos del objeto capturado.
+  * Aplica esa misma gama cromática al cuerpo y partes del personaje, respetando su fidelidad visual original.
 - ¡ESTRICTAMENTE PROHIBIDO usar los colores cian, turquesa (#00f0ff, #38bdf8), violeta (#a855f7) de la aplicación!
 - ¡ESTRICTAMENTE PROHIBIDO convertir el objeto en un robot cyberpunk o bloque oscuro genérico a menos que el objeto sea realmente un dispositivo electrónico!
-- El personaje debe capturar la forma reconocible del objeto y verse cálido, profesional y con identidad propia.
+- El personaje debe capturar la silueta y textura reconocible del objeto, luciendo cálido, profesional y con identidad propia.
 
 =======================================================
 🎨 DIRECTIVA DE ESTILO (APLICA ESTE ESTILO CON MÁXIMA FIDELIDAD):
