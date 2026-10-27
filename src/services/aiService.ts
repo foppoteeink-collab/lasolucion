@@ -380,13 +380,140 @@ ${historyContext}
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════
- * 📸 FORJA NEURAL KAI // PIPELINE MULTIMODAL HÍBRIDO (OPCIÓN C)
- * Paso 1: Reconocimiento exacto del objeto con Gemini Vision (2026).
- * Paso 2: Según el estilo elegido:
- *   - Rama Ilustración Real (3D Vinyl, Anime, Cómic, Crayón): Generación + Chroma Key WebP.
- *   - Rama Vectorial (Geometría Neón, Cyber-Pixel, Flujo, Low Poly): SVG nativo estructurado.
+ * 📸 FORJA NEURAL KAI // PIPELINE ILUSTRATIVO EN ALTA RESOLUCIÓN + CHROMA KEY
+ * Paso 1: Reconocimiento exacto del objeto y colores con Gemini Vision (2026).
+ * Paso 2: Generación de ilustración artística en alta definición (FLUX / Diffusion).
+ * Paso 3: Eliminación automática de fondo exterior con BFS Flood-Fill en Canvas
+ *         para obtener una figura de arte limpia en PNG/WebP 100% transparente.
  * ══════════════════════════════════════════════════════════════════════════════
  */
+
+/**
+ * Procesa la imagen en un lienzo <canvas> aplicando Chroma Keying con BFS Flood-Fill
+ * desde el perímetro exterior sobre el fondo neutro de estudio.
+ * Esto garantiza que el fondo exterior se vuelva 100% transparente (alpha = 0),
+ * pero CUALQUIER elemento oscuro INTERNO (pupilas, trazos negros o sombras del personaje)
+ * se mantenga 100% intacto y nítido.
+ */
+export async function processChromaKeyToWebP(imageSource: string): Promise<string> {
+  if (typeof window === 'undefined') return imageSource;
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        const W = 400;
+        const H = 400;
+        canvas.width = W;
+        canvas.height = H;
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        if (!ctx) {
+          resolve(imageSource);
+          return;
+        }
+
+        ctx.clearRect(0, 0, W, H);
+        ctx.drawImage(img, 0, 0, W, H);
+
+        const imgData = ctx.getImageData(0, 0, W, H);
+        const data = imgData.data;
+
+        // Muestrear los 4 bordes para determinar el color predominante del fondo
+        const corners = [0, (W - 1), (H - 1) * W, (H - 1) * W + (W - 1)];
+        let sumR = 0, sumG = 0, sumB = 0;
+        for (const c of corners) {
+          sumR += data[c * 4];
+          sumG += data[c * 4 + 1];
+          sumB += data[c * 4 + 2];
+        }
+        const bgR = sumR / 4;
+        const bgG = sumG / 4;
+        const bgB = sumB / 4;
+        const bgLum = 0.299 * bgR + 0.587 * bgG + 0.114 * bgB;
+
+        // BFS Flood-fill desde el perímetro exterior
+        const isBg = new Uint8Array(W * H);
+        const queue: number[] = [];
+
+        const isSimilarToBg = (idx: number) => {
+          const r = data[idx * 4];
+          const g = data[idx * 4 + 1];
+          const b = data[idx * 4 + 2];
+          const dr = r - bgR;
+          const dg = g - bgG;
+          const db = b - bgB;
+          const dist = Math.sqrt(dr * dr + dg * dg + db * db);
+          const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+          return dist < 48 || (bgLum < 45 && lum < 30);
+        };
+
+        // Sembrar píxeles de los 4 bordes exteriores
+        for (let x = 0; x < W; x++) {
+          const topIdx = x;
+          const btmIdx = (H - 1) * W + x;
+          if (isSimilarToBg(topIdx) && !isBg[topIdx]) { isBg[topIdx] = 1; queue.push(topIdx); }
+          if (isSimilarToBg(btmIdx) && !isBg[btmIdx]) { isBg[btmIdx] = 1; queue.push(btmIdx); }
+        }
+        for (let y = 0; y < H; y++) {
+          const lftIdx = y * W;
+          const rgtIdx = y * W + (W - 1);
+          if (isSimilarToBg(lftIdx) && !isBg[lftIdx]) { isBg[lftIdx] = 1; queue.push(lftIdx); }
+          if (isSimilarToBg(rgtIdx) && !isBg[rgtIdx]) { isBg[rgtIdx] = 1; queue.push(rgtIdx); }
+        }
+
+        // Propagación BFS
+        let qHead = 0;
+        while (qHead < queue.length) {
+          const curr = queue[qHead++];
+          const cx = curr % W;
+          const cy = Math.floor(curr / W);
+
+          const neighbors = [
+            cx > 0 ? curr - 1 : -1,
+            cx < W - 1 ? curr + 1 : -1,
+            cy > 0 ? curr - W : -1,
+            cy < H - 1 ? curr + W : -1,
+          ];
+
+          for (const n of neighbors) {
+            if (n >= 0 && !isBg[n] && isSimilarToBg(n)) {
+              isBg[n] = 1;
+              queue.push(n);
+            }
+          }
+        }
+
+        // Aplicar transparencia a los píxeles de fondo
+        for (let i = 0; i < W * H; i++) {
+          if (isBg[i]) {
+            data[i * 4 + 3] = 0; // Alpha = 0 (100% transparente)
+          }
+        }
+
+        ctx.putImageData(imgData, 0, 0);
+        resolve(canvas.toDataURL('image/webp', 0.92));
+      } catch (err) {
+        console.warn('[processChromaKeyToWebP] Error procesando canvas:', err);
+        resolve(imageSource);
+      }
+    };
+    img.onerror = () => resolve(imageSource);
+    img.src = imageSource;
+  });
+}
+
+/**
+ * Genera la ilustración en alta resolución usando FLUX y la procesa a PNG transparente
+ */
+export async function generateKaiIllustration(promptText: string): Promise<string> {
+  const seed = Math.floor(Math.random() * 999999);
+  const cleanPrompt = promptText.trim().replace(/\s+/g, ' ');
+  const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(cleanPrompt)}?width=512&height=512&model=flux&seed=${seed}`;
+  return await processChromaKeyToWebP(pollinationsUrl);
+}
+
 export async function forgeKaiFromImage(params: {
   imageBase64: string;
   mimeType?: string;
@@ -415,316 +542,63 @@ export async function forgeKaiFromImage(params: {
   }
   cleanBase64 = cleanBase64.trim().replace(/[\r\n\s]+/g, '');
 
-  // 2. Construcción de directiva del prompt unificado 100% SVG
-  function buildMultiversePrompt(selectedArtStyle: KaiMultiverseStyle, userPrompt: string, selectedMood: KaiTemperament = 'stoic'): string {
-    let vectorDirective = '';
-    switch (selectedArtStyle) {
-
-      case 'pixar':
-        vectorDirective = `
-🎬 ESTILO: "ANIMACIÓN 3D ESTILO PIXAR / DREAMWORKS (PELÍCULA DE ALTO PRESUPUESTO)"
-- ILUMINACIÓN 3D: Usa múltiples <radialGradient> y <linearGradient> en <defs> para simular volumen esférico real con oclusión ambiental (sombra oscura suave debajo) y reflejo de luz de estudio en la parte superior izquierda.
-- OJOS EXPRESIVOS: Grandes y llenos de vida. Globo ocular con elipse blanca/crema, iris con gradiente vibrante interno, pupila negra, y DOS destellos de luz circulares blancos (catchlights) en cada ojo. Los ojos deben transmitir EMOCIÓN auténtica.
-- BOCA: Curvada, expresiva, con labios que tienen profundidad 3D y sombra interna.
-- SILUETA: Formas redondeadas, orgánicas, amigables y llenas de calidez cinematográfica. Nada angular ni rígido.
-- CALIDAD: Debe parecer un personaje de película de animación real. Usa gradientes suaves ricos para el cuerpo principal del objeto.`;
-        break;
-
-      case 'cartoon':
-        vectorDirective = `
-📺 ESTILO: "CARTOON NETWORK CLÁSICO (EL GRAN PANTHEON DE ANIMACIÓN TRADICIONAL CN)"
-Inspiración visual directa: Dexter, Las Chicas Superpoderosas, Samurai Jack, Coraje el Perro Cobarde, Ed Edd n Eddy, Billy y Mandy, Chowder, Hora de Aventura, KND (Los Chicos del Barrio), Mansión Foster, Un Show Más (Mordecai y Rigby), Gumball y Darwin, Johnny Bravo, Steven Universe, Teen Titans Go, Flapjack, Escandalosos y Mao Mao.
-
-1. PRINCIPIO UNIVERSAL DE ANIMACIÓN (EL OBJETO COBRA VIDA):
-- CUALQUIERA que sea el objeto presente en la fotografía, su estructura física, proporciones y contorno real constituyen el cuerpo del personaje.
-- NO alteres ni reemplaces la silueta natural del objeto por figuras geométricas genéricas.
-- Dota al objeto de vida antropomórfica integrando rostro, ojos y extremidades de forma orgánica que nazcan de su propia anatomía, manteniendo intactas y reconocibles todas sus características físicas, relieves y partes funcionales.
-- Al ver el personaje, debe ser evidente e inconfundible qué objeto real fue fotografiado.
-
-2. CATÁLOGO DE EXTREMIDADES SUPERIORES (BRAZOS Y MANOS):
-- Brazos "Manguera de Goma / Rubber-Hose" (Jake, Finn, Coraje): Curvados, elásticos, sin codos rígidos, con manitas simples de 3 o 4 deditos o manoplas redondeadas.
-- Brazos de "Científico con Guantes de Hule" (Dexter): Brazos estilizados que terminan en guantes de laboratorio con pliegues en la muñeca.
-- Brazos "Hipermusculosos Geométricos" (Johnny Bravo): Bíceps en trapecio, muñecas estrechas y puños angulares.
-- Brazos "Alas con Dedos de Pluma" (Mordecai): Brazos que terminan en plumas afiladas que gesticulan como dedos hábiles.
-- Brazos "Patitas de Animal / Garras Amigables" (Rigby, Coraje, Gumball, Darwin): Extremidades ágiles con almohadillas o 3 garras redondeadas.
-- Brazos "Robóticos / Cyborg" (Cyborg de Teen Titans, Robot de Dexter): Segmentos con juntas circulares, pernos y pinzas de armadura.
-- Brazos "Expresivos Tradicionales CN" (Coraje, Finn, Dexter): Brazos dinámicos y estilizados con mangas marcadas y manos de cuatro dedos expresivas con volumen.
-- Brazos "Regordetes con Pliegues" (Chowder, Clarence, Tío Grandpa): Brazos gorditos con muñecas acojinadas.
-- Brazos con "Mangas Holgadas Gigantes" (Samurai Jack, Ed): Mangas caídas donde las manos asoman apenas.
-- Brazos "Vendados de Combate" (Chris McLean, Mao Mao): Muñequeras o vendajes blancos enrollados en los antebrazos.
-
-3. CATÁLOGO DE EXTREMIDADES INFERIORES Y CALZADO:
-- Botas "Tácticas de Suela Gruesa" (Numbuh 1 de KND, Robin): Botas marrones o negras con suela ancha y cordones cruzados visibles.
-- Tenis "Deportivos / Skater Bicolor" (Darwin, Ben 10): Zapatillas deportivas con puntera de goma blanca y calcetines doblados.
-- Zapatos "Mary Jane / Escolar Elegante" (Mandy): Zapatitos negros redondeados con correa y calcetitas blancas.
-- Zapatitos "Puntiagudos de Laboratorio" (Dexter): Zapatos triangulares negros minúsculos que salen directamente de la base.
-- Piernas "Atléticas de Acción" (Robin, Ben 10): Piernas firmes con pantalones estilizados y calzado de buen apoyo.
-- Patas "Animales Articuladas" (Rigby, Gumball, Coraje): Patas ágiles articuladas hacia atrás.
-- Base "Espectral / Deslizante sin Piernas" (Puro Hueso, Bloo): Túnica negra desgarrada en la base o silueta fantasmagórica que flota.
-- Pantalones "Acampanados / Baggy Caídos de los 90s" (Ed Edd n Eddy): Pantalones holgados que cubren los tobillos.
-
-4. CATÁLOGO VISUAL DE OJOS Y MIRADAS CN:
-- Ojos "Powerpuff / Gumball": Grandes círculos u óvalos blancos expresivos juntos en el centro, con pupilas negras de botón o con anillo de color brillante y destello gráfico blanco.
-- Ojos "Mandy / Samurai Jack": Ceño negro grueso en V afilada que corta los ojos por la parte superior (mirada determinada, seria o rebelde).
-- Ojos "Dexter / Numbuh 1 / Johnny Bravo": Gafas oscuras estilizadas o lentes de montura gruesa con reflejo blanco diagonal.
-- Ojos "Hora de Aventura / Finn / Jake / Escandalosos": Dos puntos o píldoras negras minimalistas llenos de carisma y simplicidad.
-- Ojos "Coraje / Billy / Ed": Ojos saltones ligeramente asimétricos con pupilas desorbitadas (asombro cómico).
-- Ojos "Regular Show / Rigby / Mordecai": Óvalos negros con círculos oscuros de ojeras o marcas de contorno.
-
-5. CATÁLOGO VISUAL DE BOCAS Y EXPRESIVIDAD:
-- Sonrisa cómica abierta con lengua plana rosada y diente solitario caricaturesco (estilo Chowder, Flapjack o Darwin).
-- O mueca ladeada sarcástica / confiada trazada en una sola línea angular negra (estilo Dexter o Mandy).
-- O boca elástica y limpia de un solo trazo curvo expresivo (estilo Jake o Bloo).
-- O pico / hocico geométrico integrado a la silueta del objeto (estilo Mordecai o Rigby).
-- O mandíbula abierta de grito cómico o susto (estilo Coraje).
-
-6. TÉCNICA VECTORIAL Y PALETA DE COLOR OBLIGATORIA:
-- CONTORNO DE TINTA NEGRA PURO: stroke="#000000" con grosor uniforme y audaz (stroke-width="3.8" a "4.5"), stroke-linejoin="round" y stroke-linecap="round" en cada silueta y detalle.
-- PALETA DE COLOR BASADA EN LA FOTO: Utiliza estrictamente los colores REALES del objeto fotografiado.
-- COLOR EN BLOQUE PLANO (CEL-SHADING): ¡PROHIBIDO cualquier degradado difuso, sombras borrosas o efectos de render 3D! Colores planos y sólidos súper saturados. Sombras duras de corte recto en un tono 20% más oscuro.`;
-        break;
-
+  // 2. Directiva artística de alto nivel según el estilo
+  function getStylePromptKeywords(selectedStyle: KaiMultiverseStyle): string {
+    switch (selectedStyle) {
       case 'anime':
-        vectorDirective = `
-⚔️ ESTILO: "ANIME JAPONÉS SHONEN CLÁSICO Y MODERNO (ILUSTRACIÓN VECTORIAL CEL-SHADED)"
-
-1. PRINCIPIO UNIVERSAL DE ANIMACIÓN SHONEN (CERO CONDICIONAMIENTO):
-- CUALQUIERA que sea el objeto presente en la fotografía, su estructura física, contorno real, volumen y partes constituyen la anatomía viva del personaje.
-- NO alteres ni reemplaces la silueta natural del objeto por figuras geométricas genéricas ni lo encasilles en moldes predefinidos.
-- Dota al objeto de vida orgánica integrando rostro, ojos expresivos y extremidades que nazcan armónicamente de su propia masa y proporciones físicas.
-- Mantén intactas y reconocibles todas sus piezas, materiales y relieves originales: si tiene hendiduras, botones, tapas, ranuras o aristas, se respetan e integran con el trazo de tinta y sombreado cel-shaded del anime.
-- Al ver el personaje, debe ser evidente e inconfundible qué objeto real fue fotografiado.
-
-2. CATÁLOGO ROBUSTO DE EXTREMIDADES SUPERIORES (BRAZOS, GARRAS Y MANOS):
-- Brazos "Guanteletes Shinobi / Marciales": Muñequeras de tela enrollada, guantes sin dedos con placas metálicas en el dorso y nudillos reforzados.
-- Brazos "Garra Afilada de Bestia Ancestral": 3 o 4 garras curvadas de marfil o filo blanco cel-shaded, con almohadillas en las palmas o escamas triangulares.
-- Brazos "Placas de Armadura Biselada / Cyborg": Hombreras angulares con remaches, juntas esféricas en codos y muñecas, y antebrazo blindado.
-- Brazos "Manga Larga de Haori / Túnica Marcial": Mangas anchas tradicionales con dobladillo geométrico de donde solo asoman las puntas de los dedos o puños tensos.
-- Brazos "Alas Cuchilla / Filos Aerodinámicos": Extremidades con plumas afiladas o membranas que actúan como alas y como brazos gesticulares ágiles.
-- Brazos "Guantes de Boxeo / Impacto Redondeado": Guantes de cuero acolchados con costuras cruzadas y brillo especular de impacto.
-- Brazos "Cañones de Muñeca / Gauntlet Mecánico": Antebrazo robusto que termina en cañón cilíndrico o garra hidráulica de tres puntas.
-- Brazos "Vendajes Deshilachados de Entrenamiento": Tiras de tela elástica blanca que envuelven todo el antebrazo con extremos sueltos ondeando al viento.
-- Brazos "Mano Abierta de Invocación / Postura de Energía": Dedos estilizados en arco listos para canalizar un ataque, con líneas de tensión anime.
-- Brazos "Puños Tensos Cerrados con Nudillos Marcados": Puño cerrado con pulgar bloqueando los nudillos, trazos afilados de fuerza y líneas de esfuerzo estilizadas.
-- Brazos "Mini-Garras Chibi Tiernas pero Temibles": Extremidades cortas y robustas rematadas en 3 garritas blancas que denotan ferocidad contenida.
-- Brazos "Zarcillos / Filamentos de Energía": Lazos flexibles o zarcillos que fluyen desde los hombros como látigos de energía cel-shaded.
-
-3. CATÁLOGO ROBUSTO DE EXTREMIDADES INFERIORES, PATAS Y CALZADO:
-- Botas "De Combate Saiyan / Armadura Pesada": Botas altas blancas o contrastadas con punteras reforzadas, líneas elásticas verticales y suelas de amortiguación gruesa.
-- Botas "Ninja / Shinobi": Calzado de tela ajustada con empeine descubierto, puntera dividida para los dedos o caña atada con cordones cruzados.
-- Patas "Bípedas de Bestia / Dragón Digitígradas": Muslos musculosos, corvejones articulados hacia atrás y patas con 3 garras delanteras y 1 espolón trasero de equilibrio.
-- Patas "Cuadrúpedas de Felino / Lobo de Batalla": Cuatro patas ágiles con pezuñas o garras retráctiles y mechones de pelaje afilado en los tobillos.
-- Patas "Chibi Compactas de Gran Estabilidad": Patitas cortas, redondeadas y firmes, con almohadillas planas para poses sentadas o en cuclillas.
-- Zapatillas "Sneakers Urbanas Estilo Shonen": Tenis de bota alta con suela de goma blanca gruesa, lengüeta gigante alzada y cordones sueltos dinámicos.
-- Piernas con "Pantalón Gi Plisado / Hakama Marcial": Pantalón holgado de tela pesada recogido en los tobillos con polainas o cintas negras.
-- Base "Vórtice de Energía / Nube Voladora / Flotación": El objeto levita sin piernas; su parte inferior se disuelve en una estela cónica de fuego, nube condensada o humo fantasmagórico cel-shaded.
-- Patas "Insectoides / Exoesqueleto Quitinoso": Patas segmentadas delgadas pero firmes con espinas laterales y ganchos terminales afilados.
-- Calzado "Sandalias Tradicionales Zori / Geta": Suela de madera o paja con correas en V de color vibrante y calcetines tabi blancos.
-
-4. CATÁLOGO ROBUSTO DE OJOS Y MIRADAS ANIME SHONEN:
-- Mirada "Determinada / Héroe Shonen": Párpado superior grueso y angulado en diagonal descendente hacia el centro, iris elíptico vertical con degradado bicolor interno (tono claro arriba, tono oscuro abajo) y un destello especular blanco circular nítido.
-- Mirada "Ojos Rasgados Fieros / Saiyan / Rival": Líneas de ceño en V agresiva, sombra triangular dura debajo de las cejas, pupilas contraídas en pequeños puntos y párpado inferior tenso.
-- Mirada "Ojos Chibi Gigantes / Gran Expresividad": Grandes globos oculares con iris enorme y doble reflejo circular blanco (uno grande arriba, uno pequeño abajo), pupilas negras profundas y brillo de determinación joven.
-- Mirada "Pupila de Rendija / Ojo de Bestia": Iris dorado, carmesí o esmeralda con una pupila vertical fina como de reptil o felino despertado.
-- Mirada "Ocular Místico / Patrones Concéntricos / Runas": Iris con círculos concéntricos, aspas geométricas o tomoes ninja de poder visual.
-- Mirada "Ojos Entrecerrados / Sabio / Sonrisa Astuta": Dos arcos horizontales afilados con pestañas angulares que ocultan los ojos en una expresión de calma imperturbable.
-- Mirada "Ojo Único / Sensor Ciclópeo": Un solo ojo central dominante o visor óptico horizontal con brillo de escaneo cel-shaded.
-- Mirada "Gafas de Combate / Visor Táctico": Gafas de piloto sobre la frente o visor translúcido con reflejo diagonal blanco y montura técnica.
-- Mirada "En Blanco / Furia Berserker": Ojos sin pupila, completamente blancos con contorno afilado y venas de energía en los bordes.
-
-5. CATÁLOGO ROBUSTO DE BOCAS Y EXPRESIVIDAD SHONEN:
-- Mueca "Smirk Confiado": Sonrisa ladeada en una sola comisura mostrando un colmillito blanco triangular superior (actitud de rival confiado).
-- Sonrisa "Gran Protagonista Shonen": Boca amplia abierta en D horizontal, con hilera superior de dientes lisos y lengua plana de color coral.
-- Boca "Grito de Batalla / Rugido": Boca abierta triangular o poligonal con mandíbula tensa, interior oscuro y colmillos superiores e inferiores afilados.
-- Mueca "Línea Firme / Concentración Absoluta": Trazo recto horizontal con una pequeña muesca angular hacia abajo en el centro y una línea mínima bajo la boca indicando el labio inferior.
-- Mandíbula "Dientes de Tiburón / Monstruo Feroz": Fila completa de dientes triangulares entrelazados como una sierra blanca continua.
-- Mueca "Mordiendo una Paja / Hoja / Hilo": Boca cerrada con una ramita verde o hilo de combate asomando entre los labios.
-- Boquita "Chibi Adorable en Forma de W (Gatuna / Bicho)": Línea curvada en forma de :3 o W invertida con mejillas sonrojadas.
-- Máscara / Protector Facial de Tela: La boca está cubierta por una máscara ninja ajustada al rostro o cuello alto alzado hasta la nariz.
-
-6. CATÁLOGO ROBUSTO DE RASGOS, CABELLO Y ACCESORIOS SHONEN:
-- Mechones "Spiky / Cabello Picudo": 3 a 7 mechones triangulares afilados que desafían la gravedad, con sombras de corte recto cel-shaded en cada punta.
-- Cuernos y Crestas: Un par de cuernos curvados hacia atrás (tipo dragón o demonio) o un cuerno central afilado de combate tipo escarabajo rinoceronte.
-- Bandana / Cinta de la Frente: Tira de tela con placa metálica o broche grabado en el centro, y dos lazos largos flotando dinámicamente hacia atrás.
-- Orejas Puntiagudas / Aletas: Orejas largas élficas, aletas laterales membranosas o alas auditivas de plumas.
-- Marcas Faciales / Tatuajes de Batalla: Rayas horizontales de guerrero en las mejillas, marcas de maldición tribales, lágrimas o cicatrices finas cruzando un ojo.
-- Cola Dinámica: Cola de lagarto gruesa, cola con punta de llama viva cel-shaded, cola peluda con punta blanca o cola segmentada con púas.
-- Bufanda / Capa Larga Rasgada: Bufanda roja o negra ondeando dramáticamente hacia un costado, con bordes deshilachados.
-- Joyería de Poder: Pendientes colgantes geométricos (estilo potara o hanafuda), cuentas de oración budistas gigantes o collares de garras.
-- Aureola / Halo de Energía en Suspensión: Anillo circular u ovalado de energía flotando detrás de la cabeza o alrededor del cuello.
-- Fragmentos de Aura / Chispas de Ki Cel-Shaded: 2 o 3 pequeños rombos o triángulos flotando alrededor del cuerpo con opacidad 0.7, simulando energía liberada.
-
-7. TÉCNICA VECTORIAL Y PALETA OBLIGATORIA:
-- CONTORNO DE TINTA ANIME: stroke="#111827" o "#0f172a", grosor controlado (stroke-width="2.5" a "3.5"), stroke-linejoin="round" y remates afilados.
-- PALETA DE COLOR BASADA EN LA FOTO: Utiliza estrictamente los colores originales del objeto fotografiado como tono base.
-- CEL-SHADING DE ALTO CONTRASTE (2 A 3 TONOS): Color base del objeto + sombra plana 25% más oscura cortada con aristas angulares afiladas (cero gradientes difusos ni blur).
-- LUCES ESPECULARES AFILADAS: Pequeñas líneas blancas biseladas o triángulos de reflejo (opacity="0.75") en las crestas y bordes superiores.`;
-        break;
-
+        return 'authentic anime shonen character art style, Akira Toriyama and Ken Sugimori Pokémon official art aesthetic, sharp ink lineart, high contrast cel-shading in 2-3 flat tones, dynamic combat stance, spiky hair locks or energy crests, expressive determined warrior eyes with specular highlights, heroic anime companion';
+      case 'cartoon':
+        return 'classic 90s Cartoon Network character design, Dexter Laboratory and Samurai Jack and Powerpuff Girls aesthetic, bold ultra-thick black ink contours, super flat solid saturated colors, expressive quirky facial features, dynamic animated action silhouette';
+      case 'pixar':
+        return 'high-end 3D animated film character, Disney Pixar and Dreamworks movie render style, soft ambient occlusion, warm studio lighting, big glossy expressive eyes, soft tactile volume, cute friendly creature';
       case 'pop':
-        vectorDirective = `
-🎨 ESTILO: "POP ART / VINYL ART TOY (FUNKO POP / SUPERPLASTIC / ANDY WARHOL / KIDROBOT)"
-- SILUETA: Estilo figura coleccionable de vinilo pop icónica. Cabeza característica y grande, cuerpo compacto y estilizado con proporciones de juguete pop.
-- ACABADO VINILO: Brillo de vinilo brillante en la cabeza y hombros: usa destellos alargados blancos en la parte superior del cuerpo (stroke="white" opacity="0.7" en arcos o elipses).
-- OJOS: Ojos negros redondos de botón con brillo pop (pequeño círculo blanco de reflejo). Limpios, gráficos e icónicos.
-- COLORES: Paleta viva y contrastada de colores primarios o neón muy saturados. Sombras de corte limpio tipo póster pop, sin degradados difusos.
-- ACTITUD: Aspecto de juguete exclusivo de diseñador de edición limitada que cualquier coleccionista querría tener.`;
-        break;
-
+        return 'exclusive designer vinyl art toy figure, Funko and Superplastic collectible aesthetic, smooth glossy vinyl finish with studio reflections, clean graphic button eyes, stylized proportions';
       case 'doodle':
-        vectorDirective = `
-✏️ ESTILO: "DOODLE ART / BOCETO DIBUJADO A MANO CON TINTA (MR. DOODLE / KEITH HARING / SKETCHBOOK POSCA)"
-- TRAZO ARTESANAL: Estilo pluma o marcador negro ORGÁNICO dibujado a mano (stroke="#0f172a" stroke-width="2.4" a "3" con variaciones irregulares orgánicas en grosor, esquinas redondeadas naturales).
-- CROSS-HATCHING: Usa líneas paralelas diagonales o cruzadas para sombras manuales (<line> paralelas muy juntas con opacidad 0.4-0.6) en las zonas de sombra del cuerpo.
-- GARABATOS: Pequeñas líneas de acción espontáneas, estrellas dibujadas a mano, flechas, mini patrones o símbolos orbitando alrededor del personaje (como garabatos de cuaderno).
-- COLOR: Predominio de trazo negro sobre fondo transparente, con TOQUES SELECTIVOS de color como si estuvieran pintados con marcador Posca o acuarela selectiva (no todo el cuerpo coloreado, solo acentos).
-- ACTITUD: Divertido, espontáneo, creativo y lleno de energía de boceto vivo.`;
-        break;
-
+        return 'dynamic hand-drawn doodle art illustration, Keith Haring and Mr Doodle aesthetic, energetic organic black marker linework, selective vibrant Posca paint color accents, spontaneous action vibes';
       case 'clay3d':
       default:
-        vectorDirective = `
-🏺 ESTILO: "3D CLAYMATION / ESCULTURA DE PLASTILINA (WALLACE & GROMIT / AARDMAN STUDIOS / CLAYMATION)"
-- TEXTURA PLASTILINA: El personaje DEBE parecer modelado a mano en plastilina real. Bordes suaves, redondeados, orgánicos y con ligeras imperfecciones artesanales (nada perfectamente simétrico).
-- ILUMINACIÓN CLAY: Sombras suaves y difusas como de arcilla real bajo luz de estudio. Usa <radialGradient> con transición suave de color claro a oscuro para simular la curvatura de la masa de plastilina. Brillo satinado MATE (no brillante) en la superficie.
-- RASGOS: Ojos tipo bolita de plastilina (esferas con reflejo blanco pequeño), boca como hendidura tallada en la masa, extremidades tubulares y redondeadas. Dedos gorditos si tiene manos.
-- IMPERFECCIONES: Ligeras huellas dactilares simuladas, bordes no perfectamente lisos, sensación táctil ARTESANAL única.
-- COLORES: Colores de plastilina vibrantes pero satinados, ligeramente más opacos que el plástico puro.`;
-        break;
-
-      // Legacy compatibility
-      case 'mecha-chibi':
-      case 'neon-geometry':
-        vectorDirective = `ESTILO: "MECHA SPEC-OPS". Convierte el objeto en una unidad robótica de combate compacta con placas angulares biseladas, visor de energía panorámico y chasis blindado oscuro.`;
-        break;
-      case 'mystic-relic':
-      case 'organic-flow':
-        vectorDirective = `ESTILO: "MONOLITO ARCANO". Transforma el objeto en un artefacto de obsidiana con runas luminosas talladas y un ojo etéreo en el centro.`;
-        break;
-      case 'sticker-pop':
-      case 'crayon':
-        vectorDirective = `ESTILO: "STREETWEAR POP". Genera una ilustración gráfica urbana con borde troquelado blanco grueso, paleta neón saturada y actitud urbana.`;
-        break;
-      case 'cyber-pixel':
-      case 'pixel':
-        vectorDirective = `ESTILO: "PIXEL ART". Genera un sprite de pixel art sobre cuadrícula nítida (shape-rendering="crispEdges") con paleta de combate oscura y contrastes eléctricos.`;
-        break;
-      case 'comic':
-        vectorDirective = `ESTILO: "CÓMIC NEO-NOIR". Tinta negra pesada, contrastes extremos, sombras agresivas en bloque oscuro y estética de novela gráfica madura.`;
-        break;
-      case 'low-poly':
-        vectorDirective = `ESTILO: "LOW POLY CRYSTAL". Escultura poligonal facetada de cristal con polígonos cerrados (<polygon>) y reflejos especulares de filo.`;
-        break;
+        return 'handmade claymation stop-motion figure, Wallace and Gromit Aardman clay sculpture, tactile clay fingerprint texture, soft studio rim lighting, matte satin finish';
     }
-
-    let moodDirective = '';
-    switch (selectedMood) {
-      case 'stoic':
-      case 'determined':
-        moodDirective = `TEMPERAMENTO Y ESPÍRITU — "Estoico / Firme":
-- Actitud: Disciplinado, imperturbable, en guardia y enfocado. Su presencia transmite calma y poder contenido.
-- Frase (personalityQuote): Breve, sabia, firme (ej: "La disciplina no negocia.", "En guardia.", "Enfocado.").`;
-        break;
-
-      case 'mischievous':
-      case 'playful':
-        moodDirective = `TEMPERAMENTO Y ESPÍRITU — "Pícaro / Astuto y Travieso":
-- Actitud: Confiado, rebelde, dinámico y lleno de picardía audaz.
-- Frase (personalityQuote): Ingeniosa, confiada y con humor (ej: "¿Me buscabas?", "Nadie me para.", "Sigamos.").`;
-        break;
-
-      case 'fierce':
-        moodDirective = `TEMPERAMENTO Y ESPÍRITU — "Feroz / Modo Batalla":
-- Actitud: Combativo, electrizante, imparable e impulsado por adrenalina pura de batalla.
-- Frase (personalityQuote): Enérgica e imparable (ej: "¡Aplastemos esa meta!", "¡Sin rendirse!", "¡Modo bestia!").`;
-        break;
-
-      case 'mystic':
-      case 'curious':
-        moodDirective = `TEMPERAMENTO Y ESPÍRITU — "Místico / Enigmático y Sabio":
-- Actitud: Misterioso, intuitivo, sereno y conectado con una fuerza arcana superior.
-- Frase (personalityQuote): Profunda y misteriosa (ej: "El camino se revela solo.", "Observa. Aprende. Trasciende.").`;
-        break;
-
-      case 'zen':
-        moodDirective = `TEMPERAMENTO Y ESPÍRITU — "Zen / Pacífico y Relajado":
-- Actitud: Calma profunda, armonía total, sin prisa y en equilibrio mental absoluto.
-- Frase (personalityQuote): Serena y sin prisa (ej: "Fluye.", "Respira.", "El momento es ahora.").`;
-        break;
-
-      case 'cheerful':
-      case 'happy':
-      default:
-        moodDirective = `TEMPERAMENTO Y ESPÍRITU — "Alegre / Radiante y Positivo":
-- Actitud: Entusiasta, leal, optimista y lleno de vitalidad contagiosa.
-- Frase (personalityQuote): Motivadora y victoriosa (ej: "¡Hoy es nuestro día!", "¡Vamos a lograrlo!", "¡Imparable!").`;
-        break;
-    }
-
-    return `
-ERES UN DIRECTOR DE ARTE DE ÉLITE Y MAESTRO EN GENERACIÓN VECTORIAL SVG.
-Tu misión: analizar la foto adjunta, identificar con precisión el OBJETO real que contiene, y transformarlo en un COMPAÑERO VIVO KAI antropomórfico en formato SVG puro, aplicando con máxima fidelidad el estilo artístico especificado abajo.
-
-🚨 DIRECTIVA CRÍTICA DE COLORES REALES (CERO COLORES DE LA APP):
-- DEBES USAR OBLIGATORIAMENTE LOS COLORES REALES DEL OBJETO FOTOGRAFIADO:
-  * Identifica y extrae con precisión los tonos exactos, gradientes y acentos cromáticos del objeto capturado.
-  * Aplica esa misma gama cromática al cuerpo y partes del personaje, respetando su fidelidad visual original.
-- ¡ESTRICTAMENTE PROHIBIDO usar los colores cian, turquesa (#00f0ff, #38bdf8), violeta (#a855f7) de la aplicación!
-- ¡ESTRICTAMENTE PROHIBIDO convertir el objeto en un robot cyberpunk o bloque oscuro genérico a menos que el objeto sea realmente un dispositivo electrónico!
-- El personaje debe capturar la silueta y textura reconocible del objeto, luciendo cálido, profesional y con identidad propia.
-
-=======================================================
-🎨 DIRECTIVA DE ESTILO (APLICA ESTE ESTILO CON MÁXIMA FIDELIDAD):
-=======================================================
-${vectorDirective}
-
-=======================================================
-🎭 EXPRESIÓN Y ACTITUD DEL PERSONAJE:
-=======================================================
-${moodDirective}
-
-=======================================================
-📐 ARQUITECTURA VECTORIAL SVG (FIGURA ARTÍSTICA COMPLETA Y LIBRE):
-=======================================================
-1. viewBox="0 0 160 170" y width="100%" height="100%".
-2. FONDO 100% TRANSPARENTE: ¡PROHIBIDO cualquier <rect> o círculo de fondo sólido! El personaje FLOTA libremente sobre el fondo oscuro de la app.
-3. Centra la figura completa en x=80, entre y=20 e y=148, ocupando el lienzo con una pose equilibrada y firme.
-4. UNIFICACIÓN ANATÓMICA (CERO ATADURAS):
-   - Dibuja el rostro, ojos, expresión y extremidades de forma INTEGRADA y orgánica como una ilustración completa.
-   - ¡NO fragmentes los ojos ni la boca en partes mecánicas aisladas! Diseña los ojos y boca con la técnica y estética del estilo seleccionado (iris detallado, destellos, ceño, pestañas y sombreado cel-shaded real).
-   - Envuelve a todo el personaje en un grupo principal <g id="kai-body"> para que levite y respire de forma armoniosa en la interfaz.
-5. 🚫 PROHIBICIÓN TOTAL DE "BRAZOS DE ALAMBRE / PALO Y BOLITA":
-   - ¡ESTRICTAMENTE PROHIBIDO dibujar extremidades como simples líneas negras con un círculo blanco pegado en la punta!
-   - Cada extremidad (brazo, mano, garra o pata) DEBE tener volumen real, silueta dibujada con <path fill="..." stroke="...">, músculos, mangas, guanteletes o garras con masa anatómica tridimensional.
-6. El objeto fotografiado DEBE ser plenamente reconocible en el cuerpo del personaje.
-7. Sombra de flotación suave en la base: <ellipse cx="80" cy="155" rx="28" ry="5" fill="#000000" opacity="0.25"/>
-${userPrompt ? `7. Contexto del usuario: "${userPrompt}".` : ''}
-
-=======================================================
-📦 RESPONDE ÚNICAMENTE CON ESTE JSON VÁLIDO (SIN NADA MÁS):
-=======================================================
-{
-  "detectedObject": "Nombre del objeto identificado en español",
-  "characterConcept": "Descripción creativa de cómo el objeto se fusionó con el estilo",
-  "epicName": "Nombre memorable del compañero (máx 24 caracteres)",
-  "personalityQuote": "Frase corta característica de su personalidad y expresión",
-  "primaryColor": "#hexColorPrincipalDelObjeto",
-  "secondaryColor": "#hexColorSecundario",
-  "artStyle": "${selectedArtStyle}",
-  "mood": "${selectedMood}",
-  "svg": "<svg viewBox=\"0 0 160 170\" xmlns=\"http://www.w3.org/2000/svg\">...</svg>"
-}
-`;
   }
 
-  const systemInstructions = buildMultiversePrompt(artStyle, promptDescription, mood);
+  const styleDirective = getStylePromptKeywords(artStyle);
+
+  const systemInstructions = `
+ERES UN DIRECTOR DE ARTE DE ÉLITE Y MAESTRO EN DISEÑO MULTIVERSAL DE PERSONAJES.
+Tu misión:
+1. Analizar la foto adjunta e identificar con máxima precisión el OBJETO real que contiene, su forma física, volumen, piezas y colores originales.
+2. Transformar ese objeto en un COMPAÑERO VIVO KAI legendario bajo el estilo artístico especificado abajo.
+   - El objeto en sí mismo cobra vida como una criatura o guerrero con anatomía integrada (su masa y partes son su cuerpo, armadura o cabeza).
+   - ¡CERO monigotes o cajas planas con palitos!
+3. Redactar un prompt de ilustración en INGLÉS impecable ("illustrationPrompt") diseñado para el motor de arte FLUX, que genere la figura completa del personaje de cuerpo entero, centrado, sobre un fondo plano oscuro de estudio #050505.
+
+ESTILO ARTÍSTICO REQUERIDO (${artStyle.toUpperCase()}):
+${styleDirective}
+
+DIRECTIVA DE COLORES REALES:
+- Extrae con precisión los tonos exactos y acentos del objeto fotografiado y aplícalos a la criatura para que sea plenamente reconocible.
+${promptDescription ? `- Petición o detalle adicional del usuario: "${promptDescription}".` : ''}
+
+RESPONDE ÚNICAMENTE CON ESTE JSON VÁLIDO (SIN MARKDOWN):
+{
+  "detectedObject": "Nombre del objeto identificado en español",
+  "characterConcept": "Descripción de cómo el objeto cobró vida en este estilo",
+  "epicName": "Nombre memorable del compañero (máx 24 caracteres)",
+  "personalityQuote": "Frase legendaria corta representativa del personaje",
+  "primaryColor": "#hexColorPrincipalDelObjeto",
+  "secondaryColor": "#hexColorSecundario",
+  "artStyle": "${artStyle}",
+  "illustrationPrompt": "Masterpiece character design of an epic [character description integrating the exact features, materials, and real colors of the detected object], ${styleDirective}, full body standing centered, dynamic pose, professional lighting, isolated on solid dark studio background #050505, 8k resolution"
+}
+`;
+
   let jsonResult: string | null = null;
   let lastErrorMessage = '';
 
   // Cadena de modelos multimodales activos vigentes (2026) con timeout de 25000ms
   const CANDIDATE_MODELS = ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-3.8-flash', 'gemini-flash-latest'];
 
-  // 1. Intento primario: Direct Gemini Developer API (utiliza la clave autorizada para generativelanguage)
+  // 1. Intento primario: Direct Gemini Developer API
   const apiKeyToTry = getEffectiveGeminiApiKey();
   if (apiKeyToTry) {
     for (const modelName of CANDIDATE_MODELS) {
@@ -744,7 +618,7 @@ ${userPrompt ? `7. Contexto del usuario: "${userPrompt}".` : ''}
                 ],
               },
             ],
-            generationConfig: { temperature: 0.25, maxOutputTokens: 8192 },
+            generationConfig: { temperature: 0.25, maxOutputTokens: 2048 },
           }),
           signal: controller.signal,
         });
@@ -776,7 +650,7 @@ ${userPrompt ? `7. Contexto del usuario: "${userPrompt}".` : ''}
           model: modelName,
           generationConfig: {
             temperature: 0.25,
-            maxOutputTokens: 8192,
+            maxOutputTokens: 2048,
           },
         });
 
@@ -801,12 +675,11 @@ ${userPrompt ? `7. Contexto del usuario: "${userPrompt}".` : ''}
     }
   }
 
-  // Si la IA no respondió o falló, mostrar el error real para depuración (NO fallback ciego silencioso)
   if (!jsonResult) {
     throw new Error(
       lastErrorMessage
         ? `Error en Gemini Vision: ${lastErrorMessage}`
-        : 'No se pudo conectar con Gemini Vision para analizar la imagen. Por favor verifica tu conexión o clave de API.'
+        : 'No se pudo conectar con Gemini Vision para analizar la imagen. Por favor verifica tu conexión.'
     );
   }
 
@@ -824,7 +697,7 @@ ${userPrompt ? `7. Contexto del usuario: "${userPrompt}".` : ''}
       rawJson = rawJson.substring(firstBrace, lastBrace + 1);
     }
     parsed = JSON.parse(rawJson.trim());
-  } catch (parseErr) {
+  } catch {
     throw new Error('La IA reconoció el objeto pero devolvió un formato no válido. Intenta nuevamente.');
   }
 
@@ -834,6 +707,7 @@ ${userPrompt ? `7. Contexto del usuario: "${userPrompt}".` : ''}
   const personalityQuote = parsed.personalityQuote || `¡He despertado del mundo real en el Multiverso bajo el estilo ${artStyle.toUpperCase()}!`;
   const primaryColor = parsed.primaryColor || '#00f0ff';
   const secondaryColor = parsed.secondaryColor || '#ec4899';
+  const illustrationPrompt = parsed.illustrationPrompt || `Masterpiece character of ${detectedObject}, ${styleDirective}, full body, centered, solid dark studio background`;
 
   // Notificar al cliente que el Paso 1 (Visión) culminó exitosamente con el objeto detectado
   if (onProgress) {
@@ -841,21 +715,12 @@ ${userPrompt ? `7. Contexto del usuario: "${userPrompt}".` : ''}
     onProgress('generation', { detectedObject });
   }
 
-  // Procesamiento del código SVG nativo (como respaldo estructural)
-  const rawSvg = parsed.svg || parsed.svgContent || parsed.svg_code;
-  let svgContent: string | undefined = undefined;
-
-  if (typeof rawSvg === 'string' && rawSvg.trim()) {
-    svgContent = rawSvg.trim();
-    svgContent = svgContent.replace(/^```(?:svg|xml|html)?\s*/i, '').replace(/\s*```$/i, '').trim();
-    if (!svgContent.startsWith('<svg')) {
-      svgContent = `<svg viewBox="0 0 160 170" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">${svgContent}</svg>`;
-    }
-  }
-
-  // Validación estricta: asegurar que vino el SVG
-  if (!svgContent && (!Array.isArray(parsed.polygons) || parsed.polygons.length === 0)) {
-    throw new Error(`La IA reconoció el objeto "${detectedObject}", pero no generó el diseño para el estilo "${artStyle}". Por favor intenta de nuevo.`);
+  // 4. Paso 2: Generar la ilustración artística en alta definición + recortar fondo
+  let imageUrl: string | undefined = undefined;
+  try {
+    imageUrl = await generateKaiIllustration(illustrationPrompt);
+  } catch (imgErr) {
+    console.warn('[Forja Neural] Error en generación de ilustración:', imgErr);
   }
 
   return {
@@ -869,9 +734,8 @@ ${userPrompt ? `7. Contexto del usuario: "${userPrompt}".` : ''}
     primaryColor,
     secondaryColor,
     mood: (parsed.mood as KaiTemperament) || mood || 'stoic',
-    renderBranch: 'vector',
-    svgContent,
-    polygons: Array.isArray(parsed.polygons) ? parsed.polygons : undefined,
+    renderBranch: 'illustration',
+    imageUrl: imageUrl || undefined,
   };
 }
 

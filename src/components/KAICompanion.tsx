@@ -475,49 +475,18 @@ export const KAICompanion: React.FC<KAICompanionProps> = ({
             }}
           />
 
-          {/* Capa de Ojos Vivos Interactivos (Opción A): Destellos que siguen el dedo en móvil y ratón en PC */}
-          <svg
-            viewBox="0 0 160 170"
-            className="absolute inset-0 w-full h-full pointer-events-none overflow-visible"
-          >
-            <g
-              id="kai-live-illustration-gaze"
-              style={{
-                transform: `translate(${effectiveEyeOffset.x * 0.85}px, ${effectiveEyeOffset.y * 0.85}px)`,
-                transition: effectiveIsTracking
-                  ? 'transform 0.1s cubic-bezier(0.2, 0, 0, 1)'
-                  : 'transform 0.45s ease-out',
-              }}
+          {/* Onda de voz al hacer clic o interactuar */}
+          {effectiveIsSpeaking && (
+            <svg
+              viewBox="0 0 160 170"
+              className="absolute inset-0 w-full h-full pointer-events-none overflow-visible"
             >
-              {/* Reflejos de mirada viva sincronizados con puntero o dedo */}
-              <circle
-                cx="67"
-                cy="62"
-                r="3.2"
-                fill="#ffffff"
-                opacity="0.85"
-                style={{ filter: `drop-shadow(0 0 4px ${effectiveAuraColor})` }}
-              />
-              <circle
-                cx="93"
-                cy="62"
-                r="3.2"
-                fill="#ffffff"
-                opacity="0.85"
-                style={{ filter: `drop-shadow(0 0 4px ${effectiveAuraColor})` }}
-              />
-              <circle cx="68.2" cy="60.6" r="1.2" fill="#ffffff" />
-              <circle cx="94.2" cy="60.6" r="1.2" fill="#ffffff" />
-            </g>
-
-            {/* Onda de voz al hacer clic o interactuar */}
-            {effectiveIsSpeaking && (
               <circle cx="80" cy="98" r="14" fill="none" stroke="#ffffff" strokeWidth="1.8" opacity="0.8">
                 <animate attributeName="r" from="6" to="28" dur="0.55s" repeatCount="indefinite" />
                 <animate attributeName="opacity" from="0.9" to="0" dur="0.55s" repeatCount="indefinite" />
               </circle>
-            )}
-          </svg>
+            </svg>
+          )}
         </motion.div>
       ) : effectiveShape === 'custom' && renderedSvgHtml ? (
         /* 2. RENDERIZADO FORJA NEURAL: RAMA VECTORIAL VIVA */

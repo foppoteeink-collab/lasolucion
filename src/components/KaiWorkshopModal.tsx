@@ -1224,64 +1224,24 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                             Tomar o subir foto
                           </span>
                           <span className="text-[10px] text-slate-400 block mt-0.5">
-                            Cualquier objeto real (manzana, taza, tenis...)
+                            Fotografía nítida del objeto que cobrará vida
                           </span>
                         </div>
                       </div>
                     )}
                   </div>
 
-                  {/* Selector de Temperamento & Expresión Facial */}
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold uppercase text-slate-400 block tracking-wide">
-                        2. Expresión & Temperamento
-                      </span>
-                      <span className="text-[10px] font-mono text-fuchsia-300 font-bold">
-                        {KAI_TEMPERAMENTS.find(m => m.id === selectedMood)?.fullName || 'Estoico'}
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-1.5">
-                      {KAI_TEMPERAMENTS.map((t) => {
-                        const isChosen = selectedMood === t.id;
-                        return (
-                          <button
-                            key={t.id}
-                            type="button"
-                            onClick={() => { soundFX.playClick(); setSelectedMood(t.id); }}
-                            className={`p-2 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
-                              isChosen
-                                ? 'bg-fuchsia-950/70 border-fuchsia-400 ring-1 ring-fuchsia-400/50 shadow-[0_0_12px_rgba(217,70,239,0.25)]'
-                                : 'bg-[#080d1a] border-white/10 hover:border-white/20 hover:bg-white/5'
-                            }`}
-                          >
-                            <div className="flex items-center gap-1.5 mb-0.5">
-                              <span className="text-sm">{t.icon}</span>
-                              <span className={`text-[11px] font-bold truncate ${isChosen ? 'text-white' : 'text-slate-300'}`}>
-                                {t.label}
-                              </span>
-                            </div>
-                            <span className="text-[9px] text-slate-400 font-mono truncate block">
-                              {t.id === 'stoic' ? 'Sin sonrisas' : t.id === 'fierce' ? 'Modo combate' : t.id === 'mischievous' ? 'Smirk astuto' : t.id === 'mystic' ? 'Calma zen' : t.id === 'zen' ? 'Relajado' : 'Sonriente'}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Input Limpio de Nombre o Detalle */}
+                  {/* Input Limpio de Detalle o Rasgo Especial */}
                   <div className="space-y-1.5">
                     <label className="text-[11px] font-bold text-slate-400 flex items-center justify-between">
-                      <span>3. Nombre o Detalle</span>
+                      <span>2. Detalle o Rasgo Especial</span>
                       <span className="text-[10px] text-slate-500 font-normal">Opcional</span>
                     </label>
                     <input
                       type="text"
                       value={forgePrompt}
                       onChange={(e) => setForgePrompt(e.target.value)}
-                      placeholder="Ej: Detalle adicional o rasgo especial (opcional)..."
+                      placeholder="Ej: Con cuernos de fuego, con bufanda ninja..."
                       className="w-full px-3 py-2 rounded-xl bg-black/60 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-fuchsia-400/80 transition-colors"
                     />
                   </div>
