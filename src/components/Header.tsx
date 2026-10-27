@@ -138,14 +138,11 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
             </div>
 
-            {/* Titular Tipográfico Kinético Moxen interactivo */}
-            <button
+            {/* Logotipo Principal: Base limpia lista para empezar de cero */}
+            <MainLogo
+              size="md"
               onClick={() => { soundFX.playClick(); onGoToCover(); }}
-              className="text-left focus:outline-none transition-transform active:scale-95"
-              title="Ir al Núcleo Central"
-            >
-              <MainLogo size="md" forceColor={isKaiPulsing ? kaiPulseColor : undefined} />
-            </button>
+            />
           </div>
 
           {/* DERECHA: RECURSOS VITALES ÚNICAMENTE (CERO SATURACIÓN) */}

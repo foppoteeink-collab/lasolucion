@@ -380,20 +380,22 @@ ${historyContext}
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════
- * 📸 FORJA NEURAL KAI // PIPELINE ILUSTRATIVO EN ALTA RESOLUCIÓN + CHROMA KEY
- * Paso 1: Reconocimiento exacto del objeto y colores con Gemini Vision (2026).
- * Paso 2: Generación de ilustración artística en alta definición (FLUX / Diffusion).
- * Paso 3: Eliminación automática de fondo exterior con BFS Flood-Fill en Canvas
- *         para obtener una figura de arte limpia en PNG/WebP 100% transparente.
+ * 🏛️ FORJA NEURAL KAI // PIPELINE "IMAGE-TO-CHARACTER" NATIVO DE ESTUDIO
+ * Célula de Expertos Interdisciplinaria:
+ * - 1. Erradicación total de Pollinations (cero tiempos de espera o marcas de agua).
+ * - 2. Algoritmo de Visión por Computadora: BFS Flood-Fill perimetral + 2px Defringe
+ *      en lienzo Canvas de 384x384 para transparencia 100% pura y limpia.
+ * - 3. Motor A: Generación Multimodal Nativa de Imagen (responseModalities: ["TEXT", "IMAGE"]).
+ * - 4. Motor B (Failover): Escultura Vectorial SVG en Capas Anatómicas (viewBox="0 0 240 240")
+ *      siguiendo la regla 80/20 (el chasis del objeto real ES el 80% del personaje).
  * ══════════════════════════════════════════════════════════════════════════════
  */
 
 /**
  * Procesa la imagen en un lienzo <canvas> aplicando Chroma Keying con BFS Flood-Fill
  * desde el perímetro exterior sobre el fondo neutro de estudio.
- * Esto garantiza que el fondo exterior se vuelva 100% transparente (alpha = 0),
- * pero CUALQUIER elemento oscuro INTERNO (pupilas, trazos negros o sombras del personaje)
- * se mantenga 100% intacto y nítido.
+ * Protege al 100% cualquier elemento oscuro interno (pupilas, trazos negros o sombras del personaje).
+ * Aplica un defringe/feathering de 2 píxeles para eliminar cualquier halo perimetral.
  */
 export async function processChromaKeyToWebP(imageSource: string): Promise<string> {
   if (typeof window === 'undefined') return imageSource;
@@ -404,8 +406,8 @@ export async function processChromaKeyToWebP(imageSource: string): Promise<strin
     img.onload = () => {
       try {
         const canvas = document.createElement('canvas');
-        const W = 400;
-        const H = 400;
+        const W = 384;
+        const H = 384;
         canvas.width = W;
         canvas.height = H;
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
@@ -420,22 +422,24 @@ export async function processChromaKeyToWebP(imageSource: string): Promise<strin
         const imgData = ctx.getImageData(0, 0, W, H);
         const data = imgData.data;
 
-        // Muestrear los 4 bordes para determinar el color predominante del fondo
-        const corners = [0, (W - 1), (H - 1) * W, (H - 1) * W + (W - 1)];
+        // 1. Muestreo de las 4 esquinas exteriores para detectar el color base del fondo
+        const corners = [0, W - 1, (H - 1) * W, (H - 1) * W + (W - 1)];
         let sumR = 0, sumG = 0, sumB = 0;
         for (const c of corners) {
           sumR += data[c * 4];
           sumG += data[c * 4 + 1];
           sumB += data[c * 4 + 2];
         }
-        const bgR = sumR / 4;
-        const bgG = sumG / 4;
-        const bgB = sumB / 4;
+        const bgR = Math.round(sumR / 4);
+        const bgG = Math.round(sumG / 4);
+        const bgB = Math.round(sumB / 4);
         const bgLum = 0.299 * bgR + 0.587 * bgG + 0.114 * bgB;
 
-        // BFS Flood-fill desde el perímetro exterior
+        // 2. BFS Flood-Fill desde el perímetro exterior
         const isBg = new Uint8Array(W * H);
-        const queue: number[] = [];
+        const queue = new Int32Array(W * H);
+        let qHead = 0;
+        let qTail = 0;
 
         const isSimilarToBg = (idx: number) => {
           const r = data[idx * 4];
@@ -446,54 +450,86 @@ export async function processChromaKeyToWebP(imageSource: string): Promise<strin
           const db = b - bgB;
           const dist = Math.sqrt(dr * dr + dg * dg + db * db);
           const lum = 0.299 * r + 0.587 * g + 0.114 * b;
-          return dist < 48 || (bgLum < 45 && lum < 30);
+          if (bgLum < 30) {
+            return lum < 28 || dist < 36;
+          }
+          return dist < 38;
         };
 
-        // Sembrar píxeles de los 4 bordes exteriores
+        // Sembrar el perímetro exterior (los 4 bordes)
         for (let x = 0; x < W; x++) {
-          const topIdx = x;
-          const btmIdx = (H - 1) * W + x;
-          if (isSimilarToBg(topIdx) && !isBg[topIdx]) { isBg[topIdx] = 1; queue.push(topIdx); }
-          if (isSimilarToBg(btmIdx) && !isBg[btmIdx]) { isBg[btmIdx] = 1; queue.push(btmIdx); }
+          const top = x;
+          const btm = (H - 1) * W + x;
+          if (isSimilarToBg(top) && !isBg[top]) { isBg[top] = 1; queue[qTail++] = top; }
+          if (isSimilarToBg(btm) && !isBg[btm]) { isBg[btm] = 1; queue[qTail++] = btm; }
         }
         for (let y = 0; y < H; y++) {
-          const lftIdx = y * W;
-          const rgtIdx = y * W + (W - 1);
-          if (isSimilarToBg(lftIdx) && !isBg[lftIdx]) { isBg[lftIdx] = 1; queue.push(lftIdx); }
-          if (isSimilarToBg(rgtIdx) && !isBg[rgtIdx]) { isBg[rgtIdx] = 1; queue.push(rgtIdx); }
+          const lft = y * W;
+          const rgt = y * W + (W - 1);
+          if (isSimilarToBg(lft) && !isBg[lft]) { isBg[lft] = 1; queue[qTail++] = lft; }
+          if (isSimilarToBg(rgt) && !isBg[rgt]) { isBg[rgt] = 1; queue[qTail++] = rgt; }
         }
 
-        // Propagación BFS
-        let qHead = 0;
-        while (qHead < queue.length) {
+        // Expansión BFS
+        while (qHead < qTail) {
           const curr = queue[qHead++];
           const cx = curr % W;
           const cy = Math.floor(curr / W);
 
-          const neighbors = [
-            cx > 0 ? curr - 1 : -1,
-            cx < W - 1 ? curr + 1 : -1,
-            cy > 0 ? curr - W : -1,
-            cy < H - 1 ? curr + W : -1,
-          ];
+          if (cx > 0) {
+            const left = curr - 1;
+            if (!isBg[left] && isSimilarToBg(left)) { isBg[left] = 1; queue[qTail++] = left; }
+          }
+          if (cx < W - 1) {
+            const right = curr + 1;
+            if (!isBg[right] && isSimilarToBg(right)) { isBg[right] = 1; queue[qTail++] = right; }
+          }
+          if (cy > 0) {
+            const up = curr - W;
+            if (!isBg[up] && isSimilarToBg(up)) { isBg[up] = 1; queue[qTail++] = up; }
+          }
+          if (cy < H - 1) {
+            const down = curr + W;
+            if (!isBg[down] && isSimilarToBg(down)) { isBg[down] = 1; queue[qTail++] = down; }
+          }
+        }
 
-          for (const n of neighbors) {
-            if (n >= 0 && !isBg[n] && isSimilarToBg(n)) {
-              isBg[n] = 1;
-              queue.push(n);
+        // 3. Defringe / Feathering (2 píxeles de suavizado de borde perimetral)
+        const borderDist = new Uint8Array(W * H);
+        for (let y = 1; y < H - 1; y++) {
+          for (let x = 1; x < W - 1; x++) {
+            const idx = y * W + x;
+            if (!isBg[idx]) {
+              if (isBg[idx - 1] || isBg[idx + 1] || isBg[idx - W] || isBg[idx + W]) {
+                borderDist[idx] = 1;
+              }
+            }
+          }
+        }
+        for (let y = 2; y < H - 2; y++) {
+          for (let x = 2; x < W - 2; x++) {
+            const idx = y * W + x;
+            if (!isBg[idx] && borderDist[idx] === 0) {
+              if (borderDist[idx - 1] === 1 || borderDist[idx + 1] === 1 || borderDist[idx - W] === 1 || borderDist[idx + W] === 1) {
+                borderDist[idx] = 2;
+              }
             }
           }
         }
 
-        // Aplicar transparencia a los píxeles de fondo
+        // 4. Asignación de canal Alpha (transparencia limpia + anti-aliasing)
         for (let i = 0; i < W * H; i++) {
           if (isBg[i]) {
-            data[i * 4 + 3] = 0; // Alpha = 0 (100% transparente)
+            data[i * 4 + 3] = 0; // Fondo 100% transparente
+          } else if (borderDist[i] === 1) {
+            data[i * 4 + 3] = Math.round(data[i * 4 + 3] * 0.45);
+          } else if (borderDist[i] === 2) {
+            data[i * 4 + 3] = Math.round(data[i * 4 + 3] * 0.85);
           }
         }
 
         ctx.putImageData(imgData, 0, 0);
-        resolve(canvas.toDataURL('image/webp', 0.92));
+        resolve(canvas.toDataURL('image/webp', 0.88));
       } catch (err) {
         console.warn('[processChromaKeyToWebP] Error procesando canvas:', err);
         resolve(imageSource);
@@ -505,13 +541,67 @@ export async function processChromaKeyToWebP(imageSource: string): Promise<strin
 }
 
 /**
- * Genera la ilustración en alta resolución usando FLUX y la procesa a PNG transparente
+ * Intenta generar la ilustración con Gemini en modalidad nativa de imagen (responseModalities: ["TEXT", "IMAGE"])
  */
-export async function generateKaiIllustration(promptText: string): Promise<string> {
-  const seed = Math.floor(Math.random() * 999999);
-  const cleanPrompt = promptText.trim().replace(/\s+/g, ' ');
-  const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(cleanPrompt)}?width=512&height=512&model=flux&seed=${seed}`;
-  return await processChromaKeyToWebP(pollinationsUrl);
+export async function generateGeminiNativeImage(params: {
+  cleanBase64: string;
+  effectiveMime: string;
+  illustrationPrompt: string;
+}): Promise<string | null> {
+  const apiKey = getEffectiveGeminiApiKey();
+  if (!apiKey) return null;
+
+  const IMAGE_MODELS = [
+    'gemini-2.5-flash-image',
+    'gemini-3.1-flash-image',
+    'gemini-3.1-flash-lite-image',
+    'gemini-3-pro-image-preview',
+  ];
+
+  for (const modelName of IMAGE_MODELS) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                { inline_data: { mime_type: params.effectiveMime, data: params.cleanBase64 } },
+                { text: params.illustrationPrompt },
+              ],
+            },
+          ],
+          generationConfig: {
+            responseModalities: ['TEXT', 'IMAGE'],
+            temperature: 0.3,
+          },
+        }),
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const data = await res.json();
+        const parts = data.candidates?.[0]?.content?.parts || [];
+        for (const p of parts) {
+          const inline = p.inlineData || p.inline_data;
+          if (inline?.data) {
+            const rawDataUrl = `data:${inline.mimeType || inline.mime_type || 'image/png'};base64,${inline.data}`;
+            return await processChromaKeyToWebP(rawDataUrl);
+          }
+        }
+      }
+    } catch {
+      // Intentar siguiente modelo de imagen
+    }
+  }
+
+  return null;
 }
 
 export async function forgeKaiFromImage(params: {
@@ -542,63 +632,93 @@ export async function forgeKaiFromImage(params: {
   }
   cleanBase64 = cleanBase64.trim().replace(/[\r\n\s]+/g, '');
 
-  // 2. Directiva artística de alto nivel según el estilo
-  function getStylePromptKeywords(selectedStyle: KaiMultiverseStyle): string {
+  // 2. Directivas de estilo estricto para el diseño del personaje
+  function getStyleDirectives(selectedStyle: KaiMultiverseStyle): { keywordsEn: string; vectorRulesEs: string } {
     switch (selectedStyle) {
       case 'anime':
-        return 'authentic anime shonen character art style, Akira Toriyama and Ken Sugimori Pokémon official art aesthetic, sharp ink lineart, high contrast cel-shading in 2-3 flat tones, dynamic combat stance, spiky hair locks or energy crests, expressive determined warrior eyes with specular highlights, heroic anime companion';
+        return {
+          keywordsEn: 'authentic 90s anime shonen character, Ken Sugimori Pokemon official watercolor lineart and Akira Toriyama Dragon Ball Z aesthetic, high-contrast cel-shaded lighting in 2 sharp tones, sharp ink contours, dynamic warrior stance, expressive eyes with specular highlights, heroic anime companion',
+          vectorRulesEs: 'ANIME SHONEN CLÁSICO (Toriyama / Sugimori): Contornos de tinta negra afilada (stroke="#111827" stroke-width="2.5"), cel-shading de 2 tonos contrastados con sombras angulares de corte recto, ojos rasgados de guerrero con iris degradado y destello blanco, cabello o cresta picuda (spiky) en la parte superior del objeto.',
+        };
       case 'cartoon':
-        return 'classic 90s Cartoon Network character design, Dexter Laboratory and Samurai Jack and Powerpuff Girls aesthetic, bold ultra-thick black ink contours, super flat solid saturated colors, expressive quirky facial features, dynamic animated action silhouette';
+        return {
+          keywordsEn: 'classic 90s Cartoon Network character design, Dexter Laboratory, Samurai Jack and Powerpuff Girls aesthetic, bold ultra-thick black ink outlines, flat solid vibrant colors, quirky expressive face, dynamic animated stance',
+          vectorRulesEs: 'CARTOON NETWORK CLÁSICO (Años 90/2000): Tinta negra ultra gruesa y audaz (stroke="#000000" stroke-width="4.2"), colores planos supersaturados sin degradados borrosos, ojos grandes y expresivos juntos en el centro, y extremidades dinámicas con volumen elástico.',
+        };
       case 'pixar':
-        return 'high-end 3D animated film character, Disney Pixar and Dreamworks movie render style, soft ambient occlusion, warm studio lighting, big glossy expressive eyes, soft tactile volume, cute friendly creature';
+        return {
+          keywordsEn: 'high-end 3D animated film character, Disney Pixar and Dreamworks movie render style, soft ambient occlusion, warm studio lighting, big glossy expressive eyes, soft tactile volume, cute friendly creature',
+          vectorRulesEs: 'ANIMACIÓN 3D PIXAR: Modelado con múltiples <radialGradient> y <linearGradient> que simulan volumen esférico con luz de estudio y sombras de oclusión suaves, ojos grandes y cálidos con doble catchlight blanco.',
+        };
       case 'pop':
-        return 'exclusive designer vinyl art toy figure, Funko and Superplastic collectible aesthetic, smooth glossy vinyl finish with studio reflections, clean graphic button eyes, stylized proportions';
+        return {
+          keywordsEn: 'exclusive designer vinyl art toy figure, Funko and Superplastic collectible aesthetic, smooth glossy vinyl finish with studio reflections, clean graphic button eyes, stylized proportions',
+          vectorRulesEs: 'POP ART / VINYL TOY: Figura coleccionable de vinilo pulido, cabeza característica con proporciones de juguete de diseñador, destellos blancos alargados que simulan brillo de plástico y ojos negros de botón.',
+        };
       case 'doodle':
-        return 'dynamic hand-drawn doodle art illustration, Keith Haring and Mr Doodle aesthetic, energetic organic black marker linework, selective vibrant Posca paint color accents, spontaneous action vibes';
+        return {
+          keywordsEn: 'dynamic hand-drawn doodle art illustration, Keith Haring and Mr Doodle aesthetic, energetic organic black marker linework, selective vibrant Posca paint color accents, spontaneous action vibes',
+          vectorRulesEs: 'DOODLE ART POSCA: Trazos orgánicos de marcador negro grueso con pequeñas líneas de acción alrededor, relleno selectivo de color vibrante y garabatos espontáneos llenos de energía.',
+        };
       case 'clay3d':
       default:
-        return 'handmade claymation stop-motion figure, Wallace and Gromit Aardman clay sculpture, tactile clay fingerprint texture, soft studio rim lighting, matte satin finish';
+        return {
+          keywordsEn: 'handmade claymation stop-motion figure, Wallace and Gromit Aardman clay sculpture, tactile clay fingerprint texture, soft studio rim lighting, matte satin finish',
+          vectorRulesEs: 'CLAYMATION 3D: Escultura de plastilina modelada a mano, bordes orgánicos ligeramente asimétricos, sombras suaves difusas de arcilla real y acabado satinado mate.',
+        };
     }
   }
 
-  const styleDirective = getStylePromptKeywords(artStyle);
+  const { keywordsEn, vectorRulesEs } = getStyleDirectives(artStyle);
 
+  // 3. Prompt Maestro Multimodal "Object-As-Body"
   const systemInstructions = `
-ERES UN DIRECTOR DE ARTE DE ÉLITE Y MAESTRO EN DISEÑO MULTIVERSAL DE PERSONAJES.
-Tu misión:
-1. Analizar la foto adjunta e identificar con máxima precisión el OBJETO real que contiene, su forma física, volumen, piezas y colores originales.
-2. Transformar ese objeto en un COMPAÑERO VIVO KAI legendario bajo el estilo artístico especificado abajo.
-   - El objeto en sí mismo cobra vida como una criatura o guerrero con anatomía integrada (su masa y partes son su cuerpo, armadura o cabeza).
-   - ¡CERO monigotes o cajas planas con palitos!
-3. Redactar un prompt de ilustración en INGLÉS impecable ("illustrationPrompt") diseñado para el motor de arte FLUX, que genere la figura completa del personaje de cuerpo entero, centrado, sobre un fondo plano oscuro de estudio #050505.
+ERES UN DIRECTOR DE ARTE DE ÉLITE Y MAESTRO EN CONCEPT ART DE VIDEOJUEGOS (NIVEL NINTENDO / RIOT GAMES).
 
-ESTILO ARTÍSTICO REQUERIDO (${artStyle.toUpperCase()}):
-${styleDirective}
+DIRECTIVA MAESTRA "OBJECT-AS-BODY" (REGLA DE ORO 80/20):
+1. OBSERVA CON DETENIMIENTO LA FOTOGRAFÍA ADJUNTA:
+   - Identifica con precisión matemática el OBJETO REAL presente (su silueta geométrica, materiales, relieves, tapas, boquillas, hendiduras y sus colores reales exactos).
+2. TRANSFORMA ESE MISMO OBJETO EN UN PERSONAJE VIVO:
+   - ¡ESTRICTAMENTE PROHIBIDO reemplazar el objeto por un animal genérico, un oso, un duende o una figura humana!
+   - El chasis y cuerpo físico del objeto fotografiado DEBE SER EL 80% DEL CUERPO Y CABEZA DEL PERSONAJE.
+   - Si es un vape o encendedor, su boquilla/tapa metálica ES su casco, cresta o cabeza; su cuerpo plástico/metálico ES su torso y armadura, y sus logotipos reales son sus emblemas heráldicos.
+   - Integra un rostro expresivo directamente en el frente del objeto, y añade extremidades con VOLUMEN ANATÓMICO REAL (músculos, mangas, guanteletes de combate o botas de acción que nazcan orgánicamente de la base del chasis).
+   - ¡PROHIBICIÓN TOTAL DE BRAZOS O PIERNAS DE ALAMBRE ("PALO Y BOLITA")! Cada extremidad debe tener masa física tridimensional.
 
-DIRECTIVA DE COLORES REALES:
-- Extrae con precisión los tonos exactos y acentos del objeto fotografiado y aplícalos a la criatura para que sea plenamente reconocible.
-${promptDescription ? `- Petición o detalle adicional del usuario: "${promptDescription}".` : ''}
+ESTILO VISUAL REQUERIDO (${artStyle.toUpperCase()}):
+${vectorRulesEs}
+${promptDescription ? `- Detalle especial del operador: "${promptDescription}".` : ''}
 
-RESPONDE ÚNICAMENTE CON ESTE JSON VÁLIDO (SIN MARKDOWN):
+DIRECTIVA DEL CÓDIGO VECTORIAL SVG (viewBox="0 0 240 240"):
+- Genera código SVG puro, centrado, 100% libre de <rect> de fondo sólido.
+- Estructura el SVG en capas semánticas ordenadas:
+  * <defs>: gradientes <linearGradient> o <radialGradient> para simular volumen, relieve e iluminación.
+  * <g id="back-limbs">: extremidades traseras con volumen anatómico y sombreado cel-shaded.
+  * <g id="object-chassis">: el cuerpo y chasis fiel del objeto fotografiado en perspectiva 3/4 con sus colores reales y relieves.
+  * <g id="expressive-face">: rostro integrado con ojos vivos detallados (iris degradado + destellos blancos) y boca con actitud.
+  * <g id="front-limbs">: extremidades delanteras firmes, guanteletes o garras con masa física y contorno definido.
+  * Sombra de flotación suave en la base: <ellipse cx="120" cy="225" rx="42" ry="7" fill="#000000" opacity="0.25"/>
+
+RESPONDE ÚNICAMENTE CON ESTE JSON VÁLIDO (SIN TEXTO EXTRA):
 {
-  "detectedObject": "Nombre del objeto identificado en español",
+  "detectedObject": "Nombre exacto del objeto identificado en español",
   "characterConcept": "Descripción de cómo el objeto cobró vida en este estilo",
   "epicName": "Nombre memorable del compañero (máx 24 caracteres)",
   "personalityQuote": "Frase legendaria corta representativa del personaje",
   "primaryColor": "#hexColorPrincipalDelObjeto",
   "secondaryColor": "#hexColorSecundario",
   "artStyle": "${artStyle}",
-  "illustrationPrompt": "Masterpiece character design of an epic [character description integrating the exact features, materials, and real colors of the detected object], ${styleDirective}, full body standing centered, dynamic pose, professional lighting, isolated on solid dark studio background #050505, 8k resolution"
+  "illustrationPrompt": "Masterpiece character design of an epic living companion whose body IS the exact photographed [describe object, parts and real colors], ${keywordsEn}, object-as-body concept, heroic full body standing pose, dynamic 3/4 stance, sturdy limbs with thick gloves and boots, isolated on solid pure flat black background #000000, zero glow, sharp crisp edges, 8k resolution",
+  "svg": "<svg viewBox=\"0 0 240 240\" width=\"100%\" height=\"100%\" xmlns=\"http://www.w3.org/2000/svg\">...</svg>"
 }
 `;
 
   let jsonResult: string | null = null;
   let lastErrorMessage = '';
 
-  // Cadena de modelos multimodales activos vigentes (2026) con timeout de 25000ms
   const CANDIDATE_MODELS = ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-3.8-flash', 'gemini-flash-latest'];
 
-  // 1. Intento primario: Direct Gemini Developer API
+  // 1. Análisis Multimodal Primario con Gemini Developer API
   const apiKeyToTry = getEffectiveGeminiApiKey();
   if (apiKeyToTry) {
     for (const modelName of CANDIDATE_MODELS) {
@@ -618,7 +738,7 @@ RESPONDE ÚNICAMENTE CON ESTE JSON VÁLIDO (SIN MARKDOWN):
                 ],
               },
             ],
-            generationConfig: { temperature: 0.25, maxOutputTokens: 2048 },
+            generationConfig: { temperature: 0.25, maxOutputTokens: 8192 },
           }),
           signal: controller.signal,
         });
@@ -629,7 +749,7 @@ RESPONDE ÚNICAMENTE CON ESTE JSON VÁLIDO (SIN MARKDOWN):
           const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
           if (text && text.trim()) {
             jsonResult = text.trim();
-            console.log(`[Gemini API Multimodal] ✓ Respuesta exitosa con ${modelName}`);
+            console.log(`[Gemini API Multimodal] ✓ Objeto analizado con éxito usando ${modelName}`);
             break;
           }
         } else {
@@ -642,7 +762,7 @@ RESPONDE ÚNICAMENTE CON ESTE JSON VÁLIDO (SIN MARKDOWN):
     }
   }
 
-  // 2. Intento secundario: Firebase AI Logic SDK si el directo no respondió
+  // 2. Respaldo Firebase AI Logic si el directo no respondió
   if (!jsonResult && firebaseAI) {
     for (const modelName of CANDIDATE_MODELS) {
       try {
@@ -650,7 +770,7 @@ RESPONDE ÚNICAMENTE CON ESTE JSON VÁLIDO (SIN MARKDOWN):
           model: modelName,
           generationConfig: {
             temperature: 0.25,
-            maxOutputTokens: 2048,
+            maxOutputTokens: 8192,
           },
         });
 
@@ -707,7 +827,7 @@ RESPONDE ÚNICAMENTE CON ESTE JSON VÁLIDO (SIN MARKDOWN):
   const personalityQuote = parsed.personalityQuote || `¡He despertado del mundo real en el Multiverso bajo el estilo ${artStyle.toUpperCase()}!`;
   const primaryColor = parsed.primaryColor || '#00f0ff';
   const secondaryColor = parsed.secondaryColor || '#ec4899';
-  const illustrationPrompt = parsed.illustrationPrompt || `Masterpiece character of ${detectedObject}, ${styleDirective}, full body, centered, solid dark studio background`;
+  const illustrationPrompt = parsed.illustrationPrompt || `Masterpiece character of ${detectedObject}, ${keywordsEn}, full body, isolated on solid pure black background #000000`;
 
   // Notificar al cliente que el Paso 1 (Visión) culminó exitosamente con el objeto detectado
   if (onProgress) {
@@ -715,12 +835,37 @@ RESPONDE ÚNICAMENTE CON ESTE JSON VÁLIDO (SIN MARKDOWN):
     onProgress('generation', { detectedObject });
   }
 
-  // 4. Paso 2: Generar la ilustración artística en alta definición + recortar fondo
+  // 4. Intento de Generación Nativa de Imagen con Gemini (Motor A)
   let imageUrl: string | undefined = undefined;
   try {
-    imageUrl = await generateKaiIllustration(illustrationPrompt);
+    const nativeImg = await generateGeminiNativeImage({
+      cleanBase64,
+      effectiveMime,
+      illustrationPrompt,
+    });
+    if (nativeImg) {
+      imageUrl = nativeImg;
+      console.log('[Forja Neural] ✓ Imagen nativa generada y recortada exitosamente.');
+    }
   } catch (imgErr) {
-    console.warn('[Forja Neural] Error en generación de ilustración:', imgErr);
+    console.warn('[Forja Neural] Modalidad de imagen nativa no disponible, activando motor SVG esculpido:', imgErr);
+  }
+
+  // 5. Procesamiento del código SVG Esculpido (Motor B / Respaldo estructural)
+  const rawSvg = parsed.svg || parsed.svgContent || parsed.svg_code;
+  let svgContent: string | undefined = undefined;
+
+  if (typeof rawSvg === 'string' && rawSvg.trim()) {
+    svgContent = rawSvg.trim();
+    svgContent = svgContent.replace(/^```(?:svg|xml|html)?\s*/i, '').replace(/\s*```$/i, '').trim();
+    if (!svgContent.startsWith('<svg')) {
+      svgContent = `<svg viewBox="0 0 240 240" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">${svgContent}</svg>`;
+    }
+  }
+
+  // Validación final: si no hubo imagen ni SVG válido, arrojar error descriptivo
+  if (!imageUrl && !svgContent) {
+    throw new Error(`La IA reconoció el objeto "${detectedObject}", pero no generó el diseño para el estilo "${artStyle}". Por favor intenta de nuevo.`);
   }
 
   return {
@@ -734,8 +879,9 @@ RESPONDE ÚNICAMENTE CON ESTE JSON VÁLIDO (SIN MARKDOWN):
     primaryColor,
     secondaryColor,
     mood: (parsed.mood as KaiTemperament) || mood || 'stoic',
-    renderBranch: 'illustration',
+    renderBranch: imageUrl ? 'illustration' : 'vector',
     imageUrl: imageUrl || undefined,
+    svgContent: svgContent || undefined,
   };
 }
 
