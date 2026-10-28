@@ -2,8 +2,9 @@ import { useEffect, useRef } from 'react';
 
 /**
  * Motor de física de rebote e inercia elástica extraído de Moxen Chicle.
- * Aplica deformación elástica direccional dinámica (translate, skewX, scale)
- * sobre cualquier botón o control interactivo con la clase .chicle-btn.
+ * Detecta dinámicamente cada botón o control interactivo con la clase .chicle-btn
+ * dentro del panel de Ajustes y vincula los eventos directos de pointermove, pointerdown,
+ * pointerup y pointerleave para simular la deformación fluida de goma / chicle.
  */
 export function useMoxenChicle<T extends HTMLElement = HTMLDivElement>() {
   const containerRef = useRef<T>(null);
@@ -12,91 +13,87 @@ export function useMoxenChicle<T extends HTMLElement = HTMLDivElement>() {
     const container = containerRef.current;
     if (!container) return;
 
-    let currentBtn: HTMLElement | null = null;
-    let cleanupTimer: ReturnType<typeof setTimeout> | null = null;
+    const cleanupFns = new Map<HTMLElement, () => void>();
 
-    const releaseButton = (btn: HTMLElement) => {
-      btn.style.transition = 'transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.35)';
-      btn.style.transform = 'translate3d(0px, 0px, 0px) scale(1) skewX(0deg)';
+    const attachToButton = (el: HTMLElement) => {
+      if (cleanupFns.has(el)) return;
+      let isPressed = false;
+      let resetTimer: ReturnType<typeof setTimeout> | null = null;
 
-      if (cleanupTimer) clearTimeout(cleanupTimer);
-      cleanupTimer = setTimeout(() => {
-        // Limpiar inline style para que las reglas CSS :hover / :active retomen el control sin interferencias
-        btn.style.removeProperty('transform');
-        btn.style.removeProperty('transition');
-      }, 520);
+      const onPointerMove = (e: PointerEvent) => {
+        if (el.hasAttribute('disabled')) return;
+        const rect = el.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) return;
+
+        const dx = e.clientX - (rect.left + rect.width / 2);
+        const dy = e.clientY - (rect.top + rect.height / 2);
+        const skewX = Math.max(-8, Math.min(8, -(dx / rect.width) * 16));
+        const scaleX = isPressed ? 0.91 : 1.07;
+        const scaleY = isPressed ? 1.14 : 0.96;
+        const transX = (dx * 0.22).toFixed(1);
+        const transY = (dy * 0.22).toFixed(1);
+
+        el.style.transition = 'transform 0.08s ease-out';
+        el.style.transform = `translate3d(${transX}px, ${transY}px, 0px) scale(${scaleX}, ${scaleY}) skewX(${skewX.toFixed(1)}deg)`;
+      };
+
+      const onPointerDown = () => {
+        if (el.hasAttribute('disabled')) return;
+        isPressed = true;
+        if (resetTimer) clearTimeout(resetTimer);
+        el.style.transition = 'transform 0.12s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+        el.style.transform = 'scale(0.90, 1.15) skewX(6deg) translateY(2px)';
+      };
+
+      const onPointerUp = () => {
+        isPressed = false;
+        el.style.transition = 'transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.45)';
+        el.style.transform = 'translate3d(0px, 0px, 0px) scale(1.05, 0.97) skewX(-3deg)';
+      };
+
+      const onPointerLeave = () => {
+        isPressed = false;
+        el.style.transition = 'transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.45)';
+        el.style.transform = 'translate3d(0px, 0px, 0px) scale(1, 1) skewX(0deg)';
+        if (resetTimer) clearTimeout(resetTimer);
+        resetTimer = setTimeout(() => {
+          el.style.removeProperty('transform');
+          el.style.removeProperty('transition');
+        }, 550);
+      };
+
+      el.addEventListener('pointermove', onPointerMove, { passive: true });
+      el.addEventListener('pointerdown', onPointerDown, { passive: true });
+      el.addEventListener('pointerup', onPointerUp, { passive: true });
+      el.addEventListener('pointerleave', onPointerLeave, { passive: true });
+
+      cleanupFns.set(el, () => {
+        el.removeEventListener('pointermove', onPointerMove);
+        el.removeEventListener('pointerdown', onPointerDown);
+        el.removeEventListener('pointerup', onPointerUp);
+        el.removeEventListener('pointerleave', onPointerLeave);
+        if (resetTimer) clearTimeout(resetTimer);
+        el.style.removeProperty('transform');
+        el.style.removeProperty('transition');
+      });
     };
 
-    const handlePointerMove = (e: PointerEvent) => {
-      const btn = (e.target as HTMLElement)?.closest('.chicle-btn') as HTMLElement | null;
+    // Vincular todos los botones con .chicle-btn presentes en el montaje
+    const buttons = container.querySelectorAll<HTMLElement>('.chicle-btn');
+    buttons.forEach(attachToButton);
 
-      if (!btn || btn.hasAttribute('disabled')) {
-        if (currentBtn) {
-          releaseButton(currentBtn);
-          currentBtn = null;
-        }
-        return;
-      }
+    // Observar inserciones dinámicas de DOM (cambio de sub-pestañas, modales, etc.)
+    const observer = new MutationObserver(() => {
+      const currentButtons = container.querySelectorAll<HTMLElement>('.chicle-btn');
+      currentButtons.forEach(attachToButton);
+    });
 
-      if (currentBtn && currentBtn !== btn) {
-        releaseButton(currentBtn);
-      }
-
-      if (cleanupTimer) {
-        clearTimeout(cleanupTimer);
-        cleanupTimer = null;
-      }
-
-      currentBtn = btn;
-      const rect = btn.getBoundingClientRect();
-      const dx = e.clientX - (rect.left + rect.width / 2);
-      const dy = e.clientY - (rect.top + rect.height / 2);
-      // Cálculo de skew direccional proporcional al desplazamiento horizontal
-      const skewX = Math.max(-6, Math.min(6, -(dx / (rect.width || 1)) * 10));
-
-      btn.style.transition = 'transform 0.08s ease-out';
-      btn.style.transform = `translate3d(${(dx * 0.16).toFixed(1)}px, ${(dy * 0.16).toFixed(1)}px, 0px) scale(1.05) skewX(${skewX.toFixed(1)}deg)`;
-    };
-
-    const handlePointerDown = (e: PointerEvent) => {
-      const btn = (e.target as HTMLElement)?.closest('.chicle-btn') as HTMLElement | null;
-      if (btn && !btn.hasAttribute('disabled')) {
-        if (cleanupTimer) clearTimeout(cleanupTimer);
-        btn.style.transition = 'transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-        btn.style.transform = 'scale(0.91) skewX(5deg)';
-      }
-    };
-
-    const handlePointerUp = (e: PointerEvent) => {
-      const btn = (e.target as HTMLElement)?.closest('.chicle-btn') as HTMLElement | null;
-      if (btn && !btn.hasAttribute('disabled')) {
-        btn.style.transition = 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.35)';
-        btn.style.transform = 'translate3d(0px, 0px, 0px) scale(1.03) skewX(-2deg)';
-      }
-    };
-
-    const handleMouseLeave = () => {
-      if (currentBtn) {
-        releaseButton(currentBtn);
-        currentBtn = null;
-      }
-    };
-
-    container.addEventListener('pointermove', handlePointerMove, { passive: true });
-    container.addEventListener('pointerdown', handlePointerDown, { passive: true });
-    container.addEventListener('pointerup', handlePointerUp, { passive: true });
-    container.addEventListener('mouseleave', handleMouseLeave, { passive: true });
+    observer.observe(container, { childList: true, subtree: true });
 
     return () => {
-      container.removeEventListener('pointermove', handlePointerMove);
-      container.removeEventListener('pointerdown', handlePointerDown);
-      container.removeEventListener('pointerup', handlePointerUp);
-      container.removeEventListener('mouseleave', handleMouseLeave);
-      if (cleanupTimer) clearTimeout(cleanupTimer);
-      if (currentBtn) {
-        currentBtn.style.removeProperty('transform');
-        currentBtn.style.removeProperty('transition');
-      }
+      observer.disconnect();
+      cleanupFns.forEach((cleanup) => cleanup());
+      cleanupFns.clear();
     };
   }, []);
 

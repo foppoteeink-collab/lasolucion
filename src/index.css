@@ -442,17 +442,19 @@ body.modal-open-hide-floating .omni-companion-hub-root {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), background-color 0.3s ease !important;
-  transform-origin: center;
+  transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.45), background-color 0.3s ease !important;
+  transform-origin: center center;
   will-change: transform;
+  user-select: none;
 }
 
 .chicle-btn:hover {
-  transform: scale(1.06) skewX(-3deg) !important;
+  transform: scale(1.07, 0.96) skewX(-4deg) translateY(-2px) !important;
 }
 
 .chicle-btn:active {
-  transform: scale(0.91) skewX(5deg) !important;
+  transform: scale(0.90, 1.15) skewX(6deg) translateY(2px) !important;
+  transition: transform 0.12s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
 }
 
 .chicle-btn:disabled,
