@@ -2,6 +2,7 @@ import React from 'react';
 import { FileText, Edit3, Trash2, Lock, Crown, Clock, Coins, CheckCircle2, ShieldAlert } from 'lucide-react';
 import { TaskItem } from '../../types';
 import { SlashText } from './SlashText';
+import { useMoxenVidrio } from '../../hooks/useMoxenVidrio';
 
 interface LegendaryBountyCardProps {
   task: TaskItem;
@@ -23,17 +24,55 @@ export const LegendaryBountyCard: React.FC<LegendaryBountyCardProps> = ({
   if (!task || !task.title) return null;
   const isLocked = isDayEnded && !task.completed;
 
+  const cardRef = useMoxenVidrio<HTMLDivElement>({
+    inclina: 6,
+    suavidad: 8,
+    active: true,
+  });
+
+  const vidrioStyle: React.CSSProperties = {
+    '--vi-vidrio': isLocked
+      ? 'rgba(21, 5, 0, 0.75)'
+      : task.completed
+      ? 'rgba(1, 20, 32, 0.75)'
+      : 'rgba(2, 14, 23, 0.75)',
+    '--vi-borde': isLocked
+      ? 'rgba(217, 119, 6, 0.45)'
+      : task.completed
+      ? 'rgba(0, 240, 255, 0.50)'
+      : 'rgba(245, 158, 11, 0.65)',
+    '--vi-luz': isLocked
+      ? 'rgba(245, 158, 11, 0.22)'
+      : task.completed
+      ? 'rgba(0, 240, 255, 0.35)'
+      : 'rgba(245, 158, 11, 0.45)',
+    '--vi-filo': isLocked
+      ? 'rgba(245, 158, 11, 0.60)'
+      : task.completed
+      ? 'rgba(0, 240, 255, 0.95)'
+      : 'rgba(245, 158, 11, 0.95)',
+    '--vi-reflejo': isLocked
+      ? 'rgba(245, 158, 11, 0.10)'
+      : task.completed
+      ? 'rgba(0, 240, 255, 0.22)'
+      : 'rgba(245, 158, 11, 0.25)',
+    '--vi-desenfoque': '20px',
+    '--vi-grano': '0.07',
+  } as React.CSSProperties;
+
   return (
     <div
+      ref={cardRef}
+      style={vidrioStyle}
       onClick={() => {
         onOpenEditModal(task);
       }}
-      className={`p-3.5 sm:p-4 rounded-2xl border transition-all cursor-pointer relative overflow-hidden ${
+      className={`vi-tarjeta p-3.5 sm:p-4 rounded-2xl cursor-pointer relative overflow-hidden transition-shadow ${
         isLocked
-          ? 'bg-[#150500] border-amber-600/50 opacity-85 shadow-[0_0_20px_rgba(245,158,11,0.15)]'
+          ? 'opacity-85 shadow-[0_0_20px_rgba(245,158,11,0.15)]'
           : task.completed
-          ? 'bg-[#011420]/90 border-cyan-500/50 shadow-[0_0_20px_rgba(0,240,255,0.2)] hover:border-cyan-400'
-          : 'bg-[#020e17] border-amber-400/80 hover:border-amber-300 shadow-[0_0_25px_rgba(245,158,11,0.25)] hover:shadow-[0_0_30px_rgba(245,158,11,0.4)]'
+          ? 'shadow-[0_0_20px_rgba(0,240,255,0.2)] hover:border-cyan-400'
+          : 'shadow-[0_0_25px_rgba(245,158,11,0.25)] hover:shadow-[0_0_30px_rgba(245,158,11,0.4)]'
       }`}
     >
       {/* Glow corner ambient effect */}

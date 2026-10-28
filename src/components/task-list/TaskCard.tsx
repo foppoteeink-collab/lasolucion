@@ -115,25 +115,54 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   const catStyle = getCategoryStyle(task.category);
   const rarity = getRarityBadge(task);
 
+  const hexToRgba = (hex: string, alpha: number): string => {
+    const cleanHex = hex.replace('#', '');
+    const r = parseInt(cleanHex.substring(0, 2), 16) || 0;
+    const g = parseInt(cleanHex.substring(2, 4), 16) || 0;
+    const b = parseInt(cleanHex.substring(4, 6), 16) || 0;
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  };
+
+  const glassStyle: React.CSSProperties = isCompleted
+    ? {
+        background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(3, 7, 18, 0.85) 75%)',
+        borderColor: 'rgba(16, 185, 129, 0.28)',
+        boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06), inset 0 -1px 0 rgba(0, 0, 0, 0.3), 0 4px 16px -6px rgba(0, 0, 0, 0.5)',
+        backdropFilter: 'blur(16px) saturate(1.2)',
+        WebkitBackdropFilter: 'blur(16px) saturate(1.2)',
+      }
+    : {
+        background: `linear-gradient(135deg, ${hexToRgba(catStyle.color, 0.09)} 0%, rgba(7, 4, 23, 0.75) 75%)`,
+        borderColor: hexToRgba(catStyle.color, 0.30),
+        boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -1px 0 rgba(0, 0, 0, 0.35), 0 8px 24px -10px rgba(0, 0, 0, 0.6)',
+        backdropFilter: 'blur(18px) saturate(1.3)',
+        WebkitBackdropFilter: 'blur(18px) saturate(1.3)',
+      };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 15 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.1 }}
+      whileTap={{ scale: 0.985 }}
       exit={{ opacity: 0, scale: 0.98 }}
       transition={{ 
         duration: 0.22,
         ease: [0.16, 1, 0.3, 1],
         delay: Math.min((index % 5) * 0.02, 0.1) 
       }}
-      className={`relative p-2.5 sm:p-3 rounded-xl border transition-all duration-200 ${
-        isMenuOpen ? 'z-30 ring-1 ring-cyan-500/40 shadow-[0_0_15px_rgba(0,240,255,0.15)]' : 'z-0'
+      style={glassStyle}
+      className={`relative isolate p-2.5 sm:p-3 rounded-xl border transition-all duration-200 ${
+        isMenuOpen ? 'z-30 ring-1 ring-cyan-500/40 shadow-[0_0_15px_rgba(0,240,255,0.25)]' : 'z-0'
       } ${
         isCompleted 
-          ? 'bg-[#030712]/75 border-emerald-500/30 text-slate-200 opacity-90 shadow-sm' 
-          : 'bg-surface-card backdrop-blur-md border-white/10 hover:border-white/20 text-white shadow-sm'
+          ? 'text-slate-200 opacity-90' 
+          : 'text-white'
       }`}
     >
+      {/* Grano esmerilado táctil Moxen Vidrio */}
+      <span className="vi-grano" aria-hidden="true" />
+
       {/* Línea 1: Protagonista (Check + Título + Menú Orbital Kai) */}
       <div className="flex items-center justify-between gap-2 min-w-0">
         <div className="flex items-center gap-2.5 min-w-0 flex-1">
