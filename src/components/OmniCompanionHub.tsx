@@ -15,7 +15,6 @@ import {
   FlaskConical
 } from 'lucide-react';
 import { HoloCompanion, CompanionAuraState } from './HoloCompanion';
-import { KaiRadialMenu } from './KaiRadialMenu';
 import { SatelliteKaiHub, SatelliteHubItem } from './SatelliteKaiHub';
 import { useUIStore } from '../store/useUIStore';
 import { usePlayerStore } from '../store/usePlayerStore';
@@ -389,16 +388,16 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
 
           {/* KAI CON ANILLO ORBITAL 360° */}
           <div className="relative touch-none flex items-center justify-center z-[70]">
-            {/* MENÚ RADIAL MOXEN KAI 360° */}
-            <KaiRadialMenu
-              isOpen={isMenuOpen}
-              onClose={() => setIsMenuOpen(false)}
-              radius={viewportDims.width < 640 ? 94 : 110}
-              onNavigate={(tab) => {
-                setActiveTab(tab as any);
-                setIsMenuOpen(false);
-              }}
-            />
+            {/* ÓRBITA PLANETARIA 360° */}
+            <AnimatePresence>
+              {isMenuOpen && (
+                <SatelliteKaiHub
+                  items={wheelItems}
+                  onClose={() => setIsMenuOpen(false)}
+                  onSelect={handleSelectItem}
+                />
+              )}
+            </AnimatePresence>
 
             {/* KAI SE HACE UN POCO MÁS GRANDE CUANDO SE ACTIVA */}
             <motion.div
