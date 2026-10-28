@@ -608,75 +608,146 @@ export async function forgeKaiFromImage(params: {
   cleanBase64 = cleanBase64.trim().replace(/[\r\n\s]+/g, '');
 
   // 2. Directivas de estilo estricto para el diseño del personaje
-  function getStyleDirectives(selectedStyle: KaiMultiverseStyle): { keywordsEn: string; vectorRulesEs: string } {
+  interface StyleDirectives {
+    styleTitle: string;
+    artistPersona: string;
+    keywordsEn: string;
+    lineworkRule: string;
+    colorAndShadingRule: string;
+    eyesAndFaceRule: string;
+    limbsAndStanceRule: string;
+    styleTouchRule: string;
+  }
+
+  function getStyleDirectives(selectedStyle: KaiMultiverseStyle): StyleDirectives {
     switch (selectedStyle) {
-      case 'anime':
-        return {
-          keywordsEn: 'authentic 90s anime shonen character, Ken Sugimori Pokemon official watercolor lineart and Akira Toriyama Dragon Ball Z aesthetic, high-contrast cel-shaded lighting in 2 sharp tones, sharp ink contours, dynamic warrior stance, expressive eyes with specular highlights, heroic anime companion',
-          vectorRulesEs: 'ANIME SHONEN CLÁSICO (Toriyama / Sugimori): Contornos de tinta negra afilada (stroke="#111827" stroke-width="2.5"), cel-shading de 2 tonos contrastados con sombras angulares de corte recto, ojos rasgados de guerrero con iris degradado y destello blanco, cabello o cresta picuda (spiky) en la parte superior del objeto.',
-        };
       case 'cartoon':
         return {
-          keywordsEn: 'classic 90s Cartoon Network character design, Dexter Laboratory, Samurai Jack and Powerpuff Girls aesthetic, bold ultra-thick black ink outlines, flat solid vibrant colors, quirky expressive face, dynamic animated stance',
-          vectorRulesEs: 'CARTOON NETWORK CLÁSICO (Años 90/2000): Tinta negra ultra gruesa y audaz (stroke="#000000" stroke-width="4.2"), colores planos supersaturados sin degradados borrosos, ojos grandes y expresivos juntos en el centro, y extremidades dinámicas con volumen elástico.',
+          styleTitle: 'CARTOON NETWORK CLÁSICO (ERA DORADA AÑOS 90/2000)',
+          artistPersona: 'ERES UN DIRECTOR DE ARTE SENIOR DE ANIMACIÓN DE CARTOON NETWORK (Genndy Tartakovsky, Craig McCracken y Maxwell Atoms en Dexter, Samurai Jack, Las Chicas Superpoderosas, Coraje el Perro Cobarde y Hora de Aventura).',
+          keywordsEn: 'classic 90s Cartoon Network character design, Dexter Laboratory, Samurai Jack, Powerpuff Girls aesthetic, bold ultra-thick black ink outlines, flat solid vibrant colors, quirky expressive face, dynamic animated stance',
+          lineworkRule: 'Tinta negra ultra gruesa y audaz en todos los contornos (stroke="#000000" stroke-width="3.8" a "4.5" con stroke-linejoin="round"). Contornos de grosor uniforme que le dan el peso característico de animación cel tradicional.',
+          colorAndShadingRule: 'Colores 100% planos, saturados y brillantes (flat colors). PROHIBIDOS degradados fotorealistas borrosos. Sombras en bloques angulares de corte duro o ilustración limpia sin sombras (estilo Dexter / Samurai Jack).',
+          eyesAndFaceRule: 'Ojos cartoon caricaturescos: óvalos grandes con pupilas circulares negras expresivas juntas en el centro, cejas gruesas móviles y boca cómica elástica (diente único, lengua curva o sonrisa exagerada).',
+          limbsAndStanceRule: 'Brazos y piernas elásticos de animación clásica con masa sólida. Manos de caricatura de 4 dedos o manoplas cómicas. Zapatos o zapatillas caricaturescas redondeadas de suela plana.',
+          styleTouchRule: 'Exageración gestual cómica. Si el objeto tiene tapas o botones, se convierten en sombrerito cartoon, anteojos gigantes o mandíbula articulada.',
         };
+
+      case 'anime':
+        return {
+          styleTitle: 'ANIME JAPONÉS SHONEN CLÁSICO Y MODERNO',
+          artistPersona: 'ERES UN MANGAKA E ILUSTRADOR SENIOR DE ANIME SHONEN JAPONÉS (estilo Ken Sugimori en Pokémon oficial, Akira Toriyama en Dragon Ball Z y Koyoharu Gotouge en Demon Slayer).',
+          keywordsEn: 'authentic 90s anime shonen character, Ken Sugimori Pokemon official lineart, Akira Toriyama Dragon Ball Z aesthetic, high-contrast cel-shaded lighting in 2 sharp tones, sharp ink contours, dynamic warrior stance, expressive eyes with specular highlights, heroic anime companion',
+          lineworkRule: 'Trazos afilados de plumilla G-Pen japonesa (stroke="#111827" stroke-width="1.8" a "2.2" con terminaciones en punta). Líneas limpias, enérgicas y aerodinámicas.',
+          colorAndShadingRule: 'Técnica Cel-Shading japonesa pura en 2 tonos contrastados: color base vivo + sombras poligonales angulares de corte recto/diagonal (sin degradados suaves difuminados).',
+          eyesAndFaceRule: 'Ojos de guerrero/criatura anime: párpado superior grueso y rasgado, iris vertical elíptico con degradado de color y punto de brillo especular blanco puro (<circle fill="#ffffff"/>), mirada heroica y cejas angulares en V.',
+          limbsAndStanceRule: 'Extremidades dinámicas de combate o de criatura compañera: garras afiladas estilizadas, o manos con muñequeras de combate/vendajes ninja, y botas de guerrero Shonen o pezuñas ágiles.',
+          styleTouchRule: 'Mechones o crestas puntiagudas (spiky hair/crest) de energía en la cúspide del objeto y un aura de combate o destellos de energía ki sutiles.',
+        };
+
       case 'pixar':
         return {
+          styleTitle: 'ANIMACIÓN 3D DE CINE (PIXAR & DREAMWORKS)',
+          artistPersona: 'ERES UN DIRECTOR DE ILUMINACIÓN Y MODELADO 3D DE ESTUDIOS PIXAR Y DREAMWORKS.',
           keywordsEn: 'high-end 3D animated film character, Disney Pixar and Dreamworks movie render style, soft ambient occlusion, warm studio lighting, big glossy expressive eyes, soft tactile volume, cute friendly creature',
-          vectorRulesEs: 'ANIMACIÓN 3D PIXAR: Modelado con múltiples <radialGradient> y <linearGradient> que simulan volumen esférico con luz de estudio y sombras de oclusión suaves, ojos grandes y cálidos con doble catchlight blanco.',
+          lineworkRule: 'CERO o mínimo contorno de tinta negra. El volumen y los bordes se definen mediante luz de estudio, sombreado volumétrico y degradados suaves (<radialGradient> y <linearGradient>).',
+          colorAndShadingRule: 'Modelado volumétrico 3D suave. Iluminación cálida de estudio cinematográfico desde arriba, sombras de oclusión ambiental suaves (opacity="0.25" a "0.5") y luz de borde (rim light) sutil que perfila la silueta.',
+          eyesAndFaceRule: 'Ojos 3D esféricos llenos de alma: iris detallado con gradiente concéntrico radial, pupila profunda y DOBLE catchlight blanco brillante que refleja la iluminación de estudio de cine.',
+          limbsAndStanceRule: 'Extremidades suaves y redondeadas con volumen táctil tridimensional, dedos o almohadillas acolchonadas y zapatitos redondeados de goma con suela modelada.',
+          styleTouchRule: 'Sensación de personaje tierno, entrañable y expresivo de película de animación de alto presupuesto.',
         };
+
       case 'pop':
         return {
+          styleTitle: 'POP ART / VINYL DESIGNER TOY (EDICIÓN LIMITADA)',
+          artistPersona: 'ERES UN DISEÑADOR PRINCIPAL DE VINYL ART TOYS DE COLECCIÓN (estilo Superplastic, Funko, Kidrobot y figuras de vinilo pulido KAWS).',
           keywordsEn: 'exclusive designer vinyl art toy figure, Funko and Superplastic collectible aesthetic, smooth glossy vinyl finish with studio reflections, clean graphic button eyes, stylized proportions',
-          vectorRulesEs: 'POP ART / VINYL TOY: Figura coleccionable de vinilo pulido, cabeza característica con proporciones de juguete de diseñador, destellos blancos alargados que simulan brillo de plástico y ojos negros de botón.',
+          lineworkRule: 'Trazos vectoriales limpios y pulidos de precisión industrial (stroke="#1e293b" stroke-width="2.2" a "2.6"). Bordes geométricos exactos de figura de vinilo inyectado.',
+          colorAndShadingRule: 'Paleta pop de edición limitada de alto contraste. Reflejos alargados curvados de plástico pulido nuevo de fábrica (<ellipse fill="#ffffff" opacity="0.55"/>) que simulan el brillo de una caja de luz sobre vinilo brillante.',
+          eyesAndFaceRule: 'Ojos icónicos de diseñador: grandes círculos o cápsulas de vinilo negro brillante con un único destello circular blanco nítido descentrado (ojos de botón pulido) o diseño gráfico minimalista.',
+          limbsAndStanceRule: 'Proporciones características de juguete de diseñador (cuerpo/cabeza dominante, extremidades compactas y estilizadas), manos moldeadas tipo vinilo y pies planos sólidos que le dan estabilidad para exhibirse en repisa.',
+          styleTouchRule: 'Estética de figura coleccionable "mint in box" exclusiva para tiendas de arte contemporáneo.',
         };
+
       case 'doodle':
         return {
+          styleTitle: 'DOODLE ART A MANO / STREET POSCA',
+          artistPersona: 'ERES UN ARTISTA URBANO DE SKETCHBOOK Y MURALISMO DOODLE (estilo Keith Haring, Mr. Doodle y marcadores acrílicos Posca).',
           keywordsEn: 'dynamic hand-drawn doodle art illustration, Keith Haring and Mr Doodle aesthetic, energetic organic black marker linework, selective vibrant Posca paint color accents, spontaneous action vibes',
-          vectorRulesEs: 'DOODLE ART POSCA: Trazos orgánicos de marcador negro grueso con pequeñas líneas de acción alrededor, relleno selectivo de color vibrante y garabatos espontáneos llenos de energía.',
+          lineworkRule: 'Línea orgánica de marcador acrílico negro grueso (stroke="#000000" stroke-width="3.6" a "4.8" con puntas redondeadas). Sensación de dibujo libre dibujado a mano alzada con pulso vivo.',
+          colorAndShadingRule: 'Blanco y negro dominante con rellenos selectivos de color plano de marcador Posca (1 o 2 colores vibrantes de acento como amarillo sol o azul cian). Sombreados mediante tramados artesanales de líneas paralelas (cross-hatching) en vez de degradados digitales.',
+          eyesAndFaceRule: 'Ojos doodle espontáneos: círculos dibujados a pulso con punto central, espirales cómicas o miradas expresivas de trazo rápido.',
+          limbsAndStanceRule: 'Brazos y piernas con ritmo suelto de ilustración urbana, manos doodle simplificadas con trazos rápidos y postura llena de energía callejera.',
+          styleTouchRule: 'Alrededor del personaje incluye detalles doodle flotantes: pequeñas líneas de acción, chispas de marcador, estrellitas o coronitas flotantes que le dan vibra de cuaderno de bocetos.',
         };
+
       case 'clay3d':
       default:
         return {
+          styleTitle: 'CLAYMATION 3D / PLASTILINA STOP-MOTION',
+          artistPersona: 'ERES UN MAESTRO ESCULTOR DE PLASTILINA DE ANIMACIÓN STOP-MOTION (estilo Aardman Studios en Wallace & Gromit y Pollitos en Fuga).',
           keywordsEn: 'handmade claymation stop-motion figure, Wallace and Gromit Aardman clay sculpture, tactile clay fingerprint texture, soft studio rim lighting, matte satin finish',
-          vectorRulesEs: 'CLAYMATION 3D: Escultura de plastilina modelada a mano, bordes orgánicos ligeramente asimétricos, sombras suaves difusas de arcilla real y acabado satinado mate.',
+          lineworkRule: 'Sin líneas duras de tinta digital. Los bordes son formas orgánicas redondeadas de plastilina modelada a mano con volumen físico tangible y asimetrías suaves de modelado artesanal.',
+          colorAndShadingRule: 'Colores táctiles de plastilina real con acabado satinado mate (sin brillos de plástico). Gradientes suaves (<radialGradient>) que simulan volumen de plastilina amasada bajo luz de estudio difusa.',
+          eyesAndFaceRule: 'Ojos de bolita de masa o cuentas de arcilla incrustadas: pequeñas esferas de plastilina blanca con una bolita negra de masa como pupila y párpados moldeados en relieve.',
+          limbsAndStanceRule: 'Brazos y piernas como cilindros de plastilina amasada, manos con dedos redondeados y rechonchos, y pies planos y gruesos de base de escultura.',
+          styleTouchRule: 'Sensación de pieza de arcilla hecha a mano con imperfecciones hermosas, lista para cobrar vida fotograma a fotograma.',
         };
     }
   }
 
-  const { keywordsEn, vectorRulesEs } = getStyleDirectives(artStyle);
+  const directives = getStyleDirectives(artStyle);
+  const keywordsEn = directives.keywordsEn;
 
-  // 3. Prompt Maestro Multimodal "Object-As-Body" de Alta Definición
+  // Modulador de temperamento / actitud facial
+  let moodGuidance = 'Actitud estoica, noble, firme y confiable.';
+  if (mood === 'mischievous' || mood === 'playful') {
+    moodGuidance = 'Actitud pícara, traviesa y audaz (sonrisa de medio lado, ceja alzada con energía juguetona).';
+  } else if (mood === 'fierce' || mood === 'determined') {
+    moodGuidance = 'Actitud feroz, determinada e intensa (ceño fruncido con determinación de combate, mirada focalizada).';
+  } else if (mood === 'zen' || mood === 'mystic') {
+    moodGuidance = 'Actitud serena, mística y en paz (ojos entrecerrados o plácidos, sonrisa tranquila y sabia).';
+  } else if (mood === 'cheerful' || mood === 'happy') {
+    moodGuidance = 'Actitud alegre, optimista y festiva (ojos abiertos llenos de luz, sonrisa amplia y carismática).';
+  }
+
+  // 3. Prompt Maestro Multimodal "Object-As-Body" Dinámico por Estilo
   const systemInstructions = `
-ERES UN ILUSTRADOR Y DISEÑADOR DE PERSONAJES SENIOR DE NINTENDO Y CARTOON NETWORK.
-Transforma este objeto real fotografiado en un personaje legendario en código SVG puro (viewBox="0 0 300 300").
+${directives.artistPersona}
+Transforma este objeto real fotografiado en un personaje legendario único en código SVG puro (viewBox="0 0 300 300").
 
-REGLAS ARTÍSTICAS VITALES (NIVEL ESTUDIO):
+ESTILO VISUAL EXIGIDO: ${directives.styleTitle}
+
+REGLAS ARTÍSTICAS FUNDAMENTALES:
 1. EL OBJETO ES EL CUERPO (80/20):
-   - Identifica el objeto fotografiado (su chasis, boquilla, tapas, botones, logotipos, colores y textos exactos).
-   - El torso y cabeza ES el objeto real con volumen 3D (<linearGradient> o <radialGradient> para simular relieve cilíndrico o prismático).
-   - Sus piezas superiores (boquillas metálicas, tapas, ruedas o botones) conforman su casco cromado, corona o armadura mecánica.
-   - Replica con fidelidad los textos, estampados o marcas visibles en el objeto (como el lema serigrafiado, franjas o logotipos).
-2. ROSTRO HEROICO CON ALMA:
-   - Ojos grandes y expresivos estilo Nintendo/Anime con esclerótica blanca, iris degradado de color vivo, pupila oscura y destellos blancos especulares (<circle fill="#ffffff"/>).
-   - Cejas con actitud y boca pícara o sonrisa con dientecito/lengua cartoon.
-3. EXTREMIDADES CON VOLUMEN REAL:
-   - ¡PROHIBIDAS LAS LÍNEAS DE ALAMBRE ("PALO Y BOLITA")!
-   - Brazos y piernas con masa anatómica y sombreado cel-shading en 2 tonos.
-   - Guantes blancos gruesos de acción (estilo Mario / Sonic / Cuphead) con muñequeras y nudillos.
-   - Zapatillas o botas deportivas estilizadas con suela blanca en la base.
-4. ILUMINACIÓN Y FLOTACIÓN:
-   - Si es un objeto de fuego o energía (encendedor, vape), añade una flama viva o penacho brillante estilizado en la cúspide.
-   - Sombra de contacto suave en la base (<ellipse cy="275" ...>) para flotar con presencia sólida.
-   - 100% libre de <rect> de fondo sólido exterior (debe ser transparente).
+   - Identifica con total fidelidad el objeto fotografiado (su silueta física, chasis, boquillas, tapas, botones, logotipos, colores y textos exactos).
+   - El torso y cabeza ES el objeto real conservando su silueta geométrica reconocible.
+   - Sus piezas mecánicas superiores (tapas, ruedas, boquillas, ranuras) se integran naturalmente como su casco, corona o armadura.
+   - Replica con fidelidad los textos, estampados o logos visibles en el objeto original.
 
-${promptDescription ? `- Detalle especial del operador: "${promptDescription}".` : ''}
+2. APLICACIÓN ESTRICTA DEL ESTILO "${directives.styleTitle}":
+   - LÍNEAS Y TRAZOS: ${directives.lineworkRule}
+   - COLOR Y SOMBREADO: ${directives.colorAndShadingRule}
+   - ROSTRO Y OJOS: ${directives.eyesAndFaceRule}
+   - EXTREMIDADES Y ANATOMÍA: ${directives.limbsAndStanceRule}
+   - TOQUE DEL ESTILO: ${directives.styleTouchRule}
+
+3. EXPRESIVIDAD Y ACTITUD:
+   - ${moodGuidance}
+   - ¡PROHIBIDAS LAS LÍNEAS DE ALAMBRE ("PALO Y BOLITA")! Las extremidades deben tener masa anatómica y volumen propio según las reglas del estilo.
+
+4. COMPOSICIÓN Y TRANSPARENCIA:
+   - Si el objeto emite fuego, energía, chispas o vapor (ej: encendedor, vape), añade una flama o efecto estilizado en la cúspide según el estilo.
+   - Sombra de contacto suave en la base (<ellipse cy="275" ...>) para apoyarlo con presencia sólida en el suelo.
+   - 100% libre de fondo exterior rectangular (el SVG debe ser transparente para flotar en la interfaz de la app).
+
+${promptDescription ? `- Instrucción especial del operador: "${promptDescription}".` : ''}
 
 ESTRUCTURA EXACTA DE TU RESPUESTA:
 ===METADATA===
 OBJECT: Nombre exacto del objeto identificado en español
 NAME: Nombre memorable del personaje (máx 24 caracteres)
-QUOTE: Frase carismática corta del personaje
+QUOTE: Frase carismática corta del personaje acorde a su estilo y actitud
 PRIMARY_COLOR: #hex
 SECONDARY_COLOR: #hex
 ===SVG===
