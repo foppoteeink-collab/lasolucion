@@ -40,6 +40,7 @@ import {
 import { useUIStore } from '../store/useUIStore';
 import { CloudSyncResult } from '../hooks/useCloudSync';
 import { useMoxenChicle } from '../hooks/useMoxenChicle';
+import { ChicleToggle } from './ChicleToggle';
 
 interface SettingsViewProps {
   settings: GameSettings;
@@ -225,6 +226,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   };
 
   const toggleSetting = (key: keyof GameSettings) => {
+    soundFX.playClick();
     onUpdateSettings({
       ...settings,
       [key]: !settings[key]
@@ -483,12 +485,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   >
                     {audioTesting ? 'Sonando...' : 'Probar'}
                   </button>
-                  <button 
-                    onClick={toggleSound}
-                    className={`chicle-btn w-12 h-6 rounded-full relative transition-colors flex-shrink-0 cursor-pointer ${soundEnabled ? 'bg-cyan-500' : 'bg-slate-700'}`}
-                  >
-                    <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-all ${soundEnabled ? 'left-6.5 translate-x-[24px]' : 'left-0.5'}`}></div>
-                  </button>
+                  <ChicleToggle
+                    checked={soundEnabled}
+                    onChange={() => toggleSound()}
+                    color="cyan"
+                    size="md"
+                    ariaLabel="Alternar efectos sonoros"
+                  />
                 </div>
               </div>
 
@@ -572,16 +575,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                           <p className="text-[10px] text-slate-500">Avisa 2 min antes de cada tarea con timeBlock</p>
                         </div>
                       </div>
-                      <button
-                        onClick={() => handleToggleNotifSetting('habitReminders')}
-                        className={`chicle-btn w-10 h-5 rounded-full relative transition-colors flex-shrink-0 cursor-pointer ${
-                          notifSettings.habitReminders ? 'bg-cyan-500' : 'bg-slate-700'
-                        }`}
-                      >
-                        <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-all ${
-                          notifSettings.habitReminders ? 'left-5.5 translate-x-[22px]' : 'left-0.5'
-                        }`} />
-                      </button>
+                      <ChicleToggle
+                        checked={!!notifSettings.habitReminders}
+                        onChange={() => handleToggleNotifSetting('habitReminders')}
+                        color="cyan"
+                        size="sm"
+                        ariaLabel="Alternar recordatorios por hora"
+                      />
                     </div>
 
                     {/* Briefing matutino */}
@@ -593,16 +593,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                           <p className="text-[10px] text-slate-500">Resumen 15 min antes de tu primera tarea del día</p>
                         </div>
                       </div>
-                      <button
-                        onClick={() => handleToggleNotifSetting('morningBriefing')}
-                        className={`chicle-btn w-10 h-5 rounded-full relative transition-colors flex-shrink-0 cursor-pointer ${
-                          notifSettings.morningBriefing ? 'bg-amber-500' : 'bg-slate-700'
-                        }`}
-                      >
-                        <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-all ${
-                          notifSettings.morningBriefing ? 'left-5.5 translate-x-[22px]' : 'left-0.5'
-                        }`} />
-                      </button>
+                      <ChicleToggle
+                        checked={!!notifSettings.morningBriefing}
+                        onChange={() => handleToggleNotifSetting('morningBriefing')}
+                        color="amber"
+                        size="sm"
+                        ariaLabel="Alternar briefing matutino"
+                      />
                     </div>
 
                     {/* Reflexión nocturna */}
@@ -626,16 +623,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                             ))}
                           </select>
                         )}
-                        <button
-                          onClick={() => handleToggleNotifSetting('nightlyReflection')}
-                          className={`chicle-btn w-10 h-5 rounded-full relative transition-colors flex-shrink-0 cursor-pointer ${
-                            notifSettings.nightlyReflection ? 'bg-indigo-500' : 'bg-slate-700'
-                          }`}
-                        >
-                          <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-all ${
-                            notifSettings.nightlyReflection ? 'left-5.5 translate-x-[22px]' : 'left-0.5'
-                          }`} />
-                        </button>
+                        <ChicleToggle
+                          checked={!!notifSettings.nightlyReflection}
+                          onChange={() => handleToggleNotifSetting('nightlyReflection')}
+                          color="indigo"
+                          size="sm"
+                          ariaLabel="Alternar reflexión nocturna"
+                        />
                       </div>
                     </div>
 
@@ -648,16 +642,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                           <p className="text-[10px] text-slate-500">Avisa a las 20:00 si el Boss del día sigue vivo</p>
                         </div>
                       </div>
-                      <button
-                        onClick={() => handleToggleNotifSetting('bossAlert')}
-                        className={`chicle-btn w-10 h-5 rounded-full relative transition-colors flex-shrink-0 cursor-pointer ${
-                          notifSettings.bossAlert ? 'bg-red-500' : 'bg-slate-700'
-                        }`}
-                      >
-                        <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-all ${
-                          notifSettings.bossAlert ? 'left-5.5 translate-x-[22px]' : 'left-0.5'
-                        }`} />
-                      </button>
+                      <ChicleToggle
+                        checked={!!notifSettings.bossAlert}
+                        onChange={() => handleToggleNotifSetting('bossAlert')}
+                        color="red"
+                        size="sm"
+                        ariaLabel="Alternar alerta de Boss"
+                      />
                     </div>
 
                     {/* Racha en peligro */}
@@ -669,16 +660,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                           <p className="text-[10px] text-slate-500">Alerta si llevas horas sin completar ninguna misión</p>
                         </div>
                       </div>
-                      <button
-                        onClick={() => handleToggleNotifSetting('streakAlert')}
-                        className={`chicle-btn w-10 h-5 rounded-full relative transition-colors flex-shrink-0 cursor-pointer ${
-                          notifSettings.streakAlert ? 'bg-orange-500' : 'bg-slate-700'
-                        }`}
-                      >
-                        <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-all ${
-                          notifSettings.streakAlert ? 'left-5.5 translate-x-[22px]' : 'left-0.5'
-                        }`} />
-                      </button>
+                      <ChicleToggle
+                        checked={!!notifSettings.streakAlert}
+                        onChange={() => handleToggleNotifSetting('streakAlert')}
+                        color="amber"
+                        size="sm"
+                        ariaLabel="Alternar alerta de racha en peligro"
+                      />
                     </div>
 
                     {/* Pomodoro completado */}
@@ -690,16 +678,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                           <p className="text-[10px] text-slate-500">Notificación al finalizar cada sesión de foco</p>
                         </div>
                       </div>
-                      <button
-                        onClick={() => handleToggleNotifSetting('pomodoroComplete')}
-                        className={`chicle-btn w-10 h-5 rounded-full relative transition-colors flex-shrink-0 cursor-pointer ${
-                          notifSettings.pomodoroComplete ? 'bg-emerald-500' : 'bg-slate-700'
-                        }`}
-                      >
-                        <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-all ${
-                          notifSettings.pomodoroComplete ? 'left-5.5 translate-x-[22px]' : 'left-0.5'
-                        }`} />
-                      </button>
+                      <ChicleToggle
+                        checked={!!notifSettings.pomodoroComplete}
+                        onChange={() => handleToggleNotifSetting('pomodoroComplete')}
+                        color="emerald"
+                        size="sm"
+                        ariaLabel="Alternar alerta de pomodoro completado"
+                      />
                     </div>
                   </div>
                 )}
@@ -805,17 +790,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     Desactiva orbes de energía pesados y partículas continuas para una interfaz sobria, sin distracciones y con mínimo consumo de GPU en móvil.
                   </p>
                 </div>
-                <button 
-                  type="button"
-                  onClick={() => {
+                <ChicleToggle
+                  checked={zenMode}
+                  onChange={() => {
                     soundFX.playClick();
                     toggleZenMode();
                   }}
-                  className={`chicle-btn w-12 h-6 rounded-full relative transition-colors flex-shrink-0 cursor-pointer ${zenMode ? 'bg-emerald-500' : 'bg-slate-700'}`}
+                  color="emerald"
+                  size="md"
+                  ariaLabel="Alternar Modo Zen"
                   title={zenMode ? 'Modo Zen activado' : 'Modo Zen desactivado'}
-                >
-                  <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-all ${zenMode ? 'left-6.5 translate-x-[24px]' : 'left-0.5'}`}></div>
-                </button>
+                />
               </div>
             </div>
           </div>
@@ -840,12 +825,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     Detecta déficits de hábitos y propone misiones secundarias limitadas de bonificación de XP.
                   </p>
                 </div>
-                <button 
-                  onClick={() => toggleSetting('enableDynamicQuests')}
-                  className={`chicle-btn w-12 h-6 rounded-full relative transition-colors flex-shrink-0 cursor-pointer ${settings.enableDynamicQuests ? 'bg-cyan-500' : 'bg-slate-700'}`}
-                >
-                  <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-all ${settings.enableDynamicQuests ? 'left-6.5 translate-x-[24px]' : 'left-0.5'}`}></div>
-                </button>
+                <ChicleToggle
+                  checked={!!settings.enableDynamicQuests}
+                  onChange={() => toggleSetting('enableDynamicQuests')}
+                  color="cyan"
+                  size="md"
+                  ariaLabel="Alternar Generador de Misiones Dinámicas"
+                />
               </div>
 
               {/* Familiar RPG */}
@@ -858,12 +844,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     Muestra un Familiar visual que evoluciona basándose en tu atributo dominante de maestría.
                   </p>
                 </div>
-                <button 
-                  onClick={() => toggleSetting('enableCompanion')}
-                  className={`chicle-btn w-12 h-6 rounded-full relative transition-colors flex-shrink-0 cursor-pointer ${settings.enableCompanion ? 'bg-purple-500' : 'bg-slate-700'}`}
-                >
-                  <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-all ${settings.enableCompanion ? 'left-6.5 translate-x-[24px]' : 'left-0.5'}`}></div>
-                </button>
+                <ChicleToggle
+                  checked={!!settings.enableCompanion}
+                  onChange={() => toggleSetting('enableCompanion')}
+                  color="purple"
+                  size="md"
+                  ariaLabel="Alternar Compañero / Familiar RPG"
+                />
               </div>
 
               {/* Modo Estricto */}
@@ -876,12 +863,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     Si fallas un hábito, las penalizaciones de racha y XP son más severas.
                   </p>
                 </div>
-                <button 
-                  onClick={() => toggleSetting('strictMode')}
-                  className={`chicle-btn w-12 h-6 rounded-full relative transition-colors flex-shrink-0 cursor-pointer ${settings.strictMode ? 'bg-red-500' : 'bg-slate-700'}`}
-                >
-                  <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-all ${settings.strictMode ? 'left-6.5 translate-x-[24px]' : 'left-0.5'}`}></div>
-                </button>
+                <ChicleToggle
+                  checked={!!settings.strictMode}
+                  onChange={() => toggleSetting('strictMode')}
+                  color="red"
+                  size="md"
+                  ariaLabel="Alternar Modo Estricto"
+                />
               </div>
             </div>
 
