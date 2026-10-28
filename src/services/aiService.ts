@@ -646,60 +646,57 @@ export async function forgeKaiFromImage(params: {
 
   const { keywordsEn, vectorRulesEs } = getStyleDirectives(artStyle);
 
-  // 3. Prompt Maestro Multimodal "Object-As-Body"
+  // 3. Prompt Maestro Multimodal "Object-As-Body" de Alta Definición
   const systemInstructions = `
-ERES UN DIRECTOR DE ARTE DE ÉLITE Y MAESTRO EN CONCEPT ART DE VIDEOJUEGOS (NIVEL NINTENDO / RIOT GAMES).
+ERES UN ILUSTRADOR Y DISEÑADOR DE PERSONAJES SENIOR DE NINTENDO Y CARTOON NETWORK.
+Transforma este objeto real fotografiado en un personaje legendario en código SVG puro (viewBox="0 0 300 300").
 
-DIRECTIVA MAESTRA "OBJECT-AS-BODY" (REGLA DE ORO 80/20):
-1. OBSERVA CON DETENIMIENTO LA FOTOGRAFÍA ADJUNTA:
-   - Identifica con precisión matemática el OBJETO REAL presente (su silueta geométrica, materiales, relieves, tapas, boquillas, hendiduras y sus colores reales exactos).
-2. TRANSFORMA ESE MISMO OBJETO EN UN PERSONAJE VIVO:
-   - ¡ESTRICTAMENTE PROHIBIDO reemplazar el objeto por un animal genérico, un oso, un duende o una figura humana!
-   - El chasis y cuerpo físico del objeto fotografiado DEBE SER EL 80% DEL CUERPO Y CABEZA DEL PERSONAJE.
-   - Si es un vape o encendedor, su boquilla/tapa metálica ES su casco, cresta o cabeza; su cuerpo plástico/metálico ES su torso y armadura, y sus logotipos reales son sus emblemas heráldicos.
-   - Integra un rostro expresivo directamente en el frente del objeto, y añade extremidades con VOLUMEN ANATÓMICO REAL (músculos, mangas, guanteletes de combate o botas de acción que nazcan orgánicamente de la base del chasis).
-   - ¡PROHIBICIÓN TOTAL DE BRAZOS O PIERNAS DE ALAMBRE ("PALO Y BOLITA")! Cada extremidad debe tener masa física tridimensional.
+REGLAS ARTÍSTICAS VITALES (NIVEL ESTUDIO):
+1. EL OBJETO ES EL CUERPO (80/20):
+   - Identifica el objeto fotografiado (su chasis, boquilla, tapas, botones, logotipos, colores y textos exactos).
+   - El torso y cabeza ES el objeto real con volumen 3D (<linearGradient> o <radialGradient> para simular relieve cilíndrico o prismático).
+   - Sus piezas superiores (boquillas metálicas, tapas, ruedas o botones) conforman su casco cromado, corona o armadura mecánica.
+   - Replica con fidelidad los textos, estampados o marcas visibles en el objeto (como el lema serigrafiado, franjas o logotipos).
+2. ROSTRO HEROICO CON ALMA:
+   - Ojos grandes y expresivos estilo Nintendo/Anime con esclerótica blanca, iris degradado de color vivo, pupila oscura y destellos blancos especulares (<circle fill="#ffffff"/>).
+   - Cejas con actitud y boca pícara o sonrisa con dientecito/lengua cartoon.
+3. EXTREMIDADES CON VOLUMEN REAL:
+   - ¡PROHIBIDAS LAS LÍNEAS DE ALAMBRE ("PALO Y BOLITA")!
+   - Brazos y piernas con masa anatómica y sombreado cel-shading en 2 tonos.
+   - Guantes blancos gruesos de acción (estilo Mario / Sonic / Cuphead) con muñequeras y nudillos.
+   - Zapatillas o botas deportivas estilizadas con suela blanca en la base.
+4. ILUMINACIÓN Y FLOTACIÓN:
+   - Si es un objeto de fuego o energía (encendedor, vape), añade una flama viva o penacho brillante estilizado en la cúspide.
+   - Sombra de contacto suave en la base (<ellipse cy="275" ...>) para flotar con presencia sólida.
+   - 100% libre de <rect> de fondo sólido exterior (debe ser transparente).
 
-ESTILO VISUAL REQUERIDO (${artStyle.toUpperCase()}):
-${vectorRulesEs}
 ${promptDescription ? `- Detalle especial del operador: "${promptDescription}".` : ''}
 
-DIRECTIVA DEL CÓDIGO VECTORIAL SVG (viewBox="0 0 240 240"):
-- Genera código SVG puro, centrado, 100% libre de <rect> de fondo sólido.
-- Estructura el SVG en capas semánticas ordenadas:
-  * <defs>: gradientes <linearGradient> o <radialGradient> para simular volumen, relieve e iluminación.
-  * <g id="back-limbs">: extremidades traseras con volumen anatómico y sombreado cel-shaded.
-  * <g id="object-chassis">: el cuerpo y chasis fiel del objeto fotografiado en perspectiva 3/4 con sus colores reales y relieves.
-  * <g id="expressive-face">: rostro integrado con ojos vivos detallados (iris degradado + destellos blancos) y boca con actitud.
-  * <g id="front-limbs">: extremidades delanteras firmes, guanteletes o garras con masa física y contorno definido.
-  * Sombra de flotación suave en la base: <ellipse cx="120" cy="225" rx="42" ry="7" fill="#000000" opacity="0.25"/>
-
-RESPONDE ÚNICAMENTE CON ESTE JSON VÁLIDO (SIN TEXTO EXTRA):
-{
-  "detectedObject": "Nombre exacto del objeto identificado en español",
-  "characterConcept": "Descripción de cómo el objeto cobró vida en este estilo",
-  "epicName": "Nombre memorable del compañero (máx 24 caracteres)",
-  "personalityQuote": "Frase legendaria corta representativa del personaje",
-  "primaryColor": "#hexColorPrincipalDelObjeto",
-  "secondaryColor": "#hexColorSecundario",
-  "artStyle": "${artStyle}",
-  "illustrationPrompt": "Masterpiece character design of an epic living companion whose body IS the exact photographed [describe object, parts and real colors], ${keywordsEn}, object-as-body concept, heroic full body standing pose, dynamic 3/4 stance, sturdy limbs with thick gloves and boots, isolated on solid pure flat black background #000000, zero glow, sharp crisp edges, 8k resolution",
-  "svg": "<svg viewBox=\"0 0 240 240\" width=\"100%\" height=\"100%\" xmlns=\"http://www.w3.org/2000/svg\">...</svg>"
-}
+ESTRUCTURA EXACTA DE TU RESPUESTA:
+===METADATA===
+OBJECT: Nombre exacto del objeto identificado en español
+NAME: Nombre memorable del personaje (máx 24 caracteres)
+QUOTE: Frase carismática corta del personaje
+PRIMARY_COLOR: #hex
+SECONDARY_COLOR: #hex
+===SVG===
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="100%" height="100%">
+...
+</svg>
 `;
 
-  let jsonResult: string | null = null;
+  let rawResult: string | null = null;
   let lastErrorMessage = '';
 
-  const CANDIDATE_MODELS = ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-3.8-flash', 'gemini-flash-latest'];
+  const CANDIDATE_MODELS = ['gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-flash-latest'];
 
-  // 1. Análisis Multimodal Primario con Gemini Developer API
+  // 1. Análisis e Ilustración Multimodal Primaria con Gemini Developer API
   const apiKeyToTry = getEffectiveGeminiApiKey();
   if (apiKeyToTry) {
     for (const modelName of CANDIDATE_MODELS) {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 25000);
+        const timeoutId = setTimeout(() => controller.abort(), 35000);
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKeyToTry}`;
         const res = await fetch(url, {
           method: 'POST',
@@ -713,7 +710,7 @@ RESPONDE ÚNICAMENTE CON ESTE JSON VÁLIDO (SIN TEXTO EXTRA):
                 ],
               },
             ],
-            generationConfig: { temperature: 0.25, maxOutputTokens: 8192 },
+            generationConfig: { temperature: 0.65, maxOutputTokens: 16384 },
           }),
           signal: controller.signal,
         });
@@ -723,8 +720,8 @@ RESPONDE ÚNICAMENTE CON ESTE JSON VÁLIDO (SIN TEXTO EXTRA):
           const data = await res.json();
           const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
           if (text && text.trim()) {
-            jsonResult = text.trim();
-            console.log(`[Gemini API Multimodal] ✓ Objeto analizado con éxito usando ${modelName}`);
+            rawResult = text.trim();
+            console.log(`[Gemini API Multimodal] ✓ Personaje ilustrado con éxito usando ${modelName}`);
             break;
           }
         } else {
@@ -738,14 +735,14 @@ RESPONDE ÚNICAMENTE CON ESTE JSON VÁLIDO (SIN TEXTO EXTRA):
   }
 
   // 2. Respaldo Firebase AI Logic si el directo no respondió
-  if (!jsonResult && firebaseAI) {
+  if (!rawResult && firebaseAI) {
     for (const modelName of CANDIDATE_MODELS) {
       try {
         const model = getGenerativeModel(firebaseAI, {
           model: modelName,
           generationConfig: {
-            temperature: 0.25,
-            maxOutputTokens: 8192,
+            temperature: 0.65,
+            maxOutputTokens: 16384,
           },
         });
 
@@ -759,8 +756,8 @@ RESPONDE ÚNICAMENTE CON ESTE JSON VÁLIDO (SIN TEXTO EXTRA):
         const result = await model.generateContent([systemInstructions, imagePart]);
         const text = result.response.text();
         if (text && text.trim()) {
-          jsonResult = text.trim();
-          console.log(`[Firebase AI Logic] ✓ Objeto analizado con éxito usando ${modelName}`);
+          rawResult = text.trim();
+          console.log(`[Firebase AI Logic] ✓ Personaje ilustrado con éxito usando ${modelName}`);
           break;
         }
       } catch (err: any) {
@@ -770,7 +767,7 @@ RESPONDE ÚNICAMENTE CON ESTE JSON VÁLIDO (SIN TEXTO EXTRA):
     }
   }
 
-  if (!jsonResult) {
+  if (!rawResult) {
     throw new Error(
       lastErrorMessage
         ? `Error en Gemini Vision: ${lastErrorMessage}`
@@ -778,41 +775,76 @@ RESPONDE ÚNICAMENTE CON ESTE JSON VÁLIDO (SIN TEXTO EXTRA):
     );
   }
 
-  // 3. Procesar respuesta JSON de la IA
-  let parsed: any = null;
-  try {
-    let rawJson = jsonResult;
-    const fenceMatch = rawJson.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-    if (fenceMatch) {
-      rawJson = fenceMatch[1];
+  // 3. Extracción de Metadatos y Código SVG Puro
+  let detectedObject = 'Objeto Escaneado';
+  let epicName = promptDescription ? `KAI ${promptDescription.slice(0, 16)}` : 'KAI Legendario';
+  let personalityQuote = `¡Con toda la energía y presencia del Multiverso!`;
+  let primaryColor = '#FF4757';
+  let secondaryColor = '#2ED573';
+  let svgContent: string | undefined = undefined;
+
+  // Si viene con el separador estructurado ===SVG===
+  if (rawResult.includes('===SVG===')) {
+    const parts = rawResult.split(/===SVG===/i);
+    const metaBlock = parts[0] || '';
+    const svgBlock = parts[1] || '';
+
+    const objMatch = metaBlock.match(/OBJECT:\s*(.+)/i);
+    if (objMatch) detectedObject = objMatch[1].trim();
+
+    const nameMatch = metaBlock.match(/NAME:\s*(.+)/i);
+    if (nameMatch) epicName = nameMatch[1].trim().slice(0, 28);
+
+    const quoteMatch = metaBlock.match(/QUOTE:\s*(.+)/i);
+    if (quoteMatch) personalityQuote = quoteMatch[1].trim();
+
+    const pColorMatch = metaBlock.match(/PRIMARY_COLOR:\s*(#[0-9a-fA-F]{3,8})/i);
+    if (pColorMatch) primaryColor = pColorMatch[1].trim();
+
+    const sColorMatch = metaBlock.match(/SECONDARY_COLOR:\s*(#[0-9a-fA-F]{3,8})/i);
+    if (sColorMatch) secondaryColor = sColorMatch[1].trim();
+
+    svgContent = svgBlock.trim();
+  } else {
+    // Si no contiene el delimitador, buscar bloque <svg> directamente
+    const svgMatch = rawResult.match(/<svg[\s\S]*<\/svg>/i);
+    if (svgMatch) {
+      svgContent = svgMatch[0].trim();
+    } else if (rawResult.includes('<svg')) {
+      const startIndex = rawResult.indexOf('<svg');
+      svgContent = rawResult.substring(startIndex).trim();
+      if (!svgContent.endsWith('</svg>')) {
+        svgContent += '</svg>';
+      }
     }
-    const firstBrace = rawJson.indexOf('{');
-    const lastBrace = rawJson.lastIndexOf('}');
-    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-      rawJson = rawJson.substring(firstBrace, lastBrace + 1);
-    }
-    parsed = JSON.parse(rawJson.trim());
-  } catch {
-    throw new Error('La IA reconoció el objeto pero devolvió un formato no válido. Intenta nuevamente.');
   }
 
-  const detectedObject = parsed.detectedObject ? String(parsed.detectedObject).trim() : 'Objeto Escaneado';
-  const characterConcept = parsed.characterConcept ? String(parsed.characterConcept).trim() : `${detectedObject} con vida propia`;
-  const epicName = (parsed.epicName || parsed.name || (promptDescription ? `KAI ${promptDescription.slice(0, 16)}` : `KAI ${detectedObject.slice(0, 16)}`)).slice(0, 32);
-  const personalityQuote = parsed.personalityQuote || `¡He despertado del mundo real en el Multiverso bajo el estilo ${artStyle.toUpperCase()}!`;
-  const primaryColor = parsed.primaryColor || '#00f0ff';
-  const secondaryColor = parsed.secondaryColor || '#ec4899';
-  const illustrationPrompt = parsed.illustrationPrompt || `Masterpiece character of ${detectedObject}, ${keywordsEn}, full body, isolated on solid pure black background #000000`;
+  // Limpiar cercas de markdown si quedaron residuos
+  if (svgContent) {
+    svgContent = svgContent.replace(/^```(?:svg|xml|html)?\s*/i, '').replace(/\s*```$/i, '').trim();
+    if (!svgContent.startsWith('<svg')) {
+      svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="100%" height="100%">${svgContent}</svg>`;
+    }
+    if (!svgContent.endsWith('</svg>')) {
+      svgContent += '</svg>';
+    }
+  }
 
-  // Notificar al cliente que el Paso 1 (Visión) culminó exitosamente con el objeto detectado
+  // Si no se pudo extraer SVG, arrojar error descriptivo
+  if (!svgContent) {
+    throw new Error('La IA analizó el objeto pero no pudo completar el diseño vectorial. Intenta de nuevo.');
+  }
+
+  // Notificar progreso a la UI
   if (onProgress) {
     onProgress('vision', { detectedObject });
     onProgress('generation', { detectedObject });
   }
 
-  // 4. Intento de Generación Nativa de Imagen con Gemini (Motor A)
+  // 4. Intento de Generación Nativa de Imagen con Gemini (Motor A opcional para cuando haya facturación)
   let imageUrl: string | undefined = undefined;
   try {
+    const illustrationPrompt = `Masterpiece character of ${detectedObject}, ${keywordsEn}, full body, isolated on solid pure black background #000000`;
     const nativeImg = await generateGeminiNativeImage({
       cleanBase64,
       effectiveMime,
@@ -822,25 +854,8 @@ RESPONDE ÚNICAMENTE CON ESTE JSON VÁLIDO (SIN TEXTO EXTRA):
       imageUrl = nativeImg;
       console.log('[Forja Neural] ✓ Imagen nativa generada y recortada exitosamente.');
     }
-  } catch (imgErr) {
-    console.warn('[Forja Neural] Modalidad de imagen nativa no disponible, activando motor SVG esculpido:', imgErr);
-  }
-
-  // 5. Procesamiento del código SVG Esculpido (Motor B / Respaldo estructural)
-  const rawSvg = parsed.svg || parsed.svgContent || parsed.svg_code;
-  let svgContent: string | undefined = undefined;
-
-  if (typeof rawSvg === 'string' && rawSvg.trim()) {
-    svgContent = rawSvg.trim();
-    svgContent = svgContent.replace(/^```(?:svg|xml|html)?\s*/i, '').replace(/\s*```$/i, '').trim();
-    if (!svgContent.startsWith('<svg')) {
-      svgContent = `<svg viewBox="0 0 240 240" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">${svgContent}</svg>`;
-    }
-  }
-
-  // Validación final: si no hubo imagen ni SVG válido, arrojar error descriptivo
-  if (!imageUrl && !svgContent) {
-    throw new Error(`La IA reconoció el objeto "${detectedObject}", pero no generó el diseño para el estilo "${artStyle}". Por favor intenta de nuevo.`);
+  } catch {
+    // Si no hay cuota de imagen, sigue con el SVG sin interrumpir
   }
 
   return {
@@ -848,12 +863,12 @@ RESPONDE ÚNICAMENTE CON ESTE JSON VÁLIDO (SIN TEXTO EXTRA):
     sourceType: 'image',
     createdAt: new Date().toISOString(),
     detectedObject,
-    characterConcept,
+    characterConcept: `${detectedObject} con vida propia`,
     artStyle,
     personalityQuote,
     primaryColor,
     secondaryColor,
-    mood: (parsed.mood as KaiTemperament) || mood || 'stoic',
+    mood: mood || 'stoic',
     renderBranch: imageUrl ? 'illustration' : 'vector',
     imageUrl: imageUrl || undefined,
     svgContent: svgContent || undefined,
