@@ -304,9 +304,14 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
     const currentRight = isDesktop ? 20 : 10;
     const currentBottom = isDesktop ? 24 : (navigationMode === 'classic' ? 80 : 16);
 
+    // KAI tiene tamaño 64 en el menú desplegado (svgWidth ~102px, svgHeight ~109px).
+    // Su centro real está a la mitad exacta de su masa visual:
+    const kaiHalfWidth = 51;
+    const kaiHalfHeight = 55;
+
     // Centro exacto absoluto de la pantalla tanto en móvil como en computadora
-    const targetX = -(viewportDims.width / 2 - (currentRight + 24));
-    const targetY = -(viewportDims.height / 2 - (currentBottom + 24));
+    const targetX = -(viewportDims.width / 2 - (currentRight + kaiHalfWidth));
+    const targetY = -(viewportDims.height / 2 - (currentBottom + kaiHalfHeight));
 
     return {
       x: Math.round(targetX),

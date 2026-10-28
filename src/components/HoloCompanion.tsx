@@ -444,21 +444,40 @@ export const HoloCompanion: React.FC<HoloCompanionProps> = ({
           } as React.CSSProperties}
           className="relative z-10 flex items-center justify-center"
         >
-          <KaiVectorGraphics
-            shapeId={effectiveShape}
-            activeColor={activeColor}
-            secondaryColor={activeSecondaryColor}
-            glowFilterId={`${gradientId}-neon-glow`}
-            isHovered={isHovered}
-            justClicked={justClicked}
-            eyeOffset={eyeOffset}
-            isTrackingMouse={isTrackingMouse}
-            isFocusTrance={auraState === 'focus_trance'}
-            has21Days={has21Days}
-            has66Days={has66Days}
-            ascensionCrystalsCount={ascensionCrystalsCount}
-            customForm={effectiveCustomForm}
-          />
+          {effectiveShape === 'custom' && effectiveCustomForm?.svgContent ? (
+            <div
+              className="w-full h-full flex items-center justify-center [&>svg]:w-full [&>svg]:h-full [&>svg]:overflow-visible select-none pointer-events-none"
+              style={{
+                filter: `drop-shadow(0 0 12px ${activeColor}70)`,
+              }}
+              dangerouslySetInnerHTML={{ __html: effectiveCustomForm.svgContent }}
+            />
+          ) : effectiveShape === 'custom' && effectiveCustomForm?.imageUrl ? (
+            <img
+              src={effectiveCustomForm.imageUrl}
+              alt={effectiveCustomForm.name || 'KAI'}
+              className="w-full h-full object-contain pointer-events-none select-none"
+              style={{
+                filter: `drop-shadow(0 0 12px ${activeColor}80)`,
+              }}
+            />
+          ) : (
+            <KaiVectorGraphics
+              shapeId={effectiveShape}
+              activeColor={activeColor}
+              secondaryColor={activeSecondaryColor}
+              glowFilterId={`${gradientId}-neon-glow`}
+              isHovered={isHovered}
+              justClicked={justClicked}
+              eyeOffset={eyeOffset}
+              isTrackingMouse={isTrackingMouse}
+              isFocusTrance={auraState === 'focus_trance'}
+              has21Days={has21Days}
+              has66Days={has66Days}
+              ascensionCrystalsCount={ascensionCrystalsCount}
+              customForm={effectiveCustomForm}
+            />
+          )}
         </div>
       </motion.div>
 
