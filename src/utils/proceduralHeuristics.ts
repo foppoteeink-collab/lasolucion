@@ -1,5 +1,5 @@
 // Heuristic engine for offline, client-side, and procedural fallbacks
-import { autoArrangeSchedule, cleanScheduleTitle } from './timeUtils';
+import { autoArrangeSchedule, cleanScheduleTitle, shareDays } from './timeUtils';
 
 export const JUNG_ARCHETYPE_PROFILES: Record<string, {
   title: string;
@@ -374,6 +374,10 @@ export function generateProceduralSchedule(userPrompt: string, userContext: any,
     .replace(/;\s*/g, '\n')
     // Protect "desconexión (nocturna)? y (dormir|descanso|acostarse)" from getting broken into fragments
     .replace(/desconexi[oó]n\s+(?:nocturna\s+)?y\s+(?:dormir|descanso|acostarse)/gi, 'Desconexión nocturna y descanso')
+    // Protect "ejercicio y entrenamiento / gimnasio"
+    .replace(/(?:ejercicio|deporte)\s+y\s+(?:entrenamiento|gimnasio|gym)/gi, 'Entrenamiento físico y deporte')
+    // Protect "cena saludable y tiempo libre / descanso"
+    .replace(/cena\s+(?:saludable\s+)?y\s+(?:tiempo\s+libre|descanso|lectura)/gi, 'Cena saludable y descanso')
     // Smart split of work with lunch: "trabajo de 09:00 a 17:00 con almuerzo de 13:00 a 14:00"
     .replace(/((?:bloque\s+laboral|trabajo|oficina|jornada|estudio)[^.\n]*?)\s+de\s+(\d{1,2}(?::\d{2})?)\s*a\s*(\d{1,2}(?::\d{2})?)\s+con\s+almuerzo\s+de\s+(\d{1,2}(?::\d{2})?)\s*a\s*(\d{1,2}(?::\d{2})?)/gi,
       (_m, prefix, sw, ew, sl, el) => `${prefix} (Turno Mañana) de ${sw} a ${sl}\nAlmuerzo y Pausa de Recarga de ${sl} a ${el}\n${prefix} (Turno Tarde) de ${el} a ${ew}`)
@@ -569,7 +573,7 @@ export function generateProceduralSchedule(userPrompt: string, userContext: any,
     let cleanTitle = cleanLine
       .replace(timeRangeRegex, '')
       .replace(explicitSingleTimeRegex, '')
-      .replace(/(?:los\s+d[ií]as\s+|los\s+|el\s+|de\s+)?(?:lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bados?|domingos?|lun|mar|mi[eé]|jue|vie|s[aá]b|dom)(?:[\s,y]+(?:a\s+)?(?:lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bados?|domingos?|lun|mar|mi[eé]|jue|vie|s[aá]b|dom))*/gi, '')
+      .replace(/\b(?:los\s+d[ií]as\s+|los\s+|el\s+|de\s+)?(?:lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bados?|domingos?|lun|mar|mi[eé]|jue|vie|s[aá]b|dom)\b(?:[\s,y]+(?:a\s+)?\b(?:lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bados?|domingos?|lun|mar|mi[eé]|jue|vie|s[aá]b|dom)\b)*/gi, '')
       .replace(/(?:l-v|lunes a viernes|fines de semana|fin de semana|laborables|todos los d[ií]as|a diario|diario)/gi, '')
       .replace(/con\s+desglose\s+por\s+grupo\s+muscular\s+seg[uú]n\s+el\s+d[ií]a/gi, '(Rutina por Grupo Muscular)')
       .replace(/\s+/g, ' ')
@@ -608,32 +612,21 @@ export function generateProceduralSchedule(userPrompt: string, userContext: any,
     });
   });
 
-  // Assign smart non-overlapping time blocks to any items that lacked an explicit timeBlock,
-  // and resolve overlaps ONLY among items that share days!
+  // 1. Keep explicit user time blocks normalized and register them
   const occupiedSlots: Array<{ start: number; end: number; freq: string; specificDays?: number[] }> = [];
 
   parsedHabits.forEach(h => {
-    const conflictingOccupied = occupiedSlots.filter(o =>
-      shareDays(h.frequencyType, h.specificDays, o.freq, o.specificDays)
-    );
-
     if (h.timeBlock) {
+      const norm = normalizeTimeBlock(h.timeBlock);
+      if (norm) h.timeBlock = norm;
       const r = parseRangeToMins(h.timeBlock);
       if (r) {
-        const overlaps = conflictingOccupied.some(o => r.start < o.end && o.start < r.end);
-        if (!overlaps) {
-          occupiedSlots.push({ ...r, freq: h.frequencyType, specificDays: h.specificDays });
-          h.timeBlock = `${formatMinsToHHMM(r.start)} - ${formatMinsToHHMM(r.end)}`;
-        } else {
-          const dur = Math.max(30, r.end - r.start);
-          const adjusted = findNonOverlappingSlot(r.start, dur, conflictingOccupied, 5 * 60, 23 * 60 + 45);
-          occupiedSlots.push({ ...adjusted, freq: h.frequencyType, specificDays: h.specificDays });
-          h.timeBlock = `${formatMinsToHHMM(adjusted.start)} - ${formatMinsToHHMM(adjusted.end)}`;
-        }
+        occupiedSlots.push({ ...r, freq: h.frequencyType, specificDays: h.specificDays });
       }
     }
   });
 
+  // 2. Only assign slots to items that genuinely lacked an explicit time block
   parsedHabits.forEach(h => {
     if (!h.timeBlock) {
       const conflictingOccupied = occupiedSlots.filter(o =>

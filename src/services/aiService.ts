@@ -845,6 +845,7 @@ SECONDARY_COLOR: #hex
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="100%" height="100%">
 ...
 </svg>
+(IMPORTANTE: Tu respuesta concluye estrictamente en </svg>. NO añadas ===END=== ni ningún texto después de </svg>).
 `;
 
   let rawResult: string | null = null;
@@ -975,21 +976,31 @@ SECONDARY_COLOR: #hex
     } else if (rawResult.includes('<svg')) {
       const startIndex = rawResult.indexOf('<svg');
       svgContent = rawResult.substring(startIndex).trim();
-      if (!svgContent.endsWith('</svg>')) {
-        svgContent += '</svg>';
-      }
     }
   }
 
-  // Limpiar cercas de markdown si quedaron residuos
+  // Limpiar y aislar estrictamente el código SVG puro (eliminando cualquier ===END=== o texto residual)
   if (svgContent) {
+    // Eliminar fences de markdown
     svgContent = svgContent.replace(/^```(?:svg|xml|html)?\s*/i, '').replace(/\s*```$/i, '').trim();
-    if (!svgContent.startsWith('<svg')) {
-      svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="100%" height="100%">${svgContent}</svg>`;
+
+    // Recorte estricto de apertura <svg a cierre </svg>
+    const openIdx = svgContent.indexOf('<svg');
+    const closeIdx = svgContent.lastIndexOf('</svg>');
+
+    if (openIdx !== -1 && closeIdx !== -1 && closeIdx > openIdx) {
+      svgContent = svgContent.substring(openIdx, closeIdx + 6).trim();
+    } else if (openIdx !== -1) {
+      let trimmed = svgContent.substring(openIdx);
+      trimmed = trimmed.replace(/={2,}\s*[a-zA-Z0-9_\-]+\s*={2,}[\s\S]*/g, '').trim();
+      svgContent = trimmed.endsWith('</svg>') ? trimmed : `${trimmed}</svg>`;
+    } else {
+      let trimmed = svgContent.replace(/={2,}\s*[a-zA-Z0-9_\-]+\s*={2,}[\s\S]*/g, '').trim();
+      svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="100%" height="100%">${trimmed}</svg>`;
     }
-    if (!svgContent.endsWith('</svg>')) {
-      svgContent += '</svg>';
-    }
+
+    // Purgar de raíz cualquier marcador delimitador residual (ej: ===END===)
+    svgContent = svgContent.replace(/={2,}\s*[a-zA-Z0-9_\-]+\s*={2,}/g, '').trim();
   }
 
   // Si no se pudo extraer SVG, arrojar error descriptivo

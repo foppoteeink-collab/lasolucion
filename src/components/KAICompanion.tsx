@@ -45,13 +45,22 @@ export function injectAuraColorIntoSvg(
   cleaned = cleaned.replace(/^```(?:svg|xml|html)?\s*/i, '').replace(/\s*```$/i, '').trim();
 
   // Extraer el elemento <svg> si está embebido en texto
-  const svgMatch = cleaned.match(/<svg[\s\S]*?<\/svg>/i);
-  if (svgMatch) {
-    cleaned = svgMatch[0];
-  } else if (!cleaned.startsWith('<svg')) {
-    // Si la IA devolvió solo los elementos internos (sin la etiqueta raíz <svg>)
-    cleaned = `<svg viewBox="0 0 160 170" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">${cleaned}</svg>`;
+  const firstOpen = cleaned.indexOf('<svg');
+  const lastClose = cleaned.lastIndexOf('</svg>');
+  if (firstOpen !== -1 && lastClose !== -1 && lastClose > firstOpen) {
+    cleaned = cleaned.substring(firstOpen, lastClose + 6);
+  } else {
+    const svgMatch = cleaned.match(/<svg[\s\S]*?<\/svg>/i);
+    if (svgMatch) {
+      cleaned = svgMatch[0];
+    } else if (!cleaned.startsWith('<svg')) {
+      // Si la IA devolvió solo los elementos internos (sin la etiqueta raíz <svg>)
+      cleaned = `<svg viewBox="0 0 160 170" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">${cleaned}</svg>`;
+    }
   }
+
+  // Purgar de raíz cualquier delimitador residual (ej: ===END===)
+  cleaned = cleaned.replace(/={2,}\s*[a-zA-Z0-9_\-]+\s*={2,}/g, '').trim();
 
   const eyeX = options?.eyeOffset?.x !== undefined ? options.eyeOffset.x.toFixed(2) : '0';
   const eyeY = options?.eyeOffset?.y !== undefined ? options.eyeOffset.y.toFixed(2) : '0';

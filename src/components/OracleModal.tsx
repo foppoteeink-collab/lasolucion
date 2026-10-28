@@ -497,30 +497,16 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
       }
     });
 
-    // Fallback: if all habits were for specific days that don't include currentDateStr (e.g. Mon-Fri schedule created on Sunday),
-    // still inject them into currentDateStr so the user sees their organized schedule immediately on the active screen!
+    // If all habits were for specific days that don't include currentDateStr (e.g. Mon-Fri schedule created on Sunday),
+    // navigate to the first active day in the window so the user sees their organized schedule immediately without polluting their day off!
     if (currentDayInsertedCount === 0 && suggestedHabits.length > 0) {
-      suggestedHabits.forEach((h, index) => {
-        const dayExisting = (updatedTasksByDate[currentDateStr] || []).filter(
-          t => !isDuplicateActivity(t, { title: h.title, timeBlock: h.timeBlock })
-        );
-        const freshTask: TaskItem = {
-          id: `oracle-task-${currentDateStr}-${index}-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-          title: h.title,
-          category: (h.category === 'habito' ? 'rutina' : h.category) as any,
-          description: h.description || '',
-          xpReward: h.xpReward || 20,
-          coinReward: h.coinReward || 10,
-          completed: false,
-          completedAt: undefined,
-          timeBlock: normalizeTimeBlock(h.timeBlock) || h.timeBlock,
-          isHabit: false,
-          quickIcon: h.quickIcon
-        };
-        updatedTasksByDate[currentDateStr] = gameEngine.sortTasksChronologically(
-          deduplicateTasksForDay([...dayExisting, freshTask])
-        );
-      });
+      for (let i = 1; i <= 7; i++) {
+        const candidateDateStr = addDaysToDateString(currentDateStr, i);
+        if (updatedTasksByDate[candidateDateStr] && updatedTasksByDate[candidateDateStr].length > 0) {
+          taskStore.setCurrentViewDate(candidateDateStr);
+          break;
+        }
+      }
     }
 
     taskStore.setTasksByDate(sanitizeTasksByDate(updatedTasksByDate));

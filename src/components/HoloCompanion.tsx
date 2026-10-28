@@ -450,7 +450,18 @@ export const HoloCompanion: React.FC<HoloCompanionProps> = ({
               style={{
                 filter: `drop-shadow(0 0 12px ${activeColor}70)`,
               }}
-              dangerouslySetInnerHTML={{ __html: effectiveCustomForm.svgContent }}
+              dangerouslySetInnerHTML={{
+                __html: (() => {
+                  const raw = effectiveCustomForm.svgContent;
+                  if (!raw) return '';
+                  const firstSvg = raw.indexOf('<svg');
+                  const lastSvg = raw.lastIndexOf('</svg>');
+                  if (firstSvg !== -1 && lastSvg !== -1 && lastSvg > firstSvg) {
+                    return raw.substring(firstSvg, lastSvg + 6);
+                  }
+                  return raw.replace(/={2,}\s*[a-zA-Z0-9_\-]+\s*={2,}/g, '').trim();
+                })(),
+              }}
             />
           ) : effectiveShape === 'custom' && effectiveCustomForm?.imageUrl ? (
             <img
