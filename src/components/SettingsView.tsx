@@ -1462,6 +1462,28 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   </ol>
                 </div>
               )}
+
+              <div className="pt-3 border-t border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="space-y-0.5">
+                  <p className="text-[11px] font-bold text-slate-300">Caché & Actualizaciones en Vivo</p>
+                  <p className="text-[10px] text-slate-500">Si no ves los cambios más recientes o la app muestra una versión vieja en tu equipo.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    soundFX.playClick();
+                    if ((window as any).purgeAppCacheAndReload) {
+                      await (window as any).purgeAppCacheAndReload();
+                    } else {
+                      window.location.reload();
+                    }
+                  }}
+                  className="chicle-btn flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-950/60 hover:bg-cyan-900/80 border border-cyan-800/80 hover:border-cyan-400 text-[11px] font-mono text-cyan-300 transition-colors cursor-pointer shrink-0"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  Vaciar Caché y Forzar Actualización
+                </button>
+              </div>
             </div>
 
             {/* 7. ZONA CRÍTICA */}

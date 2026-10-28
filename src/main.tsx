@@ -22,13 +22,16 @@ if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
   });
 
   const checkSWUpdate = () => {
-    navigator.serviceWorker.getRegistration().then((reg) => {
-      if (reg) {
-        reg.update().catch(() => {});
+    navigator.serviceWorker.ready.then((reg) => {
+      if (reg.waiting) {
+        reg.waiting.postMessage({ type: 'SKIP_WAITING' });
       }
-    });
+      reg.update().catch(() => {});
+    }).catch(() => {});
   };
 
+  // Check immediately upon script execution, and also on load, focus, and visibility change
+  checkSWUpdate();
   window.addEventListener('load', checkSWUpdate);
   window.addEventListener('focus', checkSWUpdate);
   document.addEventListener('visibilitychange', () => {
@@ -36,6 +39,27 @@ if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       checkSWUpdate();
     }
   });
+
+  // Global utility for hard clearing app cache and service workers
+  (window as any).purgeAppCacheAndReload = async () => {
+    try {
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (const reg of registrations) {
+          await reg.unregister();
+        }
+      }
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        for (const key of keys) {
+          await caches.delete(key);
+        }
+      }
+      window.location.href = window.location.pathname + '?v=' + Date.now();
+    } catch {
+      window.location.reload();
+    }
+  };
 }
 
 const rootElement = document.getElementById('root');
