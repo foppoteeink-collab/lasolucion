@@ -199,7 +199,7 @@ export const GoogleDriveSyncCard: React.FC = () => {
                 checkDriveBackup(res.accessToken);
               }
             }}
-            className="flex items-center justify-center gap-2.5 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-[0_0_15px_rgba(37,99,235,0.4)] transition-all cursor-pointer shrink-0"
+            className="chicle-btn flex items-center justify-center gap-2.5 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-[0_0_15px_rgba(37,99,235,0.4)] transition-all cursor-pointer shrink-0"
           >
             <LogIn className="w-4 h-4" />
             <span>Acceder con Google</span>
@@ -240,7 +240,7 @@ export const GoogleDriveSyncCard: React.FC = () => {
                 onClick={() => checkDriveBackup()}
                 disabled={isLoading}
                 title="Comprobar archivo en Drive"
-                className="p-2 rounded-lg bg-blue-950/60 hover:bg-blue-900/60 text-cyan-300 border border-blue-800 transition-colors cursor-pointer disabled:opacity-50"
+                className="chicle-btn p-2 rounded-lg bg-blue-950/60 hover:bg-blue-900/60 text-cyan-300 border border-blue-800 transition-colors cursor-pointer disabled:opacity-50"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
               </button>
@@ -253,7 +253,7 @@ export const GoogleDriveSyncCard: React.FC = () => {
               type="button"
               onClick={() => setShowUploadConfirm(true)}
               disabled={isLoading}
-              className="min-h-[46px] px-4 py-3 bg-[#002850] hover:bg-[#003870] text-cyan-300 hover:text-white font-black text-xs uppercase tracking-wider rounded-xl border border-cyan-600/50 hover:border-cyan-400 flex items-center justify-center gap-2.5 transition-all cursor-pointer shadow-sm disabled:opacity-50"
+              className="chicle-btn min-h-[46px] px-4 py-3 bg-[#002850] hover:bg-[#003870] text-cyan-300 hover:text-white font-black text-xs uppercase tracking-wider rounded-xl border border-cyan-600/50 hover:border-cyan-400 flex items-center justify-center gap-2.5 transition-all cursor-pointer shadow-sm disabled:opacity-50"
             >
               <Upload className="w-4 h-4 text-cyan-400" />
               <span>Guardar en Google Drive</span>
@@ -263,7 +263,7 @@ export const GoogleDriveSyncCard: React.FC = () => {
               type="button"
               onClick={handlePrepareDownload}
               disabled={isLoading}
-              className="min-h-[46px] px-4 py-3 bg-[#002244] hover:bg-[#003060] text-blue-300 hover:text-white font-black text-xs uppercase tracking-wider rounded-xl border border-blue-600/50 hover:border-blue-400 flex items-center justify-center gap-2.5 transition-all cursor-pointer shadow-sm disabled:opacity-50"
+              className="chicle-btn min-h-[46px] px-4 py-3 bg-[#002244] hover:bg-[#003060] text-blue-300 hover:text-white font-black text-xs uppercase tracking-wider rounded-xl border border-blue-600/50 hover:border-blue-400 flex items-center justify-center gap-2.5 transition-all cursor-pointer shadow-sm disabled:opacity-50"
             >
               <Download className="w-4 h-4 text-blue-400" />
               <span>Cargar desde Google Drive</span>
@@ -318,7 +318,7 @@ export const GoogleDriveSyncCard: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowUploadConfirm(false)}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl transition-colors cursor-pointer"
+                className="chicle-btn px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl transition-colors cursor-pointer"
               >
                 Cancelar
               </button>
@@ -326,7 +326,7 @@ export const GoogleDriveSyncCard: React.FC = () => {
                 type="button"
                 onClick={executeUpload}
                 disabled={isLoading}
-                className="px-5 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-black uppercase tracking-wider rounded-xl shadow-lg transition-all cursor-pointer flex items-center gap-2"
+                className="chicle-btn px-5 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-black uppercase tracking-wider rounded-xl shadow-lg transition-all cursor-pointer flex items-center gap-2"
               >
                 {isLoading && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
                 Confirmar y Guardar
@@ -369,14 +369,14 @@ export const GoogleDriveSyncCard: React.FC = () => {
                   setShowDownloadConfirm(false);
                   setPendingDownloadData(null);
                 }}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl transition-colors cursor-pointer"
+                className="chicle-btn px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl transition-colors cursor-pointer"
               >
                 Cancelar
               </button>
               <button
                 type="button"
                 onClick={executeDownload}
-                className="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black uppercase tracking-wider rounded-xl shadow-lg transition-all cursor-pointer"
+                className="chicle-btn px-5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black uppercase tracking-wider rounded-xl shadow-lg transition-all cursor-pointer"
               >
                 Sí, Cargar Datos
               </button>

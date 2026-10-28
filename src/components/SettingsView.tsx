@@ -39,6 +39,7 @@ import {
 } from '../utils/finance';
 import { useUIStore } from '../store/useUIStore';
 import { CloudSyncResult } from '../hooks/useCloudSync';
+import { useMoxenChicle } from '../hooks/useMoxenChicle';
 
 interface SettingsViewProps {
   settings: GameSettings;
@@ -59,6 +60,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   cloudSync: propCloudSync,
   onOpenKaiWorkshop,
 }) => {
+  const chicleContainerRef = useMoxenChicle<HTMLDivElement>();
   const { user, signInWithGoogle, signOut } = useAuth();
   const pwa = usePWAInstall();
   const [showIOSInstructions, setShowIOSInstructions] = useState(false);
@@ -382,7 +384,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   ];
 
   return (
-    <div className="space-y-6 pb-20">
+    <div ref={chicleContainerRef} className="space-y-6 pb-20">
       {/* HEADER & SUB-TABS NAVIGATION */}
       <div className="bg-[#00152b] rounded-2xl border border-cyan-500/20 p-3 sm:p-4 shadow-[0_4px_20px_rgba(0,0,0,0.35)] space-y-3">
         <div className="flex items-center justify-between px-1">
@@ -397,7 +399,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 soundFX.playClick();
                 setActiveSubTab('gameplay');
               }}
-              className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-mono font-bold bg-fuchsia-950/80 hover:bg-fuchsia-900 border border-fuchsia-500/50 text-fuchsia-300 transition-all cursor-pointer"
+              className="chicle-btn flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-mono font-bold bg-fuchsia-950/80 hover:bg-fuchsia-900 border border-fuchsia-500/50 text-fuchsia-300 transition-all cursor-pointer"
             >
               <ChevronLeft className="w-3.5 h-3.5" />
               <span>Volver a Configuración</span>
@@ -418,7 +420,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   soundFX.playClick();
                   setActiveSubTab(tab.id);
                 }}
-                className={`flex items-center justify-center gap-2 py-2.5 px-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
+                className={`chicle-btn flex items-center justify-center gap-2 py-2.5 px-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
                   isActive
                     ? 'bg-[#00284d] text-white border border-cyan-500/50 shadow-[0_0_15px_rgba(0,240,255,0.25)]'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-[#001830]'
@@ -470,7 +472,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     type="button"
                     onClick={handleTestAudio}
                     disabled={!soundEnabled}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all border ${
+                    className={`chicle-btn px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all border ${
                       !soundEnabled
                         ? 'opacity-40 cursor-not-allowed border-slate-800 text-slate-500'
                         : audioTesting
@@ -483,7 +485,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   </button>
                   <button 
                     onClick={toggleSound}
-                    className={`w-12 h-6 rounded-full relative transition-colors flex-shrink-0 cursor-pointer ${soundEnabled ? 'bg-cyan-500' : 'bg-slate-700'}`}
+                    className={`chicle-btn w-12 h-6 rounded-full relative transition-colors flex-shrink-0 cursor-pointer ${soundEnabled ? 'bg-cyan-500' : 'bg-slate-700'}`}
                   >
                     <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-all ${soundEnabled ? 'left-6.5 translate-x-[24px]' : 'left-0.5'}`}></div>
                   </button>
@@ -519,7 +521,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         type="button"
                         onClick={handleRequestNotifications}
                         disabled={!notificationService.isSupported()}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all border ${
+                        className={`chicle-btn px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all border ${
                           !notificationService.isSupported()
                             ? 'opacity-40 cursor-not-allowed border-slate-800 text-slate-500'
                             : 'bg-emerald-950 border-emerald-500/60 text-emerald-300 hover:bg-emerald-900/60 hover:text-white cursor-pointer shadow-[0_0_12px_rgba(52,211,153,0.2)]'
@@ -533,7 +535,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       <button
                         type="button"
                         onClick={handleTestNotification}
-                        className="px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all border bg-[#001830] border-cyan-800/60 text-cyan-400 hover:bg-cyan-950 cursor-pointer"
+                        className="chicle-btn px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all border bg-[#001830] border-cyan-800/60 text-cyan-400 hover:bg-cyan-950 cursor-pointer"
                       >
                         <BellRing className="w-3 h-3 inline mr-1" /> Probar
                       </button>
@@ -572,7 +574,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       </div>
                       <button
                         onClick={() => handleToggleNotifSetting('habitReminders')}
-                        className={`w-10 h-5 rounded-full relative transition-colors flex-shrink-0 cursor-pointer ${
+                        className={`chicle-btn w-10 h-5 rounded-full relative transition-colors flex-shrink-0 cursor-pointer ${
                           notifSettings.habitReminders ? 'bg-cyan-500' : 'bg-slate-700'
                         }`}
                       >
@@ -593,7 +595,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       </div>
                       <button
                         onClick={() => handleToggleNotifSetting('morningBriefing')}
-                        className={`w-10 h-5 rounded-full relative transition-colors flex-shrink-0 cursor-pointer ${
+                        className={`chicle-btn w-10 h-5 rounded-full relative transition-colors flex-shrink-0 cursor-pointer ${
                           notifSettings.morningBriefing ? 'bg-amber-500' : 'bg-slate-700'
                         }`}
                       >
@@ -626,7 +628,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         )}
                         <button
                           onClick={() => handleToggleNotifSetting('nightlyReflection')}
-                          className={`w-10 h-5 rounded-full relative transition-colors flex-shrink-0 cursor-pointer ${
+                          className={`chicle-btn w-10 h-5 rounded-full relative transition-colors flex-shrink-0 cursor-pointer ${
                             notifSettings.nightlyReflection ? 'bg-indigo-500' : 'bg-slate-700'
                           }`}
                         >
@@ -648,7 +650,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       </div>
                       <button
                         onClick={() => handleToggleNotifSetting('bossAlert')}
-                        className={`w-10 h-5 rounded-full relative transition-colors flex-shrink-0 cursor-pointer ${
+                        className={`chicle-btn w-10 h-5 rounded-full relative transition-colors flex-shrink-0 cursor-pointer ${
                           notifSettings.bossAlert ? 'bg-red-500' : 'bg-slate-700'
                         }`}
                       >
@@ -669,7 +671,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       </div>
                       <button
                         onClick={() => handleToggleNotifSetting('streakAlert')}
-                        className={`w-10 h-5 rounded-full relative transition-colors flex-shrink-0 cursor-pointer ${
+                        className={`chicle-btn w-10 h-5 rounded-full relative transition-colors flex-shrink-0 cursor-pointer ${
                           notifSettings.streakAlert ? 'bg-orange-500' : 'bg-slate-700'
                         }`}
                       >
@@ -690,7 +692,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       </div>
                       <button
                         onClick={() => handleToggleNotifSetting('pomodoroComplete')}
-                        className={`w-10 h-5 rounded-full relative transition-colors flex-shrink-0 cursor-pointer ${
+                        className={`chicle-btn w-10 h-5 rounded-full relative transition-colors flex-shrink-0 cursor-pointer ${
                           notifSettings.pomodoroComplete ? 'bg-emerald-500' : 'bg-slate-700'
                         }`}
                       >
@@ -717,7 +719,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   <button
                     type="button"
                     onClick={() => handleSetTheme('dark')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    className={`chicle-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                       themeMode === 'dark' ? 'bg-cyan-600 text-white shadow' : 'text-slate-400 hover:text-white'
                     }`}
                   >
@@ -727,7 +729,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   <button
                     type="button"
                     onClick={() => handleSetTheme('light')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    className={`chicle-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                       themeMode === 'light' ? 'bg-cyan-600 text-white shadow' : 'text-slate-400 hover:text-white'
                     }`}
                   >
@@ -737,7 +739,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   <button
                     type="button"
                     onClick={() => handleSetTheme('auto')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    className={`chicle-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                       themeMode === 'auto' ? 'bg-cyan-600 text-white shadow' : 'text-slate-400 hover:text-white'
                     }`}
                   >
@@ -764,7 +766,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       soundFX.playClick();
                       setNavigationMode('nexus');
                     }}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    className={`chicle-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                       navigationMode === 'nexus'
                         ? 'bg-cyan-500 text-black font-black shadow-[0_0_14px_rgba(0,240,255,0.6)]'
                         : 'text-slate-400 hover:text-white'
@@ -780,7 +782,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       soundFX.playClick();
                       setNavigationMode('classic');
                     }}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    className={`chicle-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                       navigationMode === 'classic'
                         ? 'bg-cyan-600 text-white font-black shadow'
                         : 'text-slate-400 hover:text-white'
@@ -809,7 +811,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     soundFX.playClick();
                     toggleZenMode();
                   }}
-                  className={`w-12 h-6 rounded-full relative transition-colors flex-shrink-0 cursor-pointer ${zenMode ? 'bg-emerald-500' : 'bg-slate-700'}`}
+                  className={`chicle-btn w-12 h-6 rounded-full relative transition-colors flex-shrink-0 cursor-pointer ${zenMode ? 'bg-emerald-500' : 'bg-slate-700'}`}
                   title={zenMode ? 'Modo Zen activado' : 'Modo Zen desactivado'}
                 >
                   <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-all ${zenMode ? 'left-6.5 translate-x-[24px]' : 'left-0.5'}`}></div>
@@ -840,7 +842,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 </div>
                 <button 
                   onClick={() => toggleSetting('enableDynamicQuests')}
-                  className={`w-12 h-6 rounded-full relative transition-colors flex-shrink-0 cursor-pointer ${settings.enableDynamicQuests ? 'bg-cyan-500' : 'bg-slate-700'}`}
+                  className={`chicle-btn w-12 h-6 rounded-full relative transition-colors flex-shrink-0 cursor-pointer ${settings.enableDynamicQuests ? 'bg-cyan-500' : 'bg-slate-700'}`}
                 >
                   <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-all ${settings.enableDynamicQuests ? 'left-6.5 translate-x-[24px]' : 'left-0.5'}`}></div>
                 </button>
@@ -858,7 +860,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 </div>
                 <button 
                   onClick={() => toggleSetting('enableCompanion')}
-                  className={`w-12 h-6 rounded-full relative transition-colors flex-shrink-0 cursor-pointer ${settings.enableCompanion ? 'bg-purple-500' : 'bg-slate-700'}`}
+                  className={`chicle-btn w-12 h-6 rounded-full relative transition-colors flex-shrink-0 cursor-pointer ${settings.enableCompanion ? 'bg-purple-500' : 'bg-slate-700'}`}
                 >
                   <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-all ${settings.enableCompanion ? 'left-6.5 translate-x-[24px]' : 'left-0.5'}`}></div>
                 </button>
@@ -876,7 +878,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 </div>
                 <button 
                   onClick={() => toggleSetting('strictMode')}
-                  className={`w-12 h-6 rounded-full relative transition-colors flex-shrink-0 cursor-pointer ${settings.strictMode ? 'bg-red-500' : 'bg-slate-700'}`}
+                  className={`chicle-btn w-12 h-6 rounded-full relative transition-colors flex-shrink-0 cursor-pointer ${settings.strictMode ? 'bg-red-500' : 'bg-slate-700'}`}
                 >
                   <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-all ${settings.strictMode ? 'left-6.5 translate-x-[24px]' : 'left-0.5'}`}></div>
                 </button>
@@ -924,7 +926,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       soundFX.playClick();
                       onOpenKaiWorkshop();
                     }}
-                    className="px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black font-anton text-xs uppercase tracking-wider transition-all cursor-pointer shadow-[0_0_12px_rgba(0,240,255,0.3)] active:scale-95 flex items-center gap-1.5 shrink-0"
+                    className="chicle-btn px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black font-anton text-xs uppercase tracking-wider transition-all cursor-pointer shadow-[0_0_12px_rgba(0,240,255,0.3)] flex items-center gap-1.5 shrink-0"
                   >
                     <Palette className="w-3.5 h-3.5" />
                     <span>Taller de KAI</span>
@@ -958,7 +960,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     soundFX.playClick();
                     useUIStore.getState().openTacticalGuide(1);
                   }}
-                  className="px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black font-anton text-xs uppercase tracking-wider transition-all cursor-pointer shadow-[0_0_12px_rgba(0,240,255,0.3)] active:scale-95 flex items-center gap-1.5"
+                  className="chicle-btn px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black font-anton text-xs uppercase tracking-wider transition-all cursor-pointer shadow-[0_0_12px_rgba(0,240,255,0.3)] flex items-center gap-1.5"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
                   <span>Repasar Guía Táctica</span>
@@ -975,7 +977,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       '🔄'
                     );
                   }}
-                  className="px-3.5 py-2 rounded-xl bg-surface-card hover:bg-white/10 border border-slate-700 text-slate-300 hover:text-white font-mono text-xs font-bold transition-all cursor-pointer active:scale-95 flex items-center gap-1.5"
+                  className="chicle-btn px-3.5 py-2 rounded-xl bg-surface-card hover:bg-white/10 border border-slate-700 text-slate-300 hover:text-white font-mono text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
                 >
                   <RefreshCw className="w-3.5 h-3.5 text-cyan-400" />
                   <span>Restablecer Avisos</span>
@@ -1006,7 +1008,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     soundFX.playClick();
                     setActiveSubTab('simulator');
                   }}
-                  className="w-full py-2.5 px-4 bg-fuchsia-950 hover:bg-fuchsia-900 border border-fuchsia-500/60 text-fuchsia-200 rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer"
+                  className="chicle-btn w-full py-2.5 px-4 bg-fuchsia-950 hover:bg-fuchsia-900 border border-fuchsia-500/60 text-fuchsia-200 rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer"
                 >
                   <FlaskConical className="w-3.5 h-3.5 text-fuchsia-400" />
                   <span>Abrir Simulador</span>
@@ -1034,7 +1036,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     soundFX.playClick();
                     setIsOracleOpen(true);
                   }}
-                  className="w-full py-2.5 px-4 bg-cyan-950 hover:bg-cyan-900 border border-cyan-500/60 text-cyan-200 rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer"
+                  className="chicle-btn w-full py-2.5 px-4 bg-cyan-950 hover:bg-cyan-900 border border-cyan-500/60 text-cyan-200 rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer"
                 >
                   <Cpu className="w-3.5 h-3.5 text-cyan-400" />
                   <span>Consultar Oráculo</span>
@@ -1118,7 +1120,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       key={rate}
                       type="button"
                       onClick={() => handleSelectSavingsTarget(rate)}
-                      className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                      className={`chicle-btn px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
                         savingsTarget === rate
                           ? 'bg-cyan-500 text-black shadow-[0_0_12px_rgba(6,182,212,0.4)]'
                           : 'bg-[#002244] border border-cyan-800/60 text-slate-300 hover:text-white hover:border-cyan-500'
@@ -1187,7 +1189,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   type="button"
                   onClick={handleForceSync}
                   disabled={isForceSyncing || isPullingCloud}
-                  className="min-h-[44px] flex items-center justify-center gap-2 px-4 py-2.5 bg-cyan-950/90 hover:bg-cyan-900 border border-cyan-400/70 text-cyan-200 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer disabled:opacity-50 shadow-sm"
+                  className="chicle-btn min-h-[44px] flex items-center justify-center gap-2 px-4 py-2.5 bg-cyan-950/90 hover:bg-cyan-900 border border-cyan-400/70 text-cyan-200 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer disabled:opacity-50 shadow-sm"
                 >
                   <Upload className={`w-4 h-4 ${isForceSyncing ? 'animate-bounce' : ''}`} />
                   <span>{isForceSyncing ? 'Subiendo datos...' : 'Subir datos a la nube'}</span>
@@ -1196,7 +1198,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   type="button"
                   onClick={handlePullFromCloud}
                   disabled={isPullingCloud || isForceSyncing}
-                  className="min-h-[44px] flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-950/90 hover:bg-emerald-900 border border-emerald-400/70 text-emerald-200 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer disabled:opacity-50 shadow-sm"
+                  className="chicle-btn min-h-[44px] flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-950/90 hover:bg-emerald-900 border border-emerald-400/70 text-emerald-200 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer disabled:opacity-50 shadow-sm"
                 >
                   <Download className={`w-4 h-4 ${isPullingCloud ? 'animate-bounce' : ''}`} />
                   <span>{isPullingCloud ? 'Cargando datos...' : 'Traer datos a este equipo'}</span>
@@ -1265,7 +1267,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   {user ? (
                     <button 
                       onClick={() => signOut()}
-                      className="flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-black uppercase tracking-wider transition-colors cursor-pointer"
+                      className="chicle-btn flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-black uppercase tracking-wider transition-colors cursor-pointer"
                     >
                       <LogOut className="w-3.5 h-3.5" />
                       <span>Salir</span>
@@ -1273,7 +1275,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   ) : (
                     <button 
                       onClick={() => signInWithGoogle()}
-                      className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer"
+                      className="chicle-btn flex items-center justify-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer"
                     >
                       <LogIn className="w-3.5 h-3.5" />
                       <span>Conectar Google</span>
@@ -1314,7 +1316,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 <button
                   type="button"
                   onClick={handleExportBackup}
-                  className="min-h-[44px] px-4 py-2.5 bg-[#002244] hover:bg-[#003366] text-cyan-300 hover:text-white font-black text-xs uppercase tracking-wider rounded-xl border border-cyan-700/60 hover:border-cyan-400 flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm"
+                  className="chicle-btn min-h-[44px] px-4 py-2.5 bg-[#002244] hover:bg-[#003366] text-cyan-300 hover:text-white font-black text-xs uppercase tracking-wider rounded-xl border border-cyan-700/60 hover:border-cyan-400 flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm"
                 >
                   <Download className="w-4 h-4 text-cyan-400" />
                   <span>Exportar (JSON)</span>
@@ -1323,13 +1325,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 <button
                   type="button"
                   onClick={handleExportCSV}
-                  className="min-h-[44px] px-4 py-2.5 bg-[#001f3f] hover:bg-[#002d5c] text-blue-300 hover:text-white font-black text-xs uppercase tracking-wider rounded-xl border border-blue-700/60 hover:border-blue-400 flex items-center justify-center gap-2 transition-all cursor-pointer"
+                  className="chicle-btn min-h-[44px] px-4 py-2.5 bg-[#001f3f] hover:bg-[#002d5c] text-blue-300 hover:text-white font-black text-xs uppercase tracking-wider rounded-xl border border-blue-700/60 hover:border-blue-400 flex items-center justify-center gap-2 transition-all cursor-pointer"
                 >
                   <FileSpreadsheet className="w-4 h-4 text-blue-400" />
                   <span>Bitácora (CSV)</span>
                 </button>
 
-                <label className="min-h-[44px] px-4 py-2.5 bg-[#001830] hover:bg-[#002448] text-slate-300 hover:text-cyan-200 font-black text-xs uppercase tracking-wider rounded-xl border border-slate-700 hover:border-cyan-600 flex items-center justify-center gap-2 transition-all cursor-pointer text-center">
+                <label className="chicle-btn min-h-[44px] px-4 py-2.5 bg-[#001830] hover:bg-[#002448] text-slate-300 hover:text-cyan-200 font-black text-xs uppercase tracking-wider rounded-xl border border-slate-700 hover:border-cyan-600 flex items-center justify-center gap-2 transition-all cursor-pointer text-center">
                   <Upload className="w-4 h-4 text-slate-400" />
                   <span>Restaurar (JSON)</span>
                   <input
@@ -1360,13 +1362,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 <button
                   type="button"
                   onClick={handleExportSchedule}
-                  className="min-h-[44px] px-4 py-2.5 bg-[#002211] hover:bg-[#00331a] text-emerald-300 hover:text-white font-black text-xs uppercase tracking-wider rounded-xl border border-emerald-700/60 hover:border-emerald-400 flex items-center justify-center gap-2 transition-all cursor-pointer"
+                  className="chicle-btn min-h-[44px] px-4 py-2.5 bg-[#002211] hover:bg-[#00331a] text-emerald-300 hover:text-white font-black text-xs uppercase tracking-wider rounded-xl border border-emerald-700/60 hover:border-emerald-400 flex items-center justify-center gap-2 transition-all cursor-pointer"
                 >
                   <Download className="w-4 h-4 text-emerald-400" />
                   <span>Bajar Horarios (CSV)</span>
                 </button>
 
-                <label className="min-h-[44px] px-4 py-2.5 bg-[#001810] hover:bg-[#002418] text-emerald-100/80 hover:text-emerald-200 font-black text-xs uppercase tracking-wider rounded-xl border border-slate-700 hover:border-emerald-600 flex items-center justify-center gap-2 transition-all cursor-pointer text-center">
+                <label className="chicle-btn min-h-[44px] px-4 py-2.5 bg-[#001810] hover:bg-[#002418] text-emerald-100/80 hover:text-emerald-200 font-black text-xs uppercase tracking-wider rounded-xl border border-slate-700 hover:border-emerald-600 flex items-center justify-center gap-2 transition-all cursor-pointer text-center">
                   <Upload className="w-4 h-4 text-emerald-500/70" />
                   <span>Subir Horarios (CSV)</span>
                   <input
@@ -1425,7 +1427,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       const ok = await pwa.install();
                       if (ok) soundFX.playLevelUp();
                     }}
-                    className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-xs rounded-xl shadow-[0_0_15px_rgba(0,240,255,0.3)] transition-all cursor-pointer shrink-0"
+                    className="chicle-btn flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-xs rounded-xl shadow-[0_0_15px_rgba(0,240,255,0.3)] transition-all cursor-pointer shrink-0"
                   >
                     <Download className="w-4 h-4" />
                     Instalar Ahora
@@ -1436,7 +1438,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       soundFX.playClick();
                       setShowIOSInstructions(!showIOSInstructions);
                     }}
-                    className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-900/80 hover:bg-blue-800 text-cyan-300 border border-cyan-500/40 text-xs font-bold rounded-xl transition-all cursor-pointer shrink-0"
+                    className="chicle-btn flex items-center justify-center gap-2 px-4 py-2 bg-blue-900/80 hover:bg-blue-800 text-cyan-300 border border-cyan-500/40 text-xs font-bold rounded-xl transition-all cursor-pointer shrink-0"
                   >
                     <Share className="w-3.5 h-3.5" />
                     Instrucciones iOS
@@ -1492,7 +1494,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       onResetAccount();
                     }
                   }}
-                  className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all border cursor-pointer ${
+                  className={`chicle-btn px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all border cursor-pointer ${
                     confirmReset 
                       ? 'bg-red-600 text-white border-red-500 animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.5)]' 
                       : 'bg-red-950/60 text-red-400 hover:text-white hover:bg-red-700 border-red-800'

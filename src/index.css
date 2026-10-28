@@ -434,6 +434,28 @@ body.modal-open-hide-floating .omni-companion-hub-root {
   will-change: background-position;
 }
 
+/* ==========================================================================
+   DIRECTIVA INTERACCIÓN "MOXEN CHICLE" (BOTONES ELÁSTICOS & DEFORMACIÓN FLUIDA)
+   ========================================================================== */
+.chicle-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), background-color 0.3s ease;
+  transform-origin: center;
+  will-change: transform;
+}
 
+.chicle-btn:hover {
+  transform: scale(1.05) skewX(-2deg);
+}
 
+.chicle-btn:active {
+  transform: scale(0.92) skewX(4deg);
+}
 
+.chicle-btn:disabled {
+  transform: none !important;
+  pointer-events: none;
+}
