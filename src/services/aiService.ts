@@ -131,31 +131,6 @@ async function fetchGeminiPrompt(promptText: string, modelName: string = 'gemini
     }
   }
 
-  // 3. Only if hosted on Netlify, try local Netlify function with short timeout
-  const isNetlifyHost =
-    typeof window !== 'undefined' && window.location.hostname.includes('netlify.app');
-  if (isNetlifyHost) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-      const res = await fetch('/.netlify/functions/oraculo', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: promptText, model: preferredModel }),
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-      if (res.ok) {
-        const data = await res.json();
-        if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
-          return data.candidates[0].content.parts[0].text;
-        }
-      }
-    } catch {
-      // Ignore
-    }
-  }
-
   return null;
 }
 

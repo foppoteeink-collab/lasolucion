@@ -42,11 +42,6 @@ export default defineConfig(() => {
                 cacheableResponse: { statuses: [0, 200] },
               },
             },
-            {
-              // Never cache Netlify functions — always fresh from server
-              urlPattern: /\/\.netlify\/functions\/.*/i,
-              handler: 'NetworkOnly',
-            },
           ],
         },
         devOptions: {
