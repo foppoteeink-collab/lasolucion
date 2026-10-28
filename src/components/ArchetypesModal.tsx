@@ -113,7 +113,7 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
                   {/* Action Button */}
                   <div className="pt-2 border-t border-cyan-500/20 flex items-center justify-between">
                     <span className="text-[10px] font-mono text-slate-400 uppercase">
-                      Stat: <strong className="text-cyan-300 capitalize">{arch.primaryStat}</strong>
+                      Atributo: <strong className="text-cyan-300 capitalize">{arch.primaryStat}</strong>
                     </span>
 
                     {isSelected ? (

@@ -308,7 +308,7 @@ export const INITIAL_SHOP_REWARDS: ShopReward[] = [
   },
   {
     id: 'kai-neural-core',
-    title: 'Núcleo de Forja Neural 📸',
+    title: 'Carga de Forja Neural 📸',
     description: 'Otorga +1 carga para escanear cualquier objeto real con tu cámara y transformarlo en tu compañero KAI.',
     cost: 500,
     icon: '📸',

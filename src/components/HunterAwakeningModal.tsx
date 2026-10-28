@@ -370,7 +370,7 @@ export const HunterAwakeningModal: React.FC<HunterAwakeningModalProps> = ({
                       {/* Selection Status */}
                       <div className="mt-3 pt-2 border-t border-cyan-500/20 flex items-center justify-between">
                         <span className="text-[10px] font-mono text-slate-400 uppercase">
-                          Stat: <strong className="text-cyan-300 capitalize">{arch.primaryStat}</strong>
+                          Atributo: <strong className="text-cyan-300 capitalize">{arch.primaryStat}</strong>
                         </span>
                         {isSelected ? (
                           <span className="flex items-center gap-1 text-[11px] font-mono font-black text-cyan-300 bg-cyan-900/60 border border-cyan-400 px-3 py-1 rounded-xl shadow-[0_0_10px_rgba(0,240,255,0.4)]">

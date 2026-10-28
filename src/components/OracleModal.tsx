@@ -602,7 +602,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
               </h3>
               <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-950/90 border border-emerald-500/60 text-emerald-300 text-[10px] font-mono font-bold shadow-[0_0_10px_rgba(16,185,129,0.25)]">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                <span>Gemini 3.8 AI Conectado</span>
+                <span>Inteligencia KAI Conectada</span>
               </span>
             </div>
             <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors text-slate-400 hover:text-white cursor-pointer">
@@ -622,10 +622,10 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                     <div>
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <span className="text-[11px] font-mono uppercase tracking-widest text-[#d6f421] font-bold bg-[#9600ff]/30 px-2 py-0.5 rounded border border-[#9600ff]/50">
-                          Protocolo de Agenda v5.0
+                          Protocolo de Agenda
                         </span>
                         <span className="text-[10px] text-emerald-400 font-mono font-bold">
-                          Firebase AI Logic Activo
+                          Enlace Activo
                         </span>
                       </div>
                       <p className="text-slate-200 text-xs leading-relaxed font-sans">
@@ -732,7 +732,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                         {/* Mode Selector */}
                         <div className="bg-[#03070d] border border-cyan-900/50 rounded-xl p-3">
                           <span className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-bold block mb-2">
-                            Estrategia de Compilación:
+                            Distribución del Día:
                           </span>
                           <div className="grid grid-cols-2 gap-2">
                             <button
@@ -782,7 +782,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                         <div className="space-y-2">
                           <label className="text-xs font-mono font-bold text-slate-300 uppercase tracking-widest pl-1 flex items-center gap-1.5">
                             <Zap className="w-3.5 h-3.5 text-cyan-400" />
-                            Parámetros Personalizados (Opcional)
+                            Instrucciones del Día (Opcional)
                           </label>
                           <textarea
                             value={prompt}
@@ -798,7 +798,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                           className="w-full py-4 bg-cyan-600 hover:bg-cyan-500 disabled:bg-slate-800 disabled:text-slate-500 text-slate-950 font-black uppercase tracking-widest rounded-xl transition-all shadow-[0_0_25px_rgba(6,182,212,0.35)] active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
                         >
                           <Cpu className="w-5 h-5" />
-                          <span>Compilar Agenda y Rutina Diaria</span>
+                          <span>Organizar Agenda y Rutina Diaria</span>
                         </button>
                       </div>
                     )}
@@ -817,7 +817,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                       className="w-full py-2 bg-red-900/60 hover:bg-red-800/80 border border-red-500/40 text-red-200 text-xs font-mono font-bold rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer"
                     >
                       <RefreshCw className="w-3.5 h-3.5" />
-                      <span>Reintentar Compilación Ahora</span>
+                      <span>Reintentar Ahora</span>
                     </button>
                   </div>
                 )}
@@ -838,10 +838,10 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                       onClick={() => handleGenerate()}
                       disabled={isLoading}
                       className="px-2.5 py-1 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-200 text-[11px] font-mono font-bold rounded-lg shrink-0 flex items-center gap-1.5 cursor-pointer transition-colors"
-                      title="Intentar conectar nuevamente con los modelos de IA"
+                      title="Reintentar enlace con KAI"
                     >
-                      <RefreshCw className={`w-3 h-3 ${isLoading ? 'animate-spin' : ''}`} />
-                      <span>Reintentar con IA</span>
+                      <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+                      <span>Reintentar con KAI</span>
                     </button>
                   </div>
                 ) : (
@@ -849,7 +849,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                     <div className="flex items-center gap-2.5">
                       <Sparkles className="w-4 h-4 text-emerald-400 shrink-0 animate-pulse" />
                       <p className="text-xs font-mono font-bold text-emerald-300">
-                        Agenda sintetizada en directo por Gemini 3.8 Flash (Firebase AI Logic)
+                        Agenda calibrada en tiempo real por tu compañero KAI
                       </p>
                     </div>
                     <span className="text-[10px] font-mono text-emerald-400/80 uppercase tracking-wider shrink-0 hidden sm:inline">

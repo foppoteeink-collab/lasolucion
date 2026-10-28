@@ -31,7 +31,7 @@ const DECRYPTION_STAGES = [
     ]
   },
   {
-    title: 'EJECUTANDO COMPILADOR HEURÍSTICO',
+    title: 'CALIBRANDO HORARIOS DE AGENDA',
     desc: 'Deduplicando bloques horarios, detectando colisiones y blindando descansos...',
     logs: [
       '🔍 [SCAN] Detectando solapamientos temporales en agenda previa.',

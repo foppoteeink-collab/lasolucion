@@ -206,7 +206,7 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
                     className="flex-1 py-2 px-3 bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-500/50 hover:border-cyan-300 text-cyan-300 text-xs font-mono font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 active:scale-95"
                   >
                     <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin text-cyan-300' : ''}`} />
-                    <span>{isSyncing ? 'Sincronizando...' : 'Sincronizar con Firebase'}</span>
+                    <span>{isSyncing ? 'Sincronizando...' : 'Sincronizar con la Nube'}</span>
                   </button>
 
                   <button

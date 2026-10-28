@@ -142,13 +142,13 @@ export const NeuralAnalysisModal: React.FC<NeuralAnalysisModalProps> = ({ isOpen
                 {analysisSource === 'ai' && (
                   <span className="text-[10px] font-mono font-bold bg-emerald-950/90 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/50 shadow-[0_0_10px_rgba(16,185,129,0.3)] flex items-center gap-1">
                     <Sparkles className="w-3 h-3 text-emerald-400 animate-pulse" />
-                    <span>Gemini AI Activo</span>
+                    <span>Inteligencia KAI Activa</span>
                   </span>
                 )}
                 {analysisSource === 'heuristics' && (
                   <span className="text-[10px] font-mono font-bold bg-amber-950/90 text-amber-300 px-2 py-0.5 rounded border border-amber-500/50 flex items-center gap-1">
                     <ShieldCheck className="w-3 h-3 text-amber-400" />
-                    <span>Heurístico Local</span>
+                    <span>Modo Autónomo Local</span>
                   </span>
                 )}
               </div>

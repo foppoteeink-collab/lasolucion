@@ -144,7 +144,7 @@ export const RewardShop: React.FC = () => {
     } else if (reward.id === 'kai-neural-core') {
       triggerScreenFlash('buff');
       triggerHaptic([100, 50, 100]);
-      notificationService.triggerNotification('¡Núcleo de Forja Activado! 📸', '+1 Carga obtenida para escanear cualquier objeto real con tu cámara en el Taller KAI.', '📸');
+      notificationService.triggerNotification('¡Carga de Forja Activada! 📸', '+1 Carga obtenida para escanear cualquier objeto real con tu cámara en el Taller KAI.', '📸');
     } else if (reward.id === 'kai-freeze-capsule') {
       triggerScreenFlash('buff');
       triggerHaptic([80, 40]);

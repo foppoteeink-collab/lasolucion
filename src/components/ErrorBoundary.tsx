@@ -60,7 +60,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
                 La Solución se ha detenido
               </h1>
               <p className="text-xs text-slate-400 mt-1">
-                Se detectó un error inesperado al renderizar la aplicación.
+                Se detectó una interrupción inesperada al cargar la aplicación.
               </p>
             </div>
 

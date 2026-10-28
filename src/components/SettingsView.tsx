@@ -254,7 +254,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       const totalTaskCount = exportPayload.allTasksByDate
         ? Object.values(exportPayload.allTasksByDate).reduce((acc, list) => acc + (list?.length || 0), 0)
         : exportPayload.tasks.length;
-      setExportFeedback(`✓ Respaldo JSON generado exitosamente (${totalTaskCount} misiones totales)`);
+      setExportFeedback(`✓ Copia de seguridad generada con éxito (${totalTaskCount} tareas totales)`);
       setTimeout(() => setExportFeedback(null), 4500);
     } catch (err) {
       console.error('Error al exportar:', err);
@@ -1096,8 +1096,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     <span className="text-xs font-black text-cyan-400 uppercase tracking-widest flex items-center gap-1.5">
                       <Cpu className="w-4 h-4 text-cyan-400 animate-pulse" /> Oráculo IA
                     </span>
-                    <span className="text-[10px] font-mono text-cyan-300 bg-cyan-950/70 border border-cyan-500/40 px-2 py-0.5 rounded-full">
-                      Gemini
+                    <span className="text-[10px] font-mono text-cyan-300 bg-cyan-950/70 border border-cyan-500/40 px-2 py-0.5 rounded-full uppercase">
+                      KAI
                     </span>
                   </div>
                   <p className="text-xs text-slate-300 leading-relaxed">
@@ -1379,9 +1379,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   <HardDrive className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-black text-white">Copia de Seguridad de Partida (JSON & CSV)</h4>
+                  <h4 className="text-sm font-black text-white">Copia de Seguridad de Partida</h4>
                   <p className="text-xs text-slate-400 mt-0.5">
-                    Exporta tus estadísticas, tareas y bitácora en archivo plano para resguardar tu información fuera de la aplicación.
+                    Exporta tus estadísticas, tareas y bitácora en archivo seguro para resguardar tu información fuera de la aplicación.
                   </p>
                 </div>
               </div>
@@ -1393,21 +1393,21 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   className="chicle-btn min-h-[44px] px-4 py-2.5 bg-[#002244] hover:bg-[#003366] text-cyan-300 hover:text-white font-black text-xs uppercase tracking-wider rounded-xl border border-cyan-700/60 hover:border-cyan-400 flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm"
                 >
                   <Download className="w-4 h-4 text-cyan-400" />
-                  <span>Exportar (JSON)</span>
+                  <span>Descargar Copia</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={handleExportCSV}
-                  className="chicle-btn min-h-[44px] px-4 py-2.5 bg-[#001f3f] hover:bg-[#002d5c] text-blue-300 hover:text-white font-black text-xs uppercase tracking-wider rounded-xl border border-blue-700/60 hover:border-blue-400 flex items-center justify-center gap-2 transition-all cursor-pointer"
+                  className="chicle-btn min-h-[44px] px-4 py-2.5 bg-[#001f3f] hover:bg-[#002d5c] text-blue-300 hover:text-white font-black text-xs uppercase tracking-wider rounded-xl border border-blue-700/60 hover:border-blue-400 flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm"
                 >
                   <FileSpreadsheet className="w-4 h-4 text-blue-400" />
-                  <span>Bitácora (CSV)</span>
+                  <span>Exportar Bitácora</span>
                 </button>
 
                 <label className="chicle-btn min-h-[44px] px-4 py-2.5 bg-[#001830] hover:bg-[#002448] text-slate-300 hover:text-cyan-200 font-black text-xs uppercase tracking-wider rounded-xl border border-slate-700 hover:border-cyan-600 flex items-center justify-center gap-2 transition-all cursor-pointer text-center">
                   <Upload className="w-4 h-4 text-slate-400" />
-                  <span>Restaurar (JSON)</span>
+                  <span>Restaurar Copia</span>
                   <input
                     type="file"
                     accept=".json"

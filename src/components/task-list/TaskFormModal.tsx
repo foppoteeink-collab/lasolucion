@@ -253,7 +253,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                 </h3>
                 <p className="text-[10.5px] sm:text-xs text-gray-400">
                   {activeTab === 'oracle'
-                    ? 'Planificador inteligente con IA de Gemini y plantillas de rutina'
+                    ? 'Planificador inteligente con tu compañero KAI y plantillas de rutina'
                     : isEditingHabitMode 
                       ? 'Define tu rutina diaria para fortalecer hábitos en 21/66 días'
                       : 'Organiza tu día agregando una nueva tarea o actividad'
@@ -324,7 +324,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                       </div>
                       <div className="flex-1">
                         <h4 className="text-sm font-bold text-white font-anton tracking-wide uppercase flex items-center gap-2">
-                          Oráculo KAI (Gemini IA)
+                          Oráculo KAI
                         </h4>
                         <p className="text-xs text-slate-300 mt-1 leading-relaxed">
                           Pide a Kai que divida una meta compleja en pasos diarios, organice tu jornada o te dé un micro-plan contra la procrastinación.

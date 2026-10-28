@@ -186,6 +186,21 @@ function hsl2rgb(h: number, s: number, l: number): [number, number, number] {
   return [f(p, q, h + 1 / 3), f(p, q, h), f(p, q, h - 1 / 3)];
 }
 
+// Ultra-fast OKLab precomputation in JS (runs once per frame for 5 points instead of 700k times in pixel shader)
+function toOKLab(r: number, g: number, b: number): [number, number, number] {
+  const cr = Math.pow(Math.max(0, r), 2.2);
+  const cg = Math.pow(Math.max(0, g), 2.2);
+  const cb = Math.pow(Math.max(0, b), 2.2);
+  const l = Math.cbrt(0.4122214708 * cr + 0.5363325363 * cg + 0.0514459929 * cb);
+  const m = Math.cbrt(0.2119034982 * cr + 0.6806995451 * cg + 0.1073969566 * cb);
+  const s = Math.cbrt(0.0883024619 * cr + 0.2817188376 * cg + 0.6299787005 * cb);
+  return [
+    0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s,
+    1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s,
+    0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s
+  ];
+}
+
 const VERT = 'attribute vec2 a; void main() { gl_Position = vec4(a, 0., 1.); }';
 const FRAG = [
   '#ifdef GL_FRAGMENT_PRECISION_HIGH',
@@ -198,11 +213,6 @@ const FRAG = [
   'float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }',
   'float noise(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3. - 2. * f);',
   '  return mix(mix(hash(i), hash(i + vec2(1., 0.)), f.x), mix(hash(i + vec2(0., 1.)), hash(i + vec2(1., 1.)), f.x), f.y); }',
-  'vec3 aOK(vec3 c) {',
-  '  float l = pow(.4122214708 * c.r + .5363325363 * c.g + .0514459929 * c.b, 1. / 3.);',
-  '  float m = pow(.2119034982 * c.r + .6806995451 * c.g + .1073969566 * c.b, 1. / 3.);',
-  '  float s = pow(.0883024619 * c.r + .2817188376 * c.g + .6299787005 * c.b, 1. / 3.);',
-  '  return vec3(.2104542553 * l + .793617785 * m - .0040720468 * s, 1.9779984951 * l - 2.428592205 * m + .4505937099 * s, .0259040371 * l + .7827717662 * m - .808675766 * s); }',
   'vec3 deOK(vec3 c) {',
   '  float l = c.x + .3963377774 * c.y + .2158037573 * c.z, m = c.x - .1055613458 * c.y - .0638541728 * c.z, s = c.x - .0894841775 * c.y - 1.291485548 * c.z;',
   '  l = l * l * l; m = m * m * m; s = s * s * s;',
@@ -223,7 +233,7 @@ const FRAG = [
   '      a = a > 0. ? a / (1. + L * u_estira) : a * (1. + L * .8); d = e * a + n * b; }',
   '    float r2 = dot(d, d);',
   '    float k = u_m[i] / pow(r2 + .02, u_soft);',
-  '    vec3 ok = aOK(pow(u_c[i], vec3(2.2))); col += k * ok; chroma += k * length(ok.yz); tot += k;',
+  '    vec3 ok = u_c[i]; col += k * ok; chroma += k * length(ok.yz); tot += k;',
   '  }',
   '  col /= tot; chroma /= tot; float cm = length(col.yz);',
   '  if (cm > .0001) col.yz *= mix(1., min(chroma / cm, 2.2), u_croma);',
@@ -245,6 +255,7 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
   const [applyFeedback, setApplyFeedback] = useState(false);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const placeholderRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const capaRef = useRef<HTMLDivElement | null>(null);
   const aroRef = useRef<HTMLDivElement | null>(null);
@@ -259,15 +270,79 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
   const getCssRef = useRef<(() => string) | null>(null);
   const loadColorsRef = useRef<((colors: string[], base: string) => void) | null>(null);
 
-  // Fullscreen escape key listener
+  const toggleFullscreen = () => {
+    soundFX.playClick();
+    const willBeFs = !isFullscreen;
+    setIsFullscreen(willBeFs);
+
+    const el = containerRef.current;
+    if (willBeFs) {
+      if (el?.requestFullscreen) {
+        el.requestFullscreen().catch(() => {});
+      } else if ((el as any)?.webkitRequestFullscreen) {
+        (el as any).webkitRequestFullscreen();
+      }
+    } else {
+      if (document.fullscreenElement && document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      } else if ((document as any)?.webkitFullscreenElement && (document as any)?.webkitExitFullscreen) {
+        (document as any).webkitExitFullscreen();
+      }
+    }
+  };
+
+  // Fullscreen breakout to document.body (escapes all ancestor transform and scroll containers)
+  useEffect(() => {
+    const el = containerRef.current;
+    const placeholder = placeholderRef.current;
+    if (!el || !placeholder) return;
+    const parent = placeholder.parentElement;
+    if (!parent) return;
+
+    if (isFullscreen) {
+      document.body.appendChild(el);
+      document.body.style.overflow = 'hidden';
+    } else {
+      if (el.parentElement === document.body) {
+        parent.insertBefore(el, placeholder);
+      }
+      document.body.style.overflow = '';
+    }
+
+    const timer = setTimeout(() => {
+      window.dispatchEvent(new Event('resize'));
+    }, 50);
+
+    return () => {
+      clearTimeout(timer);
+      if (el && el.parentElement === document.body && placeholder && placeholder.parentElement) {
+        placeholder.parentElement.insertBefore(el, placeholder);
+      }
+      document.body.style.overflow = '';
+    };
+  }, [isFullscreen]);
+
+  // Fullscreen escape key & native change listener
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isFullscreen) {
+        toggleFullscreen();
+      }
+    };
+    const onFsChange = () => {
+      const isFs = !!(document.fullscreenElement || (document as any).webkitFullscreenElement);
+      if (!isFs && isFullscreen) {
         setIsFullscreen(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener('fullscreenchange', onFsChange);
+    document.addEventListener('webkitfullscreenchange', onFsChange);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('fullscreenchange', onFsChange);
+      document.removeEventListener('webkitfullscreenchange', onFsChange);
+    };
   }, [isFullscreen]);
 
   // Main WebGL & Spring Physics initialization
@@ -390,7 +465,9 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
       W = Math.max(1, r.width);
       H = Math.max(1, r.height);
       if (gl) {
-        const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+        // High-performance adaptive DPR: max 1.0 on mobile (<= 860px) for 60fps silky smooth rendering; 1.25 on desktop
+        const isMobile = window.innerWidth <= 860;
+        const dpr = isMobile ? 1.0 : Math.min(window.devicePixelRatio || 1, 1.25);
         lienzo!.width = Math.round(W * dpr);
         lienzo!.height = Math.round(H * dpr);
         gl.viewport(0, 0, lienzo!.width, lienzo!.height);
@@ -408,9 +485,10 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
       ptos.forEach((p, i) => {
         bufP[i * 2] = p.px.x;
         bufP[i * 2 + 1] = 1 - p.py.x;
-        bufC[i * 3] = p.cs[0].x;
-        bufC[i * 3 + 1] = p.cs[1].x;
-        bufC[i * 3 + 2] = p.cs[2].x;
+        const ok = toOKLab(p.cs[0].x, p.cs[1].x, p.cs[2].x);
+        bufC[i * 3] = ok[0];
+        bufC[i * 3 + 1] = ok[1];
+        bufC[i * 3 + 2] = ok[2];
         bufS[i * 2] = (p.tx - p.px.x) * asp;
         bufS[i * 2 + 1] = -(p.ty - p.py.x);
         bufM[i] = p.m.x;
@@ -628,7 +706,7 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
       if (selec !== -1) {
         const p = ptos[selec];
         const d = Math.hypot(x - p.tx * W, y - p.ty * H);
-        if (d > 36 && d < 74) {
+        if (d > 26 && d < 64) {
           girando = true;
           capa.setPointerCapture(e.pointerId);
           aro.classList.add('is-gira');
@@ -636,7 +714,7 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
           e.preventDefault();
           return;
         }
-        if (d >= 74) cierraAro();
+        if (d >= 64) cierraAro();
       }
 
       const btn = (e.target as HTMLElement).closest('.ml-punto') as HTMLElement | null;
@@ -894,12 +972,13 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
       </div>
 
       {/* ── ESCENA DEL SHADER (HERO CANVAS VIEWPORT) ── */}
+      <div ref={placeholderRef} style={{ display: 'none' }} />
       <div
         ref={containerRef}
         className={`ml-escena relative border border-cyan-500/40 shadow-[0_15px_50px_rgba(0,240,255,0.18)] transition-all ${
           isFullscreen 
             ? 'is-fullscreen' 
-            : 'min-h-[560px] h-[580px] sm:h-[620px]'
+            : 'min-h-[500px] h-[520px] sm:h-[580px]'
         }`}
       >
         {/* Canvas WebGL */}
@@ -927,14 +1006,22 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
         {/* Botón de Pantalla Completa Flotante */}
         <button
           type="button"
-          onClick={() => {
-            soundFX.playClick();
-            setIsFullscreen(!isFullscreen);
-          }}
-          className="chicle-btn absolute top-3.5 right-3.5 z-30 p-2.5 rounded-xl bg-black/70 hover:bg-black/90 border border-cyan-500/50 text-cyan-300 hover:text-white backdrop-blur-md transition-all cursor-pointer shadow-[0_0_20px_rgba(0,240,255,0.3)]"
-          title={isFullscreen ? 'Reducir tamaño (Esc)' : 'Expandir a pantalla completa'}
+          onClick={toggleFullscreen}
+          className={`chicle-btn absolute top-3 right-3 z-40 p-2 sm:p-2.5 rounded-xl border transition-all cursor-pointer shadow-[0_0_20px_rgba(0,240,255,0.3)] backdrop-blur-md ${
+            isFullscreen
+              ? 'bg-rose-950/90 hover:bg-rose-900 border-rose-500/80 text-rose-200 flex items-center gap-1.5 px-3'
+              : 'bg-black/70 hover:bg-black/90 border-cyan-500/50 text-cyan-300 hover:text-white'
+          }`}
+          title={isFullscreen ? 'Salir de pantalla completa (Esc)' : 'Expandir a pantalla completa'}
         >
-          {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          {isFullscreen ? (
+            <>
+              <Minimize2 className="w-3.5 h-3.5" />
+              <span className="text-[11px] font-mono font-bold uppercase tracking-wider">Salir</span>
+            </>
+          ) : (
+            <Maximize2 className="w-4 h-4" />
+          )}
         </button>
 
         {/* Panel de Vidrio y Acciones (Floating Glass HUD - Diseño Fiel al Original) */}

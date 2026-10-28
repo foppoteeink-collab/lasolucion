@@ -938,8 +938,8 @@ SECONDARY_COLOR: #hex
   if (!rawResult) {
     throw new Error(
       lastErrorMessage
-        ? `Error en Gemini Vision: ${lastErrorMessage}`
-        : 'No se pudo conectar con Gemini Vision para analizar la imagen. Por favor verifica tu conexión.'
+        ? `Error al analizar la imagen con KAI: ${lastErrorMessage}`
+        : 'No se pudo conectar con el servicio visual de KAI para analizar la imagen. Por favor verifica tu conexión.'
     );
   }
 

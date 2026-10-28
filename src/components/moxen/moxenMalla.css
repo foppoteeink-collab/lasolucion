@@ -80,25 +80,34 @@
   position: absolute;
   left: 0;
   top: 0;
-  width: 42px;
-  height: 42px;
-  margin: -21px 0 0 -21px;
+  width: 32px;
+  height: 32px;
+  margin: -16px 0 0 -16px;
   padding: 0;
   border-radius: 50%;
   cursor: grab;
-  border: 3.5px solid #ffffff;
+  border: 2px solid #ffffff;
   background: var(--c, #00f0ff);
   touch-action: none;
   -webkit-tap-highlight-color: transparent;
-  box-shadow: 0 0 20px var(--c, #00f0ff), 0 0 0 1px rgba(255, 255, 255, 0.4) inset, 0 8px 24px -4px rgba(0, 0, 0, 0.8);
-  transition: transform 0.35s var(--ml-muelle), box-shadow 0.35s var(--ml-curva);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6), 0 0 14px var(--c, #00f0ff), 0 0 0 1px rgba(255, 255, 255, 0.4) inset;
+  transition: transform 0.3s var(--ml-muelle), box-shadow 0.3s var(--ml-curva);
   z-index: 15;
+}
+
+@media (min-width: 861px) {
+  .ml-punto {
+    width: 36px;
+    height: 36px;
+    margin: -18px 0 0 -18px;
+    border-width: 2.5px;
+  }
 }
 
 .ml-punto::after {
   content: "";
   position: absolute;
-  inset: 6px;
+  inset: 5px;
   border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0) 65%);
   pointer-events: none;
@@ -106,24 +115,24 @@
 
 @media (hover: hover) {
   .ml-punto:hover {
-    transform: scale(1.18);
-    box-shadow: 0 0 28px var(--c, #00f0ff), 0 0 0 4px rgba(255, 255, 255, 0.4);
+    transform: scale(1.15);
+    box-shadow: 0 0 22px var(--c, #00f0ff), 0 0 0 3px rgba(255, 255, 255, 0.4);
   }
 }
 
 .ml-punto.is-arrastra {
   cursor: grabbing;
-  transform: scale(1.25);
-  box-shadow: 0 0 35px var(--c, #00f0ff), 0 0 0 7px rgba(255, 255, 255, 0.5);
+  transform: scale(1.22);
+  box-shadow: 0 0 28px var(--c, #00f0ff), 0 0 0 5px rgba(255, 255, 255, 0.5);
 }
 
 .ml-punto.is-sel {
-  box-shadow: 0 0 32px var(--c, #00f0ff), 0 0 0 6px rgba(0, 240, 255, 0.6);
+  box-shadow: 0 0 25px var(--c, #00f0ff), 0 0 0 4px rgba(0, 240, 255, 0.6);
 }
 
 .ml-punto:focus-visible {
-  outline: 3px solid #00f0ff;
-  outline-offset: 4px;
+  outline: 2px solid #00f0ff;
+  outline-offset: 3px;
 }
 
 /* ── ARO CIRCULAR DE TONO HSL ────────────────────────────────────── */
@@ -131,9 +140,9 @@
   position: absolute;
   left: 0;
   top: 0;
-  width: 136px;
-  height: 136px;
-  margin: -68px 0 0 -68px;
+  width: 116px;
+  height: 116px;
+  margin: -58px 0 0 -58px;
   border-radius: 50%;
   touch-action: none;
   cursor: pointer;
@@ -163,10 +172,10 @@
     hsl(320 90% 64%),
     hsl(360 95% 62%)
   );
-  -webkit-mask: radial-gradient(circle, transparent 44px, #000 45px, #000 60px, transparent 61px);
-  mask: radial-gradient(circle, transparent 44px, #000 45px, #000 60px, transparent 61px);
-  filter: drop-shadow(0 0 20px rgba(0, 240, 255, 0.6));
-  transition: transform 0.45s var(--ml-muelle), opacity 0.25s ease;
+  -webkit-mask: radial-gradient(circle, transparent 38px, #000 39px, #000 52px, transparent 53px);
+  mask: radial-gradient(circle, transparent 38px, #000 39px, #000 52px, transparent 53px);
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.6));
+  transition: transform 0.45s var(--ml-muelle), opacity 0.2s ease;
 }
 
 .ml-aro.is-abierto .ml-aro-anillo {
@@ -178,43 +187,44 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 22px;
-  height: 22px;
-  margin: -11px 0 0 -11px;
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
   border-radius: 50%;
-  border: 3px solid #ffffff;
+  border: 2px solid #ffffff;
   background: var(--tono, #ffffff);
-  box-shadow: 0 0 15px rgba(0, 240, 255, 0.9), 0 3px 10px rgba(0, 0, 0, 0.9);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.6), 0 0 10px var(--tono, #ffffff);
   opacity: 0;
-  transform: rotate(var(--giro, 0deg)) translateY(-53.5px) scale(0.3);
-  transition: opacity 0.25s ease, transform 0.45s var(--ml-muelle);
+  transform: rotate(var(--giro, 0deg)) translateY(-45.5px) scale(0.3);
+  transition: opacity 0.2s ease, transform 0.45s var(--ml-muelle);
 }
 
 .ml-aro.is-abierto .ml-aro-asa {
   opacity: 1;
-  transform: rotate(var(--giro, 0deg)) translateY(-53.5px) scale(1);
+  transform: rotate(var(--giro, 0deg)) translateY(-45.5px) scale(1);
 }
 
 .ml-aro.is-gira .ml-aro-asa {
-  transform: rotate(var(--giro, 0deg)) translateY(-53.5px) scale(1.22);
+  transition: opacity 0.2s ease;
+  transform: rotate(var(--giro, 0deg)) translateY(-45.5px) scale(1.15);
 }
 
-/* ── EL PANEL DE VIDRIO CUÁNTICO ─────────────────────────────────── */
+/* ── EL PANEL DE VIDRIO CUÁNTICO (FINO & ELEGANTE) ──────────────── */
 .ml-panel {
   position: absolute;
   z-index: 25;
-  right: 24px;
+  right: 20px;
   top: 50%;
   transform: translateY(-50%);
-  width: 390px;
-  max-width: calc(100% - 48px);
-  padding: 22px 20px 20px;
-  border-radius: 26px;
+  width: 350px;
+  max-width: calc(100% - 40px);
+  padding: 18px 16px 16px;
+  border-radius: 22px;
   background: var(--ml-vidrio);
   border: 1px solid var(--ml-vidrio-borde);
-  backdrop-filter: blur(28px) saturate(1.5);
-  -webkit-backdrop-filter: blur(28px) saturate(1.5);
-  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.85), 0 0 30px rgba(0, 240, 255, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(24px) saturate(1.5);
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  box-shadow: 0 20px 50px -15px rgba(0, 0, 0, 0.8), 0 0 25px rgba(0, 240, 255, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.15);
   cursor: default;
 }
 
@@ -469,39 +479,42 @@
   display: none;
 }
 
-/* ── MÓVIL (< 860px): RESPONSIVE AVANZADO ────────────────────────── */
+/* ── MÓVIL (< 860px): RESPONSIVE ULTRA-FINO ──────────────────────── */
 @media (max-width: 860px) {
   .ml-escena {
-    min-height: 480px;
+    min-height: 520px;
+    height: 540px;
   }
   .ml-panel {
-    left: 14px;
-    right: 14px;
+    left: 10px;
+    right: 10px;
     top: auto;
-    bottom: 14px;
+    bottom: 10px;
     transform: none;
     width: auto;
     max-width: none;
-    padding: 14px 14px 12px;
-    border-radius: 20px;
+    padding: 10px 12px 10px;
+    border-radius: 16px;
   }
   .ml-cab {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
   }
   .ml-cab h1,
   .ml-cab h3 {
     margin: 0;
-    font-size: 18px;
+    font-size: 15px;
+    font-weight: 700;
   }
   .ml-cab p {
     display: none;
   }
   .ml-codigo {
-    padding: 8px;
-    font-size: 10px;
+    padding: 4px 6px;
+    font-size: 9.5px;
+    border-radius: 10px;
   }
   .ml-fija {
     display: none;
@@ -510,24 +523,37 @@
     display: none;
   }
   .ml-fila {
-    height: 26px;
+    height: 22px;
+    padding: 0 4px;
+    font-size: 9.5px;
+  }
+  .ml-chip {
+    width: 10px;
+    height: 10px;
   }
   .ml-acciones {
-    margin-top: 10px;
+    margin-top: 8px;
     gap: 6px;
   }
   .ml-btn {
-    height: 38px;
+    height: 34px;
+    font-size: 10.5px;
+    padding: 0 10px;
+    border-radius: 10px;
+  }
+  .ml-btn-ico {
+    width: 34px;
+    padding: 0;
   }
   .ml-pista {
     left: 50%;
     transform: translateX(-50%);
     bottom: auto;
-    top: 14px;
-    font-size: 10px;
-    padding: 6px 12px;
+    top: 8px;
+    font-size: 9.5px;
+    padding: 4px 10px;
     width: max-content;
-    max-width: calc(100% - 28px);
+    max-width: calc(100% - 20px);
     white-space: nowrap;
   }
   .ml-p-largo {
@@ -535,5 +561,39 @@
   }
   .ml-p-corto {
     display: inline;
+  }
+}
+
+/* ── MODO PANTALLA COMPLETA TOTAL (BREAKOUT) ─────────────────────── */
+.ml-escena.is-fullscreen {
+  position: fixed !important;
+  inset: 0 !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100svh !important;
+  z-index: 2147483647 !important;
+  border-radius: 0 !important;
+  border: none !important;
+  margin: 0 !important;
+  background-color: #030712 !important;
+}
+
+.ml-escena.is-fullscreen .ml-panel {
+  position: absolute;
+  z-index: 25;
+}
+
+@media (max-width: 860px) {
+  .ml-escena.is-fullscreen {
+    height: 100vh !important;
+    height: 100svh !important;
+    min-height: 100vh !important;
+  }
+  .ml-escena.is-fullscreen .ml-panel {
+    bottom: 20px;
+    left: 12px;
+    right: 12px;
   }
 }

@@ -407,7 +407,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
     setForgedResult(null);
     setLiveDetectedObject(null);
     setForgeError(null);
-    setForgeProgressText('Paso 1: Analizando imagen con IA cuántica (Gemini Vision)...');
+    setForgeProgressText('Paso 1: Analizando imagen con tu compañero KAI...');
 
     try {
       const customForm = await forgeKaiFromImage({
