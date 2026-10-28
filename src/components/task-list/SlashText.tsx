@@ -30,12 +30,12 @@ const suave = (a: number, b: number, x: number) => {
  */
 function generaTrazoTachadura(ancho: number, alto: number, seed: number) {
   const r = azar(seed);
-  const e = Math.min(1.2, Math.max(0.75, alto / 20));
-  const x0 = -3 * e;
-  const x1 = ancho + 5 * e;
-  const sube = (2.2 + r() * 2.6) * e; // Sube levemente hacia la derecha, como la mano humana
+  const e = Math.min(1.1, Math.max(0.75, alto / 20));
+  const x0 = -2.5 * e;
+  const x1 = ancho + 4.5 * e;
+  const sube = (1.8 + r() * 2.0) * e; // Sube levemente hacia la derecha de forma controlada
   const fase = r() * 6.28;
-  const base = (2.6 + r() * 0.7) * e; // Grosor base del trazo de energía
+  const base = (1.75 + r() * 0.45) * e; // Grosor estilizado y nítido (~1.8px - 2.2px) para preservar legibilidad
 
   const n = Math.max(26, Math.min(60, Math.floor(ancho / 5)));
   const x = new Float32Array(n + 1);
@@ -47,10 +47,10 @@ function generaTrazoTachadura(ancho: number, alto: number, seed: number) {
   for (let i = 0; i <= n; i++) {
     const u = i / n;
     x[i] = mezcla(x0, x1, u);
-    // Coordenada Y con oscilación natural + leve inclinación + gancho final
-    y[i] = cy + (1.2 - u * sube) + 1.1 * e * Math.sin(u * 5.5 + fase) + 3.0 * e * suave(0.92, 1, u);
-    // Presión y grosor variable: fino al apoyar, engorda en el centro, adelgaza al final
-    w[i] = base * (0.45 + 0.55 * suave(0, 0.08, u)) * (0.92 + 0.1 * Math.sin(u * 9 + fase)) * (1 - 0.58 * suave(0.8, 1, u));
+    // Coordenada Y cruzando la altura media de la fuente con onda orgánica y gancho refinado
+    y[i] = cy + (0.4 - u * sube) + 0.85 * e * Math.sin(u * 5.5 + fase) + 2.0 * e * suave(0.92, 1, u);
+    // Presión variable de pluma: fino al inicio, engorda en el centro, y remata elegante
+    w[i] = base * (0.5 + 0.5 * suave(0, 0.08, u)) * (0.92 + 0.1 * Math.sin(u * 9 + fase)) * (1 - 0.5 * suave(0.8, 1, u));
   }
 
   // Generar contorno vectorial con normales perpendiculares
@@ -148,11 +148,11 @@ export const SlashText: React.FC<SlashTextProps> = ({
 
   return (
     <span ref={containerRef} className={`relative inline-block ${className}`}>
-      {/* Texto de la tarea: se atenúa suavemente tras el paso de la pluma/láser */}
+      {/* Texto de la tarea: se mantiene brillante y nítido para perfecta legibilidad */}
       <span
         className="inline-block transition-all duration-300"
         style={{
-          opacity: isCompleted ? 0.45 : 1,
+          opacity: isCompleted ? 0.80 : 1,
           transitionDelay: isCompleted ? '100ms' : '0ms',
         }}
       >
@@ -182,12 +182,12 @@ export const SlashText: React.FC<SlashTextProps> = ({
                 }
           }
           transition={{
-            duration: isCompleted ? 0.32 : 0.18,
+            duration: isCompleted ? 0.30 : 0.18,
             ease: isCompleted ? [0.42, 0, 0.3, 1] : 'easeIn',
           }}
           style={{
             filter: isCompleted
-              ? `drop-shadow(0 0 3px ${activeColor}) drop-shadow(0 0 6px ${activeColor})`
+              ? `drop-shadow(0 0 2.5px ${activeColor}) drop-shadow(0 0 5px ${activeColor})`
               : 'none',
           }}
         />

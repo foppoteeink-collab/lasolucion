@@ -130,7 +130,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
         isMenuOpen ? 'z-30 ring-1 ring-cyan-500/40 shadow-[0_0_15px_rgba(0,240,255,0.15)]' : 'z-0'
       } ${
         isCompleted 
-          ? 'bg-[#030712]/60 border-emerald-500/25 text-slate-400 opacity-60' 
+          ? 'bg-[#030712]/75 border-emerald-500/30 text-slate-200 opacity-90 shadow-sm' 
           : 'bg-surface-card backdrop-blur-md border-white/10 hover:border-white/20 text-white shadow-sm'
       }`}
     >
@@ -195,13 +195,13 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           {/* Título de la Tarea (Clic directo abre modal de configuración) */}
           <h3 
             onClick={() => handleEdit && handleEdit(task)}
-            className="text-xs sm:text-sm font-semibold tracking-normal transition-colors leading-snug truncate cursor-pointer hover:text-cyan-300 min-w-0"
+            className="text-[13px] sm:text-[15px] font-bold tracking-tight transition-colors leading-snug truncate cursor-pointer hover:text-cyan-300 min-w-0"
             title={`${task.title} - Toca para configurar`}
           >
             <SlashText
               text={task.title}
               isCompleted={isCompleted}
-              className={isCompleted ? 'text-slate-400' : 'text-slate-100'}
+              className={isCompleted ? 'text-slate-200' : 'text-white'}
               slashColor={catStyle.slashColor}
             />
           </h3>
