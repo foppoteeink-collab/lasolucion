@@ -1,18 +1,35 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { QuantumNoiseCanvas } from './QuantumNoiseCanvas';
+import { useUIStore } from '../store/useUIStore';
 
 export const SciFiGridBackground: React.FC = () => {
+  const systemAura = useUIStore(s => s.systemAura);
+
   return (
     <div 
       className="fixed inset-0 pointer-events-none z-0 overflow-hidden select-none"
       style={{
-        background: 'radial-gradient(ellipse 130% 90% at 50% -10%, #0c1633 0%, #050b1a 45%, #02040a 100%)'
+        background: systemAura?.backgroundColor 
+          ? `radial-gradient(ellipse 130% 90% at 50% -10%, ${systemAura.backgroundColor} 0%, #050b1a 60%, #02040a 100%)`
+          : 'radial-gradient(ellipse 130% 90% at 50% -10%, #0c1633 0%, #050b1a 45%, #02040a 100%)'
       }}
       aria-hidden="true"
     >
+      {/* CAPA MOXEN MALLA: ATMÓSFERA PERSONALIZADA ACTIVA */}
+      {systemAura?.backgroundImage && (
+        <div
+          className="absolute inset-0 pointer-events-none transition-all duration-1000 z-[1] mix-blend-screen opacity-70"
+          style={{
+            backgroundImage: systemAura.backgroundImage,
+          }}
+        />
+      )}
+
       {/* CAPA 1: AURORA BOREAL DINÁMICA FLUIDA (FRAMER MOTION) */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+      <div className={`absolute inset-0 pointer-events-none overflow-hidden transition-opacity duration-1000 ${
+        systemAura ? 'opacity-40' : 'opacity-100'
+      }`}>
         {/* Veta 1: Arco Verde Boreal & Lima Neón */}
         <motion.div 
           animate={{

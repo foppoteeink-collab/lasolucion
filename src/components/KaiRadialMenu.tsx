@@ -50,7 +50,7 @@ export const KaiRadialMenu: React.FC<KaiRadialMenuProps> = ({
     },
     {
       id: 'missions',
-      label: 'Misiones',
+      label: 'Tareas',
       icon: <CheckCircle2 className="w-5 h-5" />,
       accentColor: '#00f0ff',
       glowColor: 'rgba(0, 240, 255, 0.55)',

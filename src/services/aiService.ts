@@ -851,7 +851,12 @@ SECONDARY_COLOR: #hex
   let rawResult: string | null = null;
   let lastErrorMessage = '';
 
-  const CANDIDATE_MODELS = ['gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-flash-latest'];
+  const CANDIDATE_MODELS = [
+    'gemini-3-flash-preview',
+    'gemini-3.5-flash',
+    'gemini-3.8-flash',
+    'gemini-flash-latest',
+  ];
 
   // 1. Análisis e Ilustración Multimodal Primaria con Gemini Developer API
   const apiKeyToTry = getEffectiveGeminiApiKey();
@@ -859,7 +864,7 @@ SECONDARY_COLOR: #hex
     for (const modelName of CANDIDATE_MODELS) {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 35000);
+        const timeoutId = setTimeout(() => controller.abort(), 20000);
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKeyToTry}`;
         const res = await fetch(url, {
           method: 'POST',
@@ -868,12 +873,12 @@ SECONDARY_COLOR: #hex
             contents: [
               {
                 parts: [
-                  { inline_data: { mime_type: effectiveMime, data: cleanBase64 } },
+                  { inlineData: { mimeType: effectiveMime, data: cleanBase64 } },
                   { text: systemInstructions },
                 ],
               },
             ],
-            generationConfig: { temperature: 0.65, maxOutputTokens: 16384 },
+            generationConfig: { temperature: 0.65, maxOutputTokens: 8192 },
           }),
           signal: controller.signal,
         });
@@ -905,7 +910,7 @@ SECONDARY_COLOR: #hex
           model: modelName,
           generationConfig: {
             temperature: 0.65,
-            maxOutputTokens: 16384,
+            maxOutputTokens: 8192,
           },
         });
 
@@ -1014,22 +1019,8 @@ SECONDARY_COLOR: #hex
     onProgress('generation', { detectedObject });
   }
 
-  // 4. Intento de Generación Nativa de Imagen con Gemini (Motor A opcional para cuando haya facturación)
-  let imageUrl: string | undefined = undefined;
-  try {
-    const illustrationPrompt = `Masterpiece character of ${detectedObject}, ${keywordsEn}, full body, isolated on solid pure black background #000000`;
-    const nativeImg = await generateGeminiNativeImage({
-      cleanBase64,
-      effectiveMime,
-      illustrationPrompt,
-    });
-    if (nativeImg) {
-      imageUrl = nativeImg;
-      console.log('[Forja Neural] ✓ Imagen nativa generada y recortada exitosamente.');
-    }
-  } catch {
-    // Si no hay cuota de imagen, sigue con el SVG sin interrumpir
-  }
+  // En modo vector puro, retornamos el SVG directamente a máxima velocidad
+  const imageUrl: string | undefined = undefined;
 
   return {
     name: epicName,

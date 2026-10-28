@@ -36,6 +36,7 @@ interface UIState {
   screenFlash: 'damage' | 'heal' | 'buff' | null;
   isFocusModeActive: boolean; // INMUNIZADOR DE FLUJO
   zenMode: boolean; // MODO ZEN (REDUCCIÓN DE ESTÍMULOS / AHORRO BATERÍA)
+  systemAura: { name: string; backgroundColor: string; backgroundImage: string } | null;
   
   // Modales
   isDailyRewardsOpen: boolean;
@@ -84,6 +85,7 @@ interface UIState {
   setNavigationMode: (mode: NavigationMode) => void;
   toggleNavigationMode: () => void;
   toggleZenMode: () => void;
+  setSystemAura: (aura: { name: string; backgroundColor: string; backgroundImage: string } | null) => void;
 }
 
 export const syncRootTheme = (_mode?: ThemeMode) => {
@@ -122,6 +124,16 @@ const getSavedZenMode = (): boolean => {
   return false;
 };
 
+const getSavedSystemAura = (): { name: string; backgroundColor: string; backgroundImage: string } | null => {
+  if (typeof window !== 'undefined') {
+    try {
+      const raw = localStorage.getItem('taskquest_system_aura');
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+  }
+  return null;
+};
+
 let modalTransitionTimeout: ReturnType<typeof setTimeout> | null = null;
 
 export const useUIStore = create<UIState>((set, get) => ({
@@ -133,6 +145,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   screenFlash: null,
   isFocusModeActive: false,
   zenMode: getSavedZenMode(),
+  systemAura: getSavedSystemAura(),
   
   isDailyRewardsOpen: false,
   isLevelUpOpen: false,
@@ -222,6 +235,19 @@ export const useUIStore = create<UIState>((set, get) => ({
       } catch (e) {}
     }
     set({ zenMode: next });
+  },
+
+  setSystemAura: (aura) => {
+    if (typeof window !== 'undefined') {
+      try {
+        if (aura) {
+          localStorage.setItem('taskquest_system_aura', JSON.stringify(aura));
+        } else {
+          localStorage.removeItem('taskquest_system_aura');
+        }
+      } catch (e) {}
+    }
+    set({ systemAura: aura });
   },
 
   // Enqueue or open modal through FIFO orchestrator

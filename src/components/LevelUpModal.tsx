@@ -131,7 +131,7 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({
             </div>
 
             <div className="mt-3 pt-2.5 border-t border-dashed border-white/10 flex items-center justify-between text-xs font-black">
-              <span className="text-slate-300 uppercase tracking-wider text-[10px] font-mono">Inyección Creditos Sci-Fi:</span>
+              <span className="text-slate-300 uppercase tracking-wider text-[10px] font-mono">Inyección de Monedas:</span>
               <span className="text-[#d6f421] drop-shadow-[0_0_8px_rgba(214,244,33,0.8)] text-sm font-mono">
                 +{20 + newLevel * 5} 🪙
               </span>

@@ -150,7 +150,7 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Monedas Micro-chip con brillo dorado noble */}
             <div 
               className="flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1 rounded-xl bg-surface-card border border-yellow-500/40 text-yellow-300 text-xs sm:text-sm font-anton tracking-wider shadow-[0_0_12px_rgba(234,179,8,0.22)]"
-              title={`${stats.coins || 0} Monedas de Oro acumuladas`}
+              title={`${stats.coins || 0} Monedas acumuladas`}
             >
               <Coins className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-400 drop-shadow-[0_0_5px_rgba(234,179,8,0.7)]" />
               <span><AnimatedNumber value={stats.coins} /></span>
@@ -214,7 +214,7 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             onClick={() => { soundFX.playClick(); onOpenProfile?.(); }}
             className="flex items-center gap-2 group shrink-0 cursor-pointer text-left focus:outline-none"
-            title={`Perfil de Cazador - Nivel ${stats.level} (${displayRankTitle})`}
+            title={`Perfil Táctico - Nivel ${stats.level} (${displayRankTitle})`}
           >
             {/* Micro Glifo con Nivel integrado */}
             <div className="relative w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-surface-card border border-cyan-400/70 flex items-center justify-center shadow-[0_0_10px_rgba(0,240,255,0.35)] group-hover:scale-105 transition-transform overflow-hidden">

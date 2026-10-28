@@ -72,7 +72,7 @@ export const KaiInteractiveSpotlightTour: React.FC = () => {
       badge: 'PASO 3 DE 5 // COMPLETADO',
       title: 'MARCAR TAREAS',
       instruction:
-        'Marca este recuadro al terminar tu misión para cobrar Monedas de Oro y XP al instante.',
+        'Marca este recuadro al terminar tu tarea para cobrar Monedas y XP al instante.',
       fallbackIcon: <CheckCircle2 className="w-5 h-5 text-emerald-400" />
     },
     {

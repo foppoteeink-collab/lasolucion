@@ -186,7 +186,7 @@ export class NotificationService {
         if (!this.firedKeys.has(key)) {
           this.firedKeys.add(key);
           const notif = this.triggerNotification(
-            'Misiones de la Mañana 🌅',
+            'Tareas de la Mañana 🌅',
             '¡Buenos días! Revisa tu plan diario y comienza a sumar EXP y Monedas.',
             '🌅',
             'reminder'

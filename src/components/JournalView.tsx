@@ -247,7 +247,7 @@ export const JournalView: React.FC<JournalViewProps> = ({
             <button
               onClick={() => { soundFX.playClick(); onBackToMissions(); }}
               className="p-2 rounded-xl bg-[#04020e] hover:bg-cyan-950/60 border border-cyan-500/40 text-cyan-300 hover:text-white transition-colors cursor-pointer shrink-0 shadow-[0_0_10px_rgba(0,240,255,0.15)]"
-              title="Volver a Misiones"
+              title="Volver a Tareas"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
@@ -429,7 +429,7 @@ export const JournalView: React.FC<JournalViewProps> = ({
             onClick={onBackToMissions}
             className="px-5 py-2.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-anton uppercase tracking-wider text-xs shadow-[0_0_15px_rgba(0,240,255,0.4)] cursor-pointer inline-flex items-center gap-2 transition"
           >
-            <span>Ir a Misiones del Día</span>
+            <span>Ir a Tareas del Día</span>
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>

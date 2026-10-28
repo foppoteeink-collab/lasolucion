@@ -139,7 +139,7 @@ export const WeeklyReportModal: React.FC<WeeklyReportModalProps> = ({
     md += `**Generado**: ${new Date().toLocaleString()}\n\n`;
 
     md += `## 📊 Métricas Clave\n`;
-    md += `- **Misiones completadas**: ${reportData.completedTasks} de ${reportData.totalTasks} (${reportData.completionRate}% de efectividad)\n`;
+    md += `- **Tareas completadas**: ${reportData.completedTasks} de ${reportData.totalTasks} (${reportData.completionRate}% de efectividad)\n`;
     md += `- **XP Ganada**: +${reportData.totalXp} XP\n`;
     md += `- **Monedas acumuladas**: +${reportData.totalCoins} 🪙\n`;
     if (reportData.avgSleep) {

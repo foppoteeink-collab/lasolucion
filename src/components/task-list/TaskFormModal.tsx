@@ -452,7 +452,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                   <div className="px-3 py-1.5 rounded-xl bg-cyan-950/30 border border-cyan-500/20 flex items-center justify-between text-xs">
                     <span className="text-gray-400 font-mono text-[11px]">Recompensa estimada:</span>
                     <span className="font-bold text-cyan-300 font-mono text-xs">
-                      ⚡ +{isLegendary ? (newXp || 10) * 2 : (newXp || 10)} XP • 🪙 +{isLegendary ? (newCoins || 4) * 2 : (newCoins || 4)} Oro
+                      ⚡ +{isLegendary ? (newXp || 10) * 2 : (newXp || 10)} XP • 🪙 +{isLegendary ? (newCoins || 4) * 2 : (newCoins || 4)} Monedas
                     </span>
                   </div>
                 )}

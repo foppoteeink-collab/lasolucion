@@ -289,7 +289,7 @@ export function AppLayout() {
             />
           </div>
 
-          <div className="w-full max-w-6xl mx-auto flex-1 bg-[#030712]/40 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl p-4 sm:p-8">
+          <div className="w-full max-w-6xl mx-auto flex-1 bg-[#030712]/40 backdrop-blur-xl border border-white/10 rounded-2xl sm:rounded-3xl shadow-2xl px-2.5 py-3.5 sm:p-8">
         {authError && (
           <div className="mb-4 p-3 rounded-xl bg-[#1a0500] border border-[#fb5607]/60 text-[#fb5607] text-xs flex items-center justify-between gap-3 shadow-[0_0_15px_rgba(251,86,7,0.3)]">
             <span>{authError}</span>
@@ -328,7 +328,7 @@ export function AppLayout() {
               }`}
             >
               <Swords className="w-4 h-4" />
-              <span>Misiones</span>
+              <span>Tareas</span>
             </button>
             <button
               onClick={() => { soundFX.playClick(); setActiveTab('journal'); }}
@@ -614,7 +614,7 @@ export function AppLayout() {
               }`}
             >
               <Swords className={`w-6 h-6 mb-0.5 ${activeTab === 'dashboard' ? 'text-black drop-shadow-[0_0_8px_rgba(0,0,0,0.8)]' : 'text-cyan-300'}`} />
-              <span className="text-[9px] font-bold tracking-wider">Misiones</span>
+              <span className="text-[9px] font-bold tracking-wider">Tareas</span>
             </button>
             
             <button

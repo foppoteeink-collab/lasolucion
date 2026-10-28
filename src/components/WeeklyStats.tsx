@@ -560,7 +560,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
   };
 
   return (
-    <div className="space-y-6 pb-8">
+    <div className="space-y-4 sm:space-y-6 pb-8">
       {/* Modals */}
       <Suspense fallback={null}>
         <HeroProfileModal
@@ -602,20 +602,20 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
       {/* ─────────────────────────────────────────────────────────────────── */}
       {/* 4 MASTER SUB-TABS SELECTOR (TACTICAL SCI-FI SWITCHER)              */}
       {/* ─────────────────────────────────────────────────────────────────── */}
-      <div className="sticky top-0 z-30 mb-5 p-1.5 rounded-2xl bg-[#030612]/95 backdrop-blur-md border border-cyan-500/40 shadow-[0_4px_25px_rgba(0,240,255,0.15)] flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+      <div className="sticky top-0 z-30 mb-4 p-1 sm:p-1.5 rounded-2xl bg-[#030612]/95 backdrop-blur-md border border-cyan-500/40 shadow-[0_4px_25px_rgba(0,240,255,0.15)] grid grid-cols-4 gap-1 sm:gap-1.5">
         <button
           type="button"
           onClick={() => {
             soundFX.playClick();
             setActiveSubTab('hero');
           }}
-          className={`flex-1 min-w-[105px] py-2 px-3 rounded-xl font-anton text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+          className={`py-2 px-1 sm:px-3 rounded-xl font-anton text-[11px] sm:text-xs uppercase tracking-wider flex items-center justify-center gap-1 sm:gap-1.5 transition-all cursor-pointer ${
             activeSubTab === 'hero'
               ? 'bg-gradient-to-r from-cyan-400 to-blue-600 text-black shadow-[0_0_15px_rgba(0,240,255,0.5)] font-black'
               : 'text-slate-300 hover:text-cyan-300 hover:bg-white/5 border border-transparent'
           }`}
         >
-          <Shield className="w-3.5 h-3.5" />
+          <Shield className="w-3.5 h-3.5 shrink-0" />
           <span>Héroe</span>
         </button>
 
@@ -625,16 +625,17 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
             soundFX.playClick();
             setActiveSubTab('neuro');
           }}
-          className={`flex-1 min-w-[130px] py-2 px-3 rounded-xl font-anton text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+          className={`py-2 px-1 sm:px-3 rounded-xl font-anton text-[11px] sm:text-xs uppercase tracking-wider flex items-center justify-center gap-1 sm:gap-1.5 transition-all cursor-pointer ${
             activeSubTab === 'neuro'
               ? 'bg-gradient-to-r from-purple-500 to-fuchsia-600 text-white shadow-[0_0_15px_rgba(168,85,247,0.5)] font-black'
               : 'text-slate-300 hover:text-purple-300 hover:bg-white/5 border border-transparent'
           }`}
         >
-          <Brain className="w-3.5 h-3.5" />
-          <span>Hábitos 21/66</span>
+          <Brain className="w-3.5 h-3.5 shrink-0" />
+          <span className="sm:hidden">Hábitos</span>
+          <span className="hidden sm:inline">Hábitos 21/66</span>
           {trackedHabits.length > 0 && (
-            <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold ${
+            <span className={`hidden sm:inline-block px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold ${
               activeSubTab === 'neuro' ? 'bg-black/50 text-purple-200' : 'bg-purple-900/60 text-purple-300'
             }`}>
               {trackedHabits.length}
@@ -648,14 +649,15 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
             soundFX.playClick();
             setActiveSubTab('energy');
           }}
-          className={`flex-1 min-w-[135px] py-2 px-3 rounded-xl font-anton text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+          className={`py-2 px-1 sm:px-3 rounded-xl font-anton text-[11px] sm:text-xs uppercase tracking-wider flex items-center justify-center gap-1 sm:gap-1.5 transition-all cursor-pointer ${
             activeSubTab === 'energy'
               ? 'bg-gradient-to-r from-cyan-500 to-indigo-600 text-white shadow-[0_0_15px_rgba(0,240,255,0.5)] font-black'
               : 'text-slate-300 hover:text-cyan-300 hover:bg-white/5 border border-transparent'
           }`}
         >
-          <Zap className="w-3.5 h-3.5" />
-          <span>Energía & Foco</span>
+          <Zap className="w-3.5 h-3.5 shrink-0" />
+          <span className="sm:hidden">Foco</span>
+          <span className="hidden sm:inline">Energía & Foco</span>
         </button>
 
         <button
@@ -664,13 +666,13 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
             soundFX.playClick();
             setActiveSubTab('finance');
           }}
-          className={`flex-1 min-w-[105px] py-2 px-3 rounded-xl font-anton text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+          className={`py-2 px-1 sm:px-3 rounded-xl font-anton text-[11px] sm:text-xs uppercase tracking-wider flex items-center justify-center gap-1 sm:gap-1.5 transition-all cursor-pointer ${
             activeSubTab === 'finance'
               ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-black shadow-[0_0_15px_rgba(245,158,11,0.5)] font-black'
               : 'text-slate-300 hover:text-amber-300 hover:bg-white/5 border border-transparent'
           }`}
         >
-          <Coins className="w-3.5 h-3.5" />
+          <Coins className="w-3.5 h-3.5 shrink-0" />
           <span>Finanzas</span>
         </button>
       </div>
@@ -679,9 +681,9 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
       {/* PESTAÑA 1: [🛡️ HÉROE & LINAJE]                                   */}
       {/* ================================================================= */}
       {activeSubTab === 'hero' && (
-        <div className="space-y-6 animate-fadeIn">
+        <div className="space-y-4 sm:space-y-6 animate-fadeIn">
           {/* Full Width Hero RPG Character Card */}
-          <div className="rounded-[24px] scifi-glass-panel border-2 border-cyan-400 p-4 sm:p-6 shadow-[0_0_25px_rgba(0,240,255,0.25)] flex flex-col justify-between relative overflow-hidden text-white">
+          <div className="rounded-[22px] sm:rounded-[24px] scifi-glass-panel border-2 border-cyan-400 p-3.5 sm:p-6 shadow-[0_0_25px_rgba(0,240,255,0.25)] flex flex-col justify-between relative overflow-hidden text-white">
             {onUpdateStats && (
               <button
                 onClick={() => {
@@ -858,27 +860,35 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
 
           {/* Historical RPG Phase Journey (Cleanly re-anchored to Hero tab) */}
           {phaseProgressionData.length > 0 && (
-            <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-b from-[#0a0f25] to-[#030612] border border-emerald-900/40 shadow-[0_10px_30px_rgba(16,185,129,0.08)] flex flex-col relative overflow-hidden">
+            <div className="p-3.5 sm:p-6 rounded-3xl bg-gradient-to-b from-[#0a0f25] to-[#030612] border border-emerald-900/40 shadow-[0_10px_30px_rgba(16,185,129,0.08)] flex flex-col relative overflow-hidden">
               <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 blur-3xl rounded-full pointer-events-none" />
 
-              <div className="flex items-center justify-between mb-4 relative z-10">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 relative z-10">
                 <div>
-                  <div className="flex items-center gap-2 text-emerald-400 text-xs font-mono font-bold uppercase tracking-widest">
-                    <TrendingUp className="w-4 h-4 text-emerald-400" />
+                  <div className="flex items-center gap-1.5 text-emerald-400 text-[10px] sm:text-xs font-mono font-bold uppercase tracking-widest">
+                    <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
                     Evolución del Cazador
                   </div>
-                  <h3 className="text-base sm:text-lg font-anton uppercase tracking-wide text-white mt-0.5">
+                  <h3 className="text-sm sm:text-lg font-anton uppercase tracking-wide text-white mt-0.5">
                     Diario de Fases del Sistema (1 a 10)
                   </h3>
                 </div>
-                <span className="text-[10px] font-mono text-emerald-300 bg-emerald-950/60 px-2.5 py-1 rounded-lg border border-emerald-500/30">
+                <span className="self-start sm:self-auto text-[10px] font-mono text-emerald-300 bg-emerald-950/60 px-2.5 py-1 rounded-lg border border-emerald-500/30">
                   Fase Actual: {activeRank.phase || 1}
                 </span>
               </div>
 
-              <div className="w-full h-[220px] relative z-10">
-                <ResponsiveContainer width="100%" height={220}>
-                  <LineChart data={phaseProgressionData} margin={{ top: 15, right: 30, left: 0, bottom: 0 }}>
+              {/* Guide box */}
+              <div className="p-2 sm:p-2.5 rounded-xl bg-emerald-950/30 border border-emerald-500/20 text-[10px] sm:text-[11px] text-emerald-200 font-mono mb-3 flex items-center gap-2 relative z-10">
+                <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span className="leading-tight">
+                  <strong>Cronología:</strong> Registro histórico con la fecha exacta en la que tu héroe desbloqueó cada una de las 10 fases.
+                </span>
+              </div>
+
+              <div className="w-full h-[200px] sm:h-[220px] relative z-10">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={phaseProgressionData} margin={{ top: 15, right: 15, left: -25, bottom: 0 }}>
                     <defs>
                       <linearGradient id="lineGradHero" x1="0" y1="0" x2="1" y2="0">
                         <stop offset="0%" stopColor="#10b981" />
@@ -926,40 +936,40 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
           )}
 
           {/* Récords de Leyenda */}
-          <div className="space-y-4">
+          <div className="space-y-3">
             <div className="flex items-center gap-2 text-yellow-400">
-              <Trophy className="w-5 h-5" />
-              <h3 className="text-sm font-black uppercase tracking-widest">Récords de Leyenda del Cazador</h3>
+              <Trophy className="w-4 h-4 text-yellow-400" />
+              <h3 className="text-xs sm:text-sm font-black uppercase tracking-widest">Récords de Leyenda del Cazador</h3>
             </div>
 
-            <div className="bg-gradient-to-br from-[#120a00] to-[#0a0500] p-4 rounded-2xl border border-yellow-900/50 shadow-[0_4px_20px_rgba(234,179,8,0.05)]">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-black/40 border border-yellow-900/40">
-                  <div className="p-2.5 bg-yellow-500/20 rounded-xl text-yellow-400"><Zap className="w-5 h-5" /></div>
-                  <div>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Máximo XP en 1 Día</p>
-                    <p className="text-xl font-black text-yellow-400">{maxDailyXp} <span className="text-xs text-yellow-600">XP</span></p>
+            <div className="bg-gradient-to-br from-[#120a00] to-[#0a0500] p-3 sm:p-4 rounded-2xl border border-yellow-900/50 shadow-[0_4px_20px_rgba(234,179,8,0.05)]">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+                <div className="flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-xl bg-black/40 border border-yellow-900/40">
+                  <div className="p-2 sm:p-2.5 bg-yellow-500/20 rounded-xl text-yellow-400 shrink-0"><Zap className="w-4 h-4 sm:w-5 sm:h-5" /></div>
+                  <div className="min-w-0">
+                    <p className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-wider truncate">Máximo XP / Día</p>
+                    <p className="text-base sm:text-xl font-black text-yellow-400 truncate">{maxDailyXp} <span className="text-[10px] text-yellow-600">XP</span></p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-black/40 border border-purple-900/40">
-                  <div className="p-2.5 bg-purple-500/20 rounded-xl text-purple-400"><Clock className="w-5 h-5" /></div>
-                  <div>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Sesión Deep Work Máxima</p>
-                    <p className="text-xl font-black text-purple-300">{maxPomodoro} <span className="text-xs text-purple-400 font-bold">MIN</span></p>
+                <div className="flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-xl bg-black/40 border border-purple-900/40">
+                  <div className="p-2 sm:p-2.5 bg-purple-500/20 rounded-xl text-purple-400 shrink-0"><Clock className="w-4 h-4 sm:w-5 sm:h-5" /></div>
+                  <div className="min-w-0">
+                    <p className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-wider truncate">Deep Work Máx.</p>
+                    <p className="text-base sm:text-xl font-black text-purple-300 truncate">{maxPomodoro} <span className="text-[10px] text-purple-400 font-bold">MIN</span></p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-black/40 border border-orange-900/40">
-                  <div className="p-2.5 bg-orange-500/20 rounded-xl text-orange-400"><Flame className="w-5 h-5" /></div>
-                  <div>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Mejor Racha Histórica</p>
-                    <p className="text-xl font-black text-orange-400">{maxHabitStreak} <span className="text-xs text-orange-400 font-bold">DÍAS</span></p>
+                <div className="flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-xl bg-black/40 border border-orange-900/40">
+                  <div className="p-2 sm:p-2.5 bg-orange-500/20 rounded-xl text-orange-400 shrink-0"><Flame className="w-4 h-4 sm:w-5 sm:h-5" /></div>
+                  <div className="min-w-0">
+                    <p className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-wider truncate">Racha Récord</p>
+                    <p className="text-base sm:text-xl font-black text-orange-400 truncate">{maxHabitStreak} <span className="text-[10px] text-orange-400 font-bold">DÍAS</span></p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-black/40 border border-cyan-900/40">
-                  <div className="p-2.5 bg-cyan-500/20 rounded-xl text-cyan-400"><Target className="w-5 h-5" /></div>
-                  <div>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Misiones Completadas</p>
-                    <p className="text-xl font-black text-cyan-400">{totalTasksDone} <span className="text-xs text-cyan-600">MISIONES</span></p>
+                <div className="flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-xl bg-black/40 border border-cyan-900/40">
+                  <div className="p-2 sm:p-2.5 bg-cyan-500/20 rounded-xl text-cyan-400 shrink-0"><Target className="w-4 h-4 sm:w-5 sm:h-5" /></div>
+                  <div className="min-w-0">
+                    <p className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-wider truncate">Tareas Totales</p>
+                    <p className="text-base sm:text-xl font-black text-cyan-400 truncate">{totalTasksDone} <span className="text-[10px] text-cyan-600">TAR.</span></p>
                   </div>
                 </div>
               </div>
@@ -972,9 +982,9 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
       {/* PESTAÑA 2: [🧠 NEUROPLASTICIDAD 21/66]                            */}
       {/* ================================================================= */}
       {activeSubTab === 'neuro' && (
-        <div className="space-y-6 animate-fadeIn">
+        <div className="space-y-4 sm:space-y-6 animate-fadeIn">
           {/* Neuroplasticity Scientific Overview Banner */}
-          <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-[#12081f] via-[#080d24] to-[#040817] border border-purple-500/50 shadow-[0_0_30px_rgba(168,85,247,0.15)] relative overflow-hidden">
+          <div className="p-3.5 sm:p-6 rounded-3xl bg-gradient-to-r from-[#12081f] via-[#080d24] to-[#040817] border border-purple-500/50 shadow-[0_0_30px_rgba(168,85,247,0.15)] relative overflow-hidden">
             <div className="absolute top-0 right-0 w-80 h-full bg-purple-600/10 blur-3xl pointer-events-none" />
 
             <div className="relative z-10">
@@ -1029,8 +1039,8 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
           )}
 
           {/* Dedicated 21/66 Neuroplasticity Progression Curve */}
-          <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-b from-[#0a0f25] to-[#030612] border border-purple-900/60 shadow-[0_10px_30px_rgba(168,85,247,0.1)] flex flex-col relative overflow-hidden">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 relative z-10">
+          <div className="p-3.5 sm:p-6 rounded-3xl bg-gradient-to-b from-[#0a0f25] to-[#030612] border border-purple-900/60 shadow-[0_10px_30px_rgba(168,85,247,0.1)] flex flex-col relative overflow-hidden">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-4 relative z-10">
               <div>
                 <h3 className="text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-300 via-fuchsia-300 to-amber-300 flex items-center gap-2 uppercase tracking-widest">
                   <Activity className="w-4 h-4 text-purple-400" />
@@ -1041,7 +1051,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
                 </p>
               </div>
 
-              <div className="flex items-center gap-3 text-[11px] font-mono">
+              <div className="flex items-center gap-3 text-[10px] sm:text-[11px] font-mono">
                 <div className="flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-purple-400 shadow-[0_0_8px_rgba(192,132,252,0.8)]" />
                   <span className="text-purple-300 font-bold">21d Maltz</span>
@@ -1053,18 +1063,26 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
               </div>
             </div>
 
+            {/* Guide box */}
+            <div className="p-2 sm:p-2.5 rounded-xl bg-purple-950/30 border border-purple-500/20 text-[10px] sm:text-[11px] text-purple-200 font-mono mb-3 flex items-center gap-2 relative z-10">
+              <Brain className="w-4 h-4 text-purple-400 shrink-0" />
+              <span className="leading-tight">
+                <strong>¿Cómo interpretarlo?</strong> Tus barras crecen con cada día cumplido. Al llegar a 21d superas la resistencia inicial, y a 66d el hábito se automatiza en tu cerebro.
+              </span>
+            </div>
+
             {neuroChartData.length === 0 ? (
               <div className="py-12 text-center text-slate-400 border border-dashed border-purple-900/40 rounded-2xl bg-black/20">
                 <Brain className="w-10 h-10 text-purple-400 mx-auto mb-2 opacity-60" />
                 <p className="text-sm font-bold text-purple-200">No hay hábitos en seguimiento activo</p>
                 <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-                  Crea tu primer hábito desde la pestaña de Misiones Diarias para ver tu curva de neuroplasticidad.
+                  Crea tu primer hábito desde la pestaña de Tareas Diarias para ver tu curva de neuroplasticidad.
                 </p>
               </div>
             ) : (
-              <div className="w-full h-[280px] relative z-10">
-                <ResponsiveContainer width="100%" height={280}>
-                  <BarChart data={neuroChartData} margin={{ top: 25, right: 30, left: 0, bottom: 25 }}>
+              <div className="w-full h-[260px] sm:h-[280px] relative z-10">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={neuroChartData} margin={{ top: 25, right: 10, left: -20, bottom: 25 }}>
                     <defs>
                       <linearGradient id="streakGrad" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="#00f0ff" stopOpacity={1} />
@@ -1083,7 +1101,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
                     <XAxis
                       dataKey="name"
                       stroke="#ffffff"
-                      tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 'bold' }}
+                      tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 'bold' }}
                       interval={0}
                       dy={10}
                     />
@@ -1111,7 +1129,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
                       dataKey="currentStreak"
                       name="Racha Actual"
                       radius={[8, 8, 0, 0]}
-                      barSize={32}
+                      barSize={neuroChartData.length > 4 ? 22 : 30}
                       minPointSize={4}
                       animationDuration={1500}
                     >
@@ -1235,7 +1253,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
       {/* PESTAÑA 3: [⚡ ENERGÍA & FOCO] (FUSIÓN FOCO + BIORRITMO)          */}
       {/* ================================================================= */}
       {activeSubTab === 'energy' && (
-        <div className="space-y-6 animate-fadeIn">
+        <div className="space-y-4 sm:space-y-6 animate-fadeIn">
           {/* MOXEN CONSTANCIA: 3 Concentric Rings */}
           <MoxenConstancia
             days={weekPerformanceDays}
@@ -1349,17 +1367,25 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
           </div>
 
           {/* Focus Flow BarChart */}
-          <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-b from-[#0a0f25] to-[#030612] border border-cyan-900/50 shadow-[0_10px_30px_rgba(0,240,255,0.08)] flex flex-col relative overflow-hidden">
-            <div className="flex items-center justify-between mb-4 relative z-10">
+          <div className="p-3.5 sm:p-6 rounded-3xl bg-gradient-to-b from-[#0a0f25] to-[#030612] border border-cyan-900/50 shadow-[0_10px_30px_rgba(0,240,255,0.08)] flex flex-col relative overflow-hidden">
+            <div className="flex items-center justify-between mb-3 relative z-10">
               <h3 className="text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-400 flex items-center gap-2 uppercase tracking-widest">
                 <TrendingUp className="w-4 h-4 text-cyan-400" />
                 Flujo de Foco ({timeRange === 'semanal' ? '7 Días' : timeRange === 'mensual' ? '30 Días' : '12 Meses'})
               </h3>
             </div>
 
-            <div className="w-full h-[240px] relative z-10">
-              <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={chartData} margin={{ top: 15, right: 0, left: 0, bottom: 0 }}>
+            {/* Guide box */}
+            <div className="p-2 sm:p-2.5 rounded-xl bg-cyan-950/30 border border-cyan-500/20 text-[10px] sm:text-[11px] text-cyan-200 font-mono mb-3 flex items-center gap-2 relative z-10">
+              <Clock className="w-4 h-4 text-cyan-400 shrink-0" />
+              <span className="leading-tight">
+                <strong>¿Cómo interpretarlo?</strong> Muestra tus minutos de concentración profunda acumulados por día. La línea discontinua naranja marca tu objetivo de 60 min.
+              </span>
+            </div>
+
+            <div className="w-full h-[220px] sm:h-[240px] relative z-10">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData} margin={{ top: 15, right: 10, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="barGradientFlow" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="#00f0ff" stopOpacity={1} />
@@ -1373,7 +1399,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
                   <XAxis
                     dataKey="dayLabel"
                     stroke="#ffffff"
-                    tick={{ fill: '#94a3b8', fontSize: timeRange === 'semanal' ? 11 : 9, fontWeight: 'bold' }}
+                    tick={{ fill: '#94a3b8', fontSize: timeRange === 'semanal' ? 10 : 8, fontWeight: 'bold' }}
                     axisLine={false}
                     tickLine={false}
                     dy={10}
@@ -1390,7 +1416,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
                   <Bar
                     dataKey="focusMinutes"
                     radius={[6, 6, 6, 6]}
-                    barSize={timeRange === 'semanal' ? 32 : (timeRange === 'mensual' ? 12 : 24)}
+                    barSize={timeRange === 'semanal' ? 24 : (timeRange === 'mensual' ? 8 : 18)}
                     minPointSize={2}
                     animationDuration={1200}
                   >
@@ -1432,26 +1458,29 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
           {/* Productivity Pie Chart & Filtered Time Audit */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Pie Chart */}
-            <div className="p-5 rounded-3xl bg-gradient-to-b from-[#0a0f25] to-[#030612] border border-pink-900/40 shadow-[0_10px_30px_rgba(236,72,153,0.08)] flex flex-col items-center">
-              <h3 className="text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-rose-500 uppercase tracking-widest mb-3 self-start flex items-center gap-2">
+            <div className="p-3.5 sm:p-5 rounded-3xl bg-gradient-to-b from-[#0a0f25] to-[#030612] border border-pink-900/40 shadow-[0_10px_30px_rgba(236,72,153,0.08)] flex flex-col items-center">
+              <h3 className="text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-rose-500 uppercase tracking-widest mb-1 self-start flex items-center gap-2">
                 <PieChartIcon className="w-4 h-4 text-pink-400" />
                 Distribución de Productividad
               </h3>
+              <p className="text-[10px] text-slate-400 mb-2 self-start font-mono">
+                Tareas completadas según su categoría ({timeRange}).
+              </p>
 
               {pieData.length === 0 ? (
                 <div className="py-12 text-center text-slate-400">
-                  <p className="text-xs">No hay misiones completadas en este periodo ({timeRange}).</p>
+                  <p className="text-xs">No hay tareas completadas en este periodo ({timeRange}).</p>
                 </div>
               ) : (
-                <div className="w-full h-[220px]">
-                  <ResponsiveContainer width="100%" height={220}>
+                <div className="w-full h-[200px] sm:h-[220px]">
+                  <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
                         data={pieData}
                         cx="50%"
                         cy="50%"
-                        innerRadius={50}
-                        outerRadius={80}
+                        innerRadius={45}
+                        outerRadius={75}
                         paddingAngle={5}
                         dataKey="value"
                       >
@@ -1470,13 +1499,16 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
             </div>
 
             {/* Filtered Deep Work Time Audit */}
-            <div className="p-5 rounded-3xl bg-[#001830] border border-cyan-900/40 flex flex-col justify-between">
+            <div className="p-3.5 sm:p-5 rounded-3xl bg-[#001830] border border-cyan-900/40 flex flex-col justify-between">
               <div>
-                <h3 className="text-sm font-black text-cyan-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                <h3 className="text-sm font-black text-cyan-400 uppercase tracking-widest mb-1 flex items-center gap-2">
                   <Clock className="w-4 h-4 text-cyan-400" />
                   Auditoría Deep Work ({timeRange})
                 </h3>
-                <p className="text-2xl font-black text-white font-mono mb-4">
+                <p className="text-[10px] text-slate-400 mb-2 font-mono">
+                  Minutos totales de concentración por proyecto o categoría.
+                </p>
+                <p className="text-xl sm:text-2xl font-black text-white font-mono mb-3">
                   {Math.floor(filteredTimeAudit.totalMinutes / 60)}h {filteredTimeAudit.totalMinutes % 60}m
                 </p>
               </div>
@@ -1534,7 +1566,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
       {/* PESTAÑA 4: [💰 FINANZAS]                                          */}
       {/* ================================================================= */}
       {activeSubTab === 'finance' && (
-        <div className="space-y-6 animate-fadeIn">
+        <div className="space-y-4 sm:space-y-6 animate-fadeIn">
           <Suspense fallback={<div className="p-8 text-center text-xs font-mono text-cyan-400">Cargando panel financiero...</div>}>
             <FinanceDashboard expenses={expenses} setExpenses={setExpenses} tasksByDate={tasksByDate} />
           </Suspense>

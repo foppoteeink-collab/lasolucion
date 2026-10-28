@@ -41,6 +41,7 @@ import { useUIStore } from '../store/useUIStore';
 import { CloudSyncResult } from '../hooks/useCloudSync';
 import { useMoxenChicle } from '../hooks/useMoxenChicle';
 import { ChicleToggle } from './ChicleToggle';
+import { MoxenMalla } from './moxen/MoxenMalla';
 
 interface SettingsViewProps {
   settings: GameSettings;
@@ -52,7 +53,7 @@ interface SettingsViewProps {
 
 const EMPTY_TASK_LIST: any[] = [];
 
-type SettingsSubTab = 'preferences' | 'gameplay' | 'finances' | 'data' | 'simulator';
+type SettingsSubTab = 'preferences' | 'atmosphere' | 'gameplay' | 'finances' | 'data' | 'simulator';
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
   settings,
@@ -67,7 +68,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [showIOSInstructions, setShowIOSInstructions] = useState(false);
   const game = gameEngine as any;
   const cloudSync = propCloudSync || game?.cloudSync;
-  const { soundEnabled, toggleSound, themeMode, navigationMode, setNavigationMode, zenMode, toggleZenMode } = useUIStore();
+  const { soundEnabled, toggleSound, themeMode, navigationMode, setNavigationMode, zenMode, toggleZenMode, systemAura, setSystemAura } = useUIStore();
   
   const [activeSubTab, setActiveSubTab] = useState<SettingsSubTab>('preferences');
   const [currentCurrency, setCurrentCurrency] = useState<string>(getSavedCurrencySymbol);
@@ -211,9 +212,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         const habitsCount = (st.customHabits || []).length;
         const todayCount = activeList.length;
         const completedCount = activeList.filter(t => t.completed).length;
+        const taskWord = todayCount === 1 ? 'tarea' : 'tareas';
+        const doneWord = completedCount === 1 ? 'ya realizada' : 'ya realizadas';
+        const habitWord = habitsCount === 1 ? 'hábito' : 'hábitos';
         soundFX.playLevelUp();
         setCloudActionToast(
-          `✓ ¡Sincronización completada! Se cargaron ${todayCount} tareas (${completedCount} ya realizadas) y ${habitsCount} rutinas en tu agenda.`
+          `✓ ¡Sincronización completada! Se cargaron ${todayCount} ${taskWord} (${completedCount} ${doneWord}) y ${habitsCount} ${habitWord} en tu agenda.`
         );
         setTimeout(() => setCloudActionToast(null), 6000);
       } else {
@@ -380,6 +384,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
   const tabsConfig = [
     { id: 'preferences' as SettingsSubTab, label: 'Preferencias', icon: SlidersHorizontal, color: 'text-cyan-400' },
+    { id: 'atmosphere' as SettingsSubTab, label: 'Malla Shader', icon: Palette, color: 'text-cyan-400' },
     { id: 'gameplay' as SettingsSubTab, label: 'Juego & KAI', icon: Sparkles, color: 'text-purple-400' },
     { id: 'finances' as SettingsSubTab, label: 'Tesorería', icon: Coins, color: 'text-amber-400' },
     { id: 'data' as SettingsSubTab, label: 'Nube & Datos', icon: Database, color: 'text-emerald-400' }
@@ -409,8 +414,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           )}
         </div>
 
-        {/* SUB-TABS NAV BAR: Clean 4-segment responsive control */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 p-1.5 bg-[#000d1c] rounded-xl border border-slate-800/80">
+        {/* SUB-TABS NAV BAR: 5-segment responsive control */}
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 p-1.5 bg-[#000d1c] rounded-xl border border-slate-800/80">
           {tabsConfig.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeSubTab === tab.id;
@@ -452,6 +457,36 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         {/* ===================== TAB 1: PREFERENCIAS & UI ===================== */}
         {activeSubTab === 'preferences' && (
           <div className="space-y-6 animate-fade-in">
+            {/* ACCESO RÁPIDO Y DESTACADO: MOXEN MALLA SHADER */}
+            <div className="p-4 rounded-2xl bg-gradient-to-r from-cyan-950/80 via-[#001830] to-cyan-950/80 border border-cyan-500/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-[0_0_25px_rgba(0,240,255,0.18)]">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-cyan-500/20 border border-cyan-400/50 text-cyan-300 shrink-0">
+                  <Palette className="w-5 h-5 text-cyan-300" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-black text-white flex items-center gap-2">
+                    Atmósfera Cuántica (Moxen Malla)
+                    <span className="px-2 py-0.5 rounded-full text-[9px] font-mono bg-cyan-400 text-black font-black uppercase tracking-wider">
+                      SHADER
+                    </span>
+                  </h4>
+                  <p className="text-xs text-slate-300">
+                    {systemAura?.name ? `Atmósfera activa: ${systemAura.name}` : 'Personaliza el aura ambiental de la app o explora el laboratorio de gradientes WebGL.'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  soundFX.playClick();
+                  setActiveSubTab('atmosphere');
+                }}
+                className="chicle-btn px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider bg-cyan-500 text-black hover:bg-cyan-400 transition-all shadow-[0_0_15px_rgba(0,240,255,0.4)] cursor-pointer shrink-0"
+              >
+                Abrir Malla Shader
+              </button>
+            </div>
+
             {/* ATMÓSFERA Y ENTORNO */}
             <div className="bg-[#00152b] p-5 sm:p-6 rounded-2xl border border-slate-800 space-y-5">
               <h3 className="text-xs font-black text-cyan-400 uppercase tracking-widest flex items-center gap-2">
@@ -803,6 +838,57 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 />
               </div>
             </div>
+
+            {/* ═══ PERSONALIZADOR DE ATMÓSFERA CUÁNTICA (MOXEN MALLA) ═══ */}
+            <div className="bg-[#00152b] p-5 sm:p-6 rounded-2xl border border-cyan-500/40 space-y-4 shadow-[0_0_30px_rgba(0,240,255,0.12)]">
+              <div>
+                <h3 className="text-xs font-black text-cyan-400 uppercase tracking-widest flex items-center gap-2">
+                  <Palette className="w-4 h-4 text-cyan-400" /> Atmósfera Cuántica & Shader de Malla
+                </h3>
+                <p className="text-xs text-slate-400 mt-1">
+                  Motor WebGL reactivo de fluido elástico (Moxen Malla). Elige un preset Sci-Fi, arrastra los puntos para deformar los tonos y aplícalo a la atmósfera de la app.
+                </p>
+              </div>
+
+              <MoxenMalla
+                activeSystemAuraName={systemAura?.name}
+                onApplyToSystem={(aura) => {
+                  setSystemAura(aura);
+                }}
+                onResetSystem={() => {
+                  setSystemAura(null);
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ===================== TAB EXTRA: MALLA SHADER WEBGL ===================== */}
+        {activeSubTab === 'atmosphere' && (
+          <div className="space-y-6 animate-fade-in">
+            <div className="bg-[#00152b] p-5 sm:p-6 rounded-2xl border border-cyan-500/40 space-y-4 shadow-[0_0_30px_rgba(0,240,255,0.15)]">
+              <div>
+                <div className="flex items-center gap-2 text-cyan-400 text-xs font-mono font-bold uppercase tracking-widest mb-1">
+                  <Palette className="w-4 h-4 text-cyan-400" /> Laboratorio Cuántico WebGL
+                </div>
+                <h3 className="text-base sm:text-lg font-anton uppercase tracking-wide text-white">
+                  Atmósfera & Shader de Malla Reactivo
+                </h3>
+                <p className="text-xs text-slate-400 mt-1">
+                  Motor WebGL reactivo de fluido elástico (Moxen Malla). Elige un preset Sci-Fi, arrastra los puntos para deformar los tonos y aplícalo a la atmósfera de la app o copia el código CSS.
+                </p>
+              </div>
+
+              <MoxenMalla
+                activeSystemAuraName={systemAura?.name}
+                onApplyToSystem={(aura) => {
+                  setSystemAura(aura);
+                }}
+                onResetSystem={() => {
+                  setSystemAura(null);
+                }}
+              />
+            </div>
           </div>
         )}
 
@@ -815,14 +901,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 <Sparkles className="w-4 h-4" /> Mecánicas RPG & Gamificación
               </h3>
 
-              {/* Misiones Dinámicas */}
+              {/* Tareas Dinámicas */}
               <div className="flex items-center justify-between gap-4 py-2 border-b border-slate-800/80">
                 <div>
                   <h4 className="text-sm font-black text-white flex items-center gap-2 mb-1">
-                    <Sparkles className="w-4 h-4 text-cyan-400"/> Generador de Misiones Dinámicas
+                    <Sparkles className="w-4 h-4 text-cyan-400"/> Generador de Tareas Dinámicas
                   </h4>
                   <p className="text-xs text-slate-400">
-                    Detecta déficits de hábitos y propone misiones secundarias limitadas de bonificación de XP.
+                    Detecta déficits de hábitos y propone tareas secundarias limitadas de bonificación de XP.
                   </p>
                 </div>
                 <ChicleToggle
@@ -830,7 +916,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   onChange={() => toggleSetting('enableDynamicQuests')}
                   color="cyan"
                   size="md"
-                  ariaLabel="Alternar Generador de Misiones Dinámicas"
+                  ariaLabel="Alternar Generador de Tareas Dinámicas"
                 />
               </div>
 
@@ -1126,9 +1212,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   <ArrowUpRight className="w-4 h-4" />
                 </div>
                 <div className="text-xs space-y-1">
-                  <div className="font-bold text-white">Acreditación Automática desde Misiones</div>
+                  <div className="font-bold text-white">Acreditación Automática desde Tareas</div>
                   <p className="text-slate-400 leading-relaxed">
-                    Al completar misiones con recompensa en efectivo en la pestaña <strong className="text-cyan-300">Misiones</strong>, el monto se agrega de forma automática como ingreso al balance diario de tesorería.
+                    Al completar tareas con recompensa en efectivo en la pestaña <strong className="text-cyan-300">Tareas</strong>, el monto se agrega de forma automática como ingreso al balance diario de tesorería.
                   </p>
                 </div>
               </div>
@@ -1276,7 +1362,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <div className="p-3.5 rounded-xl bg-[#001224] border border-blue-900/40 text-xs text-slate-300 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2.5">
                   <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>Protección en tiempo real: Nivel, XP, Misiones, Hábitos, Bitácora y Tesorería.</span>
+                  <span>Protección en tiempo real: Nivel, XP, Tareas, Hábitos, Bitácora y Tesorería.</span>
                 </div>
                 {user && cloudSync?.lastSyncTime && (
                   <span className="text-[11px] font-mono text-slate-400 whitespace-nowrap">

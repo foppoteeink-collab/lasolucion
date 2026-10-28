@@ -113,8 +113,8 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
     () => [
       {
         id: 'missions',
-        label: 'Misiones',
-        categoryBadge: 'MISIONES',
+        label: 'Tareas',
+        categoryBadge: 'TAREAS',
         icon: <CheckCircle2 className="w-5 h-5" />,
         accentColor: '#00f0ff',
         glowColor: 'rgba(0, 240, 255, 0.45)',

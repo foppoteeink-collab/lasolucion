@@ -314,7 +314,7 @@ export const DayTemplatesModal: React.FC<DayTemplatesModalProps> = ({
                 {/* Tasks List in Template */}
                 <div className="my-3 flex-1 overflow-y-auto space-y-1.5 max-h-[36vh] pr-1">
                   <div className="flex items-center justify-between text-[11px] font-bold text-slate-400 px-1">
-                    <span>Misiones incluidas ({selectedTemplate.tasks.length}):</span>
+                    <span>Tareas incluidas ({selectedTemplate.tasks.length}):</span>
                     <span>XP Total: +{selectedTemplate.tasks.reduce((sum, t) => sum + (t.xpReward || 0), 0)}</span>
                   </div>
                   {selectedTemplate.tasks.map((task, idx) => (

@@ -82,12 +82,12 @@ export const ClearDayConfirmModal: React.FC<ClearDayConfirmModalProps> = ({
           </div>
 
           <h2 className="text-xl sm:text-2xl font-black text-white text-center mb-2 tracking-wide">
-            ¿Limpiar Misiones del Día?
+            ¿Limpiar Tareas del Día?
           </h2>
 
           <p className="text-center text-slate-300 text-sm mb-5 leading-relaxed">
             Estás a punto de cancelar las{' '}
-            <strong className="text-white font-bold">{tasks.length} misiones</strong> programadas para el{' '}
+            <strong className="text-white font-bold">{tasks.length} tareas</strong> programadas para el{' '}
             <span className="text-cyan-300 font-bold">{formatDateForDisplay(currentDate)}</span>.
           </p>
 
@@ -159,14 +159,14 @@ export const ClearDayConfirmModal: React.FC<ClearDayConfirmModalProps> = ({
               className="w-full py-3.5 px-4 rounded-xl bg-red-600 hover:bg-red-500 active:scale-[0.99] text-white font-black shadow-[0_0_20px_rgba(239,68,68,0.4)] transition-all flex items-center justify-center gap-2 cursor-pointer text-sm"
             >
               <Trash2 className="w-5 h-5" />
-              Sí, Limpiar Misiones de Hoy
+              Sí, Limpiar Tareas de Hoy
             </button>
 
             <button
               onClick={onClose}
               className="w-full py-3.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-[0.99] text-slate-300 hover:text-white font-bold border border-slate-700 transition-all cursor-pointer text-sm"
             >
-              Cancelar (Conservar Misiones)
+              Cancelar (Conservar Tareas)
             </button>
           </div>
         </div>

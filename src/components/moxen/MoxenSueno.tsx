@@ -163,24 +163,31 @@ export const MoxenSueno: React.FC<MoxenSuenoProps> = ({
   const startPercent = (brushRange[0] / totalBars) * 100;
   const widthPercent = ((brushRange[1] - brushRange[0] + 1) / totalBars) * 100;
 
+  const handleApplyPreset = (start: number, end: number, bTime: string, wTime: string) => {
+    soundFX.playClick();
+    setBrushRange([start, end]);
+    setCurrentBedtime(bTime);
+    setCurrentWakeTime(wTime);
+  };
+
   return (
-    <div className="moxen-sueno-root p-5 sm:p-6 rounded-3xl bg-gradient-to-b from-[#080e1e] to-[#02050e] border border-cyan-500/30 shadow-[0_10px_35px_rgba(0,240,255,0.1)] relative overflow-hidden">
+    <div className="moxen-sueno-root p-3.5 sm:p-6 rounded-3xl bg-gradient-to-b from-[#080e1e] to-[#02050e] border border-cyan-500/30 shadow-[0_10px_35px_rgba(0,240,255,0.1)] relative overflow-hidden">
       <div className="absolute top-0 left-0 w-80 h-32 bg-indigo-500/10 blur-3xl pointer-events-none" />
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 relative z-10">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-3 relative z-10">
         <div>
           <div className="flex items-center gap-2 text-indigo-400 text-xs font-mono font-bold uppercase tracking-widest">
             <Moon className="w-4 h-4 text-indigo-400" />
             Cronobiograma Cuántico
           </div>
-          <h3 className="text-base sm:text-lg font-anton uppercase tracking-wide text-white mt-0.5">
+          <h3 className="text-sm sm:text-lg font-anton uppercase tracking-wide text-white mt-0.5">
             Arquitectura del Sueño & Recuperación
           </h3>
         </div>
 
         {/* Legend */}
-        <div className="flex items-center gap-2.5 flex-wrap text-[10px] font-mono">
+        <div className="flex items-center gap-2 flex-wrap text-[9px] sm:text-[10px] font-mono">
           <span className="flex items-center gap-1 text-slate-300">
             <span className="w-2 h-2 rounded-full bg-[#f97316]" /> Despierto
           </span>
@@ -196,10 +203,48 @@ export const MoxenSueno: React.FC<MoxenSuenoProps> = ({
         </div>
       </div>
 
+      {/* Guide explanation box */}
+      <div className="p-2 sm:p-2.5 rounded-xl bg-indigo-950/40 border border-indigo-500/30 text-[10px] sm:text-[11px] text-indigo-200 font-mono mb-3 flex items-start gap-2 relative z-10">
+        <Sparkles className="w-4 h-4 text-indigo-300 shrink-0 mt-0.5" />
+        <span className="leading-tight">
+          <strong>¿Cómo leerlo?</strong> Cada barra representa 6 min de la noche. Arrastra las manijas cian del marco interactivo o toca un ajuste rápido para sincronizar tu descanso.
+        </span>
+      </div>
+
+      {/* Quick Preset Buttons (Mobile-First Touch Chips) */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 mb-2 relative z-10 scrollbar-none">
+        <button
+          type="button"
+          onClick={() => handleApplyPreset(0, 79, '23:00', '07:00')}
+          className="px-2.5 py-1 rounded-lg bg-indigo-950/80 hover:bg-indigo-900 border border-indigo-500/40 text-[10px] font-mono text-indigo-200 hover:text-white transition-all cursor-pointer whitespace-nowrap active:scale-95 flex items-center gap-1"
+        >
+          <Moon className="w-3 h-3 text-indigo-400" />
+          <span>🌙 Noche 8h (23:00-07:00)</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleApplyPreset(10, 69, '00:00', '06:00')}
+          className="px-2.5 py-1 rounded-lg bg-purple-950/80 hover:bg-purple-900 border border-purple-500/40 text-[10px] font-mono text-purple-200 hover:text-white transition-all cursor-pointer whitespace-nowrap active:scale-95 flex items-center gap-1"
+        >
+          <Sparkles className="w-3 h-3 text-purple-400" />
+          <span>💤 Profundo 6h (00:00-06:00)</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleApplyPreset(0, 7, '14:00', '14:45')}
+          className="px-2.5 py-1 rounded-lg bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-500/40 text-[10px] font-mono text-cyan-200 hover:text-white transition-all cursor-pointer whitespace-nowrap active:scale-95 flex items-center gap-1"
+        >
+          <Clock className="w-3 h-3 text-cyan-400" />
+          <span>⚡ Siesta 45m</span>
+        </button>
+      </div>
+
       {/* Interactive Sleep Hypnogram Canvas / Bars */}
       <div
         ref={containerRef}
-        className="sn-grafica relative z-10 my-4"
+        className="sn-grafica relative z-10 my-3"
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
       >
@@ -233,12 +278,12 @@ export const MoxenSueno: React.FC<MoxenSuenoProps> = ({
           }}
           onPointerDown={(e) => handlePointerDown('body', e)}
         >
-          {/* Left Handle */}
+          {/* Left Handle with expanded hit-target */}
           <div
             className="sn-asa sn-asa-izq"
             onPointerDown={(e) => handlePointerDown('left', e)}
           />
-          {/* Right Handle */}
+          {/* Right Handle with expanded hit-target */}
           <div
             className="sn-asa sn-asa-der"
             onPointerDown={(e) => handlePointerDown('right', e)}
@@ -247,7 +292,7 @@ export const MoxenSueno: React.FC<MoxenSuenoProps> = ({
       </div>
 
       {/* Timeline Hour Labels */}
-      <div className="flex justify-between text-[10px] font-mono text-slate-500 px-1 mb-5 relative z-10">
+      <div className="flex justify-between text-[9px] sm:text-[10px] font-mono text-slate-500 px-1 mb-4 relative z-10">
         <span>23:00</span>
         <span>01:00</span>
         <span>03:00</span>
@@ -255,39 +300,39 @@ export const MoxenSueno: React.FC<MoxenSuenoProps> = ({
         <span>07:00</span>
       </div>
 
-      {/* Sleep Metrics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 relative z-10 mb-5">
-        <div className="p-3.5 rounded-2xl bg-[#030712]/90 border border-indigo-500/30 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-indigo-950/80 border border-indigo-400 flex items-center justify-center text-indigo-300 font-bold text-sm shadow-[0_0_10px_rgba(99,102,241,0.3)]">
-            <Clock className="w-5 h-5 text-indigo-300" />
+      {/* Sleep Metrics Cards (Ultra-compact 3 columns on mobile) */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-3.5 relative z-10 mb-4">
+        <div className="p-2.5 sm:p-3.5 rounded-2xl bg-[#030712]/90 border border-indigo-500/30 flex flex-col sm:flex-row items-center text-center sm:text-left gap-1.5 sm:gap-3">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-indigo-950/80 border border-indigo-400 flex items-center justify-center text-indigo-300 font-bold shrink-0 shadow-[0_0_10px_rgba(99,102,241,0.3)]">
+            <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-300" />
           </div>
-          <div>
-            <p className="text-[10px] uppercase font-bold text-slate-400">Tiempo Dormido</p>
-            <p className="text-lg font-black text-white font-mono">
+          <div className="min-w-0">
+            <p className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-400 truncate">Tiempo Dormido</p>
+            <p className="text-xs sm:text-base font-black text-white font-mono truncate">
               {statsInRange.hours}h {statsInRange.mins}m
             </p>
           </div>
         </div>
 
-        <div className="p-3.5 rounded-2xl bg-[#030712]/90 border border-indigo-500/30 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-purple-950/80 border border-purple-400 flex items-center justify-center text-purple-300 font-bold text-sm shadow-[0_0_10px_rgba(168,85,247,0.3)]">
-            <Sparkles className="w-5 h-5 text-purple-300" />
+        <div className="p-2.5 sm:p-3.5 rounded-2xl bg-[#030712]/90 border border-indigo-500/30 flex flex-col sm:flex-row items-center text-center sm:text-left gap-1.5 sm:gap-3">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-purple-950/80 border border-purple-400 flex items-center justify-center text-purple-300 font-bold shrink-0 shadow-[0_0_10px_rgba(168,85,247,0.3)]">
+            <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-purple-300" />
           </div>
-          <div>
-            <p className="text-[10px] uppercase font-bold text-slate-400">Puntuación de Biorritmo</p>
-            <p className="text-lg font-black text-amber-300 font-mono">
-              {statsInRange.score} / 100
+          <div className="min-w-0">
+            <p className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-400 truncate">Biorritmo</p>
+            <p className="text-xs sm:text-base font-black text-amber-300 font-mono truncate">
+              {statsInRange.score}<span className="text-[9px] text-slate-400 font-sans">/100</span>
             </p>
           </div>
         </div>
 
-        <div className="p-3.5 rounded-2xl bg-[#030712]/90 border border-indigo-500/30 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-cyan-950/80 border border-cyan-400 flex items-center justify-center text-cyan-300 font-bold text-sm shadow-[0_0_10px_rgba(0,240,255,0.3)]">
-            <Moon className="w-5 h-5 text-cyan-300" />
+        <div className="p-2.5 sm:p-3.5 rounded-2xl bg-[#030712]/90 border border-indigo-500/30 flex flex-col sm:flex-row items-center text-center sm:text-left gap-1.5 sm:gap-3">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-cyan-950/80 border border-cyan-400 flex items-center justify-center text-cyan-300 font-bold shrink-0 shadow-[0_0_10px_rgba(0,240,255,0.3)]">
+            <Moon className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-300" />
           </div>
-          <div>
-            <p className="text-[10px] uppercase font-bold text-slate-400">Profundo + REM</p>
-            <p className="text-lg font-black text-cyan-300 font-mono">
+          <div className="min-w-0">
+            <p className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-400 truncate">Profundo+REM</p>
+            <p className="text-xs sm:text-base font-black text-cyan-300 font-mono truncate">
               {Math.floor((statsInRange.deepMinutes + statsInRange.remMinutes) / 60)}h {(statsInRange.deepMinutes + statsInRange.remMinutes) % 60}m
             </p>
           </div>
@@ -295,37 +340,37 @@ export const MoxenSueno: React.FC<MoxenSuenoProps> = ({
       </div>
 
       {/* Manual Sleep Calibrator Form */}
-      <div className="p-3.5 rounded-2xl bg-[#040a18] border border-cyan-500/20 flex flex-col md:flex-row items-center justify-between gap-3 relative z-10">
-        <div className="flex items-center gap-2">
-          <Sliders className="w-4 h-4 text-cyan-400" />
-          <span className="text-xs font-bold text-slate-200">Calibrar Horario de Descanso:</span>
+      <div className="p-2.5 sm:p-3.5 rounded-2xl bg-[#040a18] border border-cyan-500/20 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 relative z-10">
+        <div className="flex items-center gap-1.5">
+          <Sliders className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+          <span className="text-xs font-bold text-slate-200">Horario Exacto:</span>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
-          <div className="flex items-center gap-1.5 bg-black/60 px-2.5 py-1 rounded-xl border border-white/10">
-            <span className="text-[10px] font-mono text-slate-400">Dormir:</span>
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1 bg-black/60 px-2 py-1 rounded-xl border border-white/10 flex-1 sm:flex-none">
+            <span className="text-[9px] font-mono text-slate-400">Dormir:</span>
             <input
               type="time"
               value={currentBedtime}
               onChange={(e) => setCurrentBedtime(e.target.value)}
-              className="bg-transparent text-xs font-mono text-white focus:outline-none"
+              className="bg-transparent text-xs font-mono text-white focus:outline-none w-16"
             />
           </div>
 
-          <div className="flex items-center gap-1.5 bg-black/60 px-2.5 py-1 rounded-xl border border-white/10">
-            <span className="text-[10px] font-mono text-slate-400">Despertar:</span>
+          <div className="flex items-center gap-1 bg-black/60 px-2 py-1 rounded-xl border border-white/10 flex-1 sm:flex-none">
+            <span className="text-[9px] font-mono text-slate-400">Despertar:</span>
             <input
               type="time"
               value={currentWakeTime}
               onChange={(e) => setCurrentWakeTime(e.target.value)}
-              className="bg-transparent text-xs font-mono text-white focus:outline-none"
+              className="bg-transparent text-xs font-mono text-white focus:outline-none w-16"
             />
           </div>
 
           <button
             type="button"
             onClick={handleSave}
-            className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-mono text-xs font-bold transition-all shadow-[0_0_12px_rgba(99,102,241,0.4)] cursor-pointer active:scale-95"
+            className="w-full sm:w-auto px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-mono text-xs font-bold transition-all shadow-[0_0_12px_rgba(99,102,241,0.4)] cursor-pointer active:scale-95 text-center"
           >
             Guardar Noche
           </button>

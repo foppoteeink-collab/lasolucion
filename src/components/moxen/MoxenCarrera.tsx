@@ -111,6 +111,14 @@ export const MoxenCarrera: React.FC<MoxenCarreraProps> = ({
         </div>
       </div>
 
+      {/* Guide explanation box */}
+      <div className="p-2 sm:p-2.5 rounded-xl bg-purple-950/40 border border-purple-500/30 text-[10px] sm:text-[11px] text-purple-200 font-mono mb-3 flex items-start gap-2 relative z-10">
+        <Flame className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+        <span className="leading-tight">
+          <strong>¿Cómo interpretarlo?</strong> Observa la evolución de tus rachas en cada periodo. Pulsa <strong>Iniciar Carrera</strong> para ver la animación temporal hasta la consolidación neuroplástica.
+        </span>
+      </div>
+
       {/* Race Stage Area */}
       <div className="cr-escena relative z-10">
         {/* Giant period label in the background */}
@@ -118,36 +126,44 @@ export const MoxenCarrera: React.FC<MoxenCarreraProps> = ({
           {periods[currentStep]}
         </div>
 
-        {/* Habit Bars */}
-        <div className="space-y-3 relative z-10">
+        {/* Habit Bars (Mobile-first responsive rows) */}
+        <div className="space-y-2.5 relative z-10">
           {sortedHabits.map((habit, rankIdx) => {
             const isFirst = rankIdx === 0 && habit.currentValue > 0;
             const pct = Math.min(100, Math.round((habit.currentValue / maxValue) * 100));
             const barColor = habit.color || (isFirst ? 'linear-gradient(90deg, #f59e0b, #fbbf24)' : 'linear-gradient(90deg, #a855f7, #c084fc)');
+            const medal = rankIdx === 0 ? '🥇' : rankIdx === 1 ? '🥈' : rankIdx === 2 ? '🥉' : `#${rankIdx + 1}`;
 
             return (
-              <div key={habit.id} className="cr-fila">
-                <div className="cr-etiqueta flex items-center gap-1.5">
-                  <span className="font-mono text-xs font-black text-slate-400 w-4">
-                    #{rankIdx + 1}
-                  </span>
-                  <span className="truncate text-white text-xs font-bold" title={habit.name}>
-                    {habit.name}
-                  </span>
+              <div
+                key={habit.id}
+                className="p-2 sm:p-2.5 rounded-xl bg-black/40 border border-white/5 transition-all hover:border-purple-500/30"
+              >
+                {/* Header line for each habit */}
+                <div className="flex items-center justify-between text-xs mb-1.5">
+                  <div className="flex items-center gap-1.5 min-w-0 pr-2">
+                    <span className="font-mono text-xs font-black text-amber-400 shrink-0">
+                      {medal}
+                    </span>
+                    <span className="truncate text-white font-bold" title={habit.name}>
+                      {habit.name}
+                    </span>
+                  </div>
+
+                  <div className="shrink-0 font-mono text-xs font-black text-cyan-300">
+                    {habit.currentValue} <span className="text-[10px] text-slate-400 font-sans font-normal">días</span>
+                  </div>
                 </div>
 
-                <div className="cr-barra-track">
+                {/* Full-width responsive track */}
+                <div className="w-full h-3 rounded-full bg-slate-900 overflow-hidden border border-white/10 relative">
                   <div
-                    className={`cr-barra-fill ${isFirst ? 'is-primero' : ''}`}
+                    className={`h-full rounded-full transition-all duration-500 ${isFirst ? 'shadow-[0_0_12px_rgba(245,158,11,0.5)]' : ''}`}
                     style={{
                       width: `${pct}%`,
                       background: barColor
                     }}
                   />
-                </div>
-
-                <div className="cr-valor font-mono">
-                  {habit.currentValue} <span className="text-[10px] text-slate-400 font-sans">días</span>
                 </div>
               </div>
             );
@@ -156,9 +172,9 @@ export const MoxenCarrera: React.FC<MoxenCarreraProps> = ({
       </div>
 
       {/* Timeline Scrubber */}
-      <div className="mt-4 pt-3 border-t border-purple-500/20 relative z-10 flex items-center justify-between text-xs font-mono text-slate-400">
-        <span>Inicio ({periods[0]})</span>
-        <div className="flex items-center gap-1">
+      <div className="mt-3.5 pt-2.5 border-t border-purple-500/20 relative z-10 flex items-center justify-between text-[11px] font-mono text-slate-400">
+        <span className="truncate">{periods[0]}</span>
+        <div className="flex items-center gap-1.5">
           {periods.map((p, idx) => (
             <button
               key={p}
@@ -167,7 +183,7 @@ export const MoxenCarrera: React.FC<MoxenCarreraProps> = ({
                 soundFX.playClick();
                 setCurrentStep(idx);
               }}
-              className={`w-2.5 h-2.5 rounded-full transition-all cursor-pointer ${
+              className={`w-3 h-3 rounded-full transition-all cursor-pointer ${
                 currentStep === idx
                   ? 'bg-purple-400 shadow-[0_0_8px_#c084fc] scale-125'
                   : 'bg-slate-700 hover:bg-slate-500'
@@ -176,7 +192,7 @@ export const MoxenCarrera: React.FC<MoxenCarreraProps> = ({
             />
           ))}
         </div>
-        <span>Final ({periods[periods.length - 1]})</span>
+        <span className="truncate">{periods[periods.length - 1]}</span>
       </div>
     </div>
   );

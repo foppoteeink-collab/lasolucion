@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import './moxen.css';
-import { Dumbbell, Brain, BatteryCharging, ShieldAlert, BookOpen, Sparkles } from 'lucide-react';
+import { Dumbbell, Brain, BatteryCharging, ShieldAlert, BookOpen, Sparkles, Info } from 'lucide-react';
 import { soundFX } from '../../utils/audio';
 
 export interface AttributeItem {
@@ -16,19 +16,19 @@ interface MoxenTelaranaProps {
 }
 
 const ATTRIBUTE_ICONS: Record<string, React.ReactNode> = {
-  Fuerza: <Dumbbell className="w-3.5 h-3.5 text-red-400" />,
-  Mente: <Brain className="w-3.5 h-3.5 text-purple-400" />,
-  Energía: <BatteryCharging className="w-3.5 h-3.5 text-yellow-400" />,
-  Disciplina: <ShieldAlert className="w-3.5 h-3.5 text-cyan-400" />,
-  Estudio: <BookOpen className="w-3.5 h-3.5 text-emerald-400" />
+  Fuerza: <Dumbbell className="w-4 h-4 text-red-400" />,
+  Mente: <Brain className="w-4 h-4 text-purple-400" />,
+  Energía: <BatteryCharging className="w-4 h-4 text-yellow-400" />,
+  Disciplina: <ShieldAlert className="w-4 h-4 text-cyan-400" />,
+  Estudio: <BookOpen className="w-4 h-4 text-emerald-400" />
 };
 
-const ATTRIBUTE_GRADIENTS: Record<string, { start: string; end: string }> = {
-  Fuerza: { start: '#ef4444', end: '#f97316' },
-  Mente: { start: '#a855f7', end: '#d946ef' },
-  Energía: { start: '#eab308', end: '#f59e0b' },
-  Disciplina: { start: '#06b6d4', end: '#3b82f6' },
-  Estudio: { start: '#10b981', end: '#14b8a6' }
+const ATTRIBUTE_GRADIENTS: Record<string, { start: string; end: string; desc: string }> = {
+  Disciplina: { start: '#06b6d4', end: '#3b82f6', desc: 'Rutinas, hábitos y perseverancia' },
+  Fuerza: { start: '#ef4444', end: '#f97316', desc: 'Entrenamiento físico y resistencia' },
+  Mente: { start: '#a855f7', end: '#d946ef', desc: 'Foco profundo, creatividad y trabajo' },
+  Energía: { start: '#eab308', end: '#f59e0b', desc: 'Descanso, nutrición y recuperación' },
+  Estudio: { start: '#10b981', end: '#14b8a6', desc: 'Lectura, aprendizaje y expansión' }
 };
 
 export const MoxenTelarana: React.FC<MoxenTelaranaProps> = ({
@@ -44,9 +44,11 @@ export const MoxenTelarana: React.FC<MoxenTelaranaProps> = ({
   const [activeIdx, setActiveIdx] = useState<number>(-1);
   const [activePreset, setActivePreset] = useState<'actual' | 'balance' | 'elite'>('actual');
 
-  const C = 220;
-  const R = 150;
+  // Expanded ViewBox dimensions: 500x500 to guarantee NO label clipping on mobile
+  const C = 250;
+  const R = 135;
   const n = attributes.length || 5;
+
   const maxAttrValue = useMemo(() => {
     const highest = Math.max(...attributes.map(a => a.level), 10);
     return Math.max(10, Math.ceil(highest / 10) * 10);
@@ -150,7 +152,7 @@ export const MoxenTelarana: React.FC<MoxenTelaranaProps> = ({
       // Update floating globe position if active
       if (activeIdx >= 0 && pts[activeIdx] && globoRef.current && svgRef.current) {
         const rect = svgRef.current.getBoundingClientRect();
-        const scale = rect.width / 440;
+        const scale = rect.width / 500;
         globoRef.current.style.left = `${pts[activeIdx][0] * scale}px`;
         globoRef.current.style.top = `${pts[activeIdx][1] * scale}px`;
       }
@@ -165,24 +167,24 @@ export const MoxenTelarana: React.FC<MoxenTelaranaProps> = ({
   }, [activeIdx, presetValues, TOPE, n]);
 
   return (
-    <div className="moxen-telarana-root p-5 sm:p-6 rounded-3xl bg-gradient-to-b from-[#080e1e] to-[#02050e] border border-cyan-500/30 shadow-[0_10px_35px_rgba(0,240,255,0.1)] relative overflow-hidden">
+    <div className="moxen-telarana-root p-3.5 sm:p-6 rounded-2xl sm:rounded-3xl bg-gradient-to-b from-[#080e1e] to-[#02050e] border border-cyan-500/30 shadow-[0_10px_35px_rgba(0,240,255,0.1)] relative overflow-hidden">
       {/* Background ambient light */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-36 bg-cyan-500/10 blur-3xl rounded-full pointer-events-none" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-32 bg-cyan-500/10 blur-3xl rounded-full pointer-events-none" />
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 relative z-10">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-3 relative z-10">
         <div>
-          <div className="flex items-center gap-2 text-cyan-400 text-xs font-mono font-bold uppercase tracking-widest">
+          <div className="flex items-center gap-1.5 text-cyan-400 text-[10px] sm:text-xs font-mono font-bold uppercase tracking-widest">
             <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
             {characterClass}
           </div>
-          <h3 className="text-base sm:text-lg font-anton uppercase tracking-wide text-white mt-0.5">
+          <h3 className="text-sm sm:text-base font-anton uppercase tracking-wide text-white mt-0.5">
             {title}
           </h3>
         </div>
 
         {/* Preset switcher buttons */}
-        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-black/60 border border-cyan-500/30">
+        <div className="flex items-center gap-1 p-1 rounded-xl bg-black/60 border border-cyan-500/30 self-start sm:self-auto">
           <button
             type="button"
             onClick={() => {
@@ -228,13 +230,21 @@ export const MoxenTelarana: React.FC<MoxenTelaranaProps> = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center relative z-10">
-        {/* Radar SVG Diagram */}
-        <div className="lg:col-span-7 flex justify-center">
+      {/* Guide explanation box */}
+      <div className="p-2 sm:p-2.5 rounded-xl bg-cyan-950/40 border border-cyan-500/30 text-[10px] sm:text-[11px] text-slate-300 font-mono mb-3.5 flex items-start sm:items-center gap-2 relative z-10">
+        <Info className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5 sm:mt-0" />
+        <span className="leading-tight">
+          <strong>¿Cómo interpretarlo?</strong> Tu forma <strong className="text-cyan-300">cian</strong> refleja tu nivel actual. La línea punteada <strong className="text-purple-300">morada</strong> marca el equilibrio medio. Toca cualquier atributo para ver su desglose.
+        </span>
+      </div>
+
+      <div className="flex flex-col lg:grid lg:grid-cols-12 gap-5 items-center relative z-10">
+        {/* Radar SVG Diagram (Fully centered with breathing room) */}
+        <div className="w-full lg:col-span-6 flex justify-center py-2">
           <div className="tl-grafico">
             <svg
               ref={svgRef}
-              viewBox="0 0 440 440"
+              viewBox="0 0 500 500"
               className="tl-svg"
               onPointerLeave={() => setActiveIdx(-1)}
             >
@@ -288,7 +298,7 @@ export const MoxenTelarana: React.FC<MoxenTelaranaProps> = ({
                     />
                     <circle
                       className="tl-blanco"
-                      r={18}
+                      r={24}
                       onPointerEnter={() => {
                         soundFX.playClick();
                         setActiveIdx(i);
@@ -299,10 +309,10 @@ export const MoxenTelarana: React.FC<MoxenTelaranaProps> = ({
                 ))}
               </g>
 
-              {/* Axis Label Texts */}
+              {/* Axis Label Texts (Safely positioned with 70px outer padding) */}
               <g className="tl-rotulos">
                 {attributes.map((attr, i) => {
-                  const [x, y] = punto(i, TOPE * 1.18);
+                  const [x, y] = punto(i, TOPE * 1.22);
                   const c = Math.cos(ang(i));
                   const anchor = Math.abs(c) < 0.2 ? 'middle' : c > 0 ? 'start' : 'end';
                   return (
@@ -329,24 +339,24 @@ export const MoxenTelarana: React.FC<MoxenTelaranaProps> = ({
             >
               {activeIdx >= 0 && attributes[activeIdx] && (
                 <>
-                  <b>{presetValues[activeIdx]}</b>
-                  <span> {attributes[activeIdx].subject} • Media {averageValue}</span>
+                  <b>Nv.{presetValues[activeIdx]}</b>
+                  <span> {attributes[activeIdx].subject} (Media: {averageValue})</span>
                 </>
               )}
             </div>
           </div>
         </div>
 
-        {/* Synced Breakdown Bars & Interactive Legend */}
-        <div className="lg:col-span-5 flex flex-col justify-center space-y-2">
-          <div className="flex items-center justify-between pb-2 mb-1 border-b border-cyan-500/20 text-[11px] font-mono font-bold text-slate-400 uppercase">
-            <span>Atributo RPG</span>
+        {/* Synced Breakdown Bars & Interactive Legend (Mobile-optimised) */}
+        <div className="w-full lg:col-span-6 flex flex-col justify-center space-y-1.5">
+          <div className="flex items-center justify-between pb-1.5 mb-1 border-b border-cyan-500/20 text-[10px] font-mono font-bold text-slate-400 uppercase">
+            <span>Atributo & Significado</span>
             <span>Nivel</span>
           </div>
 
           <ul className="tl-ejes">
             {attributes.map((attr, idx) => {
-              const grad = ATTRIBUTE_GRADIENTS[attr.subject] || { start: '#00f0ff', end: '#3b82f6' };
+              const conf = ATTRIBUTE_GRADIENTS[attr.subject] || { start: '#00f0ff', end: '#3b82f6', desc: '' };
               const icon = ATTRIBUTE_ICONS[attr.subject] || <Sparkles className="w-3.5 h-3.5 text-cyan-400" />;
               const ratio = Math.min(100, Math.round((presetValues[idx] / TOPE) * 100));
               const avgRatio = Math.min(100, Math.round((averageValue / TOPE) * 100));
@@ -357,13 +367,15 @@ export const MoxenTelarana: React.FC<MoxenTelaranaProps> = ({
                   <button
                     type="button"
                     className={`tl-eje ${isActive ? 'is-activo' : ''}`}
+                    onClick={() => {
+                      soundFX.playClick();
+                      setActiveIdx(activeIdx === idx ? -1 : idx);
+                    }}
                     onPointerEnter={() => {
                       soundFX.playClick();
                       setActiveIdx(idx);
                     }}
                     onPointerLeave={() => setActiveIdx(-1)}
-                    onFocus={() => setActiveIdx(idx)}
-                    onBlur={() => setActiveIdx(-1)}
                   >
                     <span className="flex items-center gap-1.5 truncate">
                       {icon}
@@ -374,13 +386,13 @@ export const MoxenTelarana: React.FC<MoxenTelaranaProps> = ({
                       <i
                         style={{
                           transform: `scaleX(${ratio / 100})`,
-                          background: `linear-gradient(90deg, ${grad.start}, ${grad.end})`
+                          background: `linear-gradient(90deg, ${conf.start}, ${conf.end})`
                         }}
                       />
                       <b style={{ left: `${avgRatio}%` }} title={`Media: ${averageValue}`} />
                     </span>
 
-                    <span style={{ color: grad.start }}>
+                    <span style={{ color: conf.start }}>
                       Nv.{presetValues[idx]}
                     </span>
                   </button>
@@ -392,7 +404,7 @@ export const MoxenTelarana: React.FC<MoxenTelaranaProps> = ({
           <div className="flex items-center justify-between pt-2 text-[10px] font-mono text-slate-400">
             <span className="flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_6px_#00f0ff]" />
-              Tu Matriz Cuántica
+              Tu Matriz Activa
             </span>
             <span className="flex items-center gap-1">
               <span className="w-2.5 h-0.5 bg-purple-400" />

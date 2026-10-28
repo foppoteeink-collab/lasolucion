@@ -79,7 +79,7 @@ export const JUNG_ARCHETYPES: JungArchetype[] = [
     fear: 'Ser dejado de lado o destacar demasiado.',
     description: 'Busca la pertenencia y la conexión genuina con los demás. Valora la igualdad, tiene una gran empatía y teme ser dejado de lado o destacar demasiado.',
     primaryStat: 'disciplina',
-    statBonus: '+15% Oro al completar Misiones',
+    statBonus: '+15% Monedas en Tareas',
     color: 'from-blue-600 to-indigo-800',
     badgeBg: 'bg-blue-500/20 text-blue-300 border-blue-500/40',
     companion: {
@@ -232,7 +232,7 @@ export const JUNG_ARCHETYPES: JungArchetype[] = [
     fear: 'El conformismo y el aburrimiento.',
     description: 'Ansía la libertad para descubrirse a sí mismo explorando el mundo. Es independiente, auténtico y huye desesperadamente del conformismo y el aburrimiento.',
     primaryStat: 'fuerza',
-    statBonus: '+15% Oro en Aventura',
+    statBonus: '+15% Monedas en Foco',
     color: 'from-amber-600 to-orange-800',
     badgeBg: 'bg-orange-500/20 text-orange-300 border-orange-500/40',
     companion: {
@@ -283,7 +283,7 @@ export const JUNG_ARCHETYPES: JungArchetype[] = [
     fear: 'La impotencia frente al sistema.',
     description: 'Desea destruir lo que no funciona para dar paso a lo nuevo. Rompe las reglas, es revolucionario y teme ser impotente frente al sistema.',
     primaryStat: 'fuerza',
-    statBonus: '+20% Oro en Misiones',
+    statBonus: '+20% Monedas en Tareas',
     color: 'from-purple-700 to-black',
     badgeBg: 'bg-purple-500/20 text-purple-300 border-purple-500/40',
     companion: {
@@ -436,7 +436,7 @@ export const JUNG_ARCHETYPES: JungArchetype[] = [
     fear: 'Aburrirse o ser aburrido.',
     description: 'Su meta es vivir en el presente y disfrutar de la vida al máximo. Utiliza el humor, la irreverencia y teme profundamente aburrirse o ser aburrido.',
     primaryStat: 'energia',
-    statBonus: '+20% Oro en Recompensas',
+    statBonus: '+20% Monedas en Recompensas',
     color: 'from-cyan-500 to-teal-700',
     badgeBg: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40',
     companion: {
@@ -589,7 +589,7 @@ export const JUNG_ARCHETYPES: JungArchetype[] = [
     fear: 'El caos y perder el poder.',
     description: 'Busca el control absoluto para crear orden, estabilidad y prosperidad en su comunidad, empresa o familia. Teme el caos y perder el poder.',
     primaryStat: 'disciplina',
-    statBonus: '+20% Oro General',
+    statBonus: '+20% Monedas en General',
     color: 'from-amber-600 to-yellow-800',
     badgeBg: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/40',
     companion: {

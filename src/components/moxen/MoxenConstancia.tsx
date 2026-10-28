@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import './moxen.css';
-import { Check, Flame, Clock, Target, Sparkles, Award } from 'lucide-react';
+import { Check, Flame, Clock, Target, Award, Info } from 'lucide-react';
 import { soundFX } from '../../utils/audio';
 
 export interface DayPerformance {
@@ -20,15 +20,14 @@ interface MoxenConstanciaProps {
   habitsGoal?: number;
 }
 
-const L = 340; // logical size
-const MARGEN = 48;
-const LT = L + 2 * MARGEN;
-const GROSOR = 28;
-const RADIOS = [142, 108, 74];
+const L_LOGICAL = 260; // Base logical ring diameter
+const MARGEN = 36;
+const LT_LOGICAL = L_LOGICAL + 2 * MARGEN;
+const GROSOR_LOGICAL = 22;
+const RADIOS_LOGICAL = [112, 85, 58];
 
 const RES = {
   anillo: { k: 78, c: 10 },
-  pulso: { k: 130, c: 7 },
   glow: { k: 60, c: 9 }
 };
 
@@ -72,6 +71,7 @@ export const MoxenConstancia: React.FC<MoxenConstanciaProps> = ({
     {
       id: 'focus',
       nombre: 'Minutos Foco',
+      desc: 'Tiempo en concentración profunda',
       icon: <Clock className="w-4 h-4 text-cyan-400" />,
       meta: focusGoal,
       val: selectedDay.focusMinutes,
@@ -83,11 +83,12 @@ export const MoxenConstancia: React.FC<MoxenConstanciaProps> = ({
     },
     {
       id: 'tasks',
-      nombre: 'Misiones Cumplidas',
+      nombre: 'Tareas Cumplidas',
+      desc: 'Tareas diarias finalizadas',
       icon: <Target className="w-4 h-4 text-amber-400" />,
       meta: tasksGoal,
       val: selectedDay.tasksDone,
-      unit: 'misiones',
+      unit: 'tareas',
       colorName: 'ambar',
       base: '#f59e0b',
       c0: '#b45309',
@@ -96,6 +97,7 @@ export const MoxenConstancia: React.FC<MoxenConstanciaProps> = ({
     {
       id: 'habits',
       nombre: 'Hábitos 21/66',
+      desc: 'Rutinas de neuroplasticidad',
       icon: <Flame className="w-4 h-4 text-purple-400" />,
       meta: habitsGoal,
       val: selectedDay.habitsDone,
@@ -132,18 +134,18 @@ export const MoxenConstancia: React.FC<MoxenConstanciaProps> = ({
   const triggerCelebration = () => {
     soundFX.playLevelUp?.();
     const azar = mulberry32(Date.now());
-    const cx = LT / 2;
-    const cy = LT / 2;
+    const cx = LT_LOGICAL / 2;
+    const cy = LT_LOGICAL / 2;
     const escala = 1;
 
     destello.current = { t: 0, cx, cy, e: escala };
     particles.current = [];
 
     METAS.forEach((m, i) => {
-      for (let j = 0; j < 35; j++) {
+      for (let j = 0; j < 30; j++) {
         const a = azar() * 6.2832;
-        const r = RADIOS[i] * escala;
-        const v = (120 + azar() * 260) * escala;
+        const r = RADIOS_LOGICAL[i] * escala;
+        const v = (100 + azar() * 220) * escala;
         const tang = (azar() - 0.5) * 0.7 * v;
         particles.current.push({
           x: cx + Math.cos(a) * r,
@@ -151,8 +153,8 @@ export const MoxenConstancia: React.FC<MoxenConstanciaProps> = ({
           vx: Math.cos(a) * v - Math.sin(a) * tang,
           vy: Math.sin(a) * v + Math.cos(a) * tang,
           vida: 0,
-          dura: 0.9 + azar() * 0.8,
-          r: (1.5 + azar() * 2.5) * escala,
+          dura: 0.8 + azar() * 0.7,
+          r: (1.4 + azar() * 2.2) * escala,
           c: azar() < 0.25 ? '#ffffff' : azar() < 0.5 ? m.c1 : m.base,
           estrella: azar() < 0.2
         });
@@ -172,11 +174,12 @@ export const MoxenConstancia: React.FC<MoxenConstanciaProps> = ({
     }
   }, [selectedDayIdx, METAS, allThreeClosed]);
 
-  // Main Canvas Render Loop
+  // Main Canvas Render Loop with True Dynamic Responsive Sizing
   useEffect(() => {
     const canvas = canvasRef.current;
     const chispasCanvas = chispasRef.current;
-    if (!canvas || !chispasCanvas) return;
+    const container = containerRef.current;
+    if (!canvas || !chispasCanvas || !container) return;
 
     const g = canvas.getContext('2d');
     const cg = chispasCanvas.getContext('2d');
@@ -186,18 +189,27 @@ export const MoxenConstancia: React.FC<MoxenConstanciaProps> = ({
     let lastTime = performance.now();
 
     const dpr = Math.min(2, window.devicePixelRatio || 1);
-    const k = L / L;
-    const tam = LT * k;
 
-    canvas.width = Math.round(tam * dpr);
-    canvas.height = Math.round(tam * dpr);
-    canvas.style.width = `${tam}px`;
-    canvas.style.height = `${tam}px`;
+    // Responsive scaling based on container clientWidth
+    const measureAndResize = () => {
+      const containerWidth = Math.min(300, Math.max(220, container.clientWidth || L_LOGICAL));
+      const k = containerWidth / L_LOGICAL;
+      const displaySize = LT_LOGICAL * k;
 
-    chispasCanvas.width = Math.round(tam * dpr);
-    chispasCanvas.height = Math.round(tam * dpr);
-    chispasCanvas.style.width = `${tam}px`;
-    chispasCanvas.style.height = `${tam}px`;
+      canvas.width = Math.round(displaySize * dpr);
+      canvas.height = Math.round(displaySize * dpr);
+      canvas.style.width = `${displaySize}px`;
+      canvas.style.height = `${displaySize}px`;
+
+      chispasCanvas.width = Math.round(displaySize * dpr);
+      chispasCanvas.height = Math.round(displaySize * dpr);
+      chispasCanvas.style.width = `${displaySize}px`;
+      chispasCanvas.style.height = `${displaySize}px`;
+
+      return { k, displaySize };
+    };
+
+    let { k } = measureAndResize();
 
     const render = (now: number) => {
       const dt = Math.min(0.04, (now - lastTime) / 1000);
@@ -215,20 +227,21 @@ export const MoxenConstancia: React.FC<MoxenConstanciaProps> = ({
       // Clear main canvas
       g.setTransform(1, 0, 0, 1, 0, 0);
       g.clearRect(0, 0, canvas.width, canvas.height);
+
       const S = dpr * k;
-      const C = LT / 2;
+      const C = LT_LOGICAL / 2;
       g.setTransform(S, 0, 0, S, 0, 0);
 
       // Draw Rings
       for (let i = 0; i < 3; i++) {
-        const r = RADIOS[i];
+        const r = RADIOS_LOGICAL[i];
         const p = limita(springVals.current[i].x, 0, 1.15);
         const meta = METAS[i];
 
         // Track background
-        g.lineWidth = GROSOR;
+        g.lineWidth = GROSOR_LOGICAL;
         g.lineCap = 'butt';
-        g.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+        g.strokeStyle = 'rgba(255, 255, 255, 0.06)';
         g.beginPath();
         g.arc(C, C, r, 0, 6.2832);
         g.stroke();
@@ -248,8 +261,8 @@ export const MoxenConstancia: React.FC<MoxenConstanciaProps> = ({
 
         g.save();
         g.shadowColor = meta.base;
-        g.shadowBlur = (14 + gr.x * 12) * S;
-        g.lineWidth = GROSOR;
+        g.shadowBlur = (12 + gr.x * 10) * S;
+        g.lineWidth = GROSOR_LOGICAL;
         g.lineCap = 'butt';
         g.strokeStyle = grad;
         g.beginPath();
@@ -260,7 +273,7 @@ export const MoxenConstancia: React.FC<MoxenConstanciaProps> = ({
         // Round start cap
         g.fillStyle = meta.c0;
         g.beginPath();
-        g.arc(C + r * Math.cos(a0), C + r * Math.sin(a0), GROSOR / 2, 0, 6.2832);
+        g.arc(C + r * Math.cos(a0), C + r * Math.sin(a0), GROSOR_LOGICAL / 2, 0, 6.2832);
         g.fill();
 
         // Round head cap
@@ -269,30 +282,30 @@ export const MoxenConstancia: React.FC<MoxenConstanciaProps> = ({
         g.save();
         if (p > 0.94) {
           g.shadowColor = 'rgba(0, 0, 0, 0.7)';
-          g.shadowBlur = 10 * S;
-          g.shadowOffsetX = Math.cos(aCab + Math.PI / 2) * 4 * S;
-          g.shadowOffsetY = Math.sin(aCab + Math.PI / 2) * 4 * S;
+          g.shadowBlur = 8 * S;
+          g.shadowOffsetX = Math.cos(aCab + Math.PI / 2) * 3 * S;
+          g.shadowOffsetY = Math.sin(aCab + Math.PI / 2) * 3 * S;
         } else {
           g.shadowColor = meta.base;
-          g.shadowBlur = (10 + gr.x * 6) * S;
+          g.shadowBlur = (8 + gr.x * 6) * S;
         }
         g.fillStyle = meta.c1;
         g.beginPath();
-        g.arc(hx, hy, GROSOR / 2, 0, 6.2832);
+        g.arc(hx, hy, GROSOR_LOGICAL / 2, 0, 6.2832);
         g.fill();
         g.restore();
 
         // Specular highlight on head
-        g.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        g.fillStyle = 'rgba(255, 255, 255, 0.28)';
         g.beginPath();
-        g.arc(hx - 2, hy - 3, GROSOR * 0.22, 0, 6.2832);
+        g.arc(hx - 2, hy - 2, GROSOR_LOGICAL * 0.22, 0, 6.2832);
         g.fill();
       }
 
       // Render Chispas / Sparks Canvas
       cg.setTransform(1, 0, 0, 1, 0, 0);
       cg.clearRect(0, 0, chispasCanvas.width, chispasCanvas.height);
-      cg.setTransform(dpr, 0, 0, dpr, 0, 0);
+      cg.setTransform(dpr * k, 0, 0, dpr * k, 0, 0);
 
       if (destello.current) {
         destello.current.t += dt / 0.85;
@@ -300,19 +313,19 @@ export const MoxenConstancia: React.FC<MoxenConstanciaProps> = ({
           destello.current = null;
         } else {
           const t = destello.current.t;
-          const radial = cg.createRadialGradient(C, C, 0, C, C, 90 + t * 240);
-          const alpha = Math.pow(1 - t, 2) * 0.55;
+          const radial = cg.createRadialGradient(C, C, 0, C, C, 80 + t * 200);
+          const alpha = Math.pow(1 - t, 2) * 0.5;
           radial.addColorStop(0, `rgba(0, 240, 255, ${alpha})`);
-          radial.addColorStop(0.6, `rgba(168, 85, 247, ${alpha * 0.4})`);
+          radial.addColorStop(0.6, `rgba(168, 85, 247, ${alpha * 0.3})`);
           radial.addColorStop(1, 'rgba(0, 0, 0, 0)');
           cg.fillStyle = radial;
-          cg.fillRect(0, 0, LT, LT);
+          cg.fillRect(0, 0, LT_LOGICAL, LT_LOGICAL);
 
           // Expanding shockwave ring
-          cg.lineWidth = Math.max(0.5, 3 * (1 - t));
+          cg.lineWidth = Math.max(0.5, 2.5 * (1 - t));
           cg.strokeStyle = `rgba(255, 255, 255, ${0.7 * (1 - t)})`;
           cg.beginPath();
-          cg.arc(C, C, 70 + t * 220, 0, 6.2832);
+          cg.arc(C, C, 60 + t * 180, 0, 6.2832);
           cg.stroke();
         }
       }
@@ -333,16 +346,9 @@ export const MoxenConstancia: React.FC<MoxenConstanciaProps> = ({
         cg.globalAlpha = a;
         cg.fillStyle = p.c;
 
-        if (p.estrella) {
-          const s = p.r * 2.2;
-          cg.beginPath();
-          cg.arc(p.x, p.y, s, 0, 6.2832);
-          cg.fill();
-        } else {
-          cg.beginPath();
-          cg.arc(p.x, p.y, p.r, 0, 6.2832);
-          cg.fill();
-        }
+        cg.beginPath();
+        cg.arc(p.x, p.y, p.r, 0, 6.2832);
+        cg.fill();
       }
       cg.globalAlpha = 1;
 
@@ -354,31 +360,50 @@ export const MoxenConstancia: React.FC<MoxenConstanciaProps> = ({
   }, [METAS]);
 
   return (
-    <div className="moxen-constancia-root p-5 sm:p-6 rounded-3xl bg-gradient-to-b from-[#080e1e] to-[#02050e] border border-cyan-500/30 shadow-[0_10px_35px_rgba(0,240,255,0.1)] relative overflow-hidden">
-      <div className="absolute top-0 right-0 w-80 h-40 bg-purple-600/10 blur-3xl pointer-events-none" />
-
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 relative z-10">
+    <div className="moxen-constancia-root p-3.5 sm:p-6 rounded-2xl sm:rounded-3xl bg-gradient-to-b from-[#080e1e] to-[#02050e] border border-cyan-500/30 shadow-[0_10px_35px_rgba(0,240,255,0.1)] relative overflow-hidden">
+      {/* Header with clear explanatory context */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 relative z-10">
         <div>
-          <div className="flex items-center gap-2 text-cyan-400 text-xs font-mono font-bold uppercase tracking-widest">
-            <Award className="w-4 h-4 text-cyan-400" />
-            Consistencia Cuántica
+          <div className="flex items-center gap-1.5 text-cyan-400 text-[10px] sm:text-xs font-mono font-bold uppercase tracking-widest">
+            <Award className="w-3.5 h-3.5 text-cyan-400" />
+            Consistencia Diaria
           </div>
-          <h3 className="text-base sm:text-lg font-anton uppercase tracking-wide text-white mt-0.5">
-            Trío Diario de Alto Rendimiento
+          <h3 className="text-sm sm:text-base font-anton uppercase tracking-wide text-white mt-0.5">
+            Los 3 Anillos de Rendimiento
           </h3>
         </div>
 
-        <div className="text-right">
-          <span className="text-[11px] font-mono text-slate-400">
-            Día Seleccionado: <strong className="text-cyan-300">{selectedDay.name}</strong>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-mono text-slate-400 bg-white/5 px-2.5 py-1 rounded-lg border border-white/5">
+            Día: <strong className="text-cyan-300">{selectedDay.name}</strong>
           </span>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10 mb-6">
-        {/* Canvas Rings */}
-        <div className="lg:col-span-6 flex justify-center">
+      {/* Guide explanation box */}
+      <div className="p-2 sm:p-2.5 rounded-xl bg-cyan-950/40 border border-cyan-500/30 text-[10px] sm:text-[11px] text-slate-300 font-mono mb-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 relative z-10">
+        <div className="flex items-center gap-2">
+          <Info className="w-4 h-4 text-cyan-400 shrink-0" />
+          <span className="leading-tight">
+            <strong>¿Cómo leer tus 3 anillos?</strong> Cada anillo representa una dimensión de tu constancia diaria:
+          </span>
+        </div>
+        <div className="flex items-center gap-2.5 text-[9px] sm:text-[10px] flex-wrap">
+          <span className="flex items-center gap-1 text-cyan-300 font-bold">
+            <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_6px_#00f0ff]" /> Foco (Ext.)
+          </span>
+          <span className="flex items-center gap-1 text-amber-300 font-bold">
+            <span className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_6px_#f59e0b]" /> Tareas (Med.)
+          </span>
+          <span className="flex items-center gap-1 text-purple-300 font-bold">
+            <span className="w-2 h-2 rounded-full bg-purple-400 shadow-[0_0_6px_#a855f7]" /> Hábitos (Int.)
+          </span>
+        </div>
+      </div>
+
+      <div className="flex flex-col md:grid md:grid-cols-12 gap-5 items-center relative z-10 mb-4">
+        {/* Canvas Rings Center */}
+        <div className="w-full md:col-span-6 flex justify-center items-center py-1">
           <div ref={containerRef} className="co-anillos">
             <canvas ref={canvasRef} className="co-lienzo" />
             <canvas ref={chispasRef} className="co-chispas" />
@@ -394,15 +419,15 @@ export const MoxenConstancia: React.FC<MoxenConstanciaProps> = ({
                     ✨ ¡Trío Cerrado!
                   </span>
                 ) : (
-                  <span>Meta Diaria</span>
+                  <span>Meta de Hoy</span>
                 )}
               </div>
             </div>
           </div>
         </div>
 
-        {/* Goal Detail Cards */}
-        <div className="lg:col-span-6 space-y-3">
+        {/* Goal Detail Cards with explicit color legend */}
+        <div className="w-full md:col-span-6 space-y-2">
           {METAS.map((m) => {
             const isCompleted = m.val >= m.meta;
             const pct = Math.min(100, Math.round((m.val / Math.max(1, m.meta)) * 100));
@@ -423,14 +448,16 @@ export const MoxenConstancia: React.FC<MoxenConstanciaProps> = ({
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
                       {m.icon}
-                      {m.nombre}
+                      <span>{m.nombre}</span>
                     </span>
-                    <span className="text-xs font-mono font-bold text-slate-400">
+                    <span className="text-xs font-mono font-bold text-cyan-300">
                       {m.val} / {m.meta} {m.unit}
                     </span>
                   </div>
 
-                  <div className="w-full h-2 bg-black/60 rounded-full mt-2 overflow-hidden border border-white/10">
+                  <p className="text-[10px] text-slate-400 font-mono mt-0.5">{m.desc}</p>
+
+                  <div className="w-full h-1.5 bg-black/60 rounded-full mt-1.5 overflow-hidden border border-white/10">
                     <div
                       className="h-full rounded-full transition-all duration-700"
                       style={{
@@ -443,7 +470,7 @@ export const MoxenConstancia: React.FC<MoxenConstanciaProps> = ({
                 </div>
 
                 <div className="co-ok">
-                  <Check className="w-5 h-5 text-black stroke-[3]" />
+                  <Check className="w-4 h-4 text-black stroke-[3]" />
                 </div>
               </div>
             );
@@ -451,10 +478,10 @@ export const MoxenConstancia: React.FC<MoxenConstanciaProps> = ({
         </div>
       </div>
 
-      {/* Weekly Day Selector with Mini-Rings */}
-      <div className="pt-4 border-t border-cyan-500/20 relative z-10 flex flex-col items-center">
-        <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest mb-3">
-          Registro Semanal (Toca un día para inspeccionar sus anillos)
+      {/* Weekly Day Selector with Mini-Rings (Fluid on mobile) */}
+      <div className="pt-3 border-t border-cyan-500/20 relative z-10 flex flex-col items-center">
+        <span className="text-[9px] sm:text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest mb-2.5 text-center">
+          Historial de la Semana (Toca un día para inspeccionar)
         </span>
 
         <div className="co-semana">
@@ -464,7 +491,6 @@ export const MoxenConstancia: React.FC<MoxenConstanciaProps> = ({
             const p2 = Math.min(1, d.tasksDone / Math.max(1, tasksGoal));
             const p3 = Math.min(1, d.habitsDone / Math.max(1, habitsGoal));
 
-            // Circumferences for mini circles
             const c1 = 2 * Math.PI * 13;
             const c2 = 2 * Math.PI * 9.5;
             const c3 = 2 * Math.PI * 6;
@@ -482,7 +508,6 @@ export const MoxenConstancia: React.FC<MoxenConstanciaProps> = ({
               >
                 <div className="co-mini">
                   <svg viewBox="0 0 34 34">
-                    {/* Ring 1 - Cyan */}
                     <circle cx="17" cy="17" r="13" stroke="#00f0ff" strokeOpacity="0.2" />
                     <circle
                       cx="17"
@@ -493,7 +518,6 @@ export const MoxenConstancia: React.FC<MoxenConstanciaProps> = ({
                       strokeDashoffset={c1 * (1 - p1)}
                     />
 
-                    {/* Ring 2 - Amber */}
                     <circle cx="17" cy="17" r="9.5" stroke="#f59e0b" strokeOpacity="0.2" />
                     <circle
                       cx="17"
@@ -504,7 +528,6 @@ export const MoxenConstancia: React.FC<MoxenConstanciaProps> = ({
                       strokeDashoffset={c2 * (1 - p2)}
                     />
 
-                    {/* Ring 3 - Purple */}
                     <circle cx="17" cy="17" r="6" stroke="#a855f7" strokeOpacity="0.2" />
                     <circle
                       cx="17"

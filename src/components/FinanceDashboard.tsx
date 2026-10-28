@@ -342,7 +342,7 @@ export const FinanceDashboard: React.FC<FinanceDashboardProps> = ({ expenses, se
             <p className="text-xl sm:text-2xl font-black text-emerald-300 font-mono tracking-tight">
               <AnimatedCounter value={financialTotals.income} prefix={`+${currencySymbol}`} />
             </p>
-            <p className="text-[10px] text-emerald-600/80 font-mono mt-1">Misiones y entradas manuales</p>
+            <p className="text-[10px] text-emerald-600/80 font-mono mt-1">Tareas y entradas manuales</p>
         </div>
         
         <div className="bg-[#1a0606]/90 p-4 sm:p-5 rounded-2xl border border-red-900/40 flex flex-col justify-between relative overflow-hidden group hover:border-red-500/50 transition-colors">
@@ -599,7 +599,7 @@ export const FinanceDashboard: React.FC<FinanceDashboardProps> = ({ expenses, se
         </div>
 
         <div className="mb-3 px-3 py-2 bg-emerald-950/40 border border-emerald-800/30 rounded-xl flex items-center justify-between text-[11px] text-emerald-400/90">
-            <span>💡 Para registrar ingresos y egresos diarios, utiliza el widget <strong>Tesorería Diaria</strong> en la pestaña de Misiones.</span>
+            <span>💡 Para registrar ingresos y egresos diarios, utiliza el widget <strong>Tesorería Diaria</strong> en la pestaña de Tareas.</span>
             <span className="font-mono text-[10px] text-emerald-500">{filteredTransactions.length} registros</span>
         </div>
 

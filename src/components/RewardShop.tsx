@@ -514,7 +514,7 @@ export const RewardShop: React.FC = () => {
                       if (canAfford) handleRedeem(reward);
                       else soundFX.playClick();
                     }}
-                    title={canAfford ? 'Toca para canjear de inmediato' : `Requiere ${discountedCost} Oro`}
+                    title={canAfford ? 'Toca para canjear de inmediato' : `Requiere ${discountedCost} Monedas`}
                   >
                     <span>{reward.icon}</span>
                   </motion.div>

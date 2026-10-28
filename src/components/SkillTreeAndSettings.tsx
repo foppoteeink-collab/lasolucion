@@ -42,7 +42,7 @@ export const SkillTreeAndSettings: React.FC<SkillTreeAndSettingsProps> = ({
         <div className="flex flex-col sm:flex-row items-center justify-between scifi-glass-panel p-4.5 rounded-2xl gap-4">
            <div className="text-center sm:text-left">
              <p className="text-cyan-300 font-anton text-base tracking-wide uppercase">Puntos de Investigación Disponibles</p>
-             <p className="text-[11px] text-cyan-300/80 font-medium">Usa tus monedas de oro para desbloquear talentos y mejoras pasivas de cazador.</p>
+             <p className="text-[11px] text-cyan-300/80 font-medium">Usa tus Monedas para desbloquear talentos y mejoras pasivas de tu perfil táctico.</p>
            </div>
            <div className="flex items-center gap-2 bg-[#04020e] px-4 py-2 rounded-xl border border-amber-400/60 shadow-[0_0_12px_rgba(245,158,11,0.25)]">
              <Gem className="w-5 h-5 text-amber-400" />

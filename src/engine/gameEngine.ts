@@ -940,7 +940,7 @@ export const handleClaimBossBounty = () => {
      spawnJuiceParticle({ x: window.innerWidth / 2, y: window.innerHeight / 2, text: '💖 ¡JEFE DERROTADO & HP RESTAURADO!', type: 'boss', isCrit: true });
      stateUI.addFloatingEffect({ x: window.innerWidth / 2, y: window.innerHeight / 2 - 20, text: `+${xpReward} XP`, type: 'xp' });
      setTimeout(() => {
-       stateUI.addFloatingEffect({ x: window.innerWidth / 2, y: window.innerHeight / 2 - 40, text: `+${coinReward} Oro`, type: 'coins' });
+       stateUI.addFloatingEffect({ x: window.innerWidth / 2, y: window.innerHeight / 2 - 40, text: `+${coinReward} Monedas`, type: 'coins' });
      }, 150);
      setTimeout(() => {
        stateUI.addFloatingEffect({ x: window.innerWidth / 2, y: window.innerHeight / 2 - 60, text: `+${hpReward} HP 💖`, type: 'heal' });
@@ -1012,7 +1012,7 @@ export const handlePomodoroComplete = (session: any) => {
     if (typeof window !== 'undefined') {
        stateUI.addFloatingEffect({ x: window.innerWidth / 2, y: window.innerHeight / 2 - 20, text: `+${xpReward} XP`, type: 'xp' });
        setTimeout(() => {
-         stateUI.addFloatingEffect({ x: window.innerWidth / 2, y: window.innerHeight / 2 - 40, text: `+${coinReward} Oro`, type: 'coins' });
+         stateUI.addFloatingEffect({ x: window.innerWidth / 2, y: window.innerHeight / 2 - 40, text: `+${coinReward} Monedas`, type: 'coins' });
        }, 150);
     }
   }

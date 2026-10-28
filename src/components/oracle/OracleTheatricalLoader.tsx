@@ -44,7 +44,7 @@ const DECRYPTION_STAGES = [
     desc: 'Inyectando recompensas calibradas, misiones tácticas y directivas vitales...',
     logs: [
       '🛡️ [SHIELD] Configurando resiliencia de racha diaria.',
-      '💎 [ECONOMY] Calculando deltas óptimos de XP y Oro.',
+      '💎 [ECONOMY] Calculando deltas óptimos de XP y Monedas.',
       '🧬 [FINALIZE] Preparando interfaz de edición visual.'
     ]
   }
