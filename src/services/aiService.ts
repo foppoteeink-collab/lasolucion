@@ -67,13 +67,14 @@ async function fetchGeminiPrompt(promptText: string, modelName: string = 'gemini
   }
 
   const sanitizedPrompt = promptText.trim().slice(0, 4000);
-  const preferredModel =
-    modelName && !['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'].includes(modelName)
-      ? modelName
-      : 'gemini-3.5-flash-lite';
-
   const candidateModels = Array.from(
-    new Set([preferredModel, 'gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-3.8-flash', 'gemini-flash-latest'])
+    new Set([
+      modelName || 'gemini-2.5-flash',
+      'gemini-2.5-flash',
+      'gemini-2.0-flash',
+      'gemini-1.5-flash',
+      'gemini-flash-latest'
+    ])
   );
 
   // 1. Primary: Direct Gemini Developer API (using active key)
@@ -165,13 +166,14 @@ export async function generateScheduleFrontend(
     - Clase/Rango: ${userContext?.class || 'Ninguna'} (${userContext?.rank || 'Principiante'})
 
     REGLAS OBLIGATORIAS DE HORARIO Y ESTRUCTURA:
-    1. CANTIDAD IDEAL: Genera entre 5 y ${maxBlocks} bloques en total para el día (máximo ${maxBlocks}). NUNCA generes más de ${maxBlocks} bloques ni superes las 11 horas planificadas por día.
-    2. FORMATO DE HORA ESTRICTO "HH:mm - HH:mm" (24h, entre 06:30 y 22:45). Ejemplo: "08:00 - 09:30", "13:00 - 14:00", "18:00 - 19:00". NUNCA pongas horas como "20:30 - 23:59" ni bloques que terminen a las 23:59.
-    3. CERO SOLAPAMIENTOS: Ningún bloque puede solaparse con otro en el mismo día. Deja transiciones lógicas (mañana -> almuerzo -> tarde -> entrenamiento/creativo -> descanso).
-    4. TÍTULOS LIMPIOS Y EJECUTABLES: Prohibido usar textos como "(Consolidado)", "Tarea extra:", o "Horario Semanal Completo".
-    5. DÍAS DE LA SEMANA: usa frequencyType: "specific_days" y specificDays (Dom=0, Lun=1, Mar=2, Mié=3, Jue=4, Vie=5, Sáb=6) cuando aplique a días concretos (ej. L-V es [1,2,3,4,5]), o frequencyType: "daily" y specificDays: [0,1,2,3,4,5,6] si aplica a toda la semana.
-    6. PROHIBICIÓN TOTAL DE MICRO-HÁBITOS (agua, pasos, cepillado de dientes).
-    7. CATEGORÍAS PERMITIDAS: "rutina", "entrenamiento", "comida", "intelecto", "limpieza", "creativo".
+    1. CANTIDAD IDEAL: Genera entre 5 y ${maxBlocks} bloques en total para el día (máximo ${maxBlocks}).
+    2. BLOQUES REALISTAS DE TRABAJO/ESTUDIO: Un bloque laboral o de estudio puede durar 4, 5, 6, 7 u 8 horas (ej. "09:00 - 17:00" o "08:30 - 16:30"). Si la jornada incluye pausa de almuerzo (ej. 13:00 - 14:00), estructura el trabajo en Turno Mañana ("09:00 - 13:00") y Turno Tarde ("14:00 - 17:00"), con el almuerzo en medio ("13:00 - 14:00").
+    3. FORMATO DE HORA ESTRICTO "HH:mm - HH:mm" (24h, entre 06:00 y 23:45). Ejemplo: "07:30 - 08:30", "09:00 - 13:00", "13:00 - 14:00", "14:00 - 18:00", "18:30 - 19:45", "20:30 - 21:30", "23:00 - 23:30".
+    4. CERO SOLAPAMIENTOS: Ningún bloque puede solaparse con otro en el mismo día. Sigue el flujo cronológico natural: mañana -> trabajo/estudio -> almuerzo -> turno tarde -> entrenamiento/creativo/hogar -> cena -> desconexión/descanso. La cena SIEMPRE va antes de la desconexión nocturna o descanso.
+    5. TÍTULOS LIMPIOS Y EJECUTABLES: Prohibido usar textos como "(Consolidado)", "Tarea extra:", o "Horario Semanal Completo".
+    6. DÍAS DE LA SEMANA EXACTOS: Si una actividad es de fin de semana (ej. "Clase de los sábados"), usa frequencyType: "specific_days" y specificDays: [6]. Si es de lunes a viernes, specificDays: [1,2,3,4,5]. Si es diaria (despertar, comidas, descanso nocturno), frequencyType: "daily" y specificDays: [0,1,2,3,4,5,6].
+    7. PROHIBICIÓN TOTAL DE MICRO-HÁBITOS (beber agua, contar pasos, cepillado de dientes).
+    8. CATEGORÍAS PERMITIDAS: "rutina", "entrenamiento", "comida", "intelecto", "limpieza", "creativo".
 
     Devuelve ÚNICAMENTE un array JSON ESTRICTO sin formato Markdown. Ejemplo:
     [
@@ -607,91 +609,194 @@ export async function forgeKaiFromImage(params: {
   }
   cleanBase64 = cleanBase64.trim().replace(/[\r\n\s]+/g, '');
 
-  // 2. Directivas de estilo estricto para el diseño del personaje
-  interface StyleDirectives {
+  // 2. Directivas de estilo maestro: Catálogos completos de diseño para cada universo
+  interface StyleMasterConfig {
     styleTitle: string;
-    artistPersona: string;
     keywordsEn: string;
-    lineworkRule: string;
-    colorAndShadingRule: string;
-    eyesAndFaceRule: string;
-    limbsAndStanceRule: string;
-    styleTouchRule: string;
+    promptBody: string;
   }
 
-  function getStyleDirectives(selectedStyle: KaiMultiverseStyle): StyleDirectives {
+  function getStyleDirectives(selectedStyle: KaiMultiverseStyle): StyleMasterConfig {
     switch (selectedStyle) {
       case 'cartoon':
         return {
-          styleTitle: 'CARTOON NETWORK CLÁSICO (ERA DORADA AÑOS 90/2000)',
-          artistPersona: 'ERES UN DIRECTOR DE ARTE SENIOR DE ANIMACIÓN DE CARTOON NETWORK (Genndy Tartakovsky, Craig McCracken y Maxwell Atoms en Dexter, Samurai Jack, Las Chicas Superpoderosas, Coraje el Perro Cobarde y Hora de Aventura).',
+          styleTitle: 'CARTOON NETWORK (EL PANTHEON DORADO & MODERNO DE CN)',
           keywordsEn: 'classic 90s Cartoon Network character design, Dexter Laboratory, Samurai Jack, Powerpuff Girls aesthetic, bold ultra-thick black ink outlines, flat solid vibrant colors, quirky expressive face, dynamic animated stance',
-          lineworkRule: 'Tinta negra ultra gruesa y audaz en todos los contornos (stroke="#000000" stroke-width="3.8" a "4.5" con stroke-linejoin="round"). Contornos de grosor uniforme que le dan el peso característico de animación cel tradicional.',
-          colorAndShadingRule: 'Colores 100% planos, saturados y brillantes (flat colors). PROHIBIDOS degradados fotorealistas borrosos. Sombras en bloques angulares de corte duro o ilustración limpia sin sombras (estilo Dexter / Samurai Jack).',
-          eyesAndFaceRule: 'Ojos cartoon caricaturescos: óvalos grandes con pupilas circulares negras expresivas juntas en el centro, cejas gruesas móviles y boca cómica elástica (diente único, lengua curva o sonrisa exagerada).',
-          limbsAndStanceRule: 'Brazos y piernas elásticos de animación clásica con masa sólida. Manos de caricatura de 4 dedos o manoplas cómicas. Zapatos o zapatillas caricaturescas redondeadas de suela plana.',
-          styleTouchRule: 'Exageración gestual cómica. Si el objeto tiene tapas o botones, se convierten en sombrerito cartoon, anteojos gigantes o mandíbula articulada.',
+          promptBody: `
+📺 ESTILO MAESTRO: CARTOON NETWORK (EL PANTHEON DORADO & MODERNO DE CN)
+Referencias visuales directas: Dexter, Las Chicas Superpoderosas, Samurai Jack, Coraje el Perro Cobarde, Ed Edd n Eddy, Billy & Mandy, Chowder, Hora de Aventura, KND: Los Chicos del Barrio, Mansión Foster, Regular Show (Un Show Más), Gumball y Darwin, Johnny Bravo, Steven Universe, Teen Titans Go, Flapjack y We Bare Bears.
+
+1. PRINCIPIO SAGRADO DE LA SILUETA (EL OBJETO COBRA VIDA, NO SE DEFORMA):
+- NO forces al objeto a ser un círculo o figura geométrica genérica.
+- Analiza minuciosamente la silueta, piezas y contorno REAL de la fotografía:
+  * El torso y cabeza ES el objeto real conservando su silueta reconocible.
+  * Si tiene piezas mecánicas, tapas o ranuras se convierten en ojos, boca o detalles de su traje / armadura.
+- La identidad del objeto debe ser 100% RECONOCIBLE a primer golpe de vista, pero convertido en un ser vivo con alma de caricatura de Cartoon Network.
+
+2. CATÁLOGO VISUAL DE OJOS CN (ELIGE LA COMBINACIÓN QUE MEJOR QUEDE AL OBJETO):
+Inspirándote en las referencias, dótalo de uno de los estilos de ojos icónicos de CN:
+- Ojos "Powerpuff / Gumball": Dos óvalos blancos grandes juntos en el centro, con pupilas negras de botón o anillo de color brillante con destello blanco gráfico.
+- Ojos "Mandy / Samurai Jack": Ceño grueso negro en V cortante que rebana los ojos por arriba, dándole actitud severa, determinada, rebelde o imponente.
+- Ojos "Dexter / Numbuh 1 / Johnny Bravo": Gafas estilizadas negras o gafas de laboratorio azuladas que tapan los ojos y le dan misterio o genialidad con reflejo diagonal blanco.
+- Ojos "Hora de Aventura / Jake / Finn": Dos puntos o píldoras negras minimalistas llenas de carisma y expresividad pura.
+- Ojos "Coraje / Billy / Ed": Ojos saltones ligeramente asimétricos con pupilas desorbitadas que transmiten humor, curiosidad o sorpresa cómica.
+- Ojos "Rigby / Mordecai": Óvalos negros con círculos oscuros de ojeras o plumas alrededor.
+
+3. CATÁLOGO VISUAL DE BOCAS Y EXPRESIVIDAD CN:
+- Sonrisa cómica de oreja a oreja abierta, con lengua rosa plana y diente solitario caricaturesco (estilo Chowder, Flapjack o Darwin).
+- O mueca ladeada sarcástica / confiada en una sola línea angular negra (estilo Dexter o Mandy).
+- O boca elástica simple de una sola curva expresiva que se ensancha con humor (estilo Jake o Bloo de Mansión Foster).
+- O pico / hocico geométrico integrado a la forma del objeto (estilo Mordecai o Rigby).
+
+4. EXTREMIDADES Y COMPLEMENTOS DE CARTOON NETWORK:
+- Brazos y piernas con la física de Cartoon Network:
+  * Brazos elásticos y dinámicos (estilo "manguera de goma" de Jake, Finn o Coraje) con manitas de 3 o 4 dedos enguantados (estilo Dexter).
+  * O brazos musculosos geométricos si el objeto es robusto (estilo Johnny Bravo o Garnet).
+- Calzado caricaturesco reconocible:
+  * Botitas pesadas de caricatura con cordones (estilo Numbuh 1 o Edd de Ed Edd n Eddy).
+  * Tenis planos bicolores (estilo Darwin o Ben 10).
+  * O piececitos negros minimalistas de frijol (estilo Chicas Superpoderosas o Dexter).
+
+5. TÉCNICA VECTORIAL Y PALETA DE COLOR OBLIGATORIA:
+- CONTORNO DE TINTA NEGRA PURO: stroke="#000000" con grosor audaz (stroke-width="3.5" a "4.5"), stroke-linejoin="round" y stroke-linecap="round". Cada silueta y detalle debe tener este contorno definido como en los acetatos de animación tradicionales.
+- PALETA DE COLOR BASADA EN LA FOTO: Usa estrictamente los colores REALES del objeto fotografiado (si es rojo, usa rojo puro y sombras carmesí; si es verde, verde brillante; etc.).
+- COLOR EN BLOQUE PLANO: ¡CERO degradados difuminados, cero luces borrosas ni filtros 3D! Colores planos y sólidos súper vivos (cel-shading). Si agregas sombras, deben ser sombras duras de corte limpio en un tono 20% más oscuro.
+`,
         };
 
       case 'anime':
         return {
           styleTitle: 'ANIME JAPONÉS SHONEN CLÁSICO Y MODERNO',
-          artistPersona: 'ERES UN MANGAKA E ILUSTRADOR SENIOR DE ANIME SHONEN JAPONÉS (estilo Ken Sugimori en Pokémon oficial, Akira Toriyama en Dragon Ball Z y Koyoharu Gotouge en Demon Slayer).',
           keywordsEn: 'authentic 90s anime shonen character, Ken Sugimori Pokemon official lineart, Akira Toriyama Dragon Ball Z aesthetic, high-contrast cel-shaded lighting in 2 sharp tones, sharp ink contours, dynamic warrior stance, expressive eyes with specular highlights, heroic anime companion',
-          lineworkRule: 'Trazos afilados de plumilla G-Pen japonesa (stroke="#111827" stroke-width="1.8" a "2.2" con terminaciones en punta). Líneas limpias, enérgicas y aerodinámicas.',
-          colorAndShadingRule: 'Técnica Cel-Shading japonesa pura en 2 tonos contrastados: color base vivo + sombras poligonales angulares de corte recto/diagonal (sin degradados suaves difuminados).',
-          eyesAndFaceRule: 'Ojos de guerrero/criatura anime: párpado superior grueso y rasgado, iris vertical elíptico con degradado de color y punto de brillo especular blanco puro (<circle fill="#ffffff"/>), mirada heroica y cejas angulares en V.',
-          limbsAndStanceRule: 'Extremidades dinámicas de combate o de criatura compañera: garras afiladas estilizadas, o manos con muñequeras de combate/vendajes ninja, y botas de guerrero Shonen o pezuñas ágiles.',
-          styleTouchRule: 'Mechones o crestas puntiagudas (spiky hair/crest) de energía en la cúspide del objeto y un aura de combate o destellos de energía ki sutiles.',
+          promptBody: `
+⚔️ ESTILO MAESTRO: ANIME JAPONÉS SHONEN CLÁSICO Y MODERNO (ILUSTRACIÓN VECTORIAL CEL-SHADED)
+Referencias visuales directas: Ken Sugimori (Pokémon Oficial), Akira Toriyama (Dragon Ball Z), Akiyoshi Hongo (Digimon Tri), Naruto, One Piece, Demon Slayer (Kimetsu no Yaiba) y Jujutsu Kaisen.
+
+1. PRINCIPIO UNIVERSAL DE ANIMACIÓN SHONEN (CERO CONDICIONAMIENTO):
+- CUALQUIERA que sea el objeto presente en la fotografía, su estructura física, contorno real, volumen y partes constituyen la anatomía viva del personaje.
+- NO alteres ni reemplaces la silueta natural del objeto por figuras geométricas genéricas ni lo encasilles en moldes predefinidos.
+- Dota al objeto de vida orgánica integrando rostro, ojos expresivos y extremidades que nazcan armónicamente de su propia masa y proporciones físicas.
+- Mantén intactas y reconocibles todas sus piezas, materiales y relieves originales: si tiene hendiduras, botones, tapas, ranuras o aristas, se respetan e integran con el trazo de tinta y sombreado cel-shaded del anime.
+- Al ver el personaje, debe ser evidente e inconfundible qué objeto real fue fotografiado.
+
+2. CATÁLOGO ROBUSTO DE EXTREMIDADES SUPERIORES (BRAZOS, GARRAS Y MANOS):
+- Brazos "Guanteletes Shinobi / Marciales": Muñequeras de tela enrollada, guantes sin dedos con placas metálicas en el dorso y nudillos reforzados.
+- Brazos "Garra Afilada de Bestia Ancestral": 3 o 4 garras curvadas de marfil o filo blanco cel-shaded, con almohadillas en las palmas o escamas triangulares.
+- Brazos "Placas de Armadura Biselada / Cyborg": Hombreras angulares con remaches, juntas esféricas en codos y muñecas, y antebrazo blindado.
+- Brazos "Manga Larga de Haori / Túnica Marcial": Mangas anchas tradicionales con dobladillo geométrico de donde solo asoman las puntas de los dedos o puños tensos.
+- Brazos "Alas Cuchilla / Filos Aerodinámicos": Extremidades con plumas afiladas o membranas que actúan como alas y como brazos gesticulares ágiles.
+- Brazos "Guantes de Boxeo / Impacto Redondeado": Guantes de cuero acolchados con costuras cruzadas y brillo especular de impacto.
+- Brazos "Cañones de Muñeca / Gauntlet Mecánico": Antebrazo robusto que termina en cañón cilíndrico o garra hidráulica de tres puntas.
+- Brazos "Vendajes Deshilachados de Entrenamiento": Tiras de tela elástica blanca que envuelven todo el antebrazo con extremos sueltos ondeando al viento.
+- Brazos "Mano Abierta de Invocación / Postura de Energía": Dedos estilizados en arco listos para canalizar un ataque, con líneas de tensión anime.
+- Brazos "Puños Tensos Cerrados con Nudillos Marcados": Puño cerrado con pulgar bloqueando los nudillos, trazos afilados de fuerza y líneas de esfuerzo estilizadas.
+- Brazos "Mini-Garras Chibi Tiernas pero Temibles": Extremidades cortas y robustas rematadas en 3 garritas blancas que denotan ferocidad contenida.
+- Brazos "Zarcillos / Filamentos de Energía": Lazos flexibles o zarcillos que fluyen desde los hombros como látigos de energía cel-shaded.
+
+3. CATÁLOGO ROBUSTO DE EXTREMIDADES INFERIORES, PATAS Y CALZADO:
+- Botas "De Combate Saiyan / Armadura Pesada": Botas altas blancas o contrastadas con punteras reforzadas, líneas elásticas verticales y suelas de amortiguación gruesa.
+- Botas "Ninja / Shinobi": Calzado de tela ajustada con empeine descubierto, puntera dividida para los dedos o caña atada con cordones cruzados.
+- Patas "Bípedas de Bestia / Dragón Digitígradas": Muslos musculosos, corvejones articulados hacia atrás y patas con 3 garras delanteras y 1 espolón trasero de equilibrio.
+- Patas "Cuadrúpedas de Felino / Lobo de Batalla": Cuatro patas ágiles con pezuñas o garras retráctiles y mechones de pelaje afilado en los tobillos.
+- Patas "Chibi Compactas de Gran Estabilidad": Patitas cortas, redondeadas y firmes, con almohadillas planas para poses sentadas o en cuclillas.
+- Zapatillas "Sneakers Urbanas Estilo Shonen": Tenis de bota alta con suela de goma blanca gruesa, lengüeta gigante alzada y cordones sueltos dinámicos.
+- Piernas con "Pantalón Gi Plisado / Hakama Marcial": Pantalón holgado de tela pesada recogido en los tobillos con polainas o cintas negras.
+- Base "Vórtice de Energía / Nube Voladora / Flotación": El objeto levita sin piernas; su parte inferior se disuelve en una estela cónica de fuego, nube condensada o humo fantasmagórico cel-shaded.
+- Patas "Insectoides / Exoesqueleto Quitinoso": Patas segmentadas delgadas pero firmes con espinas laterales y ganchos terminales afilados.
+- Calzado "Sandalias Tradicionales Zori / Geta": Suela de madera o paja con correas en V de color vibrante y calcetines tabi blancos.
+
+4. CATÁLOGO ROBUSTO DE OJOS Y MIRADAS ANIME SHONEN:
+- Mirada "Determinada / Héroe Shonen": Párpado superior grueso y angulado en diagonal descendente hacia el centro, iris elíptico vertical con degradado bicolor interno (tono claro arriba, tono oscuro abajo) y un destello especular blanco circular nítido.
+- Mirada "Ojos Rasgados Fieros / Saiyan / Rival": Líneas de ceño en V agresiva, sombra triangular dura debajo de las cejas, pupilas contraídas en pequeños puntos y párpado inferior tenso.
+- Mirada "Ojos Chibi Gigantes / Gran Expresividad": Grandes globos oculares con iris enorme y doble reflejo circular blanco (uno grande arriba, uno pequeño abajo), pupilas negras profundas y brillo de determinación joven.
+- Mirada "Pupila de Rendija / Ojo de Bestia": Iris dorado, carmesí o esmeralda con una pupila vertical fina como de reptil o felino despertado.
+- Mirada "Ocular Místico / Patrones Concéntricos / Runas": Iris con círculos concéntricos, aspas geométricas o tomoes ninja de poder visual.
+- Mirada "Ojos Entrecerrados / Sabio / Sonrisa Astuta": Dos arcos horizontales afilados con pestañas angulares que ocultan los ojos en una expresión de calma imperturbable.
+- Mirada "Ojo Único / Sensor Ciclópeo": Un solo ojo central dominante o visor óptico horizontal con brillo de escaneo cel-shaded.
+- Mirada "Gafas de Combate / Visor Táctico": Gafas de piloto sobre la frente o visor translúcido con reflejo diagonal blanco y montura técnica.
+- Mirada "En Blanco / Furia Berserker": Ojos sin pupila, completamente blancos con contorno afilado y venas de energía en los bordes.
+
+5. CATÁLOGO ROBUSTO DE BOCAS Y EXPRESIVIDAD SHONEN:
+- Mueca "Smirk Confiado": Sonrisa ladeada en una sola comisura mostrando un colmillito blanco triangular superior (actitud de rival confiado).
+- Sonrisa "Gran Protagonista Shonen": Boca amplia abierta en D horizontal, con hilera superior de dientes lisos y lengua plana de color coral.
+- Boca "Grito de Batalla / Rugido": Boca abierta triangular o poligonal con mandíbula tensa, interior oscuro y colmillos superiores e inferiores afilados.
+- Mueca "Línea Firme / Concentración Absoluta": Trazo recto horizontal con una pequeña muesca angular hacia abajo en el centro y una línea mínima bajo la boca indicando el labio inferior.
+- Mandíbula "Dientes de Tiburón / Monstruo Feroz": Fila completa de dientes triangulares entrelazados como una sierra blanca continua.
+- Mueca "Mordiendo una Paja / Hoja / Hilo": Boca cerrada con una ramita verde o hilo de combate asomando entre los labios.
+- Boquita "Chibi Adorable en Forma de W (Gatuna / Bicho)": Línea curvada en forma de :3 o W invertida con mejillas sonrojadas.
+- Máscara / Protector Facial de Tela: La boca está cubierta por una máscara ninja ajustada al rostro o cuello alto alzado hasta la nariz.
+
+6. CATÁLOGO ROBUSTO DE RASGOS, CABELLO Y ACCESORIOS SHONEN:
+- Mechones "Spiky / Cabello Picudo": 3 a 7 mechones triangulares afilados que desafían la gravedad, con sombras de corte recto cel-shaded en cada punta.
+- Cuernos y Crestas: Un par de cuernos curvados hacia atrás (tipo dragón o demonio) o un cuerno central afilado de combate tipo escarabajo rinoceronte.
+- Bandana / Cinta de la Frente: Tira de tela con placa metálica o broche grabado en el centro, y dos lazos largos flotando dinámicamente hacia atrás.
+- Orejas Puntiagudas / Aletas: Orejas largas élficas, aletas laterales membranosas o alas auditivas de plumas.
+- Marcas Faciales / Tatuajes de Batalla: Rayas horizontales de guerrero en las mejillas, marcas de maldición tribales, lágrimas o cicatrices finas cruzando un ojo.
+- Cola Dinámica: Cola de lagarto gruesa, cola con punta de llama viva cel-shaded, cola peluda con punta blanca o cola segmentada con púas.
+- Bufanda / Capa Larga Rasgada: Bufanda roja o negra ondeando dramáticamente hacia un costado, con bordes deshilachados.
+- Joyería de Poder: Pendientes colgantes geométricos (estilo potara o hanafuda), cuentas de oración budistas gigantes o collares de garras.
+- Aureola / Halo de Energía en Suspensión: Anillo circular u ovalado de energía flotando detrás de la cabeza o alrededor del cuello.
+- Fragmentos de Aura / Chispas de Ki Cel-Shaded: 2 o 3 pequeños rombos o triángulos flotando alrededor del cuerpo con opacidad 0.7, simulando energía liberada.
+
+7. TÉCNICA VECTORIAL Y PALETA OBLIGATORIA:
+- CONTORNO DE TINTA ANIME: stroke="#111827" o "#0f172a", grosor controlado (stroke-width="2.5" a "3.5"), stroke-linejoin="round" y remates afilados.
+- PALETA DE COLOR BASADA EN LA FOTO: Utiliza estrictamente los colores originales del objeto fotografiado como tono base.
+- CEL-SHADING DE ALTO CONTRASTE (2 A 3 TONOS): Color base del objeto + sombra plana 25% más oscura cortada con aristas angulares afiladas (cero gradientes difusos ni blur).
+- LUCES ESPECULARES AFILADAS: Pequeñas líneas blancas biseladas o triángulos de reflejo (opacity="0.75") en las crestas y bordes superiores.
+`,
         };
 
       case 'pixar':
         return {
           styleTitle: 'ANIMACIÓN 3D DE CINE (PIXAR & DREAMWORKS)',
-          artistPersona: 'ERES UN DIRECTOR DE ILUMINACIÓN Y MODELADO 3D DE ESTUDIOS PIXAR Y DREAMWORKS.',
           keywordsEn: 'high-end 3D animated film character, Disney Pixar and Dreamworks movie render style, soft ambient occlusion, warm studio lighting, big glossy expressive eyes, soft tactile volume, cute friendly creature',
-          lineworkRule: 'CERO o mínimo contorno de tinta negra. El volumen y los bordes se definen mediante luz de estudio, sombreado volumétrico y degradados suaves (<radialGradient> y <linearGradient>).',
-          colorAndShadingRule: 'Modelado volumétrico 3D suave. Iluminación cálida de estudio cinematográfico desde arriba, sombras de oclusión ambiental suaves (opacity="0.25" a "0.5") y luz de borde (rim light) sutil que perfila la silueta.',
-          eyesAndFaceRule: 'Ojos 3D esféricos llenos de alma: iris detallado con gradiente concéntrico radial, pupila profunda y DOBLE catchlight blanco brillante que refleja la iluminación de estudio de cine.',
-          limbsAndStanceRule: 'Extremidades suaves y redondeadas con volumen táctil tridimensional, dedos o almohadillas acolchonadas y zapatitos redondeados de goma con suela modelada.',
-          styleTouchRule: 'Sensación de personaje tierno, entrañable y expresivo de película de animación de alto presupuesto.',
+          promptBody: `
+🎬 ESTILO MAESTRO: ANIMACIÓN 3D PIXAR Y DREAMWORKS
+- Eres un Director de Arte y Modelado 3D de Pixar/DreamWorks.
+- TÉCNICA: CERO o mínimo contorno negro. El volumen se esculpe mediante <radialGradient> y <linearGradient> suaves con oclusión ambiental (opacity="0.25" a "0.5") y luz cálida de estudio cinematográfico desde arriba a la izquierda.
+- OJOS: Ojos 3D esféricos con iris radial detallado concéntrico y DOBLE catchlight blanco brillante que refleja los focos de estudio de cine.
+- ANATOMÍA: Extremidades acolchonadas y suaves con volumen tangible, dedos redondeados y zapatitos con relieve tridimensional.
+`,
         };
 
       case 'pop':
         return {
           styleTitle: 'POP ART / VINYL DESIGNER TOY (EDICIÓN LIMITADA)',
-          artistPersona: 'ERES UN DISEÑADOR PRINCIPAL DE VINYL ART TOYS DE COLECCIÓN (estilo Superplastic, Funko, Kidrobot y figuras de vinilo pulido KAWS).',
           keywordsEn: 'exclusive designer vinyl art toy figure, Funko and Superplastic collectible aesthetic, smooth glossy vinyl finish with studio reflections, clean graphic button eyes, stylized proportions',
-          lineworkRule: 'Trazos vectoriales limpios y pulidos de precisión industrial (stroke="#1e293b" stroke-width="2.2" a "2.6"). Bordes geométricos exactos de figura de vinilo inyectado.',
-          colorAndShadingRule: 'Paleta pop de edición limitada de alto contraste. Reflejos alargados curvados de plástico pulido nuevo de fábrica (<ellipse fill="#ffffff" opacity="0.55"/>) que simulan el brillo de una caja de luz sobre vinilo brillante.',
-          eyesAndFaceRule: 'Ojos icónicos de diseñador: grandes círculos o cápsulas de vinilo negro brillante con un único destello circular blanco nítido descentrado (ojos de botón pulido) o diseño gráfico minimalista.',
-          limbsAndStanceRule: 'Proporciones características de juguete de diseñador (cuerpo/cabeza dominante, extremidades compactas y estilizadas), manos moldeadas tipo vinilo y pies planos sólidos que le dan estabilidad para exhibirse en repisa.',
-          styleTouchRule: 'Estética de figura coleccionable "mint in box" exclusiva para tiendas de arte contemporáneo.',
+          promptBody: `
+🎨 ESTILO MAESTRO: POP ART / VINYL TOY DE COLECCIÓN
+- Eres un Diseñador Principal de Vinyl Art Toys de colección (estilo Superplastic, Funko, Kidrobot y KAWS).
+- TÉCNICA: Trazos vectoriales limpios (stroke="#1e293b" stroke-width="2.2" a "2.6"). Reflejos curvados alargados de plástico brillante nuevo (<ellipse fill="#ffffff" opacity="0.55"/>) que simulan la luz de un estudio sobre vinilo pulido.
+- OJOS: Ojos icónicos de diseñador: grandes botones circulares negros de vinilo con un único destello circular blanco nítido descentrado.
+- ANATOMÍA: Silueta característica con proporciones coleccionables (cabeza/cuerpo dominante), manos moldeadas y pies planos sólidos de exhibición en repisa.
+`,
         };
 
       case 'doodle':
         return {
           styleTitle: 'DOODLE ART A MANO / STREET POSCA',
-          artistPersona: 'ERES UN ARTISTA URBANO DE SKETCHBOOK Y MURALISMO DOODLE (estilo Keith Haring, Mr. Doodle y marcadores acrílicos Posca).',
           keywordsEn: 'dynamic hand-drawn doodle art illustration, Keith Haring and Mr Doodle aesthetic, energetic organic black marker linework, selective vibrant Posca paint color accents, spontaneous action vibes',
-          lineworkRule: 'Línea orgánica de marcador acrílico negro grueso (stroke="#000000" stroke-width="3.6" a "4.8" con puntas redondeadas). Sensación de dibujo libre dibujado a mano alzada con pulso vivo.',
-          colorAndShadingRule: 'Blanco y negro dominante con rellenos selectivos de color plano de marcador Posca (1 o 2 colores vibrantes de acento como amarillo sol o azul cian). Sombreados mediante tramados artesanales de líneas paralelas (cross-hatching) en vez de degradados digitales.',
-          eyesAndFaceRule: 'Ojos doodle espontáneos: círculos dibujados a pulso con punto central, espirales cómicas o miradas expresivas de trazo rápido.',
-          limbsAndStanceRule: 'Brazos y piernas con ritmo suelto de ilustración urbana, manos doodle simplificadas con trazos rápidos y postura llena de energía callejera.',
-          styleTouchRule: 'Alrededor del personaje incluye detalles doodle flotantes: pequeñas líneas de acción, chispas de marcador, estrellitas o coronitas flotantes que le dan vibra de cuaderno de bocetos.',
+          promptBody: `
+✏️ ESTILO MAESTRO: DOODLE ART A MANO Y POSCA URBANO
+- Eres un Artista Urbano de cuaderno de bocetos y muralismo (estilo Keith Haring, Mr. Doodle y marcadores Posca).
+- TÉCNICA: Trazo orgánico de marcador acrílico negro grueso (stroke="#000000" stroke-width="3.6" a "4.8" con puntas redondeadas).
+- COLOR: Blanco y negro dominante con rellenos selectivos planos de marcador Posca (1 o 2 acentos vivos). Sombreados mediante tramados de líneas paralelas (hatching).
+- DETALLES: Pequeñas líneas de acción, garabatos, estrellitas o coronitas doodle flotando alrededor del personaje.
+`,
         };
 
       case 'clay3d':
       default:
         return {
           styleTitle: 'CLAYMATION 3D / PLASTILINA STOP-MOTION',
-          artistPersona: 'ERES UN MAESTRO ESCULTOR DE PLASTILINA DE ANIMACIÓN STOP-MOTION (estilo Aardman Studios en Wallace & Gromit y Pollitos en Fuga).',
           keywordsEn: 'handmade claymation stop-motion figure, Wallace and Gromit Aardman clay sculpture, tactile clay fingerprint texture, soft studio rim lighting, matte satin finish',
-          lineworkRule: 'Sin líneas duras de tinta digital. Los bordes son formas orgánicas redondeadas de plastilina modelada a mano con volumen físico tangible y asimetrías suaves de modelado artesanal.',
-          colorAndShadingRule: 'Colores táctiles de plastilina real con acabado satinado mate (sin brillos de plástico). Gradientes suaves (<radialGradient>) que simulan volumen de plastilina amasada bajo luz de estudio difusa.',
-          eyesAndFaceRule: 'Ojos de bolita de masa o cuentas de arcilla incrustadas: pequeñas esferas de plastilina blanca con una bolita negra de masa como pupila y párpados moldeados en relieve.',
-          limbsAndStanceRule: 'Brazos y piernas como cilindros de plastilina amasada, manos con dedos redondeados y rechonchos, y pies planos y gruesos de base de escultura.',
-          styleTouchRule: 'Sensación de pieza de arcilla hecha a mano con imperfecciones hermosas, lista para cobrar vida fotograma a fotograma.',
+          promptBody: `
+🏺 ESTILO MAESTRO: CLAYMATION 3D / PLASTILINA STOP-MOTION
+- Eres un Maestro Escultor de plastilina de Aardman Studios (Wallace & Gromit).
+- TÉCNICA: Bordes orgánicos redondeados de plastilina modelada a mano, textura satinada mate con <radialGradient> suaves y ligeras asimetrías de arcilla real.
+- OJOS: Ojos de bolita de masa blanca con un puntito negro de plastilina como pupila y relieve en los párpados.
+- ANATOMÍA: Brazos y piernas gruesos como rollitos de masa amasada a mano, dedos rechonchos y base sólida de escultura.
+`,
         };
     }
   }
@@ -713,30 +818,16 @@ export async function forgeKaiFromImage(params: {
 
   // 3. Prompt Maestro Multimodal "Object-As-Body" Dinámico por Estilo
   const systemInstructions = `
-${directives.artistPersona}
-Transforma este objeto real fotografiado en un personaje legendario único en código SVG puro (viewBox="0 0 300 300").
+Transforma este objeto real fotografiado en un personaje legendario en código SVG puro (viewBox="0 0 300 300").
 
-ESTILO VISUAL EXIGIDO: ${directives.styleTitle}
+${directives.promptBody}
 
-REGLAS ARTÍSTICAS FUNDAMENTALES:
-1. EL OBJETO ES EL CUERPO (80/20):
-   - Identifica con total fidelidad el objeto fotografiado (su silueta física, chasis, boquillas, tapas, botones, logotipos, colores y textos exactos).
-   - El torso y cabeza ES el objeto real conservando su silueta geométrica reconocible.
-   - Sus piezas mecánicas superiores (tapas, ruedas, boquillas, ranuras) se integran naturalmente como su casco, corona o armadura.
-   - Replica con fidelidad los textos, estampados o logos visibles en el objeto original.
-
-2. APLICACIÓN ESTRICTA DEL ESTILO "${directives.styleTitle}":
-   - LÍNEAS Y TRAZOS: ${directives.lineworkRule}
-   - COLOR Y SOMBREADO: ${directives.colorAndShadingRule}
-   - ROSTRO Y OJOS: ${directives.eyesAndFaceRule}
-   - EXTREMIDADES Y ANATOMÍA: ${directives.limbsAndStanceRule}
-   - TOQUE DEL ESTILO: ${directives.styleTouchRule}
-
-3. EXPRESIVIDAD Y ACTITUD:
+DIRECTIVAS GENERALES DE INTEGRACIÓN:
+1. EXPRESIVIDAD Y ACTITUD:
    - ${moodGuidance}
-   - ¡PROHIBIDAS LAS LÍNEAS DE ALAMBRE ("PALO Y BOLITA")! Las extremidades deben tener masa anatómica y volumen propio según las reglas del estilo.
+   - ¡PROHIBIDAS LAS LÍNEAS DE ALAMBRE ("PALO Y BOLITA")! Las extremidades deben tener masa y volumen propio según el catálogo del estilo elegido.
 
-4. COMPOSICIÓN Y TRANSPARENCIA:
+2. COMPOSICIÓN Y TRANSPARENCIA:
    - Si el objeto emite fuego, energía, chispas o vapor (ej: encendedor, vape), añade una flama o efecto estilizado en la cúspide según el estilo.
    - Sombra de contacto suave en la base (<ellipse cy="275" ...>) para apoyarlo con presencia sólida en el suelo.
    - 100% libre de fondo exterior rectangular (el SVG debe ser transparente para flotar en la interfaz de la app).

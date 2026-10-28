@@ -372,15 +372,20 @@ export function generateProceduralSchedule(userPrompt: string, userContext: any,
   // Pre-split compound structures from Wizard, Templates, and natural Spanish
   const normalizedInput = rawInput
     .replace(/;\s*/g, '\n')
-    // Split "Despertar a las X y desconexión/dormir a las Y"
-    .replace(/\s+y\s+(?=(?:desconexi[oó]n|dormir|acostarse|cena|almuerzo|entrenamiento|gimnasio|segundo\s+turno|bloque|estudio|lectura|limpieza)\b)/gi, '\n')
+    // Protect "desconexión (nocturna)? y (dormir|descanso|acostarse)" from getting broken into fragments
+    .replace(/desconexi[oó]n\s+(?:nocturna\s+)?y\s+(?:dormir|descanso|acostarse)/gi, 'Desconexión nocturna y descanso')
+    // Smart split of work with lunch: "trabajo de 09:00 a 17:00 con almuerzo de 13:00 a 14:00"
+    .replace(/((?:bloque\s+laboral|trabajo|oficina|jornada|estudio)[^.\n]*?)\s+de\s+(\d{1,2}(?::\d{2})?)\s*a\s*(\d{1,2}(?::\d{2})?)\s+con\s+almuerzo\s+de\s+(\d{1,2}(?::\d{2})?)\s*a\s*(\d{1,2}(?::\d{2})?)/gi,
+      (_m, prefix, sw, ew, sl, el) => `${prefix} (Turno Mañana) de ${sw} a ${sl}\nAlmuerzo y Pausa de Recarga de ${sl} a ${el}\n${prefix} (Turno Tarde) de ${el} a ${ew}`)
+    // Split "Despertar a las X y cena/entrenamiento a las Y"
+    .replace(/\s+y\s+(?=(?:cena|almuerzo|entrenamiento|gimnasio|segundo\s+turno|bloque|estudio|lectura|limpieza)\b)/gi, '\n')
     // Split ", y segundo turno..." or ": primer turno..."
     .replace(/,?\s*y\s+segundo\s+turno/gi, '\nSegundo turno laboral')
     .replace(/en\s+jornada\s+partida:\s*primer\s+turno/gi, ' - Primer turno')
-    // Split "con almuerzo de 13:00 a 14:00" into its own block
+    // Split remaining "con almuerzo de 13:00 a 14:00" into its own block
     .replace(/\s+con\s+(?=almuerzo\s+de\s+\d)/gi, '\n')
-    // Split commas before day names or time expressions
-    .replace(/(?:,\s*|\.\s*)(?=(?:de\s+lunes|lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)\b)/gi, '\n')
+    // Split commas before day names or time expressions (supporting plural days)
+    .replace(/(?:,\s*|\.\s*)(?=(?:de\s+lunes|lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bados?|domingos?)\b)/gi, '\n')
     .replace(/\s+(?:y\s+de\s+|\by\s+(?=\d{1,2}(?::\d{2})?\s*(?:am|pm|a\b|-|–|—|de\s+la\s+tarde)))/gi, '\n')
     // Split comma-separated lists if there are no newlines or if comma is followed by action/time
     .replace(/,\s+(?=(?:a\s+las\s+\d|de\s+\d|\d{1,2}(?::\d{2})?\s*(?:am|pm|h)|ir\s+a|trabajar|estudiar|entrenar|hacer|limpiar|cocinar|almorzar|cenar|desayunar|leer|meditar))/gi, '\n')
@@ -541,8 +546,8 @@ export function generateProceduralSchedule(userPrompt: string, userContext: any,
       if (/\b(?:mie|mié|miercoles|miércoles)\b/i.test(cleanLine)) dayArr.push(3);
       if (/\b(?:jue|jueves)\b/i.test(cleanLine)) dayArr.push(4);
       if (/\b(?:vie|viernes)\b/i.test(cleanLine)) dayArr.push(5);
-      if (/\b(?:sab|sáb|sabado|sábado)\b/i.test(cleanLine)) dayArr.push(6);
-      if (/\b(?:dom|domingo)\b/i.test(cleanLine)) dayArr.push(0);
+      if (/\b(?:sab|sáb|sabado|sábado|sabados|sábados)\b/i.test(cleanLine)) dayArr.push(6);
+      if (/\b(?:dom|domingo|domingos)\b/i.test(cleanLine)) dayArr.push(0);
 
       if (dayArr.length > 0 && dayArr.length < 7) {
         freq = 'specific_days';
@@ -604,22 +609,25 @@ export function generateProceduralSchedule(userPrompt: string, userContext: any,
   });
 
   // Assign smart non-overlapping time blocks to any items that lacked an explicit timeBlock,
-  // and resolve overlaps among items that share days!
-  const occupiedSlots: Array<{ start: number; end: number }> = [];
+  // and resolve overlaps ONLY among items that share days!
+  const occupiedSlots: Array<{ start: number; end: number; freq: string; specificDays?: number[] }> = [];
+
   parsedHabits.forEach(h => {
+    const conflictingOccupied = occupiedSlots.filter(o =>
+      shareDays(h.frequencyType, h.specificDays, o.freq, o.specificDays)
+    );
+
     if (h.timeBlock) {
       const r = parseRangeToMins(h.timeBlock);
       if (r) {
-        // Check if this explicit slot conflicts with an already registered slot on overlapping days
-        const overlaps = occupiedSlots.some(o => r.start < o.end && o.start < r.end);
+        const overlaps = conflictingOccupied.some(o => r.start < o.end && o.start < r.end);
         if (!overlaps) {
-          occupiedSlots.push(r);
+          occupiedSlots.push({ ...r, freq: h.frequencyType, specificDays: h.specificDays });
           h.timeBlock = `${formatMinsToHHMM(r.start)} - ${formatMinsToHHMM(r.end)}`;
         } else {
-          // Shift slightly or keep if distinct
           const dur = Math.max(30, r.end - r.start);
-          const adjusted = findNonOverlappingSlot(r.start, dur, occupiedSlots, 5 * 60, 23 * 60 + 45);
-          occupiedSlots.push(adjusted);
+          const adjusted = findNonOverlappingSlot(r.start, dur, conflictingOccupied, 5 * 60, 23 * 60 + 45);
+          occupiedSlots.push({ ...adjusted, freq: h.frequencyType, specificDays: h.specificDays });
           h.timeBlock = `${formatMinsToHHMM(adjusted.start)} - ${formatMinsToHHMM(adjusted.end)}`;
         }
       }
@@ -628,8 +636,11 @@ export function generateProceduralSchedule(userPrompt: string, userContext: any,
 
   parsedHabits.forEach(h => {
     if (!h.timeBlock) {
-      const slot = findNonOverlappingSlot(h._prefStart || 9 * 60, h._prefDur || 60, occupiedSlots, 6 * 60, 23 * 60);
-      occupiedSlots.push(slot);
+      const conflictingOccupied = occupiedSlots.filter(o =>
+        shareDays(h.frequencyType, h.specificDays, o.freq, o.specificDays)
+      );
+      const slot = findNonOverlappingSlot(h._prefStart || 9 * 60, h._prefDur || 60, conflictingOccupied, 6 * 60, 23 * 60);
+      occupiedSlots.push({ ...slot, freq: h.frequencyType, specificDays: h.specificDays });
       h.timeBlock = `${formatMinsToHHMM(slot.start)} - ${formatMinsToHHMM(slot.end)}`;
     }
     delete h._prefStart;

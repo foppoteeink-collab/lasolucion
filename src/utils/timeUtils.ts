@@ -220,11 +220,23 @@ export const detectTimeOverlap = (
 
   const startA = parseTimeToMinutes(a.timeBlock);
   let endA = parseEndTimeToMinutes(a.timeBlock);
-  if (endA === 9999 || endA <= startA) endA = startA + 60;
+  if (endA === 9999 || endA <= startA) {
+    if (endA !== 9999 && endA < startA && (endA + 1440 - startA) <= 720) {
+      endA = endA + 1440; // cross-midnight block
+    } else {
+      endA = startA + 60;
+    }
+  }
 
   const startB = parseTimeToMinutes(b.timeBlock);
   let endB = parseEndTimeToMinutes(b.timeBlock);
-  if (endB === 9999 || endB <= startB) endB = startB + 60;
+  if (endB === 9999 || endB <= startB) {
+    if (endB !== 9999 && endB < startB && (endB + 1440 - startB) <= 720) {
+      endB = endB + 1440; // cross-midnight block
+    } else {
+      endB = startB + 60;
+    }
+  }
 
   if (startA === 9999 || startB === 9999) return false;
 
@@ -235,10 +247,19 @@ export const detectTimeOverlap = (
 /**
  * Sorts any list of items with timeBlock chronologically.
  */
-export const sortByChronologicalTime = <T extends { timeBlock?: string }>(items: T[]): T[] => {
+export const sortByChronologicalTime = <T extends { timeBlock?: string; title?: string }>(items: T[]): T[] => {
   return [...items].sort((a, b) => {
-    const timeA = parseTimeToMinutes(a.timeBlock);
-    const timeB = parseTimeToMinutes(b.timeBlock);
+    let timeA = parseTimeToMinutes(a.timeBlock);
+    let timeB = parseTimeToMinutes(b.timeBlock);
+    const lowerA = (a.title || '').toLowerCase();
+    const lowerB = (b.title || '').toLowerCase();
+
+    // Natural day-cycle sanity: Sleep/desconexión at 22:00-00:00 stays at the bottom of the active day
+    const isSleepA = lowerA.includes('dormir') || lowerA.includes('desconexi') || lowerA.includes('acostar') || lowerA.includes('descanso nocturno');
+    const isSleepB = lowerB.includes('dormir') || lowerB.includes('desconexi') || lowerB.includes('acostar') || lowerB.includes('descanso nocturno');
+    if (isSleepA && !isSleepB && timeA >= 21 * 60) timeA += 1000;
+    if (isSleepB && !isSleepA && timeB >= 21 * 60) timeB += 1000;
+
     return timeA - timeB;
   });
 };
@@ -283,30 +304,30 @@ const getLogicalAnchorAndDuration = (title: string, category: string, index: num
     return { anchor: 13 * 60, dur: 60 };
   }
   if (lower.includes('cena') || lower.includes('cenar')) {
-    return { anchor: 20 * 60 + 30, dur: 45 };
+    return { anchor: 20 * 60 + 30, dur: 60 };
   }
-  if (lower.includes('dormir') || lower.includes('desconexi') || lower.includes('acostar')) {
-    return { anchor: 22 * 60 + 30, dur: 30 };
+  if (lower.includes('dormir') || lower.includes('desconexi') || lower.includes('acostar') || lower.includes('descanso nocturno')) {
+    return { anchor: 23 * 60, dur: 30 };
   }
   if (category === 'entrenamiento' || lower.includes('gym') || lower.includes('gimnasio') || lower.includes('entren') || lower.includes('ejercicio') || lower.includes('deporte')) {
-    return { anchor: 18 * 60, dur: 60 };
+    return { anchor: 18 * 60, dur: 75 };
   }
   if (category === 'limpieza' || lower.includes('limp') || lower.includes('orden') || lower.includes('hogar')) {
-    return { anchor: 19 * 60 + 15, dur: 45 };
+    return { anchor: 19 * 60 + 30, dur: 45 };
   }
   if (category === 'creativo' || lower.includes('creativ') || lower.includes('canva') || lower.includes('web') || lower.includes('redes') || lower.includes('anunciar') || lower.includes('contenido') || lower.includes('lectura') || lower.includes('leer')) {
-    return { anchor: 16 * 60 + 30, dur: 60 };
+    return { anchor: 20 * 60, dur: 60 };
   }
   if (category === 'intelecto' || category === 'estudio' || lower.includes('estud') || lower.includes('clase') || lower.includes('curso')) {
-    return { anchor: 11 * 60, dur: 90 };
+    return { anchor: 10 * 60, dur: 120 };
   }
-  // Default work / routine
-  return { anchor: 9 * 60 + (index % 4) * 90, dur: 90 };
+  // Default work / routine (4 hours default)
+  return { anchor: 9 * 60 + (index % 4) * 90, dur: 240 };
 };
 
 /**
  * Automatically sanitizes, deduplicates, consolidates (if over capacity), and arranges
- * schedule items so there are ZERO time overlaps on shared days and total daily hours stay balanced.
+ * schedule items so there are ZERO time overlaps on shared days and realistic work durations stay intact.
  */
 export const autoArrangeSchedule = <T extends {
   id: string;
@@ -323,7 +344,7 @@ export const autoArrangeSchedule = <T extends {
 }>(items: T[], mode: 'master_blocks' | 'detailed' = 'master_blocks', maxBlocksPerDay: number = 8): T[] => {
   if (!Array.isArray(items) || items.length === 0) return [];
 
-  // 1. Clean titles and filter out junk / micro-habits
+  // 1. Clean titles and filter out micro-habits
   const cleanedList: T[] = [];
   const seenKeys = new Set<string>();
 
@@ -343,86 +364,88 @@ export const autoArrangeSchedule = <T extends {
       continue;
     }
 
-    // Deduplicate by normalized prefix + days
-    const normPrefix = lower.replace(/[^a-záéíóúñ0-9]/gi, '').slice(0, 22);
+    const normTB = normalizeTimeBlock(rawItem.timeBlock) || rawItem.timeBlock || '';
     const daysKey =
       rawItem.frequencyType === 'specific_days' && Array.isArray(rawItem.specificDays) && rawItem.specificDays.length > 0 && rawItem.specificDays.length < 7
         ? rawItem.specificDays.slice().sort().join(',')
         : 'daily';
-    const dedupKey = `${normPrefix}__${daysKey}`;
+
+    // Deduplicate by clean title + timeBlock + days (preserve distinct morning and afternoon shifts!)
+    const dedupKey = `${cleanedTitle.toLowerCase()}__${normTB}__${daysKey}`;
     if (seenKeys.has(dedupKey)) continue;
     seenKeys.add(dedupKey);
 
     cleanedList.push({
       ...rawItem,
       title: cleanedTitle,
-      timeBlock: normalizeTimeBlock(rawItem.timeBlock) || rawItem.timeBlock,
+      timeBlock: normTB || undefined,
     });
   }
 
   if (cleanedList.length === 0) return [];
 
-  // 2. If there are too many items (e.g. > maxBlocksPerDay on daily/overlapping schedule), consolidate excess items by category
-  const targetMax = mode === 'master_blocks' ? Math.min(maxBlocksPerDay, 7) : Math.min(maxBlocksPerDay, 10);
-  let workingList: T[] = cleanedList;
+  // 2. Intelligent Work & Lunch Split:
+  // If an overarching work/study block (e.g. 09:00 - 17:00) contains lunch (e.g. 13:00 - 14:00) on shared days,
+  // split into Turno Mañana and Turno Tarde around lunch so lunch is never pushed to 17:00!
+  const splitList: T[] = [];
+  for (let i = 0; i < cleanedList.length; i++) {
+    const item = cleanedList[i];
+    const s = parseTimeToMinutes(item.timeBlock);
+    const e = parseEndTimeToMinutes(item.timeBlock);
 
-  if (workingList.length > targetMax) {
-    // Keep specific single-day variations (e.g. Monday Gym vs Wednesday Gym) separate,
-    // and consolidate general/daily items that share categories
-    const bucketMap = new Map<string, T>();
-    const condensed: T[] = [];
-
-    for (const item of workingList) {
-      const daysKey =
-        item.frequencyType === 'specific_days' && Array.isArray(item.specificDays) && item.specificDays.length < 5
-          ? item.specificDays.slice().sort().join(',')
-          : 'common';
-      const lower = item.title.toLowerCase();
-      const slotType =
-        lower.includes('despertar') || lower.includes('mañana') || lower.includes('desayun')
-          ? 'morning'
-          : lower.includes('almuerzo') || lower.includes('cena') || item.category === 'comida'
-          ? `meal-${lower.includes('cena') ? 'dinner' : 'lunch'}`
-          : lower.includes('dormir') || lower.includes('desconexi')
-          ? 'sleep'
-          : `${item.category || 'rutina'}-${daysKey}`;
-
-      const existing = bucketMap.get(slotType);
-      if (!existing) {
-        const clone = { ...item };
-        bucketMap.set(slotType, clone);
-        condensed.push(clone);
-      } else {
-        // Combine titles cleanly without appending "(Consolidado)"
-        if (!existing.title.toLowerCase().includes(item.title.toLowerCase().slice(0, 12))) {
-          const combined = `${existing.title} & ${item.title}`;
-          if (combined.length <= 54) {
-            existing.title = combined;
-          }
-        }
-        existing.xpReward = Math.min(60, Math.max(existing.xpReward || 25, item.xpReward || 25) + 5);
-      }
+    let engulfedLunch: T | undefined = undefined;
+    if (s !== 9999 && e !== 9999 && e - s >= 240) {
+      engulfedLunch = cleanedList.find(other => {
+        if (other.id === item.id || !other.timeBlock) return false;
+        const otherLower = (other.title || '').toLowerCase();
+        if (!otherLower.includes('almuerzo') && !otherLower.includes('comida') && other.category !== 'comida') return false;
+        if (!shareDays(item.frequencyType, item.specificDays, other.frequencyType, other.specificDays)) return false;
+        const os = parseTimeToMinutes(other.timeBlock);
+        const oe = parseEndTimeToMinutes(other.timeBlock);
+        return os !== 9999 && oe !== 9999 && os >= s + 60 && oe <= e - 60;
+      });
     }
-    workingList = condensed.slice(0, targetMax);
+
+    if (engulfedLunch) {
+      const ls = parseTimeToMinutes(engulfedLunch.timeBlock);
+      const le = parseEndTimeToMinutes(engulfedLunch.timeBlock);
+      const shift1: T = {
+        ...item,
+        id: `${item.id}-shift1`,
+        title: item.title.includes('Turno') ? item.title : `${item.title} (Turno Mañana)`,
+        timeBlock: `${formatMinutesToHHMM(s)} - ${formatMinutesToHHMM(ls)}`
+      };
+      const shift2: T = {
+        ...item,
+        id: `${item.id}-shift2`,
+        title: item.title.includes('Turno') ? item.title : `${item.title} (Turno Tarde)`,
+        timeBlock: `${formatMinutesToHHMM(le)} - ${formatMinutesToHHMM(e)}`
+      };
+      splitList.push(shift1, shift2);
+    } else {
+      splitList.push(item);
+    }
   }
 
-  // 3. Parse desired start & duration for each item, clamping unrealistic durations (e.g. "20:30 - 23:59")
-  const metaList = workingList.map((item, idx) => {
+  // 3. Prepare meta list with realistic duration preservation (Never collapse 8h shifts into 90 mins!)
+  const metaList = splitList.map((item, idx) => {
     const { anchor, dur: defaultDur } = getLogicalAnchorAndDuration(item.title, item.category || 'rutina', idx);
     let startMin = parseTimeToMinutes(item.timeBlock);
     let endMin = parseEndTimeToMinutes(item.timeBlock);
 
     let dur = defaultDur;
-    if (startMin !== 9999 && endMin !== 9999 && endMin > startMin) {
-      const rawDur = endMin - startMin;
-      // If a block was corrupted to 20:30 - 23:59 or > 4 hours, reset to a clean logical duration
-      if (endMin >= 1438 || rawDur > 240) {
-        dur = defaultDur;
-        if (startMin >= 20 * 60 && endMin >= 1438) {
-          startMin = anchor;
+    if (startMin !== 9999 && endMin !== 9999) {
+      if (endMin > startMin) {
+        const rawDur = endMin - startMin;
+        // Accept work/study blocks up to 10 hours (600 mins).
+        if (rawDur > 720) {
+          dur = defaultDur;
+        } else {
+          dur = Math.max(30, rawDur);
         }
-      } else {
-        dur = Math.max(30, Math.min(180, rawDur));
+      } else if (endMin < startMin && (endMin + 1440 - startMin) <= 600) {
+        // Cross-midnight shift (e.g. 22:00 - 06:00 or 23:00 - 07:00)
+        dur = endMin + 1440 - startMin;
       }
     } else {
       startMin = anchor;
@@ -431,29 +454,16 @@ export const autoArrangeSchedule = <T extends {
 
     return {
       item,
-      prefStart: Math.max(6 * 60, Math.min(22 * 60 + 30, startMin)),
+      prefStart: Math.max(0, Math.min(1439, startMin)),
       dur,
+      hasExplicitTime: Boolean(item.timeBlock && startMin !== 9999 && endMin !== 9999)
     };
   });
 
   // Sort by preferred start time
   metaList.sort((a, b) => a.prefStart - b.prefStart);
 
-  // 4. Check if total duration on any day exceeds 13.5 hours (810 mins); if so, cap durations to 45-75 mins so everything fits!
-  for (let d = 0; d <= 6; d++) {
-    const dayItems = metaList.filter(m =>
-      shareDays(m.item.frequencyType, m.item.specificDays, 'specific_days', [d])
-    );
-    const dayTotal = dayItems.reduce((acc, m) => acc + m.dur, 0);
-    if (dayTotal > 780 && dayItems.length > 0) {
-      const scale = 720 / dayTotal;
-      dayItems.forEach(m => {
-        m.dur = Math.max(30, Math.round((m.dur * scale) / 15) * 15);
-      });
-    }
-  }
-
-  // 5. Place items chronologically with ZERO overlaps on shared days
+  // 4. Place items chronologically with ZERO overlaps on shared days
   const placed: Array<{
     item: T;
     start: number;
@@ -472,16 +482,23 @@ export const autoArrangeSchedule = <T extends {
     let chosenStart = Math.round(m.prefStart / 15) * 15;
     let found = false;
 
-    // Try forward from preferred start (06:00 to 23:15)
-    for (let s = chosenStart; s + dur <= 23 * 60 + 15; s += 15) {
-      if (isSlotFree(s, s + dur)) {
-        chosenStart = s;
-        found = true;
-        break;
+    // A. If the user provided an explicit time and it's free, KEEP IT EXACTLY!
+    if (m.hasExplicitTime && isSlotFree(chosenStart, chosenStart + dur)) {
+      found = true;
+    }
+
+    // B. If not free, try nudging forward
+    if (!found) {
+      for (let s = chosenStart; s + dur <= 23 * 60 + 45; s += 15) {
+        if (isSlotFree(s, s + dur)) {
+          chosenStart = s;
+          found = true;
+          break;
+        }
       }
     }
 
-    // Try backward from preferred start down to 06:00
+    // C. Try backward
     if (!found) {
       for (let s = chosenStart - 15; s >= 6 * 60; s -= 15) {
         if (isSlotFree(s, s + dur)) {
@@ -492,11 +509,11 @@ export const autoArrangeSchedule = <T extends {
       }
     }
 
-    // If still not found with full duration, try with compact 30m duration in any open gap between 06:00 and 23:30
+    // D. Compact fallback in open gap
     let finalDur = dur;
     if (!found) {
-      finalDur = 30;
-      for (let s = 6 * 60; s + finalDur <= 23 * 60 + 30; s += 15) {
+      finalDur = Math.max(30, Math.min(60, dur));
+      for (let s = 6 * 60; s + finalDur <= 23 * 60 + 45; s += 15) {
         if (isSlotFree(s, s + finalDur)) {
           chosenStart = s;
           found = true;
@@ -505,11 +522,12 @@ export const autoArrangeSchedule = <T extends {
       }
     }
 
-    const chosenEnd = Math.min(23 * 60 + 30, chosenStart + finalDur);
+    const chosenEnd = chosenStart + finalDur;
+    const formattedEnd = chosenEnd >= 1440 ? formatMinutesToHHMM(chosenEnd - 1440) : formatMinutesToHHMM(chosenEnd);
     placed.push({
       item: {
         ...m.item,
-        timeBlock: `${formatMinutesToHHMM(chosenStart)} - ${formatMinutesToHHMM(chosenEnd)}`,
+        timeBlock: `${formatMinutesToHHMM(chosenStart)} - ${formattedEnd}`,
       },
       start: chosenStart,
       end: chosenEnd,
@@ -645,6 +663,11 @@ export const diagnoseSchedule = <T extends {
   for (let i = 0; i < sorted.length - 1; i++) {
     const curr = sorted[i];
     const next = sorted[i + 1];
+
+    // Only detect gaps between items that actually occur on the same day!
+    if (!shareDays(curr.frequencyType, curr.specificDays, next.frequencyType, next.specificDays)) {
+      continue;
+    }
 
     let currEnd = parseEndTimeToMinutes(curr.timeBlock);
     if (currEnd === 9999) currEnd = parseTimeToMinutes(curr.timeBlock) + 60;
