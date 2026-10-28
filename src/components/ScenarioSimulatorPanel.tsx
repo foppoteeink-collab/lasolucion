@@ -107,16 +107,15 @@ export const ScenarioSimulatorPanel: React.FC<ScenarioSimulatorPanelProps> = ({ 
         <div className="space-y-1">
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className="text-white font-black text-base uppercase tracking-wider">
-              Simulador de Escenarios & Telemetría
+              Simulador de Progreso & Proyecciones
             </h3>
             <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase font-mono bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/40">
-              SANDBOX SEGURO
+              MODO PRUEBA
             </span>
           </div>
           <p className="text-xs text-slate-300 leading-relaxed">
-            Experimenta cómo se comporta la aplicación completa para distintos perfiles de uso (2 semanas, 1 mes, 3 meses). 
-            <strong>Simula el ecosistema completo:</strong> tareas de trabajo reales por horarios, ingresos de clientes, gastos cotidianos, metas de tesorería, sesiones de foco y reflexiones nocturnas.
-            <strong className="text-fuchsia-200"> Tus datos personales reales se respaldan de inmediato</strong> y se restauran con un solo toque.
+            Prueba la aplicación con perfiles de 2 semanas, 1 mes o 3 meses de uso continuo. 
+            <strong className="text-fuchsia-200"> Tus datos reales se respaldan automáticamente</strong> y se restauran con un toque.
           </p>
 
           <div className="flex items-center gap-2 pt-1 flex-wrap text-[10px] font-mono font-bold text-slate-300">
@@ -219,7 +218,7 @@ export const ScenarioSimulatorPanel: React.FC<ScenarioSimulatorPanelProps> = ({ 
                   </p>
 
                   <div className="space-y-1.5 pt-2 border-t border-slate-800/80">
-                    <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Telemetría clave:</p>
+                    <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Métricas clave:</p>
                     {preset.highlights.map((h, hIdx) => (
                       <div key={hIdx} className="flex items-center gap-1.5 text-[11px] text-slate-300">
                         <CheckCircle2 className="w-3 h-3 text-cyan-400 shrink-0" />

@@ -86,8 +86,8 @@ export const ClearDayConfirmModal: React.FC<ClearDayConfirmModalProps> = ({
           </h2>
 
           <p className="text-center text-slate-300 text-sm mb-5 leading-relaxed">
-            Estás a punto de cancelar las{' '}
-            <strong className="text-white font-bold">{tasks.length} tareas</strong> programadas para el{' '}
+            Se cancelarán las{' '}
+            <strong className="text-white font-bold">{tasks.length} tareas</strong> del{' '}
             <span className="text-cyan-300 font-bold">{formatDateForDisplay(currentDate)}</span>.
           </p>
 
@@ -96,11 +96,11 @@ export const ClearDayConfirmModal: React.FC<ClearDayConfirmModalProps> = ({
             <div className="bg-amber-950/40 border border-amber-500/40 rounded-2xl p-4 sm:p-5 mb-5 shadow-[0_0_25px_rgba(245,158,11,0.15)]">
               <div className="flex items-center gap-2 mb-2 text-amber-400 font-black text-sm">
                 <AlertTriangle className="w-5 h-5 text-amber-400 flex-shrink-0 animate-bounce" />
-                <span>Advertencia: Regla de 21 / 66 Días</span>
+                <span>Advertencia: Regla 21/66 Días</span>
               </div>
 
               <p className="text-amber-200/90 text-xs sm:text-sm leading-relaxed mb-3">
-                Tienes hábitos programados para la regla de consistencia y maestría (21 o 66 días). Si limpias las misiones de hoy porque necesitas el tiempo para otra actividad urgente, ten en cuenta que no se registrará avance hoy para estos hábitos:
+                ⚠️ Tienes hábitos de 21/66d activos hoy. Si los limpias sin completarlos, pausarás tu racha si no usas un Escudo:
               </p>
 
               <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
@@ -141,14 +141,14 @@ export const ClearDayConfirmModal: React.FC<ClearDayConfirmModalProps> = ({
               </div>
 
               <p className="text-[11px] text-amber-300/70 mt-3 italic">
-                * Puedes volver a restablecer las misiones predeterminadas en cualquier momento usando el botón "Restablecer Día".
+                * Puedes restaurar tus tareas habituales con "Restablecer Día".
               </p>
             </div>
           )}
 
           {!hasHighStreakWarning && (
             <div className="bg-blue-950/30 border border-blue-500/30 rounded-2xl p-4 mb-5 text-xs text-blue-200/90 leading-relaxed">
-              Al limpiar el día, la lista de misiones quedará despejada para que puedas enfocarte en tus otras prioridades. Siempre podrás pulsar <strong className="text-white">"Restablecer Día"</strong> si deseas recuperar la plantilla habitual de tareas.
+              La lista del día quedará en blanco. Tu historial previo se mantiene intacto y puedes usar <strong className="text-white">"Restablecer Día"</strong> cuando quieras.
             </div>
           )}
 

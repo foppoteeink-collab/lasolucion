@@ -674,7 +674,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                         </span>
                       </h3>
                       <p className="text-[11px] text-slate-300 mt-0.5">
-                        Salón de la fama de tus compañeros vivos. Puedes vincular cada KAI a un hábito para que sea su guardián personal.
+                        Tus compañeros creados. Vincula un KAI a cualquier hábito para protegerlo.
                       </p>
                     </div>
                   </div>
@@ -697,7 +697,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                     </div>
                     <h4 className="text-sm font-bold text-white">Tu Bóveda está vacía</h4>
                     <p className="text-xs text-slate-400 leading-relaxed">
-                      Escanea tu primer objeto real en la Forja Neural para darle vida a un compañero y consagrarlo como guardián de tus hábitos.
+                      Crea tu primer compañero con la Forja Neural para asignarlo a tus hábitos.
                     </p>
                     <button
                       type="button"
@@ -889,7 +889,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
 
                       <div className="pt-2.5 mt-2.5 border-t border-white/5 flex items-center justify-between">
                         <span className="text-[9px] font-mono text-slate-400">
-                          {isSelected ? 'Compañero Activo' : 'Núcleo Génesis'}
+                          {isSelected ? 'Compañero Activo' : 'Compañero Génesis'}
                         </span>
                         {isSelected ? (
                           <span className="text-[10px] font-mono font-black text-cyan-300 bg-cyan-900/60 border border-cyan-400 px-2.5 py-0.5 rounded-lg flex items-center gap-1">

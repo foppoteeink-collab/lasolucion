@@ -14,19 +14,19 @@ interface OracleTheatricalLoaderProps {
 const DECRYPTION_STAGES = [
   {
     title: 'ESTABLECIENDO PUENTE CUÁNTICO',
-    desc: 'Inicializando conexión con el Núcleo Central a través del túnel cifrado TLS...',
+    desc: 'Inicializando enlace con tu compañero KAI a través de un canal seguro...',
     logs: [
       '⚡ [INIT] Petición entrante desde terminal de calibración.',
-      '🌐 [ROUTE] Encaminando a través de la subred VPN cuántica.',
-      '🔑 [AUTH] Token de sesión verificado por el agente de Zero-Trust.'
+      '🌐 [ROUTE] Encaminando enlace táctico optimizado.',
+      '🔑 [SEGURIDAD] Conexión segura establecida con éxito.'
     ]
   },
   {
     title: 'SINCRO-ANÁLISIS DE DATOS PERFIL',
-    desc: 'Extrayendo telemetría vital del Operador para ajustar coeficientes de fatiga...',
+    desc: 'Analizando energía vital y hábitos para ajustar coeficientes de esfuerzo...',
     logs: [
       '📈 [STATS] Leyendo nivel de disciplina, fuerza y energía.',
-      '🧠 [CORE] Cargando mapa de arquetipos de Carl Jung.',
+      '🧠 [MENTE] Sincronizando mapa de arquetipos.',
       '⚙️ [ALGO] Modificadores de recompensa alineados con la clase.'
     ]
   },
@@ -36,7 +36,7 @@ const DECRYPTION_STAGES = [
     logs: [
       '🔍 [SCAN] Detectando solapamientos temporales en agenda previa.',
       '🛠️ [DEDUP] Aplicando filtros de congruencia para misiones repetidas.',
-      '📊 [MODEL] Generando bloques maestros estructurados (Time-Blocking).'
+      '📊 [MODEL] Generando bloques estructurados en agenda.'
     ]
   },
   {
@@ -44,7 +44,7 @@ const DECRYPTION_STAGES = [
     desc: 'Inyectando recompensas calibradas, misiones tácticas y directivas vitales...',
     logs: [
       '🛡️ [SHIELD] Configurando resiliencia de racha diaria.',
-      '💎 [ECONOMY] Calculando deltas óptimos de XP y Monedas.',
+      '💎 [BALANCE] Calibrando recompensas de XP y Monedas.',
       '🧬 [FINALIZE] Preparando interfaz de edición visual.'
     ]
   }
@@ -177,7 +177,7 @@ export const OracleTheatricalLoader: React.FC<OracleTheatricalLoaderProps> = ({ 
         {/* Live log stream */}
         <div className="space-y-1 bg-[#03000a] p-3 rounded-lg border border-[#9600ff]/20 max-h-[85px] overflow-y-auto custom-scrollbar">
           {displayedLogs.length === 0 ? (
-            <div className="text-slate-600 italic text-[10px] animate-pulse">Esforzándose por enganchar multiplexor...</div>
+            <div className="text-slate-600 italic text-[10px] animate-pulse">Sincronizando enlace neural con KAI...</div>
           ) : (
             displayedLogs.map((log, idx) => (
               <motion.div 
@@ -214,10 +214,10 @@ export const OracleTheatricalLoader: React.FC<OracleTheatricalLoaderProps> = ({ 
       </div>
 
       {/* Footer warning */}
-      <div className="relative z-10 flex items-center gap-2 p-2.5 bg-[#0e001f] border border-[#9600ff]/30 rounded-lg">
-        <Sparkles className="w-4 h-4 text-[#d6f421]" />
+      <div className="relative z-10 flex items-center gap-2 p-2 bg-[#0e001f] border border-[#9600ff]/30 rounded-lg">
+        <Sparkles className="w-4 h-4 text-[#d6f421] shrink-0" />
         <p className="text-[10px] text-slate-300 leading-snug">
-          <strong>NOTA DE RENDIMIENTO:</strong> El Oráculo está ejecutando análisis cuánticos para optimizar tu agenda. No cierres el modal para asegurar la coherencia del enlace.
+          Optimizando tu agenda con IA. Mantén esta ventana abierta un momento.
         </p>
       </div>
     </div>

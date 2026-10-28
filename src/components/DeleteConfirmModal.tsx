@@ -48,11 +48,10 @@ export function DeleteConfirmModal({ task, onClose, onConfirm }: DeleteConfirmMo
           {isHabit && (
             <div className="bg-orange-950/40 border border-orange-500/30 rounded-xl p-4 mb-6">
               <h3 className="text-orange-400 font-black text-sm mb-1 flex items-center justify-center gap-2">
-                <Calendar className="w-4 h-4" /> Regla de 21 / 66 Días
+                <Calendar className="w-4 h-4" /> Regla 21/66 Días
               </h3>
               <p className="text-orange-200/80 text-xs text-center">
-                Esta misión o hábito está programada para cumplir la regla de consistencia (21 o 66 días). 
-                Si la eliminas o la reprogramas, podrías afectar tu progreso y racha acumulada.
+                ⚠️ Vinculado a la regla 21/66d. Eliminarlo pausará el avance de racha de este hábito.
               </p>
             </div>
           )}
@@ -73,7 +72,7 @@ export function DeleteConfirmModal({ task, onClose, onConfirm }: DeleteConfirmMo
               className={`w-full py-3 rounded-xl ${isHabit ? 'bg-slate-800/50 hover:bg-slate-700/50 text-slate-300 border border-slate-700' : 'bg-red-500/10 hover:bg-red-500/20 text-red-400 font-black border border-red-500/30'} transition-all flex items-center justify-center gap-2 cursor-pointer`}
             >
               <Trash2 className="w-5 h-5" />
-              {isHabit ? 'Eliminar SOLO por HOY' : 'Eliminar Misión'}
+              {isHabit ? 'Eliminar SOLO por HOY' : 'Eliminar Tarea'}
             </button>
 
             <button

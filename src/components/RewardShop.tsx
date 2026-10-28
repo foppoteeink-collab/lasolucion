@@ -101,7 +101,7 @@ export const RewardShop: React.FC = () => {
             id: 'inv-freeze-capsule',
             baseId: 'freeze_capsule',
             name: 'Cápsula Criogénica',
-            description: 'Pausa un hábito por 3 días sin perder su racha de 21 o 66 días.',
+            description: 'Pausa un hábito por 3 días protegiendo su racha 21/66d.',
             icon: '❄️',
             rarity: 'raro',
             quantity: 1,

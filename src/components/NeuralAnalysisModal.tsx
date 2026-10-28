@@ -137,7 +137,7 @@ export const NeuralAnalysisModal: React.FC<NeuralAnalysisModalProps> = ({ isOpen
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-mono uppercase tracking-widest text-purple-300 font-bold bg-purple-900/40 px-2 py-0.5 rounded border border-purple-700/50">
-                  Módulo de Telemetría Biológica
+                  Diagnóstico Holístico
                 </span>
                 {analysisSource === 'ai' && (
                   <span className="text-[10px] font-mono font-bold bg-emerald-950/90 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/50 shadow-[0_0_10px_rgba(16,185,129,0.3)] flex items-center gap-1">
@@ -172,14 +172,14 @@ export const NeuralAnalysisModal: React.FC<NeuralAnalysisModalProps> = ({ isOpen
               <Sparkles className="w-4 h-4 text-purple-400" />
             </div>
             <div className="text-xs text-slate-300 font-mono leading-relaxed">
-              "Análisis integral independiente de tu matriz arquetípica, metas, tareas en curso, dominio de hábitos y bitácora de reflexiones. Gobernado por el Núcleo Central para calibrar tu rendimiento sin interferir con la síntesis de agenda del Oráculo."
+              Diagnóstico integral de tus metas, hábitos y reflexiones, calibrado por tu compañero KAI para optimizar tu rendimiento.
             </div>
           </div>
 
           <div className="flex items-center justify-between pt-2">
             <h4 className="text-xs font-mono font-bold text-purple-200 uppercase tracking-wider flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span>Informe de Telemetría Operativa</span>
+              <span>Informe de Rendimiento</span>
             </h4>
             <button
               type="button"
@@ -188,7 +188,7 @@ export const NeuralAnalysisModal: React.FC<NeuralAnalysisModalProps> = ({ isOpen
               className="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer shadow transition-all active:scale-95"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isAnalyzing ? 'animate-spin' : ''}`} />
-              <span>{isAnalyzing ? 'Analizando...' : 'Re-escanear Telemetría'}</span>
+              <span>{isAnalyzing ? 'Analizando...' : 'Actualizar Diagnóstico'}</span>
             </button>
           </div>
 
@@ -196,7 +196,7 @@ export const NeuralAnalysisModal: React.FC<NeuralAnalysisModalProps> = ({ isOpen
             <div className="p-12 bg-[#040914] border border-purple-900/40 rounded-xl flex flex-col items-center justify-center text-center space-y-3">
               <Loader2 className="w-8 h-8 text-purple-400 animate-spin" />
               <p className="text-xs font-mono text-purple-300">
-                El Núcleo Central está escrutando tus metas, tareas activas, racha de hábitos y notas de bitácora mediante IA...
+                KAI está analizando tus metas, hábitos y reflexiones para calibrar tu rendimiento...
               </p>
             </div>
           ) : error ? (
@@ -209,7 +209,7 @@ export const NeuralAnalysisModal: React.FC<NeuralAnalysisModalProps> = ({ isOpen
               {analysisSource === 'ai' && (
                 <div className="text-[11px] font-mono text-emerald-400/90 flex items-center gap-1 px-1">
                   <Sparkles className="w-3 h-3 text-emerald-400" />
-                  <span>Sintetizado por Gemini Neural Model en directo:</span>
+                  <span>Sintetizado con IA:</span>
                 </div>
               )}
               <div className="p-4 rounded-xl bg-[#040914] border border-purple-950/80 text-xs text-slate-200 font-mono leading-relaxed shadow-inner max-h-[400px] overflow-y-auto space-y-0.5">
@@ -218,7 +218,7 @@ export const NeuralAnalysisModal: React.FC<NeuralAnalysisModalProps> = ({ isOpen
             </div>
           ) : (
             <div className="text-center py-10 text-slate-400 text-xs font-mono border border-dashed border-purple-900/50 rounded-xl">
-              Presiona "Re-escanear Telemetría" para generar tu diagnóstico holístico de rendimiento.
+              Presiona "Actualizar Diagnóstico" para generar tu evaluación de rendimiento.
             </div>
           )}
         </div>

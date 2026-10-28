@@ -64,11 +64,11 @@ export const SciFiEmptyState: React.FC<SciFiEmptyStateProps> = ({
         {/* Descriptive Body Copy */}
         <p className="text-xs sm:text-sm text-slate-300 font-sans leading-relaxed mb-6">
           {searchTerm ? (
-            <>No encontramos tareas que coincidan con la búsqueda <span className="text-cyan-300 font-bold">"{searchTerm}"</span>.</>
+            <>Sin resultados para <span className="text-cyan-300 font-bold">"{searchTerm}"</span>.</>
           ) : isFiltered ? (
-            'No hay tareas asignadas dentro del filtro o categoría seleccionada. Puedes ajustar los filtros o agregar una nueva tarea.'
+            'No hay tareas en este filtro. Ajusta tus filtros o crea una nueva tarea.'
           ) : (
-            '¡Excelente trabajo! Has completado todas tus tareas o aún no has programado tareas para hoy.'
+            'Todo al día. Crea una tarea o activa una plantilla para arrancar.'
           )}
         </p>
 

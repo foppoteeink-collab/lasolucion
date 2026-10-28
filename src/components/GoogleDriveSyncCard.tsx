@@ -186,7 +186,7 @@ export const GoogleDriveSyncCard: React.FC = () => {
               <Cloud className="w-4 h-4 text-amber-400" /> Conecta tu cuenta de Gmail / Google
             </p>
             <p className="text-xs text-slate-400 leading-relaxed max-w-xl">
-              Inicia sesión con tu cuenta de Google para habilitar el guardado y carga automática en tu Google Drive personal con tu permiso.
+              Conecta tu cuenta de Google para respaldar y sincronizar tus datos en la nube.
             </p>
           </div>
 
@@ -306,10 +306,10 @@ export const GoogleDriveSyncCard: React.FC = () => {
             </div>
 
             <p className="text-xs text-slate-300 leading-relaxed">
-              Esta acción guardará un archivo de respaldo (<code className="text-cyan-300 font-mono">la_solucion_cloud_backup.json</code>) en tu Google Drive personal con tu progreso actual, tareas, hábitos y balance.
+              Se guardará una copia cifrada en tu Google Drive personal con tu progreso, tareas y hábitos.
               {driveFile && (
-                <span className="block mt-2 text-amber-300 font-semibold">
-                  ⚠️ Se actualizará la copia existente con fecha del {new Date(driveFile.modifiedTime).toLocaleDateString()}.
+                <span className="block mt-1 text-amber-300 font-semibold text-[11px]">
+                  ⚠️ Sobrescribirá la copia del {new Date(driveFile.modifiedTime).toLocaleDateString()}.
                 </span>
               )}
             </p>

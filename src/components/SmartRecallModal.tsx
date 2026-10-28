@@ -137,11 +137,11 @@ export const SmartRecallModal: React.FC<SmartRecallModalProps> = ({
                   Smart Recall: Repaso Espaciado
                 </h2>
                 <span className="text-[10px] uppercase font-mono font-bold px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
-                  Ebbinghaus
+                  MEMORIA ACTIVA
                 </span>
               </div>
               <p className="text-xs text-slate-400 font-sans">
-                Fortalece tu memoria a largo plazo repasando notas de misiones
+                Repaso espaciado activo para consolidar notas clave.
               </p>
             </div>
           </div>
@@ -163,16 +163,15 @@ export const SmartRecallModal: React.FC<SmartRecallModalProps> = ({
               </div>
               <h3 className="text-lg font-black text-white font-anton uppercase mb-2">¡Todo al día!</h3>
               <p className="text-sm text-slate-300 max-w-md mx-auto mb-6">
-                No tienes notas de misiones pendientes de repaso para hoy ({currentDate}).
-                Tus recuerdos están frescos y consolidados.
+                No hay notas pendientes de repaso para hoy ({currentDate}).
               </p>
               <div className="bg-surface-base border border-cyan-500/30 rounded-xl p-4 text-xs text-slate-300 max-w-sm w-full mb-6 text-left">
                 <p className="font-bold text-white mb-1 flex items-center gap-1.5 font-anton uppercase">
                   <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                  ¿Cómo agregar más memorias?
+                  ¿Cómo programar notas?
                 </p>
                 <p className="text-slate-400 font-sans">
-                  Agrega notas o reflexiones en el botón <strong className="text-amber-300">Nota</strong> de cualquier misión. Se programarán automáticamente a los 1, 3, 7, 14 y 30 días.
+                  Escribe una nota en cualquier tarea y se programará a 1, 3, 7, 14 y 30 días.
                 </p>
               </div>
               <button

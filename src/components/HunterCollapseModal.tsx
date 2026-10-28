@@ -70,7 +70,7 @@ export const HunterCollapseModal: React.FC = () => {
             </h2>
 
             <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-mono mb-5">
-              Tu reserva de energía vital se ha agotado. Tu determinación te permite levantarte de nuevo al <strong className="text-emerald-400">50% de HP</strong>. Elige tu método de recuperación:
+              Tu energía llegó a 0 HP. Restáurate de inmediato al <strong className="text-emerald-400">50% HP</strong>. Sin culpa:
             </p>
 
             {/* Options */}

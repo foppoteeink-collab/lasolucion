@@ -214,7 +214,7 @@ export const HunterAwakeningModal: React.FC<HunterAwakeningModalProps> = ({
                     Sintonización de tu Compañero Cuántico KAI
                   </h3>
                   <p className="text-[11px] sm:text-xs text-slate-300 font-sans leading-relaxed mt-0.5">
-                    Te presentamos a <strong>KAI en su Forma Génesis: El Prisma Cuántico</strong>. Este núcleo cuántico de visión y foco te acompañará desde el Día 0. Luego, en el Taller Cuántico, podrás forjarle formas únicas a partir de cualquier objeto real con IA:
+                    Conoce a <strong>KAI: tu compañero táctico</strong> para optimizar enfoque, hábitos y energía diaria:
                   </p>
                 </div>
               </div>
@@ -309,7 +309,7 @@ export const HunterAwakeningModal: React.FC<HunterAwakeningModalProps> = ({
                     Canalización del Arquetipo Psicológico
                   </h3>
                   <p className="text-[11px] sm:text-xs text-slate-200 leading-relaxed font-sans mt-0.5">
-                    Tu compañero <strong>KAI ({currentKaiShapeDef.name})</strong> canalizará tu energía diaria a través de un <strong className="text-cyan-300">Arquetipo Jungiano</strong>. Elige con cuál resuenas para activar tu bonificación pasiva:
+                    Tu compañero <strong>KAI ({currentKaiShapeDef.name})</strong> canalizará tu energía. Elige tu <strong className="text-cyan-300">Arquetipo</strong> para activar tu bonificación:
                   </p>
                 </div>
               </div>
@@ -393,9 +393,9 @@ export const HunterAwakeningModal: React.FC<HunterAwakeningModalProps> = ({
           {/* ════════════════════════════ PASO 3: IDENTIDAD & CUENTA ════════════════════════════ */}
           {step === 3 && (
             <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-200">
-              <div className="bg-[#030d1a]/80 p-4 rounded-2xl border border-cyan-500/30">
+              <div className="bg-[#030d1a]/80 p-3.5 rounded-2xl border border-cyan-500/30">
                 <p className="text-xs sm:text-sm text-slate-200 font-sans leading-relaxed">
-                  Con tu <strong>KAI ({currentKaiShapeDef.name})</strong> y tu <strong>Arquetipo ({currentArchetype.name})</strong> configurados, registra tu identidad de Operador para blindar tu progreso en la nube:
+                  Ingresa tu nombre para activar tu terminal táctico y blindar tu progreso:
                 </p>
               </div>
 

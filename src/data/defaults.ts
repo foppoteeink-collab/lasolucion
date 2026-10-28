@@ -219,7 +219,7 @@ export const INITIAL_SHOP_REWARDS: ShopReward[] = [
   {
     id: 'perk-healing-potion',
     title: 'Poción de Curación Mayor 💖',
-    description: 'Restaura inmediatamente 30 puntos de Energía Vital (HP). Ideal para recuperarte tras fallar tareas o sesiones de foco.',
+    description: 'Restaura 30 HP de Energía Vital al instante.',
     cost: 120,
     icon: '💖',
     category: 'perk',
@@ -228,7 +228,7 @@ export const INITIAL_SHOP_REWARDS: ShopReward[] = [
   {
     id: 'perk-streak-shield',
     title: 'Escudo de Racha 🛡️',
-    description: 'Protege tu racha acumulada si un día no puedes completar tareas.',
+    description: 'Protege tu racha si un día no puedes completar tareas.',
     cost: 250,
     icon: '🛡️',
     category: 'perk',
@@ -237,7 +237,7 @@ export const INITIAL_SHOP_REWARDS: ShopReward[] = [
   {
     id: 'perk-focus-potion',
     title: 'Poción de Enfoque (+50% XP/Monedas) 🧪',
-    description: 'Bebida alquímica que potencia un 50% las ganancias de XP y monedas durante tus próximas tareas.',
+    description: '+50% XP y Monedas en tus próximas tareas.',
     cost: 180,
     icon: '🧪',
     category: 'perk',
@@ -246,7 +246,7 @@ export const INITIAL_SHOP_REWARDS: ShopReward[] = [
   {
     id: 'perk-resurrection-potion',
     title: 'Poción de Resurrección 💖',
-    description: 'Comodín supremo para reanimar una racha caída y proteger tus días de mayor esfuerzo (+2 Escudos de Racha).',
+    description: 'Reanima una racha perdida y otorga +2 Escudos.',
     cost: 450,
     icon: '💖',
     category: 'perk',
@@ -255,7 +255,7 @@ export const INITIAL_SHOP_REWARDS: ShopReward[] = [
   {
     id: 'perk-epic-title',
     title: 'Título de Maestría / Enfoque Supremo 👑',
-    description: 'Desbloquea el título honorífico de "Maestro del Enfoque" y +10 en todos tus atributos.',
+    description: 'Título exclusivo y +10 en todos tus atributos.',
     cost: 700,
     icon: '👑',
     category: 'perk',

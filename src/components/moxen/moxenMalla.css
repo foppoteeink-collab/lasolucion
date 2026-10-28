@@ -1,0 +1,539 @@
+/* =====================================================================
+   MOXEN MALLA · SHADER DE MALLA WEBGL
+   La Solución - Adaptación Profesional Cyberpunk / Sci-Fi
+   ===================================================================== */
+
+:root, .dark, .moxen-malla-root {
+  --ml-p1: #00f0ff;
+  --ml-p2: #7000ff;
+  --ml-p3: #ff007f;
+  --ml-p4: #00ff88;
+  --ml-p5: #facc15;
+  --ml-base: #030712;
+
+  --ml-tinta: #f8fafc;
+  --ml-suave: #94a3b8;
+  --ml-accion: #00f0ff;
+  --ml-accion-tx: #030712;
+  --ml-vidrio: rgba(4, 10, 24, 0.88);
+  --ml-vidrio-borde: rgba(0, 240, 255, 0.35);
+  --ml-vidrio-fila: rgba(0, 0, 0, 0.55);
+  --ml-sombra: rgba(0, 240, 255, 0.25);
+  --ml-linea: rgba(0, 240, 255, 0.2);
+  --ml-foco: #00f0ff;
+  --ml-pista: rgba(248, 250, 252, 0.95);
+  --ml-pista-sombra: rgba(0, 0, 0, 0.7);
+
+  --ml-curva: cubic-bezier(0.22, 1, 0.36, 1);
+  --ml-muelle: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ml-display: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --ml-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+/* ── LA ESCENA (LIENZO PRINCIPAL) ─────────────────────────────────── */
+.ml-escena {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  min-height: 520px;
+  overflow: hidden;
+  background: var(--ml-base);
+  user-select: none;
+  -webkit-user-select: none;
+  border-radius: 24px;
+}
+
+.ml-escena.is-fullscreen {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  min-height: 100vh !important;
+  border-radius: 0 !important;
+  z-index: 9999 !important;
+}
+
+.ml-lienzo {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.ml-escena.sin-gl .ml-lienzo {
+  background-color: var(--ml-base);
+}
+
+/* ── CAPA TÁCTIL Y PUNTOS FLOTANTES ──────────────────────────────── */
+.ml-capa {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.ml-punto {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 42px;
+  height: 42px;
+  margin: -21px 0 0 -21px;
+  padding: 0;
+  border-radius: 50%;
+  cursor: grab;
+  border: 3.5px solid #ffffff;
+  background: var(--c, #00f0ff);
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: 0 0 20px var(--c, #00f0ff), 0 0 0 1px rgba(255, 255, 255, 0.4) inset, 0 8px 24px -4px rgba(0, 0, 0, 0.8);
+  transition: transform 0.35s var(--ml-muelle), box-shadow 0.35s var(--ml-curva);
+  z-index: 15;
+}
+
+.ml-punto::after {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0) 65%);
+  pointer-events: none;
+}
+
+@media (hover: hover) {
+  .ml-punto:hover {
+    transform: scale(1.18);
+    box-shadow: 0 0 28px var(--c, #00f0ff), 0 0 0 4px rgba(255, 255, 255, 0.4);
+  }
+}
+
+.ml-punto.is-arrastra {
+  cursor: grabbing;
+  transform: scale(1.25);
+  box-shadow: 0 0 35px var(--c, #00f0ff), 0 0 0 7px rgba(255, 255, 255, 0.5);
+}
+
+.ml-punto.is-sel {
+  box-shadow: 0 0 32px var(--c, #00f0ff), 0 0 0 6px rgba(0, 240, 255, 0.6);
+}
+
+.ml-punto:focus-visible {
+  outline: 3px solid #00f0ff;
+  outline-offset: 4px;
+}
+
+/* ── ARO CIRCULAR DE TONO HSL ────────────────────────────────────── */
+.ml-aro {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 136px;
+  height: 136px;
+  margin: -68px 0 0 -68px;
+  border-radius: 50%;
+  touch-action: none;
+  cursor: pointer;
+  z-index: 20;
+}
+
+.ml-aro[hidden] {
+  display: none !important;
+}
+
+.ml-aro-anillo {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  opacity: 0;
+  transform: scale(0.35);
+  background: conic-gradient(
+    from 0deg,
+    hsl(0 95% 62%),
+    hsl(40 95% 60%),
+    hsl(80 85% 55%),
+    hsl(120 75% 52%),
+    hsl(160 80% 50%),
+    hsl(200 95% 58%),
+    hsl(240 95% 66%),
+    hsl(280 85% 66%),
+    hsl(320 90% 64%),
+    hsl(360 95% 62%)
+  );
+  -webkit-mask: radial-gradient(circle, transparent 44px, #000 45px, #000 60px, transparent 61px);
+  mask: radial-gradient(circle, transparent 44px, #000 45px, #000 60px, transparent 61px);
+  filter: drop-shadow(0 0 20px rgba(0, 240, 255, 0.6));
+  transition: transform 0.45s var(--ml-muelle), opacity 0.25s ease;
+}
+
+.ml-aro.is-abierto .ml-aro-anillo {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.ml-aro-asa {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
+  border-radius: 50%;
+  border: 3px solid #ffffff;
+  background: var(--tono, #ffffff);
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.9), 0 3px 10px rgba(0, 0, 0, 0.9);
+  opacity: 0;
+  transform: rotate(var(--giro, 0deg)) translateY(-53.5px) scale(0.3);
+  transition: opacity 0.25s ease, transform 0.45s var(--ml-muelle);
+}
+
+.ml-aro.is-abierto .ml-aro-asa {
+  opacity: 1;
+  transform: rotate(var(--giro, 0deg)) translateY(-53.5px) scale(1);
+}
+
+.ml-aro.is-gira .ml-aro-asa {
+  transform: rotate(var(--giro, 0deg)) translateY(-53.5px) scale(1.22);
+}
+
+/* ── EL PANEL DE VIDRIO CUÁNTICO ─────────────────────────────────── */
+.ml-panel {
+  position: absolute;
+  z-index: 25;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 390px;
+  max-width: calc(100% - 48px);
+  padding: 22px 20px 20px;
+  border-radius: 26px;
+  background: var(--ml-vidrio);
+  border: 1px solid var(--ml-vidrio-borde);
+  backdrop-filter: blur(28px) saturate(1.5);
+  -webkit-backdrop-filter: blur(28px) saturate(1.5);
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.85), 0 0 30px rgba(0, 240, 255, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  cursor: default;
+}
+
+.ml-cab {
+  margin-bottom: 14px;
+}
+
+.ml-etiqueta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 10px 0 8px;
+  border-radius: 999px;
+  background: rgba(0, 240, 255, 0.12);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  color: #00f0ff;
+  font: 700 10px var(--ml-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ml-etiqueta::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #00f0ff;
+  box-shadow: 0 0 6px #00f0ff;
+}
+
+.ml-cab h1,
+.ml-cab h3 {
+  margin: 6px 0 0;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ml-cab p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ml-suave);
+}
+
+.ml-codigo {
+  padding: 12px 10px;
+  border-radius: 16px;
+  background: var(--ml-vidrio-fila);
+  border: 1px solid var(--ml-linea);
+  font: 400 11px/1.45 var(--ml-mono);
+  color: #94a3b8;
+  position: relative;
+  overflow: hidden;
+}
+
+.ml-linea {
+  padding: 1px 6px;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.ml-k {
+  color: #38bdf8;
+}
+
+.ml-v {
+  color: #00f0ff;
+  font-weight: 700;
+}
+
+.ml-capas {
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ml-fila {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 28px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  white-space: nowrap;
+  transition: background-color 0.2s ease;
+}
+
+@media (hover: hover) {
+  .ml-fila:hover {
+    background: rgba(0, 240, 255, 0.12);
+  }
+}
+
+.ml-fila.is-sel {
+  background: rgba(0, 240, 255, 0.2);
+  border: 1px solid rgba(0, 240, 255, 0.4);
+}
+
+.ml-chip {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--c, #ffffff);
+  box-shadow: 0 0 8px var(--c, #00f0ff);
+}
+
+.ml-fila code {
+  font: inherit;
+}
+
+.ml-fila b {
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.ml-fila .ml-hex {
+  color: #38bdf8;
+  font-weight: 700;
+}
+
+.ml-fila.is-cambia::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.4), transparent);
+  transform: translateX(-100%);
+  animation: ml-barrido 0.8s var(--ml-curva) forwards;
+  pointer-events: none;
+}
+
+@keyframes ml-barrido {
+  to { transform: translateX(100%); }
+}
+
+.ml-acciones {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.ml-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--ml-linea);
+  border-radius: 12px;
+  cursor: pointer;
+  background: rgba(3, 10, 24, 0.75);
+  color: #ffffff;
+  font: 700 12px var(--ml-mono);
+  letter-spacing: 0.02em;
+  transition: all 0.25s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ml-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.ml-btn:hover {
+  background: rgba(0, 240, 255, 0.18);
+  border-color: rgba(0, 240, 255, 0.5);
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.25);
+}
+
+.ml-btn-ico {
+  width: 40px;
+  padding: 0;
+  flex: none;
+}
+
+.ml-btn-prin {
+  flex: 1;
+  background: linear-gradient(135deg, #00f0ff 0%, #0284c7 100%);
+  color: #030712;
+  border-color: transparent;
+  font-weight: 800;
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.45);
+}
+
+.ml-btn-prin:hover {
+  background: linear-gradient(135deg, #38bdf8 0%, #00f0ff 100%);
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.7);
+  transform: translateY(-1px);
+}
+
+.ml-b-ico {
+  position: relative;
+  width: 16px;
+  height: 16px;
+}
+
+.ml-i-copia {
+  transition: opacity 0.25s ease, transform 0.3s var(--ml-curva);
+}
+
+.ml-i-ok {
+  stroke-dasharray: 22;
+  stroke-dashoffset: 22;
+  opacity: 0;
+  transition: stroke-dashoffset 0.4s var(--ml-curva) 0.1s, opacity 0.15s ease;
+}
+
+.ml-btn-prin.is-copiado .ml-i-copia {
+  opacity: 0;
+  transform: scale(0.6);
+}
+
+.ml-btn-prin.is-copiado .ml-i-ok {
+  stroke-dashoffset: 0;
+  opacity: 1;
+}
+
+.ml-pista {
+  position: absolute;
+  z-index: 20;
+  left: 24px;
+  bottom: 20px;
+  margin: 0;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font: 700 11px var(--ml-mono);
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(3, 10, 24, 0.8);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+
+.ml-p-corto {
+  display: none;
+}
+
+/* ── MÓVIL (< 860px): RESPONSIVE AVANZADO ────────────────────────── */
+@media (max-width: 860px) {
+  .ml-escena {
+    min-height: 480px;
+  }
+  .ml-panel {
+    left: 14px;
+    right: 14px;
+    top: auto;
+    bottom: 14px;
+    transform: none;
+    width: auto;
+    max-width: none;
+    padding: 14px 14px 12px;
+    border-radius: 20px;
+  }
+  .ml-cab {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .ml-cab h1,
+  .ml-cab h3 {
+    margin: 0;
+    font-size: 18px;
+  }
+  .ml-cab p {
+    display: none;
+  }
+  .ml-codigo {
+    padding: 8px;
+    font-size: 10px;
+  }
+  .ml-fija {
+    display: none;
+  }
+  .ml-r-pre, .ml-r-suf {
+    display: none;
+  }
+  .ml-fila {
+    height: 26px;
+  }
+  .ml-acciones {
+    margin-top: 10px;
+    gap: 6px;
+  }
+  .ml-btn {
+    height: 38px;
+  }
+  .ml-pista {
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: auto;
+    top: 14px;
+    font-size: 10px;
+    padding: 6px 12px;
+    width: max-content;
+    max-width: calc(100% - 28px);
+    white-space: nowrap;
+  }
+  .ml-p-largo {
+    display: none;
+  }
+  .ml-p-corto {
+    display: inline;
+  }
+}

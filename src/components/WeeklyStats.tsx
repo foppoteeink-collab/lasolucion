@@ -1067,7 +1067,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
             <div className="p-2 sm:p-2.5 rounded-xl bg-purple-950/30 border border-purple-500/20 text-[10px] sm:text-[11px] text-purple-200 font-mono mb-3 flex items-center gap-2 relative z-10">
               <Brain className="w-4 h-4 text-purple-400 shrink-0" />
               <span className="leading-tight">
-                <strong>¿Cómo interpretarlo?</strong> Tus barras crecen con cada día cumplido. Al llegar a 21d superas la resistencia inicial, y a 66d el hábito se automatiza en tu cerebro.
+                <strong>Curva de hábito:</strong> 21 días supera la resistencia inicial; 66 días automatiza la conducta.
               </span>
             </div>
 

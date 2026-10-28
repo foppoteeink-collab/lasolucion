@@ -239,7 +239,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
         soundFX.playSubBassConfirm();
         setError(null);
       } catch (fallbackErr) {
-        let errMsg = err.message || 'Error de compilación en el Núcleo Central.';
+        let errMsg = err.message || 'Error de sincronización con tu compañero KAI.';
         setError(errMsg);
         soundFX.playGlitch();
       }
@@ -598,7 +598,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
             <div className="flex items-center gap-2.5 flex-wrap">
               <h3 className="text-base sm:text-lg font-black text-white flex items-center gap-2 uppercase tracking-widest font-mono">
                 <Cpu className="w-5 h-5 text-[#d6f421] animate-pulse" />
-                Núcleo Central // Oráculo Neural
+                Compañero KAI // Oráculo Neural
               </h3>
               <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-950/90 border border-emerald-500/60 text-emerald-300 text-[10px] font-mono font-bold shadow-[0_0_10px_rgba(16,185,129,0.25)]">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
@@ -829,7 +829,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                     <div className="flex items-start gap-3">
                       <Sparkles className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
                       <div>
-                        <p className="text-xs font-mono font-bold text-amber-300 uppercase tracking-wider">Aviso de Telemetría</p>
+                        <p className="text-xs font-mono font-bold text-amber-300 uppercase tracking-wider">Aviso del Sistema</p>
                         <p className="text-xs text-amber-200/90 font-mono mt-0.5">{notice}</p>
                       </div>
                     </div>

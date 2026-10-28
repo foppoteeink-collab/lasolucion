@@ -384,7 +384,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
   const tabsConfig = [
     { id: 'preferences' as SettingsSubTab, label: 'Preferencias', icon: SlidersHorizontal, color: 'text-cyan-400' },
-    { id: 'atmosphere' as SettingsSubTab, label: 'Malla Shader', icon: Palette, color: 'text-cyan-400' },
+    { id: 'atmosphere' as SettingsSubTab, label: 'Atmósfera Visual', icon: Palette, color: 'text-cyan-400' },
     { id: 'gameplay' as SettingsSubTab, label: 'Juego & KAI', icon: Sparkles, color: 'text-purple-400' },
     { id: 'finances' as SettingsSubTab, label: 'Tesorería', icon: Coins, color: 'text-amber-400' },
     { id: 'data' as SettingsSubTab, label: 'Nube & Datos', icon: Database, color: 'text-emerald-400' }
@@ -467,11 +467,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   <h4 className="text-sm font-black text-white flex items-center gap-2">
                     Atmósfera Cuántica (Moxen Malla)
                     <span className="px-2 py-0.5 rounded-full text-[9px] font-mono bg-cyan-400 text-black font-black uppercase tracking-wider">
-                      SHADER
+                      ATMÓSFERA
                     </span>
                   </h4>
                   <p className="text-xs text-slate-300">
-                    {systemAura?.name ? `Atmósfera activa: ${systemAura.name}` : 'Personaliza el aura ambiental de la app o explora el laboratorio de gradientes WebGL.'}
+                    {systemAura?.name ? `Atmósfera activa: ${systemAura.name}` : 'Personaliza el aura ambiental de la app o explora el laboratorio de gradientes reactivos.'}
                   </p>
                 </div>
               </div>
@@ -483,7 +483,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 }}
                 className="chicle-btn px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider bg-cyan-500 text-black hover:bg-cyan-400 transition-all shadow-[0_0_15px_rgba(0,240,255,0.4)] cursor-pointer shrink-0"
               >
-                Abrir Malla Shader
+                Personalizar Atmósfera
               </button>
             </div>
 
@@ -501,7 +501,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     Efectos Sonoros Sintéticos
                   </h4>
                   <p className="text-xs text-slate-400">
-                    Audio Web Audio API para completado de misiones, subidas de nivel y feedback táctico.
+                    Efectos sonoros tácticos y feedback auditivo al completar misiones.
                   </p>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
@@ -607,7 +607,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         <Timer className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
                         <div>
                           <p className="text-xs font-bold text-white">Recordatorios por hora</p>
-                          <p className="text-[10px] text-slate-500">Avisa 2 min antes de cada tarea con timeBlock</p>
+                          <p className="text-[10px] text-slate-500">Avisa 2 min antes de cada tarea con horario</p>
                         </div>
                       </div>
                       <ChicleToggle
@@ -822,7 +822,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     <Shield className="w-4 h-4 text-emerald-400" /> Modo Zen (Ultra Enfoque & Batería)
                   </h4>
                   <p className="text-xs text-slate-400">
-                    Desactiva orbes de energía pesados y partículas continuas para una interfaz sobria, sin distracciones y con mínimo consumo de GPU en móvil.
+                    Desactiva orbes y partículas continuas para máxima fluidez y ahorro de batería en móvil.
                   </p>
                 </div>
                 <ChicleToggle
@@ -843,10 +843,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <div className="bg-[#00152b] p-5 sm:p-6 rounded-2xl border border-cyan-500/40 space-y-4 shadow-[0_0_30px_rgba(0,240,255,0.12)]">
               <div>
                 <h3 className="text-xs font-black text-cyan-400 uppercase tracking-widest flex items-center gap-2">
-                  <Palette className="w-4 h-4 text-cyan-400" /> Atmósfera Cuántica & Shader de Malla
+                  <Palette className="w-4 h-4 text-cyan-400" /> Atmósfera Cuántica & Fluido Visual
                 </h3>
                 <p className="text-xs text-slate-400 mt-1">
-                  Motor WebGL reactivo de fluido elástico (Moxen Malla). Elige un preset Sci-Fi, arrastra los puntos para deformar los tonos y aplícalo a la atmósfera de la app.
+                  Fluido interactivo reactivo. Arrastra los nodos o toca para cambiar colores y personalizar el fondo.
                 </p>
               </div>
 
@@ -869,13 +869,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <div className="bg-[#00152b] p-5 sm:p-6 rounded-2xl border border-cyan-500/40 space-y-4 shadow-[0_0_30px_rgba(0,240,255,0.15)]">
               <div>
                 <div className="flex items-center gap-2 text-cyan-400 text-xs font-mono font-bold uppercase tracking-widest mb-1">
-                  <Palette className="w-4 h-4 text-cyan-400" /> Laboratorio Cuántico WebGL
+                  <Palette className="w-4 h-4 text-cyan-400" /> Personalizador de Atmósfera
                 </div>
                 <h3 className="text-base sm:text-lg font-anton uppercase tracking-wide text-white">
-                  Atmósfera & Shader de Malla Reactivo
+                  Atmósfera & Fluido Reactivo
                 </h3>
                 <p className="text-xs text-slate-400 mt-1">
-                  Motor WebGL reactivo de fluido elástico (Moxen Malla). Elige un preset Sci-Fi, arrastra los puntos para deformar los tonos y aplícalo a la atmósfera de la app o copia el código CSS.
+                  Fluido interactivo reactivo. Arrastra los nodos o toca para cambiar colores y personalizar el fondo.
                 </p>
               </div>
 
@@ -1024,7 +1024,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
 
               <p className="text-xs text-slate-300 leading-relaxed">
-                Repasa en cualquier momento la inducción guiada paso a paso sobre Energía Vital (HP), la Ley 21/66 en tus Orbes, la creación de misiones en Bloques Maestros, el Modo Foco y la Tienda.
+                Repasa el tutorial guiado sobre Energía Vital (HP), la Ley 21/66, Modo Foco y la Tienda.
               </p>
 
               <div className="flex flex-wrap items-center gap-3 pt-1">
@@ -1068,8 +1068,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     <span className="text-xs font-black text-fuchsia-400 uppercase tracking-widest flex items-center gap-1.5">
                       <FlaskConical className="w-4 h-4 text-fuchsia-400" /> Simulador Táctico
                     </span>
-                    <span className="text-[10px] font-mono text-fuchsia-300 bg-fuchsia-950/70 border border-fuchsia-500/40 px-2 py-0.5 rounded-full">
-                      Sandbox
+                    <span className="text-[10px] font-mono text-fuchsia-300 bg-fuchsia-950/70 border border-fuchsia-500/40 px-2 py-0.5 rounded-full uppercase">
+                      Modo Prueba
                     </span>
                   </div>
                   <p className="text-xs text-slate-300 leading-relaxed">
@@ -1255,7 +1255,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
 
               <p className="text-xs text-slate-300 leading-relaxed">
-                1️⃣ En tu <strong>Tablet</strong> toca &quot;Subir datos&quot; · 2️⃣ En tu <strong>Teléfono</strong> toca &quot;Traer datos&quot; para sincronizar tus misiones y rutinas al instante entre dispositivos.
+                Sube tus datos desde un dispositivo y descárgalos en el otro para sincronizar tu progreso al instante.
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
@@ -1291,7 +1291,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <div className="bg-[#00152b] p-5 sm:p-6 rounded-2xl border border-slate-800 space-y-5">
               <div className="flex items-center justify-between border-b border-slate-800 pb-4">
                 <h3 className="text-sm font-black text-white flex items-center gap-2">
-                  <Cloud className="w-4 h-4 text-cyan-400" /> Sincronización en la Nube (Firestore)
+                  <Cloud className="w-4 h-4 text-cyan-400" /> Sincronización en la Nube
                 </h3>
                 {user && (
                   <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5 ${
@@ -1331,7 +1331,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     </p>
                     <p className="text-xs text-slate-400 mt-0.5">
                       {user 
-                        ? `Conectado a Firestore: ${user.email}` 
+                        ? `Conectado a la nube: ${user.email}` 
                         : 'Tu partida se almacena temporalmente en la memoria del navegador.'}
                     </p>
                   </div>
@@ -1571,7 +1571,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     Reinicio Total de Partida
                   </h4>
                   <p className="text-xs text-red-300/80 mt-1 leading-relaxed">
-                    Esta acción restablece todo tu progreso, nivel, XP acumulada, monedas, hábitos y bitácora tanto en este dispositivo como en Firestore. La cuenta volverá al estado inicial de Nivel 1.
+                    Restablece tu progreso local y en la nube al Nivel 1 inicial. Acción irreversible.
                   </p>
                 </div>
               </div>

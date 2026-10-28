@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import './moxen.css';
+import './moxenMalla.css';
 import { 
   Sparkles, RotateCcw, Copy, Check, Shuffle, Maximize2, Minimize2, 
-  Palette, CheckCircle2, Layers, Compass, Zap
+  Palette, CheckCircle2, ChevronDown, ChevronUp, Code2, Zap
 } from 'lucide-react';
 import { soundFX } from '../../utils/audio';
 
@@ -251,7 +251,6 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
   const capasElRef = useRef<HTMLOListElement | null>(null);
   const baseElRef = useRef<HTMLSpanElement | null>(null);
 
-  // References to dynamic state to bridge React & WebGL animation loop
   const ptosRef = useRef<PointState[]>([]);
   const baseColorRef = useRef<string>(MOXEN_MALLA_PRESETS[0].base);
   const activePresetRef = useRef<string>('cyberpunk');
@@ -292,11 +291,9 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
     const rnd = mulberry32(7);
     const initialColors = preset.colors;
 
-    // Clear existing DOM buttons/layers
     capa.querySelectorAll('.ml-punto').forEach(el => el.remove());
     capasEl.innerHTML = '';
 
-    // Initialize point objects
     const ptos: PointState[] = initialColors.map((hex, i) => {
       const rgb = hex2rgb(hex);
       const pos = disposicion()[i];
@@ -345,7 +342,6 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
       p.chip = li.querySelector('.ml-chip') as HTMLElement;
     });
 
-    // WebGL Context setup
     let gl: WebGLRenderingContext | null =
       lienzo.getContext('webgl', { antialias: false, alpha: false, preserveDrawingBuffer: false }) ||
       (lienzo.getContext('experimental-webgl') as WebGLRenderingContext | null);
@@ -704,7 +700,6 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
     capa.addEventListener('pointerup', onPointerUp);
     capa.addEventListener('pointercancel', onPointerUp);
 
-    // Click on code rows highlights or opens the corresponding point
     const onFilaClick = (e: MouseEvent) => {
       const btn = (e.target as HTMLElement).closest('.ml-fila') as HTMLElement | null;
       if (!btn) return;
@@ -715,7 +710,6 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
     };
     capasEl.addEventListener('click', onFilaClick);
 
-    // Azar & Reset logic
     const azar = () => {
       soundFX.playClick();
       const r = 0.12;
@@ -725,7 +719,6 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
           lim(r + Math.random() * (1 - 2 * r), 0.05, 0.95),
         ];
       });
-      // Barajar colores cíclicamente
       const shift = 1 + Math.floor(Math.random() * 4);
       const prevColores = ptos.map(p => ({ rgb: p.rgb.slice() as [number, number, number], hsl: p.hsl.slice() as [number, number, number] }));
       ptos.forEach((p, idx) => {
@@ -769,15 +762,14 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
     };
     loadColorsRef.current = loadColors;
 
-    // Observe Resize
     const resizeObserver = new ResizeObserver(() => {
       mide();
       pinta();
       coloca();
     });
     resizeObserver.observe(capa);
+    if (containerRef.current) resizeObserver.observe(containerRef.current);
 
-    // Initial first frame render
     mide();
     pintaCodigo(false);
     ptos.forEach(p => {
@@ -796,10 +788,11 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
       capa.removeEventListener('pointercancel', onPointerUp);
       capasEl.removeEventListener('click', onFilaClick);
       if (raf) cancelAnimationFrame(raf);
+      capa.querySelectorAll('.ml-punto').forEach(el => el.remove());
+      capasEl.innerHTML = '';
     };
   }, []);
 
-  // Handle Preset Switching
   const handleSelectPreset = useCallback((presetId: string) => {
     soundFX.playClick();
     setActivePreset(presetId);
@@ -810,7 +803,6 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
     }
   }, []);
 
-  // Handle Copy CSS
   const handleCopyCss = () => {
     soundFX.playClick();
     if (!getCssRef.current) return;
@@ -826,14 +818,12 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
     setTimeout(() => setCopyFeedback(false), 2200);
   };
 
-  // Handle Apply to System (Option A)
   const handleApplyToSystem = () => {
     soundFX.playLevelUp?.();
     if (!getCssRef.current) return;
     const code = getCssRef.current();
     const currPreset = MOXEN_MALLA_PRESETS.find(p => p.id === activePreset);
     
-    // Extract background-image & background-color
     const bgColMatch = code.match(/background-color:\s*([^;]+);/);
     const bgImgMatch = code.match(/background-image:\s*([\s\S]+?);/);
 
@@ -860,7 +850,7 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
 
   return (
     <div className={`moxen-malla-root space-y-4 ${className}`}>
-      {/* ── BARRA SUPERIOR DE PRESETS SCI-FI (OPCIÓN C) ── */}
+      {/* ── BARRA SUPERIOR DE PRESETS SCI-FI ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-[#00152b] rounded-2xl border border-cyan-500/30 shadow-[0_4px_20px_rgba(0,0,0,0.4)]">
         <div className="flex items-center gap-2.5">
           <div className="p-2 rounded-xl bg-cyan-950/80 border border-cyan-500/40 text-cyan-400">
@@ -871,7 +861,7 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
               Atmósfera Cuántica · Moxen Malla
             </span>
             <span className="text-xs font-anton tracking-wide text-white block">
-              Elige un Preset o diseña tu propia aura en WebGL
+              Elige un Preset o afina cada tono en pantalla
             </span>
           </div>
         </div>
@@ -893,8 +883,8 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
                 title={p.desc}
               >
                 <span 
-                  className="w-2.5 h-2.5 rounded-full shrink-0 border border-black/40"
-                  style={{ background: p.colors[0] }}
+                  className="w-2.5 h-2.5 rounded-full shrink-0 border border-black/40 shadow-[0_0_6px_currentColor]"
+                  style={{ background: p.colors[0], color: p.colors[0] }}
                 />
                 <span>{p.badge}</span>
               </button>
@@ -903,19 +893,19 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
         </div>
       </div>
 
-      {/* ── LIENZO INTERACTIVO MALLA (ESCENA) ── */}
+      {/* ── ESCENA DEL SHADER (HERO CANVAS VIEWPORT) ── */}
       <div
         ref={containerRef}
-        className={`ml-escena relative border border-cyan-500/40 shadow-[0_15px_40px_rgba(0,240,255,0.12)] transition-all ${
+        className={`ml-escena relative border border-cyan-500/40 shadow-[0_15px_50px_rgba(0,240,255,0.18)] transition-all ${
           isFullscreen 
-            ? 'fixed inset-4 z-50 rounded-3xl min-h-[90vh] shadow-[0_0_60px_rgba(0,240,255,0.3)]' 
-            : 'h-[460px] sm:h-[480px]'
+            ? 'is-fullscreen' 
+            : 'min-h-[560px] h-[580px] sm:h-[620px]'
         }`}
       >
-        {/* WebGL Canvas */}
+        {/* Canvas WebGL */}
         <canvas ref={canvasRef} className="ml-lienzo" aria-hidden="true" />
 
-        {/* Interactive Pointer Overlay Layer */}
+        {/* Capa de interacción y puntos flotantes */}
         <div ref={capaRef} className="ml-capa">
           {/* Aro de Tono Circular (HSL) */}
           <div
@@ -934,30 +924,28 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
           </div>
         </div>
 
-        {/* Botón Flotante para Alternar Pantalla Completa */}
+        {/* Botón de Pantalla Completa Flotante */}
         <button
           type="button"
           onClick={() => {
             soundFX.playClick();
             setIsFullscreen(!isFullscreen);
           }}
-          className="chicle-btn absolute top-3 right-3 z-30 p-2 rounded-xl bg-black/60 hover:bg-black/80 border border-cyan-500/40 text-cyan-300 hover:text-white backdrop-blur-md transition-all cursor-pointer shadow-[0_0_15px_rgba(0,240,255,0.2)]"
-          title={isFullscreen ? 'Reducir tamaño' : 'Ver a pantalla completa'}
+          className="chicle-btn absolute top-3.5 right-3.5 z-30 p-2.5 rounded-xl bg-black/70 hover:bg-black/90 border border-cyan-500/50 text-cyan-300 hover:text-white backdrop-blur-md transition-all cursor-pointer shadow-[0_0_20px_rgba(0,240,255,0.3)]"
+          title={isFullscreen ? 'Reducir tamaño (Esc)' : 'Expandir a pantalla completa'}
         >
           {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
         </button>
 
-        {/* Panel de Vidrio y Código CSS Reactivo */}
+        {/* Panel de Vidrio y Acciones (Floating Glass HUD - Diseño Fiel al Original) */}
         <aside className="ml-panel" aria-label="Degradado en código">
           <header className="ml-cab">
-            <span className="ml-etiqueta">Shader WebGL</span>
-            <h3>
-              <Sparkles className="w-4 h-4 text-cyan-400 inline" />
-              Malla Cuántica
-            </h3>
-            <p>Arrastra los puntos o toca uno para afinar su tono en el aro.</p>
+            <span className="ml-etiqueta">Shader</span>
+            <h1>Malla</h1>
+            <p>Arrastra un punto y su color se derrama por la malla.</p>
           </header>
 
+          {/* Código CSS (Siempre en el DOM para mantener sincronizado el motor) */}
           <div className="ml-codigo">
             <p className="ml-linea ml-fija">
               <span className="ml-k">background-color</span>: <span ref={baseElRef} className="ml-v">#030712</span>;
@@ -968,7 +956,7 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
             <ol ref={capasElRef} className="ml-capas" />
           </div>
 
-          {/* Acciones del Lienzo */}
+          {/* Botones de Acción Tácticos */}
           <div className="ml-acciones">
             <button
               type="button"
@@ -999,20 +987,20 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
                 {copyFeedback ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
               </span>
               <span className="ml-b-txt">
-                <span>{copyFeedback ? '¡Copiado!' : 'Copiar CSS'}</span>
+                <span>{copyFeedback ? '¡Copiado!' : 'Copiar'}</span>
               </span>
             </button>
           </div>
         </aside>
 
-        {/* Pista Inferior */}
+        {/* Pista Inferior Descriptiva */}
         <p className="ml-pista">
           <span className="ml-p-largo">Toca y arrastra un punto · Pulsa un punto para desplegar el aro de color</span>
           <span className="ml-p-corto">Arrastra o pulsa un punto</span>
         </p>
       </div>
 
-      {/* ── BARRA DE APLICACIÓN A LA ATMÓSFERA DEL SISTEMA (OPCIÓN A) ── */}
+      {/* ── BARRA DE APLICACIÓN A LA ATMÓSFERA DEL SISTEMA ── */}
       <div className="p-4 bg-gradient-to-r from-[#00152b] via-[#002244] to-[#00152b] rounded-2xl border border-cyan-500/40 shadow-[0_0_25px_rgba(0,240,255,0.15)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">

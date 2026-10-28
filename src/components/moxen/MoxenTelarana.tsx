@@ -234,7 +234,7 @@ export const MoxenTelarana: React.FC<MoxenTelaranaProps> = ({
       <div className="p-2 sm:p-2.5 rounded-xl bg-cyan-950/40 border border-cyan-500/30 text-[10px] sm:text-[11px] text-slate-300 font-mono mb-3.5 flex items-start sm:items-center gap-2 relative z-10">
         <Info className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5 sm:mt-0" />
         <span className="leading-tight">
-          <strong>¿Cómo interpretarlo?</strong> Tu forma <strong className="text-cyan-300">cian</strong> refleja tu nivel actual. La línea punteada <strong className="text-purple-300">morada</strong> marca el equilibrio medio. Toca cualquier atributo para ver su desglose.
+          <strong className="text-cyan-300">Cian:</strong> nivel actual · <strong className="text-purple-300">Morado:</strong> equilibrio. Toca un atributo para ver detalles.
         </span>
       </div>
 

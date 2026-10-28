@@ -234,7 +234,7 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
             ) : (
               <div className="space-y-2.5">
                 <p className="text-xs text-slate-300 font-mono leading-relaxed">
-                  Tu progreso actualmente reside en la memoria local de este navegador. Vincula tu cuenta de Google para respaldar tus niveles, monedas, hábitos y racha en la nube.
+                  Progreso guardado en este dispositivo. Conecta tu cuenta para respaldar en la nube:
                 </p>
                 <button
                   type="button"

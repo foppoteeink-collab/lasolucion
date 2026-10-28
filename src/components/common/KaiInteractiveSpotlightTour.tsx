@@ -87,7 +87,7 @@ export const KaiInteractiveSpotlightTour: React.FC = () => {
     {
       id: 'hp-bar',
       targetSelector: '[data-tour="hp-bar"]',
-      badge: 'PASO 5 DE 5 // TELEMETRÍA',
+      badge: 'PASO 5 DE 5 // SALUD & HP',
       title: 'ENERGÍA VITAL (HP)',
       instruction:
         'Esta barra es tu salud. Si necesitas descansar, activa "Modo Descanso" en el calendario para protegerla.',
