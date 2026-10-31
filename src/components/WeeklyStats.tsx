@@ -988,45 +988,44 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
             <div className="absolute top-0 right-0 w-80 h-full bg-purple-600/10 blur-3xl pointer-events-none" />
 
             <div className="relative z-10">
-              <div className="flex items-center gap-2 mb-2">
-                <Brain className="w-6 h-6 text-purple-400" />
-                <h2 className="text-base sm:text-lg font-anton uppercase tracking-wider text-white">
-                  Arquitectura Biológica de la Neuroplasticidad (21 / 66 Días)
+              <div className="flex items-center gap-2 mb-1.5">
+                <Brain className="w-5 h-5 text-purple-400" />
+                <h2 className="text-base font-bold text-white">
+                  Ley 21 / 66 Días: Automatización de Hábitos
                 </h2>
               </div>
-              <p className="text-xs text-slate-300 max-w-3xl leading-relaxed mb-5">
-                La neuroplasticidad no es motivación abstracta: es remodelación anatómica de vías sinápticas.
-                El sistema divide cada hábito en dos umbrales biológicos rigurosos para eliminar la resistencia de la corteza prefrontal.
+              <p className="text-xs text-slate-300 max-w-2xl leading-relaxed mb-4">
+                Construye constancia en dos etapas clave para fijar cada hábito en tu rutina diaria.
               </p>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 rounded-2xl bg-black/50 border border-purple-500/40 space-y-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="p-3 sm:p-3.5 rounded-xl bg-black/40 border border-purple-500/30 space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-anton text-purple-300 uppercase tracking-wide flex items-center gap-1.5">
-                      <Zap className="w-4 h-4 text-purple-400" />
-                      Fase 1: Barrera de Maltz (1 a 21 Días)
+                    <span className="text-xs font-bold text-purple-300 flex items-center gap-1.5">
+                      <Zap className="w-3.5 h-3.5 text-purple-400" />
+                      Fase 1: 1 a 21 Días
                     </span>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-900/60 text-purple-200 border border-purple-500/40">
-                      Rompimiento de Inercia
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-900/60 text-purple-200 border border-purple-500/40">
+                      Aura KAI
                     </span>
                   </div>
                   <p className="text-xs text-slate-300 leading-snug">
-                    Desbloquea el <strong>Aura Elemental de KAI</strong>. Se supera la resistencia celular inicial y se consolidan las conexiones neuronales tempranas.
+                    Supera la resistencia inicial y desbloquea el Aura Elemental de tu compañero KAI.
                   </p>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-black/50 border border-amber-500/40 space-y-2">
+                <div className="p-3 sm:p-3.5 rounded-xl bg-black/40 border border-amber-500/30 space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-anton text-amber-300 uppercase tracking-wide flex items-center gap-1.5">
-                      <Award className="w-4 h-4 text-amber-400" />
-                      Fase 2: Maestría de Lally (22 a 66 Días)
+                    <span className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                      <Award className="w-3.5 h-3.5 text-amber-400" />
+                      Fase 2: 22 a 66 Días
                     </span>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-900/60 text-amber-200 border border-amber-500/40">
-                      Automatización Basal
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-900/60 text-amber-200 border border-amber-500/40">
+                      Forma Maestra
                     </span>
                   </div>
                   <p className="text-xs text-slate-300 leading-snug">
-                    Desbloquea la <strong>Forma Maestra de KAI</strong> y blindaje cuántico. La acción pasa de la corteza prefrontal a los ganglios basales: se ejecuta sin fatiga ni gasto de fuerza de voluntad.
+                    Automatiza el hábito en tu rutina y desbloquea la Forma Maestra de KAI.
                   </p>
                 </div>
               </div>

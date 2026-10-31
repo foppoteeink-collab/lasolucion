@@ -127,11 +127,11 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
               <Zap className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="text-lg sm:text-xl font-bold text-white font-display flex items-center gap-2">
-                <span>Gestor Unificado de Rutinas y Hábitos</span>
+              <h3 className="text-base sm:text-lg font-bold text-white font-display flex items-center gap-2">
+                <span>Rutinas y Hábitos</span>
               </h3>
-              <p className="text-xs text-gray-400 mt-0.5">
-                Controla todas tus actividades recurrentes. Elige con 1-clic cuáles van al Check Rápido (21/66d) y cuáles a tu Agenda por días.
+              <p className="text-xs text-slate-400 mt-0.5">
+                Organiza tus hábitos diarios (21/66d) y rutinas programadas en tu agenda.
               </p>
             </div>
           </div>

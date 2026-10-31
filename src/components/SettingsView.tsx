@@ -5,7 +5,7 @@ import {
   HardDrive, FileSpreadsheet, Cpu, CheckCircle2,
   Coins, Volume2, VolumeX, Target, Sun, Moon, Laptop, ArrowUpRight, CheckCheck,
   SlidersHorizontal, Smartphone, Share, PlusSquare, FlaskConical,
-  Compass, Eye, Layout, Bell, BellOff, BellRing, Zap, Flame, Timer, Palette, ChevronLeft, Wallet
+  Compass, Eye, Layout, Bell, BellOff, BellRing, Zap, Flame, Timer, Palette, ChevronLeft, Wallet, Type
 } from 'lucide-react';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 import { GameSettings } from '../types';
@@ -82,6 +82,29 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [notifSettings, setNotifSettings] = useState<NotificationSettings>(getNotificationSettings);
   const [notifTestFeedback, setNotifTestFeedback] = useState<string | null>(null);
   const [currencyChangedToast, setCurrencyChangedToast] = useState<string | null>(null);
+  const [textDensityCompact, setTextDensityCompact] = useState<boolean>(() => {
+    return localStorage.getItem('taskquest_text_density') === 'compact';
+  });
+
+  const handleToggleTextDensity = () => {
+    soundFX.playClick();
+    const next = !textDensityCompact;
+    setTextDensityCompact(next);
+    localStorage.setItem('taskquest_text_density', next ? 'compact' : 'normal');
+    if (next) {
+      document.documentElement.classList.add('text-density-compact');
+    } else {
+      document.documentElement.classList.remove('text-density-compact');
+    }
+  };
+
+  useEffect(() => {
+    if (textDensityCompact) {
+      document.documentElement.classList.add('text-density-compact');
+    } else {
+      document.documentElement.classList.remove('text-density-compact');
+    }
+  }, [textDensityCompact]);
 
   const todayTasks = useTaskStore(s => s.tasksByDate[getTodayDateString()] ?? EMPTY_TASK_LIST);
   const stats = usePlayerStore(s => s.stats);
@@ -841,6 +864,26 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   title={zenMode ? 'Modo Zen activado' : 'Modo Zen desactivado'}
                 />
               </div>
+
+              {/* DENSIDAD TIPOGRÁFICA / LECTURA COMPACTA */}
+              <div className="flex items-center justify-between gap-4 py-2 border-t border-slate-800/80">
+                <div>
+                  <h4 className="text-sm font-black text-white flex items-center gap-2 mb-1">
+                    <Type className="w-4 h-4 text-cyan-400" /> Densidad de Texto Compacta
+                  </h4>
+                  <p className="text-xs text-slate-400">
+                    Reduce el tamaño de las fuentes y minimiza párrafos para una lectura rápida sin saturar la pantalla.
+                  </p>
+                </div>
+                <ChicleToggle
+                  checked={textDensityCompact}
+                  onChange={handleToggleTextDensity}
+                  color="cyan"
+                  size="md"
+                  ariaLabel="Alternar Densidad de Texto Compacta"
+                  title={textDensityCompact ? 'Lectura compacta activa' : 'Lectura normal'}
+                />
+              </div>
             </div>
 
             {/* ═══ PERSONALIZADOR DE ATMÓSFERA CUÁNTICA (MOXEN MALLA) ═══ */}
@@ -1264,7 +1307,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     Módulo de Tesorería en Misiones
                   </div>
                   <p className="text-xs text-slate-400">
-                    Habilita la micro-cápsula de balance y registro rápido en la pantalla de Misiones. Si lo desactivas, la vista de misiones queda 100% limpia y sin datos financieros.
+                    Muestra el balance rápido en Misiones. Desactívalo para una vista 100% enfocada solo en tareas.
                   </p>
                 </div>
                 <ChicleToggle
@@ -1354,7 +1397,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 <div className="text-xs space-y-1">
                   <div className="font-bold text-white">Acreditación Automática desde Tareas</div>
                   <p className="text-slate-400 leading-relaxed">
-                    Al completar tareas con recompensa en efectivo en la pestaña <strong className="text-cyan-300">Tareas</strong>, el monto se agrega de forma automática como ingreso al balance diario de tesorería.
+                    Las recompensas de tareas completadas se suman automáticamente al balance de tesorería.
                   </p>
                 </div>
               </div>

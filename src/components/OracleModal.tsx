@@ -747,12 +747,12 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                                   : 'bg-black/40 border-slate-800 text-slate-400 hover:border-slate-700'
                               }`}
                             >
-                              <div className="flex items-center gap-1.5 font-bold font-mono text-xs text-cyan-300">
+                              <div className="flex items-center gap-1.5 font-bold font-sans text-xs text-cyan-300">
                                 <Layers className="w-4 h-4" />
                                 <span>Bloques Maestros (Recomendado)</span>
                               </div>
-                              <p className="text-[11px] text-slate-400 mt-1 leading-snug">
-                                Sintetiza el día en 4 a 6 bloques funcionales amplios. Evita la sobrecarga de 15 micro-tareas.
+                              <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">
+                                Agrupa el día en 4 a 6 bloques para evitar sobrecarga.
                               </p>
                             </button>
 
@@ -768,12 +768,12 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                                   : 'bg-black/40 border-slate-800 text-slate-400 hover:border-slate-700'
                               }`}
                             >
-                              <div className="flex items-center gap-1.5 font-bold font-mono text-xs text-slate-200">
+                              <div className="flex items-center gap-1.5 font-bold font-sans text-xs text-slate-200">
                                 <CheckSquare className="w-4 h-4" />
                                 <span>Modo Detallado</span>
                               </div>
-                              <p className="text-[11px] text-slate-400 mt-1 leading-snug">
-                                Extrae cada micro-actividad por separado para máxima granularidad paso a paso.
+                              <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">
+                                Registra cada actividad individualmente paso a paso.
                               </p>
                             </button>
                           </div>
