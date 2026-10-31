@@ -57,31 +57,64 @@ html.optic-noir #app-optical-canvas {
   transition: filter 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
-/* 3. MODO NOIR CLARO (Manga B&W Táctico en Blanco / Tinta China de Alto Contraste) */
+/* 3. MODO NOIR CLARO (Manga B&W Táctico en Blanco / Tinta China de Alto Impacto) */
 html.optic-eink {
-  background-color: #f8fafc !important;
+  background-color: #ffffff !important;
 }
 
 html.optic-eink #main-layout-wrapper {
-  background-color: #f8fafc !important;
+  background-color: #ffffff !important;
 }
 
 html.optic-eink #app-optical-canvas {
-  /* Fondo blanco papel limpio, escala de grises al 100%, inversión perfecta y contraste profundo de tinta negra */
-  filter: invert(1) hue-rotate(180deg) grayscale(100%) contrast(1.65) brightness(0.88) !important;
+  /* Filtro de entintado profundo: Inversión completa con alto contraste calibrado que aplasta los grises en tinta negra */
+  filter: invert(1) hue-rotate(180deg) grayscale(100%) contrast(2.3) brightness(0.82) !important;
   transition: filter 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
-/* Refuerzo de tinta negra para Noir Claro: textos con peso, bordes nítidos y cero grises lavados */
+/* En la estructura previa a la inversión: forzar blanco puro para que al invertirse sea NEGRO AZABACHE PURO (#000000) */
 html.optic-eink #app-optical-canvas p,
 html.optic-eink #app-optical-canvas span,
 html.optic-eink #app-optical-canvas h1,
 html.optic-eink #app-optical-canvas h2,
 html.optic-eink #app-optical-canvas h3,
 html.optic-eink #app-optical-canvas h4,
-html.optic-eink #app-optical-canvas button,
-html.optic-eink #app-optical-canvas label {
-  text-shadow: 0 0 0.5px rgba(0, 0, 0, 0.8) !important;
+html.optic-eink #app-optical-canvas h5,
+html.optic-eink #app-optical-canvas h6,
+html.optic-eink #app-optical-canvas label,
+html.optic-eink #app-optical-canvas .text-slate-400,
+html.optic-eink #app-optical-canvas .text-slate-300,
+html.optic-eink #app-optical-canvas .text-slate-500,
+html.optic-eink #app-optical-canvas .text-slate-200,
+html.optic-eink #app-optical-canvas .text-white\/60,
+html.optic-eink #app-optical-canvas .text-white\/70,
+html.optic-eink #app-optical-canvas .text-white\/80 {
+  color: #ffffff !important;
+  text-shadow: 0 0 0.6px rgba(0, 0, 0, 0.9) !important;
+}
+
+/* Bordes nítidos de tinta negra china: al forzar blanco antes de la inversión, se vuelven líneas negras puras de dibujo manga */
+html.optic-eink #app-optical-canvas [class*="border-white"],
+html.optic-eink #app-optical-canvas [class*="border-cyan"],
+html.optic-eink #app-optical-canvas [class*="border-slate"],
+html.optic-eink #app-optical-canvas .border {
+  border-color: rgba(255, 255, 255, 0.92) !important;
+}
+
+/* Botones principales y pestañas activas: bloques negros azabache con texto blanco puro (estilo Manga B&W táctico) */
+html.optic-eink #app-optical-canvas [class*="bg-cyan-400"],
+html.optic-eink #app-optical-canvas [class*="bg-cyan-500"],
+html.optic-eink #app-optical-canvas .chicle-btn.bg-cyan-400,
+html.optic-eink #app-optical-canvas .chicle-btn.bg-cyan-500 {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  border-color: #ffffff !important;
+  box-shadow: 0 2px 10px rgba(255, 255, 255, 0.6) !important;
+}
+
+html.optic-eink #app-optical-canvas [class*="bg-cyan-400"] *,
+html.optic-eink #app-optical-canvas [class*="bg-cyan-500"] * {
+  color: #000000 !important;
 }
 
 /* Preservar avatares, fotos, gemas y logos dentro del lienzo */
