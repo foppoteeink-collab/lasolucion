@@ -22,6 +22,7 @@ import { getRankForLevel, getCategoryColor } from '../data/defaults';
 import { CloudSyncResult } from '../hooks/useCloudSync';
 import { ArchetypeGlyph } from './ArchetypeGlyph';
 import { MoxenEclipseToggle } from './moxen/MoxenEclipseToggle';
+import { getArchetypeTitle } from '../data/archetypes';
 
 interface HeaderProps {
   onOpenProfile?: () => void;
@@ -175,21 +176,6 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* Utilidades de escritorio (Silenciador / Google Auth) */}
             <div className="flex items-center gap-1.5 ml-1">
-              {/* Interruptor Cinemático Moxen Eclipse (Día Solar vs Noche Boreal) */}
-              <div className="flex items-center px-1" title="Visión Solar / Eclipse Boreal">
-                <MoxenEclipseToggle
-                  size="sm"
-                  onToggle={(isNight) => {
-                    const root = document.documentElement;
-                    if (isNight) {
-                      root.classList.remove('solar-day-mode');
-                    } else {
-                      root.classList.add('solar-day-mode');
-                    }
-                  }}
-                />
-              </div>
-
               <button
                 onClick={toggleSound}
                 className="hidden sm:flex p-2 rounded-xl bg-surface-card text-cyan-300 border border-cyan-500/30 hover:border-cyan-400 hover:bg-cyan-950/40 transition-all cursor-pointer"
@@ -251,7 +237,7 @@ export const Header: React.FC<HeaderProps> = ({
                 {displayRankTitle}
               </span>
               <span className="text-[9px] font-mono text-cyan-400/70 truncate leading-tight mt-0.5">
-                {stats.characterClass || 'Guardián'}
+                {getArchetypeTitle(stats.characterClass, stats.genderPreference)}
               </span>
             </div>
           </button>

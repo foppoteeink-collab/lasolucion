@@ -19,8 +19,8 @@ import {
   Layers,
   LayoutGrid
 } from 'lucide-react';
-import { PlayerStats, KaiShapeKey } from '../types';
-import { JUNG_ARCHETYPES, JungArchetype, getArchetypeByName } from '../data/archetypes';
+import { PlayerStats, KaiShapeKey, GenderPreference } from '../types';
+import { JUNG_ARCHETYPES, JungArchetype, getArchetypeByName, getArchetypeTitle } from '../data/archetypes';
 import { KAI_OFFICIAL_SHAPES, KaiShapeDefinition } from '../data/kaiShapes';
 import { KaiVectorGraphics } from './KaiVectorGraphics';
 import { soundFX } from '../utils/audio';
@@ -149,6 +149,7 @@ interface HunterAwakeningModalProps {
     characterClass: string;
     mantra?: string;
     kaiShape?: KaiShapeKey;
+    genderPreference?: GenderPreference;
   }) => void;
   cloudSync?: CloudSyncResult;
 }
@@ -170,6 +171,7 @@ export const HunterAwakeningModal: React.FC<HunterAwakeningModalProps> = ({
 
   // Archetype & Identity states
   const [selectedArchName, setSelectedArchName] = useState(stats.characterClass || 'El Héroe');
+  const [genderPreference, setGenderPreference] = useState<GenderPreference>(stats.genderPreference || 'universal');
   const [username, setUsername] = useState(
     stats.username && stats.username !== 'CazadorDelSistema' ? stats.username : ''
   );
@@ -230,7 +232,8 @@ export const HunterAwakeningModal: React.FC<HunterAwakeningModalProps> = ({
         fullName: fullName.trim(),
         characterClass: selectedArchName,
         mantra: mantra.trim(),
-        kaiShape: selectedKaiShape
+        kaiShape: selectedKaiShape,
+        genderPreference
       });
     } catch (e) {
       console.error('onCompleteAwakening error', e);
@@ -721,7 +724,7 @@ export const HunterAwakeningModal: React.FC<HunterAwakeningModalProps> = ({
                     value={username} 
                     onChange={(e) => setUsername(e.target.value)}
                     className="w-full bg-[#04020e] border border-cyan-500/50 rounded-xl p-3 text-white focus:outline-none focus:border-cyan-300 text-xs font-mono"
-                    placeholder="Ej: Operador_Prime"
+                    placeholder="Ej: Fénix_Prime"
                   />
                 </div>
                 <div>
@@ -733,7 +736,7 @@ export const HunterAwakeningModal: React.FC<HunterAwakeningModalProps> = ({
                     value={fullName} 
                     onChange={(e) => setFullName(e.target.value)}
                     className="w-full bg-[#04020e] border border-cyan-500/50 rounded-xl p-3 text-white focus:outline-none focus:border-cyan-300 text-xs"
-                    placeholder="Ej: Carlos Jin"
+                    placeholder="Ej: Alex Jin"
                   />
                 </div>
               </div>
@@ -749,6 +752,66 @@ export const HunterAwakeningModal: React.FC<HunterAwakeningModalProps> = ({
                   className="w-full bg-[#04020e] border border-cyan-500/50 rounded-xl p-3 text-white focus:outline-none focus:border-cyan-300 text-xs"
                   placeholder="Ej: Solo yo puedo cambiar mi destino"
                 />
+              </div>
+
+              {/* Tratamiento e Identidad de Género */}
+              <div>
+                <label className="block text-xs font-anton text-cyan-300 uppercase tracking-wider mb-1.5">
+                  Tratamiento y Estilo en el Sistema
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFX.playClick();
+                      setGenderPreference('universal');
+                    }}
+                    className={`p-2.5 rounded-xl border text-xs font-mono transition-all text-center flex flex-col items-center justify-center gap-1 cursor-pointer active:scale-95 ${
+                      genderPreference === 'universal'
+                        ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 shadow-[0_0_12px_rgba(0,240,255,0.25)] font-bold'
+                        : 'bg-[#020710] border-slate-700/60 text-slate-400 hover:border-slate-500 hover:text-slate-200'
+                    }`}
+                  >
+                    <span className="text-sm">✨</span>
+                    <span>Universal</span>
+                    <span className="text-[9px] text-slate-400 font-sans">Neutral / Esencia</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFX.playClick();
+                      setGenderPreference('feminine');
+                    }}
+                    className={`p-2.5 rounded-xl border text-xs font-mono transition-all text-center flex flex-col items-center justify-center gap-1 cursor-pointer active:scale-95 ${
+                      genderPreference === 'feminine'
+                        ? 'bg-pink-500/20 border-pink-400 text-pink-300 shadow-[0_0_12px_rgba(244,63,94,0.25)] font-bold'
+                        : 'bg-[#020710] border-slate-700/60 text-slate-400 hover:border-slate-500 hover:text-slate-200'
+                    }`}
+                  >
+                    <span className="text-sm">🏹</span>
+                    <span>Femenino</span>
+                    <span className="text-[9px] text-slate-400 font-sans">Títulos femeninos</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFX.playClick();
+                      setGenderPreference('masculine');
+                    }}
+                    className={`p-2.5 rounded-xl border text-xs font-mono transition-all text-center flex flex-col items-center justify-center gap-1 cursor-pointer active:scale-95 ${
+                      genderPreference === 'masculine'
+                        ? 'bg-amber-500/20 border-amber-400 text-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.25)] font-bold'
+                        : 'bg-[#020710] border-slate-700/60 text-slate-400 hover:border-slate-500 hover:text-slate-200'
+                    }`}
+                  >
+                    <span className="text-sm">🗡️</span>
+                    <span>Masculino</span>
+                    <span className="text-[9px] text-slate-400 font-sans">Títulos masculinos</span>
+                  </button>
+                </div>
+                <p className="text-[10px] text-slate-400 font-mono mt-1.5">
+                  Arquetipo en tu perfil: <span className="text-cyan-300 font-semibold">{getArchetypeTitle(currentArchetype, genderPreference)}</span>
+                </p>
               </div>
 
               {/* Cloud Account Linking */}
@@ -810,7 +873,7 @@ export const HunterAwakeningModal: React.FC<HunterAwakeningModalProps> = ({
                   ¡DESPERTAR CONFIRMADO!
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-300 font-mono mt-1">
-                  Bienvenido al Sistema, <strong className="text-cyan-300">@{username || 'Operador'}</strong>
+                  Te damos la bienvenida al Sistema, <strong className="text-cyan-300">@{username || 'Operador'}</strong>
                 </p>
               </div>
 
@@ -828,7 +891,7 @@ export const HunterAwakeningModal: React.FC<HunterAwakeningModalProps> = ({
                   <span className="text-slate-400">Arquetipo Activo:</span>
                   <span className="text-white font-bold flex items-center gap-1.5">
                     <span>{currentArchetype.avatar}</span>
-                    <span>{currentArchetype.name}</span>
+                    <span>{getArchetypeTitle(currentArchetype, genderPreference)}</span>
                   </span>
                 </div>
 

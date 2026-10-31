@@ -44,6 +44,7 @@ import {
 } from 'lucide-react';
 import { getHabitBaseId } from '../intelligence/masteryEngine';
 import { CHARACTER_CLASSES, getRankForLevel } from '../data/defaults';
+import { getArchetypeTitle } from '../data/archetypes';
 import { soundFX } from '../utils/audio';
 import {
   ResponsiveContainer,
@@ -691,7 +692,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
                   setIsEditingProfile(true);
                 }}
                 className="absolute top-4 right-4 z-20 p-2 bg-[#04020e] rounded-xl border border-cyan-500/60 text-cyan-300 hover:bg-cyan-950/60 hover:text-white transition-colors cursor-pointer shadow-[0_0_10px_rgba(0,240,255,0.2)]"
-                title="Editar Identidad del Cazador"
+                title="Editar tu Perfil"
               >
                 <Edit2 className="w-4 h-4" />
               </button>
@@ -727,7 +728,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
                       </p>
                     )}
                     <h2 className="text-base sm:text-lg font-anton uppercase text-white tracking-wide truncate">
-                      {stats.characterClass || 'Héroe del Sistema'}
+                      {getArchetypeTitle(stats.characterClass, stats.genderPreference)}
                     </h2>
                     <div className="flex flex-wrap items-center gap-2 mt-0.5">
                       <p className="text-xs text-cyan-300/90 font-bold flex items-center gap-1">
@@ -854,7 +855,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
           {/* MOXEN TELARAÑA: Pentagonal Power Matrix of RPG Attributes */}
           <MoxenTelarana
             attributes={attributesData}
-            characterClass={stats.characterClass || 'Héroe del Sistema'}
+            characterClass={getArchetypeTitle(stats.characterClass, stats.genderPreference)}
             title="Matriz de Poder Pentagonal"
           />
 
@@ -867,7 +868,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
                 <div>
                   <div className="flex items-center gap-1.5 text-emerald-400 text-[10px] sm:text-xs font-mono font-bold uppercase tracking-widest">
                     <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
-                    Evolución del Cazador
+                    Tu Evolución
                   </div>
                   <h3 className="text-sm sm:text-lg font-anton uppercase tracking-wide text-white mt-0.5">
                     Diario de Fases del Sistema (1 a 10)
@@ -882,7 +883,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
               <div className="p-2 sm:p-2.5 rounded-xl bg-emerald-950/30 border border-emerald-500/20 text-[10px] sm:text-[11px] text-emerald-200 font-mono mb-3 flex items-center gap-2 relative z-10">
                 <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
                 <span className="leading-tight">
-                  <strong>Cronología:</strong> Registro histórico con la fecha exacta en la que tu héroe desbloqueó cada una de las 10 fases.
+                  <strong>Cronología:</strong> Registro histórico con la fecha exacta en la que alcanzaste cada una de las 10 fases.
                 </span>
               </div>
 
@@ -939,7 +940,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
           <div className="space-y-3">
             <div className="flex items-center gap-2 text-yellow-400">
               <Trophy className="w-4 h-4 text-yellow-400" />
-              <h3 className="text-xs sm:text-sm font-black uppercase tracking-widest">Récords de Leyenda del Cazador</h3>
+              <h3 className="text-xs sm:text-sm font-black uppercase tracking-widest">Tus Récords de Leyenda</h3>
             </div>
 
             <div className="bg-gradient-to-br from-[#120a00] to-[#0a0500] p-3 sm:p-4 rounded-2xl border border-yellow-900/50 shadow-[0_4px_20px_rgba(234,179,8,0.05)]">

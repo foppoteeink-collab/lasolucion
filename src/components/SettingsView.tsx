@@ -43,6 +43,7 @@ import { useMoxenChicle } from '../hooks/useMoxenChicle';
 import { ChicleToggle } from './ChicleToggle';
 import { MoxenMalla } from './moxen/MoxenMalla';
 import { MoxenRayas, MoxenRayasTheme, MoxenRayasVariant } from './moxen/MoxenRayas';
+import { MoxenEclipseToggle } from './moxen/MoxenEclipseToggle';
 
 interface SettingsViewProps {
   settings: GameSettings;
@@ -536,6 +537,31 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <h3 className="text-xs font-black text-cyan-400 uppercase tracking-widest flex items-center gap-2">
                 <Volume2 className="w-4 h-4" /> Atmósfera & Interfaz
               </h3>
+
+              {/* TEMA BASE & MODO ECLIPSE CINEMÁTICO */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-[#001024] border border-cyan-500/30 shadow-[0_0_20px_rgba(0,240,255,0.12)]">
+                <div>
+                  <h4 className="text-sm font-black text-white flex items-center gap-2 mb-1">
+                    <Sun className="w-4 h-4 text-amber-400" /> Visión Solar / Eclipse Boreal (Moxen)
+                  </h4>
+                  <p className="text-xs text-slate-300">
+                    Alterna entre el Modo Solar Diurno (alto contraste) y el Modo Eclipse Boreal con física cinemática.
+                  </p>
+                </div>
+                <div className="shrink-0 flex items-center gap-2">
+                  <MoxenEclipseToggle
+                    size="md"
+                    onToggle={(isNight) => {
+                      const root = document.documentElement;
+                      if (isNight) {
+                        root.classList.remove('solar-day-mode');
+                      } else {
+                        root.classList.add('solar-day-mode');
+                      }
+                    }}
+                  />
+                </div>
+              </div>
 
               {/* SONIDO */}
               <div className="flex items-center justify-between gap-4">

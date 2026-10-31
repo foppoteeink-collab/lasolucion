@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { PlayerStats, KaiShapeKey } from '../types';
+import { PlayerStats, KaiShapeKey, GenderPreference } from '../types';
 import { getRankForLevel, calculateRequiredXp } from '../data/defaults';
 import { useUIStore } from './useUIStore';
 import { getTodayDateString, getYesterdayDateString, calcSleepDuration, getSleepQuality } from '../utils/date';
@@ -29,6 +29,7 @@ interface PlayerState {
     characterClass: string;
     mantra?: string;
     kaiShape?: KaiShapeKey;
+    genderPreference?: GenderPreference;
   }) => void;
   markTutorialGuideSeen: (guideKey: string) => void;
   resetTutorialGuides: () => void;
@@ -50,6 +51,7 @@ const INITIAL_PLAYER_STATS: PlayerStats = {
   rankTitle: 'Chispazo de Voluntad',
   avatarIcon: '🛡️',
   characterClass: 'El Héroe',
+  genderPreference: 'universal',
   attributes: {
     disciplina: 0,
     fuerza: 0,
@@ -548,6 +550,7 @@ export const usePlayerStore = create<PlayerState>()(
             fullName: data.fullName?.trim() || state.stats.fullName,
             avatarIcon: data.avatarIcon || state.stats.avatarIcon || '🛡️',
             characterClass: data.characterClass || state.stats.characterClass || 'El Héroe',
+            genderPreference: data.genderPreference || state.stats.genderPreference || 'universal',
             kaiShape: data.kaiShape || state.stats.kaiShape || 'prism',
             mantra: data.mantra?.trim() || state.stats.mantra,
             hasCompletedAwakening: true,

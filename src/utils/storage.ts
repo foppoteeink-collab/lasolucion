@@ -250,7 +250,7 @@ export const loadNotifications = (): AppNotification[] => {
       return [
         {
           id: 'welcome-notif',
-          title: '⚔️ ¡Bienvenido a La Solución!',
+          title: '⚔️ ¡Te damos la bienvenida a La Solución!',
           message: 'Tu aventura diaria comienza hoy. Completa tus tareas, reclama recompensas diarias y sube de nivel.',
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           type: 'info',

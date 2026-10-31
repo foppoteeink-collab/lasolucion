@@ -41,18 +41,46 @@ html.text-density-compact .explainer-text {
   display: none !important;
 }
 
-/* Visión Solar Diurna (Moxen Eclipse - Alto Contraste Solar) */
+/* Visión Solar Diurna (Moxen Eclipse - Tema Solar Táctico Limpio) */
 html.solar-day-mode {
-  --surface-base: #0a1128;
-  --surface-card: rgba(15, 23, 42, 0.85);
-  --surface-modal: rgba(15, 23, 42, 0.98);
-  --color-vacio: #070d1e;
-  filter: contrast(1.08) saturate(1.15);
+  --surface-base: #f0f4f8;
+  --surface-card: rgba(255, 255, 255, 0.92);
+  --surface-modal: rgba(255, 255, 255, 0.98);
+  --color-vacio: #e2e8f0;
 }
 
-html.solar-day-mode .scifi-glass-panel {
-  background: rgba(15, 23, 42, 0.88) !important;
-  border-color: rgba(56, 189, 248, 0.45) !important;
+html.solar-day-mode body,
+html.solar-day-mode #root,
+html.solar-day-mode #main-layout-wrapper {
+  background-color: #f0f4f8 !important;
+  color: #0f172a !important;
+}
+
+html.solar-day-mode h1,
+html.solar-day-mode h2,
+html.solar-day-mode h3,
+html.solar-day-mode h4,
+html.solar-day-mode .text-white {
+  color: #0f172a !important;
+}
+
+html.solar-day-mode .text-slate-300,
+html.solar-day-mode .text-slate-400 {
+  color: #475569 !important;
+}
+
+html.solar-day-mode .bg-\[\#00152b\],
+html.solar-day-mode .bg-\[\#001024\],
+html.solar-day-mode .bg-\[\#000d1c\],
+html.solar-day-mode .bg-\[\#010a12\]\/90,
+html.solar-day-mode .bg-\[\#010912\]\/95 {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+}
+
+html.solar-day-mode .fixed.inset-0.pointer-events-none {
+  opacity: 0.15 !important;
 }
 
 /* Force pure dark background everywhere and eradicate light mode remnants */
@@ -123,24 +151,36 @@ html.solar-day-mode .scifi-glass-panel {
   box-shadow: 0 0 12px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.20) !important;
 }
 
-/* Conexión directa de acentos Tailwind al color de la Aurora */
+/* Conexión directa y visible de acentos al color de la Aurora */
 .border-cyan-500\/30,
 .border-cyan-500\/40,
 .border-cyan-500\/20,
-.border-cyan-500\/25 {
-  border-color: rgba(var(--aura-glow-rgb, 0, 240, 255), 0.35) !important;
+.border-cyan-500\/25,
+.border-cyan-400,
+.border-cyan-500 {
+  border-color: var(--aura-color-1, #00f0ff) !important;
+}
+
+.text-cyan-400,
+.text-cyan-300,
+.text-cyan-200 {
+  color: var(--aura-color-1, #00f0ff) !important;
+}
+
+.bg-cyan-500 {
+  background-color: var(--aura-color-1, #00f0ff) !important;
 }
 
 .shadow-\[0_4px_30px_rgba\(0\,240\,255\,0\.12\)\] {
-  box-shadow: 0 4px 30px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.18) !important;
+  box-shadow: 0 4px 30px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.25) !important;
 }
 
 .shadow-\[0_0_10px_rgba\(0\,240\,255\,0\.35\)\] {
-  box-shadow: 0 0 10px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.35) !important;
+  box-shadow: 0 0 10px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.45) !important;
 }
 
 .shadow-\[0_0_8px_rgba\(0\,240\,255\,0\.7\)\] {
-  box-shadow: 0 0 8px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.7) !important;
+  box-shadow: 0 0 12px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.8) !important;
 }
 
 /* Clases de Superficie Unificadas */
