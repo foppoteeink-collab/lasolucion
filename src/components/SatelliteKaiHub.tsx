@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import { soundFX } from '../utils/audio';
 
 export interface SatelliteHubItem {
@@ -54,8 +54,8 @@ export const SatelliteKaiHub: React.FC<SatelliteKaiHubProps> = ({
   const lastWheelTime = useRef(0);
   const isTapRef = useRef(true);
 
-  const activeIdx = wrapIndex(Math.round(rotRef.current), n);
-  const activeItem = items[activeIdx];
+  const activeIdx = wrapIndex(Math.round(rotState), n);
+  const activeItem = items[activeIdx] || items[0];
 
   // ─── Motor de inercia y snap magnético ───────────────────────────────────
   const lastClickIdxRef = useRef(activeIdx);
@@ -392,61 +392,58 @@ export const SatelliteKaiHub: React.FC<SatelliteKaiHubProps> = ({
         })}
 
         {/* ── 4. SUBTÍTULO HOLOGRÁFICO PURO: FLOTANTE SIN CAJA (0% INVASIVO) ── */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={`holo-label-${activeItemDisplay.id}`}
-            initial={{ opacity: 0, y: 5 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
-            transition={{ duration: 0.15 }}
-            style={{
-              position: 'absolute',
-              top: `${Math.round(ORBIT_RADIUS * 0.82 + 24)}px`,
-              left: '0px',
-              transform: 'translate(-50%, 0)',
-              zIndex: 70,
+        <div
+          style={{
+            position: 'absolute',
+            top: `${Math.round(ORBIT_RADIUS * 0.82 + 24)}px`,
+            left: '0px',
+            transform: 'translate(-50%, 0)',
+            zIndex: 70,
+          }}
+          className="pointer-events-auto select-none"
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <div
+            onClick={(e) => {
+              e.stopPropagation();
+              soundFX.playClick();
+              onSelect(activeItemDisplay);
             }}
-            className="pointer-events-auto select-none"
-            onPointerDown={(e) => e.stopPropagation()}
+            className="group flex flex-col items-center cursor-pointer active:scale-95 transition-transform"
           >
-            <div
-              onClick={(e) => {
-                e.stopPropagation();
-                soundFX.playClick();
-                onSelect(activeItemDisplay);
-              }}
-              className="group flex flex-col items-center cursor-pointer active:scale-95 transition-transform"
-            >
-              {/* Texto flotante con espaciado amplio táctico */}
-              <div className="flex items-center gap-1.5 px-2 py-0.5">
-                <span
-                  className="font-mono tracking-[0.28em] text-[11px] font-bold uppercase text-white/95 group-hover:text-white transition-colors"
-                  style={{
-                    textShadow: `0 0 10px ${activeItemDisplay.accentColor}80, 0 0 20px ${activeItemDisplay.glowColor}`,
-                  }}
-                >
-                  {activeItemDisplay.label}
-                </span>
-                <span
-                  className="text-[9px] font-mono font-bold group-hover:translate-x-1 transition-transform"
-                  style={{ color: activeItemDisplay.accentColor }}
-                >
-                  ➔
-                </span>
-              </div>
-
-              {/* Micro-filamento láser sutil debajo del texto */}
-              <div
-                className="h-[1px] rounded-full transition-all duration-300"
+            {/* Texto flotante con actualización inmediata sin bloqueo de colas */}
+            <div className="flex items-center gap-1.5 px-2 py-0.5">
+              <motion.span
+                key={activeItemDisplay.id}
+                initial={{ opacity: 0.5, scale: 0.94 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.08, ease: 'easeOut' }}
+                className="font-mono tracking-[0.28em] text-[11px] font-bold uppercase text-white/95 group-hover:text-white transition-colors"
                 style={{
-                  width: '60%',
-                  background: `linear-gradient(to right, transparent, ${activeItemDisplay.accentColor}90, transparent)`,
-                  boxShadow: `0 0 6px ${activeItemDisplay.accentColor}`,
+                  textShadow: `0 0 10px ${activeItemDisplay.accentColor}80, 0 0 20px ${activeItemDisplay.glowColor}`,
                 }}
-              />
+              >
+                {activeItemDisplay.label}
+              </motion.span>
+              <span
+                className="text-[9px] font-mono font-bold group-hover:translate-x-1 transition-transform"
+                style={{ color: activeItemDisplay.accentColor }}
+              >
+                ➔
+              </span>
             </div>
-          </motion.div>
-        </AnimatePresence>
+
+            {/* Micro-filamento láser sutil debajo del texto */}
+            <div
+              className="h-[1px] rounded-full transition-all duration-300"
+              style={{
+                width: '60%',
+                background: `linear-gradient(to right, transparent, ${activeItemDisplay.accentColor}90, transparent)`,
+                boxShadow: `0 0 6px ${activeItemDisplay.accentColor}`,
+              }}
+            />
+          </div>
+        </div>
       </motion.div>
   );
 };
