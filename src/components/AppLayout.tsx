@@ -278,8 +278,8 @@ export function AppLayout() {
           
 
 
-          {/* Top Main Navigation Header */}
-          <div className="mb-6">
+          {/* Top Main Navigation Header (Unified Floating Cockpit) */}
+          <div className="mb-3 sm:mb-5">
             <Header
               notifications={notifications}
               onOpenDailyRewards={() => setIsDailyRewardsOpen(true)}
@@ -293,10 +293,12 @@ export function AppLayout() {
               cloudSync={cloudSync}
               onOpenKaiWorkshop={() => setIsKaiWorkshopOpen(true)}
               onOpenProfile={() => setActiveTab('stats')}
+              activeTab={activeTab}
+              onTabChange={(tab) => setActiveTab(tab)}
             />
           </div>
 
-          <div className="w-full max-w-6xl mx-auto flex-1 bg-[#030712]/40 backdrop-blur-xl border border-white/10 rounded-2xl sm:rounded-3xl shadow-2xl px-2.5 py-3.5 sm:p-8">
+          <div className="w-full max-w-6xl mx-auto flex-1 bg-[#030712]/40 backdrop-blur-xl border border-white/10 rounded-2xl sm:rounded-3xl shadow-2xl px-2.5 py-3.5 sm:p-6">
         {authError && (
           <div className="mb-4 p-3 rounded-xl bg-[#1a0500] border border-[#fb5607]/60 text-[#fb5607] text-xs flex items-center justify-between gap-3 shadow-[0_0_15px_rgba(251,86,7,0.3)]">
             <span>{authError}</span>
@@ -311,77 +313,6 @@ export function AppLayout() {
         
         {/* Safe Sandbox Active Simulation Banner */}
         <SimulationBanner />
-
-        {/* Navigation Tabs (Desktop / Tablet pills) */}
-        <div className="hidden sm:flex items-center justify-center gap-2 mb-5 overflow-x-auto pb-1 scrollbar-none">
-          <div className="flex items-center gap-1 sm:gap-1.5 p-1 sm:p-1.5 rounded-2xl bg-[#030712]/75 backdrop-blur-md border border-cyan-500/40 shadow-[0_0_25px_rgba(0,240,255,0.15)]">
-            <button
-              onClick={() => { soundFX.playClick(); setActiveTab('stats'); }}
-              className={`flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2 rounded-xl transition-all font-anton text-sm sm:text-base whitespace-nowrap cursor-pointer tracking-wider ${
-                activeTab === 'stats'
-                  ? 'bg-cyan-400 text-black shadow-[0_0_16px_rgba(0,240,255,0.7)]'
-                  : 'text-slate-300 hover:text-white hover:bg-cyan-950/40'
-              }`}
-            >
-              <Shield className="w-4 h-4" />
-              <span>Perfil</span>
-            </button>
-            <button
-              onClick={() => { soundFX.playClick(); setActiveTab('dashboard'); }}
-              className={`flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2 rounded-xl transition-all font-anton text-sm sm:text-base whitespace-nowrap cursor-pointer tracking-wider ${
-                activeTab === 'dashboard'
-                  ? 'bg-cyan-400 text-black shadow-[0_0_16px_rgba(0,240,255,0.7)]'
-                  : 'text-slate-300 hover:text-white hover:bg-cyan-950/40'
-              }`}
-            >
-              <Swords className="w-4 h-4" />
-              <span>Tareas</span>
-            </button>
-            <button
-              onClick={() => { soundFX.playClick(); setActiveTab('journal'); }}
-              className={`flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2 rounded-xl transition-all font-anton text-sm sm:text-base whitespace-nowrap cursor-pointer tracking-wider ${
-                activeTab === 'journal'
-                  ? 'bg-cyan-400 text-black shadow-[0_0_16px_rgba(0,240,255,0.7)]'
-                  : 'text-slate-300 hover:text-white hover:bg-cyan-950/40'
-              }`}
-            >
-              <BookOpen className="w-4 h-4" />
-              <span>Bitácora</span>
-            </button>
-            <button
-              onClick={() => { soundFX.playClick(); setActiveTab('shop'); }}
-              className={`flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2 rounded-xl transition-all font-anton text-sm sm:text-base whitespace-nowrap cursor-pointer tracking-wider ${
-                activeTab === 'shop'
-                  ? 'bg-purple-600 text-white shadow-[0_0_16px_rgba(168,85,247,0.7)]'
-                  : 'text-slate-300 hover:text-white hover:bg-purple-950/40'
-              }`}
-            >
-              <ShoppingBag className="w-4 h-4" />
-              <span>Tienda</span>
-            </button>
-            <button
-              onClick={() => { soundFX.playClick(); setActiveTab('skills'); }}
-              className={`flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2 rounded-xl transition-all font-anton text-sm sm:text-base whitespace-nowrap cursor-pointer tracking-wider ${
-                activeTab === 'skills'
-                  ? 'bg-purple-600 text-white shadow-[0_0_16px_rgba(168,85,247,0.7)]'
-                  : 'text-slate-300 hover:text-white hover:bg-purple-950/40'
-              }`}
-            >
-              <FlaskConical className="w-4 h-4" />
-              <span>Lab</span>
-            </button>
-            <button
-              onClick={() => { soundFX.playClick(); setActiveTab('settings'); }}
-              className={`flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2 rounded-xl transition-all font-anton text-sm sm:text-base whitespace-nowrap cursor-pointer tracking-wider ${
-                activeTab === 'settings'
-                  ? 'bg-slate-800 text-cyan-300 border border-cyan-500/60 shadow-[0_0_16px_rgba(0,240,255,0.3)]'
-                  : 'text-slate-300 hover:text-white hover:bg-cyan-950/40'
-              }`}
-            >
-              <span>Ajustes</span>
-            </button>
-          </div>
-        </div>
 
         {/* Dynamic Tab Views */}
         <motion.div

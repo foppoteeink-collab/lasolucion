@@ -151,11 +151,19 @@ html.solar-day-mode .fixed.inset-0.pointer-events-none {
   box-shadow: 0 0 12px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.20) !important;
 }
 
-/* Conexión directa y visible de acentos al color de la Aurora */
-.border-cyan-500\/30,
-.border-cyan-500\/40,
-.border-cyan-500\/20,
-.border-cyan-500\/25,
+/* Conexión elegante y difuminada de acentos al color de la Aurora (Preservando opacidad translúcida) */
+.border-cyan-500\/20 {
+  border-color: rgba(var(--aura-glow-rgb, 0, 240, 255), 0.20) !important;
+}
+.border-cyan-500\/25 {
+  border-color: rgba(var(--aura-glow-rgb, 0, 240, 255), 0.25) !important;
+}
+.border-cyan-500\/30 {
+  border-color: rgba(var(--aura-glow-rgb, 0, 240, 255), 0.30) !important;
+}
+.border-cyan-500\/40 {
+  border-color: rgba(var(--aura-glow-rgb, 0, 240, 255), 0.40) !important;
+}
 .border-cyan-400,
 .border-cyan-500 {
   border-color: var(--aura-color-1, #00f0ff) !important;
