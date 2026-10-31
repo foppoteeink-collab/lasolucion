@@ -254,8 +254,10 @@ export function AppLayout() {
       {/* Clean UI: Overlays disabled to prevent screen clutter */}
       <div id="main-layout-wrapper" className="relative min-h-screen bg-[#000000] overflow-hidden text-white font-sans selection:bg-[#d6f421] selection:text-black">
         
-        {/* ATMÓSFERA CÓSMICA / AURORA BOREAL & GRID */}
-        <SciFiGridBackground />
+        {/* LIENZO ÓPTICO: Recibe los filtros visuales (Aurora, Noir Oscuro, Noir Claro, Cobalto) */}
+        <div id="app-optical-canvas" className="relative min-h-screen flex flex-col w-full transition-[filter] duration-300">
+          {/* ATMÓSFERA CÓSMICA / AURORA BOREAL & GRID */}
+          <SciFiGridBackground />
 
         {/* GLOBAL LEVEL UP / REWARD GLOW */}
         <div 
@@ -708,25 +710,31 @@ export function AppLayout() {
         )}
       </AnimatePresence>
 
-      {/* OMNIPRESENT COMPANION & HOLOGRAPHIC COMMAND HUB (VISIBLE ON ALL SCREENS) */}
-      <OmniCompanionHub
-        onOpenOracleWithPrompt={handleOpenOracleWithPrompt}
-        onOpenNeuralAnalysis={() => setIsNeuralAnalysisOpen(true)}
-        onOpenKaiWorkshop={() => setIsKaiWorkshopOpen(true)}
-        archetype={stats?.characterClass || currentArchetype.name}
-      />
+        </div>
+        {/* FIN #app-optical-canvas */}
 
-      {/* TALLER CUÁNTICO DE KAI (FORMAS DÍA 0, EVOLUCIÓN 21/66D & FORJA IA) */}
-      <KaiWorkshopModal
-        isOpen={isKaiWorkshopOpen}
-        onClose={() => setIsKaiWorkshopOpen(false)}
-        onOpenShop={() => setActiveTab('shop')}
-      />
+        {/* SOBERANÍA VISUAL DE KAI: Aislado del lienzo de filtros ópticos para preservar 100% sus colores, ropa y auras neón */}
+        <div id="kai-sovereign-portal" className="relative z-[90]">
+          {/* OMNIPRESENT COMPANION & HOLOGRAPHIC COMMAND HUB (VISIBLE ON ALL SCREENS) */}
+          <OmniCompanionHub
+            onOpenOracleWithPrompt={handleOpenOracleWithPrompt}
+            onOpenNeuralAnalysis={() => setIsNeuralAnalysisOpen(true)}
+            onOpenKaiWorkshop={() => setIsKaiWorkshopOpen(true)}
+            archetype={stats?.characterClass || currentArchetype.name}
+          />
 
-      {/* Offline Status Badge & PWA Install Banner */}
-      <PWAInstallBanner />
-      <OfflineIndicator />
-    </div>
+          {/* TALLER CUÁNTICO DE KAI (FORMAS DÍA 0, EVOLUCIÓN 21/66D & FORJA IA) */}
+          <KaiWorkshopModal
+            isOpen={isKaiWorkshopOpen}
+            onClose={() => setIsKaiWorkshopOpen(false)}
+            onOpenShop={() => setActiveTab('shop')}
+          />
+        </div>
+
+        {/* Offline Status Badge & PWA Install Banner */}
+        <PWAInstallBanner />
+        <OfflineIndicator />
+      </div>
     </>
   );
 }

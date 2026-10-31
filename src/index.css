@@ -46,40 +46,75 @@ html.text-density-compact .explainer-text {
    ═══════════════════════════════════════════════════════════════════════ */
 
 /* 1. MODO AURORA (Default): Plena saturación con paleta viva de la Malla */
-html.optic-aurora {
+html.optic-aurora #app-optical-canvas {
   filter: none !important;
   transition: filter 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
-/* 2. MODO NOIR DARK (Manga Oscuro / B&W Táctico): Cero distracciones, negros puros */
-html.optic-noir {
-  filter: grayscale(100%) contrast(1.15) brightness(0.96) !important;
+/* 2. MODO NOIR OSCURO (Manga Oscuro / B&W Táctico): Cero distracciones, negros puros */
+html.optic-noir #app-optical-canvas {
+  filter: grayscale(100%) contrast(1.22) brightness(0.96) !important;
   transition: filter 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
-/* 3. MODO NOIR CLARO (Manga B&W Táctico en Blanco / Dibujo sobre Papel) */
+/* 3. MODO NOIR CLARO (Manga B&W Táctico en Blanco / Tinta China de Alto Contraste) */
 html.optic-eink {
-  /* Fondo blanco papel limpio, escala de grises al 100%, inversión de luminancia perfecta y alto contraste de tinta */
-  filter: invert(1) hue-rotate(180deg) grayscale(100%) contrast(1.22) brightness(0.98) !important;
+  background-color: #f8fafc !important;
+}
+
+html.optic-eink #main-layout-wrapper {
+  background-color: #f8fafc !important;
+}
+
+html.optic-eink #app-optical-canvas {
+  /* Fondo blanco papel limpio, escala de grises al 100%, inversión perfecta y contraste profundo de tinta negra */
+  filter: invert(1) hue-rotate(180deg) grayscale(100%) contrast(1.65) brightness(0.88) !important;
   transition: filter 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
-/* Preservar avatares, fotos, gemas y logos para que no se vean como rayos X */
-html.optic-eink img,
-html.optic-eink video,
-html.optic-eink [data-preserve-optic] {
-  filter: invert(1) hue-rotate(180deg) grayscale(0%) !important;
+/* Refuerzo de tinta negra para Noir Claro: textos con peso, bordes nítidos y cero grises lavados */
+html.optic-eink #app-optical-canvas p,
+html.optic-eink #app-optical-canvas span,
+html.optic-eink #app-optical-canvas h1,
+html.optic-eink #app-optical-canvas h2,
+html.optic-eink #app-optical-canvas h3,
+html.optic-eink #app-optical-canvas h4,
+html.optic-eink #app-optical-canvas button,
+html.optic-eink #app-optical-canvas label {
+  text-shadow: 0 0 0.5px rgba(0, 0, 0, 0.8) !important;
+}
+
+/* Preservar avatares, fotos, gemas y logos dentro del lienzo */
+html.optic-eink #app-optical-canvas img,
+html.optic-eink #app-optical-canvas video,
+html.optic-eink #app-optical-canvas [data-preserve-optic] {
+  filter: invert(1) hue-rotate(180deg) grayscale(0%) contrast(0.85) !important;
 }
 
 /* 4. MODO CYBER COBALTO (Azul Zafiro / Cian Abisal & Blanco): Monocromo Oceánico */
-html.optic-cobalt {
-  filter: sepia(100%) hue-rotate(170deg) saturate(320%) contrast(1.18) !important;
+html.optic-cobalt #app-optical-canvas {
+  filter: sepia(100%) hue-rotate(170deg) saturate(320%) contrast(1.22) !important;
   transition: filter 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   SOBERANÍA Y PROTECCIÓN DE COLOR DE KAI (ACENTO DIEGÉTICO PERPETUO)
+   KAI trasciende los filtros ópticos y se mantiene SIEMPRE en sus colores
+   originales vivos, con su ropa, auras neón y energía intacta.
+   ═══════════════════════════════════════════════════════════════════════ */
+#kai-sovereign-portal {
+  filter: none !important;
+  isolation: isolate !important;
+}
+
+/* Resalte luminoso para KAI sobre el papel blanco en Modo Noir Claro */
+html.optic-eink #kai-sovereign-portal .omni-companion-hub-root {
+  filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.35)) drop-shadow(0 0 14px rgba(0, 240, 255, 0.65)) !important;
+}
+
 /* Compatibilidad retrospectiva para noir-mode */
-html.noir-mode {
-  filter: grayscale(100%) contrast(1.15) brightness(0.96) !important;
+html.noir-mode #app-optical-canvas {
+  filter: grayscale(100%) contrast(1.22) brightness(0.96) !important;
 }
 
 /* Force pure dark background everywhere and eradicate light mode remnants */
