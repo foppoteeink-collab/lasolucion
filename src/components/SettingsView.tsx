@@ -429,7 +429,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
   const tabsConfig = [
     { id: 'preferences' as SettingsSubTab, label: 'Preferencias', icon: SlidersHorizontal, color: 'text-cyan-400' },
-    { id: 'atmosphere' as SettingsSubTab, label: 'Atmósfera Visual', icon: Palette, color: 'text-cyan-400' },
+    { id: 'atmosphere' as SettingsSubTab, label: 'Apariencia & Visión', icon: Palette, color: 'text-cyan-400' },
     { id: 'gameplay' as SettingsSubTab, label: 'Juego & KAI', icon: Sparkles, color: 'text-purple-400' },
     { id: 'finances' as SettingsSubTab, label: 'Tesorería', icon: Coins, color: 'text-amber-400' },
     { id: 'data' as SettingsSubTab, label: 'Nube & Datos', icon: Database, color: 'text-emerald-400' }
@@ -508,149 +508,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         {/* ===================== TAB 1: PREFERENCIAS & UI ===================== */}
         {activeSubTab === 'preferences' && (
           <div className="space-y-6 animate-fade-in">
-            {/* ACCESO RÁPIDO Y DESTACADO: MOXEN MALLA SHADER */}
-            <div className="p-4 rounded-2xl bg-gradient-to-r from-cyan-950/80 via-[#001830] to-cyan-950/80 border border-cyan-500/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-[0_0_25px_rgba(0,240,255,0.18)]">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-cyan-500/20 border border-cyan-400/50 text-cyan-300 shrink-0">
-                  <Palette className="w-5 h-5 text-cyan-300" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-black text-white flex items-center gap-2">
-                    Atmósfera Cuántica (Moxen Malla)
-                    <span className="px-2 py-0.5 rounded-full text-[9px] font-mono bg-cyan-400 text-black font-black uppercase tracking-wider">
-                      ATMÓSFERA
-                    </span>
-                  </h4>
-                  <p className="text-xs text-slate-300">
-                    {systemAura?.name ? `Atmósfera activa: ${systemAura.name}` : 'Personaliza el aura ambiental de la app o explora el laboratorio de gradientes reactivos.'}
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  soundFX.playClick();
-                  setActiveSubTab('atmosphere');
-                }}
-                className="chicle-btn px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider bg-cyan-500 text-black hover:bg-cyan-400 transition-all shadow-[0_0_15px_rgba(0,240,255,0.4)] cursor-pointer shrink-0"
-              >
-                Personalizar Atmósfera
-              </button>
-            </div>
-
-            {/* ATMÓSFERA Y ENTORNO */}
+            {/* AUDIO & FEEDBACK TÁCTICO */}
             <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-xl p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-5">
               {/* Micrograno táctil Moxen Vidrio */}
               <span className="vi-grano opacity-5" aria-hidden="true" />
 
               <h3 className="text-xs font-anton text-cyan-400 uppercase tracking-wider flex items-center gap-2 relative z-10">
-                <Volume2 className="w-4 h-4" /> Atmósfera & Interfaz
+                <Volume2 className="w-4 h-4" /> Audio & Efectos del Sistema
               </h3>
-
-              {/* ═══════════════════════════════════════════════════════════════ */}
-              {/* MATRIZ DE MODOS ÓPTICOS TÁCTICOS (4 SISTEMAS DE VISIÓN KAI)    */}
-              {/* ═══════════════════════════════════════════════════════════════ */}
-              <div className="p-4 sm:p-5 rounded-2xl bg-black/50 border border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.4)] space-y-3.5 relative z-10">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div>
-                    <h4 className="text-sm font-anton uppercase tracking-wider text-white flex items-center gap-2">
-                      <Eye className="w-4 h-4 text-cyan-400" /> Sistema Óptico Táctico (4 Modos de Visión)
-                    </h4>
-                    <p className="text-xs text-slate-400 mt-0.5">
-                      Sintoniza el espectro visual de la interfaz según tu entorno y nivel de concentración.
-                    </p>
-                  </div>
-                  <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 font-bold self-start sm:self-auto">
-                    {opticMode === 'aurora' && '🌌 Aurora Neón'}
-                    {opticMode === 'noir' && '🌑 Noir Oscuro (B&W)'}
-                    {opticMode === 'eink' && '☀️ Noir Claro (Manga B&W)'}
-                    {opticMode === 'cobalt' && '🌊 Cobalto & Zafiro'}
-                  </span>
-                </div>
-
-                {/* SELECTOR SEGMENTADO RESPONSIVE DE 4 MODOS */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
-                  {/* MODO 1: AURORA NEÓN */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundFX.playClick();
-                      setOpticMode('aurora');
-                    }}
-                    className={`chicle-btn p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                      opticMode === 'aurora'
-                        ? 'bg-cyan-500/20 border-cyan-400 text-white shadow-[0_0_18px_rgba(0,240,255,0.35)] ring-1 ring-cyan-400'
-                        : 'bg-white/[0.03] border-white/10 text-slate-400 hover:text-white hover:border-white/20'
-                    }`}
-                  >
-                    <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-cyan-400 via-purple-500 to-pink-500 flex items-center justify-center text-xs shadow-sm">
-                      ✨
-                    </div>
-                    <span className="text-xs font-anton tracking-wider uppercase">Aurora Neón</span>
-                    <span className="text-[9px] font-mono text-slate-400">Color Pleno</span>
-                  </button>
-
-                  {/* MODO 2: NOIR MANGA (B&W OSCURO) */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundFX.playClick();
-                      setOpticMode('noir');
-                    }}
-                    className={`chicle-btn p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                      opticMode === 'noir'
-                        ? 'bg-white/15 border-white text-white shadow-[0_0_18px_rgba(255,255,255,0.25)] ring-1 ring-white'
-                        : 'bg-white/[0.03] border-white/10 text-slate-400 hover:text-white hover:border-white/20'
-                    }`}
-                  >
-                    <div className="w-6 h-6 rounded-lg bg-black border border-white/40 flex items-center justify-center text-xs text-white font-mono font-black">
-                      B&W
-                    </div>
-                    <span className="text-xs font-anton tracking-wider uppercase">Noir Oscuro</span>
-                    <span className="text-[9px] font-mono text-slate-400">Manga Táctico</span>
-                  </button>
-
-                  {/* MODO 3: NOIR CLARO (MANGA B&W AL REVÉS: FONDO BLANCO & TINTA NEGRA) */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundFX.playClick();
-                      setOpticMode('eink');
-                    }}
-                    className={`chicle-btn p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                      opticMode === 'eink'
-                        ? 'bg-white border-white text-black shadow-[0_0_18px_rgba(255,255,255,0.4)] ring-2 ring-white font-bold'
-                        : 'bg-white/[0.03] border-white/10 text-slate-400 hover:text-white hover:border-white/20'
-                    }`}
-                  >
-                    <div className="w-6 h-6 rounded-lg bg-white border border-black/40 flex items-center justify-center text-xs text-black font-mono font-black shadow-sm">
-                      B&W
-                    </div>
-                    <span className="text-xs font-anton tracking-wider uppercase">Noir Claro</span>
-                    <span className="text-[9px] font-mono text-slate-400">Manga Blanco</span>
-                  </button>
-
-                  {/* MODO 4: CYBER COBALTO (AZUL & BLANCO MONOCROMO) */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundFX.playClick();
-                      setOpticMode('cobalt');
-                    }}
-                    className={`chicle-btn p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                      opticMode === 'cobalt'
-                        ? 'bg-blue-600/25 border-blue-400 text-blue-200 shadow-[0_0_18px_rgba(96,165,250,0.35)] ring-1 ring-blue-400'
-                        : 'bg-white/[0.03] border-white/10 text-slate-400 hover:text-white hover:border-white/20'
-                    }`}
-                  >
-                    <div className="w-6 h-6 rounded-lg bg-gradient-to-b from-blue-500 to-indigo-900 border border-blue-300 flex items-center justify-center text-xs text-white">
-                      🌊
-                    </div>
-                    <span className="text-xs font-anton tracking-wider uppercase">Cobalto Azul</span>
-                    <span className="text-[9px] font-mono text-slate-400">Zafiro Táctico</span>
-                  </button>
-                </div>
-              </div>
 
               {/* SONIDO */}
               <div className="flex items-center justify-between gap-4">
@@ -1017,37 +882,134 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 />
               </div>
             </div>
-
-            {/* ═══ PERSONALIZADOR DE ATMÓSFERA CUÁNTICA (MOXEN MALLA) ═══ */}
-            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-xl p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
-              <span className="vi-grano opacity-5" aria-hidden="true" />
-              <div className="relative z-10">
-                <h3 className="text-xs font-anton text-cyan-400 uppercase tracking-wider flex items-center gap-2">
-                  <Palette className="w-4 h-4 text-cyan-400" /> Atmósfera Cuántica & Fluido Visual
-                </h3>
-                <p className="text-xs text-slate-400 mt-1">
-                  Fluido interactivo reactivo. Arrastra los nodos o toca para cambiar colores y personalizar el fondo.
-                </p>
-              </div>
-
-              <div className="relative z-10">
-                <MoxenMalla
-                  activeSystemAuraName={systemAura?.name}
-                  onApplyToSystem={(aura) => {
-                    setSystemAura(aura);
-                  }}
-                  onResetSystem={() => {
-                    setSystemAura(null);
-                  }}
-                />
-              </div>
-            </div>
           </div>
         )}
 
-        {/* ===================== TAB EXTRA: MALLA SHADER WEBGL ===================== */}
+        {/* ===================== TAB 2: APARIENCIA & VISIÓN (ÓPTICA + MALLA + RAYAS) ===================== */}
         {activeSubTab === 'atmosphere' && (
           <div className="space-y-6 animate-fade-in">
+            {/* HERO CARD: SISTEMA ÓPTICO TÁCTICO & CONTROL ECLIPSE MOXEN */}
+            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-xl p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
+              <span className="vi-grano opacity-5" aria-hidden="true" />
+              
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 text-cyan-400 text-xs font-mono font-bold uppercase tracking-widest mb-1">
+                    <Eye className="w-4 h-4 text-cyan-400" /> Sistema Óptico Táctico
+                  </div>
+                  <h3 className="text-base sm:text-lg font-anton uppercase tracking-wide text-white">
+                    Modo de Visión & Eclipse Boreal
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-1 max-w-lg">
+                    Toca el interruptor cinemático del Eclipse para avanzar entre fases, o selecciona directamente el modo deseado.
+                  </p>
+                </div>
+
+                {/* CONTROL KINÉTICO DEL ECLIPSE */}
+                <div className="flex items-center gap-3 self-start sm:self-auto bg-black/40 p-2 sm:p-2.5 rounded-2xl border border-white/10 shrink-0">
+                  <div className="text-right">
+                    <span className="text-[10px] font-mono text-slate-400 block uppercase">Fase Eclipse</span>
+                    <span className="text-xs font-anton text-cyan-300 uppercase tracking-wider block">
+                      {opticMode === 'aurora' && '🌌 Aurora Neón'}
+                      {opticMode === 'noir' && '🌑 Noir Oscuro'}
+                      {opticMode === 'eink' && '☀️ Noir Claro'}
+                      {opticMode === 'cobalt' && '🌊 Cobalto Azul'}
+                    </span>
+                  </div>
+                  <MoxenEclipseToggle
+                    opticMode={opticMode}
+                    onSelectMode={(mode) => {
+                      setOpticMode(mode);
+                    }}
+                    size="lg"
+                  />
+                </div>
+              </div>
+
+              {/* SELECTOR SEGMENTADO RESPONSIVE DE 4 MODOS */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2 relative z-10">
+                {/* MODO 1: AURORA NEÓN */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFX.playClick();
+                    setOpticMode('aurora');
+                  }}
+                  className={`chicle-btn p-3.5 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                    opticMode === 'aurora'
+                      ? 'bg-cyan-500/20 border-cyan-400 text-white shadow-[0_0_18px_rgba(0,240,255,0.35)] ring-1 ring-cyan-400'
+                      : 'bg-white/[0.03] border-white/10 text-slate-400 hover:text-white hover:border-white/20'
+                  }`}
+                >
+                  <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-cyan-400 via-purple-500 to-pink-500 flex items-center justify-center text-sm shadow-sm">
+                    ✨
+                  </div>
+                  <span className="text-xs font-anton tracking-wider uppercase">Aurora Neón</span>
+                  <span className="text-[9px] font-mono text-slate-400">Color Pleno</span>
+                </button>
+
+                {/* MODO 2: NOIR OSCURO (B&W MANGA) */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFX.playClick();
+                    setOpticMode('noir');
+                  }}
+                  className={`chicle-btn p-3.5 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                    opticMode === 'noir'
+                      ? 'bg-white/15 border-white text-white shadow-[0_0_18px_rgba(255,255,255,0.25)] ring-1 ring-white'
+                      : 'bg-white/[0.03] border-white/10 text-slate-400 hover:text-white hover:border-white/20'
+                  }`}
+                >
+                  <div className="w-7 h-7 rounded-lg bg-black border border-white/40 flex items-center justify-center text-xs text-white font-mono font-black">
+                    B&W
+                  </div>
+                  <span className="text-xs font-anton tracking-wider uppercase">Noir Oscuro</span>
+                  <span className="text-[9px] font-mono text-slate-400">Manga Táctico</span>
+                </button>
+
+                {/* MODO 3: NOIR CLARO (MANGA B&W TINTA PURA SOBRE PAPEL BLANCO) */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFX.playClick();
+                    setOpticMode('eink');
+                  }}
+                  className={`chicle-btn p-3.5 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                    opticMode === 'eink'
+                      ? 'bg-white border-white text-black shadow-[0_0_18px_rgba(255,255,255,0.4)] ring-2 ring-white font-bold'
+                      : 'bg-white/[0.03] border-white/10 text-slate-400 hover:text-white hover:border-white/20'
+                  }`}
+                >
+                  <div className="w-7 h-7 rounded-lg bg-white border border-black/40 flex items-center justify-center text-xs text-black font-mono font-black shadow-sm">
+                    B&W
+                  </div>
+                  <span className="text-xs font-anton tracking-wider uppercase">Noir Claro</span>
+                  <span className="text-[9px] font-mono text-slate-400">Manga Blanco</span>
+                </button>
+
+                {/* MODO 4: CYBER COBALTO (AZUL & BLANCO MONOCROMO) */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFX.playClick();
+                    setOpticMode('cobalt');
+                  }}
+                  className={`chicle-btn p-3.5 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                    opticMode === 'cobalt'
+                      ? 'bg-blue-600/25 border-blue-400 text-blue-200 shadow-[0_0_18px_rgba(96,165,250,0.35)] ring-1 ring-blue-400'
+                      : 'bg-white/[0.03] border-white/10 text-slate-400 hover:text-white hover:border-white/20'
+                  }`}
+                >
+                  <div className="w-7 h-7 rounded-lg bg-gradient-to-b from-blue-500 to-indigo-900 border border-blue-300 flex items-center justify-center text-xs text-white">
+                    🌊
+                  </div>
+                  <span className="text-xs font-anton tracking-wider uppercase">Cobalto Azul</span>
+                  <span className="text-[9px] font-mono text-slate-400">Zafiro Táctico</span>
+                </button>
+              </div>
+            </div>
+
             <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-xl p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
               <span className="vi-grano opacity-5" aria-hidden="true" />
               <div className="relative z-10">

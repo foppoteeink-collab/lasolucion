@@ -1,45 +1,54 @@
-import React, { useState } from 'react';
+import React from 'react';
 import './moxenEclipse.css';
 import { soundFX } from '../../utils/audio';
+import { OpticMode } from '../../store/useUIStore';
 
 interface MoxenEclipseToggleProps {
-  isNight?: boolean;
-  onToggle?: (isNight: boolean) => void;
+  opticMode?: OpticMode;
+  onCycle?: () => void;
+  onSelectMode?: (mode: OpticMode) => void;
   className?: string;
   size?: 'sm' | 'md' | 'lg';
 }
 
+const MODES_ORDER: OpticMode[] = ['aurora', 'noir', 'eink', 'cobalt'];
+
 export const MoxenEclipseToggle: React.FC<MoxenEclipseToggleProps> = ({
-  isNight = true,
-  onToggle,
+  opticMode = 'aurora',
+  onCycle,
+  onSelectMode,
   className = '',
   size = 'md',
 }) => {
-  const [activeNight, setActiveNight] = useState(isNight);
-
   const sizeStyles = {
     sm: { '--ec-tam': '15px' } as React.CSSProperties,
     md: { '--ec-tam': '19px' } as React.CSSProperties,
-    lg: { '--ec-tam': '26px' } as React.CSSProperties,
+    lg: { '--ec-tam': '25px' } as React.CSSProperties,
   };
 
-  const handleClick = () => {
-    const next = !activeNight;
-    setActiveNight(next);
+  const handleToggle = () => {
     soundFX.playClick();
-    onToggle?.(next);
+    if (onCycle) {
+      onCycle();
+    } else if (onSelectMode) {
+      const currentIndex = MODES_ORDER.indexOf(opticMode);
+      const nextIndex = (currentIndex + 1) % MODES_ORDER.length;
+      onSelectMode(MODES_ORDER[nextIndex]);
+    }
   };
+
+  const phaseClass = `fase-${opticMode}`;
+  const isNight = opticMode === 'noir' || opticMode === 'cobalt';
 
   return (
     <button
       type="button"
       role="switch"
-      aria-checked={activeNight}
-      onClick={handleClick}
-      aria-label="Alternar Modo Color Aurora vs Modo Táctico Noir (Blanco y Negro)"
-      className={`ec-interruptor ${activeNight ? 'is-noche' : ''} select-none outline-none focus:outline-none cursor-pointer ${className}`}
+      onClick={handleToggle}
+      aria-label={`Modo Óptico Eclipse: ${opticMode}`}
+      className={`ec-interruptor ${phaseClass} ${isNight ? 'is-noche' : ''} select-none outline-none focus:outline-none cursor-pointer transition-all active:scale-95 ${className}`}
       style={sizeStyles[size]}
-      title={activeNight ? 'Modo Color Aurora Activo (Toca para Modo Táctico B&W)' : 'Modo Táctico B&W Activo (Toca para Color Aurora)'}
+      title={`Fase Eclipse activa: ${opticMode.toUpperCase()} (Toca para alternar fase)`}
     >
       <span className="ec-cielo" aria-hidden="true">
         <span className="ec-cielo-noche" />

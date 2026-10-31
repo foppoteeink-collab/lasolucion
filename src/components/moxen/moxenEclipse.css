@@ -178,6 +178,71 @@
 /* al cargar, el estado inicial se pone sin animar */
 .ec-quieto, .ec-quieto *, .ec-quieto *::before, .ec-quieto ~ * * { transition: none !important; }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   SISTEMA DE FASES MULTI-ÓPTICAS DEL ECLIPSE (4 MODOS CELESTIALES)
+   ═══════════════════════════════════════════════════════════════════════ */
+.ec-interruptor.fase-aurora .ec-astro {
+  transform: translateX(0em) !important;
+}
+.ec-interruptor.fase-aurora .ec-cielo-noche {
+  opacity: 0.9 !important;
+  background: radial-gradient(circle at 25% 40%, rgba(0, 240, 255, 0.45), transparent 70%), linear-gradient(135deg, #1e1b4b, #030712) !important;
+}
+.ec-interruptor.fase-aurora .ec-luna {
+  transform: translateX(110%) !important;
+}
+
+.ec-interruptor.fase-noir .ec-astro {
+  transform: translateX(0.88em) !important;
+}
+.ec-interruptor.fase-noir .ec-cielo-noche {
+  opacity: 1 !important;
+  background: radial-gradient(120% 140% at 50% 0%, #1f2937, transparent 65%), linear-gradient(#09090b, #000000) !important;
+}
+.ec-interruptor.fase-noir .ec-corona {
+  opacity: 1 !important;
+}
+.ec-interruptor.fase-noir .ec-luna {
+  transform: translateX(0%) !important;
+}
+.ec-interruptor.fase-noir .ec-estrellas i {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+.ec-interruptor.fase-eink .ec-astro {
+  transform: translateX(1.76em) !important;
+}
+.ec-interruptor.fase-eink .ec-cielo-noche {
+  opacity: 0 !important;
+}
+.ec-interruptor.fase-eink .ec-corona {
+  opacity: 0 !important;
+}
+.ec-interruptor.fase-eink .ec-luna {
+  transform: translateX(110%) !important;
+}
+.ec-interruptor.fase-eink .ec-diamante {
+  opacity: 1 !important;
+}
+.ec-interruptor.fase-eink .ec-nubes-delante {
+  transform: translate(0, 0) !important;
+}
+
+.ec-interruptor.fase-cobalt .ec-astro {
+  transform: translateX(2.6em) !important;
+}
+.ec-interruptor.fase-cobalt .ec-cielo-noche {
+  opacity: 1 !important;
+  background: radial-gradient(circle at 80% 30%, #1d4ed8, transparent 65%), linear-gradient(#0f172a, #020617) !important;
+}
+.ec-interruptor.fase-cobalt .ec-estrellas i {
+  opacity: 1 !important;
+}
+.ec-interruptor.fase-cobalt .ec-luna {
+  transform: translateX(15%) !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ec-corona, .is-noche .ec-estrellas i { animation: none; }
   .ec-estrellas i, .ec-nubes, .ec-halos i, .ec-dia, .ec-noche { transition-duration: .01s !important; transition-delay: 0s !important; }

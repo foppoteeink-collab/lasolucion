@@ -117,9 +117,10 @@ html.optic-eink #app-optical-canvas [class*="bg-cyan-500"] * {
   color: #000000 !important;
 }
 
-/* Preservar avatares, fotos, gemas y logos dentro del lienzo */
+/* Preservar avatares, fotos, gemas, logos y el interruptor cinemático Eclipse */
 html.optic-eink #app-optical-canvas img,
 html.optic-eink #app-optical-canvas video,
+html.optic-eink #app-optical-canvas .ec-interruptor,
 html.optic-eink #app-optical-canvas [data-preserve-optic] {
   filter: invert(1) hue-rotate(180deg) grayscale(0%) contrast(0.85) !important;
 }
