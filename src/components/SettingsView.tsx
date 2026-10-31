@@ -438,9 +438,15 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   return (
     <div ref={chicleContainerRef} className="space-y-6 pb-20">
       {/* HEADER & SUB-TABS NAVIGATION */}
-      <div className="bg-[#00152b] rounded-2xl border border-cyan-500/20 p-3 sm:p-4 shadow-[0_4px_20px_rgba(0,0,0,0.35)] space-y-3">
-        <div className="flex items-center justify-between px-1">
-          <h2 className="text-white font-black text-base sm:text-lg flex items-center gap-2 uppercase tracking-wider">
+      <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-2xl border border-white/10 p-3 sm:p-5 shadow-[0_12px_40px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.12)] relative overflow-hidden space-y-3">
+        {/* Micrograno táctil Moxen Vidrio */}
+        <span className="vi-grano opacity-5" aria-hidden="true" />
+        
+        {/* Filo de luz superior especular */}
+        <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-cyan-400/40 to-transparent pointer-events-none" />
+
+        <div className="flex items-center justify-between px-1 relative z-10">
+          <h2 className="text-white font-anton text-base sm:text-lg flex items-center gap-2 uppercase tracking-wider">
             <Settings className="w-5 h-5 text-cyan-400" />
             <span>Configuración del Sistema</span>
           </h2>
@@ -451,7 +457,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 soundFX.playClick();
                 setActiveSubTab('gameplay');
               }}
-              className="chicle-btn flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-mono font-bold bg-fuchsia-950/80 hover:bg-fuchsia-900 border border-fuchsia-500/50 text-fuchsia-300 transition-all cursor-pointer"
+              className="chicle-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase bg-fuchsia-950/80 hover:bg-fuchsia-900 border border-fuchsia-500/50 text-fuchsia-300 transition-all cursor-pointer active:scale-95"
             >
               <ChevronLeft className="w-3.5 h-3.5" />
               <span>Volver a Configuración</span>
@@ -460,7 +466,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         </div>
 
         {/* SUB-TABS NAV BAR: 5-segment responsive control */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 p-1.5 bg-[#000d1c] rounded-xl border border-slate-800/80">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 p-1.5 bg-black/40 rounded-xl sm:rounded-2xl border border-white/10 relative z-10">
           {tabsConfig.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeSubTab === tab.id;
@@ -472,13 +478,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   soundFX.playClick();
                   setActiveSubTab(tab.id);
                 }}
-                className={`chicle-btn flex items-center justify-center gap-2 py-2.5 px-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
+                className={`chicle-btn flex items-center justify-center gap-2 py-2.5 px-2 rounded-xl text-xs font-anton tracking-wider uppercase transition-all cursor-pointer active:scale-95 ${
                   isActive
-                    ? 'bg-[#00284d] text-white border border-cyan-500/50 shadow-[0_0_15px_rgba(0,240,255,0.25)]'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-[#001830]'
+                    ? 'bg-cyan-400 text-black shadow-[0_0_15px_rgba(0,240,255,0.5)] font-bold'
+                    : 'text-slate-400 hover:text-white hover:bg-white/[0.05]'
                 }`}
               >
-                <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-cyan-300' : tab.color}`} />
+                <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-black' : tab.color}`} />
                 <span className="truncate">{tab.label}</span>
               </button>
             );
@@ -533,18 +539,21 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* ATMÓSFERA Y ENTORNO */}
-            <div className="bg-[#00152b] p-5 sm:p-6 rounded-2xl border border-slate-800 space-y-5">
-              <h3 className="text-xs font-black text-cyan-400 uppercase tracking-widest flex items-center gap-2">
+            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-xl p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-5">
+              {/* Micrograno táctil Moxen Vidrio */}
+              <span className="vi-grano opacity-5" aria-hidden="true" />
+
+              <h3 className="text-xs font-anton text-cyan-400 uppercase tracking-wider flex items-center gap-2 relative z-10">
                 <Volume2 className="w-4 h-4" /> Atmósfera & Interfaz
               </h3>
 
               {/* ═══════════════════════════════════════════════════════════════ */}
               {/* MATRIZ DE MODOS ÓPTICOS TÁCTICOS (4 SISTEMAS DE VISIÓN KAI)    */}
               {/* ═══════════════════════════════════════════════════════════════ */}
-              <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-b from-[#001024] to-[#000a17] border border-cyan-500/40 shadow-[0_4px_30px_rgba(0,240,255,0.14)] space-y-3.5">
+              <div className="p-4 sm:p-5 rounded-2xl bg-black/50 border border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.4)] space-y-3.5 relative z-10">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
-                    <h4 className="text-sm font-black text-white flex items-center gap-2">
+                    <h4 className="text-sm font-anton uppercase tracking-wider text-white flex items-center gap-2">
                       <Eye className="w-4 h-4 text-cyan-400" /> Sistema Óptico Táctico (4 Modos de Visión)
                     </h4>
                     <p className="text-xs text-slate-400 mt-0.5">
@@ -571,13 +580,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     className={`chicle-btn p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
                       opticMode === 'aurora'
                         ? 'bg-cyan-500/20 border-cyan-400 text-white shadow-[0_0_18px_rgba(0,240,255,0.35)] ring-1 ring-cyan-400'
-                        : 'bg-[#000d1c] border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
+                        : 'bg-white/[0.03] border-white/10 text-slate-400 hover:text-white hover:border-white/20'
                     }`}
                   >
                     <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-cyan-400 via-purple-500 to-pink-500 flex items-center justify-center text-xs shadow-sm">
                       ✨
                     </div>
-                    <span className="text-xs font-mono font-bold tracking-tight">Aurora Neón</span>
+                    <span className="text-xs font-anton tracking-wider uppercase">Aurora Neón</span>
                     <span className="text-[9px] font-mono text-slate-400">Color Pleno</span>
                   </button>
 
@@ -591,13 +600,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     className={`chicle-btn p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
                       opticMode === 'noir'
                         ? 'bg-white/15 border-white text-white shadow-[0_0_18px_rgba(255,255,255,0.25)] ring-1 ring-white'
-                        : 'bg-[#000d1c] border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
+                        : 'bg-white/[0.03] border-white/10 text-slate-400 hover:text-white hover:border-white/20'
                     }`}
                   >
                     <div className="w-6 h-6 rounded-lg bg-black border border-white/40 flex items-center justify-center text-xs text-white font-mono font-black">
                       B&W
                     </div>
-                    <span className="text-xs font-mono font-bold tracking-tight">Noir Oscuro</span>
+                    <span className="text-xs font-anton tracking-wider uppercase">Noir Oscuro</span>
                     <span className="text-[9px] font-mono text-slate-400">Manga Táctico</span>
                   </button>
 
@@ -611,13 +620,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     className={`chicle-btn p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
                       opticMode === 'eink'
                         ? 'bg-white border-white text-black shadow-[0_0_18px_rgba(255,255,255,0.4)] ring-2 ring-white font-bold'
-                        : 'bg-[#000d1c] border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
+                        : 'bg-white/[0.03] border-white/10 text-slate-400 hover:text-white hover:border-white/20'
                     }`}
                   >
                     <div className="w-6 h-6 rounded-lg bg-white border border-black/40 flex items-center justify-center text-xs text-black font-mono font-black shadow-sm">
                       B&W
                     </div>
-                    <span className="text-xs font-mono font-bold tracking-tight">Noir Claro</span>
+                    <span className="text-xs font-anton tracking-wider uppercase">Noir Claro</span>
                     <span className="text-[9px] font-mono text-slate-400">Manga Blanco</span>
                   </button>
 
@@ -631,13 +640,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     className={`chicle-btn p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
                       opticMode === 'cobalt'
                         ? 'bg-blue-600/25 border-blue-400 text-blue-200 shadow-[0_0_18px_rgba(96,165,250,0.35)] ring-1 ring-blue-400'
-                        : 'bg-[#000d1c] border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
+                        : 'bg-white/[0.03] border-white/10 text-slate-400 hover:text-white hover:border-white/20'
                     }`}
                   >
                     <div className="w-6 h-6 rounded-lg bg-gradient-to-b from-blue-500 to-indigo-900 border border-blue-300 flex items-center justify-center text-xs text-white">
                       🌊
                     </div>
-                    <span className="text-xs font-mono font-bold tracking-tight">Cobalto Azul</span>
+                    <span className="text-xs font-anton tracking-wider uppercase">Cobalto Azul</span>
                     <span className="text-[9px] font-mono text-slate-400">Zafiro Táctico</span>
                   </button>
                 </div>
@@ -659,12 +668,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     type="button"
                     onClick={handleTestAudio}
                     disabled={!soundEnabled}
-                    className={`chicle-btn px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all border ${
+                    className={`chicle-btn px-3.5 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all border active:scale-95 ${
                       !soundEnabled
-                        ? 'opacity-40 cursor-not-allowed border-slate-800 text-slate-500'
+                        ? 'opacity-40 cursor-not-allowed border-white/10 text-slate-500'
                         : audioTesting
                         ? 'bg-cyan-500 text-black border-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.5)]'
-                        : 'bg-[#002244] border-cyan-800 text-cyan-300 hover:bg-cyan-900/60 hover:text-white cursor-pointer'
+                        : 'bg-white/[0.05] border-white/15 text-cyan-300 hover:bg-white/10 hover:text-white cursor-pointer'
                     }`}
                     title="Probar sonido"
                   >
@@ -681,11 +690,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
 
               {/* ═══ CENTRO DE NOTIFICACIONES KAI ═══ */}
-              <div className="pt-4 border-t border-slate-800/80 space-y-4">
+              <div className="pt-4 border-t border-white/10 space-y-4">
                 {/* Cabecera con estado y botón de permiso */}
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                   <div>
-                    <h4 className="text-sm font-black text-white flex items-center gap-2 mb-1">
+                    <h4 className="text-sm font-anton tracking-wider uppercase text-white flex items-center gap-2 mb-1">
                       <BellRing className="w-4 h-4 text-emerald-400" /> Centro de Notificaciones — La Solución
                     </h4>
                     <p className="text-xs text-slate-400">
@@ -709,9 +718,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         type="button"
                         onClick={handleRequestNotifications}
                         disabled={!notificationService.isSupported()}
-                        className={`chicle-btn px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all border ${
+                        className={`chicle-btn px-3 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all border active:scale-95 ${
                           !notificationService.isSupported()
-                            ? 'opacity-40 cursor-not-allowed border-slate-800 text-slate-500'
+                            ? 'opacity-40 cursor-not-allowed border-white/10 text-slate-500'
                             : 'bg-emerald-950 border-emerald-500/60 text-emerald-300 hover:bg-emerald-900/60 hover:text-white cursor-pointer shadow-[0_0_12px_rgba(52,211,153,0.2)]'
                         }`}
                       >
@@ -723,7 +732,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       <button
                         type="button"
                         onClick={handleTestNotification}
-                        className="chicle-btn px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all border bg-[#001830] border-cyan-800/60 text-cyan-400 hover:bg-cyan-950 cursor-pointer"
+                        className="chicle-btn px-3 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all border bg-white/[0.05] border-white/15 text-cyan-300 hover:bg-white/10 cursor-pointer active:scale-95"
                       >
                         <BellRing className="w-3 h-3 inline mr-1" /> Probar
                       </button>
@@ -748,16 +757,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
                 {/* Toggles individuales — solo si hay permisos */}
                 {notificationPermission === 'granted' && (
-                  <div className="space-y-2 bg-[#000d1c] rounded-xl p-3 border border-slate-800/60">
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Tipos de Recordatorio</p>
+                  <div className="space-y-2 bg-black/40 rounded-2xl p-3 border border-white/10">
+                    <p className="text-[10px] font-anton text-slate-400 uppercase tracking-widest mb-3">Tipos de Recordatorio</p>
 
                     {/* Hábitos por timeBlock */}
-                    <div className="flex items-center justify-between gap-3 py-2 border-b border-slate-800/50">
+                    <div className="flex items-center justify-between gap-3 py-2 border-b border-white/[0.08]">
                       <div className="flex items-center gap-2">
                         <Timer className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
                         <div>
                           <p className="text-xs font-bold text-white">Recordatorios por hora</p>
-                          <p className="text-[10px] text-slate-500">Avisa 2 min antes de cada tarea con horario</p>
+                          <p className="text-[10px] text-slate-400">Avisa 2 min antes de cada tarea con horario</p>
                         </div>
                       </div>
                       <ChicleToggle
@@ -770,12 +779,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     </div>
 
                     {/* Briefing matutino */}
-                    <div className="flex items-center justify-between gap-3 py-2 border-b border-slate-800/50">
+                    <div className="flex items-center justify-between gap-3 py-2 border-b border-white/[0.08]">
                       <div className="flex items-center gap-2">
                         <Sun className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                         <div>
                           <p className="text-xs font-bold text-white">Briefing matutino</p>
-                          <p className="text-[10px] text-slate-500">Resumen 15 min antes de tu primera tarea del día</p>
+                          <p className="text-[10px] text-slate-400">Resumen 15 min antes de tu primera tarea del día</p>
                         </div>
                       </div>
                       <ChicleToggle
@@ -788,12 +797,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     </div>
 
                     {/* Reflexión nocturna */}
-                    <div className="flex items-center justify-between gap-3 py-2 border-b border-slate-800/50">
+                    <div className="flex items-center justify-between gap-3 py-2 border-b border-white/[0.08]">
                       <div className="flex items-center gap-2">
                         <Moon className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
                         <div>
                           <p className="text-xs font-bold text-white">Reflexión nocturna</p>
-                          <p className="text-[10px] text-slate-500">Recordatorio para cerrar el día</p>
+                          <p className="text-[10px] text-slate-400">Recordatorio para cerrar el día</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -801,7 +810,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                           <select
                             value={notifSettings.nightlyHour}
                             onChange={e => handleToggleNotifSetting('nightlyHour', parseInt(e.target.value))}
-                            className="bg-[#000f20] border border-slate-700 text-indigo-300 text-[10px] font-mono rounded-lg px-2 py-1 cursor-pointer"
+                            className="bg-[#010810] border border-white/15 text-indigo-300 text-[10px] font-mono rounded-xl px-2 py-1 cursor-pointer focus:outline-none focus:border-indigo-400"
                           >
                             {[19, 20, 21, 22, 23].map(h => (
                               <option key={h} value={h}>{String(h).padStart(2, '0')}:00</option>
@@ -819,12 +828,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     </div>
 
                     {/* Alerta de Boss */}
-                    <div className="flex items-center justify-between gap-3 py-2 border-b border-slate-800/50">
+                    <div className="flex items-center justify-between gap-3 py-2 border-b border-white/[0.08]">
                       <div className="flex items-center gap-2">
                         <Zap className="w-3.5 h-3.5 text-red-400 shrink-0" />
                         <div>
                           <p className="text-xs font-bold text-white">Alerta de Boss</p>
-                          <p className="text-[10px] text-slate-500">Avisa a las 20:00 si el Boss del día sigue vivo</p>
+                          <p className="text-[10px] text-slate-400">Avisa a las 20:00 si el Boss del día sigue vivo</p>
                         </div>
                       </div>
                       <ChicleToggle
@@ -837,12 +846,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     </div>
 
                     {/* Racha en peligro */}
-                    <div className="flex items-center justify-between gap-3 py-2 border-b border-slate-800/50">
+                    <div className="flex items-center justify-between gap-3 py-2 border-b border-white/[0.08]">
                       <div className="flex items-center gap-2">
                         <Flame className="w-3.5 h-3.5 text-orange-400 shrink-0" />
                         <div>
                           <p className="text-xs font-bold text-white">Racha en peligro</p>
-                          <p className="text-[10px] text-slate-500">Alerta si llevas horas sin completar ninguna misión</p>
+                          <p className="text-[10px] text-slate-400">Alerta si llevas horas sin completar ninguna misión</p>
                         </div>
                       </div>
                       <ChicleToggle
@@ -860,7 +869,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         <Timer className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                         <div>
                           <p className="text-xs font-bold text-white">Pomodoro completado</p>
-                          <p className="text-[10px] text-slate-500">Notificación al finalizar cada sesión de foco</p>
+                          <p className="text-[10px] text-slate-400">Notificación al finalizar cada sesión de foco</p>
                         </div>
                       </div>
                       <ChicleToggle
@@ -876,21 +885,21 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
 
               {/* TEMA VISUAL */}
-              <div className="pt-4 border-t border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h4 className="text-sm font-black text-white flex items-center gap-2 mb-1">
+                  <h4 className="text-sm font-anton tracking-wider uppercase text-white flex items-center gap-2 mb-1">
                     <Sun className="w-4 h-4 text-amber-400" /> Tema de la Pantalla
                   </h4>
                   <p className="text-xs text-slate-400">
                     Paleta de contraste visual y modo de color para la interfaz.
                   </p>
                 </div>
-                <div className="flex items-center gap-1.5 bg-[#000f20] p-1 rounded-xl border border-slate-800 self-start sm:self-auto">
+                <div className="flex items-center gap-1.5 bg-black/40 p-1 rounded-2xl border border-white/10 self-start sm:self-auto">
                   <button
                     type="button"
                     onClick={() => handleSetTheme('dark')}
-                    className={`chicle-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                      themeMode === 'dark' ? 'bg-cyan-600 text-white shadow' : 'text-slate-400 hover:text-white'
+                    className={`chicle-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all cursor-pointer ${
+                      themeMode === 'dark' ? 'bg-cyan-500 text-black font-bold shadow-[0_0_12px_rgba(0,240,255,0.4)]' : 'text-slate-400 hover:text-white'
                     }`}
                   >
                     <Moon className="w-3.5 h-3.5" />
@@ -899,8 +908,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   <button
                     type="button"
                     onClick={() => handleSetTheme('light')}
-                    className={`chicle-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                      themeMode === 'light' ? 'bg-cyan-600 text-white shadow' : 'text-slate-400 hover:text-white'
+                    className={`chicle-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all cursor-pointer ${
+                      themeMode === 'light' ? 'bg-cyan-500 text-black font-bold shadow-[0_0_12px_rgba(0,240,255,0.4)]' : 'text-slate-400 hover:text-white'
                     }`}
                   >
                     <Sun className="w-3.5 h-3.5" />
@@ -909,8 +918,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   <button
                     type="button"
                     onClick={() => handleSetTheme('auto')}
-                    className={`chicle-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                      themeMode === 'auto' ? 'bg-cyan-600 text-white shadow' : 'text-slate-400 hover:text-white'
+                    className={`chicle-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all cursor-pointer ${
+                      themeMode === 'auto' ? 'bg-cyan-500 text-black font-bold shadow-[0_0_12px_rgba(0,240,255,0.4)]' : 'text-slate-400 hover:text-white'
                     }`}
                   >
                     <Laptop className="w-3.5 h-3.5" />
@@ -920,25 +929,25 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
 
               {/* MODO DE NAVEGACIÓN HUD (KAI NEXUS VS CLÁSICO) */}
-              <div className="pt-4 border-t border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h4 className="text-sm font-black text-white flex items-center gap-2 mb-1">
+                  <h4 className="text-sm font-anton tracking-wider uppercase text-white flex items-center gap-2 mb-1">
                     <Compass className="w-4 h-4 text-cyan-400" /> Modo de Navegación HUD
                   </h4>
                   <p className="text-xs text-slate-400">
                     Elige si navegar con KAI en pantalla completa inmersiva o con la barra inferior clásica.
                   </p>
                 </div>
-                <div className="flex items-center gap-1.5 bg-[#000f20] p-1 rounded-xl border border-slate-800 self-start sm:self-auto">
+                <div className="flex items-center gap-1.5 bg-black/40 p-1 rounded-2xl border border-white/10 self-start sm:self-auto">
                   <button
                     type="button"
                     onClick={() => {
                       soundFX.playClick();
                       setNavigationMode('nexus');
                     }}
-                    className={`chicle-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    className={`chicle-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all cursor-pointer ${
                       navigationMode === 'nexus'
-                        ? 'bg-cyan-500 text-black font-black shadow-[0_0_14px_rgba(0,240,255,0.6)]'
+                        ? 'bg-cyan-400 text-black font-bold shadow-[0_0_14px_rgba(0,240,255,0.6)]'
                         : 'text-slate-400 hover:text-white'
                     }`}
                     title="KAI Nexus: Pantalla completa sin barra inferior"
@@ -952,9 +961,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       soundFX.playClick();
                       setNavigationMode('classic');
                     }}
-                    className={`chicle-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    className={`chicle-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all cursor-pointer ${
                       navigationMode === 'classic'
-                        ? 'bg-cyan-600 text-white font-black shadow'
+                        ? 'bg-cyan-400 text-black font-bold shadow-[0_0_14px_rgba(0,240,255,0.6)]'
                         : 'text-slate-400 hover:text-white'
                     }`}
                     title="Clásico: Barra de navegación inferior siempre visible"
@@ -966,9 +975,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
 
               {/* Modo Zen / Rendimiento Limpio */}
-              <div className="flex items-center justify-between gap-4 py-2 border-t border-slate-800/80">
+              <div className="flex items-center justify-between gap-4 py-2 border-t border-white/10">
                 <div>
-                  <h4 className="text-sm font-black text-white flex items-center gap-2 mb-1">
+                  <h4 className="text-sm font-anton tracking-wider uppercase text-white flex items-center gap-2 mb-1">
                     <Shield className="w-4 h-4 text-emerald-400" /> Modo Zen (Ultra Enfoque & Batería)
                   </h4>
                   <p className="text-xs text-slate-400">
@@ -989,9 +998,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
 
               {/* DENSIDAD TIPOGRÁFICA / LECTURA COMPACTA */}
-              <div className="flex items-center justify-between gap-4 py-2 border-t border-slate-800/80">
+              <div className="flex items-center justify-between gap-4 py-2 border-t border-white/10">
                 <div>
-                  <h4 className="text-sm font-black text-white flex items-center gap-2 mb-1">
+                  <h4 className="text-sm font-anton tracking-wider uppercase text-white flex items-center gap-2 mb-1">
                     <Type className="w-4 h-4 text-cyan-400" /> Densidad de Texto Compacta
                   </h4>
                   <p className="text-xs text-slate-400">
@@ -1010,9 +1019,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* ═══ PERSONALIZADOR DE ATMÓSFERA CUÁNTICA (MOXEN MALLA) ═══ */}
-            <div className="bg-[#00152b] p-5 sm:p-6 rounded-2xl border border-cyan-500/40 space-y-4 shadow-[0_0_30px_rgba(0,240,255,0.12)]">
-              <div>
-                <h3 className="text-xs font-black text-cyan-400 uppercase tracking-widest flex items-center gap-2">
+            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-xl p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
+              <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="relative z-10">
+                <h3 className="text-xs font-anton text-cyan-400 uppercase tracking-wider flex items-center gap-2">
                   <Palette className="w-4 h-4 text-cyan-400" /> Atmósfera Cuántica & Fluido Visual
                 </h3>
                 <p className="text-xs text-slate-400 mt-1">
@@ -1020,15 +1030,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 </p>
               </div>
 
-              <MoxenMalla
-                activeSystemAuraName={systemAura?.name}
-                onApplyToSystem={(aura) => {
-                  setSystemAura(aura);
-                }}
-                onResetSystem={() => {
-                  setSystemAura(null);
-                }}
-              />
+              <div className="relative z-10">
+                <MoxenMalla
+                  activeSystemAuraName={systemAura?.name}
+                  onApplyToSystem={(aura) => {
+                    setSystemAura(aura);
+                  }}
+                  onResetSystem={() => {
+                    setSystemAura(null);
+                  }}
+                />
+              </div>
             </div>
           </div>
         )}
@@ -1036,8 +1048,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         {/* ===================== TAB EXTRA: MALLA SHADER WEBGL ===================== */}
         {activeSubTab === 'atmosphere' && (
           <div className="space-y-6 animate-fade-in">
-            <div className="bg-[#00152b] p-5 sm:p-6 rounded-2xl border border-cyan-500/40 space-y-4 shadow-[0_0_30px_rgba(0,240,255,0.15)]">
-              <div>
+            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-xl p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
+              <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="relative z-10">
                 <div className="flex items-center gap-2 text-cyan-400 text-xs font-mono font-bold uppercase tracking-widest mb-1">
                   <Palette className="w-4 h-4 text-cyan-400" /> Personalizador de Atmósfera
                 </div>
@@ -1049,20 +1062,23 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 </p>
               </div>
 
-              <MoxenMalla
-                activeSystemAuraName={systemAura?.name}
-                onApplyToSystem={(aura) => {
-                  setSystemAura(aura);
-                }}
-                onResetSystem={() => {
-                  setSystemAura(null);
-                }}
-              />
+              <div className="relative z-10">
+                <MoxenMalla
+                  activeSystemAuraName={systemAura?.name}
+                  onApplyToSystem={(aura) => {
+                    setSystemAura(aura);
+                  }}
+                  onResetSystem={() => {
+                    setSystemAura(null);
+                  }}
+                />
+              </div>
             </div>
 
             {/* Laboratorio de Telemetría Táctica (Moxen Rayas) */}
-            <div className="bg-[#00152b] p-5 sm:p-6 rounded-2xl border border-cyan-500/40 space-y-4 shadow-[0_0_30px_rgba(0,240,255,0.15)]">
-              <div>
+            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-xl p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
+              <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="relative z-10">
                 <div className="flex items-center gap-2 text-cyan-400 text-xs font-mono font-bold uppercase tracking-widest mb-1">
                   <Zap className="w-4 h-4 text-cyan-400" /> Laboratorio Moxen Rayas
                 </div>
@@ -1179,15 +1195,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         {activeSubTab === 'gameplay' && (
           <div className="space-y-6 animate-fade-in">
             {/* MECÁNICAS RPG */}
-            <div className="bg-[#00152b] p-5 sm:p-6 rounded-2xl border border-purple-500/30 space-y-4 shadow-[0_0_20px_rgba(168,85,247,0.08)]">
-              <h3 className="text-xs font-black text-purple-400 uppercase tracking-widest flex items-center gap-2">
+            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-xl p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
+              <span className="vi-grano opacity-5" aria-hidden="true" />
+
+              <h3 className="text-xs font-anton text-purple-400 uppercase tracking-wider flex items-center gap-2 relative z-10">
                 <Sparkles className="w-4 h-4" /> Mecánicas RPG & Gamificación
               </h3>
 
               {/* Tareas Dinámicas */}
-              <div className="flex items-center justify-between gap-4 py-2 border-b border-slate-800/80">
+              <div className="flex items-center justify-between gap-4 py-2 border-b border-white/[0.08] relative z-10">
                 <div>
-                  <h4 className="text-sm font-black text-white flex items-center gap-2 mb-1">
+                  <h4 className="text-sm font-anton tracking-wider uppercase text-white flex items-center gap-2 mb-1">
                     <Sparkles className="w-4 h-4 text-cyan-400"/> Generador de Tareas Dinámicas
                   </h4>
                   <p className="text-xs text-slate-400">
@@ -1204,9 +1222,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
 
               {/* Familiar RPG */}
-              <div className="flex items-center justify-between gap-4 py-2 border-b border-slate-800/80">
+              <div className="flex items-center justify-between gap-4 py-2 border-b border-white/[0.08] relative z-10">
                 <div>
-                  <h4 className="text-sm font-black text-white flex items-center gap-2 mb-1">
+                  <h4 className="text-sm font-anton tracking-wider uppercase text-white flex items-center gap-2 mb-1">
                     <Activity className="w-4 h-4 text-purple-400"/> Compañero / Familiar RPG
                   </h4>
                   <p className="text-xs text-slate-400">
@@ -1223,9 +1241,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
 
               {/* Modo Estricto */}
-              <div className="flex items-center justify-between gap-4 py-2">
+              <div className="flex items-center justify-between gap-4 py-2 relative z-10">
                 <div>
-                  <h4 className="text-sm font-black text-white flex items-center gap-2 mb-1">
+                  <h4 className="text-sm font-anton tracking-wider uppercase text-white flex items-center gap-2 mb-1">
                     <ShieldAlert className="w-4 h-4 text-red-400"/> Modo Estricto (Castigo de Maestría)
                   </h4>
                   <p className="text-xs text-slate-400">
@@ -1243,11 +1261,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* COMPAÑERO CUÁNTICO KAI: SELECCIÓN Y FORJA */}
-            <div className="bg-[#00152b] p-5 sm:p-6 rounded-2xl border border-cyan-500/35 space-y-4 shadow-[0_0_20px_rgba(0,240,255,0.08)]">
-              <div className="flex items-center justify-between gap-3">
+            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-xl p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
+              <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="flex items-center justify-between gap-3 relative z-10">
                 <div className="flex items-center gap-2">
                   <Palette className="w-4 h-4 text-cyan-400" />
-                  <h3 className="text-xs font-black text-cyan-400 uppercase tracking-widest">
+                  <h3 className="text-xs font-anton text-cyan-400 uppercase tracking-wider">
                     Compañero Holográfico KAI
                   </h3>
                 </div>
@@ -1256,7 +1275,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 </span>
               </div>
 
-              <div className="flex items-center justify-between gap-4 p-3.5 rounded-xl bg-black/40 border border-white/10">
+              <div className="flex items-center justify-between gap-4 p-3.5 rounded-2xl bg-black/40 border border-white/10 relative z-10">
                 <div className="flex items-center gap-3">
                   <div className="w-14 h-14 rounded-xl bg-cyan-950/40 border border-cyan-400/40 p-1 flex items-center justify-center shrink-0">
                     <KaiVectorGraphics
@@ -1267,7 +1286,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   </div>
                   <div>
                     <span className="text-[10px] font-mono text-slate-400 uppercase block">Figura Equipada:</span>
-                    <strong className="text-sm font-anton text-white tracking-wide uppercase">
+                    <strong className="text-sm font-anton text-white tracking-wider uppercase">
                       {stats.kaiShape === 'custom' ? (stats.kaiCustomForm?.name || 'Forja Neural IA') : (KAI_OFFICIAL_SHAPES.find(s => s.id === stats.kaiShape)?.name || 'El Prisma')}
                     </strong>
                     <span className="text-[10px] text-slate-400 block mt-0.5">
@@ -1283,7 +1302,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       soundFX.playClick();
                       onOpenKaiWorkshop();
                     }}
-                    className="chicle-btn px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black font-anton text-xs uppercase tracking-wider transition-all cursor-pointer shadow-[0_0_12px_rgba(0,240,255,0.3)] flex items-center gap-1.5 shrink-0"
+                    className="chicle-btn px-4 py-2.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-black font-anton text-xs uppercase tracking-wider transition-all cursor-pointer shadow-[0_0_12px_rgba(0,240,255,0.4)] flex items-center gap-1.5 shrink-0 active:scale-95"
                   >
                     <Palette className="w-3.5 h-3.5" />
                     <span>Taller de KAI</span>
@@ -1293,11 +1312,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* PROTOCOLO DE INDUCCIÓN Y GUÍA TÁCTICA DE KAI */}
-            <div className="bg-[#00152b] p-5 sm:p-6 rounded-2xl border border-cyan-500/35 space-y-4 shadow-[0_0_20px_rgba(0,240,255,0.08)]">
-              <div className="flex items-center justify-between gap-3">
+            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-xl p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
+              <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="flex items-center justify-between gap-3 relative z-10">
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-cyan-400" />
-                  <h3 className="text-xs font-black text-cyan-400 uppercase tracking-widest">
+                  <h3 className="text-xs font-anton text-cyan-400 uppercase tracking-wider">
                     Manual y Guía Táctica de KAI
                   </h3>
                 </div>
@@ -1306,18 +1326,18 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 </span>
               </div>
 
-              <p className="text-xs text-slate-300 leading-relaxed">
+              <p className="text-xs text-slate-300 leading-relaxed relative z-10">
                 Repasa el tutorial guiado sobre Energía Vital (HP), la Ley 21/66, Modo Foco y la Tienda.
               </p>
 
-              <div className="flex flex-wrap items-center gap-3 pt-1">
+              <div className="flex flex-wrap items-center gap-3 pt-1 relative z-10">
                 <button
                   type="button"
                   onClick={() => {
                     soundFX.playClick();
                     useUIStore.getState().openTacticalGuide(1);
                   }}
-                  className="chicle-btn px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black font-anton text-xs uppercase tracking-wider transition-all cursor-pointer shadow-[0_0_12px_rgba(0,240,255,0.3)] flex items-center gap-1.5"
+                  className="chicle-btn px-4 py-2 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-black font-anton text-xs uppercase tracking-wider transition-all cursor-pointer shadow-[0_0_12px_rgba(0,240,255,0.4)] flex items-center gap-1.5 active:scale-95"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
                   <span>Repasar Guía Táctica</span>
@@ -1334,7 +1354,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       '🔄'
                     );
                   }}
-                  className="chicle-btn px-3.5 py-2 rounded-xl bg-surface-card hover:bg-white/10 border border-slate-700 text-slate-300 hover:text-white font-mono text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
+                  className="chicle-btn px-3.5 py-2 rounded-xl bg-white/[0.05] hover:bg-white/10 border border-white/15 text-slate-300 hover:text-white font-anton uppercase text-xs tracking-wider transition-all cursor-pointer flex items-center gap-1.5 active:scale-95"
                 >
                   <RefreshCw className="w-3.5 h-3.5 text-cyan-400" />
                   <span>Restablecer Avisos</span>
@@ -1345,10 +1365,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             {/* LABORATORIO & HERRAMIENTAS TÁCTICAS */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Simulador */}
-              <div className="bg-[#00152b] p-5 rounded-2xl border border-fuchsia-500/40 space-y-3 shadow-[0_0_15px_rgba(217,70,239,0.1)] flex flex-col justify-between">
+              <div className="w-full rounded-2xl bg-[#020712]/90 border border-white/10 p-5 space-y-3 shadow-lg flex flex-col justify-between">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-black text-fuchsia-400 uppercase tracking-widest flex items-center gap-1.5">
+                    <span className="text-xs font-anton text-fuchsia-400 uppercase tracking-wider flex items-center gap-1.5">
                       <FlaskConical className="w-4 h-4 text-fuchsia-400" /> Simulador Táctico
                     </span>
                     <span className="text-[10px] font-mono text-fuchsia-300 bg-fuchsia-950/70 border border-fuchsia-500/40 px-2 py-0.5 rounded-full uppercase">
@@ -1365,7 +1385,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     soundFX.playClick();
                     setActiveSubTab('simulator');
                   }}
-                  className="chicle-btn w-full py-2.5 px-4 bg-fuchsia-950 hover:bg-fuchsia-900 border border-fuchsia-500/60 text-fuchsia-200 rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer"
+                  className="chicle-btn w-full py-2.5 px-4 bg-fuchsia-950/80 hover:bg-fuchsia-900 border border-fuchsia-500/60 text-fuchsia-200 rounded-xl text-xs font-anton uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-95"
                 >
                   <FlaskConical className="w-3.5 h-3.5 text-fuchsia-400" />
                   <span>Abrir Simulador</span>
@@ -1373,10 +1393,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
 
               {/* Oráculo IA */}
-              <div className="bg-[#00152b] p-5 rounded-2xl border border-cyan-500/40 space-y-3 shadow-[0_0_15px_rgba(0,240,255,0.1)] flex flex-col justify-between">
+              <div className="w-full rounded-2xl bg-[#020712]/90 border border-white/10 p-5 space-y-3 shadow-lg flex flex-col justify-between">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-black text-cyan-400 uppercase tracking-widest flex items-center gap-1.5">
+                    <span className="text-xs font-anton text-cyan-400 uppercase tracking-wider flex items-center gap-1.5">
                       <Cpu className="w-4 h-4 text-cyan-400 animate-pulse" /> Oráculo IA
                     </span>
                     <span className="text-[10px] font-mono text-cyan-300 bg-cyan-950/70 border border-cyan-500/40 px-2 py-0.5 rounded-full uppercase">
@@ -1406,26 +1426,28 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         {/* ===================== TAB 2: TESORERÍA ===================== */}
         {activeSubTab === 'finances' && (
           <div className="space-y-6 animate-fade-in">
-            <div className="bg-[#00152b] p-5 sm:p-6 rounded-2xl border border-slate-800 space-y-6">
+            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-xl p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-6">
+              <span className="vi-grano opacity-5" aria-hidden="true" />
+
               {/* HEADER DE TESORERÍA */}
-              <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+              <div className="flex items-center justify-between border-b border-white/10 pb-4 relative z-10">
                 <div>
-                  <h3 className="text-sm font-black text-white flex items-center gap-2">
+                  <h3 className="text-sm font-anton uppercase tracking-wider text-white flex items-center gap-2">
                     <Coins className="w-4 h-4 text-amber-400" /> Parámetros de Finanzas & Tesorería
                   </h3>
                   <p className="text-xs text-slate-400 mt-0.5">
                     Configura la divisa base para registros diarios, balances y análisis temporal.
                   </p>
                 </div>
-                <span className="px-3 py-1 rounded-xl bg-emerald-950 border border-emerald-600/50 text-emerald-300 font-mono font-black text-xs">
+                <span className="px-3 py-1 rounded-xl bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 font-mono font-black text-xs">
                   {currentCurrency} Activo
                 </span>
               </div>
 
               {/* TOGGLE MODULAR: TESORERÍA EN MISIONES */}
-              <div className="flex items-center justify-between p-4 rounded-xl bg-[#001020] border border-cyan-900/60">
+              <div className="flex items-center justify-between p-4 rounded-2xl bg-black/40 border border-white/10 relative z-10">
                 <div className="space-y-0.5 pr-4">
-                  <div className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-2">
+                  <div className="text-xs font-anton tracking-wider text-white uppercase flex items-center gap-2">
                     <Wallet className="w-4 h-4 text-emerald-400" />
                     Módulo de Tesorería en Misiones
                   </div>
@@ -1446,8 +1468,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
 
               {/* SELECTOR COMPACTO DE MONEDA */}
-              <div>
-                <label className="block text-xs font-black text-slate-300 uppercase tracking-wider mb-2">
+              <div className="relative z-10">
+                <label className="block text-xs font-anton text-slate-300 uppercase tracking-wider mb-2">
                   Divisa Principal del Sistema
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -1458,16 +1480,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         key={c.code}
                         type="button"
                         onClick={() => handleSelectCurrency(c.symbol, c.name)}
-                        className={`p-3 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+                        className={`p-3 rounded-2xl border text-left flex items-center justify-between transition-all cursor-pointer ${
                           isSelected
                             ? 'bg-emerald-950/80 border-emerald-400 text-white shadow-[0_0_12px_rgba(52,211,153,0.3)] ring-1 ring-emerald-400'
-                            : 'bg-[#002244] border-cyan-800/60 text-slate-300 hover:border-cyan-400 hover:text-white hover:bg-[#002d5a]'
+                            : 'bg-white/[0.04] border-white/10 text-slate-300 hover:border-white/20 hover:text-white hover:bg-white/[0.08]'
                         }`}
                       >
                         <div>
                           <div className="flex items-center gap-1.5">
                             <span className="text-base font-mono font-black text-amber-300">{c.symbol}</span>
-                            <span className="text-xs font-black uppercase text-cyan-300">{c.code}</span>
+                            <span className="text-xs font-anton tracking-wider uppercase text-cyan-300">{c.code}</span>
                           </div>
                           <div className="text-[11px] text-slate-400 truncate max-w-[120px]">{c.name}</div>
                         </div>
@@ -1479,10 +1501,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
 
               {/* META DE AHORRO */}
-              <div className="pt-4 border-t border-slate-800">
+              <div className="pt-4 border-t border-white/10 relative z-10">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
                   <div>
-                    <h4 className="text-xs font-black text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                    <h4 className="text-xs font-anton text-slate-300 uppercase tracking-wider flex items-center gap-2">
                       <Target className="w-4 h-4 text-cyan-400" /> Objetivo Sugerido de Tasa de Ahorro
                     </h4>
                     <p className="text-xs text-slate-400">
@@ -1500,10 +1522,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       key={rate}
                       type="button"
                       onClick={() => handleSelectSavingsTarget(rate)}
-                      className={`chicle-btn px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                      className={`chicle-btn px-3.5 py-1.5 rounded-xl text-xs font-anton tracking-wider transition-all cursor-pointer ${
                         savingsTarget === rate
                           ? 'bg-cyan-500 text-black shadow-[0_0_12px_rgba(6,182,212,0.4)]'
-                          : 'bg-[#002244] border border-cyan-800/60 text-slate-300 hover:text-white hover:border-cyan-500'
+                          : 'bg-white/[0.05] border border-white/15 text-slate-300 hover:text-white hover:border-white/30'
                       }`}
                     >
                       {rate}%
@@ -1513,12 +1535,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
 
               {/* INTEGRACIÓN MISIONES */}
-              <div className="p-3.5 rounded-xl bg-[#001020] border border-cyan-900/60 flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-emerald-950/70 border border-emerald-700/40 text-emerald-400 shrink-0 mt-0.5">
+              <div className="p-3.5 rounded-2xl bg-black/40 border border-white/10 flex items-start gap-3 relative z-10">
+                <div className="p-2 rounded-xl bg-emerald-950/70 border border-emerald-700/40 text-emerald-400 shrink-0 mt-0.5">
                   <ArrowUpRight className="w-4 h-4" />
                 </div>
                 <div className="text-xs space-y-1">
-                  <div className="font-bold text-white">Acreditación Automática desde Tareas</div>
+                  <div className="font-anton tracking-wider uppercase text-white">Acreditación Automática desde Tareas</div>
                   <p className="text-slate-400 leading-relaxed">
                     Las recompensas de tareas completadas se suman automáticamente al balance de tesorería.
                   </p>
@@ -1547,29 +1569,30 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             )}
 
             {/* 1. PUENTE DIRECTO TABLET ↔ TELÉFONO */}
-            <div className="bg-[#00152b] p-5 sm:p-6 rounded-2xl border border-cyan-500/40 space-y-4 shadow-[0_0_20px_rgba(0,240,255,0.1)]">
-              <div className="flex items-center justify-between gap-3 border-b border-slate-800 pb-3">
+            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-xl p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
+              <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-3 relative z-10">
                 <div className="flex items-center gap-2">
                   <Cloud className="w-4 h-4 text-cyan-400 shrink-0" />
-                  <h3 className="text-xs font-black text-white uppercase tracking-widest">
+                  <h3 className="text-xs font-anton text-white uppercase tracking-wider">
                     Puente Directo Tablet ↔ Teléfono
                   </h3>
                 </div>
-                <span className="text-[10px] font-mono font-bold text-cyan-300 bg-cyan-950/80 px-2 py-0.5 rounded border border-cyan-700/60">
+                <span className="text-[10px] font-mono font-bold text-cyan-300 bg-cyan-950/80 px-2.5 py-0.5 rounded-full border border-cyan-700/60">
                   SINCRONIZACIÓN RÁPIDA
                 </span>
               </div>
 
-              <p className="text-xs text-slate-300 leading-relaxed">
+              <p className="text-xs text-slate-300 leading-relaxed relative z-10">
                 Sube tus datos desde un dispositivo y descárgalos en el otro para sincronizar tu progreso al instante.
               </p>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 relative z-10">
                 <button
                   type="button"
                   onClick={handleForceSync}
                   disabled={isForceSyncing || isPullingCloud}
-                  className="chicle-btn min-h-[44px] flex items-center justify-center gap-2 px-4 py-2.5 bg-cyan-950/90 hover:bg-cyan-900 border border-cyan-400/70 text-cyan-200 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer disabled:opacity-50 shadow-sm"
+                  className="chicle-btn min-h-[44px] flex items-center justify-center gap-2 px-4 py-2.5 bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-400/70 text-cyan-200 rounded-xl text-xs font-anton uppercase tracking-wider transition-all cursor-pointer disabled:opacity-50 shadow-sm active:scale-95"
                 >
                   <Upload className={`w-4 h-4 ${isForceSyncing ? 'animate-bounce' : ''}`} />
                   <span>{isForceSyncing ? 'Subiendo datos...' : 'Subir datos a la nube'}</span>
@@ -1578,7 +1601,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   type="button"
                   onClick={handlePullFromCloud}
                   disabled={isPullingCloud || isForceSyncing}
-                  className="chicle-btn min-h-[44px] flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-950/90 hover:bg-emerald-900 border border-emerald-400/70 text-emerald-200 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer disabled:opacity-50 shadow-sm"
+                  className="chicle-btn min-h-[44px] flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-400/70 text-emerald-200 rounded-xl text-xs font-anton uppercase tracking-wider transition-all cursor-pointer disabled:opacity-50 shadow-sm active:scale-95"
                 >
                   <Download className={`w-4 h-4 ${isPullingCloud ? 'animate-bounce' : ''}`} />
                   <span>{isPullingCloud ? 'Cargando datos...' : 'Traer datos a este equipo'}</span>
@@ -1586,7 +1609,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
 
               {cloudActionToast && (
-                <div className="p-3 rounded-xl bg-emerald-950/90 border border-emerald-500/60 text-emerald-300 text-xs font-bold flex items-center gap-2 animate-fade-in">
+                <div className="p-3 rounded-xl bg-emerald-950/90 border border-emerald-500/60 text-emerald-300 text-xs font-bold flex items-center gap-2 animate-fade-in relative z-10">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                   <span>{cloudActionToast}</span>
                 </div>
@@ -1594,9 +1617,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* 2. ESTADO DE FIRESTORE & USUARIO */}
-            <div className="bg-[#00152b] p-5 sm:p-6 rounded-2xl border border-slate-800 space-y-5">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-                <h3 className="text-sm font-black text-white flex items-center gap-2">
+            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-xl p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-5">
+              <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="flex items-center justify-between border-b border-white/10 pb-4 relative z-10">
+                <h3 className="text-sm font-anton text-white uppercase tracking-wider flex items-center gap-2">
                   <Cloud className="w-4 h-4 text-cyan-400" /> Sincronización en la Nube
                 </h3>
                 {user && (
@@ -1618,9 +1642,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
 
               {/* INFO DE USUARIO */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#001c38]/50 p-4 rounded-xl border border-blue-950">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/[0.03] p-4 rounded-2xl border border-white/10 relative z-10">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl bg-[#002244] border border-blue-900/50 flex items-center justify-center shrink-0">
+                  <div className="w-12 h-12 rounded-2xl bg-white/[0.05] border border-white/15 flex items-center justify-center shrink-0">
                     {user ? (
                       user.photoURL ? (
                         <img src={user.photoURL} alt="Avatar" className="w-12 h-12 rounded-2xl object-cover" />
@@ -1632,7 +1656,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     )}
                   </div>
                   <div>
-                    <p className="text-base font-bold text-white">
+                    <p className="text-base font-anton uppercase tracking-wider text-white">
                       {user ? (user.displayName || user.email) : 'Modo Local (Sin autenticar)'}
                     </p>
                     <p className="text-xs text-slate-400 mt-0.5">
@@ -1647,7 +1671,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   {user ? (
                     <button 
                       onClick={() => signOut()}
-                      className="chicle-btn flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-black uppercase tracking-wider transition-colors cursor-pointer"
+                      className="chicle-btn flex items-center justify-center gap-1.5 px-4 py-2 bg-white/[0.05] hover:bg-white/10 text-slate-200 rounded-xl text-xs font-anton uppercase tracking-wider border border-white/15 transition-colors cursor-pointer active:scale-95"
                     >
                       <LogOut className="w-3.5 h-3.5" />
                       <span>Salir</span>
@@ -1655,7 +1679,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   ) : (
                     <button 
                       onClick={() => signInWithGoogle()}
-                      className="chicle-btn flex items-center justify-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer"
+                      className="chicle-btn flex items-center justify-center gap-1.5 px-4 py-2 bg-cyan-400 hover:bg-cyan-300 text-black rounded-xl text-xs font-anton uppercase tracking-wider transition-all cursor-pointer shadow-[0_0_12px_rgba(0,240,255,0.4)] active:scale-95 font-bold"
                     >
                       <LogIn className="w-3.5 h-3.5" />
                       <span>Conectar Google</span>
@@ -1665,7 +1689,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
 
               {/* RESUMEN CONCISO DE PROTECCIÓN */}
-              <div className="p-3.5 rounded-xl bg-[#001224] border border-blue-900/40 text-xs text-slate-300 flex items-center justify-between gap-3">
+              <div className="p-3.5 rounded-2xl bg-black/40 border border-white/10 text-xs text-slate-300 flex items-center justify-between gap-3 relative z-10">
                 <div className="flex items-center gap-2.5">
                   <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
                   <span>Protección en tiempo real: Nivel, XP, Tareas, Hábitos, Bitácora y Tesorería.</span>
@@ -1679,24 +1703,25 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* 3. RESPALDO LOCAL JSON & CSV */}
-            <div className="bg-[#00152b] p-5 sm:p-6 rounded-2xl border border-slate-800 space-y-4">
-              <div className="flex items-start gap-3">
-                <div className="p-2.5 rounded-xl bg-[#002244] border border-cyan-700/60 text-cyan-300 shrink-0">
+            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-xl p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
+              <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="flex items-start gap-3 relative z-10">
+                <div className="p-2.5 rounded-2xl bg-white/[0.05] border border-white/15 text-cyan-300 shrink-0">
                   <HardDrive className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-black text-white">Copia de Seguridad de Partida</h4>
+                  <h4 className="text-sm font-anton uppercase tracking-wider text-white">Copia de Seguridad de Partida</h4>
                   <p className="text-xs text-slate-400 mt-0.5">
                     Exporta tus estadísticas, tareas y bitácora en archivo seguro para resguardar tu información fuera de la aplicación.
                   </p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1 relative z-10">
                 <button
                   type="button"
                   onClick={handleExportBackup}
-                  className="chicle-btn min-h-[44px] px-4 py-2.5 bg-[#002244] hover:bg-[#003366] text-cyan-300 hover:text-white font-black text-xs uppercase tracking-wider rounded-xl border border-cyan-700/60 hover:border-cyan-400 flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm"
+                  className="chicle-btn min-h-[44px] px-4 py-2.5 bg-white/[0.05] hover:bg-white/10 text-cyan-300 hover:text-white font-anton text-xs uppercase tracking-wider rounded-xl border border-white/15 hover:border-cyan-400 flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm active:scale-95"
                 >
                   <Download className="w-4 h-4 text-cyan-400" />
                   <span>Descargar Copia</span>
@@ -1705,13 +1730,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 <button
                   type="button"
                   onClick={handleExportCSV}
-                  className="chicle-btn min-h-[44px] px-4 py-2.5 bg-[#001f3f] hover:bg-[#002d5c] text-blue-300 hover:text-white font-black text-xs uppercase tracking-wider rounded-xl border border-blue-700/60 hover:border-blue-400 flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm"
+                  className="chicle-btn min-h-[44px] px-4 py-2.5 bg-white/[0.05] hover:bg-white/10 text-blue-300 hover:text-white font-anton text-xs uppercase tracking-wider rounded-xl border border-white/15 hover:border-blue-400 flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm active:scale-95"
                 >
                   <FileSpreadsheet className="w-4 h-4 text-blue-400" />
                   <span>Exportar Bitácora</span>
                 </button>
 
-                <label className="chicle-btn min-h-[44px] px-4 py-2.5 bg-[#001830] hover:bg-[#002448] text-slate-300 hover:text-cyan-200 font-black text-xs uppercase tracking-wider rounded-xl border border-slate-700 hover:border-cyan-600 flex items-center justify-center gap-2 transition-all cursor-pointer text-center">
+                <label className="chicle-btn min-h-[44px] px-4 py-2.5 bg-white/[0.05] hover:bg-white/10 text-slate-300 hover:text-white font-anton text-xs uppercase tracking-wider rounded-xl border border-white/15 hover:border-white/30 flex items-center justify-center gap-2 transition-all cursor-pointer text-center active:scale-95">
                   <Upload className="w-4 h-4 text-slate-400" />
                   <span>Restaurar Copia</span>
                   <input
@@ -1725,31 +1750,32 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* 4. PLANTILLAS DE HORARIOS */}
-            <div className="bg-[#00152b] p-5 sm:p-6 rounded-2xl border border-slate-800 space-y-4">
-              <div className="flex items-start gap-3">
-                <div className="p-2.5 rounded-xl bg-emerald-950 border border-emerald-700/60 text-emerald-400 shrink-0">
+            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-xl p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
+              <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="flex items-start gap-3 relative z-10">
+                <div className="p-2.5 rounded-2xl bg-emerald-950/80 border border-emerald-500/40 text-emerald-400 shrink-0">
                   <FileSpreadsheet className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-black text-white">Plantillas de Horarios y Hábitos (Excel / CSV)</h4>
+                  <h4 className="text-sm font-anton uppercase tracking-wider text-white">Plantillas de Horarios y Hábitos (Excel / CSV)</h4>
                   <p className="text-xs text-slate-400 mt-0.5">
                     Descarga tu plantilla, edita en Excel marcando 'X' en los días correspondientes y vuelve a subirla.
                   </p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1 relative z-10">
                 <button
                   type="button"
                   onClick={handleExportSchedule}
-                  className="chicle-btn min-h-[44px] px-4 py-2.5 bg-[#002211] hover:bg-[#00331a] text-emerald-300 hover:text-white font-black text-xs uppercase tracking-wider rounded-xl border border-emerald-700/60 hover:border-emerald-400 flex items-center justify-center gap-2 transition-all cursor-pointer"
+                  className="chicle-btn min-h-[44px] px-4 py-2.5 bg-emerald-950/60 hover:bg-emerald-900 border border-emerald-500/40 text-emerald-300 hover:text-white font-anton text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-95"
                 >
                   <Download className="w-4 h-4 text-emerald-400" />
                   <span>Bajar Horarios (CSV)</span>
                 </button>
 
-                <label className="chicle-btn min-h-[44px] px-4 py-2.5 bg-[#001810] hover:bg-[#002418] text-emerald-100/80 hover:text-emerald-200 font-black text-xs uppercase tracking-wider rounded-xl border border-slate-700 hover:border-emerald-600 flex items-center justify-center gap-2 transition-all cursor-pointer text-center">
-                  <Upload className="w-4 h-4 text-emerald-500/70" />
+                <label className="chicle-btn min-h-[44px] px-4 py-2.5 bg-emerald-950/60 hover:bg-emerald-900 border border-emerald-500/40 text-emerald-200 hover:text-white font-anton text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer text-center active:scale-95">
+                  <Upload className="w-4 h-4 text-emerald-400" />
                   <span>Subir Horarios (CSV)</span>
                   <input
                     type="file"
@@ -1765,11 +1791,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <GoogleDriveSyncCard />
 
             {/* 6. APLICACIÓN INSTALABLE PWA */}
-            <div className="bg-[#00152b] p-5 sm:p-6 rounded-2xl border border-slate-800 space-y-3">
-              <div className="flex items-center justify-between">
+            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-xl p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
+              <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="flex items-center justify-between relative z-10">
                 <div className="flex items-center gap-2">
                   <Smartphone className="w-4 h-4 text-cyan-400" />
-                  <h4 className="text-xs font-black text-white uppercase tracking-wider font-mono">
+                  <h4 className="text-xs font-anton text-white uppercase tracking-wider">
                     Aplicación Instalable PWA (Offline Ready)
                   </h4>
                 </div>
@@ -1785,7 +1812,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 )}
               </div>
 
-              <div className="bg-[#001020] border border-cyan-900/50 p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="bg-black/40 border border-white/10 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
                 <div className="space-y-1">
                   <p className="text-xs font-bold text-slate-100">
                     Instala La Solución en tu teléfono, tablet o escritorio
@@ -1807,7 +1834,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       const ok = await pwa.install();
                       if (ok) soundFX.playLevelUp();
                     }}
-                    className="chicle-btn flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-xs rounded-xl shadow-[0_0_15px_rgba(0,240,255,0.3)] transition-all cursor-pointer shrink-0"
+                    className="chicle-btn flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-anton text-xs uppercase tracking-wider rounded-xl shadow-[0_0_15px_rgba(0,240,255,0.3)] transition-all cursor-pointer shrink-0 active:scale-95"
                   >
                     <Download className="w-4 h-4" />
                     Instalar Ahora
@@ -1818,20 +1845,20 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       soundFX.playClick();
                       setShowIOSInstructions(!showIOSInstructions);
                     }}
-                    className="chicle-btn flex items-center justify-center gap-2 px-4 py-2 bg-blue-900/80 hover:bg-blue-800 text-cyan-300 border border-cyan-500/40 text-xs font-bold rounded-xl transition-all cursor-pointer shrink-0"
+                    className="chicle-btn flex items-center justify-center gap-2 px-4 py-2 bg-blue-900/80 hover:bg-blue-800 text-cyan-300 border border-cyan-500/40 text-xs font-anton uppercase tracking-wider rounded-xl transition-all cursor-pointer shrink-0 active:scale-95"
                   >
                     <Share className="w-3.5 h-3.5" />
                     Instrucciones iOS
                   </button>
                 ) : (
-                  <div className="text-[11px] font-mono text-slate-400 bg-slate-900/80 px-3 py-1.5 rounded-lg border border-slate-800 shrink-0">
+                  <div className="text-[11px] font-mono text-slate-400 bg-black/60 px-3 py-1.5 rounded-xl border border-white/10 shrink-0">
                     Usa el menú del navegador → "Agregar a pantalla de inicio"
                   </div>
                 )}
               </div>
 
               {showIOSInstructions && (
-                <div className="p-4 rounded-xl bg-slate-900/90 border border-cyan-500/40 text-xs text-slate-300 space-y-2.5 animate-in fade-in">
+                <div className="p-4 rounded-2xl bg-black/60 border border-cyan-500/40 text-xs text-slate-300 space-y-2.5 animate-in fade-in relative z-10">
                   <p className="font-bold text-cyan-300 flex items-center gap-1.5">
                     <Smartphone className="w-4 h-4" /> Pasos para instalar en Safari iOS:
                   </p>
@@ -1843,9 +1870,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 </div>
               )}
 
-              <div className="pt-3 border-t border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="pt-3 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
                 <div className="space-y-0.5">
-                  <p className="text-[11px] font-bold text-slate-300">Caché & Actualizaciones en Vivo</p>
+                  <p className="text-[11px] font-anton uppercase tracking-wider text-slate-300">Caché & Actualizaciones en Vivo</p>
                   <p className="text-[10px] text-slate-500">Si no ves los cambios más recientes o la app muestra una versión vieja en tu equipo.</p>
                 </div>
                 <button
@@ -1858,45 +1885,46 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       window.location.reload();
                     }
                   }}
-                  className="chicle-btn flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-950/60 hover:bg-cyan-900/80 border border-cyan-800/80 hover:border-cyan-400 text-[11px] font-mono text-cyan-300 transition-colors cursor-pointer shrink-0"
+                  className="chicle-btn flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.05] hover:bg-white/10 border border-white/15 hover:border-cyan-400 text-[11px] font-anton uppercase tracking-wider text-cyan-300 transition-colors cursor-pointer shrink-0 active:scale-95"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
-                  Vaciar Caché y Forzar Actualización
+                  Vaciar Caché y Actualizar
                 </button>
               </div>
             </div>
 
             {/* 6. CREDENCIALES DE IA (GEMINI) */}
-            <div className="bg-[#00152b] p-5 sm:p-6 rounded-2xl border border-cyan-500/40 space-y-4 shadow-[0_0_20px_rgba(0,240,255,0.08)]">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-xl p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
+              <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="flex items-center justify-between border-b border-white/10 pb-3 relative z-10">
                 <div className="flex items-center gap-2">
                   <Key className="w-4 h-4 text-cyan-400" />
-                  <h3 className="text-xs font-black text-white uppercase tracking-widest">
+                  <h3 className="text-xs font-anton text-white uppercase tracking-wider">
                     Clave de Inteligencia Artificial (Gemini API)
                   </h3>
                 </div>
-                <span className="text-[10px] font-mono text-cyan-300 bg-cyan-950/80 px-2 py-0.5 rounded border border-cyan-700/60 font-bold">
+                <span className="text-[10px] font-mono text-cyan-300 bg-cyan-950/80 px-2 py-0.5 rounded-full border border-cyan-700/60 font-bold">
                   LOCAL & PRIVADA
                 </span>
               </div>
 
-              <p className="text-xs text-slate-300 leading-relaxed">
+              <p className="text-xs text-slate-300 leading-relaxed relative z-10">
                 Si deseas usar tu propia cuota directa de Google Gemini en el Oráculo y Diagnóstico Neural, ingresa tu clave API. Esta clave permanece <strong>exclusivamente en tu navegador</strong> y nunca se expone en bundles públicos.
               </p>
 
-              <div className="space-y-3 pt-1">
+              <div className="space-y-3 pt-1 relative z-10">
                 <div className="relative">
                   <input
                     type={showApiKey ? 'text' : 'password'}
                     value={geminiApiKey}
                     onChange={(e) => setGeminiApiKey(e.target.value)}
                     placeholder="AIzaSy... (Opcional)"
-                    className="w-full bg-[#000d1a] border border-cyan-900/80 focus:border-cyan-400 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none font-mono"
+                    className="w-full bg-[#010810] border border-white/15 focus:border-cyan-400 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none font-mono"
                   />
                   <button
                     type="button"
                     onClick={() => setShowApiKey(!showApiKey)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-cyan-400 hover:text-cyan-300"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-cyan-400 hover:text-cyan-300 cursor-pointer"
                   >
                     {showApiKey ? 'Ocultar' : 'Ver'}
                   </button>
@@ -1916,7 +1944,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                           setApiKeyToast('Clave eliminada con éxito.');
                           setTimeout(() => setApiKeyToast(null), 3000);
                         }}
-                        className="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-red-400 bg-slate-900/60 border border-slate-800"
+                        className="px-3 py-1.5 rounded-xl text-xs font-anton uppercase text-slate-400 hover:text-red-400 bg-white/[0.05] border border-white/10 active:scale-95"
                       >
                         Limpiar
                       </button>
@@ -1924,7 +1952,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     <button
                       type="button"
                       onClick={handleSaveApiKey}
-                      className="px-4 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider bg-cyan-500 hover:bg-cyan-400 text-black transition-all shadow-[0_0_10px_rgba(0,240,255,0.3)]"
+                      className="px-4 py-1.5 rounded-xl text-xs font-anton uppercase tracking-wider bg-cyan-400 hover:bg-cyan-300 text-black transition-all shadow-[0_0_10px_rgba(0,240,255,0.4)] active:scale-95"
                     >
                       Guardar Clave
                     </button>
@@ -1941,13 +1969,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* 7. ZONA CRÍTICA */}
-            <div className="bg-[#1a0505] p-6 rounded-2xl border border-red-900/60 space-y-4">
-              <div className="flex items-start gap-3">
-                <div className="p-3 rounded-2xl bg-red-950/80 border border-red-700 text-red-400 shrink-0">
+            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#140205]/90 backdrop-blur-xl p-6 border border-red-500/30 shadow-[0_12px_35px_rgba(239,68,68,0.1),inset_0_1px_0_rgba(255,255,255,0.06)] relative overflow-hidden space-y-4">
+              <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="flex items-start gap-3 relative z-10">
+                <div className="p-3 rounded-2xl bg-red-950/80 border border-red-700/60 text-red-400 shrink-0">
                   <ShieldAlert className="w-6 h-6" />
                 </div>
                 <div>
-                  <h4 className="text-base font-black text-red-400 uppercase tracking-wider">
+                  <h4 className="text-base font-anton text-red-400 uppercase tracking-wider">
                     Reinicio Total de Partida
                   </h4>
                   <p className="text-xs text-red-300/80 mt-1 leading-relaxed">
@@ -1956,7 +1985,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 </div>
               </div>
 
-              <div className="pt-3 border-t border-red-950 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="pt-3 border-t border-red-950/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
                 <p className="text-[11px] text-red-400/60 font-mono">
                   Confirmación de seguridad activa (Protección de doble clic).
                 </p>
@@ -1970,10 +1999,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       onResetAccount();
                     }
                   }}
-                  className={`chicle-btn px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all border cursor-pointer ${
+                  className={`chicle-btn px-5 py-2.5 rounded-xl text-xs font-anton uppercase tracking-wider transition-all border cursor-pointer active:scale-95 ${
                     confirmReset 
                       ? 'bg-red-600 text-white border-red-500 animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.5)]' 
-                      : 'bg-red-950/60 text-red-400 hover:text-white hover:bg-red-700 border-red-800'
+                      : 'bg-red-950/60 text-red-400 hover:text-white hover:bg-red-700 border-red-800/80'
                   }`}
                 >
                   {confirmReset ? '¿ESTÁS SEGURO? CLIC DE NUEVO' : 'Reiniciar Cuenta'}
