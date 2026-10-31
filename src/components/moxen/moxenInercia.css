@@ -1,0 +1,132 @@
+/* =====================================================================
+   Moxen Inercia · Sci-Fi Cyberpunk Adapted Style
+   Basado en el motor de físicas de inercia, goma, skew e imán de parada
+   de Moxen Inercia (moxen.cl) optimizado para La Solución PWA.
+   ===================================================================== */
+
+:root {
+  --in-ancho: 290px;
+  --in-hueco: 20px;
+  --in-margen: clamp(1rem, 6vw, 60px);
+}
+
+@media (max-width: 640px) {
+  :root {
+    --in-ancho: 260px;
+    --in-hueco: 16px;
+    --in-margen: 16px;
+  }
+}
+
+/* ── Ventana y Pista ── */
+.in-ventana {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  touch-action: pan-y;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  outline: none;
+  padding: 12px 0 20px;
+}
+
+.in-ventana[data-arrastrando] {
+  cursor: grabbing;
+}
+
+.in-pista {
+  display: flex;
+  gap: var(--in-hueco);
+  width: max-content;
+  padding: 0 var(--in-margen);
+  will-change: transform;
+  transform-origin: 50% 50%;
+}
+
+/* ── Tarjetas ── */
+.in-tarjeta {
+  flex: none;
+  width: var(--in-ancho);
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease;
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Al arrastrar, las tarjetas ceden un poco para dar peso en mano */
+.in-ventana[data-arrastrando] .in-tarjeta {
+  transform: scale(0.975);
+}
+
+/* Capas de paralaje interna */
+.in-forma,
+.in-fondo-num {
+  will-change: translate;
+  transition: translate 0.1s linear;
+}
+
+.in-fondo-num {
+  position: absolute;
+  right: -8px;
+  top: 0px;
+  font-size: 7.5rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.05em;
+  opacity: 0.08;
+  pointer-events: none;
+  font-family: monospace;
+}
+
+/* Indicador Odómetro Rodante */
+.in-rodillo-box {
+  display: inline-flex;
+  height: 1.25em;
+  overflow: hidden;
+  vertical-align: bottom;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25em;
+}
+
+.in-rodillo-strip {
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.in-rodillo-strip span {
+  height: 1.25em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Barra de progreso de pista */
+.in-pista-barra {
+  display: block;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+
+.in-pista-barra-fill {
+  display: block;
+  height: 100%;
+  transform-origin: 0 50%;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .in-pista,
+  .in-tarjeta,
+  .in-rodillo-strip {
+    transition: none !important;
+  }
+}
