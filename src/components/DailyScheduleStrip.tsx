@@ -19,9 +19,10 @@ export const DailyScheduleStrip: React.FC<DailyScheduleStripProps> = ({
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
+    // 15s interval keeps clock accurate to the minute without 60 renders/min CPU churn
     const timer = setInterval(() => {
       setCurrentTime(new Date());
-    }, 1000);
+    }, 15000);
     return () => clearInterval(timer);
   }, []);
 

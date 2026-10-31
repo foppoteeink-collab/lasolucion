@@ -33,6 +33,8 @@ import {
   Ban,
   Apple,
   ShieldAlert,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { TaskItem, CustomHabit, HabitEnergyType } from '../../types';
 import { INITIAL_CUSTOM_HABITS } from '../../data/defaults';
@@ -575,6 +577,25 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
     (qh) => qh.completed || (qh.currentCount || 0) >= (qh.targetCount || 1)
   ).length;
 
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('taskquest_habits_collapsed') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleCollapsed = () => {
+    soundFX.playClick();
+    const next = !isCollapsed;
+    setIsCollapsed(next);
+    try {
+      localStorage.setItem('taskquest_habits_collapsed', String(next));
+    } catch {
+      // ignore
+    }
+  };
+
   return (
     <div className="scifi-glass-panel rounded-2xl p-3 sm:p-3.5 space-y-2.5 font-sans text-white">
       {/* Header with Title and Ratio Summary (Ultra-Clean, Sin contador duplicado) */}
@@ -600,40 +621,54 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
           </button>
         </div>
 
-        {quickHabits.length > 0 && (
-          <div className="text-[10.5px] font-mono text-cyan-300/90 font-bold bg-cyan-950/60 px-2 py-0.5 rounded-md border border-cyan-500/30">
-            {completedHabitsCount}/{quickHabits.length} {completedHabitsCount === 1 ? 'Completado' : 'Completados'}
-          </div>
-        )}
-      </div>
+        <div className="flex items-center gap-1.5 shrink-0 ml-auto">
+          {quickHabits.length > 0 && (
+            <div className="text-[10.5px] font-mono text-cyan-300/90 font-bold bg-cyan-950/60 px-2 py-0.5 rounded-md border border-cyan-500/30">
+              {completedHabitsCount}/{quickHabits.length} {completedHabitsCount === 1 ? 'Completado' : 'Completados'}
+            </div>
+          )}
 
-      {activatedNotice && (
-        <div className="p-2 rounded-xl bg-cyan-950/90 border border-cyan-400 text-cyan-200 text-xs font-bold flex items-center justify-between animate-in fade-in slide-in-from-top-1 shadow-[0_0_15px_rgba(0,240,255,0.3)]">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-cyan-300" />
-            <span>{activatedNotice}</span>
-          </div>
           <button
-            onClick={() => setActivatedNotice(null)}
-            className="text-cyan-400 hover:text-white text-xs px-2 py-0.5 rounded cursor-pointer"
+            type="button"
+            onClick={toggleCollapsed}
+            className="p-1 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer"
+            title={isCollapsed ? 'Desplegar hábitos' : 'Colapsar hábitos'}
+            aria-label={isCollapsed ? 'Desplegar hábitos' : 'Colapsar hábitos'}
           >
-            ✕
+            {isCollapsed ? <ChevronDown className="w-3.5 h-3.5 text-cyan-300" /> : <ChevronUp className="w-3.5 h-3.5 text-slate-400" />}
           </button>
         </div>
-      )}
+      </div>
 
-      {isRestDay && (
-        <div className="p-2.5 rounded-xl bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 text-xs font-mono flex items-center gap-2 animate-in fade-in shadow-[0_0_12px_rgba(16,185,129,0.2)]">
-          <span className="text-base">🌿</span>
-          <div className="min-w-0 flex-1 leading-tight">
-            <span className="font-bold text-white block">Día de Descanso Activo</span>
-            <span className="text-[11px] text-emerald-400">Tus hábitos y avance (Ley 21/66) están blindados hoy sin penalización.</span>
-          </div>
-        </div>
-      )}
+      {!isCollapsed && (
+        <>
+          {activatedNotice && (
+            <div className="p-2 rounded-xl bg-cyan-950/90 border border-cyan-400 text-cyan-200 text-xs font-bold flex items-center justify-between animate-in fade-in slide-in-from-top-1 shadow-[0_0_15px_rgba(0,240,255,0.3)]">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-cyan-300" />
+                <span>{activatedNotice}</span>
+              </div>
+              <button
+                onClick={() => setActivatedNotice(null)}
+                className="text-cyan-400 hover:text-white text-xs px-2 py-0.5 rounded cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+          )}
 
-      {/* Fila Horizontal de Orbes Circulares (Estilo Historias de Instagram - Fine-Line 48px) */}
-      <div className="flex items-center gap-3.5 overflow-x-auto no-scrollbar py-1 px-0.5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          {isRestDay && (
+            <div className="p-2.5 rounded-xl bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 text-xs font-mono flex items-center gap-2 animate-in fade-in shadow-[0_0_12px_rgba(16,185,129,0.2)]">
+              <span className="text-base">🌿</span>
+              <div className="min-w-0 flex-1 leading-tight">
+                <span className="font-bold text-white block">Día de Descanso Activo</span>
+                <span className="text-[11px] text-emerald-400">Tus hábitos y avance (Ley 21/66) están blindados hoy sin penalización.</span>
+              </div>
+            </div>
+          )}
+
+          {/* Fila Horizontal de Orbes Circulares (Estilo Historias de Instagram - Fine-Line 48px) */}
+          <div className="flex items-center gap-3.5 overflow-x-auto no-scrollbar py-1 px-0.5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {quickHabits.map((qh, idx) => {
           const current = qh.currentCount || 0;
           const target = qh.targetCount || 1;
@@ -836,6 +871,8 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
           </span>
         </div>
       </div>
+        </>
+      )}
 
       {/* PROTOCOLO LEY 21/66 & AURAS DE KAI MODAL (ENFOCADO EN EL HÁBITO SELECCIONADO) */}
       {selectedHabitForProtocol && (() => {

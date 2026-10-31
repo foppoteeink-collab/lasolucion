@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Zap, 
-  BookOpen, 
   Sparkles,
   Timer,
   Trophy,
@@ -20,7 +19,7 @@ interface DailyProgressWidgetProps {
   tasks: TaskItem[];
   currentDate: string;
   onOpenTemplates: () => void;
-  onOpenJournal: () => void;
+  onOpenJournal?: () => void;
   onOpenFinishDay: () => void;
   onOpenPomodoroForTask?: (taskTitle: string, category: TaskCategory) => void;
   hasClaimedToday?: boolean;
@@ -36,7 +35,6 @@ interface DailyProgressWidgetProps {
 export const DailyProgressWidget: React.FC<DailyProgressWidgetProps> = ({
   tasks,
   currentDate,
-  onOpenJournal,
   onOpenPomodoroForTask,
   hasClaimedToday,
   onClaimDailyBonus,
@@ -51,9 +49,10 @@ export const DailyProgressWidget: React.FC<DailyProgressWidgetProps> = ({
   const activeCurrencySymbol = currencySymbol || getSavedCurrencySymbol();
 
   useEffect(() => {
+    // 30s interval provides accurate timeblock tracking without draining battery
     const timer = setInterval(() => {
       setCurrentTime(new Date());
-    }, 15000);
+    }, 30000);
     return () => clearInterval(timer);
   }, []);
 
@@ -119,7 +118,7 @@ export const DailyProgressWidget: React.FC<DailyProgressWidgetProps> = ({
           </div>
         </div>
 
-        {/* Right: Horarios + XP + Journal */}
+        {/* Right: Horarios + Tesorería + XP */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 ml-auto">
           {onToggleSchedule && (
             <button
@@ -141,11 +140,6 @@ export const DailyProgressWidget: React.FC<DailyProgressWidgetProps> = ({
             </button>
           )}
 
-          <div className="hidden sm:flex px-2 py-1 rounded-lg bg-surface-card border border-cyan-400/30 text-cyan-300 text-[11px] font-mono font-bold items-center gap-1">
-            <Sparkles className="w-3 h-3 text-cyan-400" />
-            <span>+{xpEarned}/{xpTotal} XP</span>
-          </div>
-
           {enableFinance && onOpenFinance && (
             <button
               type="button"
@@ -157,7 +151,7 @@ export const DailyProgressWidget: React.FC<DailyProgressWidgetProps> = ({
                 todayFinanceBalance > 0
                   ? 'bg-emerald-950/70 hover:bg-emerald-900/70 text-emerald-300 border-emerald-500/50 shadow-[0_0_10px_rgba(16,185,129,0.3)]'
                   : todayFinanceBalance < 0
-                  ? 'bg-rose-950/70 hover:bg-rose-900/70 text-rose-300 border-rose-500/50 shadow-[0_0_10px_rgba(244,63,94,0.3)]'
+                  ? 'bg-[#fb5607]/15 hover:bg-[#fb5607]/25 text-[#ff7043] border-[#fb5607]/40 shadow-[0_0_10px_rgba(251,86,7,0.25)]'
                   : 'bg-surface-card hover:bg-emerald-950/40 text-emerald-300 hover:text-white border-emerald-500/30'
               }`}
               title="Abrir Tesorería: registrar ingreso o gasto"
@@ -173,20 +167,15 @@ export const DailyProgressWidget: React.FC<DailyProgressWidgetProps> = ({
             </button>
           )}
 
-          <button
-            type="button"
-            onClick={() => { soundFX.playClick(); onOpenJournal(); }}
-            className="px-2.5 py-1 rounded-lg bg-surface-card hover:bg-amber-950/40 text-amber-300 hover:text-white border border-amber-500/40 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
-            title="Abrir bitácora y notas"
-          >
-            <BookOpen className="w-3.5 h-3.5 text-amber-400" />
-            <span>Bitácora{notesCount > 0 ? ` (${notesCount})` : ''}</span>
-          </button>
+          <div className="hidden xs:flex sm:flex px-2 py-1 rounded-lg bg-surface-card border border-cyan-400/30 text-cyan-300 text-[11px] font-mono font-bold items-center gap-1">
+            <Sparkles className="w-3 h-3 text-cyan-400" />
+            <span>+{xpEarned}/{xpTotal} XP</span>
+          </div>
         </div>
       </div>
 
-      {/* Live Active Mission Banner (Automatic when a scheduled timeBlock is in progress right now) */}
-      {activeTask && (
+      {/* Live Active Mission Banner (Shown only when schedule timeline is closed to avoid duplicate) */}
+      {!showSchedule && activeTask && (
         <div className="flex items-center justify-between gap-2 bg-[#002244]/85 px-3 py-2 rounded-xl border border-cyan-400/50 shadow-[0_0_12px_rgba(0,240,255,0.2)] relative z-10">
           <div className="flex items-center gap-2 min-w-0">
             <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping shrink-0" />

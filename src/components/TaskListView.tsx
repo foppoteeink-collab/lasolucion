@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { motion } from 'motion/react';
 import { Moon, Sparkles, ArrowRight } from 'lucide-react';
 import { useTaskStore } from '../store/useTaskStore';
@@ -455,9 +455,11 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
     closeAndResetModal();
   };
 
-  const safeRawTasks = (tasks || []).filter((t): t is TaskItem => Boolean(t && typeof t === 'object' && t.title));
+  const safeRawTasks = useMemo(() => {
+    return (tasks || []).filter((t): t is TaskItem => Boolean(t && typeof t === 'object' && t.title));
+  }, [tasks]);
 
-  const isQuickHabitTask = (t: TaskItem) => {
+  const isQuickHabitTask = useCallback((t: TaskItem) => {
     if (!t || !t.title) return false;
     if (t.isQuickHabit || t.isTracked2166 || t.category === 'habito' || (typeof t.id === 'string' && t.id.includes('habit-'))) {
       return true;
@@ -469,34 +471,41 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
       lower.includes('agua') ||
       lower.includes('dientes')
     );
-  };
+  }, []);
 
-  const cleanTasks = deduplicateTasksForDay(safeRawTasks);
-  const timelineTasks = cleanTasks.filter((t) => t && t.title && !isQuickHabitTask(t));
-  const completedTimelineCount = timelineTasks.filter((t) => t.completed).length;
-  const pendingTimelineCount = timelineTasks.filter((t) => !t.completed).length;
-  const routineTimelineCount = timelineTasks.filter((t) => t.timeBlock && parseTimeToMinutes(t.timeBlock) < 9999).length;
+  const cleanTasks = useMemo(() => deduplicateTasksForDay(safeRawTasks), [safeRawTasks]);
 
-  const filteredTasks = timelineTasks
-    .filter((t) => {
-      if (!t || !t.title) return false;
-      if (activeFilter === 'rutina' && (!t.timeBlock || parseTimeToMinutes(t.timeBlock) === 9999)) return false;
-      if (activeFilter === 'pendientes' && t.completed) return false;
-      if (activeFilter === 'completados' && !t.completed) return false;
-      if (selectedCategoryFilter !== 'todos' && t.category !== selectedCategoryFilter) return false;
+  const timelineTasks = useMemo(() => {
+    return cleanTasks.filter((t) => t && t.title && !isQuickHabitTask(t));
+  }, [cleanTasks, isQuickHabitTask]);
 
-      if (searchTerm.trim()) {
-        const q = searchTerm.toLowerCase();
-        const matchesTitle = t.title.toLowerCase().includes(q);
-        const matchesCategory = (t.category || '').toLowerCase().includes(q);
-        const matchesNotes = t.notes?.toLowerCase().includes(q) || false;
-        if (!matchesTitle && !matchesCategory && !matchesNotes) return false;
-      }
-      return true;
-    })
-    .sort((a, b) => parseTimeToMinutes(a.timeBlock) - parseTimeToMinutes(b.timeBlock));
+  const completedTimelineCount = useMemo(() => timelineTasks.filter((t) => t.completed).length, [timelineTasks]);
+  const pendingTimelineCount = useMemo(() => timelineTasks.filter((t) => !t.completed).length, [timelineTasks]);
+  const routineTimelineCount = useMemo(() => timelineTasks.filter((t) => t.timeBlock && parseTimeToMinutes(t.timeBlock) < 9999).length, [timelineTasks]);
+  const habitsCount = useMemo(() => cleanTasks.filter(isQuickHabitTask).length, [cleanTasks, isQuickHabitTask]);
 
-  const legendaryTask = tasks.find((t) => t.isLegendaryBounty);
+  const filteredTasks = useMemo(() => {
+    return timelineTasks
+      .filter((t) => {
+        if (!t || !t.title) return false;
+        if (activeFilter === 'rutina' && (!t.timeBlock || parseTimeToMinutes(t.timeBlock) === 9999)) return false;
+        if (activeFilter === 'pendientes' && t.completed) return false;
+        if (activeFilter === 'completados' && !t.completed) return false;
+        if (selectedCategoryFilter !== 'todos' && t.category !== selectedCategoryFilter) return false;
+
+        if (searchTerm.trim()) {
+          const q = searchTerm.toLowerCase();
+          const matchesTitle = t.title.toLowerCase().includes(q);
+          const matchesCategory = (t.category || '').toLowerCase().includes(q);
+          const matchesNotes = t.notes?.toLowerCase().includes(q) || false;
+          if (!matchesTitle && !matchesCategory && !matchesNotes) return false;
+        }
+        return true;
+      })
+      .sort((a, b) => parseTimeToMinutes(a.timeBlock) - parseTimeToMinutes(b.timeBlock));
+  }, [timelineTasks, activeFilter, selectedCategoryFilter, searchTerm]);
+
+  const legendaryTask = useMemo(() => (tasks || []).find((t) => t.isLegendaryBounty), [tasks]);
 
   return (
     <div className="space-y-4 font-sans tracking-wide pb-28 sm:pb-32">
@@ -542,7 +551,7 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
         counts={{
           total: timelineTasks.length,
           routine: routineTimelineCount,
-          habits: tasks.filter(isQuickHabitTask).length,
+          habits: habitsCount,
           pending: pendingTimelineCount,
           completed: completedTimelineCount,
         }}

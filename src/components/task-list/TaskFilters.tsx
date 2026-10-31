@@ -74,7 +74,7 @@ export const TaskFilters: React.FC<TaskFiltersProps> = ({
         <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] no-scrollbar">
           {[
             { id: 'todos', label: 'Todas', count: counts.total, icon: Layers },
-            { id: 'rutina', label: 'Horarios', count: counts.routine, icon: Clock },
+            { id: 'rutina', label: 'Con Hora', count: counts.routine, icon: Clock },
             { id: 'pendientes', label: 'Pendientes', count: counts.pending, icon: Hourglass },
             { id: 'completados', label: 'Hechas', count: counts.completed, icon: CheckCircle2 },
           ].map((tab) => {
