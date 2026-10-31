@@ -178,7 +178,7 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
                         <div className="flex items-center gap-1.5 text-rose-300 bg-[#020b14]/70 px-2 py-1 rounded-lg border border-rose-500/20 truncate">
                           <AlertTriangle className="w-3 h-3 shrink-0 text-rose-400" />
                           <span className="truncate">
-                            <strong className="text-white">Sombra: </strong>
+                            <strong className="text-white">Miedo: </strong>
                             {arch.fear}
                           </span>
                         </div>
