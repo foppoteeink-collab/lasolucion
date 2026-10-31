@@ -70,7 +70,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [showIOSInstructions, setShowIOSInstructions] = useState(false);
   const game = gameEngine as any;
   const cloudSync = propCloudSync || game?.cloudSync;
-  const { soundEnabled, toggleSound, themeMode, navigationMode, setNavigationMode, zenMode, toggleZenMode, systemAura, setSystemAura } = useUIStore();
+  const { soundEnabled, toggleSound, themeMode, opticMode, setOpticMode, navigationMode, setNavigationMode, zenMode, toggleZenMode, systemAura, setSystemAura } = useUIStore();
   
   const [activeSubTab, setActiveSubTab] = useState<SettingsSubTab>('preferences');
   const [currentCurrency, setCurrentCurrency] = useState<string>(getSavedCurrencySymbol);
@@ -538,28 +538,108 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 <Volume2 className="w-4 h-4" /> Atmósfera & Interfaz
               </h3>
 
-              {/* MODO TÁCTICO NOIR (BLANCO & NEGRO / MANGA E-INK) */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-[#001024] border border-cyan-500/30 shadow-[0_0_20px_rgba(0,240,255,0.12)]">
-                <div>
-                  <h4 className="text-sm font-black text-white flex items-center gap-2 mb-1">
-                    <Sun className="w-4 h-4 text-slate-300" /> Modo Táctico Noir (Blanco y Negro)
-                  </h4>
-                  <p className="text-xs text-slate-300">
-                    Alterna entre el Modo Color Aurora y el Modo Noir Monocromático (alto enfoque sin distracciones visuales).
-                  </p>
+              {/* ═══════════════════════════════════════════════════════════════ */}
+              {/* MATRIZ DE MODOS ÓPTICOS TÁCTICOS (4 SISTEMAS DE VISIÓN KAI)    */}
+              {/* ═══════════════════════════════════════════════════════════════ */}
+              <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-b from-[#001024] to-[#000a17] border border-cyan-500/40 shadow-[0_4px_30px_rgba(0,240,255,0.14)] space-y-3.5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <h4 className="text-sm font-black text-white flex items-center gap-2">
+                      <Eye className="w-4 h-4 text-cyan-400" /> Sistema Óptico Táctico (4 Modos de Visión)
+                    </h4>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      Sintoniza el espectro visual de la interfaz según tu entorno y nivel de concentración.
+                    </p>
+                  </div>
+                  <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 font-bold self-start sm:self-auto">
+                    {opticMode === 'aurora' && '🌌 Aurora Neón'}
+                    {opticMode === 'noir' && '🌑 Noir Oscuro (B&W)'}
+                    {opticMode === 'eink' && '☀️ Noir Claro (Manga B&W)'}
+                    {opticMode === 'cobalt' && '🌊 Cobalto & Zafiro'}
+                  </span>
                 </div>
-                <div className="shrink-0 flex items-center gap-2">
-                  <MoxenEclipseToggle
-                    size="md"
-                    onToggle={(isNight) => {
-                      const root = document.documentElement;
-                      if (isNight) {
-                        root.classList.remove('noir-mode');
-                      } else {
-                        root.classList.add('noir-mode');
-                      }
+
+                {/* SELECTOR SEGMENTADO RESPONSIVE DE 4 MODOS */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+                  {/* MODO 1: AURORA NEÓN */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFX.playClick();
+                      setOpticMode('aurora');
                     }}
-                  />
+                    className={`chicle-btn p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                      opticMode === 'aurora'
+                        ? 'bg-cyan-500/20 border-cyan-400 text-white shadow-[0_0_18px_rgba(0,240,255,0.35)] ring-1 ring-cyan-400'
+                        : 'bg-[#000d1c] border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
+                    }`}
+                  >
+                    <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-cyan-400 via-purple-500 to-pink-500 flex items-center justify-center text-xs shadow-sm">
+                      ✨
+                    </div>
+                    <span className="text-xs font-mono font-bold tracking-tight">Aurora Neón</span>
+                    <span className="text-[9px] font-mono text-slate-400">Color Pleno</span>
+                  </button>
+
+                  {/* MODO 2: NOIR MANGA (B&W OSCURO) */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFX.playClick();
+                      setOpticMode('noir');
+                    }}
+                    className={`chicle-btn p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                      opticMode === 'noir'
+                        ? 'bg-white/15 border-white text-white shadow-[0_0_18px_rgba(255,255,255,0.25)] ring-1 ring-white'
+                        : 'bg-[#000d1c] border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
+                    }`}
+                  >
+                    <div className="w-6 h-6 rounded-lg bg-black border border-white/40 flex items-center justify-center text-xs text-white font-mono font-black">
+                      B&W
+                    </div>
+                    <span className="text-xs font-mono font-bold tracking-tight">Noir Oscuro</span>
+                    <span className="text-[9px] font-mono text-slate-400">Manga Táctico</span>
+                  </button>
+
+                  {/* MODO 3: NOIR CLARO (MANGA B&W AL REVÉS: FONDO BLANCO & TINTA NEGRA) */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFX.playClick();
+                      setOpticMode('eink');
+                    }}
+                    className={`chicle-btn p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                      opticMode === 'eink'
+                        ? 'bg-white border-white text-black shadow-[0_0_18px_rgba(255,255,255,0.4)] ring-2 ring-white font-bold'
+                        : 'bg-[#000d1c] border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
+                    }`}
+                  >
+                    <div className="w-6 h-6 rounded-lg bg-white border border-black/40 flex items-center justify-center text-xs text-black font-mono font-black shadow-sm">
+                      B&W
+                    </div>
+                    <span className="text-xs font-mono font-bold tracking-tight">Noir Claro</span>
+                    <span className="text-[9px] font-mono text-slate-400">Manga Blanco</span>
+                  </button>
+
+                  {/* MODO 4: CYBER COBALTO (AZUL & BLANCO MONOCROMO) */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFX.playClick();
+                      setOpticMode('cobalt');
+                    }}
+                    className={`chicle-btn p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                      opticMode === 'cobalt'
+                        ? 'bg-blue-600/25 border-blue-400 text-blue-200 shadow-[0_0_18px_rgba(96,165,250,0.35)] ring-1 ring-blue-400'
+                        : 'bg-[#000d1c] border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
+                    }`}
+                  >
+                    <div className="w-6 h-6 rounded-lg bg-gradient-to-b from-blue-500 to-indigo-900 border border-blue-300 flex items-center justify-center text-xs text-white">
+                      🌊
+                    </div>
+                    <span className="text-xs font-mono font-bold tracking-tight">Cobalto Azul</span>
+                    <span className="text-[9px] font-mono text-slate-400">Zafiro Táctico</span>
+                  </button>
                 </div>
               </div>
 

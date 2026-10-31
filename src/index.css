@@ -41,14 +41,45 @@ html.text-density-compact .explainer-text {
   display: none !important;
 }
 
-/* Modo Táctico Noir (Blanco y Negro / Manga E-Ink de Alto Enfoque) */
-html.noir-mode {
-  filter: grayscale(100%) contrast(1.12) brightness(0.96) !important;
-  transition: filter 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+/* ═══════════════════════════════════════════════════════════════════════
+   MATRIZ DE MODOS ÓPTICOS TÁCTICOS (4 SISTEMAS DE VISIÓN DE CAZADOR)
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* 1. MODO AURORA (Default): Plena saturación con paleta viva de la Malla */
+html.optic-aurora {
+  filter: none !important;
+  transition: filter 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
-html.noir-mode .ec-interruptor {
-  filter: grayscale(0%) !important; /* Preserva la luna y el sol */
+/* 2. MODO NOIR DARK (Manga Oscuro / B&W Táctico): Cero distracciones, negros puros */
+html.optic-noir {
+  filter: grayscale(100%) contrast(1.15) brightness(0.96) !important;
+  transition: filter 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* 3. MODO NOIR CLARO (Manga B&W Táctico en Blanco / Dibujo sobre Papel) */
+html.optic-eink {
+  /* Fondo blanco papel limpio, escala de grises al 100%, inversión de luminancia perfecta y alto contraste de tinta */
+  filter: invert(1) hue-rotate(180deg) grayscale(100%) contrast(1.22) brightness(0.98) !important;
+  transition: filter 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* Preservar avatares, fotos, gemas y logos para que no se vean como rayos X */
+html.optic-eink img,
+html.optic-eink video,
+html.optic-eink [data-preserve-optic] {
+  filter: invert(1) hue-rotate(180deg) grayscale(0%) !important;
+}
+
+/* 4. MODO CYBER COBALTO (Azul Zafiro / Cian Abisal & Blanco): Monocromo Oceánico */
+html.optic-cobalt {
+  filter: sepia(100%) hue-rotate(170deg) saturate(320%) contrast(1.18) !important;
+  transition: filter 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* Compatibilidad retrospectiva para noir-mode */
+html.noir-mode {
+  filter: grayscale(100%) contrast(1.15) brightness(0.96) !important;
 }
 
 /* Force pure dark background everywhere and eradicate light mode remnants */

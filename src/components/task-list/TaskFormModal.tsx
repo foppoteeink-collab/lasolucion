@@ -4,6 +4,7 @@ import { X, Sparkles, Clock, Crown, Zap, Flame, ChevronDown, ChevronUp, FileText
 import { TaskCategory, HabitEnergyType } from '../../types';
 import { HABIT_ENERGY_DETAILS, detectHabitEnergy } from '../../utils/habitEnergyDetector';
 import { CATEGORY_COLORS } from '../../data/categoryColors';
+import { soundFX } from '../../utils/audio';
 
 interface TaskFormModalProps {
   isOpen: boolean;
@@ -208,28 +209,36 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[100] flex items-center justify-center p-2.5 sm:p-4 bg-black/85 backdrop-blur-md overflow-hidden">
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-2.5 sm:p-4 bg-black/85 backdrop-blur-md overflow-hidden font-sans">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
-          className={`relative w-full max-w-lg max-h-[92vh] sm:max-h-[90vh] flex flex-col rounded-2xl bg-gray-950/95 border shadow-2xl overflow-hidden transition-all ${
+          className={`relative w-full max-w-lg max-h-[92vh] sm:max-h-[90vh] flex flex-col rounded-2xl sm:rounded-3xl bg-[#030712]/95 border shadow-[0_0_50px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.15)] overflow-hidden transition-all backdrop-blur-2xl text-white ${
             activeTab === 'oracle'
               ? 'border-amber-500/40 shadow-amber-950/50'
               : isEditingHabitMode
                 ? 'border-purple-500/40 shadow-purple-950/50'
-                : 'border-cyan-500/30 shadow-cyan-950/40'
+                : 'border-cyan-500/35 shadow-cyan-950/40'
           }`}
         >
+          {/* Micrograno táctil Moxen Vidrio */}
+          <span className="vi-grano opacity-5" aria-hidden="true" />
+
+          {/* Luces de ambiente cyberpunk */}
+          <div className="absolute top-0 right-0 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent pointer-events-none" />
+
           {/* Header Fijo */}
-          <div className="shrink-0 flex items-center justify-between p-3.5 sm:p-5 pb-3 border-b border-white/5 bg-gray-950/95 relative">
+          <div className="shrink-0 flex items-center justify-between p-3.5 sm:p-5 pb-3 border-b border-white/10 bg-[#010810]/80 relative z-10">
             <div className="flex items-center gap-2.5 sm:gap-3">
-              <div className={`p-2 sm:p-2.5 rounded-xl border ${
+              <div className={`w-10 h-10 rounded-xl border flex items-center justify-center shadow-[0_0_15px_rgba(0,0,0,0.5)] shrink-0 ${
                 activeTab === 'oracle'
-                  ? 'bg-amber-500/10 border-amber-500/30 text-amber-400'
+                  ? 'bg-amber-950/60 border-amber-500/50 text-amber-300'
                   : isEditingHabitMode 
-                    ? 'bg-purple-500/10 border-purple-500/30 text-purple-400' 
-                    : 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400'
+                    ? 'bg-purple-950/60 border-purple-500/50 text-purple-300' 
+                    : 'bg-cyan-950/60 border-cyan-500/50 text-cyan-300'
               }`}>
                 {activeTab === 'oracle' ? (
                   <Sparkles className="w-5 h-5 animate-pulse" />
@@ -240,7 +249,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                 )}
               </div>
               <div>
-                <h3 className="text-base sm:text-lg font-bold text-white font-display">
+                <h3 className="text-sm sm:text-base font-anton uppercase tracking-wide text-white">
                   {editingTaskId 
                     ? (isEditingHabitMode ? 'Editar Hábito' : 'Editar Tarea')
                     : (activeTab === 'oracle'
@@ -251,7 +260,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                       )
                   }
                 </h3>
-                <p className="text-[10.5px] sm:text-xs text-gray-400">
+                <p className="text-[10.5px] sm:text-xs text-slate-400 font-mono">
                   {activeTab === 'oracle'
                     ? 'Planificador inteligente con tu compañero KAI y plantillas de rutina'
                     : isEditingHabitMode 
@@ -262,10 +271,15 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
               </div>
             </div>
             <button
-              onClick={onClose}
-              className="p-1.5 text-gray-400 hover:text-white rounded-lg hover:bg-gray-800/60 transition-colors"
+              type="button"
+              onClick={() => {
+                soundFX.playClick();
+                onClose();
+              }}
+              className="w-8 h-8 rounded-xl bg-white/[0.04] hover:bg-white/10 border border-white/10 hover:border-cyan-400/40 text-slate-400 hover:text-white flex items-center justify-center transition-all cursor-pointer shrink-0 ml-2 active:scale-95"
+              title="Cerrar modal (Esc)"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
 
@@ -420,7 +434,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                             className={`h-8 rounded-xl text-base transition-all flex items-center justify-center cursor-pointer ${
                               isSelected
                                 ? 'bg-purple-500/30 border border-purple-400 scale-105 shadow-[0_0_10px_rgba(168,85,247,0.4)]'
-                                : 'bg-gray-900/80 border border-gray-800 hover:bg-gray-800 hover:border-gray-700 opacity-80 hover:opacity-100'
+                                : 'bg-[#020712]/90 border border-white/10 hover:border-white/25 hover:bg-white/[0.04] opacity-80 hover:opacity-100'
                             }`}
                             title={`Seleccionar icono ${emoji}`}
                           >
@@ -434,7 +448,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
 
                 {/* Título (Campo Libre 100% Personalizado) */}
                 <div>
-                  <label className="block text-xs font-semibold text-gray-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
                     {isEditingHabitMode ? 'Nombre de tu Hábito (100% Personalizable)' : 'Título de la tarea'}
                   </label>
                   <input
@@ -443,14 +457,14 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                     value={newTitle}
                     onChange={(e) => setNewTitle(e.target.value)}
                     placeholder={isEditingHabitMode ? 'Ej. Dejar de fumar, Tomar agua, Gimnasio, Estudiar...' : 'Ej. Sesión de código profundo...'}
-                    className="w-full bg-gray-900 border border-gray-700 focus:border-purple-500 rounded-xl px-3.5 py-2 sm:py-2.5 text-white text-xs sm:text-sm placeholder-gray-500 focus:outline-none transition-colors"
+                    className="w-full bg-[#020712]/90 border border-white/15 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/50 rounded-xl px-3.5 py-2 sm:py-2.5 text-white text-xs sm:text-sm placeholder-slate-500 focus:outline-none transition-all shadow-inner"
                   />
                 </div>
 
                 {/* Badge de Recompensa Estimada (Modo Tarea) */}
                 {!isEditingHabitMode && (
                   <div className="px-3 py-1.5 rounded-xl bg-cyan-950/30 border border-cyan-500/20 flex items-center justify-between text-xs">
-                    <span className="text-gray-400 font-mono text-[11px]">Recompensa estimada:</span>
+                    <span className="text-slate-400 font-mono text-[11px]">Recompensa estimada:</span>
                     <span className="font-bold text-cyan-300 font-mono text-xs">
                       ⚡ +{isLegendary ? (newXp || 10) * 2 : (newXp || 10)} XP • 🪙 +{isLegendary ? (newCoins || 4) * 2 : (newCoins || 4)} Monedas
                     </span>
@@ -460,7 +474,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
 
               {/* Selector de Energía de Recompensa para Kai (2 columnas forzadas en móvil) */}
               {isEditingHabitMode && (
-                <div className="p-2 sm:p-2.5 rounded-xl bg-purple-950/40 border border-purple-500/30 space-y-1.5">
+                <div className="p-2.5 sm:p-3 rounded-2xl bg-[#08051a]/90 border border-purple-500/30 space-y-1.5 shadow-[0_0_15px_rgba(168,85,247,0.12)]">
                   <label className="block text-xs font-bold text-purple-200 flex items-center justify-between">
                     <span className="flex items-center gap-1.5">
                       <Sparkles className="w-3.5 h-3.5 text-purple-400" />
@@ -477,12 +491,12 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                           key={energyKey}
                           type="button"
                           onClick={() => handleSelectEnergy(energyKey)}
-                          className={`py-1 px-2 rounded-xl border text-left flex items-center gap-1.5 transition-all cursor-pointer min-h-[38px] ${
+                          className={`py-1.5 px-2 rounded-xl border text-left flex items-center gap-1.5 transition-all cursor-pointer min-h-[38px] ${
                             isFifthCard ? 'col-span-2 justify-center' : ''
                           } ${
                             isSelected
-                              ? `${detail.badgeColor} scale-[1.01] ring-1 ring-purple-400`
-                              : 'bg-gray-900/60 border-gray-800 text-gray-400 hover:bg-gray-800/80 hover:text-white'
+                              ? `${detail.badgeColor} scale-[1.01] ring-1 ring-purple-400 shadow-[0_0_12px_rgba(168,85,247,0.3)]`
+                              : 'bg-black/50 border-white/10 text-slate-400 hover:bg-white/[0.06] hover:text-white'
                           }`}
                         >
                           <span className="text-sm shrink-0">{detail.icon}</span>
@@ -507,7 +521,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                   <select
                     value={formFrequency}
                     onChange={(e) => setFormFrequency(e.target.value as any)}
-                    className="w-full bg-gray-900 border border-gray-700 focus:border-purple-500 rounded-xl px-2.5 py-1.5 text-white focus:outline-none text-xs h-[34px]"
+                    className="w-full bg-[#020712]/90 border border-white/15 focus:border-cyan-400 rounded-xl px-2.5 py-1.5 text-white focus:outline-none text-xs h-[34px] transition-colors"
                   >
                     <option value="daily">Todos los días</option>
                     <option value="specific_days">Días específicos</option>
@@ -515,17 +529,17 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-semibold text-gray-300 mb-1">
+                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">
                     Meta Protocolo
                   </label>
-                  <div className="grid grid-cols-2 gap-1 p-0.5 bg-gray-950/80 border border-gray-800 rounded-xl h-[34px] items-center">
+                  <div className="grid grid-cols-2 gap-1 p-0.5 bg-black/60 border border-white/10 rounded-xl h-[34px] items-center">
                     <button
                       type="button"
                       onClick={() => setTargetStreak && setTargetStreak(21)}
                       className={`h-full rounded-lg text-[11px] font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
                         (targetStreak || 21) === 21
                           ? 'bg-purple-600/80 text-white shadow-sm ring-1 ring-purple-400'
-                          : 'text-gray-400 hover:text-white'
+                          : 'text-slate-400 hover:text-white'
                       }`}
                       title="Meta de 21 días (Fase Neuroplasticidad / Desbloqueo de Aura para Kai)"
                     >
@@ -537,7 +551,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                       className={`h-full rounded-lg text-[11px] font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
                         targetStreak === 66
                           ? 'bg-amber-600/80 text-white shadow-sm ring-1 ring-amber-400'
-                          : 'text-gray-400 hover:text-white'
+                          : 'text-slate-400 hover:text-white'
                       }`}
                       title="Meta de 66 días (Fase Maestría / Automatización total & Forma Maestra)"
                     >
@@ -549,11 +563,11 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
             ) : (
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-300 mb-1.5">Categoría</label>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">Categoría</label>
                   <select
                     value={newCategory}
                     onChange={(e) => setNewCategory(e.target.value as TaskCategory)}
-                    className="w-full bg-gray-900 border border-gray-700 focus:border-purple-500 rounded-xl px-3 py-2.5 text-white focus:outline-none text-xs"
+                    className="w-full bg-[#020712]/90 border border-white/15 focus:border-cyan-400 rounded-xl px-3 py-2 text-white focus:outline-none text-xs transition-colors"
                   >
                     <option value="rutina">Rutina</option>
                     <option value="habito">Hábito / Disciplina</option>
@@ -568,11 +582,11 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-gray-300 mb-1.5">Frecuencia</label>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">Frecuencia</label>
                   <select
                     value={formFrequency}
                     onChange={(e) => setFormFrequency(e.target.value as any)}
-                    className="w-full bg-gray-900 border border-gray-700 focus:border-purple-500 rounded-xl px-3 py-2.5 text-white focus:outline-none text-xs"
+                    className="w-full bg-[#020712]/90 border border-white/15 focus:border-cyan-400 rounded-xl px-3 py-2 text-white focus:outline-none text-xs transition-colors"
                   >
                     <option value="once">Una sola vez (Hoy)</option>
                     <option value="daily">Todos los días</option>
@@ -583,8 +597,8 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
             )}
 
             {formFrequency === 'specific_days' && (
-              <div className="p-3 rounded-xl bg-gray-900/60 border border-gray-800">
-                <label className="block text-xs text-gray-400 mb-2">Seleccionar días de la semana:</label>
+              <div className="p-3 rounded-2xl bg-[#020712]/80 border border-white/10">
+                <label className="block text-xs text-slate-400 mb-2">Seleccionar días de la semana:</label>
                 <div className="flex gap-1.5 justify-between">
                   {daysOfWeek.map((day, idx) => {
                     const isSelected = formSpecificDays.includes(idx);
@@ -596,7 +610,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                         className={`w-9 h-9 rounded-lg font-mono text-xs font-bold transition-all ${
                           isSelected
                             ? 'bg-purple-500 text-black shadow-lg shadow-purple-500/20'
-                            : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                            : 'bg-white/[0.04] text-slate-400 hover:bg-white/10 hover:text-white border border-white/10'
                         }`}
                       >
                         {day}
@@ -607,10 +621,10 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
               </div>
             )}
 
-            {/* Sección Contador / Meta (Colapsada por defecto para máxima fluidez) */}
-            <div className="p-3 rounded-xl bg-gray-900/50 border border-gray-800 space-y-2.5">
+            {/* Sección Contador / Meta */}
+            <div className="p-3.5 rounded-2xl bg-[#020712]/80 border border-white/10 space-y-2.5">
               <label className="flex items-center justify-between cursor-pointer select-none">
-                <span className="text-xs font-semibold text-gray-300">¿Es un hábito con contador de meta?</span>
+                <span className="text-xs font-semibold text-slate-300">¿Es un hábito con contador de meta?</span>
                 <input
                   type="checkbox"
                   checked={isHabitType}
@@ -622,23 +636,23 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
               {isHabitType && (
                 <div className="grid grid-cols-2 gap-3 pt-1">
                   <div>
-                    <label className="block text-[11px] text-gray-400 mb-1">Meta numérica</label>
+                    <label className="block text-[11px] text-slate-400 mb-1 font-mono uppercase tracking-wider">Meta numérica</label>
                     <input
                       type="number"
                       min={1}
                       value={habitTarget}
                       onChange={(e) => setHabitTarget(parseInt(e.target.value, 10) || 1)}
-                      className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-1.5 text-white font-mono text-sm focus:border-purple-400"
+                      className="w-full bg-[#020712]/90 border border-white/15 focus:border-purple-400 rounded-xl px-3 py-1.5 text-white font-mono text-sm"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] text-gray-400 mb-1">Unidad</label>
+                    <label className="block text-[11px] text-slate-400 mb-1 font-mono uppercase tracking-wider">Unidad</label>
                     <input
                       type="text"
                       value={habitUnit}
                       onChange={(e) => setHabitUnit(e.target.value)}
                       placeholder="veces, mins, L..."
-                      className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-1.5 text-white text-sm focus:border-purple-400"
+                      className="w-full bg-[#020712]/90 border border-white/15 focus:border-purple-400 rounded-xl px-3 py-1.5 text-white text-sm"
                     />
                   </div>
                 </div>
@@ -650,7 +664,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
               <button
                 type="button"
                 onClick={() => setShowAdvanced(!showAdvanced)}
-                className="w-full py-2 px-3 rounded-xl bg-gray-900/60 hover:bg-gray-900 border border-gray-800 text-xs font-mono text-gray-400 hover:text-white flex items-center justify-between transition-colors"
+                className="w-full py-2 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-xs font-mono text-slate-400 hover:text-white flex items-center justify-between transition-colors cursor-pointer"
               >
                 <span className="flex items-center gap-1.5">
                   <Clock className="w-3.5 h-3.5 text-cyan-400" />
@@ -668,7 +682,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                 >
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-semibold text-gray-300 mb-1 flex items-center gap-1">
+                      <label className="block text-xs font-semibold text-slate-300 mb-1 flex items-center gap-1">
                         <Clock className="w-3.5 h-3.5 text-cyan-400" />
                         Hora Inicio
                       </label>
@@ -676,11 +690,11 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                         type="time"
                         value={newStartTime}
                         onChange={(e) => setNewStartTime(e.target.value)}
-                        className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-white font-mono text-sm focus:outline-none focus:border-cyan-500"
+                        className="w-full bg-[#020712]/90 border border-white/15 focus:border-cyan-400 rounded-xl px-3 py-2 text-white font-mono text-sm focus:outline-none"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-gray-300 mb-1 flex items-center gap-1">
+                      <label className="block text-xs font-semibold text-slate-300 mb-1 flex items-center gap-1">
                         <Clock className="w-3.5 h-3.5 text-cyan-400" />
                         Hora Fin
                       </label>
@@ -688,20 +702,20 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                         type="time"
                         value={newEndTime}
                         onChange={(e) => setNewEndTime(e.target.value)}
-                        className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-white font-mono text-sm focus:outline-none focus:border-cyan-500"
+                        className="w-full bg-[#020712]/90 border border-white/15 focus:border-cyan-400 rounded-xl px-3 py-2 text-white font-mono text-sm focus:outline-none"
                       />
                     </div>
                   </div>
 
                   {isEditingHabitMode && (
                     <div>
-                      <label className="block text-xs font-semibold text-gray-300 mb-1">
+                      <label className="block text-xs font-semibold text-slate-300 mb-1">
                         Categoría Manual (auto-asignada por Aura de Kai)
                       </label>
                       <select
                         value={newCategory}
                         onChange={(e) => setNewCategory(e.target.value as TaskCategory)}
-                        className="w-full bg-gray-900 border border-gray-700 focus:border-purple-500 rounded-xl px-3 py-2 text-white focus:outline-none text-xs"
+                        className="w-full bg-[#020712]/90 border border-white/15 focus:border-purple-400 rounded-xl px-3 py-2 text-white focus:outline-none text-xs"
                       >
                         <option value="rutina">Rutina</option>
                         <option value="habito">Hábito / Disciplina</option>
@@ -719,7 +733,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                   {!isEditingHabitMode && (
                     <div className="grid grid-cols-2 gap-3">
                       <label className={`p-3 rounded-xl border flex items-center gap-2 cursor-pointer transition-all ${
-                        isLegendary ? 'bg-amber-500/15 border-amber-500/50 text-amber-300' : 'bg-gray-900/40 border-gray-800 text-gray-400'
+                        isLegendary ? 'bg-amber-500/15 border-amber-500/50 text-amber-300' : 'bg-[#020712]/90 border-white/10 text-slate-400'
                       }`}>
                         <input
                           type="checkbox"
@@ -734,8 +748,8 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                   )}
 
                   <div>
-                    <label className="block text-xs font-semibold text-gray-300 mb-1 flex items-center gap-1.5">
-                      <FileText className="w-3.5 h-3.5 text-gray-400" />
+                    <label className="block text-xs font-semibold text-slate-300 mb-1 flex items-center gap-1.5">
+                      <FileText className="w-3.5 h-3.5 text-slate-400" />
                       Notas operativas (Opcional)
                     </label>
                     <textarea
@@ -743,7 +757,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                       onChange={(e) => setNewNotes(e.target.value)}
                       rows={2}
                       placeholder="Añade instrucciones o notas adicionales..."
-                      className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-white text-xs placeholder-gray-500 focus:outline-none focus:border-purple-500"
+                      className="w-full bg-[#020712]/90 border border-white/15 focus:border-purple-400 rounded-xl px-3 py-2 text-white text-xs placeholder-slate-500 focus:outline-none"
                     />
                   </div>
                 </motion.div>
@@ -753,36 +767,42 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
         )}
       </div>
 
-      {/* Sticky Actions Footer (Siempre Visible) */}
-      <div className="shrink-0 p-3 sm:p-4 bg-[#070510]/95 backdrop-blur-md border-t border-white/10 flex gap-2.5">
+      {/* Sticky Actions Footer (Ergonomía del Pulgar) */}
+      <div className="shrink-0 p-3 sm:p-4 bg-[#010810]/95 backdrop-blur-md border-t border-white/10 flex items-center gap-2.5 relative z-10">
         {activeTab === 'oracle' ? (
           <button
             type="button"
-            onClick={onClose}
-            className="w-full py-2.5 px-4 rounded-xl bg-gray-900 hover:bg-gray-800 text-gray-300 font-medium text-xs sm:text-sm transition-colors border border-gray-800 cursor-pointer"
+            onClick={() => {
+              soundFX.playClick();
+              onClose();
+            }}
+            className="w-full py-2.5 px-4 rounded-xl bg-white/[0.05] hover:bg-white/10 text-slate-300 hover:text-white font-anton uppercase text-xs tracking-wider transition-all border border-white/15 cursor-pointer active:scale-95 text-center"
           >
-            Cerrar
+            Cerrar Oráculo
           </button>
         ) : (
           <>
             <button
               type="button"
-              onClick={onClose}
-              className="flex-1 py-2.5 px-4 rounded-xl bg-gray-900 hover:bg-gray-800 text-gray-300 font-medium text-xs sm:text-sm transition-colors border border-gray-800 cursor-pointer"
+              onClick={() => {
+                soundFX.playClick();
+                onClose();
+              }}
+              className="flex-1 sm:flex-none sm:px-6 py-2.5 px-4 rounded-xl bg-white/[0.05] hover:bg-white/10 text-slate-300 hover:text-white font-anton uppercase text-xs tracking-wider transition-all border border-white/15 cursor-pointer active:scale-95 text-center"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className={`flex-1 py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-lg cursor-pointer ${
+              className={`flex-[2] py-2.5 px-4 rounded-xl font-anton uppercase tracking-wider text-xs sm:text-sm transition-all shadow-lg cursor-pointer active:scale-95 chicle-btn text-center font-bold ${
                 isEditingHabitMode
-                  ? 'bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-400 hover:to-indigo-500 text-white shadow-purple-950/50'
-                  : 'bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black shadow-cyan-500/25'
+                  ? 'bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-400 hover:to-indigo-500 text-white shadow-[0_0_20px_rgba(168,85,247,0.4)]'
+                  : 'bg-gradient-to-r from-cyan-400 via-cyan-300 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950 shadow-[0_0_20px_rgba(0,240,255,0.4)]'
               }`}
             >
               {editingTaskId 
                 ? 'Guardar Cambios' 
-                : (isEditingHabitMode ? 'Guardar Hábito' : 'Guardar Tarea')
+                : (isEditingHabitMode ? 'Guardar Hábito 21/66' : 'Crear Tarea')
               }
             </button>
           </>

@@ -74,8 +74,14 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
         mantra: stats.mantra || ""
       });
       setSyncFeedback(null);
+
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') onClose();
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
     }
-  }, [isOpen, stats]);
+  }, [isOpen, stats, onClose]);
 
   if (!isOpen) return null;
 
@@ -121,34 +127,46 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
+      className="fixed inset-0 z-[150] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-fade-in font-sans"
       onClick={onClose}
     >
       <div 
-        className="scifi-glass-panel border-2 border-cyan-400 rounded-2xl w-full max-w-lg shadow-[0_0_40px_rgba(0,240,255,0.3)] flex flex-col max-h-[90dvh] sm:max-h-[85vh] overflow-hidden text-white"
+        className="w-full max-w-lg max-h-[90dvh] flex flex-col bg-[#030712]/95 border border-cyan-500/35 rounded-2xl sm:rounded-3xl shadow-[0_0_50px_rgba(0,240,255,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] relative text-left overflow-hidden backdrop-blur-2xl text-white"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="p-4 border-b border-cyan-500/40 flex items-center justify-between bg-surface-modal shrink-0">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-cyan-950/80 border border-cyan-400 flex items-center justify-center text-cyan-300 shadow-[0_0_10px_rgba(0,240,255,0.4)]">
-              <Shield className="w-5 h-5" />
+        {/* Micrograno táctil Moxen Vidrio */}
+        <span className="vi-grano opacity-5" aria-hidden="true" />
+
+        {/* Luces de ambiente cyberpunk */}
+        <div className="absolute top-0 right-0 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent pointer-events-none" />
+
+        {/* Header Fijo */}
+        <div className="flex items-center justify-between p-4 sm:p-5 pb-3 border-b border-white/10 bg-[#010810]/80 shrink-0 relative z-10">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-950 to-[#021824] border border-cyan-400/50 flex items-center justify-center text-cyan-300 shadow-[0_0_15px_rgba(0,240,255,0.35)] shrink-0">
+              <Shield className="w-5 h-5 drop-shadow-[0_0_8px_rgba(0,240,255,0.6)]" />
             </div>
-            <div>
-              <h3 className="font-anton text-cyan-300 uppercase tracking-wide text-sm sm:text-base">
-                Ficha de Identidad & Cuenta
+            <div className="min-w-0">
+              <h3 className="font-anton text-cyan-300 uppercase tracking-wide text-sm sm:text-base truncate flex items-center gap-2">
+                <span>Ficha de Identidad & Cuenta</span>
               </h3>
-              <p className="text-[11px] text-cyan-300/80 font-mono mt-0.5">
+              <p className="text-[11px] text-cyan-300/80 font-mono mt-0.5 truncate">
                 Nv. {stats.level || 1} • <span className="text-white font-semibold">{currentRank.title}</span>
               </p>
             </div>
           </div>
           <button 
-            onClick={onClose} 
-            className="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
-            title="Cerrar"
+            type="button"
+            onClick={() => {
+              soundFX.playClick();
+              onClose();
+            }} 
+            className="w-8 h-8 rounded-xl bg-white/[0.04] hover:bg-white/10 border border-white/10 hover:border-cyan-400/40 text-slate-400 hover:text-white flex items-center justify-center transition-all cursor-pointer shrink-0 ml-2 active:scale-95"
+            title="Cerrar modal (Esc)"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
         
@@ -340,7 +358,7 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
               Tu Avatar (Emoji o Símbolo)
             </label>
             <div className="flex items-center gap-3 mb-2.5">
-              <div className="w-14 h-14 rounded-2xl bg-surface-modal border-2 border-cyan-400 flex items-center justify-center text-3xl shadow-[0_0_15px_rgba(0,240,255,0.35)] shrink-0">
+              <div className="w-14 h-14 rounded-2xl bg-[#020d18] border border-cyan-400/80 flex items-center justify-center text-3xl shadow-[0_0_15px_rgba(0,240,255,0.35)] shrink-0">
                 {editForm.avatarIcon || '👤'}
               </div>
               <div className="flex-1">
@@ -516,14 +534,26 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
 
         </div>
 
-        {/* Footer pinned */}
-        <div className="p-4 border-t border-cyan-500/40 bg-surface-modal shrink-0">
+        {/* ============================================================== */}
+        {/* PINNED STICKY FOOTER (ERGONOMÍA DEL PULGAR)                    */}
+        {/* ============================================================== */}
+        <div className="p-3 sm:p-4 border-t border-white/10 bg-[#010810]/90 shrink-0 flex items-center gap-2.5 relative z-10">
+          <button 
+            type="button"
+            onClick={() => {
+              soundFX.playClick();
+              onClose();
+            }}
+            className="flex-1 sm:flex-none sm:px-6 py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/10 border border-white/15 text-slate-300 hover:text-white font-anton uppercase text-xs tracking-wider transition-all cursor-pointer active:scale-95 text-center"
+          >
+            Volver
+          </button>
           <button 
             type="button"
             onClick={handleSave}
-            className="w-full py-3 bg-cyan-500 hover:bg-cyan-400 text-black rounded-xl font-anton uppercase tracking-wider shadow-[0_0_20px_rgba(0,240,255,0.4)] transition-all cursor-pointer active:scale-95 text-xs sm:text-sm"
+            className="flex-[2] py-2.5 px-4 bg-gradient-to-r from-cyan-400 via-cyan-300 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950 font-anton uppercase tracking-wider text-xs sm:text-sm rounded-xl shadow-[0_0_20px_rgba(0,240,255,0.4)] transition-all cursor-pointer active:scale-95 text-center chicle-btn font-bold"
           >
-            Guardar Cambios de Perfil
+            Guardar Cambios
           </button>
         </div>
       </div>

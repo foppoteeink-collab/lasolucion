@@ -27,6 +27,8 @@ export interface FloatingEffect {
   isCrit?: boolean;
 }
 
+export type OpticMode = 'aurora' | 'noir' | 'eink' | 'cobalt';
+
 export interface SystemAuraData {
   name: string;
   backgroundColor: string;
@@ -38,6 +40,7 @@ interface UIState {
   activeTab: ActiveTab;
   isTransitioning: boolean;
   themeMode: ThemeMode;
+  opticMode: OpticMode;
   navigationMode: NavigationMode;
   soundEnabled: boolean;
   screenFlash: 'damage' | 'heal' | 'buff' | null;
@@ -92,6 +95,7 @@ interface UIState {
   setNavigationMode: (mode: NavigationMode) => void;
   toggleNavigationMode: () => void;
   toggleZenMode: () => void;
+  setOpticMode: (mode: OpticMode) => void;
   setSystemAura: (aura: SystemAuraData | null) => void;
 }
 
@@ -140,6 +144,36 @@ export const syncRootTheme = (_mode?: ThemeMode) => {
   if (typeof document === 'undefined') return;
   const root = document.documentElement;
   root.classList.add('dark');
+};
+
+export const applyOpticMode = (mode: OpticMode) => {
+  if (typeof document === 'undefined') return;
+  const root = document.documentElement;
+  root.classList.remove('optic-aurora', 'optic-noir', 'optic-eink', 'optic-cobalt', 'noir-mode');
+  
+  if (mode === 'aurora') {
+    root.classList.add('optic-aurora');
+  } else if (mode === 'noir') {
+    root.classList.add('optic-noir', 'noir-mode');
+  } else if (mode === 'eink') {
+    root.classList.add('optic-eink');
+  } else if (mode === 'cobalt') {
+    root.classList.add('optic-cobalt');
+  }
+};
+
+const getSavedOpticMode = (): OpticMode => {
+  if (typeof window !== 'undefined') {
+    try {
+      const saved = localStorage.getItem('taskquest_optic_mode') as OpticMode;
+      if (saved && ['aurora', 'noir', 'eink', 'cobalt'].includes(saved)) {
+        applyOpticMode(saved);
+        return saved;
+      }
+    } catch (e) {}
+  }
+  applyOpticMode('aurora');
+  return 'aurora';
 };
 
 const getSavedTheme = (): ThemeMode => {
@@ -192,6 +226,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   activeTab: 'dashboard',
   isTransitioning: false,
   themeMode: getSavedTheme(),
+  opticMode: getSavedOpticMode(),
   navigationMode: getSavedNavMode(),
   soundEnabled: true,
   screenFlash: null,
@@ -287,6 +322,16 @@ export const useUIStore = create<UIState>((set, get) => ({
       } catch (e) {}
     }
     set({ zenMode: next });
+  },
+
+  setOpticMode: (mode) => {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('taskquest_optic_mode', mode);
+      } catch (e) {}
+    }
+    applyOpticMode(mode);
+    set({ opticMode: mode });
   },
 
   setSystemAura: (aura) => {
