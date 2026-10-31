@@ -240,13 +240,21 @@ export const HunterAwakeningModal: React.FC<HunterAwakeningModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/90 backdrop-blur-lg animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-[150] flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-md animate-fade-in font-sans">
       <div 
-        className="scifi-glass-panel border-2 border-cyan-400 rounded-3xl w-full max-w-4xl shadow-[0_0_60px_rgba(0,240,255,0.4)] flex flex-col max-h-[94dvh] sm:max-h-[90vh] overflow-hidden text-white"
+        className="w-full max-w-4xl max-h-[94dvh] sm:max-h-[90vh] flex flex-col rounded-2xl sm:rounded-3xl bg-[#030712]/95 border border-cyan-500/35 shadow-[0_0_60px_rgba(0,240,255,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] relative overflow-hidden backdrop-blur-2xl text-white text-left"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Micrograno táctil Moxen Vidrio */}
+        <span className="vi-grano opacity-5" aria-hidden="true" />
+
+        {/* Luces de ambiente cyberpunk */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent pointer-events-none" />
+
         {/* Header with Step Progress and Close Button */}
-        <div className="p-4 sm:p-5 border-b border-cyan-500/40 bg-[#04020e] shrink-0">
+        <div className="p-4 sm:p-5 border-b border-white/10 bg-[#010810]/80 shrink-0 relative z-10">
           <div className="flex items-center justify-between gap-3 mb-2">
             <div className="flex items-center gap-2.5">
               <div className="w-9 h-9 rounded-xl bg-cyan-950/80 border border-cyan-400 flex items-center justify-center shadow-[0_0_12px_rgba(0,240,255,0.4)]">
@@ -791,7 +799,7 @@ export const HunterAwakeningModal: React.FC<HunterAwakeningModalProps> = ({
           {step === 4 && (
             <div className="space-y-5 text-center py-2 animate-in fade-in zoom-in-95 duration-300">
               {/* KAI Centerpiece Showcase */}
-              <div className="inline-block p-4 sm:p-6 rounded-3xl bg-cyan-950/60 border-2 border-cyan-400 shadow-[0_0_50px_rgba(0,240,255,0.55)]">
+              <div className="inline-block p-4 sm:p-6 rounded-3xl bg-cyan-950/60 border border-cyan-400/80 shadow-[0_0_50px_rgba(0,240,255,0.45)]">
                 <div className="w-24 h-24 sm:w-28 sm:h-28 flex items-center justify-center mx-auto">
                   <KaiVectorGraphics 
                     shapeId={selectedKaiShape} 

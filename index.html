@@ -23,6 +23,28 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Russo+One&display=swap" rel="stylesheet">
 
     <script>
+      (function() {
+        var BUILD_REV = '2026.10.31-optic-system-v1';
+        try {
+          var currentRev = localStorage.getItem('app_build_rev');
+          if (currentRev !== BUILD_REV) {
+            localStorage.setItem('app_build_rev', BUILD_REV);
+            if ('caches' in window) {
+              caches.keys().then(function(keys) {
+                keys.forEach(function(k) { caches.delete(k); });
+              });
+            }
+            if ('serviceWorker' in navigator) {
+              navigator.serviceWorker.getRegistrations().then(function(regs) {
+                regs.forEach(function(r) { r.update(); });
+              });
+            }
+          }
+        } catch(e) {}
+      })();
+    </script>
+
+    <script>
       // Filter out expected/benign Vite HMR websocket reconnection notices in sandboxed dev environment only
       (function() {
         var isDevEnv = window.location.hostname === 'localhost' || 

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { X, Sparkles, Zap, Check, Target, AlertTriangle, LayoutGrid, SlidersHorizontal } from 'lucide-react';
 import { JUNG_ARCHETYPES, JungArchetype } from '../data/archetypes';
 import { soundFX } from '../utils/audio';
@@ -141,19 +141,36 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
     return idx >= 0 ? idx : 0;
   }, [currentNorm]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
+      className="fixed inset-0 z-[150] flex items-center justify-center p-2.5 sm:p-4 bg-black/85 backdrop-blur-md animate-fade-in font-sans"
       onClick={onClose}
     >
       <div
-        className="scifi-glass-panel border-2 border-cyan-400 rounded-3xl w-full max-w-4xl shadow-[0_0_50px_rgba(0,240,255,0.35)] flex flex-col max-h-[94dvh] sm:max-h-[90vh] overflow-hidden text-white"
+        className="w-full max-w-4xl max-h-[94dvh] sm:max-h-[90vh] flex flex-col rounded-2xl sm:rounded-3xl bg-[#030712]/95 border border-cyan-500/35 shadow-[0_0_50px_rgba(0,240,255,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] relative overflow-hidden backdrop-blur-2xl text-white text-left"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Micrograno táctil Moxen Vidrio */}
+        <span className="vi-grano opacity-5" aria-hidden="true" />
+
+        {/* Luces de ambiente cyberpunk */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent pointer-events-none" />
+
         {/* Header con título y switch de vista */}
-        <div className="p-3.5 sm:p-5 border-b border-cyan-500/40 flex items-center justify-between bg-[#04020e] shrink-0">
+        <div className="p-3.5 sm:p-5 border-b border-white/10 flex items-center justify-between bg-[#010810]/80 shrink-0 relative z-10">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-cyan-950/80 border border-cyan-400 flex items-center justify-center shadow-[0_0_15px_rgba(0,240,255,0.4)]">
               <Sparkles className="w-5 h-5 text-cyan-300" />
@@ -451,16 +468,20 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
           </div>
         )}
 
-        {/* Footer */}
-        <div className="p-3 sm:p-4 border-t border-cyan-500/40 bg-[#04020e] flex items-center justify-between shrink-0">
-          <p className="text-[10px] sm:text-xs text-slate-400 font-mono">
+        {/* Pinned Footer (Ergonomía del Pulgar) */}
+        <div className="p-3 sm:p-4 border-t border-white/10 bg-[#010810]/90 flex items-center justify-between shrink-0 relative z-10">
+          <p className="text-[10px] sm:text-xs text-slate-400 font-mono hidden sm:block">
             Arrastra con impulso táctil o usa las flechas para explorar los 12 arquetipos.
           </p>
           <button
-            onClick={onClose}
-            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-anton uppercase text-xs rounded-xl cursor-pointer transition-all border border-slate-600 active:scale-95"
+            type="button"
+            onClick={() => {
+              soundFX.playClick();
+              onClose();
+            }}
+            className="w-full sm:w-auto px-5 py-2.5 bg-white/[0.05] hover:bg-white/10 text-slate-300 hover:text-white font-anton uppercase text-xs rounded-xl cursor-pointer transition-all border border-white/15 active:scale-95 ml-auto"
           >
-            Cerrar
+            Volver
           </button>
         </div>
       </div>

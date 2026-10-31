@@ -61,9 +61,12 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({
       <div className="absolute bottom-1/4 left-1/2 -translate-x-1/2 w-96 h-96 bg-[#fb5607]/15 rounded-full blur-[120px] pointer-events-none" />
 
       <div 
-        className="relative w-full max-w-md max-h-[90dvh] sm:max-h-[85vh] flex flex-col rounded-[28px] bg-[#000000] border-2 border-[#d6f421] shadow-[0_0_60px_rgba(214,244,33,0.35)] text-center overflow-hidden"
+        className="relative w-full max-w-md max-h-[90dvh] sm:max-h-[85vh] flex flex-col rounded-3xl bg-[#030712]/95 border border-[#d6f421]/60 shadow-[0_0_60px_rgba(214,244,33,0.3),inset_0_1px_0_rgba(255,255,255,0.2)] text-center overflow-hidden backdrop-blur-2xl"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Micrograno táctil Moxen Vidrio */}
+        <span className="vi-grano opacity-5" aria-hidden="true" />
+
         {/* Subtle Top Neon Bar */}
         <div className="h-1.5 w-full bg-gradient-to-r from-[#9600ff] via-[#d6f421] to-[#fb5607]" />
 
@@ -72,7 +75,7 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({
           {/* Header Crown Emblem */}
           <div className="relative inline-block mt-2 mb-3">
             <div className="absolute inset-0 bg-[#d6f421] rounded-full blur-2xl opacity-40 animate-pulse"></div>
-            <div className="w-20 h-20 mx-auto rounded-full bg-black border-2 border-[#d6f421] shadow-[0_0_30px_rgba(214,244,33,0.8)] flex items-center justify-center text-4xl relative z-10">
+            <div className="w-20 h-20 mx-auto rounded-full bg-black border border-[#d6f421]/80 shadow-[0_0_30px_rgba(214,244,33,0.8)] flex items-center justify-center text-4xl relative z-10">
               <Crown className="w-10 h-10 text-[#d6f421] drop-shadow-[0_0_12px_#d6f421]" />
             </div>
           </div>

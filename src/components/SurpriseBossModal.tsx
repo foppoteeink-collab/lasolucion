@@ -66,9 +66,12 @@ export const SurpriseBossModal: React.FC<SurpriseBossModalProps> = ({
           initial={{ scale: 0.88, y: 30 }}
           animate={{ scale: 1, y: 0 }}
           exit={{ scale: 0.88, opacity: 0 }}
-          className="w-full max-w-sm sm:max-w-md bg-[#000a14] rounded-3xl border-2 border-[#d6f421] shadow-[0_0_60px_rgba(214,244,33,0.35)] overflow-hidden relative text-white"
+          className="w-full max-w-sm sm:max-w-md bg-[#030712]/95 rounded-3xl border border-[#d6f421]/60 shadow-[0_0_60px_rgba(214,244,33,0.3),inset_0_1px_0_rgba(255,255,255,0.2)] overflow-hidden relative text-white backdrop-blur-2xl"
           onClick={(e) => e.stopPropagation()}
         >
+          {/* Micrograno táctil Moxen Vidrio */}
+          <span className="vi-grano opacity-5" aria-hidden="true" />
+
           {/* Glowing Victor Bar */}
           <div className="h-2 w-full bg-gradient-to-r from-[#d6f421] via-amber-400 to-[#9600ff] animate-pulse" />
           
@@ -77,7 +80,7 @@ export const SurpriseBossModal: React.FC<SurpriseBossModalProps> = ({
             {/* Trophy Icon */}
             <div className="w-20 h-20 mb-3 relative flex items-center justify-center">
                <div className="absolute inset-0 bg-[#d6f421] rounded-full blur-xl opacity-40 animate-ping" />
-               <div className="w-16 h-16 rounded-2xl border-2 border-[#d6f421] bg-[#001420] flex items-center justify-center relative z-10 shadow-[0_0_25px_rgba(214,244,33,0.5)]">
+               <div className="w-16 h-16 rounded-2xl border border-[#d6f421]/80 bg-[#001420] flex items-center justify-center relative z-10 shadow-[0_0_25px_rgba(214,244,33,0.5)]">
                  <Trophy className="w-9 h-9 text-[#d6f421]" />
                </div>
             </div>
