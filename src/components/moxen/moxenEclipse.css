@@ -64,21 +64,47 @@
 }
 @keyframes ec-titila { 50% { opacity: .3; transform: scale(.6); } }
 
-/* el astro se mueve (eclipse.js le pone el transform); la forma se
-   estira y se aplasta; el sol recorta a la luna */
-.ec-astro { position: absolute; left: .18em; top: .18em; width: 1.64em; height: 1.64em; will-change: transform; }
-.ec-forma { position: absolute; inset: 0; transition: scale .5s var(--ec-rebote); }
-.ec-sol {
-  position: absolute; inset: 0; border-radius: 50%; overflow: hidden;
-  background: radial-gradient(circle at 36% 32%, #fff, #f6f6f6 45%, #d6d6d6);
-  box-shadow: 0 .06em .16em rgba(0, 0, 0, .3), inset -.05em -.07em .12em rgba(0, 0, 0, .14), inset .04em .05em .08em #fff;
+/* el astro se mueve con aceleración GPU fluida */
+.ec-astro { 
+  position: absolute; 
+  left: .18em; 
+  top: .18em; 
+  width: 1.64em; 
+  height: 1.64em; 
+  transition: transform 0.45s cubic-bezier(.22, 1, .36, 1);
+  will-change: transform; 
 }
-/* la luna: apagada por delante, con sus cráteres y el borde que ilumina la Tierra */
+.is-noche .ec-astro {
+  transform: translateX(2.6em);
+}
+.is-noche .ec-cielo-noche {
+  opacity: 1;
+}
+.is-noche .ec-corona {
+  opacity: 1;
+  transition: opacity 0.4s ease 0.2s;
+}
+.is-noche .ec-luna {
+  transform: translateX(0%);
+}
 .ec-luna {
-  position: absolute; inset: -1px; border-radius: 50%; transform: translateX(110%); will-change: transform;
+  position: absolute; 
+  inset: -1px; 
+  border-radius: 50%; 
+  transform: translateX(110%); 
+  transition: transform 0.45s cubic-bezier(.22, 1, .36, 1);
+  will-change: transform;
   background: radial-gradient(circle at 64% 70%, #141414, #090909 70%);
   box-shadow: inset .03em .03em .05em rgba(255, 255, 255, .07);
 }
+.ec-cielo-noche { 
+  position: absolute; 
+  inset: 0; 
+  opacity: 0; 
+  transition: opacity 0.45s ease;
+  background: radial-gradient(120% 140% at 80% 0%, #262626, transparent 60%), linear-gradient(var(--ec-noche-1), var(--ec-noche-2)); 
+}
+.ec-forma { position: absolute; inset: 0; transition: transform .3s ease; }
 .ec-luna i { position: absolute; border-radius: 50%; background: #121212; box-shadow: inset .015em .02em .03em rgba(0, 0, 0, .8), .01em .015em .01em rgba(255, 255, 255, .04); }
 .ec-luna i:nth-child(1) { left: 22%; top: 27%; width: 24%; height: 24%; }
 .ec-luna i:nth-child(2) { left: 58%; top: 50%; width: 16%; height: 16%; }

@@ -41,46 +41,14 @@ html.text-density-compact .explainer-text {
   display: none !important;
 }
 
-/* Visión Solar Diurna (Moxen Eclipse - Tema Solar Táctico Limpio) */
-html.solar-day-mode {
-  --surface-base: #f0f4f8;
-  --surface-card: rgba(255, 255, 255, 0.92);
-  --surface-modal: rgba(255, 255, 255, 0.98);
-  --color-vacio: #e2e8f0;
+/* Modo Táctico Noir (Blanco y Negro / Manga E-Ink de Alto Enfoque) */
+html.noir-mode {
+  filter: grayscale(100%) contrast(1.12) brightness(0.96) !important;
+  transition: filter 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
-html.solar-day-mode body,
-html.solar-day-mode #root,
-html.solar-day-mode #main-layout-wrapper {
-  background-color: #f0f4f8 !important;
-  color: #0f172a !important;
-}
-
-html.solar-day-mode h1,
-html.solar-day-mode h2,
-html.solar-day-mode h3,
-html.solar-day-mode h4,
-html.solar-day-mode .text-white {
-  color: #0f172a !important;
-}
-
-html.solar-day-mode .text-slate-300,
-html.solar-day-mode .text-slate-400 {
-  color: #475569 !important;
-}
-
-html.solar-day-mode .bg-\[\#00152b\],
-html.solar-day-mode .bg-\[\#001024\],
-html.solar-day-mode .bg-\[\#000d1c\],
-html.solar-day-mode .bg-\[\#010a12\]\/90,
-html.solar-day-mode .bg-\[\#010912\]\/95 {
-  background-color: #ffffff !important;
-  border-color: #cbd5e1 !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
-}
-
-html.solar-day-mode .fixed.inset-0.pointer-events-none {
-  opacity: 0.15 !important;
+html.noir-mode .ec-interruptor {
+  filter: grayscale(0%) !important; /* Preserva la luna y el sol */
 }
 
 /* Force pure dark background everywhere and eradicate light mode remnants */

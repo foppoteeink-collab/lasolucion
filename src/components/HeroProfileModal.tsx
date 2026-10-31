@@ -15,9 +15,8 @@ import {
   Compass,
   Award
 } from 'lucide-react';
-import { PlayerStats, GenderPreference } from '../types';
+import { PlayerStats } from '../types';
 import { getRankForLevel } from '../data/defaults';
-import { getArchetypeTitle } from '../data/archetypes';
 import { useAuth } from '../context/AuthContext';
 import { CloudSyncResult } from '../hooks/useCloudSync';
 import { soundFX } from '../utils/audio';
@@ -59,8 +58,7 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
     age: "" as string | number,
     mainGoal: "",
     profession: "",
-    mantra: "",
-    genderPreference: "universal" as GenderPreference,
+    mantra: ""
   });
 
   useEffect(() => {
@@ -73,8 +71,7 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
         age: stats.age ?? "",
         mainGoal: stats.mainGoal || "",
         profession: stats.profession || "",
-        mantra: stats.mantra || "",
-        genderPreference: stats.genderPreference || "universal",
+        mantra: stats.mantra || ""
       });
       setSyncFeedback(null);
     }
@@ -116,8 +113,7 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
         mainGoal: editForm.mainGoal.trim(),
         bio: editForm.bio.trim(),
         profession: editForm.profession.trim(),
-        mantra: editForm.mantra.trim(),
-        genderPreference: editForm.genderPreference
+        mantra: editForm.mantra.trim()
       }));
     }
     onClose();
@@ -475,84 +471,29 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
             />
           </div>
 
-          {/* ──────────────── SECCIÓN 4: INFORMACIÓN DEL ARQUETIPO ACTIVO & TRATAMIENTO ──────────────── */}
-          <div className="space-y-3 p-3.5 rounded-xl bg-[#020710] border border-cyan-500/20">
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
-                  Arquetipo Activo en tu Perfil:
-                </span>
-                <p className="text-xs font-anton text-cyan-300 uppercase truncate mt-0.5">
-                  {getArchetypeTitle(stats.characterClass, editForm.genderPreference)}
-                </p>
-              </div>
-              {onOpenArchetypes && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    soundFX.playClick();
-                    onClose();
-                    onOpenArchetypes();
-                  }}
-                  className="px-2.5 py-1.5 bg-indigo-950/80 hover:bg-indigo-900 border border-indigo-500/50 text-[10px] font-mono text-indigo-300 hover:text-white rounded-lg transition-all shrink-0 cursor-pointer active:scale-95"
-                >
-                  Cambiar en 12 Arquetipos →
-                </button>
-              )}
-            </div>
-
-            <div>
-              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block mb-1.5">
-                Tratamiento y Estilo de Títulos:
+          {/* ──────────────── SECCIÓN 4: INFORMACIÓN DEL ARQUETIPO ACTIVO ──────────────── */}
+          <div className="p-3 rounded-xl bg-[#020710] border border-cyan-500/20 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
+                Arquetipo Psicológico Activo:
               </span>
-              <div className="grid grid-cols-3 gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => {
-                    soundFX.playClick();
-                    setEditForm(prev => ({ ...prev, genderPreference: 'universal' }));
-                  }}
-                  className={`py-1.5 px-2 rounded-lg border text-[11px] font-mono transition-all text-center flex items-center justify-center gap-1 cursor-pointer active:scale-95 ${
-                    editForm.genderPreference === 'universal'
-                      ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 shadow-[0_0_10px_rgba(0,240,255,0.25)] font-bold'
-                      : 'bg-black/50 border-slate-800 text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  <span>✨</span>
-                  <span>Universal</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    soundFX.playClick();
-                    setEditForm(prev => ({ ...prev, genderPreference: 'feminine' }));
-                  }}
-                  className={`py-1.5 px-2 rounded-lg border text-[11px] font-mono transition-all text-center flex items-center justify-center gap-1 cursor-pointer active:scale-95 ${
-                    editForm.genderPreference === 'feminine'
-                      ? 'bg-pink-500/20 border-pink-400 text-pink-300 shadow-[0_0_10px_rgba(244,63,94,0.25)] font-bold'
-                      : 'bg-black/50 border-slate-800 text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  <span>🏹</span>
-                  <span>Femenino</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    soundFX.playClick();
-                    setEditForm(prev => ({ ...prev, genderPreference: 'masculine' }));
-                  }}
-                  className={`py-1.5 px-2 rounded-lg border text-[11px] font-mono transition-all text-center flex items-center justify-center gap-1 cursor-pointer active:scale-95 ${
-                    editForm.genderPreference === 'masculine'
-                      ? 'bg-amber-500/20 border-amber-400 text-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.25)] font-bold'
-                      : 'bg-black/50 border-slate-800 text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  <span>🗡️</span>
-                  <span>Masculino</span>
-                </button>
-              </div>
+              <p className="text-xs font-anton text-cyan-300 uppercase truncate mt-0.5">
+                {stats.characterClass || 'El Héroe'}
+              </p>
             </div>
+            {onOpenArchetypes && (
+              <button
+                type="button"
+                onClick={() => {
+                  soundFX.playClick();
+                  onClose();
+                  onOpenArchetypes();
+                }}
+                className="px-2.5 py-1.5 bg-indigo-950/80 hover:bg-indigo-900 border border-indigo-500/50 text-[10px] font-mono text-indigo-300 hover:text-white rounded-lg transition-all shrink-0 cursor-pointer active:scale-95"
+              >
+                Cambiar en 12 Arquetipos →
+              </button>
+            )}
           </div>
 
           {/* ──────────────── SECCIÓN 5: ACCIÓN ONBOARDING / DESPERTAR ──────────────── */}

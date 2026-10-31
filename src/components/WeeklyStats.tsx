@@ -44,7 +44,6 @@ import {
 } from 'lucide-react';
 import { getHabitBaseId } from '../intelligence/masteryEngine';
 import { CHARACTER_CLASSES, getRankForLevel } from '../data/defaults';
-import { getArchetypeTitle } from '../data/archetypes';
 import { soundFX } from '../utils/audio';
 import {
   ResponsiveContainer,
@@ -728,7 +727,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
                       </p>
                     )}
                     <h2 className="text-base sm:text-lg font-anton uppercase text-white tracking-wide truncate">
-                      {getArchetypeTitle(stats.characterClass, stats.genderPreference)}
+                      {stats.characterClass || 'Héroe del Sistema'}
                     </h2>
                     <div className="flex flex-wrap items-center gap-2 mt-0.5">
                       <p className="text-xs text-cyan-300/90 font-bold flex items-center gap-1">
@@ -855,7 +854,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
           {/* MOXEN TELARAÑA: Pentagonal Power Matrix of RPG Attributes */}
           <MoxenTelarana
             attributes={attributesData}
-            characterClass={getArchetypeTitle(stats.characterClass, stats.genderPreference)}
+            characterClass={stats.characterClass || 'Héroe del Sistema'}
             title="Matriz de Poder Pentagonal"
           />
 

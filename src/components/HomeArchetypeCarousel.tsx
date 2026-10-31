@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Zap, Check, ChevronDown, ChevronUp, Compass, Sparkles } from 'lucide-react';
-import { JUNG_ARCHETYPES, JungArchetype, getArchetypeTitle } from '../data/archetypes';
-import { usePlayerStore } from '../store/usePlayerStore';
+import { JUNG_ARCHETYPES, JungArchetype } from '../data/archetypes';
 import { soundFX } from '../utils/audio';
 import { triggerShockwave } from '../utils/celebration';
 import { MoxenInercia } from './moxen/MoxenInercia';
@@ -126,7 +125,6 @@ export const HomeArchetypeCarousel: React.FC<HomeArchetypeCarouselProps> = ({
   onSelectArchetype,
 }) => {
   const [isExpanded, setIsExpanded] = useState(true);
-  const genderPreference = usePlayerStore((s) => s.stats.genderPreference) || 'universal';
 
   const normalize = (str: string) =>
     str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
@@ -184,7 +182,7 @@ export const HomeArchetypeCarousel: React.FC<HomeArchetypeCarouselProps> = ({
           >
             <span className="text-sm select-none">{activeArchObj.avatar}</span>
             <span className="text-[11px] font-anton uppercase text-white tracking-wide">
-              {getArchetypeTitle(activeArchObj, genderPreference)}
+              {activeArchObj.name}
             </span>
           </div>
 
@@ -300,7 +298,7 @@ export const HomeArchetypeCarousel: React.FC<HomeArchetypeCarouselProps> = ({
 
                     {/* Nombre del Arquetipo */}
                     <h4 className="font-anton text-base sm:text-lg uppercase tracking-wider text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]">
-                      {getArchetypeTitle(arch, genderPreference)}
+                      {arch.name}
                     </h4>
 
                     {/* Compañero KAI */}

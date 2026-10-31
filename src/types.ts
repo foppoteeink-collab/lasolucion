@@ -1,7 +1,5 @@
 export type TaskCategory = 'clientes' | 'limpieza' | 'entrenamiento' | 'comida' | 'creativo' | 'habito' | 'estudio' | 'pomodoro' | 'trabajo' | 'rutina';
 
-export type GenderPreference = 'universal' | 'masculine' | 'feminine';
-
 
 
 export type PriorityLevel = 'baja' | 'media' | 'alta' | 'epica';
@@ -100,7 +98,6 @@ export interface PlayerStats {
   bio?: string;
   age?: number;
   mainGoal?: string;
-  genderPreference?: GenderPreference;
   finalizedDays?: Record<string, {
     finalizedAt: string; // ISO date string
     bonusXp: number;

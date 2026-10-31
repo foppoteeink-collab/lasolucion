@@ -1,15 +1,6 @@
-import { GenderPreference } from '../types';
-
-export interface ArchetypeGenderTitles {
-  universal: string;
-  feminine: string;
-  masculine: string;
-}
-
 export interface JungArchetype {
   id: string;
   name: string;
-  genderTitles?: ArchetypeGenderTitles;
   avatar: string;
   desire: string;
   fear: string;
@@ -32,11 +23,6 @@ export const JUNG_ARCHETYPES: JungArchetype[] = [
   {
     id: 'inocente',
     name: 'El Inocente',
-    genderTitles: {
-      universal: 'Espíritu Puro',
-      feminine: 'La Inocente',
-      masculine: 'El Inocente',
-    },
     avatar: '🕊️',
     desire: 'Vivir tranquilo, feliz y hacer las cosas en paz.',
     fear: 'El conflicto, meter la pata o perder la calma interior.',
@@ -87,12 +73,7 @@ export const JUNG_ARCHETYPES: JungArchetype[] = [
   },
   {
     id: 'huerfano',
-    name: 'El Hombre Corriente (El Huérfano)',
-    genderTitles: {
-      universal: 'Voz Comunitaria',
-      feminine: 'La Aliada',
-      masculine: 'El Aliado',
-    },
+    name: 'El Huérfano (El Aliado)',
     avatar: '🤝',
     desire: 'Sentirte parte de un grupo de confianza, encajar y tener gente leal a tu lado.',
     fear: 'Sentirte excluido, que te dejen solo o tener que aparentar lo que no eres.',
@@ -144,11 +125,6 @@ export const JUNG_ARCHETYPES: JungArchetype[] = [
   {
     id: 'heroe',
     name: 'El Héroe',
-    genderTitles: {
-      universal: 'Espíritu Heroico',
-      feminine: 'La Heroína',
-      masculine: 'El Héroe',
-    },
     avatar: '🛡️',
     desire: 'Superarte día a día, vencer las dificultades y demostrarte de qué estás hecho.',
     fear: 'Rendirte antes de tiempo, quedarte corto o sentirte incapaz frente a un reto.',
@@ -200,11 +176,6 @@ export const JUNG_ARCHETYPES: JungArchetype[] = [
   {
     id: 'cuidador',
     name: 'El Cuidador',
-    genderTitles: {
-      universal: 'Alma Protectora',
-      feminine: 'La Protectora',
-      masculine: 'El Protector',
-    },
     avatar: '💖',
     desire: 'Que los tuyos estén bien, protegidos y que nunca les falte apoyo ni cariño.',
     fear: 'Que alguien que quieres sufra por tu culpa o no haber estado ahí cuando te necesitaban.',
@@ -256,11 +227,6 @@ export const JUNG_ARCHETYPES: JungArchetype[] = [
   {
     id: 'explorador',
     name: 'El Explorador',
-    genderTitles: {
-      universal: 'Espíritu Libre',
-      feminine: 'La Exploradora',
-      masculine: 'El Explorador',
-    },
     avatar: '🧭',
     desire: 'Sentirte libre, probar cosas nuevas y salir de la rutina aburrida del día a día.',
     fear: 'La monotonía, sentirte atrapado en una jaula o conformarte con una vida mediocre.',
@@ -312,11 +278,6 @@ export const JUNG_ARCHETYPES: JungArchetype[] = [
   {
     id: 'rebelde',
     name: 'El Rebelde (El Forajido)',
-    genderTitles: {
-      universal: 'Fuerza Rebelde',
-      feminine: 'La Rebelde',
-      masculine: 'El Rebelde',
-    },
     avatar: '⚡',
     desire: 'Cambiar lo que no tiene sentido, romper moldes y hacer tu vida bajo tus propias reglas.',
     fear: 'Sentirte sumiso, conformarte con lo injusto o dejar que otros decidan por ti.',
@@ -368,11 +329,6 @@ export const JUNG_ARCHETYPES: JungArchetype[] = [
   {
     id: 'amante',
     name: 'El Amante',
-    genderTitles: {
-      universal: 'Corazón Apasionado',
-      feminine: 'La Apasionada',
-      masculine: 'El Apasionado',
-    },
     avatar: '🌹',
     desire: 'Vivir con pasión, sentirte querido y conectar de verdad con las personas que te rodean.',
     fear: 'La soledad, la frialdad en el trato o vivir una vida apagada y sin entusiasmo.',
@@ -424,11 +380,6 @@ export const JUNG_ARCHETYPES: JungArchetype[] = [
   {
     id: 'creador',
     name: 'El Creador',
-    genderTitles: {
-      universal: 'Mente Creadora',
-      feminine: 'La Creadora',
-      masculine: 'El Creador',
-    },
     avatar: '🎨',
     desire: 'Darle vida a tus ideas y construir proyectos con tu propio sello personal.',
     fear: 'Quedarte estancado sin inspiración o terminar haciendo cosas genéricas sin alma.',
@@ -480,11 +431,6 @@ export const JUNG_ARCHETYPES: JungArchetype[] = [
   {
     id: 'bufon',
     name: 'El Bufón',
-    genderTitles: {
-      universal: 'Espíritu Lúdico',
-      feminine: 'La Bufona',
-      masculine: 'El Bufón',
-    },
     avatar: '🃏',
     desire: 'Pasarla bien, reírte a carcajadas y quitarle dramatismo a las presiones diarias.',
     fear: 'El aburrimiento pesado y amargarse la vida por cosas que tienen solución.',
@@ -536,11 +482,6 @@ export const JUNG_ARCHETYPES: JungArchetype[] = [
   {
     id: 'sabio',
     name: 'El Sabio',
-    genderTitles: {
-      universal: 'Mente Sabia',
-      feminine: 'La Sabia',
-      masculine: 'El Sabio',
-    },
     avatar: '📜',
     desire: 'Entender el porqué de las cosas, aprender sin parar y tener las ideas bien claras.',
     fear: 'Estar desinformado, que te engañen con mentiras o actuar a ciegas sin reflexionar.',
@@ -592,11 +533,6 @@ export const JUNG_ARCHETYPES: JungArchetype[] = [
   {
     id: 'mago',
     name: 'El Mago',
-    genderTitles: {
-      universal: 'Mente Alquimista',
-      feminine: 'La Maga',
-      masculine: 'El Mago',
-    },
     avatar: '🔮',
     desire: 'Transformar tu realidad, cumplir tus metas y hacer que las cosas difíciles parezcan fáciles.',
     fear: 'Quedarte estancado en el mismo lugar o que una mala decisión perjudique tu rumbo.',
@@ -648,11 +584,6 @@ export const JUNG_ARCHETYPES: JungArchetype[] = [
   {
     id: 'gobernante',
     name: 'El Gobernante',
-    genderTitles: {
-      universal: 'Voz de Liderazgo',
-      feminine: 'La Líder',
-      masculine: 'El Líder',
-    },
     avatar: '👑',
     desire: 'Poner orden, tener las riendas de tu vida y construir estabilidad para ti y los tuyos.',
     fear: 'El descontrol, el caos y la falta de rumbo en las cosas que realmente importan.',
@@ -708,41 +639,15 @@ export const getArchetypeByName = (name?: string): JungArchetype => {
   const normalize = (str: string) => str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   const normInput = normalize(name);
 
-  const found = JUNG_ARCHETYPES.find((a) => {
-    if (normalize(a.name) === normInput || normalize(a.id) === normInput) return true;
-    if (a.genderTitles) {
-      if (normalize(a.genderTitles.universal) === normInput) return true;
-      if (normalize(a.genderTitles.feminine) === normInput) return true;
-      if (normalize(a.genderTitles.masculine) === normInput) return true;
-    }
-    return false;
-  });
+  const found = JUNG_ARCHETYPES.find(
+    (a) => normalize(a.name) === normInput || normalize(a.id) === normInput
+  );
   if (found) return found;
 
-  const partial = JUNG_ARCHETYPES.find((a) => {
-    if (normInput.includes(normalize(a.id)) || normalize(a.name).includes(normInput) || normInput.includes(normalize(a.name))) return true;
-    if (a.genderTitles) {
-      if (normInput.includes(normalize(a.genderTitles.universal)) || normalize(a.genderTitles.universal).includes(normInput)) return true;
-      if (normInput.includes(normalize(a.genderTitles.feminine)) || normalize(a.genderTitles.feminine).includes(normInput)) return true;
-      if (normInput.includes(normalize(a.genderTitles.masculine)) || normalize(a.genderTitles.masculine).includes(normInput)) return true;
-    }
-    return false;
-  });
+  const partial = JUNG_ARCHETYPES.find(
+    (a) => normInput.includes(normalize(a.id)) || normalize(a.name).includes(normInput) || normInput.includes(normalize(a.name))
+  );
   return partial || JUNG_ARCHETYPES[0];
-};
-
-/**
- * Retorna el título correspondiente del arquetipo según la preferencia de género del usuario
- * (universal, femenino o masculino), manteniendo la elegancia y lenguaje natural.
- */
-export const getArchetypeTitle = (
-  archetypeOrName: JungArchetype | string | undefined,
-  genderPreference: GenderPreference = 'universal'
-): string => {
-  if (!archetypeOrName) return 'Espíritu Heroico';
-  const arch = typeof archetypeOrName === 'string' ? getArchetypeByName(archetypeOrName) : archetypeOrName;
-  if (!arch.genderTitles) return arch.name;
-  return arch.genderTitles[genderPreference] || arch.genderTitles.universal || arch.name;
 };
 
 export const getDailyQuoteForArchetype = (archetype: JungArchetype, quoteIndexOffset: number = 0): string => {

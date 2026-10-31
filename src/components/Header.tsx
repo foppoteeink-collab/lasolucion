@@ -26,7 +26,6 @@ import { useUIStore } from '../store/useUIStore';
 import { getRankForLevel, getCategoryColor } from '../data/defaults';
 import { CloudSyncResult } from '../hooks/useCloudSync';
 import { ArchetypeGlyph } from './ArchetypeGlyph';
-import { getArchetypeTitle } from '../data/archetypes';
 
 interface HeaderProps {
   onOpenProfile?: () => void;
@@ -301,7 +300,7 @@ export const Header: React.FC<HeaderProps> = ({
                 {displayRankTitle}
               </span>
               <span className="text-[9px] font-mono text-cyan-400/70 truncate leading-tight mt-0.5">
-                {getArchetypeTitle(stats.characterClass, stats.genderPreference)}
+                {stats.characterClass || 'El Héroe'}
               </span>
             </div>
           </button>

@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { X, Sparkles, Zap, Check, Target, AlertTriangle, LayoutGrid, SlidersHorizontal } from 'lucide-react';
-import { JUNG_ARCHETYPES, JungArchetype, getArchetypeTitle } from '../data/archetypes';
-import { usePlayerStore } from '../store/usePlayerStore';
+import { JUNG_ARCHETYPES, JungArchetype } from '../data/archetypes';
 import { soundFX } from '../utils/audio';
 import { triggerShockwave } from '../utils/celebration';
 import { MoxenInercia } from './moxen/MoxenInercia';
@@ -130,7 +129,6 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
   onSelectArchetype,
 }) => {
   const [viewMode, setViewMode] = useState<'carousel' | 'grid'>('carousel');
-  const genderPreference = usePlayerStore((s) => s.stats.genderPreference) || 'universal';
 
   const normalize = (str: string) =>
     str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
@@ -301,7 +299,7 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
                       </div>
 
                       <h4 className="font-anton text-base sm:text-lg uppercase tracking-wider text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]">
-                        {getArchetypeTitle(arch, genderPreference)}
+                        {arch.name}
                       </h4>
                       <span className="text-[10px] font-mono uppercase tracking-wider text-slate-300/80 mt-0.5 font-medium flex items-center gap-1">
                         <span>{arch.companion?.icon}</span>
@@ -381,7 +379,7 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
                           </span>
                           <div>
                             <h4 className="font-anton text-sm sm:text-base uppercase tracking-wider text-white">
-                              {getArchetypeTitle(arch, genderPreference)}
+                              {arch.name}
                             </h4>
                             <span className="text-[10px] font-mono text-cyan-300 uppercase tracking-wider font-semibold">
                               KAI: {arch.companion?.title} {arch.companion?.icon}
