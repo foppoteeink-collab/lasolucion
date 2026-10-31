@@ -1,18 +1,20 @@
 /* =====================================================================
    Moxen Inercia · Fidelidad Exacta al Motor Original Moxen
+   Mejoras estéticas: máscara de desvanecimiento en bordes, proporciones
+   perfeccionadas y elevación de profundidad 3D.
    ===================================================================== */
 
 :root {
-  --in-ancho: 280px;
-  --in-hueco: 18px;
-  --in-margen: clamp(1rem, 5vw, 40px);
+  --in-ancho: 285px;
+  --in-hueco: 20px;
+  --in-margen: clamp(1.25rem, 6vw, 48px);
 }
 
 @media (max-width: 640px) {
   :root {
-    --in-ancho: 245px;
-    --in-hueco: 14px;
-    --in-margen: 16px;
+    --in-ancho: 255px;
+    --in-hueco: 15px;
+    --in-margen: 18px;
   }
 }
 
@@ -26,7 +28,10 @@
   user-select: none;
   -webkit-user-select: none;
   outline: none;
-  padding: 8px 0 16px;
+  padding: 10px 0 18px;
+  /* Máscara de desvanecimiento cinematográfica en los bordes izquierdo y derecho */
+  mask-image: linear-gradient(to right, transparent 0%, black 4%, black 96%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 4%, black 96%, transparent 100%);
 }
 
 .in-ventana[data-arrastrando] {
@@ -46,10 +51,10 @@
 .in-tarjeta {
   flex: none;
   width: var(--in-ancho);
-  height: 340px;
+  height: 360px;
   transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
   position: relative;
-  border-radius: 22px;
+  border-radius: 26px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -59,11 +64,11 @@
 
 @media (max-width: 640px) {
   .in-tarjeta {
-    height: 315px;
+    height: 340px;
   }
 }
 
-/* Al agarrar, las tarjetas ceden un poco como en el código original de Moxen */
+/* Al agarrar, las tarjetas ceden con suavidad para dar peso físico en mano */
 .in-ventana[data-arrastrando] .in-tarjeta {
   transform: scale(0.965);
 }
@@ -76,20 +81,22 @@
 
 .in-fondo-num {
   position: absolute;
-  right: -6px;
-  top: -4px;
-  font-size: 8rem;
-  font-weight: 800;
+  right: -8px;
+  top: -6px;
+  font-size: 8.5rem;
+  font-weight: 900;
   line-height: 1;
   letter-spacing: -0.06em;
-  opacity: 0.05;
+  opacity: 0.07;
   pointer-events: none;
-  font-family: monospace;
+  font-family: serif, monospace;
 }
 
 @media (max-width: 640px) {
   .in-fondo-num {
-    font-size: 6.5rem;
+    font-size: 7rem;
+    right: -4px;
+    top: -4px;
   }
 }
 
@@ -120,9 +127,9 @@
 /* Barra de progreso de pista */
 .in-pista-barra {
   display: block;
-  height: 2px;
+  height: 2.5px;
   background: rgba(255, 255, 255, 0.12);
-  border-radius: 2px;
+  border-radius: 3px;
   overflow: hidden;
   position: relative;
 }

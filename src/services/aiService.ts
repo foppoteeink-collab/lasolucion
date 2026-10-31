@@ -9,8 +9,6 @@ export function getEffectiveGeminiApiKey(): string | null {
     const custom = window.localStorage.getItem('lasolucion_gemini_api_key');
     if (custom && custom.trim()) return custom.trim();
   }
-  const envKey = (import.meta as any).env?.VITE_GEMINI_API_KEY || (import.meta as any).env?.GEMINI_API_KEY;
-  if (envKey && String(envKey).trim()) return String(envKey).trim();
   return null;
 }
 

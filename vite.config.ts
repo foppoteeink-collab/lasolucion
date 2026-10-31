@@ -19,11 +19,29 @@ export default defineConfig(() => {
           skipWaiting: true,
           clientsClaim: true,
           globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff2}'],
+          globIgnores: [
+            '**/vendor-charts-*.js',
+            '**/SettingsView-*.js',
+            '**/WeeklyStats-*.js',
+            '**/OracleModal-*.js',
+            '**/JournalView-*.js',
+            '**/HunterAwakeningModal-*.js',
+            '**/FinanceDashboard-*.js',
+          ],
           // Importar el handler personalizado de notificationclick
           importScripts: ['sw-notifications.js'],
           // Inyectar código de manejo de notificationclick en el SW generado
           // Cuando el usuario toca una notificación push, se enfoca o abre la app
           runtimeCaching: [
+            {
+              urlPattern: /assets\/(vendor-charts|SettingsView|WeeklyStats|OracleModal|JournalView|HunterAwakeningModal|FinanceDashboard)-.*\.js$/,
+              handler: 'StaleWhileRevalidate',
+              options: {
+                cacheName: 'lazy-chunks-cache',
+                expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 30 },
+                cacheableResponse: { statuses: [0, 200] },
+              },
+            },
             {
               urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
               handler: 'CacheFirst',

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { simplex3 } from '../utils/perlinNoise';
+import { useUIStore } from '../store/useUIStore';
 
 interface Particle {
   x: number;
@@ -26,8 +27,17 @@ const BRAND_COLORS = [
 
 export const QuantumNoiseCanvas: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const zenMode = useUIStore(s => s.zenMode);
 
   useEffect(() => {
+    // Si el usuario activa el Modo Zen / Ahorro de Batería, suspendemos el canvas por completo
+    if (zenMode) return;
+
+    // Detectar si el usuario prefiere movimiento reducido en el sistema
+    const prefersReducedMotion = typeof window !== 'undefined' && 
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) return;
+
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -38,7 +48,9 @@ export const QuantumNoiseCanvas: React.FC = () => {
     let width = 0;
     let height = 0;
     let particles: Particle[] = [];
-    let isVisible = true;
+    let isVisible = !document.hidden;
+    let isScrolling = false;
+    let scrollTimeout: any = null;
     let time = 0;
 
     // Mouse / touch subtle perturbation
@@ -62,21 +74,30 @@ export const QuantumNoiseCanvas: React.FC = () => {
       mouse.active = false;
     };
 
+    // Pausar actualización durante scroll activo para garantizar 60 FPS fluidos en listas
+    const handleScroll = () => {
+      isScrolling = true;
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        isScrolling = false;
+      }, 120);
+    };
+
     const createParticle = (initRandom = false): Particle => {
       const x = initRandom ? Math.random() * width : (Math.random() < 0.5 ? 0 : Math.random() * width);
       const y = initRandom ? Math.random() * height : (Math.random() < 0.5 ? 0 : Math.random() * height);
       const color = BRAND_COLORS[Math.floor(Math.random() * BRAND_COLORS.length)];
-      const maxLife = 200 + Math.random() * 300;
+      const maxLife = 220 + Math.random() * 280;
 
       return {
         x,
         y,
         prevX: x,
         prevY: y,
-        speed: 0.45 + Math.random() * 0.75, // Movimiento sutil y relajante
-        size: color === '#d6f421' ? 1.2 : 1.5 + Math.random() * 0.9,
+        speed: 0.4 + Math.random() * 0.6,
+        size: color === '#d6f421' ? 1.2 : 1.4 + Math.random() * 0.8,
         color,
-        baseAlpha: 0.18 + Math.random() * 0.22, // Muy sutil para no ensuciar
+        baseAlpha: 0.16 + Math.random() * 0.18,
         currentAlpha: 0,
         life: initRandom ? Math.random() * maxLife : 0,
         maxLife,
@@ -85,7 +106,7 @@ export const QuantumNoiseCanvas: React.FC = () => {
 
     const resize = () => {
       if (!canvas) return;
-      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.25); // Limitado a 1.25 para no saturar memoria GPU
       width = window.innerWidth;
       height = window.innerHeight;
 
@@ -96,8 +117,8 @@ export const QuantumNoiseCanvas: React.FC = () => {
 
       ctx.scale(dpr, dpr);
 
-      // Adaptative count: ~70 en mobile, ~130 en desktop (eficiente y limpio)
-      const count = width < 768 ? 65 : 125;
+      // Partículas ultra-optimizadas: 20 en mobile, 50 en desktop
+      const count = width < 768 ? 20 : 50;
       particles = Array.from({ length: count }, () => createParticle(true));
     };
 
@@ -106,11 +127,13 @@ export const QuantumNoiseCanvas: React.FC = () => {
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('touchmove', handleTouchMove, { passive: true });
     window.addEventListener('mouseleave', handleMouseLeave);
+    window.addEventListener('scroll', handleScroll, { passive: true });
 
     const onVisibilityChange = () => {
       isVisible = !document.hidden;
       if (isVisible) {
         lastTimestamp = performance.now();
+        lastFrameTime = performance.now();
         animationFrameId = requestAnimationFrame(render);
       } else {
         cancelAnimationFrame(animationFrameId);
@@ -119,31 +142,44 @@ export const QuantumNoiseCanvas: React.FC = () => {
     document.addEventListener('visibilitychange', onVisibilityChange);
 
     let lastTimestamp = performance.now();
+    let lastFrameTime = performance.now();
+    const TARGET_FRAME_MS = 33.3; // 30 FPS target (ahorro de batería del 50% vs 60/120Hz sin pérdida visual)
 
     // Render loop
     const render = (now: number) => {
+      if (!isVisible) return;
+
+      const elapsed = now - lastFrameTime;
+      if (elapsed < TARGET_FRAME_MS) {
+        animationFrameId = requestAnimationFrame(render);
+        return;
+      }
+      lastFrameTime = now - (elapsed % TARGET_FRAME_MS);
+
+      // Si el usuario está scrolleando, saltamos el cálculo para no competir con el scroll
+      if (isScrolling) {
+        animationFrameId = requestAnimationFrame(render);
+        return;
+      }
+
       const delta = Math.min((now - lastTimestamp) / 1000, 0.1);
       lastTimestamp = now;
       time += delta * 1000;
 
-      // 1. Limpieza cristalina transparente para no tapar ni ensuciar el degradado del fondo
       ctx.clearRect(0, 0, width, height);
 
-      // 2. PARTÍCULAS DE FLUJO VECTORIAL PERLIN/SIMPLEX (Puro flujo orgánico sin líneas geométricas)
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
         p.prevX = p.x;
         p.prevY = p.y;
         p.life++;
 
-        // Ciclo de vida con fade in / fade out orgánico
         const halfLife = p.maxLife / 2;
         const progress = p.life < halfLife 
           ? p.life / halfLife 
           : (p.maxLife - p.life) / halfLife;
         p.currentAlpha = Math.max(0, p.baseAlpha * progress);
 
-        // Vector de dirección derivado del Perlin / Simplex 3D
         const angle = simplex3(
           p.x * 0.0011, 
           p.y * 0.0011, 
@@ -153,14 +189,13 @@ export const QuantumNoiseCanvas: React.FC = () => {
         let vx = Math.cos(angle) * p.speed;
         let vy = Math.sin(angle) * p.speed;
 
-        // Suave influencia gravitatoria si el cursor está cerca (sutil)
         if (mouse.active) {
           const dx = mouse.x - p.x;
           const dy = mouse.y - p.y;
           const distSq = dx * dx + dy * dy;
-          if (distSq < 40000 && distSq > 400) { // dentro de 200px
+          if (distSq < 30000 && distSq > 400) {
             const dist = Math.sqrt(distSq);
-            const force = (1 - dist / 200) * 0.35;
+            const force = (1 - dist / 173) * 0.3;
             vx += (dx / dist) * force;
             vy += (dy / dist) * force;
           }
@@ -169,16 +204,15 @@ export const QuantumNoiseCanvas: React.FC = () => {
         p.x += vx;
         p.y += vy;
 
-        // Reaparición si sale de la pantalla o termina su vida
         if (p.x < -20 || p.x > width + 20 || p.y < -20 || p.y > height + 20 || p.life >= p.maxLife) {
           particles[i] = createParticle(false);
           continue;
         }
 
-        // Trazado del micro-filamento
+        // Trazado del filamento
         ctx.beginPath();
         ctx.strokeStyle = p.color;
-        ctx.globalAlpha = p.currentAlpha * 0.85;
+        ctx.globalAlpha = p.currentAlpha * 0.8;
         ctx.lineWidth = p.size;
         ctx.lineCap = 'round';
         ctx.moveTo(p.prevX, p.prevY);
@@ -189,7 +223,7 @@ export const QuantumNoiseCanvas: React.FC = () => {
         ctx.beginPath();
         ctx.fillStyle = p.color;
         ctx.globalAlpha = p.currentAlpha;
-        ctx.arc(p.x, p.y, p.size * 0.7, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, p.size * 0.65, 0, Math.PI * 2);
         ctx.fill();
       }
 
@@ -204,13 +238,17 @@ export const QuantumNoiseCanvas: React.FC = () => {
 
     return () => {
       cancelAnimationFrame(animationFrameId);
+      clearTimeout(scrollTimeout);
       window.removeEventListener('resize', resize);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('mouseleave', handleMouseLeave);
+      window.removeEventListener('scroll', handleScroll);
       document.removeEventListener('visibilitychange', onVisibilityChange);
     };
-  }, []);
+  }, [zenMode]);
+
+  if (zenMode) return null;
 
   return (
     <canvas

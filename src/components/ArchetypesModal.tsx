@@ -5,6 +5,116 @@ import { soundFX } from '../utils/audio';
 import { triggerShockwave } from '../utils/celebration';
 import { MoxenInercia } from './moxen/MoxenInercia';
 
+// Definición cromática de alta fidelidad estética para cada uno de los 12 arquetipos
+const ARCHETYPE_THEMES: Record<
+  string,
+  {
+    accent: string;
+    glow: string;
+    border: string;
+    bgGradient: string;
+    roman: string;
+    statPill: string;
+  }
+> = {
+  inocente: {
+    accent: '#f59e0b',
+    glow: 'rgba(245, 158, 11, 0.35)',
+    border: 'border-amber-500/50',
+    bgGradient: 'from-amber-500/20 via-yellow-500/5 to-transparent',
+    roman: 'I',
+    statPill: 'bg-amber-500/15 text-amber-300 border-amber-500/40',
+  },
+  huerfano: {
+    accent: '#3b82f6',
+    glow: 'rgba(59, 130, 246, 0.35)',
+    border: 'border-blue-500/50',
+    bgGradient: 'from-blue-500/20 via-indigo-500/5 to-transparent',
+    roman: 'II',
+    statPill: 'bg-blue-500/15 text-blue-300 border-blue-500/40',
+  },
+  heroe: {
+    accent: '#ef4444',
+    glow: 'rgba(239, 68, 68, 0.40)',
+    border: 'border-red-500/50',
+    bgGradient: 'from-red-500/20 via-rose-500/5 to-transparent',
+    roman: 'III',
+    statPill: 'bg-red-500/15 text-red-300 border-red-500/40',
+  },
+  cuidador: {
+    accent: '#10b981',
+    glow: 'rgba(16, 185, 129, 0.35)',
+    border: 'border-emerald-500/50',
+    bgGradient: 'from-emerald-500/20 via-teal-500/5 to-transparent',
+    roman: 'IV',
+    statPill: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40',
+  },
+  explorador: {
+    accent: '#f97316',
+    glow: 'rgba(249, 115, 22, 0.35)',
+    border: 'border-orange-500/50',
+    bgGradient: 'from-orange-500/20 via-amber-500/5 to-transparent',
+    roman: 'V',
+    statPill: 'bg-orange-500/15 text-orange-300 border-orange-500/40',
+  },
+  rebelde: {
+    accent: '#a855f7',
+    glow: 'rgba(168, 85, 247, 0.40)',
+    border: 'border-purple-500/50',
+    bgGradient: 'from-purple-500/20 via-indigo-500/5 to-transparent',
+    roman: 'VI',
+    statPill: 'bg-purple-500/15 text-purple-300 border-purple-500/40',
+  },
+  amante: {
+    accent: '#f43f5e',
+    glow: 'rgba(244, 63, 94, 0.35)',
+    border: 'border-rose-500/50',
+    bgGradient: 'from-rose-500/20 via-pink-500/5 to-transparent',
+    roman: 'VII',
+    statPill: 'bg-rose-500/15 text-rose-300 border-rose-500/40',
+  },
+  creador: {
+    accent: '#d946ef',
+    glow: 'rgba(217, 70, 239, 0.40)',
+    border: 'border-fuchsia-500/50',
+    bgGradient: 'from-fuchsia-500/20 via-purple-500/5 to-transparent',
+    roman: 'VIII',
+    statPill: 'bg-fuchsia-500/15 text-fuchsia-300 border-fuchsia-500/40',
+  },
+  bufon: {
+    accent: '#06b6d4',
+    glow: 'rgba(6, 182, 212, 0.35)',
+    border: 'border-cyan-500/50',
+    bgGradient: 'from-cyan-500/20 via-teal-500/5 to-transparent',
+    roman: 'IX',
+    statPill: 'bg-cyan-500/15 text-cyan-300 border-cyan-500/40',
+  },
+  sabio: {
+    accent: '#6366f1',
+    glow: 'rgba(99, 102, 241, 0.35)',
+    border: 'border-indigo-500/50',
+    bgGradient: 'from-indigo-500/20 via-violet-500/5 to-transparent',
+    roman: 'X',
+    statPill: 'bg-indigo-500/15 text-indigo-300 border-indigo-500/40',
+  },
+  mago: {
+    accent: '#8b5cf6',
+    glow: 'rgba(139, 92, 246, 0.40)',
+    border: 'border-violet-500/50',
+    bgGradient: 'from-violet-500/20 via-purple-500/5 to-transparent',
+    roman: 'XI',
+    statPill: 'bg-violet-500/15 text-violet-300 border-violet-500/40',
+  },
+  gobernante: {
+    accent: '#eab308',
+    glow: 'rgba(234, 179, 8, 0.35)',
+    border: 'border-yellow-500/50',
+    bgGradient: 'from-yellow-500/20 via-amber-500/5 to-transparent',
+    roman: 'XII',
+    statPill: 'bg-yellow-500/15 text-yellow-300 border-yellow-500/40',
+  },
+};
+
 interface ArchetypesModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -120,58 +230,104 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
                 const isSelected =
                   currentNorm === normalize(arch.name) || currentNorm === normalize(arch.id);
                 const cardNum = index + 1 < 10 ? `0${index + 1}` : `${index + 1}`;
+                const theme = ARCHETYPE_THEMES[arch.id] || ARCHETYPE_THEMES.heroe;
 
                 return (
                   <div
                     key={arch.id}
-                    className={`w-full h-full p-4 flex flex-col justify-between relative overflow-hidden rounded-2xl border transition-colors ${
+                    className={`relative w-full h-full p-4 sm:p-5 flex flex-col justify-between overflow-hidden rounded-[24px] border transition-all duration-300 select-none ${
                       isSelected
-                        ? 'bg-gradient-to-b from-[#0d2238] via-[#061424] to-[#020a14] border-cyan-300 shadow-[0_0_25px_rgba(0,240,255,0.25)]'
-                        : 'bg-gradient-to-b from-[#0a121e] to-[#03070d] border-cyan-500/20 hover:border-cyan-500/40'
+                        ? 'border-2 shadow-[0_0_35px_rgba(0,240,255,0.25)]'
+                        : 'border-white/10 hover:border-white/25 hover:shadow-[0_8px_25px_rgba(0,0,0,0.5)]'
                     }`}
+                    style={{
+                      backgroundColor: '#050912',
+                      borderColor: isSelected ? theme.accent : undefined,
+                    }}
                   >
-                    {/* Número para crear paralaje de fondo automáticamente */}
-                    <span className="in-num font-mono text-[11px] text-cyan-400/80 font-bold">
-                      {cardNum}
+                    {/* Luz ambiental radial superior */}
+                    <div
+                      className={`absolute inset-0 bg-gradient-to-b ${theme.bgGradient} pointer-events-none opacity-80`}
+                    />
+
+                    {/* Bisel superior */}
+                    <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+
+                    {/* Número Romano Gigante con Paralaje 3D nativa */}
+                    <span
+                      className="in-fondo-num select-none pointer-events-none transition-transform"
+                      style={{ color: theme.accent }}
+                    >
+                      {theme.roman}
                     </span>
+
+                    {/* Tag oculto para motor inercial */}
+                    <span className="in-num hidden">{theme.roman}</span>
 
                     {/* Cabecera de la Tarjeta */}
                     <div className="relative z-10 flex items-center justify-between gap-2">
-                      <span className="text-[10px] font-mono text-cyan-300/90 uppercase tracking-widest font-black bg-cyan-950/70 px-2 py-0.5 rounded-md border border-cyan-500/30">
-                        Nº {cardNum}
+                      <span className="text-[10px] font-mono tracking-widest font-black uppercase text-slate-300 bg-black/60 px-2 py-0.5 rounded-lg border border-white/10 backdrop-blur-md">
+                        {cardNum} · {theme.roman}
                       </span>
-                      <span className="text-[10px] font-mono text-amber-300 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-full font-bold shrink-0">
+                      <span
+                        className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold border backdrop-blur-md flex items-center gap-1 ${theme.statPill}`}
+                      >
+                        <span
+                          className="w-1.5 h-1.5 rounded-full"
+                          style={{ backgroundColor: theme.accent }}
+                        />
                         {arch.statBonus}
                       </span>
                     </div>
 
-                    {/* Avatar Central con paralaje */}
+                    {/* Avatar Central con paralaje (.in-forma) */}
                     <div className="relative z-10 flex flex-col items-center justify-center my-auto py-2 text-center">
-                      <div className="in-forma w-16 h-16 sm:w-18 sm:h-18 rounded-2xl bg-black/60 border border-cyan-400/40 flex items-center justify-center text-3xl sm:text-4xl shadow-[0_0_20px_rgba(0,240,255,0.2)] mb-2 select-none">
-                        {arch.avatar}
+                      <div
+                        className="in-forma relative w-20 h-20 rounded-2xl bg-gradient-to-br from-black/80 via-[#0a0f1d]/90 to-black/80 border flex items-center justify-center text-4xl shadow-[0_0_25px_rgba(0,0,0,0.8)] backdrop-blur-xl mb-2.5 transition-transform"
+                        style={{
+                          borderColor: `${theme.accent}66`,
+                          boxShadow: `0 0 25px ${theme.glow}, inset 0 1px 1px rgba(255,255,255,0.35)`,
+                        }}
+                      >
+                        <div
+                          className="absolute inset-2 rounded-xl opacity-20 pointer-events-none"
+                          style={{ backgroundColor: theme.accent }}
+                        />
+                        <span className="relative z-10 drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
+                          {arch.avatar}
+                        </span>
                       </div>
 
-                      <h4 className="font-anton text-base sm:text-lg uppercase tracking-wider text-white">
+                      <h4 className="font-anton text-base sm:text-lg uppercase tracking-wider text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]">
                         {arch.name}
                       </h4>
-                      <span className="text-[10px] font-mono text-cyan-300/80 uppercase tracking-wide mt-0.5 font-medium">
-                        {arch.companion?.title} {arch.companion?.icon}
+                      <span className="text-[10px] font-mono uppercase tracking-wider text-slate-300/80 mt-0.5 font-medium flex items-center gap-1">
+                        <span>{arch.companion?.icon}</span>
+                        <span>{arch.companion?.title}</span>
                       </span>
                     </div>
 
                     {/* Descripción: 1 frase limpia y humana */}
-                    <div className="relative z-10 mb-2">
-                      <p className="text-[11px] sm:text-xs text-slate-300 leading-snug font-sans text-center line-clamp-2 px-1">
-                        {arch.description}
+                    <div className="relative z-10 my-1 px-1">
+                      <p className="text-[11px] sm:text-xs text-slate-300/95 leading-relaxed font-sans text-center line-clamp-2 italic">
+                        "{arch.description}"
                       </p>
                     </div>
 
                     {/* Botón de Sintonización */}
-                    <div className="relative z-10 pt-1">
+                    <div className="relative z-10 pt-2 border-t border-white/10">
                       {isSelected ? (
-                        <div className="w-full py-1.5 flex items-center justify-center gap-1.5 text-xs font-mono font-bold text-cyan-300 bg-cyan-950/90 border border-cyan-400 rounded-xl shadow-[0_0_12px_rgba(0,240,255,0.3)]">
-                          <Check className="w-3.5 h-3.5 text-cyan-300" />
-                          <span>Sintonía Activa</span>
+                        <div
+                          className="w-full py-2 flex items-center justify-center gap-1.5 text-xs font-mono font-bold uppercase rounded-xl border backdrop-blur-md"
+                          style={{
+                            backgroundColor: `${theme.accent}22`,
+                            borderColor: theme.accent,
+                            color: theme.accent,
+                            boxShadow: `0 0 16px ${theme.glow}`,
+                          }}
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                          <span>Resonancia Activa</span>
                         </div>
                       ) : (
                         <button
@@ -182,10 +338,13 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
                             onSelectArchetype(arch);
                             onClose();
                           }}
-                          className="w-full py-1.5 bg-gradient-to-r from-cyan-400 to-cyan-500 hover:from-cyan-300 hover:to-cyan-400 text-black font-anton uppercase text-xs rounded-xl cursor-pointer transition-all shadow-[0_0_15px_rgba(0,240,255,0.3)] active:scale-95 flex items-center justify-center gap-1.5 font-bold"
+                          className="w-full py-2 bg-gradient-to-r from-white/10 to-white/5 hover:from-white/20 hover:to-white/10 text-white font-anton uppercase text-xs rounded-xl cursor-pointer transition-all border border-white/15 hover:border-white/30 active:scale-95 flex items-center justify-center gap-1.5 font-bold shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
+                          style={{
+                            borderColor: `${theme.accent}44`,
+                          }}
                         >
-                          <Zap className="w-3.5 h-3.5 fill-black" />
-                          <span>Sintonizar</span>
+                          <Zap className="w-3.5 h-3.5 text-cyan-300" />
+                          <span>Sintonizar Arquetipo</span>
                         </button>
                       )}
                     </div>

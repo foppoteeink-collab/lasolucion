@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Settings, Sparkles, Activity, ShieldAlert, ShieldCheck, Shield, LogOut, User, LogIn, 
   Cloud, CloudOff, Download, Upload, Database, Check, RefreshCw, 
-  HardDrive, FileSpreadsheet, Cpu, CheckCircle2,
+  HardDrive, FileSpreadsheet, Cpu, CheckCircle2, Key,
   Coins, Volume2, VolumeX, Target, Sun, Moon, Laptop, ArrowUpRight, CheckCheck,
   SlidersHorizontal, Smartphone, Share, PlusSquare, FlaskConical,
   Compass, Eye, Layout, Bell, BellOff, BellRing, Zap, Flame, Timer, Palette, ChevronLeft, Wallet, Type
@@ -115,6 +115,23 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [exportFeedback, setExportFeedback] = useState<string | null>(null);
   const [isOracleOpen, setIsOracleOpen] = useState(false);
   const [isForceSyncing, setIsForceSyncing] = useState(false);
+  const [geminiApiKey, setGeminiApiKey] = useState<string>(() => {
+    return (typeof window !== 'undefined' && localStorage.getItem('lasolucion_gemini_api_key')) || '';
+  });
+  const [apiKeyToast, setApiKeyToast] = useState<string | null>(null);
+  const [showApiKey, setShowApiKey] = useState(false);
+
+  const handleSaveApiKey = () => {
+    soundFX.playClick();
+    if (geminiApiKey.trim()) {
+      localStorage.setItem('lasolucion_gemini_api_key', geminiApiKey.trim());
+      setApiKeyToast('Clave de Gemini guardada de forma segura en este navegador.');
+    } else {
+      localStorage.removeItem('lasolucion_gemini_api_key');
+      setApiKeyToast('Clave eliminada. El sistema utilizará Firebase AI / heurísticas locales.');
+    }
+    setTimeout(() => setApiKeyToast(null), 3500);
+  };
 
   // Open simulator subtab event listener
   useEffect(() => {
@@ -1740,6 +1757,80 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   <RefreshCw className="w-3.5 h-3.5" />
                   Vaciar Caché y Forzar Actualización
                 </button>
+              </div>
+            </div>
+
+            {/* 6. CREDENCIALES DE IA (GEMINI) */}
+            <div className="bg-[#00152b] p-5 sm:p-6 rounded-2xl border border-cyan-500/40 space-y-4 shadow-[0_0_20px_rgba(0,240,255,0.08)]">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div className="flex items-center gap-2">
+                  <Key className="w-4 h-4 text-cyan-400" />
+                  <h3 className="text-xs font-black text-white uppercase tracking-widest">
+                    Clave de Inteligencia Artificial (Gemini API)
+                  </h3>
+                </div>
+                <span className="text-[10px] font-mono text-cyan-300 bg-cyan-950/80 px-2 py-0.5 rounded border border-cyan-700/60 font-bold">
+                  LOCAL & PRIVADA
+                </span>
+              </div>
+
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Si deseas usar tu propia cuota directa de Google Gemini en el Oráculo y Diagnóstico Neural, ingresa tu clave API. Esta clave permanece <strong>exclusivamente en tu navegador</strong> y nunca se expone en bundles públicos.
+              </p>
+
+              <div className="space-y-3 pt-1">
+                <div className="relative">
+                  <input
+                    type={showApiKey ? 'text' : 'password'}
+                    value={geminiApiKey}
+                    onChange={(e) => setGeminiApiKey(e.target.value)}
+                    placeholder="AIzaSy... (Opcional)"
+                    className="w-full bg-[#000d1a] border border-cyan-900/80 focus:border-cyan-400 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowApiKey(!showApiKey)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-cyan-400 hover:text-cyan-300"
+                  >
+                    {showApiKey ? 'Ocultar' : 'Ver'}
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-[10px] text-slate-500 font-mono">
+                    {geminiApiKey ? '● Clave personalizada activa' : '○ Usando Firebase AI Logic / Modo Heurístico'}
+                  </span>
+                  <div className="flex gap-2">
+                    {geminiApiKey && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setGeminiApiKey('');
+                          localStorage.removeItem('lasolucion_gemini_api_key');
+                          setApiKeyToast('Clave eliminada con éxito.');
+                          setTimeout(() => setApiKeyToast(null), 3000);
+                        }}
+                        className="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-red-400 bg-slate-900/60 border border-slate-800"
+                      >
+                        Limpiar
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={handleSaveApiKey}
+                      className="px-4 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider bg-cyan-500 hover:bg-cyan-400 text-black transition-all shadow-[0_0_10px_rgba(0,240,255,0.3)]"
+                    >
+                      Guardar Clave
+                    </button>
+                  </div>
+                </div>
+
+                {apiKeyToast && (
+                  <div className="p-2.5 rounded-xl bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 text-xs font-bold flex items-center gap-2 animate-fade-in">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>{apiKeyToast}</span>
+                  </div>
+                )}
               </div>
             </div>
 

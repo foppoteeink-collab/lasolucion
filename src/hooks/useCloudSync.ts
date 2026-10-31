@@ -547,13 +547,12 @@ export const useCloudSync = (
 
         const dataToSave = overrideData || {
           stats: liveStats,
-          tasksByDate: finalBridgeTasks,
           habitMastery,
           customHabits: habitsData,
           reflections,
           shopRewards,
-          pomodoroSessions,
-          notifications,
+          pomodoroSessions: Array.isArray(pomodoroSessions) ? pomodoroSessions.slice(-100) : [],
+          notifications: Array.isArray(notifications) ? notifications.slice(-50) : [],
           gameSettings,
           skillTree,
           companion,
@@ -567,6 +566,8 @@ export const useCloudSync = (
           activeViewDate,
           lastUpdated: dataToSave.lastUpdated || new Date().toISOString(),
         });
+        // Prevents Firestore 1MB document limit: tasksByDate is strictly sharded into task_months subcollections
+        delete payload.tasksByDate;
 
         // Save primary user document and monthly shards securely under user.uid
         const userRef = doc(db, 'users', user.uid);

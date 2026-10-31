@@ -23,8 +23,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Russo+One&display=swap" rel="stylesheet">
 
     <script>
-      // Filter out expected/benign Vite HMR websocket reconnection notices in sandboxed iframe
+      // Filter out expected/benign Vite HMR websocket reconnection notices in sandboxed dev environment only
       (function() {
+        var isDevEnv = window.location.hostname === 'localhost' || 
+          window.location.hostname === '127.0.0.1' || 
+          window.location.hostname.indexOf('webcontainer') !== -1 || 
+          window.location.hostname.indexOf('ai.studio') !== -1;
+        if (!isDevEnv) return;
+
         function shouldSuppress(args) {
           try {
             for (var i = 0; i < args.length; i++) {

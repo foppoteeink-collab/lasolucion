@@ -1,14 +1,103 @@
 rules_version = '2';
 
+// ===============================================================
+// Assumed Data Model & Security Architecture
+// ===============================================================
+//
+// Root Collection: users
+// Document ID: {userId} (matches request.auth.uid)
+// Fields in users/{userId}:
+//   - stats: map (contains nested player progression state, size <= 60)
+//       - level: number (current player level)
+//       - currentXp: number (XP gained toward next level)
+//       - requiredXp: number (XP threshold for level up)
+//       - totalXpEarned: number (cumulative lifetime XP)
+//       - coins: number (in-game gold currency)
+//       - hp: number (current health points)
+//       - maxHp: number (maximum health capacity)
+//       - streakDays: number (current consecutive day streak)
+//       - streakShields: number (protective streak shields remaining)
+//       - currentStreak: number (legacy streak alias)
+//       - highestStreak: number (all-time peak streak record)
+//       - totalFocusMinutes: number (cumulative focus session minutes)
+//       - lastActiveDate: string (YYYY-MM-DD, <= 50 chars)
+//       - lastDailyRewardClaimedDate: string (YYYY-MM-DD, <= 50 chars)
+//       - lastBossDefeatedDate: string (YYYY-MM-DD, <= 50 chars)
+//       - rankTitle: string (<= 100 chars)
+//       - username: string (<= 100 chars)
+//       - fullName: string (<= 150 chars)
+//       - profession: string (<= 150 chars)
+//       - bio: string (<= 1000 chars)
+//       - mantra: string (<= 500 chars)
+//       - mainGoal: string (<= 500 chars)
+//       - characterClass: string (<= 100 chars)
+//       - avatarIcon: string (<= 100 chars)
+//       - attributes: map (RPG stats: disciplina, fuerza, etc., size <= 20)
+//       - inventory: list (size <= 200)
+//       - finalizedDays: map (size <= 3650)
+//       - sleepLogs: map (size <= 3650)
+//       - restDays: map (size <= 3650)
+//   - customHabits: list (configured routine templates, size <= 200)
+//   - habitMastery: map (mastery records per habit key, size <= 500)
+//   - reflections: map (daily journal notes keyed by date, size <= 3650)
+//   - shopRewards: list (in-game rewards catalog, size <= 200)
+//   - pomodoroSessions: list (recent focus history, size <= 200)
+//   - notifications: list (app alert records, size <= 100)
+//   - gameSettings: map (gameplay toggles, size <= 20)
+//   - skillTree: list (unlocked skill nodes, size <= 100)
+//   - companion: map (size <= 30) or null
+//   - expenses: list (finance transactions, size <= 1000)
+//   - activeViewDate: string (<= 20 chars)
+//   - lastUpdated: string (<= 50 chars)
+//   - tasksByDate: map (legacy compatibility only, size <= 35)
+//   - Legacy Root Fields: level, currentXp, requiredXp, totalXpEarned, coins,
+//       hp, maxHp, streakDays, currentStreak, highestStreak, etc. (validated if present)
+//
+// Subcollections under users/{userId}:
+// 1. task_months/{monthId}
+//      - monthId: string (e.g. "2026_10")
+//      - tasksByDate: map (date string -> TaskItem array, size <= 35)
+// 2. tasks/{taskId}
+//      - id: string (<= 100 chars)
+//      - title: string (<= 300 chars)
+//      - category: string (<= 50 chars)
+//      - priority: string ('baja'|'media'|'alta'|'epica' | 'low'|'medium'|'high'|'epic')
+//      - xpReward: number
+//      - coinReward / goldReward: number
+//      - completed: bool
+//      - status: string ('todo'|'completed'|'failed'|'cancelled')
+// 3. pomodoro_history/{sessionId}
+//      - id: string (<= 100 chars)
+//      - duration / durationMinutes: number
+//      - timestamp: number
+//      - taskName / taskTitle: string (<= 300 chars)
+// 4. custom_habits/{habitId}
+//      - id: string (<= 100 chars)
+//      - title: string (<= 300 chars)
+//      - xpReward, coinReward / goldReward: number
+//      - frequency / frequencyType: string (<= 100 chars)
+// 5. shop_rewards/{rewardId}
+//      - id: string (<= 100 chars)
+//      - title: string (<= 300 chars)
+//      - cost: number
+//      - icon, category: string (<= 100 chars)
+// 6. settings/{settingId}
+//      - data / value: string (<= 50000 chars) or map/number/bool
+//
+// ===============================================================
+
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Global Default Deny
+    // Global Default Deny: All access closed by default
     match /{document=**} {
       allow read, write: if false;
     }
 
-    // Helpers
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
     function isSignedIn() {
       return request.auth != null;
     }
@@ -25,89 +114,254 @@ service cloud.firestore {
       return request.resource.data;
     }
 
-    // Entities Validations
-    function isValidPlayerStats(data) {
-      return data.keys().size() > 0
-        && (!('level' in data) || data.level is number)
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    // Validates the nested PlayerStats map stored in modern user documents
+    function isValidStatsMap(stats) {
+      return stats is map
+        && stats.size() <= 60
+        && (!('level' in stats) || stats.level is number)
+        && (!('currentXp' in stats) || stats.currentXp is number)
+        && (!('requiredXp' in stats) || stats.requiredXp is number)
+        && (!('totalXpEarned' in stats) || stats.totalXpEarned is number)
+        && (!('coins' in stats) || stats.coins is number)
+        && (!('hp' in stats) || stats.hp is number)
+        && (!('maxHp' in stats) || stats.maxHp is number)
+        && (!('streakDays' in stats) || stats.streakDays is number)
+        && (!('streakShields' in stats) || stats.streakShields is number)
+        && (!('previousStreak' in stats) || stats.previousStreak is number)
+        && (!('currentStreak' in stats) || stats.currentStreak is number)
+        && (!('highestStreak' in stats) || stats.highestStreak is number)
+        && (!('totalFocusMinutes' in stats) || stats.totalFocusMinutes is number)
+        && (!('reRollDice' in stats) || stats.reRollDice is number)
+        && (!('focusPotionExpiresAt' in stats) || stats.focusPotionExpiresAt is number)
+        && (!('unopenedBoxes' in stats) || stats.unopenedBoxes is number)
+        && (!('kaiNeuralForgeCharges' in stats) || stats.kaiNeuralForgeCharges is number)
+        && (!('ascensionCrystals' in stats) || stats.ascensionCrystals is number)
+        && (!('synapticBoosters' in stats) || stats.synapticBoosters is number)
+        && (!('age' in stats) || stats.age is number)
+        && (!('lastActiveDate' in stats) || (stats.lastActiveDate is string && stats.lastActiveDate.size() <= 50))
+        && (!('lastDailyRewardClaimedDate' in stats) || (stats.lastDailyRewardClaimedDate is string && stats.lastDailyRewardClaimedDate.size() <= 50))
+        && (!('lastBossDefeatedDate' in stats) || (stats.lastBossDefeatedDate is string && stats.lastBossDefeatedDate.size() <= 50))
+        && (!('lastCompletedDate' in stats) || (stats.lastCompletedDate is string && stats.lastCompletedDate.size() <= 50))
+        && (!('lastEncounterDate' in stats) || (stats.lastEncounterDate is string && stats.lastEncounterDate.size() <= 50))
+        && (!('hiddenBossTaskId' in stats) || (stats.hiddenBossTaskId is string && stats.hiddenBossTaskId.size() <= 100))
+        && (!('hiddenBossDate' in stats) || (stats.hiddenBossDate is string && stats.hiddenBossDate.size() <= 50))
+        && (!('hiddenBossDefeatedDate' in stats) || (stats.hiddenBossDefeatedDate is string && stats.hiddenBossDefeatedDate.size() <= 50))
+        && (!('rankTitle' in stats) || (stats.rankTitle is string && stats.rankTitle.size() <= 100))
+        && (!('username' in stats) || (stats.username is string && stats.username.size() <= 100))
+        && (!('fullName' in stats) || (stats.fullName is string && stats.fullName.size() <= 150))
+        && (!('profession' in stats) || (stats.profession is string && stats.profession.size() <= 150))
+        && (!('bio' in stats) || (stats.bio is string && stats.bio.size() <= 1000))
+        && (!('mantra' in stats) || (stats.mantra is string && stats.mantra.size() <= 500))
+        && (!('mainGoal' in stats) || (stats.mainGoal is string && stats.mainGoal.size() <= 500))
+        && (!('characterClass' in stats) || (stats.characterClass is string && stats.characterClass.size() <= 100))
+        && (!('avatarIcon' in stats) || (stats.avatarIcon is string && stats.avatarIcon.size() <= 100))
+        && (!('kaiShape' in stats) || (stats.kaiShape is string && stats.kaiShape.size() <= 50))
+        && (!('kaiAuraColor' in stats) || (stats.kaiAuraColor is string && stats.kaiAuraColor.size() <= 50))
+        && (!('kaiParticleEffect' in stats) || (stats.kaiParticleEffect is string && stats.kaiParticleEffect.size() <= 100))
+        && (!('hasCompletedAwakening' in stats) || stats.hasCompletedAwakening is bool)
+        && (!('hasClaimedTutorialReward' in stats) || stats.hasClaimedTutorialReward is bool)
+        && (!('attributes' in stats) || (stats.attributes is map && stats.attributes.size() <= 20))
+        && (!('activeDailyBuff' in stats) || (stats.activeDailyBuff is map && stats.activeDailyBuff.size() <= 20))
+        && (!('kaiCustomForm' in stats) || stats.kaiCustomForm == null || (stats.kaiCustomForm is map && stats.kaiCustomForm.size() <= 40))
+        && (!('inventory' in stats) || (stats.inventory is list && stats.inventory.size() <= 200))
+        && (!('kaiVault' in stats) || (stats.kaiVault is list && stats.kaiVault.size() <= 100))
+        && (!('finalizedDays' in stats) || (stats.finalizedDays is map && stats.finalizedDays.size() <= 3650))
+        && (!('sleepLogs' in stats) || (stats.sleepLogs is map && stats.sleepLogs.size() <= 3650))
+        && (!('restDays' in stats) || (stats.restDays is map && stats.restDays.size() <= 3650))
+        && (!('phaseHistory' in stats) || (stats.phaseHistory is map && stats.phaseHistory.size() <= 50))
+        && (!('frozenHabits' in stats) || (stats.frozenHabits is map && stats.frozenHabits.size() <= 100))
+        && (!('seenTutorialGuides' in stats) || (stats.seenTutorialGuides is map && stats.seenTutorialGuides.size() <= 50));
+    }
+
+    // Validates flat legacy fields directly at the document root for backward compatibility
+    function isValidLegacyStats(data) {
+      return (!('level' in data) || data.level is number)
         && (!('currentXp' in data) || data.currentXp is number)
+        && (!('requiredXp' in data) || data.requiredXp is number)
+        && (!('totalXpEarned' in data) || data.totalXpEarned is number)
         && (!('coins' in data) || data.coins is number)
         && (!('hp' in data) || data.hp is number)
+        && (!('maxHp' in data) || data.maxHp is number)
         && (!('totalFocusMinutes' in data) || data.totalFocusMinutes is number)
         && (!('currentStreak' in data) || data.currentStreak is number)
         && (!('highestStreak' in data) || data.highestStreak is number)
+        && (!('streakDays' in data) || data.streakDays is number)
+        && (!('streakShields' in data) || data.streakShields is number)
         && (!('lastCompletedDate' in data) || (data.lastCompletedDate is string && data.lastCompletedDate.size() <= 50))
+        && (!('lastActiveDate' in data) || (data.lastActiveDate is string && data.lastActiveDate.size() <= 50))
         && (!('totalTasksCompleted' in data) || data.totalTasksCompleted is number)
-        && (!('theme' in data) || (data.theme is string && data.theme.size() <= 50))
-        && (!('reflections' in data) || (data.reflections is map && data.reflections.size() <= 3650));
+        && (!('theme' in data) || (data.theme is string && data.theme.size() <= 50));
     }
 
+    // Comprehensive validator for /users/{userId} documents (supports modern useCloudSync and legacy accounts)
+    function isValidUserDocument(data) {
+      return data.keys().size() > 0
+        && data.keys().size() <= 35
+        && (!('stats' in data) || isValidStatsMap(data.stats))
+        && isValidLegacyStats(data)
+        && (!('customHabits' in data) || (data.customHabits is list && data.customHabits.size() <= 200))
+        && (!('habitMastery' in data) || (data.habitMastery is map && data.habitMastery.size() <= 500))
+        && (!('reflections' in data) || (data.reflections is map && data.reflections.size() <= 3650))
+        && (!('shopRewards' in data) || (data.shopRewards is list && data.shopRewards.size() <= 200))
+        && (!('pomodoroSessions' in data) || (data.pomodoroSessions is list && data.pomodoroSessions.size() <= 200))
+        && (!('notifications' in data) || (data.notifications is list && data.notifications.size() <= 100))
+        && (!('gameSettings' in data) || (data.gameSettings is map && data.gameSettings.size() <= 20))
+        && (!('skillTree' in data) || (data.skillTree is list && data.skillTree.size() <= 100))
+        && (!('companion' in data) || data.companion == null || (data.companion is map && data.companion.size() <= 30))
+        && (!('expenses' in data) || (data.expenses is list && data.expenses.size() <= 1000))
+        && (!('activeViewDate' in data) || (data.activeViewDate is string && data.activeViewDate.size() <= 20))
+        && (!('lastUpdated' in data) || (data.lastUpdated is string && data.lastUpdated.size() <= 50))
+        && (!('tasksByDate' in data) || (data.tasksByDate is map && data.tasksByDate.size() <= 35))
+        && (!('uid' in data) || data.uid == request.auth.uid);
+    }
+
+    // Backward compatibility alias
+    function isValidPlayerStats(data) {
+      return isValidUserDocument(data);
+    }
+
+    // Validates monthly task shard documents under /users/{userId}/task_months/{monthId}
+    function isValidTaskMonth(data) {
+      return data.keys().hasAll(['tasksByDate'])
+        && data.keys().size() <= 10
+        && data.tasksByDate is map
+        && data.tasksByDate.size() <= 35
+        && (!('lastUpdated' in data) || (data.lastUpdated is string && data.lastUpdated.size() <= 50));
+    }
+
+    // Validates individual tasks under /users/{userId}/tasks/{taskId}
     function isValidTaskItem(data) {
       return data.keys().hasAll(['id', 'title'])
-        && data.id is string && data.id.size() <= 100
+        && data.keys().size() <= 40
+        && data.id is string && data.id.size() > 0 && data.id.size() <= 100
         && data.title is string && data.title.size() <= 300
         && (!('description' in data) || (data.description is string && data.description.size() <= 1000))
         && (!('notes' in data) || (data.notes is string && data.notes.size() <= 5000))
+        && (!('completed' in data) || data.completed is bool)
         && (!('status' in data) || (data.status in ['todo', 'completed', 'failed', 'cancelled']))
+        && (!('completedAt' in data) || (data.completedAt is string && data.completedAt.size() <= 50))
         && (!('date' in data) || (data.date is string && data.date.size() <= 50))
         && (!('type' in data) || (data.type in ['daily', 'weekly', 'habit', 'one-time', 'monthly', 'yearly']))
         && (!('category' in data) || (data.category is string && data.category.size() <= 50))
-        && (!('priority' in data) || (data.priority in ['low', 'medium', 'high', 'epic']))
+        && (!('priority' in data) || (data.priority in ['baja', 'media', 'alta', 'epica', 'low', 'medium', 'high', 'epic']))
         && (!('xpReward' in data) || data.xpReward is number)
+        && (!('coinReward' in data) || data.coinReward is number)
         && (!('goldReward' in data) || data.goldReward is number)
+        && (!('awardedXp' in data) || data.awardedXp is number)
+        && (!('awardedCoins' in data) || data.awardedCoins is number)
+        && (!('rewardClaimed' in data) || data.rewardClaimed is bool)
         && (!('estimatedMinutes' in data) || data.estimatedMinutes is number)
         && (!('actualMinutes' in data) || data.actualMinutes is number)
+        && (!('timeBlock' in data) || (data.timeBlock is string && data.timeBlock.size() <= 50))
+        && (!('reminderTime' in data) || (data.reminderTime is string && data.reminderTime.size() <= 20))
+        && (!('isHabit' in data) || data.isHabit is bool)
+        && (!('targetCount' in data) || data.targetCount is number)
+        && (!('currentCount' in data) || data.currentCount is number)
+        && (!('unit' in data) || (data.unit is string && data.unit.size() <= 50))
+        && (!('isQuickHabit' in data) || data.isQuickHabit is bool)
+        && (!('isTracked2166' in data) || data.isTracked2166 is bool)
+        && (!('quickIcon' in data) || (data.quickIcon is string && data.quickIcon.size() <= 100))
+        && (!('isLegendaryBounty' in data) || data.isLegendaryBounty is bool)
+        && (!('incomeAmount' in data) || data.incomeAmount is number)
+        && (!('isCustom' in data) || data.isCustom is bool)
+        && (!('isLocked' in data) || data.isLocked is bool)
+        && (!('lockedReason' in data) || (data.lockedReason is string && data.lockedReason.size() <= 300))
+        && (!('habitEnergyType' in data) || (data.habitEnergyType is string && data.habitEnergyType.size() <= 50))
+        && (!('chestAwarded' in data) || data.chestAwarded is bool)
+        && (!('targetStreak' in data) || data.targetStreak is number)
         && (!('tags' in data) || (data.tags is list && data.tags.size() <= 20));
     }
 
+    // Validates Pomodoro focus records under /users/{userId}/pomodoro_history/{sessionId}
     function isValidPomodoroSession(data) {
-      return data.keys().hasAll(['id', 'duration'])
-        && data.id is string && data.id.size() <= 100
-        && data.duration is number
+      return data.keys().hasAll(['id'])
+        && data.keys().size() <= 20
+        && data.id is string && data.id.size() > 0 && data.id.size() <= 100
+        && (!('duration' in data) || data.duration is number)
+        && (!('durationMinutes' in data) || data.durationMinutes is number)
         && (!('timestamp' in data) || data.timestamp is number)
-        && (!('taskName' in data) || (data.taskName is string && data.taskName.size() <= 300));
+        && (!('date' in data) || (data.date is string && data.date.size() <= 50))
+        && (!('taskName' in data) || (data.taskName is string && data.taskName.size() <= 300))
+        && (!('taskTitle' in data) || (data.taskTitle is string && data.taskTitle.size() <= 300))
+        && (!('category' in data) || (data.category is string && data.category.size() <= 50))
+        && (!('completedAt' in data) || (data.completedAt is string && data.completedAt.size() <= 50))
+        && (!('xpEarned' in data) || data.xpEarned is number)
+        && (!('coinsEarned' in data) || data.coinsEarned is number);
     }
 
+    // Validates custom habit templates under /users/{userId}/custom_habits/{habitId}
     function isValidCustomHabit(data) {
       return data.keys().hasAll(['id', 'title'])
-        && data.id is string && data.id.size() <= 100
+        && data.keys().size() <= 30
+        && data.id is string && data.id.size() > 0 && data.id.size() <= 100
         && data.title is string && data.title.size() <= 300
         && (!('description' in data) || (data.description is string && data.description.size() <= 1000))
         && (!('frequency' in data) || (data.frequency is string && data.frequency.size() <= 100))
+        && (!('frequencyType' in data) || (data.frequencyType is string && data.frequencyType.size() <= 100))
         && (!('category' in data) || (data.category is string && data.category.size() <= 50))
         && (!('daysOfWeek' in data) || (data.daysOfWeek is list && data.daysOfWeek.size() <= 7))
+        && (!('specificDays' in data) || (data.specificDays is list && data.specificDays.size() <= 7))
         && (!('xpReward' in data) || data.xpReward is number)
-        && (!('goldReward' in data) || data.goldReward is number);
+        && (!('goldReward' in data) || data.goldReward is number)
+        && (!('coinReward' in data) || data.coinReward is number)
+        && (!('timeBlock' in data) || (data.timeBlock is string && data.timeBlock.size() <= 50))
+        && (!('reminderTime' in data) || (data.reminderTime is string && data.reminderTime.size() <= 20))
+        && (!('isQuickHabit' in data) || data.isQuickHabit is bool)
+        && (!('isTracked2166' in data) || data.isTracked2166 is bool)
+        && (!('quickIcon' in data) || (data.quickIcon is string && data.quickIcon.size() <= 100))
+        && (!('targetCount' in data) || data.targetCount is number)
+        && (!('unit' in data) || (data.unit is string && data.unit.size() <= 50))
+        && (!('isLegendaryBounty' in data) || data.isLegendaryBounty is bool)
+        && (!('habitEnergyType' in data) || (data.habitEnergyType is string && data.habitEnergyType.size() <= 50))
+        && (!('targetStreak' in data) || data.targetStreak is number);
     }
 
+    // Validates game shop rewards under /users/{userId}/shop_rewards/{rewardId}
     function isValidShopReward(data) {
       return data.keys().hasAll(['id', 'title'])
-        && data.id is string && data.id.size() <= 100
+        && data.keys().size() <= 20
+        && data.id is string && data.id.size() > 0 && data.id.size() <= 100
         && data.title is string && data.title.size() <= 300
         && (!('description' in data) || (data.description is string && data.description.size() <= 1000))
         && (!('cost' in data) || data.cost is number)
         && (!('icon' in data) || (data.icon is string && data.icon.size() <= 100))
+        && (!('category' in data) || (data.category is string && data.category.size() <= 50))
+        && (!('unlockedCount' in data) || data.unlockedCount is number)
         && (!('isCustom' in data) || data.isCustom is bool)
         && (!('isPurchased' in data) || data.isPurchased is bool);
     }
 
+    // Validates user settings documents under /users/{userId}/settings/{settingId}
     function isValidUserSetting(data) {
-      return data.keys().hasAll(['data'])
-        && data.data is string && data.data.size() <= 20000;
+      return data.keys().size() > 0
+        && data.keys().size() <= 10
+        && (!('data' in data) || (data.data is string && data.data.size() <= 50000))
+        && (!('value' in data) || (data.value is string && data.value.size() <= 50000) || data.value is bool || data.value is number || data.value is map);
     }
 
-    function isValidTaskMonth(data) {
-      return data.keys().hasOnly(['tasksByDate'])
-        && data.tasksByDate is map
-        && data.tasksByDate.size() <= 35;
-    }
+    // ===============================================================
+    // Collection Access Rules
+    // ===============================================================
 
-    // Rules
     match /users/{userId} {
       allow read: if isOwner(userId) && isValidId(userId);
-      allow create: if isOwner(userId) && isValidId(userId) && isValidPlayerStats(incoming());
-      allow update: if isOwner(userId) && isValidId(userId) && isValidPlayerStats(incoming());
+      allow create: if isOwner(userId) && isValidId(userId) && isValidUserDocument(incoming());
+      allow update: if isOwner(userId) && isValidId(userId) && isValidUserDocument(incoming());
       allow delete: if isOwner(userId) && isValidId(userId);
 
+      // Monthly task shards
+      match /task_months/{monthId} {
+        allow read: if isOwner(userId) && isValidId(userId);
+        allow create: if isOwner(userId) && isValidId(userId) && isValidId(monthId) && isValidTaskMonth(incoming());
+        allow update: if isOwner(userId) && isValidId(userId) && isValidId(monthId) && isValidTaskMonth(incoming());
+        allow delete: if isOwner(userId) && isValidId(userId) && isValidId(monthId);
+      }
+
+      // Individual task documents
       match /tasks/{taskId} {
         allow read: if isOwner(userId) && isValidId(userId);
         allow create: if isOwner(userId) && isValidId(userId) && isValidId(taskId) && isValidTaskItem(incoming());
@@ -115,6 +369,7 @@ service cloud.firestore {
         allow delete: if isOwner(userId) && isValidId(userId) && isValidId(taskId);
       }
 
+      // Pomodoro focus history
       match /pomodoro_history/{sessionId} {
         allow read: if isOwner(userId) && isValidId(userId);
         allow create: if isOwner(userId) && isValidId(userId) && isValidId(sessionId) && isValidPomodoroSession(incoming());
@@ -122,6 +377,7 @@ service cloud.firestore {
         allow delete: if isOwner(userId) && isValidId(userId) && isValidId(sessionId);
       }
 
+      // Custom habits
       match /custom_habits/{habitId} {
         allow read: if isOwner(userId) && isValidId(userId);
         allow create: if isOwner(userId) && isValidId(userId) && isValidId(habitId) && isValidCustomHabit(incoming());
@@ -129,6 +385,7 @@ service cloud.firestore {
         allow delete: if isOwner(userId) && isValidId(userId) && isValidId(habitId);
       }
 
+      // Shop rewards
       match /shop_rewards/{rewardId} {
         allow read: if isOwner(userId) && isValidId(userId);
         allow create: if isOwner(userId) && isValidId(userId) && isValidId(rewardId) && isValidShopReward(incoming());
@@ -136,18 +393,12 @@ service cloud.firestore {
         allow delete: if isOwner(userId) && isValidId(userId) && isValidId(rewardId);
       }
 
+      // User settings
       match /settings/{settingId} {
         allow read: if isOwner(userId) && isValidId(userId);
         allow create: if isOwner(userId) && isValidId(userId) && isValidId(settingId) && isValidUserSetting(incoming());
         allow update: if isOwner(userId) && isValidId(userId) && isValidId(settingId) && isValidUserSetting(incoming());
         allow delete: if isOwner(userId) && isValidId(userId) && isValidId(settingId);
-      }
-
-      match /task_months/{monthId} {
-        allow read: if isOwner(userId) && isValidId(userId);
-        allow create: if isOwner(userId) && isValidId(userId) && isValidId(monthId) && isValidTaskMonth(incoming());
-        allow update: if isOwner(userId) && isValidId(userId) && isValidId(monthId) && isValidTaskMonth(incoming());
-        allow delete: if isOwner(userId) && isValidId(userId) && isValidId(monthId);
       }
     }
   }
