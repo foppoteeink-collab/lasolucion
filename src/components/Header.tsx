@@ -21,6 +21,7 @@ import { useUIStore } from '../store/useUIStore';
 import { getRankForLevel, getCategoryColor } from '../data/defaults';
 import { CloudSyncResult } from '../hooks/useCloudSync';
 import { ArchetypeGlyph } from './ArchetypeGlyph';
+import { MoxenEclipseToggle } from './moxen/MoxenEclipseToggle';
 
 interface HeaderProps {
   onOpenProfile?: () => void;
@@ -173,10 +174,25 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
 
             {/* Utilidades de escritorio (Silenciador / Google Auth) */}
-            <div className="hidden md:flex items-center gap-1.5 ml-1">
+            <div className="flex items-center gap-1.5 ml-1">
+              {/* Interruptor Cinemático Moxen Eclipse (Día Solar vs Noche Boreal) */}
+              <div className="flex items-center px-1" title="Visión Solar / Eclipse Boreal">
+                <MoxenEclipseToggle
+                  size="sm"
+                  onToggle={(isNight) => {
+                    const root = document.documentElement;
+                    if (isNight) {
+                      root.classList.remove('solar-day-mode');
+                    } else {
+                      root.classList.add('solar-day-mode');
+                    }
+                  }}
+                />
+              </div>
+
               <button
                 onClick={toggleSound}
-                className="p-2 rounded-xl bg-surface-card text-cyan-300 border border-cyan-500/30 hover:border-cyan-400 hover:bg-cyan-950/40 transition-all cursor-pointer"
+                className="hidden sm:flex p-2 rounded-xl bg-surface-card text-cyan-300 border border-cyan-500/30 hover:border-cyan-400 hover:bg-cyan-950/40 transition-all cursor-pointer"
                 title={soundEnabled ? 'Sonido Activado' : 'Sonido Silenciado'}
               >
                 {soundEnabled ? <Volume2 className="w-4 h-4 text-cyan-400" /> : <VolumeX className="w-4 h-4 text-zinc-500" />}

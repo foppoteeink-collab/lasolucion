@@ -41,6 +41,20 @@ html.text-density-compact .explainer-text {
   display: none !important;
 }
 
+/* Visión Solar Diurna (Moxen Eclipse - Alto Contraste Solar) */
+html.solar-day-mode {
+  --surface-base: #0a1128;
+  --surface-card: rgba(15, 23, 42, 0.85);
+  --surface-modal: rgba(15, 23, 42, 0.98);
+  --color-vacio: #070d1e;
+  filter: contrast(1.08) saturate(1.15);
+}
+
+html.solar-day-mode .scifi-glass-panel {
+  background: rgba(15, 23, 42, 0.88) !important;
+  border-color: rgba(56, 189, 248, 0.45) !important;
+}
+
 /* Force pure dark background everywhere and eradicate light mode remnants */
 #main-layout-wrapper {
   background-color: #030712 !important;
@@ -107,6 +121,26 @@ html.text-density-compact .explainer-text {
 
 .aura-glow-subtle {
   box-shadow: 0 0 12px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.20) !important;
+}
+
+/* Conexión directa de acentos Tailwind al color de la Aurora */
+.border-cyan-500\/30,
+.border-cyan-500\/40,
+.border-cyan-500\/20,
+.border-cyan-500\/25 {
+  border-color: rgba(var(--aura-glow-rgb, 0, 240, 255), 0.35) !important;
+}
+
+.shadow-\[0_4px_30px_rgba\(0\,240\,255\,0\.12\)\] {
+  box-shadow: 0 4px 30px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.18) !important;
+}
+
+.shadow-\[0_0_10px_rgba\(0\,240\,255\,0\.35\)\] {
+  box-shadow: 0 0 10px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.35) !important;
+}
+
+.shadow-\[0_0_8px_rgba\(0\,240\,255\,0\.7\)\] {
+  box-shadow: 0 0 8px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.7) !important;
 }
 
 /* Clases de Superficie Unificadas */
