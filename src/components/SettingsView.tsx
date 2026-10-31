@@ -42,6 +42,7 @@ import { CloudSyncResult } from '../hooks/useCloudSync';
 import { useMoxenChicle } from '../hooks/useMoxenChicle';
 import { ChicleToggle } from './ChicleToggle';
 import { MoxenMalla } from './moxen/MoxenMalla';
+import { MoxenRayas, MoxenRayasTheme, MoxenRayasVariant } from './moxen/MoxenRayas';
 
 interface SettingsViewProps {
   settings: GameSettings;
@@ -72,6 +73,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   
   const [activeSubTab, setActiveSubTab] = useState<SettingsSubTab>('preferences');
   const [currentCurrency, setCurrentCurrency] = useState<string>(getSavedCurrencySymbol);
+  const [testRayasProgress, setTestRayasProgress] = useState<number>(0.65);
+  const [testRayasTheme, setTestRayasTheme] = useState<MoxenRayasTheme>('cyan');
+  const [testRayasVariant, setTestRayasVariant] = useState<MoxenRayasVariant>('hero');
   const [savingsTarget, setSavingsTarget] = useState<number>(getSavedSavingsTarget);
   const [audioTesting, setAudioTesting] = useState(false);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(notificationService.getPermission());
@@ -888,6 +892,119 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   setSystemAura(null);
                 }}
               />
+            </div>
+
+            {/* Laboratorio de Telemetría Táctica (Moxen Rayas) */}
+            <div className="bg-[#00152b] p-5 sm:p-6 rounded-2xl border border-cyan-500/40 space-y-4 shadow-[0_0_30px_rgba(0,240,255,0.15)]">
+              <div>
+                <div className="flex items-center gap-2 text-cyan-400 text-xs font-mono font-bold uppercase tracking-widest mb-1">
+                  <Zap className="w-4 h-4 text-cyan-400" /> Laboratorio Moxen Rayas
+                </div>
+                <h3 className="text-base sm:text-lg font-anton uppercase tracking-wide text-white">
+                  Telemetría & Rayas Dinámicas
+                </h3>
+                <p className="text-xs text-slate-400 mt-1">
+                  Física de resorte continuo, contra-desplazamiento a 45° y odómetro numérico mecánico.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-xl bg-black/80 border border-white/10 space-y-4">
+                <MoxenRayas
+                  progress={testRayasProgress}
+                  variant={testRayasVariant}
+                  theme={testRayasTheme}
+                  mode="active"
+                  title="Calibración Táctica Cuántica"
+                  subtitle="Transferencia de paquetes neuronales"
+                  totalUnits={250}
+                  unitLabel="MB"
+                  showOdometer={true}
+                  showTimeRemaining={true}
+                />
+
+                {/* Controles interactivos en vivo */}
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-white/10">
+                  {/* Selector de porcentajes */}
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[10px] font-mono text-slate-400 mr-1 uppercase">Progreso:</span>
+                    <button
+                      type="button"
+                      onClick={() => setTestRayasProgress(0.25)}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
+                        testRayasProgress === 0.25 ? 'bg-cyan-500 text-black' : 'bg-white/10 text-slate-300 hover:text-white'
+                      }`}
+                    >
+                      25%
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTestRayasProgress(0.7)}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
+                        testRayasProgress === 0.7 ? 'bg-cyan-500 text-black' : 'bg-white/10 text-slate-300 hover:text-white'
+                      }`}
+                    >
+                      70%
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        soundFX.playLevelUp();
+                        setTestRayasProgress(1);
+                      }}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
+                        testRayasProgress === 1 ? 'bg-emerald-400 text-black shadow-[0_0_12px_rgba(52,211,153,0.6)]' : 'bg-white/10 text-slate-300 hover:text-white'
+                      }`}
+                    >
+                      100% (✓)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTestRayasProgress(0)}
+                      className="px-2 py-1 rounded-lg text-xs font-mono text-slate-400 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
+                    >
+                      0%
+                    </button>
+                  </div>
+
+                  {/* Selector de temas */}
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-mono text-slate-400 mr-1 uppercase">Color:</span>
+                    {(['cyan', 'purple', 'amber', 'rose', 'emerald'] as MoxenRayasTheme[]).map((thm) => (
+                      <button
+                        key={thm}
+                        type="button"
+                        onClick={() => setTestRayasTheme(thm)}
+                        className={`w-6 h-6 rounded-full border-2 transition-transform cursor-pointer ${
+                          testRayasTheme === thm ? 'scale-125 border-white' : 'border-transparent opacity-70 hover:opacity-100'
+                        } ${
+                          thm === 'cyan' ? 'bg-cyan-400' :
+                          thm === 'purple' ? 'bg-purple-500' :
+                          thm === 'amber' ? 'bg-amber-400' :
+                          thm === 'rose' ? 'bg-rose-500' : 'bg-emerald-400'
+                        }`}
+                        title={thm}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Selector de tamaño */}
+                  <div className="flex items-center gap-1.5 ml-auto">
+                    <span className="text-[10px] font-mono text-slate-400 mr-1 uppercase">Tamaño:</span>
+                    {(['hero', 'compact', 'slim'] as MoxenRayasVariant[]).map((v) => (
+                      <button
+                        key={v}
+                        type="button"
+                        onClick={() => setTestRayasVariant(v)}
+                        className={`px-2 py-0.5 rounded text-[10px] font-mono uppercase transition-all cursor-pointer ${
+                          testRayasVariant === v ? 'bg-white/20 text-white font-bold' : 'text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        {v}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}

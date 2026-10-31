@@ -12,6 +12,7 @@ import { TaskItem, TaskCategory } from '../types';
 import { soundFX } from '../utils/audio';
 import { parseTimeToMinutes, parseEndTimeToMinutes, sortByChronologicalTime } from '../utils/timeUtils';
 import { getTodayDateString } from '../utils/date';
+import { MoxenRayas } from './moxen/MoxenRayas';
 
 interface DailyProgressWidgetProps {
   tasks: TaskItem[];
@@ -97,10 +98,12 @@ export const DailyProgressWidget: React.FC<DailyProgressWidgetProps> = ({
             </span>
           </div>
 
-          <div className="flex-1 h-2 bg-black/60 rounded-full border border-cyan-500/30 overflow-hidden max-w-xs">
-            <div 
-              className="h-full rounded-full transition-all duration-700 bg-gradient-to-r from-blue-500 via-cyan-400 to-cyan-200 shadow-[0_0_10px_rgba(0,240,255,0.6)]"
-              style={{ width: `${percent}%` }}
+          <div className="flex-1 max-w-xs">
+            <MoxenRayas
+              progress={percent}
+              variant="compact"
+              theme="cyan"
+              mode="reactive"
             />
           </div>
         </div>

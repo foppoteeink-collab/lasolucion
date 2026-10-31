@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { PomodoroSession, TaskCategory } from '../types';
 import { useTimer } from '../context/TimerContext';
+import { MoxenRayas } from './moxen/MoxenRayas';
 import {
   Play,
   Pause,
@@ -409,11 +410,13 @@ export const PomodoroTimer: React.FC<PomodoroTimerProps> = React.memo(({
         </div>
       </div>
 
-      {/* Progress Line */}
-      <div className="w-full h-1 bg-black/80 rounded-full overflow-hidden mb-2.5">
-        <div
-          className={`h-full ${theme.progressColor} transition-all duration-500`}
-          style={{ width: `${progressPercent}%` }}
+      {/* Progress Line with Moxen Rayas */}
+      <div className="w-full mb-2.5">
+        <MoxenRayas
+          progress={progressPercent}
+          variant="slim"
+          theme={mode === 'work' ? 'rose' : 'cyan'}
+          mode={isRunning ? 'active' : 'reactive'}
         />
       </div>
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Cpu, Terminal, Loader2, ShieldCheck, Database, Radio, Sparkles } from 'lucide-react';
 import { soundFX } from '../../utils/audio';
+import { MoxenRayas } from '../moxen/MoxenRayas';
 
 interface OracleTheatricalLoaderProps {
   userContext?: {
@@ -194,23 +195,16 @@ export const OracleTheatricalLoader: React.FC<OracleTheatricalLoaderProps> = ({ 
         </div>
       </div>
 
-      {/* Quantum Calibration Progress Bar */}
+      {/* Quantum Calibration Progress Bar with Moxen Rayas */}
       <div className="relative z-10 space-y-1.5">
-        <div className="flex justify-between items-center text-[10px] text-slate-400 uppercase tracking-widest">
-          <span className="flex items-center gap-1">
-            <Loader2 className="w-3 h-3 text-[#d6f421] animate-spin" />
-            <span>Calibrando Estabilidad Temporal</span>
-          </span>
-          <span className="font-bold text-white">{progress}%</span>
-        </div>
-        <div className="w-full h-3 bg-black rounded-full border border-[#9600ff]/50 p-0.5 overflow-hidden">
-          <motion.div 
-            className="h-full rounded-full bg-gradient-to-r from-[#9600ff] via-purple-500 to-[#d6f421] shadow-[0_0_10px_rgba(150,0,255,0.5)]"
-            style={{ width: `${progress}%` }}
-            animate={{ width: `${progress}%` }}
-            transition={{ ease: 'easeOut', duration: 0.1 }}
-          />
-        </div>
+        <MoxenRayas
+          progress={progress}
+          variant="compact"
+          theme="purple"
+          mode="active"
+          title="Calibrando Estabilidad Temporal"
+          subtitle="Sincronización cuántica de agenda con KAI Companion"
+        />
       </div>
 
       {/* Footer warning */}

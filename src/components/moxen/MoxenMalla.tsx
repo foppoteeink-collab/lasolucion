@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import './moxenMalla.css';
 import { 
   Sparkles, RotateCcw, Copy, Check, Shuffle, Maximize2, Minimize2, 
-  Palette, CheckCircle2, ChevronDown, ChevronUp, Code2, Zap
+  Palette, CheckCircle2, Zap, Waves, Flame, Eye, EyeOff, X
 } from 'lucide-react';
 import { soundFX } from '../../utils/audio';
 
@@ -12,17 +12,25 @@ export interface MoxenMallaPreset {
   badge: string;
   desc: string;
   base: string;
-  colors: string[]; // Exactly 5 hex colors
+  colors: string[]; // 4 colors (sliced to pointCount)
 }
 
 export const MOXEN_MALLA_PRESETS: MoxenMallaPreset[] = [
+  {
+    id: 'aurora',
+    name: 'Aurora Boreal',
+    badge: 'AURORA',
+    desc: 'Verde Ártico, Cian Neón, Púrpura y Plasma',
+    base: '#020d18',
+    colors: ['#00ffaa', '#00d0ff', '#7000ff', '#ff00aa']
+  },
   {
     id: 'cyberpunk',
     name: 'Cyberpunk Neón',
     badge: 'NEÓN',
     desc: 'Cian Cuántico, Ultravioleta, Magenta y Neón Lima',
     base: '#030712',
-    colors: ['#00f0ff', '#7000ff', '#ff007f', '#00ff88', '#facc15']
+    colors: ['#00f0ff', '#7000ff', '#ff007f', '#00ff88']
   },
   {
     id: 'nebulosa',
@@ -30,15 +38,15 @@ export const MOXEN_MALLA_PRESETS: MoxenMallaPreset[] = [
     badge: 'CUÁNTICA',
     desc: 'Azul Cobalto, Lila Cósmico y Durazno Estelar',
     base: '#050b1a',
-    colors: ['#2f7bd9', '#1a2a9c', '#7fb4ff', '#7a63e0', '#ff9d78']
+    colors: ['#2f7bd9', '#7a63e0', '#ff9d78', '#1a2a9c']
   },
   {
-    id: 'aurora',
-    name: 'Aurora Solar & Plasma',
+    id: 'solar',
+    name: 'Furia Solar',
     badge: 'SOLAR',
     desc: 'Plasma Incandescente, Calipso y Fuego Estelar',
     base: '#0a040f',
-    colors: ['#ff5e36', '#ffa234', '#00e5ff', '#a855f7', '#ff2a7a']
+    colors: ['#ff5500', '#ffa234', '#ff007f', '#00e5ff']
   },
   {
     id: 'abismo',
@@ -46,7 +54,7 @@ export const MOXEN_MALLA_PRESETS: MoxenMallaPreset[] = [
     badge: 'ZEN',
     desc: 'Aguas Abisales, Índigo y Cian Bioluminiscente',
     base: '#02040a',
-    colors: ['#0ea5e9', '#6366f1', '#3b82f6', '#14b8a6', '#818cf8']
+    colors: ['#0ea5e9', '#6366f1', '#14b8a6', '#3b82f6']
   },
   {
     id: 'matriz',
@@ -54,8 +62,19 @@ export const MOXEN_MALLA_PRESETS: MoxenMallaPreset[] = [
     badge: 'MATRIZ',
     desc: 'Terminal Hacker, Esmeralda y Jade Bioquántico',
     base: '#02140c',
-    colors: ['#10b981', '#064e3b', '#34d399', '#059669', '#a7f3d0']
+    colors: ['#10b981', '#00ff88', '#059669', '#34d399']
   }
+];
+
+export const HUNTER_SWATCHES = [
+  { name: 'Cian Neón', hex: '#00f0ff' },
+  { name: 'Púrpura Monarca', hex: '#7000ff' },
+  { name: 'Furia Magenta', hex: '#ff007f' },
+  { name: 'Aurora Esmeralda', hex: '#00ffaa' },
+  { name: 'Oro Solar', hex: '#facc15' },
+  { name: 'Fuego Plasma', hex: '#ff5500' },
+  { name: 'Azul Abisal', hex: '#0099ff' },
+  { name: 'Hielo Estelar', hex: '#e0f2fe' },
 ];
 
 export interface MoxenMallaProps {
@@ -93,32 +112,36 @@ interface PointState {
   m: SpringObj;
   df: SpringObj;
   el?: HTMLButtonElement;
-  fila?: HTMLElement;
-  xy?: HTMLElement;
-  hexEl?: HTMLElement;
-  chip?: HTMLElement;
-  claveCodigo?: string;
 }
 
 const AJUSTES = {
-  pos: { k: 64, c: 7.2 },
-  color: { k: 34, c: 10.5 },
+  pos: { k: 135, c: 13 },     // Rápido y reactivo al dedo
+  color: { k: 40, c: 11 },
   masa: { k: 110, c: 12 },
-  deriva: { k: 6, c: 4.4 },
+  deriva: { k: 8, c: 5.0 },
   estira: 4.4,
   derrama: 4.4,
-  amplitud: 0.028,
+  amplitud: 0.045,           // Movimiento cósmico visible de respiración
   suavidad: 2.0,
-  fluido: 0.17,
+  fluido: 0.35,              // Ondulaciones vivas de Aurora Boreal
   croma: 0.55,
   grano: 0.03,
 };
 
-const N = 5;
 const CAPA = 52;
-const DISPOSICION = {
-  ancha: [[0.17, 0.22], [0.37, 0.86], [0.49, 0.31], [0.57, 0.63], [0.08, 0.69]],
-  estrecha: [[0.17, 0.17], [0.46, 0.38], [0.62, 0.15], [0.85, 0.32], [0.14, 0.36]],
+const DISPOSICIONES: Record<number, { ancha: [number, number][]; estrecha: [number, number][] }> = {
+  2: {
+    ancha: [[0.30, 0.40], [0.70, 0.60]],
+    estrecha: [[0.32, 0.24], [0.68, 0.44]],
+  },
+  3: {
+    ancha: [[0.22, 0.35], [0.50, 0.68], [0.78, 0.35]],
+    estrecha: [[0.24, 0.20], [0.76, 0.20], [0.50, 0.44]],
+  },
+  4: {
+    ancha: [[0.22, 0.30], [0.78, 0.30], [0.30, 0.70], [0.70, 0.70]],
+    estrecha: [[0.24, 0.18], [0.76, 0.18], [0.26, 0.42], [0.74, 0.42]],
+  },
 };
 
 const lim = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
@@ -155,18 +178,22 @@ const enReposo = (r: SpringObj) => Math.abs(r.v) < r.e * 10 && Math.abs(r.meta -
 const fija = (r: SpringObj) => { r.x = r.meta; r.v = 0; };
 
 function hex2rgb(h: string): [number, number, number] {
-  let clean = h.trim().replace('#', '');
-  if (clean.length === 3) clean = clean.split('').map(c => c + c).join('');
-  const n = parseInt(clean, 16);
+  h = h.trim().replace('#', '');
+  if (h.length === 3) h = h.split('').map(c => c + c).join('');
+  const n = parseInt(h, 16);
   return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
 }
 
-const rgb2hex = (c: number[]) =>
+const rgb2hex = (c: [number, number, number]) =>
   '#' + c.map(v => Math.round(lim(v, 0, 1) * 255).toString(16).padStart(2, '0')).join('');
 
 function rgb2hsl(r: number, g: number, b: number): [number, number, number] {
-  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn;
-  let h = 0, s = 0;
+  const mx = Math.max(r, g, b);
+  const mn = Math.min(r, g, b);
+  const l = (mx + mn) / 2;
+  const d = mx - mn;
+  let h = 0;
+  let s = 0;
   if (d > 1e-6) {
     s = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn);
     h = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
@@ -186,7 +213,7 @@ function hsl2rgb(h: number, s: number, l: number): [number, number, number] {
   return [f(p, q, h + 1 / 3), f(p, q, h), f(p, q, h - 1 / 3)];
 }
 
-// Ultra-fast OKLab precomputation in JS (runs once per frame for 5 points instead of 700k times in pixel shader)
+// Pre-cálculo OKLab en JS para no sobrecargar el GPU móvil
 function toOKLab(r: number, g: number, b: number): [number, number, number] {
   const cr = Math.pow(Math.max(0, r), 2.2);
   const cg = Math.pow(Math.max(0, g), 2.2);
@@ -203,12 +230,8 @@ function toOKLab(r: number, g: number, b: number): [number, number, number] {
 
 const VERT = 'attribute vec2 a; void main() { gl_Position = vec4(a, 0., 1.); }';
 const FRAG = [
-  '#ifdef GL_FRAGMENT_PRECISION_HIGH',
-  'precision highp float;',
-  '#else',
   'precision mediump float;',
-  '#endif',
-  'uniform vec2 u_res; uniform float u_t; uniform vec2 u_p[5]; uniform vec3 u_c[5]; uniform vec2 u_s[5]; uniform float u_m[5];',
+  'uniform vec2 u_res; uniform float u_t; uniform int u_n; uniform vec2 u_p[4]; uniform vec3 u_c[4]; uniform vec2 u_s[4]; uniform float u_m[4];',
   'uniform float u_soft; uniform float u_fluid; uniform float u_grano; uniform float u_estira; uniform float u_croma;',
   'float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }',
   'float noise(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3. - 2. * f);',
@@ -221,11 +244,13 @@ const FRAG = [
   '  float asp = u_res.x / u_res.y;',
   '  vec2 uv = gl_FragCoord.xy / u_res;',
   '  vec2 q = vec2(uv.x * asp, uv.y);',
-  '  vec2 w = vec2(noise(q * 1.7 + vec2(u_t * .11, u_t * .05)), noise(q * 1.7 + vec2(7.3 - u_t * .07, 2.1 + u_t * .09))) - .5;',
-  '  w += .5 * (vec2(noise(q * 3.4 + vec2(u_t * .16, 4.)), noise(q * 3.4 + vec2(1., -u_t * .14))) - .5);',
+  '  // Ondulaciones fluidas vivas de Aurora Boreal',
+  '  vec2 w = vec2(noise(q * 1.6 + vec2(u_t * .55, u_t * .25)), noise(q * 1.6 + vec2(7.3 - u_t * .38, 2.1 + u_t * .45))) - .5;',
+  '  w += .5 * (vec2(noise(q * 3.2 + vec2(u_t * .7, 4.)), noise(q * 3.2 + vec2(1., -u_t * .6))) - .5);',
   '  q += w * u_fluid;',
   '  vec3 col = vec3(0.); float tot = 0., chroma = 0.;',
-  '  for (int i = 0; i < 5; i++) {',
+  '  for (int i = 0; i < 4; i++) {',
+  '    if (i >= u_n) break;',
   '    vec2 p = vec2(u_p[i].x * asp, u_p[i].y);',
   '    vec2 d = q - p;',
   '    float L = length(u_s[i]);',
@@ -235,7 +260,7 @@ const FRAG = [
   '    float k = u_m[i] / pow(r2 + .02, u_soft);',
   '    vec3 ok = u_c[i]; col += k * ok; chroma += k * length(ok.yz); tot += k;',
   '  }',
-  '  col /= tot; chroma /= tot; float cm = length(col.yz);',
+  '  col /= max(tot, 0.0001); chroma /= max(tot, 0.0001); float cm = length(col.yz);',
   '  if (cm > .0001) col.yz *= mix(1., min(chroma / cm, 2.2), u_croma);',
   '  col = pow(clamp(deOK(col), 0., 1.), vec3(1. / 2.2));',
   '  col += (hash(gl_FragCoord.xy) - .5) * u_grano;',
@@ -249,31 +274,52 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
   onResetSystem,
   activeSystemAuraName = null,
 }) => {
-  const [activePreset, setActivePreset] = useState<string>('cyberpunk');
+  const [pointCount, setPointCount] = useState<2 | 3 | 4>(3);
+  const [activePreset, setActivePreset] = useState<string>('aurora');
+  const [selectedPointIndex, setSelectedPointIndex] = useState<number>(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showFsControls, setShowFsControls] = useState(true);
   const [copyFeedback, setCopyFeedback] = useState(false);
   const [applyFeedback, setApplyFeedback] = useState(false);
+  const [auroraSpeed, setAuroraSpeed] = useState<'normal' | 'fast'>('fast');
+  const [pointColors, setPointColors] = useState<string[]>(MOXEN_MALLA_PRESETS[0].colors.slice(0, 3));
+
+  const currPreset = MOXEN_MALLA_PRESETS.find(p => p.id === activePreset) || MOXEN_MALLA_PRESETS[0];
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const placeholderRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const capaRef = useRef<HTMLDivElement | null>(null);
   const aroRef = useRef<HTMLDivElement | null>(null);
-  const capasElRef = useRef<HTMLOListElement | null>(null);
-  const baseElRef = useRef<HTMLSpanElement | null>(null);
 
   const ptosRef = useRef<PointState[]>([]);
+  const pointCountRef = useRef<2 | 3 | 4>(3);
   const baseColorRef = useRef<string>(MOXEN_MALLA_PRESETS[0].base);
-  const activePresetRef = useRef<string>('cyberpunk');
+  const activePresetRef = useRef<string>('aurora');
+  const speedMultiplierRef = useRef<number>(1.0);
   const triggerAzarRef = useRef<(() => void) | null>(null);
   const triggerResetRef = useRef<(() => void) | null>(null);
   const getCssRef = useRef<(() => string) | null>(null);
-  const loadColorsRef = useRef<((colors: string[], base: string) => void) | null>(null);
+  const updateSingleColorRef = useRef<((idx: number, hex: string) => void) | null>(null);
+  const changePointCountRef = useRef<((count: 2 | 3 | 4) => void) | null>(null);
+
+  pointCountRef.current = pointCount;
+  speedMultiplierRef.current = auroraSpeed === 'fast' ? 1.4 : 0.8;
+
+  const selectedPointIndexRef = useRef(selectedPointIndex);
+  selectedPointIndexRef.current = selectedPointIndex;
+  const isFullscreenRef = useRef(isFullscreen);
+  isFullscreenRef.current = isFullscreen;
+  const showFsControlsRef = useRef(showFsControls);
+  showFsControlsRef.current = showFsControls;
 
   const toggleFullscreen = () => {
     soundFX.playClick();
     const willBeFs = !isFullscreen;
     setIsFullscreen(willBeFs);
+    if (willBeFs) {
+      setShowFsControls(true);
+    }
 
     const el = containerRef.current;
     if (willBeFs) {
@@ -291,7 +337,7 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
     }
   };
 
-  // Fullscreen breakout to document.body (escapes all ancestor transform and scroll containers)
+  // Fullscreen breakout al #root (escapa cualquier transform y preserva eventos de React)
   useEffect(() => {
     const el = containerRef.current;
     const placeholder = placeholderRef.current;
@@ -299,11 +345,13 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
     const parent = placeholder.parentElement;
     if (!parent) return;
 
+    const rootTarget = document.getElementById('root') || document.body;
+
     if (isFullscreen) {
-      document.body.appendChild(el);
+      rootTarget.appendChild(el);
       document.body.style.overflow = 'hidden';
     } else {
-      if (el.parentElement === document.body) {
+      if (el.parentElement === rootTarget || el.parentElement === document.body) {
         parent.insertBefore(el, placeholder);
       }
       document.body.style.overflow = '';
@@ -315,14 +363,14 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
 
     return () => {
       clearTimeout(timer);
-      if (el && el.parentElement === document.body && placeholder && placeholder.parentElement) {
+      if (el && (el.parentElement === rootTarget || el.parentElement === document.body) && placeholder && placeholder.parentElement) {
         placeholder.parentElement.insertBefore(el, placeholder);
       }
       document.body.style.overflow = '';
     };
   }, [isFullscreen]);
 
-  // Fullscreen escape key & native change listener
+  // Escape key & native fullscreen event listener
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isFullscreen) {
@@ -350,72 +398,62 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
     const lienzo = canvasRef.current;
     const capa = capaRef.current;
     const aro = aroRef.current;
-    const capasEl = capasElRef.current;
-    const baseEl = baseElRef.current;
-    if (!lienzo || !capa || !aro || !capasEl || !baseEl) return;
+    if (!lienzo || !capa || !aro) return;
 
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
     const quieto = () => mq.matches;
     const estrecha = () => window.innerWidth <= 860;
-    const disposicion = () => DISPOSICION[estrecha() ? 'estrecha' : 'ancha'];
+    const getDisp = (count: number) => DISPOSICIONES[count][estrecha() ? 'estrecha' : 'ancha'];
 
     const preset = MOXEN_MALLA_PRESETS.find(p => p.id === activePresetRef.current) || MOXEN_MALLA_PRESETS[0];
     baseColorRef.current = preset.base;
-    baseEl.textContent = preset.base;
 
     const rnd = mulberry32(7);
-    const initialColors = preset.colors;
+    let currCount: 2 | 3 | 4 = pointCountRef.current;
 
-    capa.querySelectorAll('.ml-punto').forEach(el => el.remove());
-    capasEl.innerHTML = '';
+    function buildPoints(count: 2 | 3 | 4, colorsList: string[]) {
+      capa!.querySelectorAll('.ml-punto').forEach(el => el.remove());
+      const disp = getDisp(count);
+      const points: PointState[] = colorsList.slice(0, count).map((hex, i) => {
+        const rgb = hex2rgb(hex);
+        const pos = disp[i] || [0.5, 0.5];
+        return {
+          i,
+          obj: [pos[0], pos[1]],
+          pos0: [pos[0], pos[1]],
+          rgb: [rgb[0], rgb[1], rgb[2]],
+          hsl: rgb2hsl(rgb[0], rgb[1], rgb[2]),
+          arrastra: false,
+          fx: 0.42 + rnd() * 0.3,
+          fy: 0.36 + rnd() * 0.3,
+          f0: rnd() * 6.28,
+          f1: rnd() * 6.28,
+          tx: pos[0],
+          ty: pos[1],
+          px: resorte(pos[0], AJUSTES.pos),
+          py: resorte(pos[1], AJUSTES.pos),
+          cs: rgb.map(v => resorte(v, AJUSTES.color, 0.0008)),
+          m: resorte(1, AJUSTES.masa, 0.002),
+          df: resorte(1, AJUSTES.deriva, 0.002),
+        };
+      });
 
-    const ptos: PointState[] = initialColors.map((hex, i) => {
-      const rgb = hex2rgb(hex);
-      const pos = disposicion()[i];
-      const p: PointState = {
-        i,
-        obj: [pos[0], pos[1]],
-        pos0: [pos[0], pos[1]],
-        rgb: [rgb[0], rgb[1], rgb[2]],
-        hsl: rgb2hsl(rgb[0], rgb[1], rgb[2]),
-        arrastra: false,
-        fx: 0.42 + rnd() * 0.3,
-        fy: 0.36 + rnd() * 0.3,
-        f0: rnd() * 6.28,
-        f1: rnd() * 6.28,
-        tx: pos[0],
-        ty: pos[1],
-        px: resorte(pos[0], AJUSTES.pos),
-        py: resorte(pos[1], AJUSTES.pos),
-        cs: rgb.map(v => resorte(v, AJUSTES.color, 0.0008)),
-        m: resorte(1, AJUSTES.masa, 0.002),
-        df: resorte(1, AJUSTES.deriva, 0.002),
-      };
-      return p;
-    });
-    ptosRef.current = ptos;
+      points.forEach(p => {
+        const el = document.createElement('button');
+        el.type = 'button';
+        el.className = 'ml-punto';
+        el.dataset.i = String(p.i);
+        el.setAttribute('aria-label', `Punto ${p.i + 1}`);
+        capa!.insertBefore(el, aro);
+        p.el = el;
+      });
 
-    // Create DOM buttons for each point
-    ptos.forEach(p => {
-      const el = document.createElement('button');
-      el.type = 'button';
-      el.className = 'ml-punto';
-      el.dataset.i = String(p.i);
-      el.setAttribute('aria-label', `Punto ${p.i + 1}`);
-      capa.insertBefore(el, aro);
-      p.el = el;
-    });
+      ptosRef.current = points;
+      setPointColors(points.map(p => rgb2hex(p.rgb)));
+      return points;
+    }
 
-    // Create DOM code list items
-    ptos.forEach(p => {
-      const li = document.createElement('li');
-      li.innerHTML = `<button type="button" class="ml-fila" data-i="${p.i}"><i class="ml-chip"></i><code><span class="ml-r-pre">radial-gradient(</span>at <b data-xy></b>, <span class="ml-hex" data-hex></span><span class="ml-r-suf">, transparent ${CAPA}%)</span><span data-fin>${p.i === N - 1 ? ';' : ','}</span></code></button>`;
-      capasEl.appendChild(li);
-      p.fila = li.firstElementChild as HTMLElement;
-      p.xy = li.querySelector('[data-xy]') as HTMLElement;
-      p.hexEl = li.querySelector('[data-hex]') as HTMLElement;
-      p.chip = li.querySelector('.ml-chip') as HTMLElement;
-    });
+    let ptos = buildPoints(currCount, preset.colors);
 
     let gl: WebGLRenderingContext | null =
       lienzo.getContext('webgl', { antialias: false, alpha: false, preserveDrawingBuffer: false }) ||
@@ -430,7 +468,11 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
         if (!s) return null;
         gl!.shaderSource(s, src);
         gl!.compileShader(s);
-        return gl!.getShaderParameter(s, gl!.COMPILE_STATUS) ? s : null;
+        if (!gl!.getShaderParameter(s, gl!.COMPILE_STATUS)) {
+          console.error('[MoxenMalla] Shader compile error:', gl!.getShaderInfoLog(s));
+          return null;
+        }
+        return s;
       };
       const vs = sh(gl.VERTEX_SHADER, VERT);
       const fs = sh(gl.FRAGMENT_SHADER, FRAG);
@@ -448,7 +490,7 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
             const loc = gl.getAttribLocation(prog, 'a');
             gl.enableVertexAttribArray(loc);
             gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-            ['u_res', 'u_t', 'u_p', 'u_c', 'u_s', 'u_m', 'u_soft', 'u_fluid', 'u_grano', 'u_estira', 'u_croma'].forEach(n => {
+            ['u_res', 'u_t', 'u_n', 'u_p', 'u_c', 'u_s', 'u_m', 'u_soft', 'u_fluid', 'u_grano', 'u_estira', 'u_croma'].forEach(n => {
               U[n] = gl!.getUniformLocation(prog!, n);
             });
           }
@@ -465,7 +507,6 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
       W = Math.max(1, r.width);
       H = Math.max(1, r.height);
       if (gl) {
-        // High-performance adaptive DPR: max 1.0 on mobile (<= 860px) for 60fps silky smooth rendering; 1.25 on desktop
         const isMobile = window.innerWidth <= 860;
         const dpr = isMobile ? 1.0 : Math.min(window.devicePixelRatio || 1, 1.25);
         lienzo!.width = Math.round(W * dpr);
@@ -474,14 +515,15 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
       }
     }
 
-    const bufP = new Float32Array(N * 2);
-    const bufC = new Float32Array(N * 3);
-    const bufS = new Float32Array(N * 2);
-    const bufM = new Float32Array(N);
+    const bufP = new Float32Array(4 * 2);
+    const bufC = new Float32Array(4 * 3);
+    const bufS = new Float32Array(4 * 2);
+    const bufM = new Float32Array(4);
 
     function pinta() {
       if (!gl || !prog) return;
       const asp = W / H;
+      const count = ptos.length;
       ptos.forEach((p, i) => {
         bufP[i * 2] = p.px.x;
         bufP[i * 2 + 1] = 1 - p.py.x;
@@ -495,6 +537,7 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
       });
       gl.uniform2f(U.u_res!, lienzo!.width, lienzo!.height);
       gl.uniform1f(U.u_t!, tiempo);
+      gl.uniform1i(U.u_n!, count);
       gl.uniform2fv(U.u_p!, bufP);
       gl.uniform3fv(U.u_c!, bufC);
       gl.uniform2fv(U.u_s!, bufS);
@@ -513,7 +556,7 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
 
     function paso(dt: number) {
       const q = quieto();
-      if (!q) tiempo += dt;
+      if (!q) tiempo += dt * speedMultiplierRef.current;
       ptos.forEach(p => {
         p.df.meta = p.arrastra || selec === p.i || q ? 0 : 1;
         if (p.arrastra) {
@@ -545,33 +588,26 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
 
     function coloca() {
       ptos.forEach(p => {
-        if (!p.el || !p.chip) return;
+        if (!p.el) return;
         const x = (p.tx * W).toFixed(1) + 'px';
         const y = (p.ty * H).toFixed(1) + 'px';
         p.el.style.left = x;
         p.el.style.top = y;
         const c = rgb2hex([p.cs[0].x, p.cs[1].x, p.cs[2].x]);
         p.el.style.setProperty('--c', c);
-        p.chip.style.setProperty('--c', c);
       });
       if (selec !== -1) colocaAro();
     }
 
     function cuadro(ts: number) {
       raf = 0;
-      if (W <= 1 || H <= 1) {
-        mide();
-      }
+      if (W <= 1 || H <= 1) mide();
       const dt = ultimoTs ? lim((ts - ultimoTs) / 1000, 0, 0.05) : 1 / 60;
       ultimoTs = ts;
       paso(dt);
       pinta();
       coloca();
-      if (!quieto() || ptos.some(p => !enReposo(p.px) || !enReposo(p.py) || !enReposo(p.m) || p.cs.some(r => !enReposo(r)))) {
-        raf = requestAnimationFrame(cuadro);
-      } else {
-        ultimoTs = 0;
-      }
+      raf = requestAnimationFrame(cuadro);
     }
 
     function despierta() {
@@ -588,35 +624,7 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
     }
     getCssRef.current = css;
 
-    function destella(p: PointState) {
-      if (quieto() || !p.fila) return;
-      p.fila.classList.remove('is-cambia');
-      void p.fila.offsetWidth;
-      p.fila.classList.add('is-cambia');
-      setTimeout(() => p.fila?.classList.remove('is-cambia'), 850);
-    }
-
-    function pintaCodigo(destellar: boolean) {
-      ptos.forEach(p => {
-        if (!p.xy || !p.hexEl) return;
-        const xy = xyDe(p);
-        const hx = hexDe(p);
-        const clave = xy + hx;
-        if (p.xy.textContent !== xy) p.xy.textContent = xy;
-        if (p.hexEl.textContent !== hx) p.hexEl.textContent = hx;
-        if (clave !== p.claveCodigo) {
-          const hubo = p.claveCodigo !== undefined;
-          p.claveCodigo = clave;
-          if (hubo && destellar) destella(p);
-        }
-      });
-      if (!gl || !prog) {
-        lienzo!.style.backgroundImage = ptos.map(p => `radial-gradient(at ${xyDe(p)}, ${hexDe(p)}, transparent ${CAPA}%)`).join(',');
-        lienzo!.style.backgroundColor = baseColorRef.current;
-      }
-    }
-
-    /* ── Aro de Tono HSL ────────────────────────────────────────────── */
+    /* ── Aro de Tono Circular (HSL) ─────────────────────────────────── */
     let selec = -1;
     let girando = false;
 
@@ -637,12 +645,12 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
     function marcaSel() {
       ptos.forEach(p => {
         p.el?.classList.toggle('is-sel', p.i === selec);
-        p.fila?.classList.toggle('is-sel', p.i === selec);
       });
     }
 
     function abreAro(i: number) {
       selec = i;
+      setSelectedPointIndex(i);
       aro!.hidden = false;
       colocaAro();
       ponAsa();
@@ -663,7 +671,7 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
       p.hsl[0] = ((h % 360) + 360) % 360;
       p.rgb = hsl2rgb(p.hsl[0], p.hsl[1], p.hsl[2]);
       ponAsa();
-      pintaCodigo(false);
+      setPointColors(ptos.map(pt => rgb2hex(pt.rgb)));
       despierta();
     }
 
@@ -694,7 +702,6 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
     function ponObj(p: PointState, x: number, y: number) {
       p.obj[0] = lim(x / W, 0.02, 0.98);
       p.obj[1] = lim(y / H, 0.02, 0.98);
-      pintaCodigo(false);
       despierta();
       if (selec === p.i) colocaAro();
     }
@@ -718,6 +725,13 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
       }
 
       const btn = (e.target as HTMLElement).closest('.ml-punto') as HTMLElement | null;
+
+      // En modo normal, si el usuario toca el fondo vacío del lienzo, permitimos
+      // que el gesto sea el scroll vertical natural de la página en vez de interceptarlo
+      if (!btn && !isFullscreenRef.current) {
+        return;
+      }
+
       const p = btn ? ptos[Number(btn.dataset.i)] : masCercano(x, y);
       if (!p) return;
 
@@ -756,7 +770,6 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
       if (girando) {
         girando = false;
         aro.classList.remove('is-gira');
-        if (ptos[selec]) destella(ptos[selec]);
         return;
       }
       if (!arr || (e.pointerId !== undefined && e.pointerId !== arr.id)) return;
@@ -767,8 +780,6 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
       if (!a.moved && !a.fondo) {
         if (selec === a.p.i) cierraAro();
         else abreAro(a.p.i);
-      } else if (a.moved || a.fondo) {
-        destella(a.p);
       }
       despierta();
     };
@@ -778,34 +789,24 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
     capa.addEventListener('pointerup', onPointerUp);
     capa.addEventListener('pointercancel', onPointerUp);
 
-    const onFilaClick = (e: MouseEvent) => {
-      const btn = (e.target as HTMLElement).closest('.ml-fila') as HTMLElement | null;
-      if (!btn) return;
-      const i = Number(btn.dataset.i);
-      if (selec === i) cierraAro();
-      else abreAro(i);
-      destella(ptos[i]);
-    };
-    capasEl.addEventListener('click', onFilaClick);
-
     const azar = () => {
       soundFX.playClick();
       const r = 0.12;
       ptos.forEach(p => {
         p.obj = [
-          lim(r + Math.random() * (1 - 2 * r), 0.05, 0.95),
-          lim(r + Math.random() * (1 - 2 * r), 0.05, 0.95),
+          lim(r + Math.random() * (1 - 2 * r), 0.08, 0.92),
+          lim(r + Math.random() * (1 - 2 * r), 0.08, 0.92),
         ];
       });
-      const shift = 1 + Math.floor(Math.random() * 4);
+      const shift = 1 + Math.floor(Math.random() * (ptos.length - 1));
       const prevColores = ptos.map(p => ({ rgb: p.rgb.slice() as [number, number, number], hsl: p.hsl.slice() as [number, number, number] }));
       ptos.forEach((p, idx) => {
-        const o = prevColores[(idx + shift) % N];
+        const o = prevColores[(idx + shift) % ptos.length];
         p.rgb = o.rgb;
         p.hsl = o.hsl;
       });
       if (selec !== -1) cierraAro();
-      pintaCodigo(true);
+      setPointColors(ptos.map(p => rgb2hex(p.rgb)));
       despierta();
     };
     triggerAzarRef.current = azar;
@@ -814,31 +815,42 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
       soundFX.playClick();
       const presetActive = MOXEN_MALLA_PRESETS.find(p => p.id === activePresetRef.current) || MOXEN_MALLA_PRESETS[0];
       baseColorRef.current = presetActive.base;
-      baseEl.textContent = presetActive.base;
+      const disp = getDisp(ptos.length);
       ptos.forEach((p, idx) => {
-        const rgb = hex2rgb(presetActive.colors[idx]);
-        p.obj = disposicion()[idx].slice() as [number, number];
+        const rgb = hex2rgb(presetActive.colors[idx % presetActive.colors.length]);
+        p.obj = (disp[idx] || [0.5, 0.5]).slice() as [number, number];
         p.rgb = rgb;
         p.hsl = rgb2hsl(rgb[0], rgb[1], rgb[2]);
       });
       if (selec !== -1) cierraAro();
-      pintaCodigo(true);
+      setPointColors(ptos.map(p => rgb2hex(p.rgb)));
       despierta();
     };
     triggerResetRef.current = restablecer;
 
-    const loadColors = (newColors: string[], newBase: string) => {
-      baseColorRef.current = newBase;
-      baseEl.textContent = newBase;
-      ptos.forEach((p, idx) => {
-        const rgb = hex2rgb(newColors[idx]);
-        p.rgb = rgb;
-        p.hsl = rgb2hsl(rgb[0], rgb[1], rgb[2]);
-      });
-      pintaCodigo(true);
+    updateSingleColorRef.current = (idx: number, hex: string) => {
+      const p = ptos[idx];
+      if (!p) return;
+      const rgb = hex2rgb(hex);
+      p.rgb = rgb;
+      p.hsl = rgb2hsl(rgb[0], rgb[1], rgb[2]);
+      if (selec === idx) ponAsa();
+      setPointColors(ptos.map(pt => rgb2hex(pt.rgb)));
       despierta();
     };
-    loadColorsRef.current = loadColors;
+
+    changePointCountRef.current = (newCount: 2 | 3 | 4) => {
+      if (newCount === ptos.length) return;
+      const currentColors = ptos.map(p => rgb2hex(p.rgb));
+      const presetActive = MOXEN_MALLA_PRESETS.find(p => p.id === activePresetRef.current) || MOXEN_MALLA_PRESETS[0];
+      const mergedColors = [...currentColors, ...presetActive.colors];
+      cierraAro();
+      ptos = buildPoints(newCount, mergedColors);
+      mide();
+      coloca();
+      pinta();
+      despierta();
+    };
 
     const resizeObserver = new ResizeObserver(() => {
       mide();
@@ -849,7 +861,6 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
     if (containerRef.current) resizeObserver.observe(containerRef.current);
 
     mide();
-    pintaCodigo(false);
     ptos.forEach(p => {
       p.tx = p.obj[0];
       p.ty = p.obj[1];
@@ -864,10 +875,8 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
       capa.removeEventListener('pointermove', onPointerMove);
       capa.removeEventListener('pointerup', onPointerUp);
       capa.removeEventListener('pointercancel', onPointerUp);
-      capasEl.removeEventListener('click', onFilaClick);
       if (raf) cancelAnimationFrame(raf);
       capa.querySelectorAll('.ml-punto').forEach(el => el.remove());
-      capasEl.innerHTML = '';
     };
   }, []);
 
@@ -876,10 +885,26 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
     setActivePreset(presetId);
     activePresetRef.current = presetId;
     const targetPreset = MOXEN_MALLA_PRESETS.find(p => p.id === presetId);
-    if (targetPreset && loadColorsRef.current) {
-      loadColorsRef.current(targetPreset.colors, targetPreset.base);
+    if (targetPreset && updateSingleColorRef.current) {
+      targetPreset.colors.slice(0, pointCount).forEach((c, idx) => {
+        updateSingleColorRef.current?.(idx, c);
+      });
     }
-  }, []);
+  }, [pointCount]);
+
+  const handleChangePointCount = (count: 2 | 3 | 4) => {
+    soundFX.playClick();
+    setPointCount(count);
+    if (selectedPointIndex >= count) {
+      setSelectedPointIndex(count - 1);
+    }
+    changePointCountRef.current?.(count);
+  };
+
+  const handleUpdateColor = (idx: number, hex: string) => {
+    soundFX.playClick();
+    updateSingleColorRef.current?.(idx, hex);
+  };
 
   const handleCopyCss = () => {
     soundFX.playClick();
@@ -906,8 +931,8 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
     const bgImgMatch = code.match(/background-image:\s*([\s\S]+?);/);
 
     const aura = {
-      name: currPreset ? currPreset.name : 'Malla Personalizada',
-      backgroundColor: bgColMatch ? bgColMatch[1].trim() : '#050b1a',
+      name: `${currPreset ? currPreset.name : 'Malla Aurora'} (${pointCount} Tonos)`,
+      backgroundColor: bgColMatch ? bgColMatch[1].trim() : '#020d18',
       backgroundImage: bgImgMatch ? bgImgMatch[1].trim() : '',
     };
 
@@ -918,34 +943,84 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
     setTimeout(() => setApplyFeedback(false), 3000);
   };
 
-  const handleResetSystemAura = () => {
-    soundFX.playClick();
-    if (onResetSystem) {
-      onResetSystem();
-    }
-    setApplyFeedback(false);
-  };
+  // Delegación de eventos nativos en el contenedor para máxima fiabilidad en fullscreen
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const onNativeClick = (e: MouseEvent) => {
+      const target = (e.target as HTMLElement)?.closest('[data-action]') as HTMLElement | null;
+      if (!target) return;
+
+      const action = target.dataset.action;
+      if (!action) return;
+
+      if (action === 'toggle-fullscreen') {
+        toggleFullscreen();
+      } else if (action === 'toggle-hud') {
+        soundFX.playClick();
+        setShowFsControls(prev => !prev);
+      } else if (action === 'preset') {
+        const id = target.dataset.presetId;
+        if (id) handleSelectPreset(id);
+      } else if (action === 'point-count') {
+        const c = Number(target.dataset.count) as 2 | 3 | 4;
+        if (c === 2 || c === 3 || c === 4) handleChangePointCount(c);
+      } else if (action === 'toggle-speed') {
+        soundFX.playClick();
+        setAuroraSpeed(prev => prev === 'fast' ? 'normal' : 'fast');
+      } else if (action === 'select-gem') {
+        const idx = Number(target.dataset.gemIdx);
+        if (!isNaN(idx)) {
+          soundFX.playClick();
+          setSelectedPointIndex(idx);
+        }
+      } else if (action === 'swatch') {
+        const hex = target.dataset.swatchHex;
+        if (hex) handleUpdateColor(selectedPointIndexRef.current, hex);
+      } else if (action === 'apply-system') {
+        handleApplyToSystem();
+      } else if (action === 'azar') {
+        triggerAzarRef.current?.();
+      } else if (action === 'reset') {
+        triggerResetRef.current?.();
+      }
+    };
+
+    const onNativeChange = (e: Event) => {
+      const target = e.target as HTMLInputElement;
+      if (target && target.type === 'color' && target.dataset.action === 'color-input') {
+        handleUpdateColor(selectedPointIndexRef.current, target.value);
+      }
+    };
+
+    container.addEventListener('click', onNativeClick);
+    container.addEventListener('change', onNativeChange);
+    container.addEventListener('input', onNativeChange);
+
+    return () => {
+      container.removeEventListener('click', onNativeClick);
+      container.removeEventListener('change', onNativeChange);
+      container.removeEventListener('input', onNativeChange);
+    };
+  }, []);
 
   return (
     <div className={`moxen-malla-root space-y-4 ${className}`}>
-      {/* ── BARRA SUPERIOR DE PRESETS SCI-FI ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-[#00152b] rounded-2xl border border-cyan-500/30 shadow-[0_4px_20px_rgba(0,0,0,0.4)]">
-        <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-xl bg-cyan-950/80 border border-cyan-500/40 text-cyan-400">
-            <Palette className="w-4 h-4" />
-          </div>
-          <div>
-            <span className="text-[10px] font-mono uppercase tracking-widest text-cyan-400 font-bold block">
-              Atmósfera Cuántica · Moxen Malla
-            </span>
-            <span className="text-xs font-anton tracking-wide text-white block">
-              Elige un Preset o afina cada tono en pantalla
-            </span>
-          </div>
+      {/* ── BARRA SUPERIOR MINIMALISTA ── */}
+      <div className="flex items-center justify-between gap-2 px-1">
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_#00f0ff]" />
+          <span className="text-xs font-mono font-bold tracking-wider uppercase text-slate-300">
+            Malla Aurora
+          </span>
+          <span className="text-[10px] font-mono text-cyan-400/90 bg-white/[0.04] px-2 py-0.5 rounded-full border border-white/10">
+            {currPreset.badge}
+          </span>
         </div>
 
-        {/* Preset Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+        {/* Preset Pills Minimalistas */}
+        <div className="flex items-center gap-1 overflow-x-auto scrollbar-none py-0.5">
           {MOXEN_MALLA_PRESETS.map(p => {
             const isSelected = activePreset === p.id;
             return (
@@ -953,15 +1028,15 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
                 key={p.id}
                 type="button"
                 onClick={() => handleSelectPreset(p.id)}
-                className={`chicle-btn px-2.5 py-1.5 rounded-xl text-[11px] font-mono font-bold tracking-wider transition-all flex items-center gap-1.5 shrink-0 border cursor-pointer ${
+                className={`px-2.5 py-1 rounded-full text-[11px] font-mono font-medium transition-all flex items-center gap-1.5 shrink-0 border cursor-pointer ${
                   isSelected
-                    ? 'bg-cyan-500 text-black border-cyan-300 shadow-[0_0_15px_rgba(0,240,255,0.5)] font-black'
-                    : 'bg-[#000d1c] border-slate-800 text-slate-300 hover:text-white hover:border-cyan-500/40'
+                    ? 'bg-white/15 text-white border-white/30 shadow-[0_0_12px_rgba(255,255,255,0.15)] font-bold'
+                    : 'bg-transparent border-transparent text-slate-400 hover:text-slate-200 hover:bg-white/[0.05]'
                 }`}
                 title={p.desc}
               >
                 <span 
-                  className="w-2.5 h-2.5 rounded-full shrink-0 border border-black/40 shadow-[0_0_6px_currentColor]"
+                  className="w-2 h-2 rounded-full shrink-0 shadow-[0_0_6px_currentColor]"
                   style={{ background: p.colors[0], color: p.colors[0] }}
                 />
                 <span>{p.badge}</span>
@@ -971,14 +1046,14 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
         </div>
       </div>
 
-      {/* ── ESCENA DEL SHADER (HERO CANVAS VIEWPORT) ── */}
+      {/* ── ESCENA DEL SHADER AURORA BOREAL ── */}
       <div ref={placeholderRef} style={{ display: 'none' }} />
       <div
         ref={containerRef}
-        className={`ml-escena relative border border-cyan-500/40 shadow-[0_15px_50px_rgba(0,240,255,0.18)] transition-all ${
+        className={`ml-escena relative border border-white/10 rounded-2xl overflow-hidden shadow-[0_10px_35px_rgba(0,0,0,0.5)] transition-all ${
           isFullscreen 
             ? 'is-fullscreen' 
-            : 'min-h-[500px] h-[520px] sm:h-[580px]'
+            : 'h-[260px] sm:h-[320px] md:h-[360px]'
         }`}
       >
         {/* Canvas WebGL */}
@@ -1003,145 +1078,477 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
           </div>
         </div>
 
-        {/* Botón de Pantalla Completa Flotante */}
-        <button
-          type="button"
-          onClick={toggleFullscreen}
-          className={`chicle-btn absolute top-3 right-3 z-40 p-2 sm:p-2.5 rounded-xl border transition-all cursor-pointer shadow-[0_0_20px_rgba(0,240,255,0.3)] backdrop-blur-md ${
-            isFullscreen
-              ? 'bg-rose-950/90 hover:bg-rose-900 border-rose-500/80 text-rose-200 flex items-center gap-1.5 px-3'
-              : 'bg-black/70 hover:bg-black/90 border-cyan-500/50 text-cyan-300 hover:text-white'
-          }`}
-          title={isFullscreen ? 'Salir de pantalla completa (Esc)' : 'Expandir a pantalla completa'}
-        >
-          {isFullscreen ? (
-            <>
-              <Minimize2 className="w-3.5 h-3.5" />
-              <span className="text-[11px] font-mono font-bold uppercase tracking-wider">Salir</span>
-            </>
-          ) : (
-            <Maximize2 className="w-4 h-4" />
-          )}
-        </button>
+        {/* MODO NORMAL: Botón de Pantalla Completa Flotante Minimalista */}
+        {!isFullscreen && (
+          <button
+            type="button"
+            data-action="toggle-fullscreen"
+            onClick={toggleFullscreen}
+            className="chicle-btn absolute top-3 right-3 z-40 px-2.5 py-1.5 rounded-lg border border-white/15 bg-black/40 hover:bg-black/60 text-white/80 hover:text-white transition-all cursor-pointer backdrop-blur-md flex items-center gap-1.5 text-[11px] font-mono shadow-sm"
+            title="Expandir a pantalla completa"
+          >
+            <Maximize2 className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="hidden sm:inline font-medium">Pantalla Completa</span>
+          </button>
+        )}
 
-        {/* Panel de Vidrio y Acciones (Floating Glass HUD - Diseño Fiel al Original) */}
-        <aside className="ml-panel" aria-label="Degradado en código">
-          <header className="ml-cab">
-            <span className="ml-etiqueta">Shader</span>
-            <h1>Malla</h1>
-            <p>Arrastra un punto y su color se derrama por la malla.</p>
-          </header>
-
-          {/* Código CSS (Siempre en el DOM para mantener sincronizado el motor) */}
-          <div className="ml-codigo">
-            <p className="ml-linea ml-fija">
-              <span className="ml-k">background-color</span>: <span ref={baseElRef} className="ml-v">#030712</span>;
-            </p>
-            <p className="ml-linea ml-fija">
-              <span className="ml-k">background-image</span>:
-            </p>
-            <ol ref={capasElRef} className="ml-capas" />
-          </div>
-
-          {/* Botones de Acción Tácticos */}
-          <div className="ml-acciones">
-            <button
-              type="button"
-              className="ml-btn chicle-btn"
-              onClick={() => triggerAzarRef.current?.()}
-              title="Barajar colores y posiciones"
-            >
-              <Shuffle className="w-4 h-4" />
-              <span>Azar</span>
-            </button>
-
-            <button
-              type="button"
-              className="ml-btn ml-btn-ico chicle-btn"
-              onClick={() => triggerResetRef.current?.()}
-              title="Restablecer puntos del preset"
-            >
-              <RotateCcw className="w-4 h-4" />
-            </button>
-
-            <button
-              type="button"
-              className={`ml-btn ml-btn-prin chicle-btn ${copyFeedback ? 'is-copiado' : ''}`}
-              onClick={handleCopyCss}
-              title="Copiar código CSS al portapapeles"
-            >
-              <span className="ml-b-ico" aria-hidden="true">
-                {copyFeedback ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+        {/* MODO PANTALLA COMPLETA: CABECERA CON SAFE-AREA Y BOTÓN DE SALIDA DESTACADO */}
+        {isFullscreen && (
+          <div
+            className="absolute top-0 inset-x-0 z-[100] flex items-center justify-between px-3.5 sm:px-6 py-3 sm:py-4 pointer-events-auto"
+            style={{ paddingTop: 'max(14px, env(safe-area-inset-top, 14px))' }}
+          >
+            {/* Badge de Estado Aurora Boreal */}
+            <div className="flex items-center gap-2 bg-[#000d1c]/90 backdrop-blur-md px-3 sm:px-4 py-2 rounded-full border border-cyan-500/40 shadow-[0_0_20px_rgba(0,240,255,0.25)]">
+              <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_10px_#00f0ff]" />
+              <span className="text-[11px] sm:text-xs font-mono font-black text-white tracking-wider uppercase">
+                {currPreset?.name || 'Malla Aurora'}
               </span>
-              <span className="ml-b-txt">
-                <span>{copyFeedback ? '¡Copiado!' : 'Copiar'}</span>
+              <span className="text-[10px] font-mono font-bold text-cyan-300 border-l border-slate-700 pl-2">
+                {pointCount} Tonos
               </span>
-            </button>
+            </div>
+
+            {/* Controles de Cabecera: Toggle HUD y Botón Salir */}
+            <div className="flex items-center gap-2">
+              {/* Toggle Ocultar/Mostrar Controles HUD */}
+              <button
+                type="button"
+                data-action="toggle-hud"
+                onClick={() => {
+                  soundFX.playClick();
+                  setShowFsControls(!showFsControls);
+                }}
+                className="chicle-btn px-3 py-2 rounded-xl bg-black/80 hover:bg-black/95 border border-cyan-500/50 text-cyan-300 hover:text-white flex items-center gap-1.5 text-xs font-mono font-bold shadow-lg cursor-pointer backdrop-blur-md"
+                title={showFsControls ? 'Ocultar panel para vista limpia' : 'Mostrar panel de controles'}
+              >
+                {showFsControls ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                <span className="hidden sm:inline">{showFsControls ? 'Ocultar Panel' : 'Panel de Control'}</span>
+              </button>
+
+              {/* BOTÓN DEFINITIVO DE SALIDA PANTALLA COMPLETA */}
+              <button
+                type="button"
+                data-action="toggle-fullscreen"
+                onClick={toggleFullscreen}
+                className="chicle-btn px-3.5 sm:px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white font-mono font-black text-xs uppercase tracking-wider flex items-center gap-2 border-2 border-rose-300 shadow-[0_0_30px_rgba(244,63,94,0.7)] cursor-pointer ring-2 ring-rose-500/50"
+                title="Salir de pantalla completa (Esc)"
+              >
+                <X className="w-4 h-4 stroke-[3]" />
+                <span className="hidden sm:inline">Salir Pantalla Completa</span>
+                <span className="sm:hidden">Salir</span>
+              </button>
+            </div>
           </div>
-        </aside>
+        )}
+
+        {/* MODO PANTALLA COMPLETA: DOCK FLOTANTE DE COLORES HUD (CON CONTROLES COMPLETOS) */}
+        {isFullscreen && showFsControls && (
+          <div
+            className="absolute bottom-0 inset-x-0 z-[100] px-3 sm:px-6 py-3 sm:py-4 pointer-events-none flex justify-center"
+            style={{ paddingBottom: 'max(14px, env(safe-area-inset-bottom, 14px))' }}
+          >
+            <div
+              className="pointer-events-auto w-full max-w-3xl bg-[#00152b]/95 backdrop-blur-xl border border-cyan-500/50 rounded-2xl p-3 sm:p-4 shadow-[0_20px_50px_rgba(0,0,0,0.9),0_0_30px_rgba(0,240,255,0.25)] space-y-3 max-h-[60vh] overflow-y-auto scrollbar-thin scrollbar-thumb-cyan-500/40"
+            >
+              {/* FILA 1: PRESETS RÁPIDOS + SELECTOR DE NODOS (2, 3 o 4) + VELOCIDAD */}
+              <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-800/80">
+                {/* Presets en Pills scrollables */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none max-w-full">
+                  {MOXEN_MALLA_PRESETS.map(p => {
+                    const isSelected = activePreset === p.id;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        data-action="preset"
+                        data-preset-id={p.id}
+                        onClick={() => handleSelectPreset(p.id)}
+                        className={`chicle-btn px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold tracking-wider flex items-center gap-1.5 shrink-0 border cursor-pointer transition-all ${
+                          isSelected
+                            ? 'bg-cyan-500 text-black border-cyan-300 shadow-[0_0_12px_rgba(0,240,255,0.6)] font-black'
+                            : 'bg-[#000d1c] border-slate-800 text-slate-300 hover:text-white'
+                        }`}
+                      >
+                        <span 
+                          className="w-2 h-2 rounded-full shrink-0 border border-black/40"
+                          style={{ background: p.colors[0] }}
+                        />
+                        <span>{p.badge}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Nodos (2, 3 o 4) y Velocidad */}
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 bg-[#000d1c] p-0.5 rounded-lg border border-slate-800">
+                    {([2, 3, 4] as const).map(num => (
+                      <button
+                        key={num}
+                        type="button"
+                        data-action="point-count"
+                        data-count={num}
+                        onClick={() => handleChangePointCount(num)}
+                        className={`px-2 py-0.5 rounded text-[11px] font-mono font-black transition-all cursor-pointer ${
+                          pointCount === num
+                            ? 'bg-cyan-500 text-black shadow-[0_0_10px_rgba(0,240,255,0.5)]'
+                            : 'text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        {num}
+                      </button>
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    data-action="toggle-speed"
+                    onClick={() => {
+                      soundFX.playClick();
+                      setAuroraSpeed(auroraSpeed === 'fast' ? 'normal' : 'fast');
+                    }}
+                    className={`chicle-btn px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold flex items-center gap-1 border transition-all cursor-pointer ${
+                      auroraSpeed === 'fast'
+                        ? 'bg-purple-950/80 border-purple-400/60 text-purple-300 shadow-[0_0_12px_rgba(168,85,247,0.3)]'
+                        : 'bg-[#000d1c] border-slate-800 text-slate-400'
+                    }`}
+                  >
+                    <Waves className="w-3 h-3 text-cyan-400" />
+                    <span>{auroraSpeed === 'fast' ? '⚡ Viva' : '❄️ Calm'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* FILA 2: GEMAS ACTIVAS (TOCAR PARA SELECCIONAR) */}
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none flex-1">
+                  {pointColors.slice(0, pointCount).map((colHex, idx) => {
+                    const isSelected = selectedPointIndex === idx;
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        data-action="select-gem"
+                        data-gem-idx={idx}
+                        onClick={() => {
+                          soundFX.playClick();
+                          setSelectedPointIndex(idx);
+                        }}
+                        className={`chicle-btn px-2.5 py-1.5 rounded-xl border flex items-center gap-2 transition-all cursor-pointer shrink-0 ${
+                          isSelected
+                            ? 'bg-cyan-950/80 border-cyan-400 shadow-[0_0_15px_rgba(0,240,255,0.4)] ring-2 ring-cyan-400/50'
+                            : 'bg-[#000d1c] border-slate-800 hover:border-slate-700'
+                        }`}
+                      >
+                        <span
+                          className="w-4 h-4 rounded-full shrink-0 border-2 border-white shadow-[0_0_8px_currentColor]"
+                          style={{ background: colHex, color: colHex }}
+                        />
+                        <span className="text-[11px] font-mono font-black text-white uppercase">
+                          {colHex}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Selector de color libre */}
+                <label className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-[#000d1c] border border-cyan-500/40 text-cyan-400 hover:text-cyan-200 cursor-pointer shrink-0 text-xs font-mono font-bold">
+                  <Palette className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Color Libre</span>
+                  <input
+                    type="color"
+                    data-action="color-input"
+                    value={pointColors[selectedPointIndex] || '#00f0ff'}
+                    onChange={(e) => handleUpdateColor(selectedPointIndex, e.target.value)}
+                    className="w-0 h-0 opacity-0 absolute pointer-events-none"
+                  />
+                </label>
+              </div>
+
+              {/* FILA 3: PALETA HUNTER NEÓN RÁPIDA (ASIGNA AL PUNTO SELECCIONADO AL INSTANTE) */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+                <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest shrink-0">
+                  Gema {selectedPointIndex + 1}:
+                </span>
+                {HUNTER_SWATCHES.map((sw, sIdx) => {
+                  const isCurr = pointColors[selectedPointIndex]?.toLowerCase() === sw.hex.toLowerCase();
+                  return (
+                    <button
+                      key={sIdx}
+                      type="button"
+                      data-action="swatch"
+                      data-swatch-hex={sw.hex}
+                      onClick={() => handleUpdateColor(selectedPointIndex, sw.hex)}
+                      className={`group relative p-0.5 rounded-lg transition-all shrink-0 cursor-pointer border ${
+                        isCurr 
+                          ? 'border-white scale-110 shadow-[0_0_12px_rgba(255,255,255,0.7)]' 
+                          : 'border-transparent hover:scale-105'
+                      }`}
+                      title={`${sw.name} (${sw.hex})`}
+                    >
+                      <span
+                        className="w-6 h-6 rounded-md block border border-black/40 shadow-sm"
+                        style={{ background: sw.hex }}
+                      />
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* FILA 4: ACCIONES PRINCIPALES Y SALIR */}
+              <div className="flex items-center gap-2 pt-1">
+                {/* Botón Aplicar al Sistema */}
+                <button
+                  type="button"
+                  data-action="apply-system"
+                  onClick={handleApplyToSystem}
+                  className={`flex-1 py-2.5 px-3 rounded-xl font-anton uppercase tracking-wider text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-[0_0_20px_rgba(0,240,255,0.35)] ${
+                    applyFeedback
+                      ? 'bg-emerald-500 text-black border border-emerald-300 font-black'
+                      : 'bg-gradient-to-r from-cyan-400 via-cyan-500 to-blue-600 hover:from-cyan-300 hover:to-blue-500 text-black font-black'
+                  }`}
+                >
+                  {applyFeedback ? (
+                    <>
+                      <CheckCircle2 className="w-3.5 h-3.5 text-black stroke-[3]" />
+                      <span>¡Atmósfera Activada!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-3.5 h-3.5 text-black fill-black" />
+                      <span>Aplicar como Fondo</span>
+                    </>
+                  )}
+                </button>
+
+                {/* Azar */}
+                <button
+                  type="button"
+                  data-action="azar"
+                  onClick={() => triggerAzarRef.current?.()}
+                  className="chicle-btn p-2.5 rounded-xl bg-[#000d1c] hover:bg-[#001830] border border-cyan-500/40 text-cyan-300 text-xs font-mono font-bold flex items-center justify-center cursor-pointer"
+                  title="Barajar al azar"
+                >
+                  <Shuffle className="w-4 h-4 text-cyan-400" />
+                </button>
+
+                {/* Reset */}
+                <button
+                  type="button"
+                  data-action="reset"
+                  onClick={() => triggerResetRef.current?.()}
+                  className="chicle-btn p-2.5 rounded-xl bg-[#000d1c] hover:bg-[#001830] border border-slate-800 text-slate-300 text-xs font-mono font-bold flex items-center justify-center cursor-pointer"
+                  title="Restablecer preset"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                </button>
+
+                {/* Botón Salir en el dock inferior (Ultra Accesible con el pulgar) */}
+                <button
+                  type="button"
+                  data-action="toggle-fullscreen"
+                  onClick={toggleFullscreen}
+                  className="chicle-btn px-3 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-mono font-black text-xs uppercase tracking-wider flex items-center gap-1.5 border border-rose-300 shadow-[0_0_15px_rgba(244,63,94,0.5)] cursor-pointer"
+                  title="Salir de pantalla completa"
+                >
+                  <X className="w-3.5 h-3.5 stroke-[3]" />
+                  <span>Salir</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Pista Inferior Descriptiva */}
         <p className="ml-pista">
-          <span className="ml-p-largo">Toca y arrastra un punto · Pulsa un punto para desplegar el aro de color</span>
-          <span className="ml-p-corto">Arrastra o pulsa un punto</span>
+          <span className="ml-p-largo">Toca un nodo de color para moverlo · Pulsa "Pantalla Completa" para el laboratorio inmersivo</span>
+          <span className="ml-p-corto">Toca o arrastra un nodo</span>
         </p>
       </div>
 
-      {/* ── BARRA DE APLICACIÓN A LA ATMÓSFERA DEL SISTEMA ── */}
-      <div className="p-4 bg-gradient-to-r from-[#00152b] via-[#002244] to-[#00152b] rounded-2xl border border-cyan-500/40 shadow-[0_0_25px_rgba(0,240,255,0.15)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <Zap className="w-4 h-4 text-amber-400" />
-            <h4 className="text-sm font-black text-white uppercase tracking-wider">
-              Aura y Atmósfera Activa del Sistema
-            </h4>
-            {activeSystemAuraName && (
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-cyan-950 border border-cyan-400/50 text-cyan-300 font-bold">
-                Activa: {activeSystemAuraName}
-              </span>
-            )}
+      {/* ── DOCK DE CONTROL MINIMALISTA (ULTRA-SLIM & ESTILIZADO) ── */}
+      <div className="p-2.5 sm:p-3 bg-white/[0.02] border border-white/[0.08] backdrop-blur-xl rounded-2xl space-y-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.37)]">
+        {/* FILA 1: SELECTOR DE TONOS + VELOCIDAD + HERRAMIENTAS RÁPIDAS */}
+        <div className="flex items-center justify-between gap-2">
+          {/* Segmented Tonos [ 2 | 3 | 4 ] */}
+          <div className="flex items-center gap-0.5 bg-black/40 p-1 rounded-xl border border-white/10">
+            <span className="text-[10px] font-mono text-slate-400 px-1.5 uppercase tracking-wider hidden sm:inline font-semibold">
+              Tonos:
+            </span>
+            {([2, 3, 4] as const).map(num => (
+              <button
+                key={num}
+                type="button"
+                onClick={() => handleChangePointCount(num)}
+                className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
+                  pointCount === num
+                    ? 'bg-white/20 text-white shadow-xs'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                {num}
+              </button>
+            ))}
           </div>
-          <p className="text-xs text-slate-300">
-            Aplica este gradiente de malla como la atmósfera de fondo de toda la aplicación.
-          </p>
-        </div>
 
-        <div className="flex items-center gap-2.5 shrink-0">
-          {activeSystemAuraName && (
+          {/* Herramientas Rápidas: Velocidad + Azar + Reset + CSS */}
+          <div className="flex items-center gap-1.5">
+            {/* Velocidad Aurora */}
             <button
               type="button"
-              onClick={handleResetSystemAura}
-              className="chicle-btn px-3 py-2 rounded-xl text-xs font-mono font-bold text-slate-400 hover:text-white bg-[#000d1c] border border-slate-700 hover:border-slate-500 transition-all cursor-pointer"
+              onClick={() => {
+                soundFX.playClick();
+                setAuroraSpeed(auroraSpeed === 'fast' ? 'normal' : 'fast');
+              }}
+              className={`px-2.5 py-1.5 rounded-xl text-xs font-mono font-bold flex items-center gap-1.5 border transition-all cursor-pointer ${
+                auroraSpeed === 'fast'
+                  ? 'bg-cyan-500/15 border-cyan-400/50 text-cyan-300 shadow-[0_0_12px_rgba(0,240,255,0.2)]'
+                  : 'bg-black/30 border-white/10 text-slate-400 hover:text-white'
+              }`}
+              title="Velocidad Aurora: Normal / Rápida"
             >
-              Restablecer Predeterminado
+              <Waves className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="text-[11px] font-mono hidden sm:inline">
+                {auroraSpeed === 'fast' ? 'Viva' : 'Calma'}
+              </span>
             </button>
-          )}
 
-          <button
-            type="button"
-            onClick={handleApplyToSystem}
-            className={`chicle-btn px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 border cursor-pointer ${
-              applyFeedback
-                ? 'bg-emerald-500 text-black border-emerald-300 shadow-[0_0_20px_rgba(52,211,153,0.6)]'
-                : 'bg-gradient-to-r from-cyan-500 to-blue-600 text-black border-cyan-300 shadow-[0_0_20px_rgba(0,240,255,0.4)] hover:brightness-110 hover:shadow-[0_0_30px_rgba(0,240,255,0.7)]'
-            }`}
-          >
-            {applyFeedback ? (
-              <>
-                <CheckCircle2 className="w-4 h-4 text-black stroke-[2.5]" />
-                <span>¡Atmósfera Aplicada!</span>
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-4 h-4 text-black" />
-                <span>Aplicar a la App</span>
-              </>
-            )}
-          </button>
+            {/* Azar (Shuffle) */}
+            <button
+              type="button"
+              onClick={() => triggerAzarRef.current?.()}
+              className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-black/30 hover:bg-black/50 border border-white/10 hover:border-white/25 text-slate-300 hover:text-white text-xs font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+              title="Barajar al azar"
+            >
+              <Shuffle className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="text-[11px] font-mono hidden md:inline">Azar</span>
+            </button>
+
+            {/* Reset */}
+            <button
+              type="button"
+              onClick={() => triggerResetRef.current?.()}
+              className="p-1.5 sm:p-2 rounded-xl bg-black/30 hover:bg-black/50 border border-white/10 hover:border-white/20 text-slate-400 hover:text-white transition-all cursor-pointer"
+              title="Restablecer"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+            </button>
+
+            {/* Copiar CSS */}
+            <button
+              type="button"
+              onClick={handleCopyCss}
+              className={`p-1.5 sm:p-2 rounded-xl border transition-all cursor-pointer ${
+                copyFeedback
+                  ? 'bg-emerald-950/80 border-emerald-400 text-emerald-300'
+                  : 'bg-black/30 hover:bg-black/50 border-white/10 text-slate-400 hover:text-white'
+              }`}
+              title="Copiar CSS"
+            >
+              {copyFeedback ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+            </button>
+          </div>
         </div>
+
+        {/* FILA 2: RIBBON DE COLOR UNIFICADO (GEMAS ACTIVAS + PALETA RÁPIDA + COLOR PICKER) */}
+        <div className="flex items-center justify-between gap-2 p-2 bg-black/30 rounded-xl border border-white/10 overflow-x-auto scrollbar-none">
+          {/* Gemas activas seleccionables */}
+          <div className="flex items-center gap-2 shrink-0">
+            {pointColors.slice(0, pointCount).map((colHex, idx) => {
+              const isSelected = selectedPointIndex === idx;
+              return (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => {
+                    soundFX.playClick();
+                    setSelectedPointIndex(idx);
+                  }}
+                  className={`relative p-0.5 rounded-full transition-all cursor-pointer ${
+                    isSelected
+                      ? 'ring-2 ring-white ring-offset-2 ring-offset-[#030a18] scale-110 shadow-[0_0_12px_rgba(255,255,255,0.4)]'
+                      : 'opacity-70 hover:opacity-100 hover:scale-105'
+                  }`}
+                  title={`Gema ${idx + 1}: ${colHex}`}
+                >
+                  <span
+                    className="w-6 h-6 rounded-full block border border-white/40"
+                    style={{ background: colHex }}
+                  />
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="h-5 w-px bg-white/10 shrink-0" />
+
+          {/* Swatches rápidos de Cazador */}
+          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5">
+            {HUNTER_SWATCHES.map((sw, sIdx) => {
+              const isCurr = pointColors[selectedPointIndex]?.toLowerCase() === sw.hex.toLowerCase();
+              return (
+                <button
+                  key={sIdx}
+                  type="button"
+                  onClick={() => handleUpdateColor(selectedPointIndex, sw.hex)}
+                  className={`p-0.5 rounded-lg transition-all shrink-0 cursor-pointer ${
+                    isCurr
+                      ? 'ring-1.5 ring-white scale-110 shadow-[0_0_8px_rgba(255,255,255,0.4)]'
+                      : 'opacity-80 hover:opacity-100 hover:scale-105'
+                  }`}
+                  title={`${sw.name} (${sw.hex})`}
+                >
+                  <span
+                    className="w-5 h-5 rounded-md block border border-black/30 shadow-xs"
+                    style={{ background: sw.hex }}
+                  />
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="h-5 w-px bg-white/10 shrink-0" />
+
+          {/* Color picker libre */}
+          <label
+            className="shrink-0 p-1.5 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white cursor-pointer transition-all flex items-center justify-center"
+            title="Seleccionar color personalizado"
+          >
+            <Palette className="w-4 h-4 text-cyan-300" />
+            <input
+              type="color"
+              value={pointColors[selectedPointIndex] || '#00f0ff'}
+              onChange={(e) => handleUpdateColor(selectedPointIndex, e.target.value)}
+              className="w-0 h-0 opacity-0 absolute pointer-events-none"
+            />
+          </label>
+        </div>
+
+        {/* FILA 3: BOTÓN ESTELAR MINIMALISTA */}
+        <button
+          type="button"
+          onClick={handleApplyToSystem}
+          className={`w-full py-2.5 px-4 rounded-xl font-mono uppercase tracking-wider text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+            applyFeedback
+              ? 'bg-emerald-500 text-black shadow-[0_0_20px_rgba(16,185,129,0.4)] font-black'
+              : 'bg-gradient-to-r from-cyan-400 to-blue-600 hover:from-cyan-300 hover:to-blue-500 text-black shadow-[0_0_20px_rgba(0,240,255,0.25)]'
+          }`}
+        >
+          {applyFeedback ? (
+            <>
+              <CheckCircle2 className="w-4 h-4 text-black stroke-[3]" />
+              <span>¡Atmósfera Activada en el Sistema!</span>
+            </>
+          ) : (
+            <>
+              <Sparkles className="w-4 h-4 text-black fill-black" />
+              <span>Aplicar como Fondo del Sistema</span>
+            </>
+          )}
+        </button>
       </div>
     </div>
   );
 };
-
-export default MoxenMalla;

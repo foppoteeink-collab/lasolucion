@@ -13,11 +13,14 @@ import {
   restoreAppState, 
   DriveFileInfo 
 } from '../services/googleDriveService';
+import { MoxenRayas } from './moxen/MoxenRayas';
 
 export const GoogleDriveSyncCard: React.FC = () => {
   const { user, accessToken, signInWithGoogle } = useAuth();
 
   const [isLoading, setIsLoading] = useState(false);
+  const [syncProgress, setSyncProgress] = useState(0);
+  const [syncOperation, setSyncOperation] = useState<'upload' | 'download' | null>(null);
   const [driveFile, setDriveFile] = useState<DriveFileInfo | null>(null);
   const [hasChecked, setHasChecked] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
@@ -59,12 +62,16 @@ export const GoogleDriveSyncCard: React.FC = () => {
 
     try {
       setIsLoading(true);
+      setSyncOperation('upload');
+      setSyncProgress(0.25);
       setStatusMessage(null);
       soundFX.playClick();
 
       const currentState = gatherCurrentAppState();
+      setSyncProgress(0.65);
       const updatedFile = await uploadBackupToDrive(accessToken, currentState, driveFile?.id);
 
+      setSyncProgress(1);
       setDriveFile(updatedFile);
       setShowUploadConfirm(false);
       soundFX.playLevelUp();
@@ -80,7 +87,11 @@ export const GoogleDriveSyncCard: React.FC = () => {
         text: err?.message || 'Error al guardar en Google Drive.',
       });
     } finally {
-      setIsLoading(false);
+      setTimeout(() => {
+        setIsLoading(false);
+        setSyncOperation(null);
+        setSyncProgress(0);
+      }, 700);
     }
   };
 
@@ -93,6 +104,8 @@ export const GoogleDriveSyncCard: React.FC = () => {
 
     try {
       setIsLoading(true);
+      setSyncOperation('download');
+      setSyncProgress(0.2);
       setStatusMessage(null);
       soundFX.playClick();
 
@@ -105,13 +118,16 @@ export const GoogleDriveSyncCard: React.FC = () => {
             text: 'Aún no existe una copia de seguridad en tu Google Drive. Guarda una primero para respaldar tus datos.',
           });
           setIsLoading(false);
+          setSyncOperation(null);
           return;
         }
         targetFileId = file.id;
         setDriveFile(file);
       }
 
+      setSyncProgress(0.6);
       const backupData = await downloadBackupFromDrive(accessToken, targetFileId);
+      setSyncProgress(1);
       setPendingDownloadData(backupData);
       setShowDownloadConfirm(true);
     } catch (err: any) {
@@ -122,7 +138,11 @@ export const GoogleDriveSyncCard: React.FC = () => {
         text: err?.message || 'Error al descargar la copia desde Google Drive.',
       });
     } finally {
-      setIsLoading(false);
+      setTimeout(() => {
+        setIsLoading(false);
+        setSyncOperation(null);
+        setSyncProgress(0);
+      }, 700);
     }
   };
 
@@ -269,6 +289,24 @@ export const GoogleDriveSyncCard: React.FC = () => {
               <span>Cargar desde Google Drive</span>
             </button>
           </div>
+
+          {/* Active Cloud Sync Progress with Moxen Rayas */}
+          {isLoading && (
+            <div className="p-4 rounded-xl bg-black/80 border border-cyan-500/50 shadow-[0_0_20px_rgba(0,240,255,0.15)] animate-fade-in space-y-2 mt-3">
+              <MoxenRayas
+                progress={syncProgress}
+                variant="hero"
+                theme="cyan"
+                mode="active"
+                title={syncOperation === 'upload' ? 'Sincronizando Respaldo con Google Drive' : 'Descargando Copia de Seguridad'}
+                subtitle="Cifrado cuántico y empaquetado de estado PWA"
+                totalUnits={driveFile?.size ? Number((Number(driveFile.size) / (1024 * 1024)).toFixed(1)) : 1.8}
+                unitLabel="MB"
+                showOdometer={true}
+                showTimeRemaining={true}
+              />
+            </div>
+          )}
         </div>
       )}
 
