@@ -81,3 +81,42 @@ export function formatMoney(amount: number, symbol: string = '$'): string {
   });
   return `${isNegative ? '-' : ''}${symbol}${formatted}`;
 }
+
+export interface DayFinanceTotals {
+  income: number;
+  expense: number;
+  balance: number;
+}
+
+export function calculateDayFinanceTotals(
+  currentDate: string,
+  expenses: { date: string; type?: 'income' | 'expense'; amount: number }[] = [],
+  tasks: { completed?: boolean; incomeAmount?: number; completedAt?: string }[] = []
+): DayFinanceTotals {
+  let income = 0;
+  let expense = 0;
+
+  expenses.forEach((ex) => {
+    if (ex.date === currentDate) {
+      const type = ex.type || 'expense';
+      const val = Number(ex.amount) || 0;
+      if (type === 'income') income += val;
+      else expense += val;
+    }
+  });
+
+  tasks.forEach((t) => {
+    if (t.completed && t.incomeAmount && t.incomeAmount > 0) {
+      const taskDate = t.completedAt ? t.completedAt.split('T')[0] : currentDate;
+      if (taskDate === currentDate) {
+        income += Number(t.incomeAmount) || 0;
+      }
+    }
+  });
+
+  return {
+    income: Math.round(income * 100) / 100,
+    expense: Math.round(expense * 100) / 100,
+    balance: Math.round((income - expense) * 100) / 100,
+  };
+}

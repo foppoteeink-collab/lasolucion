@@ -341,9 +341,9 @@ export const saveHabitMastery = (mastery: Record<string, HabitMasteryRecord>) =>
 export const loadGameSettings = (): GameSettings => {
   try {
     const data = safeGetItem('gameSettings');
-    return data ? JSON.parse(data) : { enableDynamicQuests: true, enableCompanion: true, strictMode: false };
+    return data ? JSON.parse(data) : { enableDynamicQuests: true, enableCompanion: true, strictMode: false, enableFinanceModule: true };
   } catch (error) {
-    return { enableDynamicQuests: true, enableCompanion: true, strictMode: false };
+    return { enableDynamicQuests: true, enableCompanion: true, strictMode: false, enableFinanceModule: true };
   }
 };
 

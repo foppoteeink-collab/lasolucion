@@ -353,6 +353,7 @@ export interface GameSettings {
   enableDynamicQuests: boolean;
   enableCompanion: boolean;
   strictMode: boolean;
+  enableFinanceModule?: boolean;
 }
 
 export interface FinancialTransaction {

@@ -45,6 +45,8 @@ import { DamageOverlay } from './DamageOverlay';
 import { ShockwaveOverlay } from './ShockwaveOverlay';
 import { DailyProgressWidget } from './DailyProgressWidget';
 import { DailyFinanceWidget } from './DailyFinanceWidget';
+import { DailyFinanceModal } from './DailyFinanceModal';
+import { calculateDayFinanceTotals } from '../utils/finance';
 import { ScrollReveal } from './common/ScrollReveal';
 import { OfflineIndicator } from './OfflineIndicator';
 import { NotificationToastOverlay } from './NotificationToastOverlay';
@@ -87,6 +89,7 @@ export function AppLayout() {
   const [oracleInitialPrompt, setOracleInitialPrompt] = React.useState<string | undefined>(undefined);
   const [isNeuralAnalysisOpen, setIsNeuralAnalysisOpen] = React.useState(false);
   const [isKaiWorkshopOpen, setIsKaiWorkshopOpen] = React.useState(false);
+  const [isFinanceModalOpen, setIsFinanceModalOpen] = React.useState(false);
 
   const handleOpenOracleWithPrompt = (promptText?: string) => {
     setOracleInitialPrompt(promptText);
@@ -130,6 +133,10 @@ export function AppLayout() {
 
   const todayStr = getTodayDateString();
   const hasUnclaimedDailyReward = stats.lastDailyRewardClaimedDate !== todayStr;
+
+  const todayFinanceTotals = React.useMemo(() => {
+    return calculateDayFinanceTotals(currentViewDate, expenses, tasks);
+  }, [currentViewDate, expenses, tasks]);
 
 
 
@@ -450,17 +457,11 @@ export function AppLayout() {
                   onClaimDailyBonus={handleClaimBossBounty}
                   showSchedule={showBossSchedule}
                   onToggleSchedule={() => setShowBossSchedule(prev => !prev)}
+                  enableFinance={gameSettings?.enableFinanceModule ?? true}
+                  onOpenFinance={() => setIsFinanceModalOpen(true)}
+                  todayFinanceBalance={todayFinanceTotals.balance}
                 />
               </motion.div>
-
-              {/* DAILY FINANCE WIDGET: CONTROL DE INGRESOS Y GASTOS DE LA JORNADA */}
-              <ScrollReveal>
-                <DailyFinanceWidget 
-                  currentDate={currentViewDate}
-                  tasks={tasks}
-                  onOpenStats={() => setActiveTab('stats')}
-                />
-              </ScrollReveal>
 
               <motion.div variants={itemVariant}>
                 <TaskListView 
@@ -718,6 +719,18 @@ export function AppLayout() {
           onClose={() => setIsNeuralAnalysisOpen(false)}
         />
       </Suspense>
+
+      {/* Daily Finance Express Modal */}
+      <DailyFinanceModal
+        isOpen={isFinanceModalOpen}
+        onClose={() => setIsFinanceModalOpen(false)}
+        currentDate={currentViewDate}
+        tasks={tasks}
+        onOpenStats={() => {
+          setIsFinanceModalOpen(false);
+          setActiveTab('stats');
+        }}
+      />
 
       {/* Nightly Tunnel — Sequential End-of-Day Flow (Evaluation + Reward + Seal) */}
       <Suspense fallback={null}>

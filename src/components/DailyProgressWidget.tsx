@@ -6,13 +6,15 @@ import {
   Timer,
   Trophy,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Wallet
 } from 'lucide-react';
 import { TaskItem, TaskCategory } from '../types';
 import { soundFX } from '../utils/audio';
 import { parseTimeToMinutes, parseEndTimeToMinutes, sortByChronologicalTime } from '../utils/timeUtils';
 import { getTodayDateString } from '../utils/date';
 import { MoxenRayas } from './moxen/MoxenRayas';
+import { getSavedCurrencySymbol } from '../utils/finance';
 
 interface DailyProgressWidgetProps {
   tasks: TaskItem[];
@@ -25,6 +27,10 @@ interface DailyProgressWidgetProps {
   onClaimDailyBonus?: (xp: number, coins: number) => void;
   showSchedule?: boolean;
   onToggleSchedule?: () => void;
+  enableFinance?: boolean;
+  onOpenFinance?: () => void;
+  todayFinanceBalance?: number;
+  currencySymbol?: string;
 }
 
 export const DailyProgressWidget: React.FC<DailyProgressWidgetProps> = ({
@@ -36,8 +42,13 @@ export const DailyProgressWidget: React.FC<DailyProgressWidgetProps> = ({
   onClaimDailyBonus,
   showSchedule,
   onToggleSchedule,
+  enableFinance = true,
+  onOpenFinance,
+  todayFinanceBalance = 0,
+  currencySymbol,
 }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const activeCurrencySymbol = currencySymbol || getSavedCurrencySymbol();
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -134,6 +145,33 @@ export const DailyProgressWidget: React.FC<DailyProgressWidgetProps> = ({
             <Sparkles className="w-3 h-3 text-cyan-400" />
             <span>+{xpEarned}/{xpTotal} XP</span>
           </div>
+
+          {enableFinance && onOpenFinance && (
+            <button
+              type="button"
+              onClick={() => {
+                soundFX.playCoin();
+                onOpenFinance();
+              }}
+              className={`px-2.5 py-1 rounded-lg border text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 ${
+                todayFinanceBalance > 0
+                  ? 'bg-emerald-950/70 hover:bg-emerald-900/70 text-emerald-300 border-emerald-500/50 shadow-[0_0_10px_rgba(16,185,129,0.3)]'
+                  : todayFinanceBalance < 0
+                  ? 'bg-rose-950/70 hover:bg-rose-900/70 text-rose-300 border-rose-500/50 shadow-[0_0_10px_rgba(244,63,94,0.3)]'
+                  : 'bg-surface-card hover:bg-emerald-950/40 text-emerald-300 hover:text-white border-emerald-500/30'
+              }`}
+              title="Abrir Tesorería: registrar ingreso o gasto"
+            >
+              <Wallet className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="font-mono">
+                {todayFinanceBalance > 0
+                  ? `+${activeCurrencySymbol}${todayFinanceBalance}`
+                  : todayFinanceBalance < 0
+                  ? `-${activeCurrencySymbol}${Math.abs(todayFinanceBalance)}`
+                  : `${activeCurrencySymbol}0`}
+              </span>
+            </button>
+          )}
 
           <button
             type="button"

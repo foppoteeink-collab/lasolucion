@@ -5,7 +5,7 @@ import {
   HardDrive, FileSpreadsheet, Cpu, CheckCircle2,
   Coins, Volume2, VolumeX, Target, Sun, Moon, Laptop, ArrowUpRight, CheckCheck,
   SlidersHorizontal, Smartphone, Share, PlusSquare, FlaskConical,
-  Compass, Eye, Layout, Bell, BellOff, BellRing, Zap, Flame, Timer, Palette, ChevronLeft
+  Compass, Eye, Layout, Bell, BellOff, BellRing, Zap, Flame, Timer, Palette, ChevronLeft, Wallet
 } from 'lucide-react';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 import { GameSettings } from '../types';
@@ -1254,6 +1254,29 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 <span className="px-3 py-1 rounded-xl bg-emerald-950 border border-emerald-600/50 text-emerald-300 font-mono font-black text-xs">
                   {currentCurrency} Activo
                 </span>
+              </div>
+
+              {/* TOGGLE MODULAR: TESORERÍA EN MISIONES */}
+              <div className="flex items-center justify-between p-4 rounded-xl bg-[#001020] border border-cyan-900/60">
+                <div className="space-y-0.5 pr-4">
+                  <div className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-2">
+                    <Wallet className="w-4 h-4 text-emerald-400" />
+                    Módulo de Tesorería en Misiones
+                  </div>
+                  <p className="text-xs text-slate-400">
+                    Habilita la micro-cápsula de balance y registro rápido en la pantalla de Misiones. Si lo desactivas, la vista de misiones queda 100% limpia y sin datos financieros.
+                  </p>
+                </div>
+                <ChicleToggle
+                  checked={settings.enableFinanceModule ?? true}
+                  onChange={(val) => {
+                    soundFX.playClick();
+                    onUpdateSettings({ ...settings, enableFinanceModule: val });
+                  }}
+                  color="emerald"
+                  size="md"
+                  ariaLabel="Alternar Módulo de Tesorería en Misiones"
+                />
               </div>
 
               {/* SELECTOR COMPACTO DE MONEDA */}
