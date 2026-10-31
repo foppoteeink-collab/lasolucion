@@ -21,7 +21,6 @@ import { PomodoroTimer } from './PomodoroTimer';
 
 // Lazy Loaded Secondary Tabs & Modals (Code-Splitting for Instant PWA Launch)
 const WeeklyStats = lazy(() => import('./WeeklyStats').then(m => ({ default: m.WeeklyStats })));
-const MonthlyCalendar = lazy(() => import('./MonthlyCalendar').then(m => ({ default: m.MonthlyCalendar })));
 const JournalView = lazy(() => import('./JournalView').then(m => ({ default: m.JournalView })));
 const RewardShop = lazy(() => import('./RewardShop').then(m => ({ default: m.RewardShop })));
 const SkillTreeAndSettings = lazy(() => import('./SkillTreeAndSettings').then(m => ({ default: m.SkillTreeAndSettings })));
@@ -349,17 +348,6 @@ export function AppLayout() {
               <span>Bitácora</span>
             </button>
             <button
-              onClick={() => { soundFX.playClick(); setActiveTab('planner'); }}
-              className={`flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2 rounded-xl transition-all font-anton text-sm sm:text-base whitespace-nowrap cursor-pointer tracking-wider ${
-                activeTab === 'planner'
-                  ? 'bg-cyan-400 text-black shadow-[0_0_16px_rgba(0,240,255,0.7)]'
-                  : 'text-slate-300 hover:text-white hover:bg-cyan-950/40'
-              }`}
-            >
-              <Calendar className="w-4 h-4" />
-              <span>Planificador</span>
-            </button>
-            <button
               onClick={() => { soundFX.playClick(); setActiveTab('shop'); }}
               className={`flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2 rounded-xl transition-all font-anton text-sm sm:text-base whitespace-nowrap cursor-pointer tracking-wider ${
                 activeTab === 'shop'
@@ -411,22 +399,6 @@ export function AppLayout() {
           animate="show"
           className="w-full space-y-2.5 sm:space-y-4"
         >
-          {activeTab === 'planner' && (
-            <motion.div variants={itemVariant} className="w-full">
-              <Suspense fallback={<TabLoadingSkeleton />}>
-                <MonthlyCalendar 
-                  currentDate={currentViewDate}
-                  tasksByDate={tasksByDate}
-                  onChangeDate={handleSetCurrentViewDate}
-                  onNavigateToDay={(date) => {
-                     handleSetCurrentViewDate(date);
-                     setActiveTab('dashboard');
-                  }}
-                />
-              </Suspense>
-            </motion.div>
-          )}
-
           {activeTab === 'dashboard' && (
             <>
               {/* COLLAPSIBLE LIVE SCHEDULE TIMELINE */}
@@ -581,65 +553,53 @@ export function AppLayout() {
       {/* MAIN NAVIGATION BAR (Keep backdrop blur here for spatial depth) */}
       {navigationMode === 'classic' && (
         <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#030712]/80 backdrop-blur-xl border-t border-cyan-500/40 shadow-[0px_-4px_25px_rgba(0,240,255,0.2)] px-3 pt-2 pb-safe font-sans tracking-wide">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-around gap-1.5">
             <button
               onClick={() => { soundFX.playClick(); setActiveTab('stats'); }}
-              className={`flex flex-col items-center justify-center w-14 h-12 rounded-xl transition-all ${
+              className={`flex flex-col items-center justify-center flex-1 max-w-[80px] h-12 rounded-xl transition-all ${
                 activeTab === 'stats'
                   ? 'text-cyan-300 font-black bg-cyan-500/20 border border-cyan-400 shadow-[0_0_12px_rgba(0,240,255,0.4)]'
                   : 'text-slate-400 hover:text-cyan-300'
               }`}
             >
               <Shield className={`w-5 h-5 mb-1 ${activeTab === 'stats' ? 'text-cyan-300 drop-shadow-[0_0_8px_rgba(0,240,255,0.8)]' : ''}`} />
-              <span className="text-[9px] font-bold tracking-wider">Héroe</span>
-            </button>
-            
-            <button
-              onClick={() => { soundFX.playClick(); setActiveTab('planner'); }}
-              className={`flex flex-col items-center justify-center w-14 h-12 rounded-xl transition-all ${
-                activeTab === 'planner'
-                  ? 'text-cyan-300 font-black bg-cyan-500/20 border border-cyan-400 shadow-[0_0_12px_rgba(0,240,255,0.4)]'
-                  : 'text-slate-400 hover:text-cyan-300'
-              }`}
-            >
-              <Calendar className={`w-5 h-5 mb-1 ${activeTab === 'planner' ? 'text-cyan-300 drop-shadow-[0_0_8px_rgba(0,240,255,0.8)]' : ''}`} />
-              <span className="text-[9px] font-bold tracking-wider">Cal</span>
+              <span className="text-[10px] font-bold tracking-wider">Héroe</span>
             </button>
             
             <button
               onClick={() => { soundFX.playClick(); setActiveTab('dashboard'); }}
-              className={`flex flex-col items-center justify-center w-16 h-14 -mt-4 rounded-2xl transition-all shadow-[0_0_20px_rgba(0,0,0,0.9)] ${
+              className={`flex flex-col items-center justify-center flex-1 max-w-[84px] h-14 -mt-3.5 rounded-2xl transition-all shadow-[0_0_20px_rgba(0,0,0,0.9)] ${
                 activeTab === 'dashboard'
                   ? 'bg-cyan-400 text-black font-anton font-bold border-2 border-cyan-300 shadow-[0_0_20px_rgba(0,240,255,0.8)] transform -translate-y-1'
                   : 'bg-[#011420] text-slate-300 border border-cyan-500/40 hover:bg-cyan-950/40'
               }`}
             >
               <Swords className={`w-6 h-6 mb-0.5 ${activeTab === 'dashboard' ? 'text-black drop-shadow-[0_0_8px_rgba(0,0,0,0.8)]' : 'text-cyan-300'}`} />
-              <span className="text-[9px] font-bold tracking-wider">Tareas</span>
+              <span className="text-[10px] font-bold tracking-wider">Misiones</span>
             </button>
             
             <button
               onClick={() => { soundFX.playClick(); setActiveTab('journal'); }}
-              className={`flex flex-col items-center justify-center w-14 h-12 rounded-xl transition-all ${
+              className={`flex flex-col items-center justify-center flex-1 max-w-[80px] h-12 rounded-xl transition-all ${
                 activeTab === 'journal'
                   ? 'text-cyan-300 font-black bg-cyan-500/20 border border-cyan-400 shadow-[0_0_12px_rgba(0,240,255,0.4)]'
                   : 'text-slate-400 hover:text-cyan-300'
               }`}
             >
               <BookOpen className={`w-5 h-5 mb-1 ${activeTab === 'journal' ? 'text-cyan-300 drop-shadow-[0_0_8px_rgba(0,240,255,0.8)]' : ''}`} />
-              <span className="text-[9px] font-bold tracking-wider">Bitácora</span>
+              <span className="text-[10px] font-bold tracking-wider">Bitácora</span>
             </button>
             
             <button
               onClick={() => { soundFX.playClick(); setActiveTab('shop'); }}
-              className={`flex flex-col items-center justify-center w-14 h-12 rounded-xl transition-all ${
+              className={`flex flex-col items-center justify-center flex-1 max-w-[80px] h-12 rounded-xl transition-all ${
                 activeTab === 'shop'
                   ? 'text-purple-300 font-black bg-purple-500/20 border border-purple-400 shadow-[0_0_12px_rgba(168,85,247,0.4)]'
                   : 'text-slate-400 hover:text-purple-300'
               }`}
             >
               <ShoppingBag className={`w-5 h-5 mb-1 ${activeTab === 'shop' ? 'text-purple-300 drop-shadow-[0_0_8px_rgba(168,85,247,0.8)]' : ''}`} />
-              <span className="text-[9px] font-bold tracking-wider">Tienda</span>
+              <span className="text-[10px] font-bold tracking-wider">Tienda</span>
             </button>
           </div>
         </nav>

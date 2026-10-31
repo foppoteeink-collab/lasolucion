@@ -140,8 +140,8 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
         icon: <Calendar className="w-5 h-5" />,
         accentColor: '#38bdf8',
         glowColor: 'rgba(56, 189, 248, 0.45)',
-        liveStat: 'Vista mensual',
-        action: () => setActiveTab('planner'),
+        liveStat: 'Misiones & Agenda',
+        action: () => setActiveTab('dashboard'),
       },
       {
         id: 'pomodoro',

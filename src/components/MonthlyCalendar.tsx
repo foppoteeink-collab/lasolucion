@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Star } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Star, Sparkles } from 'lucide-react';
 import { TaskItem } from '../types';
 import { soundFX } from '../utils/audio';
 import { formatDateToLocal, getTodayDateString } from '../utils/date';
@@ -13,7 +13,12 @@ interface MonthlyCalendarProps {
   onNavigateToDay: (date: string) => void;
 }
 
-export const MonthlyCalendar: React.FC<MonthlyCalendarProps> = ({ currentDate, tasksByDate, onChangeDate, onNavigateToDay }) => {
+export const MonthlyCalendar: React.FC<MonthlyCalendarProps> = ({ 
+  currentDate, 
+  tasksByDate, 
+  onChangeDate, 
+  onNavigateToDay 
+}) => {
   const customHabits = useTaskStore(state => state.customHabits);
   const [viewMonth, setViewMonth] = useState(() => new Date(currentDate + "T12:00:00"));
 
@@ -47,7 +52,10 @@ export const MonthlyCalendar: React.FC<MonthlyCalendarProps> = ({ currentDate, t
     return days;
   }, [viewMonth]);
 
-  const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+  const monthNames = [
+    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+  ];
   const dayNames = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
   const prevMonth = () => {
@@ -67,72 +75,129 @@ export const MonthlyCalendar: React.FC<MonthlyCalendarProps> = ({ currentDate, t
   const todayStr = getTodayDateString();
 
   return (
-    <div className="bg-[#001224]/80 backdrop-blur-md rounded-3xl p-6 border border-slate-700 shadow-2xl relative overflow-hidden font-sans tracking-wide">
-       {/* Ambient glow */}
-       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-32 mix-blend-screen pointer-events-none" />
+    <div className="relative isolate rounded-2xl sm:rounded-3xl p-4 sm:p-6 bg-surface-card border border-white/10 backdrop-blur-2xl shadow-[0_0_35px_rgba(0,0,0,0.6)] overflow-hidden font-sans tracking-wide text-white">
+       {/* Ambient corner glows */}
+       <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+       <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
 
-       <div className="flex items-center justify-between mb-8">
+       {/* HEADER & MONTH NAVIGATION */}
+       <div className="flex items-center justify-between gap-3 mb-6 relative z-10">
           <div className="flex items-center gap-3">
-             <div className="p-3 bg-blue-900/40 rounded-2xl border border-blue-500/30">
-                <CalendarIcon className="w-6 h-6 text-blue-400" />
+             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-cyan-950/80 border border-cyan-500/40 flex items-center justify-center text-cyan-400 shadow-[0_0_15px_rgba(0,240,255,0.3)] shrink-0">
+                <CalendarIcon className="w-5 h-5 sm:w-6 sm:h-6" />
              </div>
              <div>
-               <h2 className="text-2xl font-black text-white capitalize">{monthNames[viewMonth.getMonth()]} {viewMonth.getFullYear()}</h2>
-               <p className="text-sm font-bold text-slate-400">Planificador Mensual</p>
+               <h2 className="text-lg sm:text-2xl font-anton tracking-wide text-white capitalize">
+                 {monthNames[viewMonth.getMonth()]} {viewMonth.getFullYear()}
+               </h2>
+               <p className="text-xs text-slate-400 font-mono">
+                 Cronograma Orbital de Misiones
+               </p>
              </div>
           </div>
-          <div className="flex items-center gap-2">
-             <button onClick={prevMonth} className="p-2 hover:bg-slate-800 rounded-xl transition-colors border border-slate-700 hover:border-slate-500 text-white cursor-pointer"><ChevronLeft className="w-5 h-5" /></button>
-             <button onClick={() => setViewMonth(new Date())} className="px-4 py-2 hover:bg-slate-800 rounded-xl transition-colors border border-slate-700 hover:border-slate-500 text-xs font-bold uppercase tracking-widest text-slate-300 cursor-pointer">Hoy</button>
-             <button onClick={nextMonth} className="p-2 hover:bg-slate-800 rounded-xl transition-colors border border-slate-700 hover:border-slate-500 text-white cursor-pointer"><ChevronRight className="w-5 h-5" /></button>
+          <div className="flex items-center gap-1.5 sm:gap-2">
+             <button 
+               type="button"
+               onClick={prevMonth} 
+               className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl bg-white/[0.04] hover:bg-cyan-950/60 border border-white/10 hover:border-cyan-400/50 text-slate-300 hover:text-cyan-300 transition-all cursor-pointer active:scale-95"
+               title="Mes anterior"
+             >
+               <ChevronLeft className="w-4 h-4" />
+             </button>
+             <button 
+               type="button"
+               onClick={() => {
+                 soundFX.playClick();
+                 setViewMonth(new Date());
+               }} 
+               className="px-3 py-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/40 text-cyan-300 text-xs font-anton tracking-wider uppercase transition-all cursor-pointer shadow-[0_0_10px_rgba(0,240,255,0.2)] active:scale-95"
+             >
+               Hoy
+             </button>
+             <button 
+               type="button"
+               onClick={nextMonth} 
+               className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl bg-white/[0.04] hover:bg-cyan-950/60 border border-white/10 hover:border-cyan-400/50 text-slate-300 hover:text-cyan-300 transition-all cursor-pointer active:scale-95"
+               title="Mes siguiente"
+             >
+               <ChevronRight className="w-4 h-4" />
+             </button>
           </div>
        </div>
 
-       <div className="grid grid-cols-7 gap-2 mb-2">
+       {/* WEEKDAY NAMES HEADER */}
+       <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-2 relative z-10">
           {dayNames.map(day => (
-             <div key={day} className="text-center text-[10px] sm:text-xs font-black text-slate-500 uppercase tracking-widest py-2">
+             <div key={day} className="text-center text-[10px] sm:text-xs font-anton tracking-wider text-slate-400 uppercase py-1">
                 {day}
              </div>
           ))}
        </div>
 
-       <div className="grid grid-cols-7 gap-2">
+       {/* DAYS GRID */}
+       <div className="grid grid-cols-7 gap-1 sm:gap-2 relative z-10">
           {daysInMonth.map((day, idx) => {
-             const isToday = day.date === todayStr;
+             const isDayToday = day.date === todayStr;
              const isSelected = day.date === currentDate;
              const dayTasks = tasksByDate[day.date] !== undefined ? tasksByDate[day.date] : generateDailyTasks(day.date, customHabits);
              const completedCount = dayTasks.filter(t => t.completed).length;
              const totalCount = dayTasks.length;
              const progress = totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100);
+             const isFullyDone = totalCount > 0 && completedCount === totalCount;
              
              return (
                 <button
                    key={idx}
-                   onClick={() => { soundFX.playClick(); onChangeDate(day.date); onNavigateToDay(day.date); }}
-                   className={`relative flex flex-col items-center justify-start py-2 px-1 sm:p-3 h-20 sm:h-28 rounded-2xl border transition-all cursor-pointer group ${
-                      !day.isCurrentMonth ? 'opacity-40 hover:opacity-100 bg-[#000a14] border-slate-800/50' : 
-                      isSelected ? 'bg-blue-900/40 border-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.3)]' :
-                      isToday ? 'bg-slate-800 border-yellow-500/50' :
-                      'bg-[#001830]/50 border-slate-700/50 hover:bg-[#002244] hover:border-slate-500'
+                   type="button"
+                   onClick={() => { 
+                     soundFX.playClick(); 
+                     onChangeDate(day.date); 
+                     onNavigateToDay(day.date); 
+                   }}
+                   className={`relative flex flex-col items-center justify-between py-1.5 px-1 sm:p-2.5 h-16 sm:h-24 rounded-xl sm:rounded-2xl border transition-all cursor-pointer group active:scale-95 ${
+                      !day.isCurrentMonth 
+                        ? 'opacity-30 hover:opacity-80 bg-black/40 border-white/5' 
+                        : isSelected 
+                        ? 'bg-cyan-950/80 border-cyan-400 shadow-[0_0_18px_rgba(0,240,255,0.4)] ring-1 ring-cyan-400 z-10' 
+                        : isDayToday 
+                        ? 'bg-yellow-400/10 border-yellow-400/60 shadow-[0_0_12px_rgba(250,204,21,0.25)]' 
+                        : 'bg-black/30 border-white/5 hover:border-cyan-500/40 hover:bg-[#011420]/70'
                    }`}
                 >
-                   {isToday && <div className="absolute top-0 right-0 w-3 h-3 rounded-full bg-yellow-400 -mt-1 -mr-1 shadow-[0_0_8px_rgba(250,204,21,0.8)]" />}
+                   {isDayToday && (
+                     <div className="absolute top-1 right-1 sm:top-1.5 sm:right-1.5 w-2 h-2 rounded-full bg-yellow-400 shadow-[0_0_8px_rgba(250,204,21,0.8)]" />
+                   )}
                    
-                   <span className={`text-sm sm:text-lg font-black mb-1 ${
-                      isSelected ? 'text-blue-300' :
-                      !day.isCurrentMonth ? 'text-slate-600' :
-                      isToday ? 'text-yellow-400' : 'text-slate-300'
+                   <span className={`text-xs sm:text-base font-anton ${
+                      isSelected 
+                        ? 'text-cyan-300 drop-shadow-[0_0_8px_rgba(0,240,255,0.7)]' 
+                        : !day.isCurrentMonth 
+                        ? 'text-slate-600' 
+                        : isDayToday 
+                        ? 'text-yellow-400' 
+                        : 'text-white'
                    }`}>
                       {parseInt(day.date.split('-')[2])}
                    </span>
 
                    {totalCount > 0 && (
-                      <div className="w-full px-1 mt-auto space-y-1.5 flex flex-col items-center">
-                         <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
-                            <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${progress}%` }} />
+                      <div className="w-full mt-auto space-y-1 flex flex-col items-center">
+                         <div className="w-full bg-black/60 rounded-full h-1 sm:h-1.5 overflow-hidden border border-white/10">
+                            <div 
+                              className={`h-full rounded-full transition-all ${
+                                isFullyDone 
+                                  ? 'bg-[#d6f421] shadow-[0_0_8px_rgba(214,244,33,0.8)]' 
+                                  : 'bg-gradient-to-r from-blue-500 to-cyan-400'
+                              }`} 
+                              style={{ width: `${progress}%` }} 
+                            />
                          </div>
-                         <span className="text-[9px] sm:text-[10px] font-bold text-slate-400">{completedCount}/{totalCount}</span>
-                         {progress === 100 && <Star className="w-3 h-3 text-yellow-400 absolute bottom-1 right-1" />}
+                         <span className="text-[8px] sm:text-[10px] font-mono text-slate-400 leading-none">
+                           {completedCount}/{totalCount}
+                         </span>
+                         {isFullyDone && (
+                           <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-[#d6f421] absolute top-1 left-1 drop-shadow-[0_0_6px_rgba(214,244,33,0.8)]" />
+                         )}
                       </div>
                    )}
                 </button>
@@ -142,3 +207,5 @@ export const MonthlyCalendar: React.FC<MonthlyCalendarProps> = ({ currentDate, t
     </div>
   );
 };
+
+export default MonthlyCalendar;

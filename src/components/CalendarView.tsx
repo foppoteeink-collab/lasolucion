@@ -12,6 +12,8 @@ import {
 import { soundFX } from '../utils/audio';
 import { addDaysToDateString, getTodayDateString, parseLocalDate } from '../utils/date';
 import { usePlayerStore } from '../store/usePlayerStore';
+import { useTaskStore } from '../store/useTaskStore';
+import { MonthlyCalendarModal } from './MonthlyCalendarModal';
 
 interface CalendarViewProps {
   currentDate: string;
@@ -27,6 +29,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   const restDays = usePlayerStore((s) => s.stats.restDays);
   const toggleRestDay = usePlayerStore((s) => s.toggleRestDay);
   const isCurrentDateRest = Boolean(currentDate && restDays?.[currentDate]);
+  const tasksByDate = useTaskStore((s) => s.tasksByDate);
+
+  const [isMonthlyModalOpen, setIsMonthlyModalOpen] = useState(false);
 
   // Persisted state for optional weekly micro-strip
   const [showWeekStrip, setShowWeekStrip] = useState<boolean>(() => {
@@ -179,28 +184,19 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             </span>
           </button>
 
-          {/* Selector de Calendario Nativo (OS Date Picker) */}
-          <div className="relative">
-            <input
-              type="date"
-              value={currentDate}
-              onChange={(e) => {
-                if (e.target.value) {
-                  soundFX.playClick();
-                  onChangeDate(e.target.value);
-                }
-              }}
-              className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
-              aria-label="Elegir fecha específica"
-            />
-            <button 
-              type="button"
-              className="w-8 h-8 rounded-lg bg-white/[0.04] hover:bg-cyan-950/50 border border-white/10 hover:border-cyan-400/50 text-slate-300 hover:text-cyan-300 flex items-center justify-center transition-colors cursor-pointer"
-              title="Abrir calendario completo"
-            >
-              <CalendarIcon className="w-3.5 h-3.5" />
-            </button>
-          </div>
+          {/* Botón de Planificador & Calendario Mensual */}
+          <button 
+            type="button"
+            onClick={() => {
+              soundFX.playClick();
+              setIsMonthlyModalOpen(true);
+            }}
+            className="w-8 h-8 rounded-lg bg-white/[0.04] hover:bg-cyan-950/50 border border-white/10 hover:border-cyan-400/50 text-slate-300 hover:text-cyan-300 flex items-center justify-center transition-all cursor-pointer active:scale-95"
+            title="Abrir Planificador Mensual Completo"
+            aria-label="Abrir Planificador Mensual"
+          >
+            <CalendarIcon className="w-3.5 h-3.5 text-cyan-300" />
+          </button>
 
           {/* Botón Añadir Tarea */}
           {onOpenAddModal && (
@@ -280,6 +276,15 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Planificador & Calendario Mensual Completo en Modal Sci-Fi */}
+      <MonthlyCalendarModal
+        isOpen={isMonthlyModalOpen}
+        onClose={() => setIsMonthlyModalOpen(false)}
+        currentDate={currentDate}
+        tasksByDate={tasksByDate}
+        onChangeDate={onChangeDate}
+      />
     </div>
   );
 };
