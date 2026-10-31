@@ -5,6 +5,9 @@ import { useUIStore } from '../store/useUIStore';
 
 export const SciFiGridBackground: React.FC = () => {
   const systemAura = useUIStore(s => s.systemAura);
+  const c1 = systemAura?.colors?.[0] || 'rgba(0, 240, 255, 0.60)';
+  const c2 = systemAura?.colors?.[1] || 'rgba(168, 85, 247, 0.70)';
+  const c3 = systemAura?.colors?.[2] || 'rgba(0, 255, 135, 0.65)';
 
   return (
     <div 

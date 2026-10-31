@@ -34,19 +34,59 @@
   --surface-card: rgba(7, 4, 23, 0.70);
   --surface-modal: rgba(4, 2, 14, 0.96);
 
-  /* 2. Tríada de Marca & Acentos */
+  /* 2. Tríada de Marca & Acentos Dinámicos de la Aurora */
+  --aura-color-1: #00f0ff;
+  --aura-color-2: #8a2be2;
+  --aura-color-3: #ff007f;
+  --aura-color-4: #020d18;
+  --aura-glow-rgb: 0, 240, 255;
+  --aura-gradient: linear-gradient(135deg, var(--aura-color-1) 0%, var(--aura-color-2) 100%);
+
   --color-vacio: #030712;
   --color-cristal: rgba(7, 4, 23, 0.70);
   --color-energia: #d6f421;
   --color-furia: #fb5607;
   --color-magia: #9600ff;
-  --color-cuantico: #00f0ff;
-  --color-aura-activa: #00f0ff;
+  --color-cuantico: var(--aura-color-1, #00f0ff);
+  --color-aura-activa: var(--aura-color-1, #00f0ff);
 
   /* 3. Textos Accesibles WCAG 2.1 (Ratio > 4.5:1) */
   --text-purple-accessible: #c084fc;
   --text-blue-accessible: #60a5fa;
   --text-orange-accessible: #fb923c;
+}
+
+/* Clases Reactivas de la Malla Aurora */
+.aura-text-primary {
+  color: var(--aura-color-1, #00f0ff) !important;
+}
+
+.aura-border-primary {
+  border-color: var(--aura-color-1, #00f0ff) !important;
+}
+
+.aura-bg-primary {
+  background-color: var(--aura-color-1, #00f0ff) !important;
+  color: #030712 !important;
+}
+
+.aura-btn-gradient {
+  background: var(--aura-gradient, linear-gradient(135deg, #00f0ff 0%, #8a2be2 100%)) !important;
+  color: #030712 !important;
+  box-shadow: 0 0 20px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.35) !important;
+}
+
+.aura-btn-gradient:hover {
+  filter: brightness(1.15);
+  box-shadow: 0 0 28px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.55) !important;
+}
+
+.aura-glow {
+  box-shadow: 0 0 20px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.35) !important;
+}
+
+.aura-glow-subtle {
+  box-shadow: 0 0 12px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.20) !important;
 }
 
 /* Clases de Superficie Unificadas */

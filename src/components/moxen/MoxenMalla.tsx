@@ -79,7 +79,7 @@ export const HUNTER_SWATCHES = [
 
 export interface MoxenMallaProps {
   className?: string;
-  onApplyToSystem?: (aura: { name: string; backgroundColor: string; backgroundImage: string }) => void;
+  onApplyToSystem?: (aura: { name: string; backgroundColor: string; backgroundImage: string; colors?: string[] }) => void;
   onResetSystem?: () => void;
   activeSystemAuraName?: string | null;
 }
@@ -930,10 +930,13 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
     const bgColMatch = code.match(/background-color:\s*([^;]+);/);
     const bgImgMatch = code.match(/background-image:\s*([\s\S]+?);/);
 
+    const activeColors = pointColors.slice(0, pointCount);
+
     const aura = {
       name: `${currPreset ? currPreset.name : 'Malla Aurora'} (${pointCount} Tonos)`,
       backgroundColor: bgColMatch ? bgColMatch[1].trim() : '#020d18',
       backgroundImage: bgImgMatch ? bgImgMatch[1].trim() : '',
+      colors: activeColors,
     };
 
     if (onApplyToSystem) {

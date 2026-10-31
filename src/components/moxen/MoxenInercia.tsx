@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import './moxenInercia.css';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { soundFX } from '../../utils/audio';
@@ -29,256 +29,302 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
   const ventanaRef = useRef<HTMLDivElement>(null);
   const pistaRef = useRef<HTMLDivElement>(null);
   const barraFillRef = useRef<HTMLSpanElement>(null);
-  const rodilloTensRef = useRef<HTMLDivElement>(null);
-  const rodilloUnitsRef = useRef<HTMLDivElement>(null);
-
-  const [currentIndex, setCurrentIndex] = useState<number>(initialIndex);
+  const rodilloActualRef = useRef<HTMLDivElement>(null);
+  const carruselRef = useRef<any>(null);
+  const currentIndexRef = useRef<number>(initialIndex);
+  const [activeDisplayIndex, setActiveDisplayIndex] = useState<number>(initialIndex);
   const totalItems = children.length;
 
-  // Referencias mutables para el ciclo físico de animación
-  const physicsRef = useRef({
-    x: 0,
-    xAntes: 0,
-    vel: 0,
-    meta: 0,
-    min: 0,
-    paradas: [] as number[],
-    anchoVentana: 0,
-    agarre: null as { id: number; px: number; x0: number; movido: boolean } | null,
-    muestras: [] as { t: number; x: number }[],
-    previo: 0,
-    raf: 0,
-    quieto: true,
-    inclina: 0,
-    activeIdx: initialIndex,
-  });
-
-  // Medir los topes y paradas de cada tarjeta
-  const mide = useCallback(() => {
+  useEffect(() => {
     const ventana = ventanaRef.current;
-    const pista = pistaRef.current;
-    if (!ventana || !pista) return;
+    if (!ventana) return;
 
+    const pista = pistaRef.current;
+    if (!pista) return;
+
+    const o = { friccion, goma, iman };
     const items = Array.from(pista.children) as HTMLElement[];
     if (items.length === 0) return;
 
-    const min = Math.min(0, ventana.clientWidth - pista.scrollWidth);
-    const margen = items[0] ? items[0].offsetLeft : 0;
-    const paradas = items.map((it) => Math.max(min, Math.min(0, margen - it.offsetLeft)));
+    /* Capas de paralaje: la figura (.in-forma) y el número de fondo (.in-fondo-num) */
+    const capas = items.map((it) => {
+      const num = it.querySelector('.in-num');
+      if (num && !it.querySelector('.in-fondo-num')) {
+        it.insertAdjacentHTML(
+          'afterbegin',
+          '<span class="in-fondo-num" aria-hidden="true">' + num.textContent + '</span>'
+        );
+      }
+      return {
+        forma: it.querySelector('.in-forma') as HTMLElement | null,
+        fondo: it.querySelector('.in-fondo-num') as HTMLElement | null,
+        c: 0,
+      };
+    });
 
-    physicsRef.current.min = min;
-    physicsRef.current.paradas = paradas;
-    physicsRef.current.anchoVentana = ventana.clientWidth;
-  }, []);
+    let anchoVentana = 0;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const oyentes: ((avance: number, indice: number) => void)[] = [];
 
-  const limita = (n: number) => Math.max(physicsRef.current.min, Math.min(0, n));
-  const cercana = (n: number) => {
-    const { paradas } = physicsRef.current;
-    if (paradas.length === 0) return 0;
-    return paradas.reduce((a, p, i) => (Math.abs(p - n) < Math.abs(paradas[a] - n) ? i : a), 0);
-  };
-  const estira = (n: number) => {
-    const { min } = physicsRef.current;
-    return n > 0 ? n * goma : n < min ? min + (n - min) * goma : n;
-  };
+    let x = 0,
+      v = 0,
+      meta = 0,
+      min = 0,
+      paradas = [0];
+    let agarre: { id: number; px: number; x0: number; movido: boolean } | null = null;
+    let muestras: { t: number; x: number }[] = [];
+    let previo = 0,
+      raf = 0,
+      quieto = true,
+      inclina = 0,
+      xAntes = 0;
 
-  const pinta = useCallback(
-    (dt: number) => {
-      const pista = pistaRef.current;
-      const ventana = ventanaRef.current;
-      if (!pista || !ventana) return;
-
-      const pState = physicsRef.current;
-      const vel = dt ? (pState.x - pState.xAntes) / dt : 0;
-      pState.xAntes = pState.x;
-
-      pState.inclina +=
-        (Math.max(-5, Math.min(5, -vel / 420)) - pState.inclina) * (1 - Math.exp(-dt * 10));
-
-      pista.style.transform = `translate3d(${pState.x.toFixed(2)}px, 0, 0) skewX(${pState.inclina.toFixed(2)}deg)`;
-
-      // Paralaje dentro de cada tarjeta
-      const items = Array.from(pista.children) as HTMLElement[];
-      const wVentana = pState.anchoVentana || ventana.clientWidth;
-
-      items.forEach((it) => {
-        const c = it.offsetLeft + it.offsetWidth / 2;
-        const d = (c + pState.x - wVentana / 2) / wVentana;
-        if (Math.abs(d) <= 1) {
-          const forma = it.querySelector('.in-forma') as HTMLElement | null;
-          const fondo = it.querySelector('.in-fondo-num') as HTMLElement | null;
-          if (forma) forma.style.transform = `translate3d(${(-d * 42).toFixed(1)}px, 0, 0)`;
-          if (fondo) fondo.style.transform = `translate3d(${(d * 55).toFixed(1)}px, 0, 0)`;
-        }
+    // Los topes y el punto de parada de cada tarjeta (su borde izquierdo)
+    function mide() {
+      if (!ventana || !pista) return;
+      min = Math.min(0, ventana.clientWidth - pista.scrollWidth);
+      const margen = items[0] ? items[0].offsetLeft : 0;
+      paradas = items.map((it) => Math.max(min, Math.min(0, margen - it.offsetLeft)));
+      anchoVentana = ventana.clientWidth;
+      items.forEach((it, i) => {
+        if (capas[i]) capas[i].c = it.offsetLeft + it.offsetWidth / 2;
       });
+    }
 
-      // Cálculo de avance normalizado [0, 1]
-      const avance = Math.max(0, Math.min(1, pState.min ? pState.x / pState.min : 0));
-      if (barraFillRef.current) {
-        barraFillRef.current.style.transform = `scaleX(${Math.max(0.08, avance)})`;
+    const limita = (n: number) => Math.max(min, Math.min(0, n));
+    const cercana = (n: number) =>
+      paradas.reduce((a, p, i) => (Math.abs(p - n) < Math.abs(paradas[a] - n) ? i : a), 0);
+
+    /* Pasado el tope, la pista cede cada vez menos (goma elástica) */
+    const estira = (n: number) =>
+      n > 0 ? n * o.goma : n < min ? min + (n - min) * o.goma : n;
+
+    function pinta(dt: number) {
+      if (!pista) return;
+      // Inclinación con la velocidad
+      const vel = dt ? (x - xAntes) / dt : 0;
+      xAntes = x;
+      inclina +=
+        (Math.max(-4, Math.min(4, -vel / 450)) - inclina) * (1 - Math.exp(-dt * 10));
+      pista.style.transform =
+        'translate3d(' + x.toFixed(2) + 'px, 0, 0) skewX(' + inclina.toFixed(2) + 'deg)';
+
+      /* Paralaje interior: figura hacia el centro y número hacia fuera */
+      if (!reduce) {
+        capas.forEach((k) => {
+          const d = (k.c + x - anchoVentana / 2) / anchoVentana;
+          if (Math.abs(d) > 0.9) return;
+          if (k.forma) {
+            k.forma.style.translate = (-d * 46).toFixed(1) + 'px 0';
+          }
+          if (k.fondo) {
+            k.fondo.style.translate = (d * 60).toFixed(1) + 'px 0';
+          }
+        });
       }
 
-      // Índice más cercano
-      const nuevoIdx = Math.round(avance * (totalItems - 1));
-      if (nuevoIdx !== pState.activeIdx && nuevoIdx >= 0 && nuevoIdx < totalItems) {
-        pState.activeIdx = nuevoIdx;
-        setCurrentIndex(nuevoIdx);
-        onIndexChange?.(nuevoIdx);
-      }
-    },
-    [totalItems, onIndexChange]
-  );
+      const avance = Math.max(0, Math.min(1, min ? x / min : 0));
+      const calcIndex = Math.round(avance * (items.length - 1));
+      oyentes.forEach((f) => f(avance, calcIndex));
+    }
 
-  const paso = useCallback(
-    (t: number) => {
-      const pState = physicsRef.current;
-      const dt = pState.previo ? Math.min(0.05, (t - pState.previo) / 1000) : 0;
-      pState.previo = t;
-
-      if (!pState.agarre && dt) {
-        // Resorte con amortiguación crítica
-        const w = friccion;
+    function paso(t: number) {
+      const dt = previo ? Math.min(0.05, (t - previo) / 1000) : 0;
+      previo = t;
+      if (!agarre && dt) {
+        /* Resorte con amortiguación crítica hacia la parada elegida */
+        const w = o.friccion;
         for (let h = dt, s; h > 0; h -= s) {
           s = Math.min(h, 1 / 240);
-          pState.vel += (-w * w * (pState.x - pState.meta) - 2 * w * pState.vel) * s;
-          pState.x += pState.vel * s;
+          v += (-w * w * (x - meta) - 2 * w * v) * s;
+          x += v * s;
         }
       }
-
       pinta(dt);
-
-      pState.quieto =
-        !pState.agarre &&
-        Math.abs(pState.x - pState.meta) < 0.3 &&
-        Math.abs(pState.vel) < 2 &&
-        Math.abs(pState.inclina) < 0.01;
-
-      if (pState.quieto) {
-        pState.x = pState.meta;
-        pState.vel = 0;
+      quieto =
+        !agarre &&
+        Math.abs(x - meta) < 0.3 &&
+        Math.abs(v) < 2 &&
+        Math.abs(inclina) < 0.01;
+      if (quieto) {
+        x = meta;
+        v = 0;
         pinta(0);
-        pState.raf = 0;
-        pState.previo = 0;
+        raf = 0;
+        previo = 0;
         return;
       }
-
-      pState.raf = requestAnimationFrame(paso);
-    },
-    [friccion, pinta]
-  );
-
-  const despierta = useCallback(() => {
-    if (!physicsRef.current.raf) {
-      physicsRef.current.raf = requestAnimationFrame(paso);
-    }
-  }, [paso]);
-
-  const irA = useCallback(
-    (index: number) => {
-      mide();
-      const pState = physicsRef.current;
-      const safeIndex = Math.max(0, Math.min(totalItems - 1, index));
-      pState.meta = pState.paradas[safeIndex] ?? 0;
-      despierta();
-    },
-    [mide, totalItems, despierta]
-  );
-
-  // Inicialización y eventos de redimensión
-  useEffect(() => {
-    mide();
-    if (initialIndex > 0) {
-      irA(initialIndex);
+      raf = requestAnimationFrame(paso);
     }
 
-    const handleResize = () => {
-      mide();
-      irA(physicsRef.current.activeIdx);
+    const despierta = () => {
+      if (!raf) raf = requestAnimationFrame(paso);
     };
 
-    window.addEventListener('resize', handleResize);
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (physicsRef.current.raf) {
-        cancelAnimationFrame(physicsRef.current.raf);
+    function ir(i: number) {
+      meta = paradas[Math.max(0, Math.min(paradas.length - 1, i))];
+      if (reduce) {
+        x = meta;
+        v = 0;
+        pinta(0);
+        return;
+      }
+      despierta();
+    }
+
+    // ── Arrastre con Pointer Events ──
+    const onPointerDown = (e: PointerEvent) => {
+      if (e.button !== 0) return;
+      mide();
+      agarre = { id: e.pointerId, px: e.clientX, x0: x, movido: false };
+      muestras = [{ t: performance.now(), x: e.clientX }];
+      v = 0;
+      try {
+        ventana.setPointerCapture(e.pointerId);
+      } catch (_) {}
+      ventana.setAttribute('data-arrastrando', '');
+      despierta();
+    };
+
+    const onPointerMove = (e: PointerEvent) => {
+      if (!agarre || e.pointerId !== agarre.id) return;
+      const d = e.clientX - agarre.px;
+      if (Math.abs(d) > 4) agarre.movido = true;
+      x = estira(agarre.x0 + d);
+      muestras.push({ t: performance.now(), x: e.clientX });
+      while (
+        muestras.length > 2 &&
+        muestras[muestras.length - 1].t - muestras[0].t > 100
+      ) {
+        muestras.shift();
       }
     };
-  }, [mide, initialIndex, irA]);
 
-  // Manejadores de arrastre con Pointer Events
-  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (e.button !== 0) return;
+    const suelta = (e: PointerEvent) => {
+      if (!agarre || e.pointerId !== agarre.id) return;
+      const a = muestras[0],
+        b = muestras[muestras.length - 1];
+      const dt = b && a ? (b.t - a.t) / 1000 : 0;
+      v = dt > 0.005 && b && a ? (b.x - a.x) / dt : 0;
+      if (x > 0 || x < min) v *= o.goma;
+
+      const libre = x + v / o.friccion;
+      meta = o.iman ? paradas[cercana(limita(libre))] : limita(libre);
+
+      if (agarre.movido) {
+        ventana.addEventListener(
+          'click',
+          (ev) => {
+            ev.preventDefault();
+            ev.stopPropagation();
+          },
+          { capture: true, once: true }
+        );
+      }
+
+      agarre = null;
+      ventana.removeAttribute('data-arrastrando');
+      if (reduce) {
+        x = meta;
+        v = 0;
+        pinta(0);
+      }
+      despierta();
+    };
+
+    const onWheel = (e: WheelEvent) => {
+      if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
+      e.preventDefault();
+      x = limita(x - e.deltaX);
+      meta = x;
+      v = 0;
+      clearTimeout((ventana as any).__inercia);
+      (ventana as any).__inercia = setTimeout(() => o.iman && ir(cercana(x)), 140);
+      despierta();
+    };
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      const d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+      if (!d) return;
+      e.preventDefault();
+      ir(cercana(meta) + d);
+    };
+
+    ventana.addEventListener('pointerdown', onPointerDown);
+    ventana.addEventListener('pointermove', onPointerMove);
+    ventana.addEventListener('pointerup', suelta);
+    ventana.addEventListener('pointercancel', suelta);
+    ventana.addEventListener('wheel', onWheel, { passive: false });
+    ventana.addEventListener('keydown', onKeyDown);
+
     mide();
-    const pState = physicsRef.current;
-    pState.agarre = { id: e.pointerId, px: e.clientX, x0: pState.x, movido: false };
-    pState.muestras = [{ t: performance.now(), x: e.clientX }];
-    pState.vel = 0;
+    const onResize = () => {
+      mide();
+      meta = paradas[cercana(meta)];
+      x = meta;
+      pinta(0);
+    };
+    window.addEventListener('resize', onResize);
+    (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => {
+      mide();
+      pinta(0);
+    });
 
-    const el = ventanaRef.current;
-    if (el) {
-      el.setPointerCapture(e.pointerId);
-      el.setAttribute('data-arrastrando', '');
+    const carrusel = {
+      ir,
+      alMover(f: (avance: number, indice: number) => void) {
+        oyentes.push(f);
+        pinta(0);
+      },
+      destruir() {
+        if (raf) cancelAnimationFrame(raf);
+        ventana.removeEventListener('pointerdown', onPointerDown);
+        ventana.removeEventListener('pointermove', onPointerMove);
+        ventana.removeEventListener('pointerup', suelta);
+        ventana.removeEventListener('pointercancel', suelta);
+        ventana.removeEventListener('wheel', onWheel);
+        ventana.removeEventListener('keydown', onKeyDown);
+        window.removeEventListener('resize', onResize);
+      },
+    };
+
+    carruselRef.current = carrusel;
+
+    // Escuchar movimiento para telemetría GPU y contador mecánico
+    carrusel.alMover((avance, indice) => {
+      if (barraFillRef.current) {
+        const fill = 0.08 + 0.92 * avance;
+        barraFillRef.current.style.transform = `scaleX(${fill.toFixed(4)})`;
+      }
+      if (rodilloActualRef.current) {
+        rodilloActualRef.current.style.transform = `translateY(${-indice * 1.25}em)`;
+      }
+      if (currentIndexRef.current !== indice) {
+        currentIndexRef.current = indice;
+        setActiveDisplayIndex(indice);
+        onIndexChange?.(indice);
+      }
+    });
+
+    if (initialIndex > 0) {
+      setTimeout(() => {
+        ir(initialIndex);
+      }, 50);
     }
-    despierta();
+
+    return () => {
+      carrusel.destruir();
+    };
+  }, [friccion, goma, iman, totalItems, initialIndex, onIndexChange]);
+
+  const handleStep = (direction: -1 | 1) => {
+    soundFX.playClick();
+    const nextIdx = Math.max(0, Math.min(totalItems - 1, currentIndexRef.current + direction));
+    carruselRef.current?.ir(nextIdx);
   };
-
-  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    const pState = physicsRef.current;
-    if (!pState.agarre || e.pointerId !== pState.agarre.id) return;
-
-    const d = e.clientX - pState.agarre.px;
-    if (Math.abs(d) > 4) pState.agarre.movido = true;
-    pState.x = estira(pState.agarre.x0 + d);
-    pState.muestras.push({ t: performance.now(), x: e.clientX });
-
-    while (
-      pState.muestras.length > 2 &&
-      pState.muestras[pState.muestras.length - 1].t - pState.muestras[0].t > 100
-    ) {
-      pState.muestras.shift();
-    }
-  };
-
-  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
-    const pState = physicsRef.current;
-    if (!pState.agarre || e.pointerId !== pState.agarre.id) return;
-
-    const m = pState.muestras;
-    const a = m[0];
-    const b = m[m.length - 1];
-    const dt = b && a ? (b.t - a.t) / 1000 : 0;
-    pState.vel = dt > 0.005 && b && a ? (b.x - a.x) / dt : 0;
-
-    if (pState.x > 0 || pState.x < pState.min) {
-      pState.vel *= goma;
-    }
-
-    const libre = pState.x + pState.vel / friccion;
-    pState.meta = iman ? pState.paradas[cercana(limita(libre))] : limita(libre);
-
-    pState.agarre = null;
-    const el = ventanaRef.current;
-    if (el) el.removeAttribute('data-arrastrando');
-    despierta();
-  };
-
-  // Odómetro visual: dígitos de decenas y unidades
-  const displayNum = currentIndex + 1;
-  const tens = Math.floor(displayNum / 10);
-  const units = displayNum % 10;
-  const digits = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
-
-  useEffect(() => {
-    if (rodilloTensRef.current) {
-      rodilloTensRef.current.style.transform = `translateY(-${tens * 1.25}em)`;
-    }
-    if (rodilloUnitsRef.current) {
-      rodilloUnitsRef.current.style.transform = `translateY(-${units * 1.25}em)`;
-    }
-  }, [tens, units]);
 
   return (
-    <div className={`moxen-inercia-wrapper w-full space-y-3 ${className}`}>
+    <div className={`moxen-inercia-wrapper w-full space-y-2.5 ${className}`}>
       {/* Barra superior de telemetría y controles */}
       {showNavigationControls && (
         <div className="flex items-center justify-between px-3 sm:px-6">
@@ -286,21 +332,15 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
             <span className="text-xs font-mono text-slate-400 uppercase tracking-widest font-bold">
               Arquetipo
             </span>
-            <div className="flex items-center text-sm font-mono font-black text-cyan-300 bg-black/60 px-2 py-0.5 rounded-lg border border-cyan-500/30">
-              <div className="in-rodillo-box">
-                <div ref={rodilloTensRef} className="in-rodillo-strip">
-                  {digits.map((d) => (
-                    <span key={d}>{d}</span>
-                  ))}
-                </div>
-              </div>
-              <div className="in-rodillo-box">
-                <div ref={rodilloUnitsRef} className="in-rodillo-strip">
-                  {digits.map((d) => (
-                    <span key={d}>{d}</span>
-                  ))}
-                </div>
-              </div>
+            <div className="flex items-center text-xs font-mono font-black text-cyan-300 bg-black/60 px-2 py-0.5 rounded-lg border border-cyan-500/30">
+              <span className="in-rodillo-box">
+                <b ref={rodilloActualRef} className="in-rodillo-strip">
+                  {Array.from({ length: totalItems }).map((_, i) => {
+                    const n = i + 1;
+                    return <span key={i}>{n < 10 ? `0${n}` : n}</span>;
+                  })}
+                </b>
+              </span>
               <span className="text-slate-500 mx-1">/</span>
               <span className="text-slate-400">
                 {totalItems < 10 ? `0${totalItems}` : totalItems}
@@ -308,13 +348,13 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            {/* Barra de avance */}
-            <div className="hidden sm:block w-32 in-pista-barra">
+          <div className="flex items-center gap-3">
+            {/* Barra de progreso de la pista */}
+            <div className="w-20 sm:w-28 in-pista-barra hidden sm:block">
               <span
                 ref={barraFillRef}
-                className="in-pista-barra-fill bg-cyan-400 shadow-[0_0_8px_rgba(0,240,255,0.8)]"
-                style={{ transform: `scaleX(${Math.max(0.08, (currentIndex + 1) / totalItems)})` }}
+                className="in-pista-barra-fill"
+                style={{ backgroundColor: accentColor }}
               />
             </div>
 
@@ -322,11 +362,8 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
             <div className="flex items-center gap-1">
               <button
                 type="button"
-                onClick={() => {
-                  soundFX.playClick();
-                  irA(currentIndex - 1);
-                }}
-                disabled={currentIndex === 0}
+                onClick={() => handleStep(-1)}
+                disabled={activeDisplayIndex === 0}
                 className="p-1.5 rounded-lg bg-black/60 border border-white/10 hover:border-cyan-400/60 text-slate-300 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
                 title="Arquetipo anterior"
               >
@@ -334,11 +371,8 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  soundFX.playClick();
-                  irA(currentIndex + 1);
-                }}
-                disabled={currentIndex >= totalItems - 1}
+                onClick={() => handleStep(1)}
+                disabled={activeDisplayIndex >= totalItems - 1}
                 className="p-1.5 rounded-lg bg-black/60 border border-white/10 hover:border-cyan-400/60 text-slate-300 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
                 title="Siguiente arquetipo"
               >
@@ -349,37 +383,28 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
         </div>
       )}
 
-      {/* Ventana de visualización con arrastre inercial */}
+      {/* Ventana de visualización con arrastre inercial nativo de Moxen */}
       <div
         ref={ventanaRef}
         className="in-ventana"
+        data-inercia
         tabIndex={0}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerUp}
+        aria-label="Carrusel de Arquetipos con inercia"
       >
-        <div ref={pistaRef} className="in-pista">
-          {React.Children.map(children, (child, idx) => {
-            const isActive = idx === currentIndex;
-            return (
-              <div
-                key={idx}
-                onClick={() => {
-                  if (!physicsRef.current.agarre?.movido && idx !== currentIndex) {
-                    irA(idx);
-                  }
-                }}
-                className={`in-tarjeta cursor-pointer transition-all ${
-                  isActive
-                    ? 'ring-2 ring-cyan-400 shadow-[0_0_25px_rgba(0,240,255,0.35)] scale-[1.02]'
-                    : 'opacity-70 hover:opacity-90 scale-95'
-                }`}
-              >
-                {child}
-              </div>
-            );
-          })}
+        <div ref={pistaRef} className="in-pista" data-inercia-pista>
+          {React.Children.map(children, (child, idx) => (
+            <article
+              key={idx}
+              className="in-tarjeta cursor-pointer"
+              onClick={() => {
+                if (idx !== currentIndexRef.current) {
+                  carruselRef.current?.ir(idx);
+                }
+              }}
+            >
+              {child}
+            </article>
+          ))}
         </div>
       </div>
     </div>

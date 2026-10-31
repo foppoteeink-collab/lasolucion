@@ -1,24 +1,22 @@
 /* =====================================================================
-   Moxen Inercia · Sci-Fi Cyberpunk Adapted Style
-   Basado en el motor de físicas de inercia, goma, skew e imán de parada
-   de Moxen Inercia (moxen.cl) optimizado para La Solución PWA.
+   Moxen Inercia · Fidelidad Exacta al Motor Original Moxen
    ===================================================================== */
 
 :root {
-  --in-ancho: 290px;
-  --in-hueco: 20px;
-  --in-margen: clamp(1rem, 6vw, 60px);
+  --in-ancho: 280px;
+  --in-hueco: 18px;
+  --in-margen: clamp(1rem, 5vw, 40px);
 }
 
 @media (max-width: 640px) {
   :root {
-    --in-ancho: 260px;
-    --in-hueco: 16px;
+    --in-ancho: 245px;
+    --in-hueco: 14px;
     --in-margen: 16px;
   }
 }
 
-/* ── Ventana y Pista ── */
+/* ── Ventana y Pista (touch-action pan-y permite el scroll vertical libre del navegador) ── */
 .in-ventana {
   position: relative;
   width: 100%;
@@ -28,11 +26,11 @@
   user-select: none;
   -webkit-user-select: none;
   outline: none;
-  padding: 12px 0 20px;
+  padding: 8px 0 16px;
 }
 
 .in-ventana[data-arrastrando] {
-  cursor: grabbing;
+  cursor: grabbing !important;
 }
 
 .in-pista {
@@ -48,38 +46,51 @@
 .in-tarjeta {
   flex: none;
   width: var(--in-ancho);
-  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease;
+  height: 340px;
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
   position: relative;
-  border-radius: 20px;
+  border-radius: 22px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  box-sizing: border-box;
 }
 
-/* Al arrastrar, las tarjetas ceden un poco para dar peso en mano */
+@media (max-width: 640px) {
+  .in-tarjeta {
+    height: 315px;
+  }
+}
+
+/* Al agarrar, las tarjetas ceden un poco como en el código original de Moxen */
 .in-ventana[data-arrastrando] .in-tarjeta {
-  transform: scale(0.975);
+  transform: scale(0.965);
 }
 
 /* Capas de paralaje interna */
 .in-forma,
 .in-fondo-num {
   will-change: translate;
-  transition: translate 0.1s linear;
 }
 
 .in-fondo-num {
   position: absolute;
-  right: -8px;
-  top: 0px;
-  font-size: 7.5rem;
+  right: -6px;
+  top: -4px;
+  font-size: 8rem;
   font-weight: 800;
   line-height: 1;
-  letter-spacing: -0.05em;
-  opacity: 0.08;
+  letter-spacing: -0.06em;
+  opacity: 0.05;
   pointer-events: none;
   font-family: monospace;
+}
+
+@media (max-width: 640px) {
+  .in-fondo-num {
+    font-size: 6.5rem;
+  }
 }
 
 /* Indicador Odómetro Rodante */
@@ -109,9 +120,9 @@
 /* Barra de progreso de pista */
 .in-pista-barra {
   display: block;
-  height: 3px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 2px;
   overflow: hidden;
   position: relative;
 }

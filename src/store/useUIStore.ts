@@ -27,6 +27,13 @@ export interface FloatingEffect {
   isCrit?: boolean;
 }
 
+export interface SystemAuraData {
+  name: string;
+  backgroundColor: string;
+  backgroundImage: string;
+  colors?: string[]; // [c1, c2, c3, c4]
+}
+
 interface UIState {
   activeTab: ActiveTab;
   isTransitioning: boolean;
@@ -36,7 +43,7 @@ interface UIState {
   screenFlash: 'damage' | 'heal' | 'buff' | null;
   isFocusModeActive: boolean; // INMUNIZADOR DE FLUJO
   zenMode: boolean; // MODO ZEN (REDUCCIÓN DE ESTÍMULOS / AHORRO BATERÍA)
-  systemAura: { name: string; backgroundColor: string; backgroundImage: string } | null;
+  systemAura: SystemAuraData | null;
   
   // Modales
   isDailyRewardsOpen: boolean;
@@ -85,8 +92,49 @@ interface UIState {
   setNavigationMode: (mode: NavigationMode) => void;
   toggleNavigationMode: () => void;
   toggleZenMode: () => void;
-  setSystemAura: (aura: { name: string; backgroundColor: string; backgroundImage: string } | null) => void;
+  setSystemAura: (aura: SystemAuraData | null) => void;
 }
+
+// Convierte un color HEX a RGB numérico para sombras/glows
+export const hexToRgb = (hex: string): string => {
+  let c = hex.replace('#', '').trim();
+  if (c.length === 3) {
+    c = c.split('').map(x => x + x).join('');
+  }
+  const num = parseInt(c, 16);
+  if (isNaN(num)) return '0, 240, 255';
+  const r = (num >> 16) & 255;
+  const g = (num >> 8) & 255;
+  const b = num & 255;
+  return `${r}, ${g}, ${b}`;
+};
+
+export const applyAuraCssTokens = (aura: SystemAuraData | null) => {
+  if (typeof document === 'undefined') return;
+  const root = document.documentElement;
+  if (!aura || !aura.colors || aura.colors.length === 0) {
+    // Restablecer valores por defecto (Cian cuántico original)
+    root.style.removeProperty('--aura-color-1');
+    root.style.removeProperty('--aura-color-2');
+    root.style.removeProperty('--aura-color-3');
+    root.style.removeProperty('--aura-color-4');
+    root.style.removeProperty('--aura-glow-rgb');
+    root.style.removeProperty('--aura-gradient');
+    return;
+  }
+
+  const c1 = aura.colors[0] || '#00f0ff';
+  const c2 = aura.colors[1] || aura.colors[0] || '#8a2be2';
+  const c3 = aura.colors[2] || c2;
+  const c4 = aura.colors[3] || '#020d18';
+
+  root.style.setProperty('--aura-color-1', c1);
+  root.style.setProperty('--aura-color-2', c2);
+  root.style.setProperty('--aura-color-3', c3);
+  root.style.setProperty('--aura-color-4', c4);
+  root.style.setProperty('--aura-glow-rgb', hexToRgb(c1));
+  root.style.setProperty('--aura-gradient', `linear-gradient(135deg, ${c1} 0%, ${c2} 100%)`);
+};
 
 export const syncRootTheme = (_mode?: ThemeMode) => {
   if (typeof document === 'undefined') return;
@@ -124,11 +172,15 @@ const getSavedZenMode = (): boolean => {
   return false;
 };
 
-const getSavedSystemAura = (): { name: string; backgroundColor: string; backgroundImage: string } | null => {
+const getSavedSystemAura = (): SystemAuraData | null => {
   if (typeof window !== 'undefined') {
     try {
       const raw = localStorage.getItem('taskquest_system_aura');
-      if (raw) return JSON.parse(raw);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        applyAuraCssTokens(parsed);
+        return parsed;
+      }
     } catch (e) {}
   }
   return null;
@@ -247,6 +299,7 @@ export const useUIStore = create<UIState>((set, get) => ({
         }
       } catch (e) {}
     }
+    applyAuraCssTokens(aura);
     set({ systemAura: aura });
   },
 
