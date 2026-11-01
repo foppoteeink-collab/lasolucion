@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { X, Sparkles, Zap, Check, Target, AlertTriangle, LayoutGrid, SlidersHorizontal } from 'lucide-react';
+import React, { useMemo, useEffect } from 'react';
+import { X, Sparkles, Zap, Check, Target, AlertTriangle } from 'lucide-react';
 import { JUNG_ARCHETYPES, JungArchetype, getArchetypeByName } from '../data/archetypes';
 import { soundFX } from '../utils/audio';
 import { triggerShockwave } from '../utils/celebration';
@@ -115,7 +115,6 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
   currentArchetype,
   onSelectArchetype,
 }) => {
-  const [viewMode, setViewMode] = useState<'carousel' | 'grid'>('carousel');
   const activeArch = useMemo(() => getArchetypeByName(currentArchetype), [currentArchetype]);
 
   const initialIndex = useMemo(() => {
@@ -168,263 +167,150 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Toggle Carrusel / Rejilla */}
-            <div className="flex items-center bg-black/60 p-1 rounded-xl border border-white/10">
-              <button
-                type="button"
-                onClick={() => {
-                  soundFX.playClick();
-                  setViewMode('carousel');
-                }}
-                className={`p-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1 text-[11px] font-mono font-bold ${
-                  viewMode === 'carousel'
-                    ? 'bg-cyan-500 text-black shadow-[0_0_10px_rgba(0,240,255,0.4)]'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-                title="Modo Carrusel Cinético (Moxen Inercia)"
-              >
-                <SlidersHorizontal className="w-3.5 h-3.5" />
-                <span className="hidden md:inline">Cinético</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  soundFX.playClick();
-                  setViewMode('grid');
-                }}
-                className={`p-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1 text-[11px] font-mono font-bold ${
-                  viewMode === 'grid'
-                    ? 'bg-cyan-500 text-black shadow-[0_0_10px_rgba(0,240,255,0.4)]'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-                title="Modo Rejilla Completa"
-              >
-                <LayoutGrid className="w-3.5 h-3.5" />
-                <span className="hidden md:inline">Rejilla</span>
-              </button>
-            </div>
-
             <button
               onClick={onClose}
-              className="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
-              title="Cerrar"
+              className="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
+              title="Cerrar modal"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
         </div>
 
-        {/* Contenido: Carrusel Cinético (Moxen Inercia) o Rejilla Clásica */}
-        {viewMode === 'carousel' ? (
-          <div className="flex-1 overflow-hidden flex flex-col justify-center py-2 sm:py-4">
-            <MoxenInercia
-              initialIndex={initialIndex}
-              friccion={4}
-              goma={0.3}
-              iman={true}
-              accentColor="#00f0ff"
-            >
-              {JUNG_ARCHETYPES.map((arch, index) => {
-                const isSelected = activeArch.id === arch.id;
-                const cardNum = index + 1 < 10 ? `0${index + 1}` : `${index + 1}`;
-                const theme = ARCHETYPE_THEMES[arch.id] || ARCHETYPE_THEMES.heroe;
+        {/* Contenido: Carrusel Cinético (Moxen Inercia) con Ficha Completa */}
+        <div className="flex-1 overflow-hidden flex flex-col justify-center py-2 sm:py-3 min-h-0">
+          <MoxenInercia
+            initialIndex={initialIndex}
+            friccion={4}
+            goma={0.3}
+            iman={true}
+            accentColor="#00f0ff"
+          >
+            {JUNG_ARCHETYPES.map((arch, index) => {
+              const isSelected = activeArch.id === arch.id;
+              const cardNum = index + 1 < 10 ? `0${index + 1}` : `${index + 1}`;
+              const theme = ARCHETYPE_THEMES[arch.id] || ARCHETYPE_THEMES.heroe;
 
-                return (
-                  <div
-                    key={arch.id}
-                    className={`relative w-full h-full p-4 sm:p-5 flex flex-col justify-between overflow-hidden rounded-[24px] border select-none bg-gradient-to-b ${theme.bgGradient} ${
-                      isSelected
-                        ? 'border-2 shadow-[0_0_25px_rgba(0,240,255,0.2)]'
-                        : 'border-white/10'
-                    }`}
-                    style={{
-                      borderColor: isSelected ? theme.accent : undefined,
-                    }}
-                  >
-                    {/* Bisel superior */}
-                    <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+              return (
+                <div
+                  key={arch.id}
+                  className={`relative w-full h-full p-4 sm:p-5 flex flex-col justify-between overflow-hidden rounded-[24px] border select-none bg-gradient-to-b ${theme.bgGradient} ${
+                    isSelected
+                      ? 'border-2 shadow-[0_0_25px_rgba(0,240,255,0.25)]'
+                      : 'border-white/10'
+                  }`}
+                  style={{
+                    borderColor: isSelected ? theme.accent : undefined,
+                  }}
+                >
+                  {/* Bisel superior */}
+                  <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
 
-                    {/* Cabecera de la Tarjeta */}
-                    <div className="relative z-10 flex items-center justify-between gap-2">
-                      <span className="text-[10px] font-mono tracking-widest font-black uppercase text-slate-300 bg-black/70 px-2.5 py-0.5 rounded-lg border border-white/10">
-                        #{cardNum}
-                      </span>
+                  {/* 1. Cabecera de la Tarjeta */}
+                  <div className="relative z-10 flex items-center justify-between gap-2 shrink-0">
+                    <span className="text-[10px] font-mono tracking-widest font-black uppercase text-slate-300 bg-black/70 px-2.5 py-0.5 rounded-lg border border-white/10">
+                      #{cardNum}
+                    </span>
+                    <span
+                      className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full font-bold border flex items-center gap-1.5 ${theme.statPill}`}
+                    >
                       <span
-                        className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold border flex items-center gap-1 ${theme.statPill}`}
-                      >
-                        <span
-                          className="w-1.5 h-1.5 rounded-full"
-                          style={{ backgroundColor: theme.accent }}
-                        />
-                        {arch.statBonus}
+                        className="w-1.5 h-1.5 rounded-full"
+                        style={{ backgroundColor: theme.accent }}
+                      />
+                      {arch.statBonus}
+                    </span>
+                  </div>
+
+                  {/* 2. Avatar + Nombre + Compañero KAI */}
+                  <div className="relative z-10 flex items-center gap-3 my-2 bg-black/40 p-2.5 rounded-2xl border border-white/10 shrink-0">
+                    <div
+                      className="in-forma w-12 h-12 rounded-xl bg-black/80 border flex items-center justify-center text-2xl shrink-0 shadow-[0_2px_12px_rgba(0,0,0,0.8)]"
+                      style={{
+                        borderColor: `${theme.accent}66`,
+                        boxShadow: `0 0 15px ${theme.glow}, inset 0 1px 1px rgba(255,255,255,0.25)`,
+                      }}
+                    >
+                      <span className="relative z-10 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+                        {arch.avatar}
                       </span>
                     </div>
-
-                    {/* Avatar Central con paralaje (.in-forma) */}
-                    <div className="relative z-10 flex flex-col items-center justify-center my-auto py-1 text-center">
-                      <div
-                        className="in-forma relative w-20 h-20 rounded-2xl bg-black/80 border flex items-center justify-center text-4xl mb-2.5 shadow-[0_4px_20px_rgba(0,0,0,0.8)]"
-                        style={{
-                          borderColor: `${theme.accent}66`,
-                          boxShadow: `0 0 20px ${theme.glow}, inset 0 1px 1px rgba(255,255,255,0.25)`,
-                        }}
-                      >
-                        <span className="relative z-10 drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
-                          {arch.avatar}
-                        </span>
-                      </div>
-
-                      <h4 className="font-anton text-base sm:text-lg uppercase tracking-wider text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]">
+                    <div className="min-w-0">
+                      <h4 className="font-anton text-sm sm:text-base uppercase tracking-wider text-white truncate drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]">
                         {arch.name}
                       </h4>
-                      <span className="text-[10px] font-mono uppercase tracking-wider text-slate-300/80 mt-0.5 font-medium flex items-center gap-1">
+                      <span className="text-[10px] font-mono uppercase tracking-wider text-cyan-300/90 font-medium flex items-center gap-1 truncate">
+                        <span>KAI: {arch.companion?.title}</span>
                         <span>{arch.companion?.icon}</span>
-                        <span>{arch.companion?.title}</span>
                       </span>
                     </div>
-
-                    {/* Descripción: 1 frase limpia y humana */}
-                    <div className="relative z-10 my-1 px-1">
-                      <p className="text-[11px] sm:text-xs text-slate-300/95 leading-relaxed font-sans text-center line-clamp-2 italic">
-                        "{arch.description}"
-                      </p>
-                    </div>
-
-                    {/* Botón de Sintonización */}
-                    <div className="relative z-10 pt-2 border-t border-white/10">
-                      {isSelected ? (
-                        <div
-                          className="w-full py-2 flex items-center justify-center gap-1.5 text-xs font-mono font-bold uppercase rounded-xl border shadow-[0_0_15px_rgba(0,0,0,0.5)]"
-                          style={{
-                            backgroundColor: `${theme.accent}22`,
-                            borderColor: theme.accent,
-                            color: theme.accent,
-                          }}
-                        >
-                          <Check className="w-3.5 h-3.5" />
-                          <span>Resonancia Activa</span>
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            soundFX.playItemEquip();
-                            triggerShockwave({ color: 'violet', intensity: 'medium' });
-                            onSelectArchetype(arch);
-                            onClose();
-                          }}
-                          className="w-full py-2 bg-white/10 hover:bg-white/15 active:scale-95 text-white font-anton uppercase text-xs rounded-xl cursor-pointer border border-white/15 hover:border-white/30 flex items-center justify-center gap-1.5 font-bold shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
-                          style={{
-                            borderColor: `${theme.accent}44`,
-                          }}
-                        >
-                          <Zap className="w-3.5 h-3.5 text-cyan-300" />
-                          <span>Sintonizar Arquetipo</span>
-                        </button>
-                      )}
-                    </div>
                   </div>
-                );
-              })}
-            </MoxenInercia>
-          </div>
-        ) : (
-          /* Modo Rejilla Clásica */
-          <div className="p-3 sm:p-5 space-y-4 flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-cyan-500 scrollbar-track-transparent">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {JUNG_ARCHETYPES.map((arch) => {
-                const isSelected = activeArch.id === arch.id;
 
-                return (
-                  <div
-                    key={arch.id}
-                    className={`rounded-2xl border p-4 transition-all flex flex-col justify-between ${
-                      isSelected
-                        ? 'bg-gradient-to-br from-[#06182c] to-[#042838] border-cyan-300 shadow-[0_0_20px_rgba(0,240,255,0.35)] ring-1 ring-cyan-400'
-                        : 'bg-[#030d17]/80 border-cyan-500/30 hover:border-cyan-400 hover:bg-[#041525]'
-                    }`}
-                  >
-                    <div>
-                      {/* Top Row: Avatar, Name & Bonus Badge */}
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <div className="flex items-center gap-2.5">
-                          <span className="text-3xl p-1.5 bg-black/50 rounded-xl border border-cyan-500/30 shrink-0">
-                            {arch.avatar}
-                          </span>
-                          <div>
-                            <h4 className="font-anton text-sm sm:text-base uppercase tracking-wider text-white">
-                              {arch.name}
-                            </h4>
-                            <span className="text-[10px] font-mono text-cyan-300 uppercase tracking-wider font-semibold">
-                              KAI: {arch.companion?.title} {arch.companion?.icon}
-                            </span>
-                          </div>
-                        </div>
+                  {/* 3. Descripción Humana Completa */}
+                  <div className="relative z-10 bg-black/40 p-2.5 rounded-xl border border-white/5 my-1">
+                    <p className="text-[11px] text-slate-200/95 leading-relaxed font-sans">
+                      {arch.description}
+                    </p>
+                  </div>
 
-                        <span className="text-[10px] font-mono text-amber-300 bg-amber-500/10 border border-amber-500/40 px-2 py-0.5 rounded-lg font-bold shrink-0">
-                          {arch.statBonus}
-                        </span>
-                      </div>
-
-                      {/* Description */}
-                      <p className="text-xs text-slate-200 leading-relaxed font-sans bg-black/40 p-2.5 rounded-xl border border-cyan-500/20 mb-3">
-                        {arch.description}
-                      </p>
-
-                      {/* Desire & Fear */}
-                      <div className="space-y-1.5 text-[11px] font-mono mb-3">
-                        <div className="flex items-start gap-1.5 text-cyan-300 bg-[#020b14]/60 p-2 rounded-lg border border-cyan-500/20">
-                          <Target className="w-3.5 h-3.5 shrink-0 mt-0.5 text-cyan-400" />
-                          <span>
-                            <strong className="text-white">Deseo: </strong>
-                            {arch.desire}
-                          </span>
-                        </div>
-                        <div className="flex items-start gap-1.5 text-rose-300 bg-[#020b14]/60 p-2 rounded-lg border border-rose-500/20">
-                          <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-rose-400" />
-                          <span>
-                            <strong className="text-white">Sombra / Miedo: </strong>
-                            {arch.fear}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Action Button */}
-                    <div className="pt-2 border-t border-cyan-500/20 flex items-center justify-between">
-                      <span className="text-[10px] font-mono text-slate-400 uppercase">
-                        Atributo:{' '}
-                        <strong className="text-cyan-300 capitalize">{arch.primaryStat}</strong>
+                  {/* 4. Deseo & Sombra / Miedo */}
+                  <div className="relative z-10 space-y-1.5 my-1 text-[10px] sm:text-[11px] font-mono">
+                    <div className="flex items-start gap-1.5 text-cyan-300 bg-black/40 p-2 rounded-xl border border-cyan-500/20">
+                      <Target className="w-3.5 h-3.5 shrink-0 mt-0.5 text-cyan-400" />
+                      <span>
+                        <strong className="text-white font-bold">Deseo: </strong>
+                        {arch.desire}
                       </span>
-
-                      {isSelected ? (
-                        <span className="flex items-center gap-1 text-[11px] font-mono font-black text-cyan-300 bg-cyan-900/60 border border-cyan-400 px-3 py-1 rounded-xl shadow-[0_0_10px_rgba(0,240,255,0.4)]">
-                          <Check className="w-3.5 h-3.5 text-cyan-300" />
-                          Sintonía Activa
-                        </span>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            soundFX.playItemEquip();
-                            triggerShockwave({ color: 'violet', intensity: 'medium' });
-                            onSelectArchetype(arch);
-                            onClose();
-                          }}
-                          className="px-3 py-1.5 bg-cyan-500 hover:bg-cyan-400 text-black font-anton uppercase text-[11px] rounded-xl cursor-pointer transition-all shadow-[0_0_10px_rgba(0,240,255,0.3)] active:scale-95 flex items-center gap-1"
-                        >
-                          <Zap className="w-3 h-3 fill-black" />
-                          Activar Arquetipo
-                        </button>
-                      )}
+                    </div>
+                    <div className="flex items-start gap-1.5 text-rose-300 bg-black/40 p-2 rounded-xl border border-rose-500/20">
+                      <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-rose-400" />
+                      <span>
+                        <strong className="text-white font-bold">Sombra / Miedo: </strong>
+                        {arch.fear}
+                      </span>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
+
+                  {/* 5. Footer: Atributo + Botón de Sintonización */}
+                  <div className="relative z-10 pt-2 border-t border-white/10 flex items-center justify-between gap-2 shrink-0">
+                    <span className="text-[10px] font-mono text-slate-400 uppercase">
+                      Atributo:{' '}
+                      <strong className="text-cyan-300 capitalize">{arch.primaryStat}</strong>
+                    </span>
+
+                    {isSelected ? (
+                      <span
+                        className="py-1.5 px-3 flex items-center justify-center gap-1 text-[11px] font-mono font-bold uppercase rounded-xl border shadow-[0_0_12px_rgba(0,0,0,0.5)]"
+                        style={{
+                          backgroundColor: `${theme.accent}22`,
+                          borderColor: theme.accent,
+                          color: theme.accent,
+                        }}
+                      >
+                        <Check className="w-3.5 h-3.5" />
+                        <span>Sintonía Activa</span>
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          soundFX.playItemEquip();
+                          triggerShockwave({ color: 'violet', intensity: 'medium' });
+                          onSelectArchetype(arch);
+                          onClose();
+                        }}
+                        className="py-1.5 px-3.5 bg-cyan-500 hover:bg-cyan-400 text-black font-anton uppercase text-[11px] rounded-xl cursor-pointer transition-all border border-cyan-400 shadow-[0_0_12px_rgba(0,240,255,0.35)] active:scale-95 flex items-center gap-1.5 font-bold"
+                      >
+                        <Zap className="w-3 h-3 fill-black" />
+                        <span>Activar Arquetipo</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </MoxenInercia>
+        </div>
 
         {/* Pinned Footer (Ergonomía del Pulgar) */}
         <div className="p-3 sm:p-4 border-t border-white/10 bg-[#010810]/90 flex items-center justify-between shrink-0 relative z-10">
