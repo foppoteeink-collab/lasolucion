@@ -46,7 +46,7 @@ export interface CompanionConfig {
 export const COMPANION_REGISTRY: Record<string, CompanionConfig> = {
   heroe: {
     id: 'heroe',
-    name: 'El Sabio Guardián',
+    name: 'Guardián de la Voluntad',
     codename: 'ORÁCULO // KAI',
     symbolicAvatar: '👁️',
     primaryGlow: '#00f0ff',     // Cyan eléctrico exacto de la referencia
@@ -57,7 +57,7 @@ export const COMPANION_REGISTRY: Record<string, CompanionConfig> = {
   },
   sabio: {
     id: 'sabio',
-    name: 'El Oráculo Omnisciente',
+    name: 'Oráculo de la Sabiduría',
     codename: 'SYNAPSE // CUÁNTICO',
     symbolicAvatar: '👁️',
     primaryGlow: '#00f0ff',
@@ -68,7 +68,7 @@ export const COMPANION_REGISTRY: Record<string, CompanionConfig> = {
   },
   guerrero: {
     id: 'guerrero',
-    name: 'El Observador Marcial',
+    name: 'Observador Marcial',
     codename: 'ORÁCULO // ÉGIDA',
     symbolicAvatar: '🔺',
     primaryGlow: '#38bdf8',
@@ -79,7 +79,7 @@ export const COMPANION_REGISTRY: Record<string, CompanionConfig> = {
   },
   explorador: {
     id: 'explorador',
-    name: 'La Brújula Astral',
+    name: 'Brújula Astral',
     codename: 'ORÁCULO // HORIZONTE',
     symbolicAvatar: '🧭',
     primaryGlow: '#22d3ee',
@@ -90,7 +90,7 @@ export const COMPANION_REGISTRY: Record<string, CompanionConfig> = {
   },
   creador: {
     id: 'creador',
-    name: 'El Geómetra Sagrado',
+    name: 'Geómetra Sagrado',
     codename: 'ORÁCULO // GÉNESIS',
     symbolicAvatar: '✨',
     primaryGlow: '#00f0ff',
@@ -101,7 +101,7 @@ export const COMPANION_REGISTRY: Record<string, CompanionConfig> = {
   },
   mago: {
     id: 'mago',
-    name: 'El Ojo Cósmico',
+    name: 'Ojo Cósmico',
     codename: 'ORÁCULO // ASTRAL',
     symbolicAvatar: '🔮',
     primaryGlow: '#00f0ff',

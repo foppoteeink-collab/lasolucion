@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { PlayerStats, KaiShapeKey } from '../types';
 import { getRankForLevel, calculateRequiredXp } from '../data/defaults';
+import { getArchetypeDisplayName } from '../data/archetypes';
 import { useUIStore } from './useUIStore';
 import { getTodayDateString, getYesterdayDateString, calcSleepDuration, getSleepQuality } from '../utils/date';
 
@@ -93,6 +94,7 @@ export const usePlayerStore = create<PlayerState>()(
 
         const nextStats: PlayerStats = {
           ...raw,
+          characterClass: raw.characterClass ? getArchetypeDisplayName(raw.characterClass) : state.stats.characterClass,
           level: lvl,
           rankTitle: expectedRank,
           requiredXp: calculateRequiredXp(lvl),
@@ -547,7 +549,7 @@ export const usePlayerStore = create<PlayerState>()(
             username: data.username.trim(),
             fullName: data.fullName?.trim() || state.stats.fullName,
             avatarIcon: data.avatarIcon || state.stats.avatarIcon || '🛡️',
-            characterClass: data.characterClass || state.stats.characterClass || 'Espíritu Heroico',
+            characterClass: getArchetypeDisplayName(data.characterClass || state.stats.characterClass || 'Espíritu Heroico'),
             kaiShape: data.kaiShape || state.stats.kaiShape || 'prism',
             mantra: data.mantra?.trim() || state.stats.mantra,
             hasCompletedAwakening: true,
@@ -603,6 +605,9 @@ export const usePlayerStore = create<PlayerState>()(
           const canonicalRank = getRankForLevel(lvl).title;
           if (state.stats.rankTitle !== canonicalRank) {
             state.stats.rankTitle = canonicalRank;
+          }
+          if (state.stats.characterClass) {
+            state.stats.characterClass = getArchetypeDisplayName(state.stats.characterClass);
           }
           if (state.stats.hasCompletedAwakening === undefined) {
             const hasPriorProgress = (lvl > 1) || 

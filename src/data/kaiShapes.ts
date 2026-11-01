@@ -21,7 +21,7 @@ export const KAI_OFFICIAL_SHAPES: KaiShapeDefinition[] = [
     tagline: 'Geometría cuántica pura, visión y foco mental absoluto.',
     description: 'La forma cuántica original con el ojo que todo lo ve. La esencia de tu compañero KAI con la que inicias tu camino.',
     themeTrait: 'Visión & Foco',
-    archetypeMatch: 'El Héroe / El Sabio',
+    archetypeMatch: 'Espíritu Heroico / Mente Sabia',
   },
 ];
 

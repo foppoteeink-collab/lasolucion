@@ -792,7 +792,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
                   title="Haz clic para abrir el Taller Cuántico de KAI"
                 >
                   <div className="shrink-0">
-                    <HoloCompanion archetype={stats.characterClass || 'El Héroe'} size="sm" showHUD={false} />
+                    <HoloCompanion archetype={stats.characterClass || 'Espíritu Heroico'} size="sm" showHUD={false} />
                   </div>
                   <div className="min-w-0 pr-2">
                     <div className="text-[9px] font-mono text-cyan-300 uppercase tracking-wider font-bold">Compañero Guía</div>

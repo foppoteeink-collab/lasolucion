@@ -96,7 +96,7 @@ export const NeuralAnalysisModal: React.FC<NeuralAnalysisModalProps> = ({ isOpen
 
       const res = await generateNeuralAnalysisAI(
         stats,
-        stats?.characterClass || 'El Héroe',
+        stats?.characterClass || 'Espíritu Heroico',
         habitMastery,
         currentTasks,
         reflections,

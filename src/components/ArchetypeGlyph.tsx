@@ -15,6 +15,7 @@ import {
   Eye,
   LucideIcon
 } from 'lucide-react';
+import { getArchetypeByName } from '../data/archetypes';
 
 interface ArchetypeGlyphProps {
   archetypeNameOrId?: string;
@@ -23,56 +24,32 @@ interface ArchetypeGlyphProps {
   glow?: boolean;
 }
 
-// Mapeo exhaustivo de arquetipos y clases a glifos vectoriales sagrados/neón
+// Mapeo exhaustivo de arquetipos por ID a glifos vectoriales sagrados/neón
 const ARCHETYPE_ICONS: Record<string, { icon: LucideIcon; color: string; bg: string; stroke: string }> = {
-  // El Inocente
+  // Espíritu Puro (Inocente)
   inocente: { icon: Feather, color: '#facc15', bg: 'rgba(250, 204, 21, 0.15)', stroke: '#facc15' },
-  'el inocente': { icon: Feather, color: '#facc15', bg: 'rgba(250, 204, 21, 0.15)', stroke: '#facc15' },
-
-  // El Huérfano / Corriente
+  // Espíritu Aliado (Huérfano)
   huerfano: { icon: Users, color: '#60a5fa', bg: 'rgba(96, 165, 250, 0.15)', stroke: '#60a5fa' },
-  'el hombre corriente': { icon: Users, color: '#60a5fa', bg: 'rgba(96, 165, 250, 0.15)', stroke: '#60a5fa' },
-  'el huérfano': { icon: Users, color: '#60a5fa', bg: 'rgba(96, 165, 250, 0.15)', stroke: '#60a5fa' },
-
-  // El Héroe
+  // Espíritu Heroico (Héroe)
   heroe: { icon: Shield, color: '#00f0ff', bg: 'rgba(0, 240, 255, 0.15)', stroke: '#00f0ff' },
-  'el héroe': { icon: Shield, color: '#00f0ff', bg: 'rgba(0, 240, 255, 0.15)', stroke: '#00f0ff' },
-
-  // El Cuidador
+  // Alma Protectora (Cuidador)
   cuidador: { icon: Heart, color: '#34d399', bg: 'rgba(52, 211, 153, 0.15)', stroke: '#34d399' },
-  'el cuidador': { icon: Heart, color: '#34d399', bg: 'rgba(52, 211, 153, 0.15)', stroke: '#34d399' },
-
-  // El Explorador
+  // Espíritu Libre (Explorador)
   explorador: { icon: Compass, color: '#fb923c', bg: 'rgba(251, 146, 60, 0.15)', stroke: '#fb923c' },
-  'el explorador': { icon: Compass, color: '#fb923c', bg: 'rgba(251, 146, 60, 0.15)', stroke: '#fb923c' },
-
-  // El Rebelde / Forajido
+  // Fuerza Rebelde (Rebelde)
   rebelde: { icon: Zap, color: '#ef4444', bg: 'rgba(239, 68, 68, 0.15)', stroke: '#ef4444' },
-  'el rebelde': { icon: Zap, color: '#ef4444', bg: 'rgba(239, 68, 68, 0.15)', stroke: '#ef4444' },
-
-  // El Amante
+  // Corazón Apasionado (Amante)
   amante: { icon: Flame, color: '#f43f5e', bg: 'rgba(244, 63, 94, 0.15)', stroke: '#f43f5e' },
-  'el amante': { icon: Flame, color: '#f43f5e', bg: 'rgba(244, 63, 94, 0.15)', stroke: '#f43f5e' },
-
-  // El Creador
+  // Mente Creadora (Creador)
   creador: { icon: Sparkles, color: '#a855f7', bg: 'rgba(168, 85, 247, 0.15)', stroke: '#a855f7' },
-  'el creador': { icon: Sparkles, color: '#a855f7', bg: 'rgba(168, 85, 247, 0.15)', stroke: '#a855f7' },
-
-  // El Bufón
+  // Espíritu Lúdico (Bufón)
   bufon: { icon: Laugh, color: '#fbbf24', bg: 'rgba(251, 191, 36, 0.15)', stroke: '#fbbf24' },
-  'el bufón': { icon: Laugh, color: '#fbbf24', bg: 'rgba(251, 191, 36, 0.15)', stroke: '#fbbf24' },
-
-  // El Sabio
+  // Mente Sabia (Sabio)
   sabio: { icon: BookOpen, color: '#00f0ff', bg: 'rgba(0, 240, 255, 0.15)', stroke: '#00f0ff' },
-  'el sabio': { icon: BookOpen, color: '#00f0ff', bg: 'rgba(0, 240, 255, 0.15)', stroke: '#00f0ff' },
-
-  // El Mago
+  // Mente Alquimista (Mago)
   mago: { icon: Wand2, color: '#c084fc', bg: 'rgba(192, 132, 252, 0.15)', stroke: '#c084fc' },
-  'el mago': { icon: Wand2, color: '#c084fc', bg: 'rgba(192, 132, 252, 0.15)', stroke: '#c084fc' },
-
-  // El Gobernante
+  // Voz de Liderazgo (Gobernante)
   gobernante: { icon: Crown, color: '#eab308', bg: 'rgba(234, 179, 8, 0.15)', stroke: '#eab308' },
-  'el gobernante': { icon: Crown, color: '#eab308', bg: 'rgba(234, 179, 8, 0.15)', stroke: '#eab308' },
 };
 
 export const ArchetypeGlyph: React.FC<ArchetypeGlyphProps> = ({
@@ -81,8 +58,8 @@ export const ArchetypeGlyph: React.FC<ArchetypeGlyphProps> = ({
   size = 20,
   glow = true,
 }) => {
-  const key = archetypeNameOrId.toLowerCase().trim();
-  const config = ARCHETYPE_ICONS[key] || {
+  const resolvedArch = getArchetypeByName(archetypeNameOrId);
+  const config = ARCHETYPE_ICONS[resolvedArch.id] || {
     icon: Eye,
     color: '#00f0ff',
     bg: 'rgba(0, 240, 255, 0.15)',

@@ -28,7 +28,7 @@ export const ScenarioSimulatorPanel: React.FC<ScenarioSimulatorPanelProps> = ({ 
   const [customName, setCustomName] = useState<string>('Alex Thorne');
   const [customDays, setCustomDays] = useState<number>(30);
   const [customRate, setCustomRate] = useState<number>(75);
-  const [customArchetype, setCustomArchetype] = useState<string>('El Héroe');
+  const [customArchetype, setCustomArchetype] = useState<string>('Espíritu Heroico');
   const [customSleep, setCustomSleep] = useState<'early' | 'night_owl' | 'mixed'>('mixed');
 
   useEffect(() => {

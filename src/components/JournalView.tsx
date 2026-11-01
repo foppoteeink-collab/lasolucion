@@ -268,7 +268,7 @@ export const JournalView: React.FC<JournalViewProps> = ({
               </div>
               <div>
                 <h1 className="text-base sm:text-lg md:text-xl font-black text-white tracking-wide font-anton uppercase leading-tight">
-                  Bitácora del Héroe & Repaso Semanal
+                  Bitácora de Progreso & Repaso Semanal
                 </h1>
                 <p className="text-xs text-cyan-300/80 mt-0.5 max-w-xl font-sans hidden sm:block">
                   Apuntes, temas cubiertos y avances específicos de tus misiones diarias.

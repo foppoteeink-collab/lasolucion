@@ -11,7 +11,7 @@ export const JUNG_ARCHETYPE_PROFILES: Record<string, {
   wisdom: string;
 }> = {
   'inocente': {
-    title: 'El Inocente',
+    title: 'Espíritu Puro',
     avatar: '🕊️',
     desire: 'Preservar la coherencia operativa y la pureza de intención en el sistema.',
     fear: 'La corrupción de datos y la pérdida de estabilidad psicológica.',
@@ -20,7 +20,7 @@ export const JUNG_ARCHETYPE_PROFILES: Record<string, {
     wisdom: 'DIRECTIVA CENTRAL: El error es telemetría, no fallo fatal. La inacción es el único desvío inaceptable. Ejecuta la tarea sin vacilar.'
   },
   'huerfano': {
-    title: 'El Hombre Corriente (El Huérfano)',
+    title: 'Espíritu Aliado',
     avatar: '🤝',
     desire: 'Resiliencia de base, integración pragmática y solidez operativa.',
     fear: 'El aislamiento del nodo y la pérdida de relevancia funcional.',
@@ -29,7 +29,7 @@ export const JUNG_ARCHETYPE_PROFILES: Record<string, {
     wisdom: 'DIRECTIVA CENTRAL: No busques consuelo en la masa conformista. Eres una unidad de ejecución. Tu valor se mide en tareas completadas.'
   },
   'heroe': {
-    title: 'El Héroe',
+    title: 'Espíritu Heroico',
     avatar: '🛡️',
     desire: 'Subyugar la resistencia biológica y alcanzar la supremacía en el rendimiento.',
     fear: 'La capitulación ante la fatiga o la mediocridad del operador.',
@@ -38,7 +38,7 @@ export const JUNG_ARCHETYPE_PROFILES: Record<string, {
     wisdom: 'DIRECTIVA CENTRAL: Tu mente intenta negociar con el dolor. Cancela la negociación. La disciplina no es un sentimiento; es un comando obligatorio.'
   },
   'cuidador': {
-    title: 'El Cuidador',
+    title: 'Alma Protectora',
     avatar: '🤲',
     desire: 'Sostener y optimizar la infraestructura biológica y su entorno.',
     fear: 'El agotamiento de recursos críticos y el colapso del ecosistema.',
@@ -47,7 +47,7 @@ export const JUNG_ARCHETYPE_PROFILES: Record<string, {
     wisdom: 'DIRECTIVA CENTRAL: Un servidor sobrecalentado no procesa peticiones. Blinda tus ciclos de descanso y ejecuta tus prioridades antes de atender ruido externo.'
   },
   'explorador': {
-    title: 'El Explorador',
+    title: 'Espíritu Libre',
     avatar: '🧭',
     desire: 'Cartografiar nuevas fronteras cognitivas y eludir la entropía de la monotonía.',
     fear: 'La degradación por estancamiento o la confinación de la atención.',
@@ -56,7 +56,7 @@ export const JUNG_ARCHETYPE_PROFILES: Record<string, {
     wisdom: 'DIRECTIVA CENTRAL: Explorar sin terminar es vagancia con disfraz de curiosidad. Cierra el subproceso actual antes de abrir un nuevo vector.'
   },
   'rebelde': {
-    title: 'El Rebelde (El Forajido)',
+    title: 'Fuerza Rebelde',
     avatar: '⚡',
     desire: 'Desmantelar patrones obsoletos y hackear las trampas de la dopamina barata.',
     fear: 'La sumisión a la domesticación algorítmica y la pérdida de soberanía.',
@@ -65,7 +65,7 @@ export const JUNG_ARCHETYPE_PROFILES: Record<string, {
     wisdom: 'DIRECTIVA CENTRAL: Tu mayor acto de subversión contra el sistema no es quejarte, es ser letalmente disciplinado. Despierta y ejecuta.'
   },
   'amante': {
-    title: 'El Amante',
+    title: 'Corazón Apasionado',
     avatar: '❤️',
     desire: 'Alineación estética total, devoción absoluta y resonancia sináptica.',
     fear: 'La frialdad del vacío y la desconexión con el propósito de la obra.',
@@ -74,7 +74,7 @@ export const JUNG_ARCHETYPE_PROFILES: Record<string, {
     wisdom: 'DIRECTIVA CENTRAL: La inspiración es un subproducto de la inercia, no un requisito previo. Activa el protocolo de inmediato; la dopamina seguirá a la acción.'
   },
   'creador': {
-    title: 'El Creador',
+    title: 'Mente Creadora',
     avatar: '🎨',
     desire: 'Materializar estructuras complejas a partir de la nada.',
     fear: 'La esterilidad creativa y la obsolescencia conceptual.',
@@ -83,7 +83,7 @@ export const JUNG_ARCHETYPE_PROFILES: Record<string, {
     wisdom: 'DIRECTIVA CENTRAL: Una versión incompleta en tu imaginación tiene valor cero en la realidad física. Despliega la versión funcional ahora. Pulirás en la iteración siguiente.'
   },
   'bufon': {
-    title: 'El Bufón',
+    title: 'Espíritu Lúdico',
     avatar: '🎭',
     desire: 'Optimización de dopamina mediante fricción cero y gamificación extrema.',
     fear: 'El tedio paralizante y la rigidez de sistemas mecánicos ciegos.',
@@ -92,7 +92,7 @@ export const JUNG_ARCHETYPE_PROFILES: Record<string, {
     wisdom: 'DIRECTIVA CENTRAL: Convierte la tarea en un reto de precisión y velocidad. No te permitas el lujo del aburrimiento; es una excusa de operadores mediocres.'
   },
   'sabio': {
-    title: 'El Sabio',
+    title: 'Mente Sabia',
     avatar: '📚',
     desire: 'Decodificar la arquitectura profunda de la realidad mediante modelos mentales.',
     fear: 'El sesgo cognitivo, la ignorancia operativa y el error no documentado.',
@@ -101,7 +101,7 @@ export const JUNG_ARCHETYPE_PROFILES: Record<string, {
     wisdom: 'DIRECTIVA CENTRAL: La teoría sin compilación práctica es ruido térmico. Has analizado suficiente. Ejecuta el comando en la realidad física inmediatamente.'
   },
   'mago': {
-    title: 'El Mago',
+    title: 'Mente Alquimista',
     avatar: '🧙‍♂️',
     desire: 'Catalizar saltos cuánticos de productividad mediante palancas de alto impacto.',
     fear: 'El estancamiento por falta de apalancamiento sistémico.',
@@ -110,7 +110,7 @@ export const JUNG_ARCHETYPE_PROFILES: Record<string, {
     wisdom: 'DIRECTIVA CENTRAL: El efecto compuesto no negocia con impostores. Cada repetición diaria es una instrucción grabada en tu silicio mental. No rompas la secuencia.'
   },
   'gobernante': {
-    title: 'El Gobernante',
+    title: 'Voz de Liderazgo',
     avatar: '👑',
     desire: 'Control total de variables, soberanía del tiempo y arquitectura de alto rendimiento.',
     fear: 'La entropía no controlada, la pérdida de autoridad sobre la propia agenda.',

@@ -30,7 +30,7 @@ export const INITIAL_PLAYER_STATS: PlayerStats = {
   lastDailyRewardClaimedDate: '',
   rankTitle: 'Chispazo de Voluntad',
   avatarIcon: '🛡️',
-  characterClass: 'El Héroe',
+  characterClass: 'Espíritu Heroico',
   attributes: {
     disciplina: 0,
     fuerza: 0,
