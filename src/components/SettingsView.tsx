@@ -5,7 +5,7 @@ import {
   HardDrive, FileSpreadsheet, Cpu, CheckCircle2, Key,
   Coins, Volume2, VolumeX, Target, Sun, Moon, Laptop, ArrowUpRight, CheckCheck,
   SlidersHorizontal, Smartphone, Share, PlusSquare, FlaskConical,
-  Compass, Eye, Layout, Bell, BellOff, BellRing, Zap, Flame, Timer, Palette, ChevronLeft, Wallet, Type
+  Compass, Eye, Layout, Bell, BellOff, BellRing, Zap, Flame, Timer, Palette, ChevronLeft, Wallet, Type, Waves
 } from 'lucide-react';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 import { GameSettings } from '../types';
@@ -920,7 +920,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 </div>
               </div>
 
-              {/* SELECTOR DE 4 MODOS EN BARRA DE PÍLDORAS COMPACTA */}
+              {/* SELECTOR DE 4 MODOS EN BARRA DE PÍLDORAS COMPACTA Y SIMÉTRICA */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 p-1 bg-black/40 rounded-xl border border-white/10 relative z-10">
                 {/* MODO 1: AURORA NEÓN */}
                 <button
@@ -929,13 +929,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     soundFX.playClick();
                     setOpticMode('aurora');
                   }}
-                  className={`chicle-btn px-2.5 py-2 rounded-lg border flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                  className={`chicle-btn h-10 px-3 rounded-lg border flex items-center justify-center gap-2 transition-all cursor-pointer ${
                     opticMode === 'aurora'
                       ? 'bg-cyan-500/25 border-cyan-400 text-white shadow-[0_0_12px_rgba(0,240,255,0.35)] ring-1 ring-cyan-400 font-bold optic-active-card'
                       : 'bg-transparent border-transparent text-slate-400 hover:text-white hover:bg-white/[0.05]'
                   }`}
                 >
-                  <span className="text-sm">✨</span>
+                  <Sparkles className="w-3.5 h-3.5 shrink-0" />
                   <span className="text-xs font-anton tracking-wider uppercase">Aurora</span>
                 </button>
 
@@ -946,13 +946,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     soundFX.playClick();
                     setOpticMode('noir');
                   }}
-                  className={`chicle-btn px-2.5 py-2 rounded-lg border flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                  className={`chicle-btn h-10 px-3 rounded-lg border flex items-center justify-center gap-2 transition-all cursor-pointer ${
                     opticMode === 'noir'
                       ? 'bg-white/20 border-white text-white shadow-[0_0_12px_rgba(255,255,255,0.25)] ring-1 ring-white font-bold optic-active-card'
                       : 'bg-transparent border-transparent text-slate-400 hover:text-white hover:bg-white/[0.05]'
                   }`}
                 >
-                  <span className="text-sm">🌑</span>
+                  <Moon className="w-3.5 h-3.5 shrink-0" />
                   <span className="text-xs font-anton tracking-wider uppercase">Noir Oscuro</span>
                 </button>
 
@@ -963,13 +963,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     soundFX.playClick();
                     setOpticMode('eink');
                   }}
-                  className={`chicle-btn px-2.5 py-2 rounded-lg border flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                  className={`chicle-btn h-10 px-3 rounded-lg border flex items-center justify-center gap-2 transition-all cursor-pointer ${
                     opticMode === 'eink'
-                      ? 'bg-white border-white text-black shadow-[0_0_12px_rgba(255,255,255,0.4)] ring-2 ring-white font-bold optic-active-card'
+                      ? 'bg-white border-white text-black shadow-[0_0_12px_rgba(255,255,255,0.4)] ring-1 ring-white font-bold optic-active-card'
                       : 'bg-transparent border-transparent text-slate-400 hover:text-white hover:bg-white/[0.05]'
                   }`}
                 >
-                  <span className="text-sm">☀️</span>
+                  <Sun className="w-3.5 h-3.5 shrink-0" />
                   <span className="text-xs font-anton tracking-wider uppercase">Noir Claro</span>
                 </button>
 
@@ -980,13 +980,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     soundFX.playClick();
                     setOpticMode('cobalt');
                   }}
-                  className={`chicle-btn px-2.5 py-2 rounded-lg border flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                  className={`chicle-btn h-10 px-3 rounded-lg border flex items-center justify-center gap-2 transition-all cursor-pointer ${
                     opticMode === 'cobalt'
                       ? 'bg-blue-600/30 border-blue-400 text-blue-100 shadow-[0_0_12px_rgba(96,165,250,0.35)] ring-1 ring-blue-400 font-bold optic-active-card'
                       : 'bg-transparent border-transparent text-slate-400 hover:text-white hover:bg-white/[0.05]'
                   }`}
                 >
-                  <span className="text-sm">🌊</span>
+                  <Waves className="w-3.5 h-3.5 shrink-0" />
                   <span className="text-xs font-anton tracking-wider uppercase">Cobalto</span>
                 </button>
               </div>
