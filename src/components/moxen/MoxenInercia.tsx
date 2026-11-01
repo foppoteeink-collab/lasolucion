@@ -277,6 +277,14 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
     ventana.addEventListener('keydown', onKeyDown);
 
     mide();
+    items.forEach((it, i) => {
+      if (i === initialIndex) {
+        it.classList.add('in-tarjeta-activa');
+        it.classList.remove('in-tarjeta-inactiva');
+      } else {
+        it.classList.add('in-tarjeta-inactiva');
+      }
+    });
     const onResize = () => {
       mide();
       meta = paradas[cercana(meta)];
@@ -319,6 +327,15 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
       }
       if (indice !== ultimoIndice) {
         ultimoIndice = indice;
+        items.forEach((it, i) => {
+          if (i === indice) {
+            it.classList.add('in-tarjeta-activa');
+            it.classList.remove('in-tarjeta-inactiva');
+          } else {
+            it.classList.remove('in-tarjeta-activa');
+            it.classList.add('in-tarjeta-inactiva');
+          }
+        });
         if (rodilloActualRef.current) {
           rodilloActualRef.current.style.transform = `translateY(${-indice * 1.25}em)`;
         }

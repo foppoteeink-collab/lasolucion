@@ -4,30 +4,30 @@
    ===================================================================== */
 
 :root {
-  --in-ancho: 320px;
-  --in-hueco: 16px;
-  --in-margen: clamp(1rem, 5vw, 40px);
+  --in-ancho: 300px;
+  --in-hueco: 14px;
+  --in-margen: clamp(1rem, 5vw, 36px);
 }
 
 @media (max-width: 640px) {
   :root {
-    --in-ancho: 285px;
-    --in-hueco: 12px;
-    --in-margen: 14px;
+    --in-ancho: 270px;
+    --in-hueco: 10px;
+    --in-margen: 16px;
   }
 }
 
-/* ── Ventana y Pista (touch-action pan-y permite el scroll vertical libre del navegador) ── */
+/* ── Ventana y Pista (touch-action pan-x bloquea scroll vertical invasivo en móvil) ── */
 .in-ventana {
   position: relative;
   width: 100%;
   overflow: hidden;
-  touch-action: pan-y;
+  touch-action: pan-x;
   cursor: grab;
   user-select: none;
   -webkit-user-select: none;
   outline: none;
-  padding: 4px 0 8px;
+  padding: 4px 0 6px;
 }
 
 .in-ventana[data-arrastrando] {
@@ -45,13 +45,13 @@
   -webkit-backface-visibility: hidden;
 }
 
-/* ── Tarjetas (Ajustadas para visibilidad 100% libre de scroll en celular) ── */
+/* ── Tarjetas (Ajustadas para encajar 100% en celular sin ningún scroll) ── */
 .in-tarjeta {
   flex: none;
   width: var(--in-ancho);
-  height: 385px;
+  height: 355px;
   position: relative;
-  border-radius: 22px;
+  border-radius: 20px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -61,14 +61,33 @@
   -webkit-transform: translateZ(0);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
-  touch-action: pan-y;
+  touch-action: pan-x;
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1),
+              filter 0.35s ease,
+              opacity 0.35s ease,
+              box-shadow 0.35s ease;
 }
 
 @media (max-width: 640px) {
   .in-tarjeta {
-    height: 375px;
-    border-radius: 20px;
+    height: 335px;
+    border-radius: 18px;
   }
+}
+
+/* ── Profundidad de Campo (Focus): Tarjetas laterales atenuadas en gris ── */
+.in-tarjeta.in-tarjeta-inactiva {
+  opacity: 0.35;
+  filter: grayscale(85%) brightness(0.65);
+  transform: scale(0.92) translateZ(0);
+}
+
+/* ── Tarjeta protagónica activa (Resplandor en su color, escala 1, viva) ── */
+.in-tarjeta.in-tarjeta-activa {
+  opacity: 1;
+  filter: grayscale(0%) brightness(1);
+  transform: scale(1) translateZ(0);
+  z-index: 10;
 }
 
 /* Capas de paralaje interna aceleradas por GPU */

@@ -124,11 +124,17 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
 
   useEffect(() => {
     if (!isOpen) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
@@ -195,17 +201,15 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
               return (
                 <div
                   key={arch.id}
-                  className={`relative w-full h-full p-3.5 sm:p-5 flex flex-col justify-between overflow-hidden rounded-[20px] sm:rounded-[24px] border select-none transition-all duration-300 ${
+                  className={`relative w-full h-full p-3 sm:p-4 flex flex-col justify-between overflow-hidden rounded-[18px] sm:rounded-[22px] border select-none transition-all duration-300 ${
                     isSelected
-                      ? 'border-2 shadow-[0_0_35px_rgba(0,0,0,0.8)]'
-                      : 'border-white/10 hover:border-white/20'
+                      ? 'border-2'
+                      : 'border-white/15'
                   }`}
                   style={{
-                    borderColor: isSelected ? theme.accent : undefined,
-                    background: `linear-gradient(180deg, rgba(3,7,18,0.92) 0%, rgba(10,15,29,0.95) 100%), ${theme.bgGradient}`,
-                    boxShadow: isSelected
-                      ? `0 0 30px ${theme.glow}, inset 0 1px 0 rgba(255,255,255,0.2)`
-                      : 'inset 0 1px 0 rgba(255,255,255,0.06)',
+                    borderColor: theme.accent,
+                    background: `linear-gradient(180deg, rgba(3,7,18,0.95) 0%, rgba(10,15,29,0.98) 100%), ${theme.bgGradient}`,
+                    boxShadow: `0 0 24px ${theme.glow}, inset 0 1px 0 rgba(255,255,255,0.18)`,
                   }}
                 >
                   {/* Aura lumínica adaptativa de fondo según el color del arquetipo */}
