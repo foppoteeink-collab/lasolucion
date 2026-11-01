@@ -9,7 +9,7 @@ export const SciFiGridBackground: React.FC = () => {
 
   return (
     <div 
-      className="fixed inset-0 pointer-events-none z-0 overflow-hidden select-none"
+      className="fixed inset-0 pointer-events-none z-0 overflow-hidden select-none scifi-grid-bg-root"
       style={{
         background: systemAura?.backgroundColor 
           ? `radial-gradient(ellipse 130% 90% at 50% -10%, ${systemAura.backgroundColor} 0%, #050b1a 60%, #02040a 100%)`

@@ -125,30 +125,9 @@ html.optic-eink #app-optical-canvas [data-preserve-optic] {
   filter: invert(1) hue-rotate(180deg) grayscale(0%) contrast(0.85) !important;
 }
 
-/* Erradicar borrones oscuros en Noir Claro provocados por halos de luz de neón invertidos */
-html.optic-eink #app-optical-canvas [class*="blur-3xl"],
-html.optic-eink #app-optical-canvas [class*="blur-2xl"],
-html.optic-eink #app-optical-canvas [class*="blur-xl"] {
-  display: none !important;
-}
-
-/* Eliminar resplandores incandescentes que oscurecen las letras al invertirse */
-html.optic-eink #app-optical-canvas [class*="drop-shadow-"],
-html.optic-eink #app-optical-canvas [class*="shadow-[0_0_"] {
-  filter: none !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
-}
-
-/* Iconos vectoriales nítidos en tinta negra pura */
-html.optic-eink #app-optical-canvas svg {
-  color: #ffffff !important;
-}
-html.optic-eink #app-optical-canvas svg path,
-html.optic-eink #app-optical-canvas svg circle,
-html.optic-eink #app-optical-canvas svg rect,
-html.optic-eink #app-optical-canvas svg line,
-html.optic-eink #app-optical-canvas svg polyline {
-  stroke: #ffffff !important;
+/* En Noir Claro: atenuar la atmósfera de fondo para que el papel sea blanco puro sin manchas oscuras */
+html.optic-eink #app-optical-canvas .scifi-grid-bg-root {
+  opacity: 0.08 !important;
 }
 
 /* 4. MODO CYBER COBALTO (Azul Zafiro / Cian Abisal & Blanco): Monocromo Oceánico */
