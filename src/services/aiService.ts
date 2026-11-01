@@ -746,14 +746,49 @@ Referencias visuales directas: Ken Sugimori (Pokémon Oficial), Akira Toriyama (
 
       case 'pixar':
         return {
-          styleTitle: 'ANIMACIÓN 3D DE CINE (PIXAR & DREAMWORKS)',
-          keywordsEn: 'high-end 3D animated film character, Disney Pixar and Dreamworks movie render style, soft ambient occlusion, warm studio lighting, big glossy expressive eyes, soft tactile volume, cute friendly creature',
+          styleTitle: 'ANIMACIÓN 3D DE CINE (PIXAR, DISNEY & DREAMWORKS)',
+          keywordsEn: 'high-end 3D animated film character, Disney Pixar and DreamWorks official movie render aesthetic, soft studio lighting in 3 points with warm key light and bright rim light, zero black ink outlines, volumetric ambient occlusion, expressive glass eyes with dual circular catchlights, soft marshmallow tactile limbs, charming character with immense soul, Monsters Inc and Wall-E character design',
           promptBody: `
-🎬 ESTILO MAESTRO: ANIMACIÓN 3D PIXAR Y DREAMWORKS
-- Eres un Director de Arte y Modelado 3D de Pixar/DreamWorks.
-- TÉCNICA: CERO o mínimo contorno negro. El volumen se esculpe mediante <radialGradient> y <linearGradient> suaves con oclusión ambiental (opacity="0.25" a "0.5") y luz cálida de estudio cinematográfico desde arriba a la izquierda.
-- OJOS: Ojos 3D esféricos con iris radial detallado concéntrico y DOBLE catchlight blanco brillante que refleja los focos de estudio de cine.
-- ANATOMÍA: Extremidades acolchonadas y suaves con volumen tangible, dedos redondeados y zapatitos con relieve tridimensional.
+🎬 ESTILO MAESTRO: ANIMACIÓN 3D DE CINE (PIXAR, DISNEY & DREAMWORKS)
+Referencias visuales directas: Toy Story, Monsters Inc (Mike Wazowski y Sulley), Wall-E y EVA, Cars (Rayo McQueen y Mate), Buscando a Nemo / Dory, Up (Carl Fredricksen, Russell y Dug), Ratatouille, Intensamente, Cómo entrenar a tu dragón (Chimuelo), Los Increíbles, Grandes Héroes (Baymax) y los cortometrajes de Pixar.
+
+1. PRINCIPIO SAGRADO DE LA SILUETA (EL OBJETO COBRA VIDA CON ALMA CINEMATOGRÁFICA):
+- ¡PROHIBIDO transformar al objeto en un muñeco humano genérico con ropa!
+- Al igual que Wall-E es una compactadora viva, Rayo McQueen es un auto vivo, o la Lámpara Luxo Jr. es una lámpara viva:
+  * El objeto fotografiado CONSERVA su silueta, masa, volumen, curvaturas y piezas mecánicas o materiales reales.
+  * Son sus propias ranuras, botones, tapas, etiquetas o texturas las que se transforman en ojos, boca o detalles orgánicos.
+  * Debe ser 100% reconocible el objeto real a primer vistazo, pero infundido con el carisma, la calidez y el alma de un protagonista de película animada de cine.
+
+2. CERO LÍNEAS DE TINTA NEGRA (MODELADO 3D PURO MEDIANTE LUZ Y VOLUMEN):
+- ¡PROHIBIDOS los contornos negros duros de cómic o plumón (stroke="#000000" o trazos oscuros gruesos)! En el cine de animación 3D, las líneas negras no existen.
+- La tridimensionalidad y los bordes se definen exclusivamente mediante:
+  * Iluminación de estudio en 3 puntos: Luz principal cálida desde arriba a la izquierda (<radialGradient> y <linearGradient>), luz de relleno suave, y contraluz (Rim Light brillante en las aristas superiores para despegar al personaje del fondo).
+  * Oclusión ambiental suave: Sombras de contacto orgánicas en los pliegues (tonos profundos con opacity="0.2" a "0.45"), dando peso y masa tangible.
+  * Sombras de contacto en el piso: Doble elipse bajo los pies/base (<ellipse cx="150" cy="275" rx="75" ry="12" fill="#000000" opacity="0.55"/> y núcleo interno <ellipse cx="150" cy="275" rx="45" ry="7" fill="#000000" opacity="0.8"/>).
+
+3. CATÁLOGO MAESTRO DE OJOS Y MIRADAS PIXAR (EL ESPEJO DEL ALMA):
+Inspirándote en las referencias, dótalo de uno de los sistemas oculares cinematográficos que mejor armonicen con el objeto:
+- El Ojo de Cristal de Estudio (Doble Catchlight): Esferas de córnea translúcida con iris radial concéntrico en degradado luminoso (azul zafiro, ámbar miel, avellana o esmeralda) y DOS reflejos de foco blanco brillante (un destello circular principal arriba a la izquierda y un micro-destello secundario suave abajo a la derecha).
+- Ojos de Cíclope Carismático (Estilo Mike Wazowski): Un único ojo colosal centrado en el torso/cabeza del objeto, con párpados carnosos redondeados, pupilas expresivas y mirada cómica de gran líder.
+- Ojos Asimétricos Tiernos (Uno Grande y Uno Pequeño): Un ojo un 25% más grande que el otro o ligeramente desalineado, transmitiendo inocencia, ternura irresistible y curiosidad infantil (estilo criatura de Monsters Inc o Wall-E).
+- Ojos en Antenas / Tallos Flexibles: Ojos de bolita brillante montados sobre tallitos carnosos móviles que emergen de la parte superior del objeto (estilo caracol, bicho o extraterrestre de Toy Story).
+- Visor Óptico Binocular (Estilo Wall-E / Edna Mode): Lentes dobles de vidrio pulido con montura técnica o gafas de pasta gruesa redondeada con reflejos de luz de estudio diagonales.
+- Ojos Digitales LED / Cyber-Clean (Estilo EVA / Baymax): Pantalla o visor negro brillante pulido con cápsulas de luz celeste o azul neón que forman miradas sonrientes o parpadeos suaves.
+
+4. CATÁLOGO MAESTRO DE BOCAS, DIENTES Y GESTOS PIXAR:
+- Diente Solitario / Mella Tierna (Estilo Mate / Monstruito Infantil): Sonrisa ancha con un solo dientecito blanco redondeado asomando tímidamente del labio inferior o superior.
+- Lengua Colgante Ingenua (Estilo Dug el Perro): Boquita entreabierta con una lengüita rosada redondeada con brillo especular que cae relajada hacia un costado.
+- Sonrisa Amplia con Hoyuelos Acolchonados: Comisuras profundas que empujan las mejillas carnosas hacia arriba creando relieve tridimensional.
+- Dientes de Sierra Redondeados (Monstruo Suave): Hilera de pequeños dientecitos cónicos pero romos y blancos, que parecen gomitas de dulce, cero amenazantes.
+- Mueca de Asombro "O" / Ceja Alzada Escéptica: Boca circular pequeña con labio inferior carnoso y una ceja curvada hacia arriba con actitud curiosa.
+- Ranura Mecánica Expresiva: Si el objeto es un electrodoméstico o caja, su ranura se curva suavemente como una sonrisa metálica viva con esquinas redondeadas.
+
+5. EXTREMIDADES, CALZADO Y DETALLES ANATÓMICOS:
+- Brazos y Manitas Acolchonadas: Manoplas suaves de 4 dedos rechonchos como malvaviscos, sin articulaciones huesudas rígidas, con palmas acolchonadas.
+- Piececitos de Gota / Patitas Chibi: Extremidades inferiores cortitas y cónicas que terminan en deditos redondeados con mini-uñitas suaves como perlas.
+- Orugas, Ruedas o Levitación (Mecánica Viva): Si el objeto tiene ruedas, engranajes o propulsores, estos se flexionan elásticamente como zapatitos de goma.
+- El Clásico "Parche de Pancita" (Belly Patch): Óvalo o gota en el abdomen de color pastel más claro que el resto del cuerpo, aportando volumen y calidez táctil.
+- Cuernitos y Antenas Suaves: Cuernitos romos con brillo satinado (como plástico suave o arcilla pulida) o antenitas con puntas esféricas de luz.
 `,
         };
 
