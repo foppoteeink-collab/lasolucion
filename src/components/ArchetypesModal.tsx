@@ -177,13 +177,14 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
           </div>
         </div>
 
-        {/* Contenido: Carrusel Cinético (Moxen Inercia) con Ficha Completa */}
+        {/* Contenido: Carrusel Cinético (Moxen Inercia) con Ficha Holográfica de Élite */}
         <div className="flex-1 overflow-hidden flex flex-col justify-center py-2 sm:py-3 min-h-0">
           <MoxenInercia
             initialIndex={initialIndex}
             friccion={4}
             goma={0.3}
             iman={true}
+            loop={true}
             accentColor="#00f0ff"
           >
             {JUNG_ARCHETYPES.map((arch, index) => {
@@ -194,101 +195,158 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
               return (
                 <div
                   key={arch.id}
-                  className={`relative w-full h-full p-4 sm:p-5 flex flex-col justify-between overflow-hidden rounded-[24px] border select-none bg-gradient-to-b ${theme.bgGradient} ${
+                  className={`relative w-full h-full p-4 sm:p-5 flex flex-col justify-between overflow-hidden rounded-[26px] border select-none transition-all duration-300 ${
                     isSelected
-                      ? 'border-2 shadow-[0_0_25px_rgba(0,240,255,0.25)]'
-                      : 'border-white/10'
+                      ? 'border-2 shadow-[0_0_35px_rgba(0,0,0,0.8)]'
+                      : 'border-white/10 hover:border-white/20'
                   }`}
                   style={{
                     borderColor: isSelected ? theme.accent : undefined,
+                    background: `linear-gradient(180deg, rgba(3,7,18,0.92) 0%, rgba(10,15,29,0.95) 100%), ${theme.bgGradient}`,
+                    boxShadow: isSelected
+                      ? `0 0 30px ${theme.glow}, inset 0 1px 0 rgba(255,255,255,0.2)`
+                      : 'inset 0 1px 0 rgba(255,255,255,0.06)',
                   }}
                 >
-                  {/* Bisel superior */}
-                  <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+                  {/* Aura lumínica adaptativa de fondo según el color del arquetipo */}
+                  <div
+                    className="absolute -top-16 -right-16 w-44 h-44 rounded-full blur-3xl pointer-events-none opacity-25"
+                    style={{ backgroundColor: theme.accent }}
+                  />
+                  <div
+                    className="absolute -bottom-16 -left-16 w-36 h-36 rounded-full blur-2xl pointer-events-none opacity-20"
+                    style={{ backgroundColor: theme.accent }}
+                  />
 
-                  {/* 1. Cabecera de la Tarjeta */}
+                  {/* Bisel superior especular */}
+                  <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none" />
+
+                  {/* 1. Header de Telemetría: Número de Arquetipo + Chip de Bonificación */}
                   <div className="relative z-10 flex items-center justify-between gap-2 shrink-0">
-                    <span className="text-[10px] font-mono tracking-widest font-black uppercase text-slate-300 bg-black/70 px-2.5 py-0.5 rounded-lg border border-white/10">
-                      #{cardNum}
-                    </span>
-                    <span
-                      className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full font-bold border flex items-center gap-1.5 ${theme.statPill}`}
-                    >
+                    <div className="flex items-center gap-1.5 bg-black/60 px-2.5 py-1 rounded-lg border border-white/10">
                       <span
-                        className="w-1.5 h-1.5 rounded-full"
+                        className="w-1.5 h-1.5 rounded-full animate-pulse"
                         style={{ backgroundColor: theme.accent }}
                       />
+                      <span className="text-[10px] font-mono tracking-widest font-black uppercase text-slate-300">
+                        #{cardNum}
+                      </span>
+                    </div>
+
+                    <span
+                      className={`text-[10px] font-mono px-2.5 py-1 rounded-full font-bold border flex items-center gap-1.5 backdrop-blur-md ${theme.statPill}`}
+                    >
+                      <Sparkles className="w-3 h-3" style={{ color: theme.accent }} />
                       {arch.statBonus}
                     </span>
                   </div>
 
-                  {/* 2. Avatar + Nombre + Compañero KAI */}
-                  <div className="relative z-10 flex items-center gap-3 my-2 bg-black/40 p-2.5 rounded-2xl border border-white/10 shrink-0">
+                  {/* 2. Hero de Identidad: Avatar Resonante + Nombre + Sinergia KAI */}
+                  <div className="relative z-10 flex items-center gap-3.5 my-1.5 p-3 rounded-2xl bg-black/35 border border-white/10 backdrop-blur-md shrink-0">
                     <div
-                      className="in-forma w-12 h-12 rounded-xl bg-black/80 border flex items-center justify-center text-2xl shrink-0 shadow-[0_2px_12px_rgba(0,0,0,0.8)]"
+                      className="in-forma w-14 h-14 rounded-2xl bg-gradient-to-b from-black/90 to-slate-950 border flex items-center justify-center text-3xl shrink-0 transition-transform"
                       style={{
-                        borderColor: `${theme.accent}66`,
-                        boxShadow: `0 0 15px ${theme.glow}, inset 0 1px 1px rgba(255,255,255,0.25)`,
+                        borderColor: `${theme.accent}88`,
+                        boxShadow: `0 0 20px ${theme.glow}, inset 0 1px 2px rgba(255,255,255,0.35)`,
                       }}
                     >
-                      <span className="relative z-10 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+                      <span className="relative z-10 drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)]">
                         {arch.avatar}
                       </span>
                     </div>
-                    <div className="min-w-0">
-                      <h4 className="font-anton text-sm sm:text-base uppercase tracking-wider text-white truncate drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]">
+
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-anton text-base sm:text-lg uppercase tracking-wider text-white truncate drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
                         {arch.name}
                       </h4>
-                      <span className="text-[10px] font-mono uppercase tracking-wider text-cyan-300/90 font-medium flex items-center gap-1 truncate">
-                        <span>KAI: {arch.companion?.title}</span>
-                        <span>{arch.companion?.icon}</span>
-                      </span>
+                      <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                        <span
+                          className="text-[9.5px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-md font-semibold border flex items-center gap-1"
+                          style={{
+                            backgroundColor: `${theme.accent}15`,
+                            borderColor: `${theme.accent}40`,
+                            color: theme.accent,
+                          }}
+                        >
+                          <span>KAI: {arch.companion?.title}</span>
+                          <span>{arch.companion?.icon}</span>
+                        </span>
+                      </div>
                     </div>
                   </div>
 
-                  {/* 3. Descripción Humana Completa */}
-                  <div className="relative z-10 bg-black/40 p-2.5 rounded-xl border border-white/5 my-1">
-                    <p className="text-[11px] text-slate-200/95 leading-relaxed font-sans">
-                      {arch.description}
+                  {/* 3. Manifiesto / Descripción Psicológica (Glassmorphism Continuo) */}
+                  <div className="relative z-10 p-3 rounded-xl bg-black/30 border border-white/5 my-1 backdrop-blur-sm">
+                    <p className="text-[11px] sm:text-[11.5px] text-slate-200/90 leading-relaxed font-sans italic">
+                      &ldquo;{arch.description}&rdquo;
                     </p>
                   </div>
 
-                  {/* 4. Deseo & Sombra / Miedo */}
+                  {/* 4. Vectores Tácticos de Resonancia (Deseo & Sombra sin cajas toscas) */}
                   <div className="relative z-10 space-y-1.5 my-1 text-[10px] sm:text-[11px] font-mono">
-                    <div className="flex items-start gap-1.5 text-cyan-300 bg-black/40 p-2 rounded-xl border border-cyan-500/20">
-                      <Target className="w-3.5 h-3.5 shrink-0 mt-0.5 text-cyan-400" />
-                      <span>
-                        <strong className="text-white font-bold">Deseo: </strong>
-                        {arch.desire}
-                      </span>
+                    {/* Impulso Primario (Deseo) */}
+                    <div
+                      className="p-2 rounded-xl border flex items-start gap-2 backdrop-blur-sm"
+                      style={{
+                        backgroundColor: 'rgba(0,0,0,0.35)',
+                        borderColor: `${theme.accent}33`,
+                      }}
+                    >
+                      <Target
+                        className="w-3.5 h-3.5 shrink-0 mt-0.5"
+                        style={{ color: theme.accent }}
+                      />
+                      <div className="leading-tight">
+                        <span
+                          className="font-black text-[9px] uppercase tracking-wider block mb-0.5"
+                          style={{ color: theme.accent }}
+                        >
+                          Impulso Primario · Deseo
+                        </span>
+                        <span className="text-slate-200 font-medium">{arch.desire}</span>
+                      </div>
                     </div>
-                    <div className="flex items-start gap-1.5 text-rose-300 bg-black/40 p-2 rounded-xl border border-rose-500/20">
+
+                    {/* Punto Ciego (Sombra / Miedo) */}
+                    <div className="p-2 rounded-xl bg-black/35 border border-rose-500/20 flex items-start gap-2 backdrop-blur-sm">
                       <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-rose-400" />
-                      <span>
-                        <strong className="text-white font-bold">Sombra / Miedo: </strong>
-                        {arch.fear}
-                      </span>
+                      <div className="leading-tight">
+                        <span className="font-black text-[9px] uppercase tracking-wider text-rose-400 block mb-0.5">
+                          Punto Ciego · Sombra / Miedo
+                        </span>
+                        <span className="text-slate-300 font-medium">{arch.fear}</span>
+                      </div>
                     </div>
                   </div>
 
-                  {/* 5. Footer: Atributo + Botón de Sintonización */}
+                  {/* 5. Footer: Atributo + Botón de Activación Holográfico */}
                   <div className="relative z-10 pt-2 border-t border-white/10 flex items-center justify-between gap-2 shrink-0">
-                    <span className="text-[10px] font-mono text-slate-400 uppercase">
-                      Atributo:{' '}
-                      <strong className="text-cyan-300 capitalize">{arch.primaryStat}</strong>
-                    </span>
-
-                    {isSelected ? (
-                      <span
-                        className="py-1.5 px-3 flex items-center justify-center gap-1 text-[11px] font-mono font-bold uppercase rounded-xl border shadow-[0_0_12px_rgba(0,0,0,0.5)]"
+                    <div className="flex items-center gap-1.5 text-[10px] font-mono text-slate-400 uppercase">
+                      <span>Atributo:</span>
+                      <strong
+                        className="font-bold px-2 py-0.5 rounded-md border text-[10px] capitalize"
                         style={{
-                          backgroundColor: `${theme.accent}22`,
-                          borderColor: theme.accent,
+                          backgroundColor: `${theme.accent}15`,
+                          borderColor: `${theme.accent}30`,
                           color: theme.accent,
                         }}
                       >
-                        <Check className="w-3.5 h-3.5" />
-                        <span>Sintonía Activa</span>
+                        {arch.primaryStat}
+                      </strong>
+                    </div>
+
+                    {isSelected ? (
+                      <span
+                        className="py-2 px-3.5 flex items-center justify-center gap-1.5 text-[11px] font-mono font-bold uppercase rounded-xl border shadow-[0_0_15px_rgba(0,0,0,0.6)]"
+                        style={{
+                          backgroundColor: `${theme.accent}20`,
+                          borderColor: theme.accent,
+                          color: theme.accent,
+                          boxShadow: `0 0 16px ${theme.glow}`,
+                        }}
+                      >
+                        <Check className="w-3.5 h-3.5 stroke-[3]" />
+                        <span>Resonancia Activa</span>
                       </span>
                     ) : (
                       <button
@@ -299,10 +357,16 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
                           onSelectArchetype(arch);
                           onClose();
                         }}
-                        className="py-1.5 px-3.5 bg-cyan-500 hover:bg-cyan-400 text-black font-anton uppercase text-[11px] rounded-xl cursor-pointer transition-all border border-cyan-400 shadow-[0_0_12px_rgba(0,240,255,0.35)] active:scale-95 flex items-center gap-1.5 font-bold"
+                        className="py-2 px-4 font-anton uppercase text-[11.5px] rounded-xl cursor-pointer transition-all active:scale-95 flex items-center gap-1.5 font-bold tracking-wide"
+                        style={{
+                          background: `linear-gradient(135deg, ${theme.accent}, ${theme.accent}cc)`,
+                          color: '#030712',
+                          boxShadow: `0 0 18px ${theme.glow}`,
+                          border: `1px solid ${theme.accent}`,
+                        }}
                       >
-                        <Zap className="w-3 h-3 fill-black" />
-                        <span>Activar Arquetipo</span>
+                        <Zap className="w-3.5 h-3.5 fill-black stroke-black" />
+                        <span>Sincronizar</span>
                       </button>
                     )}
                   </div>

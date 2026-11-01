@@ -10,6 +10,7 @@ export interface MoxenInerciaProps {
   friccion?: number;
   goma?: number;
   iman?: boolean;
+  loop?: boolean;
   className?: string;
   showNavigationControls?: boolean;
   accentColor?: string;
@@ -22,6 +23,7 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
   friccion = 4,
   goma = 0.3,
   iman = true,
+  loop = true,
   className = '',
   showNavigationControls = true,
   accentColor = '#00f0ff',
@@ -254,7 +256,11 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
       const d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
       if (!d) return;
       e.preventDefault();
-      ir(cercana(meta) + d);
+      const cur = cercana(meta);
+      const nextIdx = loop
+        ? (cur + d + paradas.length) % paradas.length
+        : Math.max(0, Math.min(paradas.length - 1, cur + d));
+      ir(nextIdx);
     };
 
     ventana.addEventListener('pointerdown', onPointerDown);
@@ -310,10 +316,10 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
           rodilloActualRef.current.style.transform = `translateY(${-indice * 1.25}em)`;
         }
         if (prevBtnRef.current) {
-          prevBtnRef.current.disabled = indice === 0;
+          prevBtnRef.current.disabled = loop ? false : indice === 0;
         }
         if (nextBtnRef.current) {
-          nextBtnRef.current.disabled = indice >= totalItems - 1;
+          nextBtnRef.current.disabled = loop ? false : indice >= totalItems - 1;
         }
       }
     });
@@ -327,11 +333,13 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
     return () => {
       carrusel.destruir();
     };
-  }, [friccion, goma, iman, totalItems, initialIndex, onIndexChange]);
+  }, [friccion, goma, iman, loop, totalItems, initialIndex, onIndexChange]);
 
   const handleStep = (direction: -1 | 1) => {
     soundFX.playClick();
-    const nextIdx = Math.max(0, Math.min(totalItems - 1, currentIndexRef.current + direction));
+    const nextIdx = loop
+      ? (currentIndexRef.current + direction + totalItems) % totalItems
+      : Math.max(0, Math.min(totalItems - 1, currentIndexRef.current + direction));
     currentIndexRef.current = nextIdx;
     carruselRef.current?.ir(nextIdx);
   };
@@ -377,7 +385,7 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
                 ref={prevBtnRef}
                 type="button"
                 onClick={() => handleStep(-1)}
-                disabled={initialIndex === 0}
+                disabled={loop ? false : initialIndex === 0}
                 className="p-1.5 rounded-lg bg-black/80 border border-white/10 hover:border-cyan-400/60 text-slate-300 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
                 title="Arquetipo anterior"
               >
@@ -387,7 +395,7 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
                 ref={nextBtnRef}
                 type="button"
                 onClick={() => handleStep(1)}
-                disabled={initialIndex >= totalItems - 1}
+                disabled={loop ? false : initialIndex >= totalItems - 1}
                 className="p-1.5 rounded-lg bg-black/80 border border-white/10 hover:border-cyan-400/60 text-slate-300 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
                 title="Siguiente arquetipo"
               >
