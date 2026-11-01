@@ -507,20 +507,10 @@ export const HunterAwakeningModal: React.FC<HunterAwakeningModalProps> = ({
                           {/* Bisel superior */}
                           <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
 
-                          {/* Número Romano Gigante con Paralaje 3D nativa */}
-                          <span
-                            className="in-fondo-num select-none pointer-events-none transition-transform"
-                            style={{ color: theme.accent }}
-                          >
-                            {theme.roman}
-                          </span>
-
-                          <span className="in-num hidden">{theme.roman}</span>
-
                           {/* Cabecera de la Tarjeta */}
                           <div className="relative z-10 flex items-center justify-between gap-2">
-                            <span className="text-[10px] font-mono tracking-widest font-black uppercase text-slate-300 bg-black/60 px-2 py-0.5 rounded-lg border border-white/10 backdrop-blur-md">
-                              {cardNum} · {theme.roman}
+                            <span className="text-[10px] font-mono tracking-widest font-black uppercase text-slate-300 bg-black/60 px-2.5 py-0.5 rounded-lg border border-white/10 backdrop-blur-md">
+                              #{cardNum}
                             </span>
                             <span
                               className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold border backdrop-blur-md flex items-center gap-1 ${theme.statPill}`}

@@ -43,7 +43,6 @@ import { TransitionOverlay } from './TransitionOverlay';
 import { DamageOverlay } from './DamageOverlay';
 import { ShockwaveOverlay } from './ShockwaveOverlay';
 import { DailyProgressWidget } from './DailyProgressWidget';
-import { HomeArchetypeCarousel } from './HomeArchetypeCarousel';
 import { DailyFinanceWidget } from './DailyFinanceWidget';
 import { DailyFinanceModal } from './DailyFinanceModal';
 import { calculateDayFinanceTotals } from '../utils/finance';
@@ -366,19 +365,6 @@ export function AppLayout() {
                   enableFinance={gameSettings?.enableFinanceModule ?? true}
                   onOpenFinance={() => setIsFinanceModalOpen(true)}
                   todayFinanceBalance={todayFinanceTotals.balance}
-                />
-              </motion.div>
-
-              {/* CARRUSEL DE ARQUETIPOS CINÉTICO (MOXEN INERCIA) EN HOME */}
-              <motion.div variants={itemVariant}>
-                <HomeArchetypeCarousel
-                  currentArchetype={stats?.characterClass || currentArchetype.name}
-                  onSelectArchetype={(arch) => {
-                    setStats((prev: any) => ({
-                      ...prev,
-                      characterClass: arch.name,
-                    }));
-                  }}
                 />
               </motion.div>
 
