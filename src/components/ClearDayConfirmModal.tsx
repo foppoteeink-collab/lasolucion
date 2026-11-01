@@ -60,7 +60,7 @@ export const ClearDayConfirmModal: React.FC<ClearDayConfirmModalProps> = ({
 
   const modalContent = (
     <div
-      className="fixed inset-0 z-[180] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
+      className="fixed inset-0 z-[180] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200 portal-modal-root"
       onClick={onClose}
     >
       <div
@@ -176,7 +176,8 @@ export const ClearDayConfirmModal: React.FC<ClearDayConfirmModalProps> = ({
   );
 
   if (typeof document !== 'undefined') {
-    return createPortal(modalContent, document.body);
+    const portalTarget = document.getElementById('app-optical-canvas') || document.body;
+    return createPortal(modalContent, portalTarget);
   }
 
   return modalContent;

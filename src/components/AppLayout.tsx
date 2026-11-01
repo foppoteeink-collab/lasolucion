@@ -724,10 +724,21 @@ export function AppLayout() {
         )}
       </AnimatePresence>
 
+          {/* TALLER CUÁNTICO DE KAI (Adaptable a Modos Ópticos Noir, Cobalto y Aurora) */}
+          <KaiWorkshopModal
+            isOpen={isKaiWorkshopOpen}
+            onClose={() => setIsKaiWorkshopOpen(false)}
+            onOpenShop={() => setActiveTab('shop')}
+          />
+
+          {/* Offline Status Badge & PWA Install Banner */}
+          <PWAInstallBanner />
+          <OfflineIndicator />
+
         </div>
         {/* FIN #app-optical-canvas */}
 
-        {/* SOBERANÍA VISUAL DE KAI: Aislado del lienzo de filtros ópticos para preservar 100% sus colores, ropa y auras neón */}
+        {/* SOBERANÍA VISUAL DE KAI: Aislado del lienzo de filtros ópticos para preservar 100% sus colores, ropa y auras neón del avatar */}
         <div id="kai-sovereign-portal" className="relative z-[90]">
           {/* OMNIPRESENT COMPANION & HOLOGRAPHIC COMMAND HUB (VISIBLE ON ALL SCREENS) */}
           <OmniCompanionHub
@@ -736,18 +747,7 @@ export function AppLayout() {
             onOpenKaiWorkshop={() => setIsKaiWorkshopOpen(true)}
             archetype={stats?.characterClass || currentArchetype.name}
           />
-
-          {/* TALLER CUÁNTICO DE KAI (FORMAS DÍA 0, EVOLUCIÓN 21/66D & FORJA IA) */}
-          <KaiWorkshopModal
-            isOpen={isKaiWorkshopOpen}
-            onClose={() => setIsKaiWorkshopOpen(false)}
-            onOpenShop={() => setActiveTab('shop')}
-          />
         </div>
-
-        {/* Offline Status Badge & PWA Install Banner */}
-        <PWAInstallBanner />
-        <OfflineIndicator />
       </div>
     </>
   );

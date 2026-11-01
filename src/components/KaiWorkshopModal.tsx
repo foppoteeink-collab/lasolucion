@@ -539,7 +539,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[120] bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-fadeIn">
+    <div className="fixed inset-0 z-[120] bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-fadeIn portal-modal-root">
       <div className="relative w-full max-w-4xl max-h-[92dvh] sm:max-h-[88vh] bg-[#030712]/95 border border-cyan-500/35 rounded-2xl sm:rounded-3xl shadow-[0_0_50px_rgba(0,240,255,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] flex flex-col overflow-hidden text-white backdrop-blur-2xl">
         
         {/* Micrograno táctil Moxen Vidrio */}

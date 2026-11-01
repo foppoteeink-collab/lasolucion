@@ -118,7 +118,7 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
   const modalContent = (
     <AnimatePresence>
       <div 
-        className="fixed inset-0 z-[180] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-fade-in font-sans"
+        className="fixed inset-0 z-[180] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-fade-in font-sans portal-modal-root"
         onClick={onClose}
       >
         <motion.div
@@ -430,7 +430,8 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
   );
 
   if (typeof document !== 'undefined') {
-    return createPortal(modalContent, document.body);
+    const portalTarget = document.getElementById('app-optical-canvas') || document.body;
+    return createPortal(modalContent, portalTarget);
   }
 
   return modalContent;

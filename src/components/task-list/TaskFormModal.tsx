@@ -210,7 +210,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
 
   const modalContent = (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[170] flex items-center justify-center p-2.5 sm:p-4 bg-black/85 backdrop-blur-md overflow-hidden font-sans">
+      <div className="fixed inset-0 z-[170] flex items-center justify-center p-2.5 sm:p-4 bg-black/85 backdrop-blur-md overflow-hidden font-sans portal-modal-root">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -816,7 +816,8 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
   );
 
   if (typeof document !== 'undefined') {
-    return createPortal(modalContent, document.body);
+    const portalTarget = document.getElementById('app-optical-canvas') || document.body;
+    return createPortal(modalContent, portalTarget);
   }
 
   return modalContent;

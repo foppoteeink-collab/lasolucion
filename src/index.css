@@ -52,7 +52,10 @@ html.optic-aurora #app-optical-canvas {
 }
 
 /* 2. MODO NOIR OSCURO (Manga Oscuro / B&W Táctico): Cero distracciones, negros puros */
-html.optic-noir #app-optical-canvas {
+html.optic-noir #app-optical-canvas,
+html.optic-noir body > .fixed.inset-0:not(#kai-sovereign-portal),
+html.optic-noir body > [role="dialog"],
+html.optic-noir .portal-modal-root {
   filter: grayscale(100%) contrast(1.22) brightness(0.96) !important;
   transition: filter 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
@@ -66,7 +69,10 @@ html.optic-eink #main-layout-wrapper {
   background-color: #ffffff !important;
 }
 
-html.optic-eink #app-optical-canvas {
+html.optic-eink #app-optical-canvas,
+html.optic-eink body > .fixed.inset-0:not(#kai-sovereign-portal),
+html.optic-eink body > [role="dialog"],
+html.optic-eink .portal-modal-root {
   /* Filtro de entintado profundo: Inversión completa con alto contraste que garantiza papel blanco puro y negros azabache */
   filter: invert(1) hue-rotate(180deg) grayscale(100%) contrast(1.5) brightness(1.02) !important;
   transition: filter 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
@@ -234,7 +240,10 @@ html.optic-eink #app-optical-canvas .blur-2xl {
 }
 
 /* 4. MODO CYBER COBALTO (Azul Zafiro / Cian Abisal & Blanco): Monocromo Oceánico */
-html.optic-cobalt #app-optical-canvas {
+html.optic-cobalt #app-optical-canvas,
+html.optic-cobalt body > .fixed.inset-0:not(#kai-sovereign-portal),
+html.optic-cobalt body > [role="dialog"],
+html.optic-cobalt .portal-modal-root {
   filter: sepia(100%) hue-rotate(170deg) saturate(320%) contrast(1.22) !important;
   transition: filter 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }

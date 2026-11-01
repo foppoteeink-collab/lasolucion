@@ -139,11 +139,13 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen || typeof document === 'undefined') return null;
+
+  const portalTarget = document.getElementById('app-optical-canvas') || document.body;
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-2 sm:p-4 bg-black/85 backdrop-blur-md animate-fade-in font-sans overflow-hidden"
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-2 sm:p-4 bg-black/85 backdrop-blur-md animate-fade-in font-sans overflow-hidden portal-modal-root"
       onClick={onClose}
     >
       <div
@@ -393,6 +395,6 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
         </div>
       </div>
     </div>,
-    document.body
+    portalTarget
   );
 };
