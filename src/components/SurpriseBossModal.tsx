@@ -94,7 +94,7 @@ export const SurpriseBossModal: React.FC<SurpriseBossModalProps> = ({
             </h2>
             
             <p className="text-slate-300 text-xs sm:text-sm mb-4 leading-relaxed font-mono">
-              <strong className="text-[#d6f421]">OPERADOR:</strong> Has completado tus tareas clave de hoy. Quebraste la resistencia del letargo y mantuviste el foco.
+              <strong className="text-[#d6f421]">MISIÓN CUMPLIDA:</strong> Has completado tus tareas clave de hoy. Quebraste la resistencia del letargo y mantuviste el foco.
             </p>
 
             {/* Bounty Card */}

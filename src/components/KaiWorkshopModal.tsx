@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Sparkles, 
@@ -528,63 +528,80 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
     });
   };
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   return (
     <div className="fixed inset-0 z-[120] bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-fadeIn">
-      <div className="relative w-full max-w-4xl max-h-[92vh] bg-[#030712] border border-cyan-500/40 rounded-3xl shadow-[0_0_50px_rgba(0,240,255,0.2)] flex flex-col overflow-hidden text-white">
+      <div className="relative w-full max-w-4xl max-h-[92dvh] sm:max-h-[88vh] bg-[#030712]/95 border border-cyan-500/35 rounded-2xl sm:rounded-3xl shadow-[0_0_50px_rgba(0,240,255,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] flex flex-col overflow-hidden text-white backdrop-blur-2xl">
         
-        {/* ─── ENCABEZADO MINIMALISTA ─── */}
-        <div className="px-5 py-3.5 border-b border-white/10 flex items-center justify-between bg-[#040814]/90 backdrop-blur-md">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-400/30 text-cyan-400">
+        {/* Micrograno táctil Moxen Vidrio */}
+        <span className="vi-grano opacity-5" aria-hidden="true" />
+
+        {/* Filamento especular superior */}
+        <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent pointer-events-none" />
+
+        {/* ─── ENCABEZADO MOXEN OBSIDIAN ─── */}
+        <div className="px-4 sm:px-6 py-3.5 border-b border-white/10 flex items-center justify-between bg-[#040814]/90 backdrop-blur-md relative z-10">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-cyan-500/15 border border-cyan-400/40 text-cyan-300 shadow-[0_0_14px_rgba(0,240,255,0.3)]">
               <Sparkles className="w-5 h-5" />
             </div>
-            <div>
-              <h2 className="text-sm sm:text-base font-bold text-white tracking-wide flex items-center gap-2">
-                <span>Taller de KAI</span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono text-cyan-300 bg-cyan-950/60 border border-cyan-500/30 font-normal">
-                  Activo: {stats.kaiShape === 'custom' ? (stats.kaiCustomForm?.name || 'Forja IA') : (KAI_OFFICIAL_SHAPES.find(s => s.id === stats.kaiShape)?.name || 'El Prisma')}
-                </span>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+              <h2 className="text-base sm:text-lg font-anton tracking-wider text-white uppercase flex items-center gap-2">
+                Taller de KAI
               </h2>
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono text-cyan-300 bg-cyan-950/70 border border-cyan-500/40 font-normal w-fit">
+                Activo: {stats.kaiShape === 'custom' ? (stats.kaiCustomForm?.name || 'Forja IA') : (KAI_OFFICIAL_SHAPES.find(s => s.id === stats.kaiShape)?.name || 'El Prisma')}
+              </span>
             </div>
           </div>
 
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 border border-transparent hover:border-white/10 transition-all cursor-pointer active:scale-95"
+            title="Cerrar (Esc)"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* ─── BARRA DE PESTAÑAS ─── */}
-        <div className="flex border-b border-white/10 bg-black/40 overflow-x-auto scrollbar-none px-4 pt-1.5 gap-1.5">
+        {/* ─── BARRA DE PESTAÑAS MOXEN SQUIRCLE ─── */}
+        <div className="px-4 sm:px-6 py-2.5 bg-black/40 border-b border-white/10 flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-none relative z-10">
           <button
             type="button"
             onClick={() => { soundFX.playClick(); setActiveTab('forge'); }}
-            className={`px-3.5 py-2 text-xs font-semibold rounded-t-xl flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
+            className={`px-3.5 py-2 text-xs font-anton tracking-wider uppercase rounded-xl flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap active:scale-95 ${
               activeTab === 'forge'
-                ? 'border-b-2 border-fuchsia-400 text-fuchsia-300 bg-fuchsia-950/30'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-fuchsia-500 text-black shadow-[0_0_16px_rgba(217,70,239,0.6)] font-bold'
+                : 'text-slate-400 hover:text-white hover:bg-white/5'
             }`}
           >
-            <Camera className="w-3.5 h-3.5 text-fuchsia-400" />
+            <Camera className="w-3.5 h-3.5" />
             <span>Forja Neural (IA)</span>
           </button>
 
           <button
             type="button"
             onClick={() => { soundFX.playClick(); setActiveTab('vault'); }}
-            className={`px-3.5 py-2 text-xs font-semibold rounded-t-xl flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
+            className={`px-3.5 py-2 text-xs font-anton tracking-wider uppercase rounded-xl flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap active:scale-95 ${
               activeTab === 'vault'
-                ? 'border-b-2 border-emerald-400 text-emerald-300 bg-emerald-950/30'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-emerald-400 text-black shadow-[0_0_16px_rgba(52,211,153,0.6)] font-bold'
+                : 'text-slate-400 hover:text-white hover:bg-white/5'
             }`}
           >
-            <Landmark className="w-3.5 h-3.5 text-emerald-400" />
+            <Landmark className="w-3.5 h-3.5" />
             <span>Bóveda / Museo</span>
             {((stats.kaiVault?.length || 0) > 0 || stats.kaiCustomForm) && (
-              <span className="px-1.5 py-0.2 rounded-full text-[9px] font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+              <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-mono ${activeTab === 'vault' ? 'bg-black/30 text-black font-bold' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'}`}>
                 {stats.kaiVault?.length || (stats.kaiCustomForm ? 1 : 0)}
               </span>
             )}
@@ -593,10 +610,10 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
           <button
             type="button"
             onClick={() => { soundFX.playClick(); setActiveTab('shapes'); }}
-            className={`px-3.5 py-2 text-xs font-semibold rounded-t-xl flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
+            className={`px-3.5 py-2 text-xs font-anton tracking-wider uppercase rounded-xl flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap active:scale-95 ${
               activeTab === 'shapes'
-                ? 'border-b-2 border-cyan-400 text-cyan-300 bg-cyan-950/30'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-cyan-400 text-black shadow-[0_0_16px_rgba(0,240,255,0.6)] font-bold'
+                : 'text-slate-400 hover:text-white hover:bg-white/5'
             }`}
           >
             <Layers className="w-3.5 h-3.5" />
@@ -606,10 +623,10 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
           <button
             type="button"
             onClick={() => { soundFX.playClick(); setActiveTab('evolution'); }}
-            className={`px-3.5 py-2 text-xs font-semibold rounded-t-xl flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
+            className={`px-3.5 py-2 text-xs font-anton tracking-wider uppercase rounded-xl flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap active:scale-95 ${
               activeTab === 'evolution'
-                ? 'border-b-2 border-amber-400 text-amber-300 bg-amber-950/30'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-amber-400 text-black shadow-[0_0_16px_rgba(251,191,36,0.6)] font-bold'
+                : 'text-slate-400 hover:text-white hover:bg-white/5'
             }`}
           >
             <Crown className="w-3.5 h-3.5" />
@@ -619,10 +636,10 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
           <button
             type="button"
             onClick={() => { soundFX.playClick(); setActiveTab('armory'); }}
-            className={`px-3.5 py-2 text-xs font-semibold rounded-t-xl flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
+            className={`px-3.5 py-2 text-xs font-anton tracking-wider uppercase rounded-xl flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap active:scale-95 ${
               activeTab === 'armory'
-                ? 'border-b-2 border-purple-400 text-purple-300 bg-purple-950/30'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-purple-400 text-black shadow-[0_0_16px_rgba(192,132,252,0.6)] font-bold'
+                : 'text-slate-400 hover:text-white hover:bg-white/5'
             }`}
           >
             <Shield className="w-3.5 h-3.5" />
@@ -720,13 +737,13 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                           key={relicId}
                           className={`p-4 rounded-2xl border transition-all flex flex-col justify-between group relative overflow-hidden ${
                             isEquipped
-                              ? 'bg-emerald-950/30 border-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.25)] ring-1 ring-emerald-400/50'
-                              : 'bg-[#040814] border-white/10 hover:border-emerald-500/30 hover:bg-[#05111b]'
+                              ? 'bg-[#01140e]/90 border-emerald-400/80 shadow-[0_0_25px_rgba(16,185,129,0.25),inset_0_1px_0_rgba(255,255,255,0.1)]'
+                              : 'bg-[#040814]/80 border-white/10 hover:border-emerald-500/30 hover:bg-[#05111b]'
                           }`}
                         >
                           <div>
                             <div className="flex items-center gap-3 mb-3">
-                              <div className="w-16 h-16 shrink-0 relative flex items-center justify-center bg-black/60 rounded-xl border border-white/5 p-1 overflow-hidden">
+                              <div className="w-16 h-16 shrink-0 relative flex items-center justify-center bg-black/70 rounded-2xl border border-white/10 p-1.5 overflow-hidden shadow-inner">
                                 <KAICompanion
                                   customForm={relic}
                                   shapeId="custom"
@@ -737,20 +754,20 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
 
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center justify-between gap-1">
-                                  <h4 className="text-sm font-bold text-white truncate">{relic.name}</h4>
+                                  <h4 className="text-sm font-anton tracking-wide text-white truncate">{relic.name}</h4>
                                   <button
                                     type="button"
                                     onClick={() => handleDeleteRelic(relicId)}
                                     title="Retirar de la Bóveda"
-                                    className="p-1 rounded text-slate-500 hover:text-rose-400 hover:bg-rose-950/30 transition-colors cursor-pointer"
+                                    className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-950/30 transition-colors cursor-pointer"
                                   >
                                     <Trash2 className="w-3.5 h-3.5" />
                                   </button>
                                 </div>
-                                <span className="text-[10px] font-mono text-emerald-400 block truncate">
+                                <span className="text-[10px] font-mono text-emerald-400 block truncate mt-0.5">
                                   🎯 {relic.detectedObject || 'Objeto Forjado'}
                                 </span>
-                                <span className="inline-block mt-1 px-1.5 py-0.2 rounded text-[9px] font-mono bg-white/5 border border-white/10 text-slate-400 uppercase">
+                                <span className="inline-block mt-1 px-2 py-0.5 rounded-lg text-[9px] font-mono bg-white/5 border border-white/10 text-slate-300 uppercase">
                                   {relic.artStyle || 'Multiverso'}
                                 </span>
                               </div>
@@ -758,13 +775,13 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
 
                             {/* Frase de Personalidad */}
                             {relic.personalityQuote && (
-                              <p className="text-[10px] text-slate-300 italic bg-black/40 px-2.5 py-1.5 rounded-lg border border-white/5 line-clamp-2 mb-3">
+                              <p className="text-[10px] text-slate-300 italic bg-black/40 px-2.5 py-1.5 rounded-xl border border-white/5 line-clamp-2 mb-3">
                                 "{relic.personalityQuote}"
                               </p>
                             )}
 
                             {/* Selector de Hábito Custodiado */}
-                            <div className="space-y-1 mb-3 pt-2 border-t border-white/5">
+                            <div className="space-y-1 mb-3 pt-2.5 border-t border-white/5">
                               <label className="text-[9px] font-mono uppercase text-slate-400 flex items-center gap-1 font-bold">
                                 <Link className="w-3 h-3 text-cyan-400" />
                                 <span>Hábito que Custodia:</span>
@@ -778,7 +795,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                                     const matched = habitList.find(h => h.id === selectedId);
                                     handleLinkHabitToRelic(relicId, selectedId, matched?.title || '');
                                   }}
-                                  className="w-full bg-[#0a121f] border border-white/10 text-white rounded-lg px-2 py-1 text-[10px] font-mono focus:border-emerald-400 focus:outline-none cursor-pointer"
+                                  className="w-full bg-[#0a121f] border border-white/10 text-white rounded-xl px-2.5 py-1.5 text-[10px] font-mono focus:border-emerald-400 focus:outline-none cursor-pointer"
                                 >
                                   <option value="">(Sin vincular a hábito)</option>
                                   {habitList.map((h) => (
@@ -794,7 +811,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                               )}
 
                               {linkedHabit && (
-                                <div className="flex items-center gap-1.5 text-[9px] font-mono text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 mt-1">
+                                <div className="flex items-center gap-1.5 text-[9px] font-mono text-amber-300 bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20 mt-1.5">
                                   <Flame className="w-3 h-3 text-amber-400" />
                                   <span>Racha protegida: {linkedHabit.streak || 0} días</span>
                                 </div>
@@ -803,21 +820,21 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                           </div>
 
                           {/* Botón de Equipar */}
-                          <div className="pt-2.5 border-t border-white/5 flex items-center justify-between">
+                          <div className="pt-3 border-t border-white/5 flex items-center justify-between">
                             <span className="text-[9px] font-mono text-slate-500">
                               {relic.createdAt ? new Date(relic.createdAt).toLocaleDateString() : 'Activo'}
                             </span>
 
                             {isEquipped ? (
-                              <span className="text-[10px] font-mono font-bold text-emerald-300 bg-emerald-950/70 border border-emerald-400/50 px-2.5 py-0.5 rounded-lg flex items-center gap-1">
-                                <Check className="w-3 h-3" />
+                              <span className="text-xs font-anton tracking-wider uppercase text-emerald-300 bg-emerald-950/80 border border-emerald-400/60 px-3.5 py-1.5 rounded-xl shadow-[0_0_12px_rgba(16,185,129,0.3)] flex items-center gap-1.5">
+                                <Check className="w-3.5 h-3.5 stroke-[3]" />
                                 Activo
                               </span>
                             ) : (
                               <button
                                 type="button"
                                 onClick={() => handleEquipCustomForm(relic)}
-                                className="px-3 py-1 rounded-lg bg-emerald-500/20 border border-emerald-400/40 hover:bg-emerald-500 hover:text-black font-mono text-[10px] font-bold text-emerald-200 transition-all cursor-pointer"
+                                className="chicle-btn px-4 py-1.5 rounded-xl bg-emerald-500/20 border border-emerald-400/40 hover:bg-emerald-400 hover:text-black font-anton text-xs uppercase tracking-wider text-emerald-200 transition-all cursor-pointer active:scale-95"
                               >
                                 Equipar
                               </button>
@@ -854,14 +871,14 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                   return (
                     <div
                       onClick={() => handleSelectShape('prism')}
-                      className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between group relative overflow-hidden ${
+                      className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between group relative overflow-hidden ${
                         isSelected
-                          ? 'bg-cyan-950/40 border-cyan-400 shadow-[0_0_20px_rgba(0,240,255,0.25)] ring-1 ring-cyan-400/60'
-                          : 'bg-[#040814] border-white/10 hover:border-cyan-500/40 hover:bg-[#061022]'
+                          ? 'bg-cyan-950/40 border-cyan-400/80 shadow-[0_0_25px_rgba(0,240,255,0.22),inset_0_1px_0_rgba(255,255,255,0.1)]'
+                          : 'bg-[#040814]/80 border-white/10 hover:border-cyan-500/40 hover:bg-[#061022]'
                       }`}
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="w-14 h-14 shrink-0 relative flex items-center justify-center bg-black/50 rounded-xl border border-white/5 p-1">
+                      <div className="flex items-center gap-3.5">
+                        <div className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 relative flex items-center justify-center bg-black/70 rounded-2xl border border-white/10 p-1.5 overflow-hidden shadow-inner">
                           <KaiVectorGraphics
                             shapeId="prism"
                             activeColor={isSelected ? '#00f0ff' : '#94a3b8'}
@@ -873,27 +890,27 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                           />
                         </div>
 
-                        <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-0 flex flex-col gap-1">
                           <div className="flex items-center gap-1.5">
                             <span className="text-sm">🔺</span>
-                            <h4 className="text-xs font-bold text-white truncate">El Prisma</h4>
+                            <h4 className="text-sm sm:text-base font-anton tracking-wide text-white truncate">El Prisma</h4>
                           </div>
-                          <span className="text-[9px] font-mono text-cyan-300 block mt-0.5">
+                          <span className="text-[10px] font-mono text-cyan-300 block tracking-wider uppercase">
                             ORÁCULO // PRIMA
                           </span>
-                          <span className="inline-block mt-1 px-1.5 py-0.2 rounded text-[9px] font-mono bg-white/5 border border-white/10 text-slate-400">
+                          <span className="inline-block self-start px-2 py-0.5 rounded-lg text-[9px] font-mono bg-white/5 border border-white/10 text-slate-300">
                             Visión & Foco Mental
                           </span>
                         </div>
                       </div>
 
-                      <div className="pt-2.5 mt-2.5 border-t border-white/5 flex items-center justify-between">
-                        <span className="text-[9px] font-mono text-slate-400">
-                          {isSelected ? 'Compañero Activo' : 'Compañero Génesis'}
+                      <div className="pt-3 mt-3 border-t border-white/10 flex items-center justify-between">
+                        <span className="text-[10px] font-mono text-slate-400">
+                          {isSelected ? '● Estado: Activo' : 'Compañero Canónico'}
                         </span>
                         {isSelected ? (
-                          <span className="text-[10px] font-mono font-black text-cyan-300 bg-cyan-900/60 border border-cyan-400 px-2.5 py-0.5 rounded-lg flex items-center gap-1">
-                            <Check className="w-3 h-3 text-cyan-300" />
+                          <span className="text-xs font-anton tracking-wider uppercase text-cyan-300 bg-cyan-950/80 border border-cyan-400/60 px-3 py-1 rounded-xl shadow-[0_0_12px_rgba(0,240,255,0.3)] flex items-center gap-1.5">
+                            <Check className="w-3.5 h-3.5 text-cyan-300 stroke-[3]" />
                             Equipado
                           </span>
                         ) : (
@@ -903,7 +920,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                               e.stopPropagation();
                               handleSelectShape('prism');
                             }}
-                            className="px-3 py-1 rounded-lg bg-cyan-500/20 border border-cyan-400/40 hover:bg-cyan-500 hover:text-black font-mono text-[10px] font-bold text-cyan-200 transition-all cursor-pointer"
+                            className="chicle-btn px-4 py-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-400 hover:text-black border border-cyan-400/40 font-anton text-xs uppercase tracking-wider text-cyan-200 transition-all cursor-pointer active:scale-95"
                           >
                             Equipar
                           </button>
@@ -917,14 +934,14 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                 {stats.kaiCustomForm && (
                   <div
                     onClick={() => handleSelectShape('custom')}
-                    className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between group relative overflow-hidden ${
+                    className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between group relative overflow-hidden ${
                       stats.kaiShape === 'custom'
-                        ? 'bg-fuchsia-950/40 border-fuchsia-400 shadow-[0_0_20px_rgba(217,70,239,0.3)] ring-1 ring-fuchsia-400/60'
-                        : 'bg-[#040814] border-fuchsia-500/30 hover:border-fuchsia-500/60'
+                        ? 'bg-fuchsia-950/40 border-fuchsia-400/80 shadow-[0_0_25px_rgba(217,70,239,0.25),inset_0_1px_0_rgba(255,255,255,0.1)]'
+                        : 'bg-[#040814]/80 border-white/10 hover:border-fuchsia-500/40 hover:bg-[#12041e]'
                     }`}
                   >
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="w-14 h-14 shrink-0 relative flex items-center justify-center bg-black/50 rounded-xl border border-fuchsia-500/30 p-1">
+                    <div className="flex items-center gap-3.5">
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 relative flex items-center justify-center bg-black/70 rounded-2xl border border-fuchsia-500/30 p-1.5 overflow-hidden shadow-inner">
                         <KaiVectorGraphics
                           shapeId="custom"
                           activeColor="#e879f9"
@@ -937,24 +954,27 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                         />
                       </div>
 
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-0 flex flex-col gap-1">
                         <div className="flex items-center gap-1.5">
                           <span className="text-sm">✨</span>
-                          <h4 className="text-xs font-bold text-fuchsia-200 truncate">{stats.kaiCustomForm.name}</h4>
+                          <h4 className="text-sm sm:text-base font-anton tracking-wide text-fuchsia-200 truncate">{stats.kaiCustomForm.name}</h4>
                         </div>
-                        <span className="text-[9px] font-mono text-fuchsia-400 block mt-0.5">
+                        <span className="text-[10px] font-mono text-fuchsia-400 block tracking-wider uppercase">
                           FORJA NEURAL IA
                         </span>
-                        <span className="inline-block mt-1 px-1.5 py-0.2 rounded text-[9px] font-mono bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/40">
+                        <span className="inline-block self-start px-2 py-0.5 rounded-lg text-[9px] font-mono bg-fuchsia-500/15 text-fuchsia-300 border border-fuchsia-500/30">
                           {stats.kaiCustomForm.detectedObject || 'Personalizado'}
                         </span>
                       </div>
                     </div>
 
-                    <div className="pt-2.5 mt-2.5 border-t border-fuchsia-500/20 flex items-center justify-end">
+                    <div className="pt-3 mt-3 border-t border-white/10 flex items-center justify-between">
+                      <span className="text-[10px] font-mono text-slate-400">
+                        {stats.kaiShape === 'custom' ? '● Estado: Activo' : 'Creación Neural'}
+                      </span>
                       {stats.kaiShape === 'custom' ? (
-                        <span className="text-[10px] font-mono font-black text-fuchsia-300 bg-fuchsia-900/60 border border-fuchsia-400 px-2.5 py-0.5 rounded-lg flex items-center gap-1">
-                          <Check className="w-3 h-3 text-fuchsia-300" />
+                        <span className="text-xs font-anton tracking-wider uppercase text-fuchsia-300 bg-fuchsia-950/80 border border-fuchsia-400/60 px-3 py-1 rounded-xl shadow-[0_0_12px_rgba(217,70,239,0.3)] flex items-center gap-1.5">
+                          <Check className="w-3.5 h-3.5 text-fuchsia-300 stroke-[3]" />
                           Equipado
                         </span>
                       ) : (
@@ -964,7 +984,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                             e.stopPropagation();
                             handleSelectShape('custom');
                           }}
-                          className="px-3 py-1 rounded-lg bg-fuchsia-500/20 hover:bg-fuchsia-500 hover:text-black font-mono text-[10px] font-bold text-fuchsia-200 transition-all cursor-pointer border border-fuchsia-500/40"
+                          className="chicle-btn px-4 py-1.5 rounded-xl bg-fuchsia-500/20 hover:bg-fuchsia-400 hover:text-black font-anton text-xs uppercase tracking-wider text-fuchsia-200 transition-all cursor-pointer border border-fuchsia-500/40 active:scale-95"
                         >
                           Equipar
                         </button>
@@ -1139,8 +1159,8 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                         }}
                         className={`p-2 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-2.5 ${
                           isSelected
-                            ? 'bg-fuchsia-950/60 border-fuchsia-400 shadow-[0_0_15px_rgba(217,70,239,0.3)] ring-1 ring-fuchsia-400/50'
-                            : 'bg-[#040814] border-white/10 hover:border-white/20 hover:bg-white/5'
+                            ? 'bg-fuchsia-950/60 border-fuchsia-400/80 shadow-[0_0_15px_rgba(217,70,239,0.35)]'
+                            : 'bg-[#040814]/80 border-white/10 hover:border-white/20 hover:bg-white/5'
                         }`}
                       >
                         <div className="w-8 h-8 shrink-0 rounded-lg bg-black/60 border border-white/10 flex items-center justify-center p-0.5">
@@ -1533,21 +1553,26 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
 
         </div>
 
-        {/* ─── PIE DEL MODAL ─── */}
-        <div className="p-3.5 sm:p-4 border-t border-white/10 bg-black/60 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
-            <span>KAI Activo: <strong className="text-cyan-300 uppercase">{stats.kaiShape === 'custom' ? (stats.kaiCustomForm?.name || 'Forja Neural') : (KAI_OFFICIAL_SHAPES.find(s => s.id === stats.kaiShape)?.name || 'El Prisma')}</strong></span>
+        {/* ─── PIE DEL MODAL MOXEN THUMB-ZONE ─── */}
+        <div className="p-3.5 sm:p-5 border-t border-white/10 bg-[#030712]/95 backdrop-blur-md flex items-center justify-between gap-3 relative z-10">
+          <div className="flex items-center gap-2 text-xs font-mono text-slate-400 min-w-0">
+            <span className="shrink-0">KAI Activo:</span>
+            <span className="px-2.5 py-1 rounded-lg bg-cyan-950/60 border border-cyan-500/40 text-cyan-300 font-anton tracking-wider uppercase text-xs truncate">
+              {stats.kaiShape === 'custom' ? (stats.kaiCustomForm?.name || 'Forja Neural') : (KAI_OFFICIAL_SHAPES.find(s => s.id === stats.kaiShape)?.name || 'El Prisma')}
+            </span>
             {has66Days && (
-              <span className="text-amber-300 font-bold">• Corona de Maestría Activa</span>
+              <span className="hidden sm:inline-flex items-center gap-1 text-amber-300 font-anton text-xs uppercase tracking-wider">
+                <Crown className="w-3.5 h-3.5" /> Maestría Activa
+              </span>
             )}
           </div>
 
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs transition-colors cursor-pointer"
+            className="chicle-btn px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-white font-anton text-xs uppercase tracking-wider transition-all cursor-pointer active:scale-95 shrink-0"
           >
-            Cerrar
+            Volver al Cockpit
           </button>
         </div>
 

@@ -303,12 +303,19 @@ export const KaiVectorGraphics: React.FC<KaiVectorGraphicsProps> = ({
             isTracking: isTrackingMouse,
             isSpeaking: justClicked,
           });
+          const viewBoxMatch = processed.match(/viewBox=["']([^"']+)["']/i);
+          const originalViewBox = viewBoxMatch ? viewBoxMatch[1] : '0 0 300 300';
           const innerMatch = processed.match(/<svg[^>]*>([\s\S]*?)<\/svg>/i);
           const innerContent = innerMatch ? innerMatch[1] : processed;
           return (
-            <g
-              id={`${gradientId}-custom-svg-body`}
-              style={{ '--color-aura-activa': lineColor } as React.CSSProperties}
+            <svg
+              x="8"
+              y="8"
+              width="144"
+              height="154"
+              viewBox={originalViewBox}
+              preserveAspectRatio="xMidYMid meet"
+              style={{ overflow: 'visible', '--color-aura-activa': lineColor } as React.CSSProperties}
               filter={`url(#${filterId})`}
               dangerouslySetInnerHTML={{ __html: innerContent }}
             />

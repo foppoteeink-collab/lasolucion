@@ -154,7 +154,7 @@ export const OracleTheatricalLoader: React.FC<OracleTheatricalLoaderProps> = ({ 
               Sintonizador Neural Oráculo
             </h4>
             <p className="text-[10px] text-slate-400 uppercase">
-              Operador: {userContext?.name || 'Iniciado'} // Rango: {userContext?.rank || 'Fase Inicial'}
+              Identidad: {userContext?.name || 'Iniciado'} // Rango: {userContext?.rank || 'Fase Inicial'}
             </p>
           </div>
         </div>

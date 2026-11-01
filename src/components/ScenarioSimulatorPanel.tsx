@@ -256,7 +256,7 @@ export const ScenarioSimulatorPanel: React.FC<ScenarioSimulatorPanelProps> = ({ 
             </h4>
           </div>
           <span className="text-[10px] font-mono text-fuchsia-300 bg-fuchsia-950/60 px-2 py-0.5 rounded border border-fuchsia-800">
-            MOTOR PROCEDURAL
+            SIMULADOR DINÁMICO
           </span>
         </div>
 

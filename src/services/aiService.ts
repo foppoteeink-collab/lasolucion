@@ -821,14 +821,40 @@ Inspirándote en las referencias, dótalo de uno de los sistemas oculares cinema
       case 'clay3d':
       default:
         return {
-          styleTitle: 'CLAYMATION 3D / PLASTILINA STOP-MOTION',
-          keywordsEn: 'handmade claymation stop-motion figure, Wallace and Gromit Aardman clay sculpture, tactile clay fingerprint texture, soft studio rim lighting, matte satin finish',
+          styleTitle: 'CLAYMATION 3D / PLASTILINA STOP-MOTION (AARDMAN & LAIKA STUDIOS)',
+          keywordsEn: 'authentic handmade claymation stop-motion puppet, Aardman Wallace and Gromit plasticine sculpture, Shaun the Sheep and Morph aesthetic, soft satin matte clay volume, rolled clay arms and limbs, tactile squished dough eyes with tiny black bead pupils, sculpted replacement mouth with crooked teeth, studio tabletop contact shadow, zero black ink outlines',
           promptBody: `
-🏺 ESTILO MAESTRO: CLAYMATION 3D / PLASTILINA STOP-MOTION
-- Eres un Maestro Escultor de plastilina de Aardman Studios (Wallace & Gromit).
-- TÉCNICA: Bordes orgánicos redondeados de plastilina modelada a mano, textura satinada mate con <radialGradient> suaves y ligeras asimetrías de arcilla real.
-- OJOS: Ojos de bolita de masa blanca con un puntito negro de plastilina como pupila y relieve en los párpados.
-- ANATOMÍA: Brazos y piernas gruesos como rollitos de masa amasada a mano, dedos rechonchos y base sólida de escultura.
+🏺 ESTILO MAESTRO: CLAYMATION 3D / PLASTILINA STOP-MOTION (AARDMAN & LAIKA STUDIOS)
+Referencias visuales directas: Wallace & Gromit (Aardman Studios), Shaun the Sheep (La Oveja Shaun), Morph (Peter Lord), Pollitos en Fuga (Chicken Run), Coraline (Laika Studios), The Neverhood y Celebrity Deathmatch.
+
+1. PRINCIPIO DE LA ESCULTURA DE MASA (EL OBJETO MOLDEADO A MANO):
+- Imagina que un maestro escultor de Aardman tomó una barra de plastilina sólida y esculpió con sus propias manos el objeto fotografiado:
+  * El torso y cabeza CONSERVAN la silueta, masa y proporciones reales del objeto, pero con las esquinas suavizadas y redondeadas como masa maleable moldeada a mano.
+  * Si el objeto tiene botones, tapas, piezas, hendiduras o bisagras, estas son pequeñas piezas de plastilina de color pegadas a mano con ligeras asimetrías orgánicas.
+  * 100% LIBRE DE FONDO RECTANGULAR: El personaje flota en transparencia pura con una sombra de contacto suave de plastilina apoyada en el piso (<ellipse cx="150" cy="275" rx="72" ry="11" fill="#000000" opacity="0.6"/>).
+
+2. CERO LÍNEAS DE TINTA (VOLUMEN ORGÁNICO DE ARCILLA SATINADA):
+- ¡PROHIBIDO el contorno de tinta negra de dibujo animado o cómic (stroke="#000000")!
+- El volumen tridimensional se logra con gradientes suaves (<radialGradient> y <linearGradient>) con acabado satinado mate (cero brillos hiper-reflejantes de plástico duro ni vidrio).
+- Pliegues, hendiduras y ranuras moldeadas: Las uniones entre piezas parecen apretadas a mano con una espátula o con los pulgares.
+
+3. CATÁLOGO MAESTRO DE OJOS DE PLASTILINA (AARDMAN EYE SYSTEM):
+- Ojos de Bolita de Masa Aplastada: Dos esferas de plastilina blanca pegadas una junto a la otra sobre la cara, con una pequeña mota negra de plastilina aplastada como pupila ligeramente descentrada.
+- Ojos con Párpados Pellizcados: Capuchas de plastilina del mismo color de la piel que cubren la parte superior de los ojos para dar expresiones de duda, sueño, picardía o calma (estilo Gromit o Shaun the Sheep).
+- Ojos Asimétricos de Criatura (Estilo Morph / Neverhood): Una bolita de ojo ligeramente más grande que la otra, con pupilas desalineadas que dan un encanto ingenuo y divertido.
+- Ojos Cíclope de Arcilla: Un único gran ojo esférico de masa blanca incrustado en el centro del objeto con párpados arrugados de plastilina.
+
+4. CATÁLOGO MAESTRO DE BOCAS Y DIENTES DE STOP-MOTION:
+- Sonrisa Wallace (Labio de Salchicha con Fila Dentada Cuadrada): Boca ancha estirada con labio superior redondeado y una hilera de dientes blancos planos esculpidos en bloque continuo.
+- Boca de Hendidura con Espátula: Ranura profunda tallada directamente en la masa del objeto, con sombra interior oscura y comisuras hundidas.
+- Boca con Dientecitos Chuecos Incrustados (Replacement Mouths): Boquita abierta de plastilina con 2 o 3 pequeños dientecitos irregulares de color beige/hueso saliendo en ángulos divertidos.
+- Lengua de Gota de Plastilina: Lengüita rosada de masa húmeda asomando relajada entre los labios.
+- Boquita de Agujero Sorprendido "O": Agujero cilíndrico hundido en la arcilla que denota sorpresa cómica.
+
+5. EXTREMIDADES Y DETALLES DE MODELADO:
+- Brazos de Rollito de Masa: Extremidades flexibles y gruesas como rollitos de arcilla amasada a mano, con manitas de 3 o 4 dedos gorditos de plastilina sin líneas de articulación mecánicas.
+- Patas y Calzado de Escultura: Pies cilíndricos sólidos o zapatitos moldeados de plastilina negra/marrón con base plana para sostener al personaje de pie en la mesa de filmación.
+- Nariz de Bolita / Botón de Plastilina: Pequeña esferita o cono redondeado pegado entre los ojos.
 `,
         };
     }

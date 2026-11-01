@@ -208,7 +208,7 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-bold text-white truncate">{user.displayName || 'Operador Autenticado'}</p>
+                    <p className="text-xs font-bold text-white truncate">{user.displayName || 'Sesión Iniciada'}</p>
                     <p className="text-[11px] text-slate-300 font-mono truncate flex items-center gap-1 mt-0.5">
                       <Mail className="w-3 h-3 text-cyan-400 shrink-0" />
                       {user.email}

@@ -476,7 +476,7 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
                     transition={{ delay: 0.35 }}
                     className="text-sm text-slate-400 leading-relaxed max-w-sm"
                   >
-                    Tu progreso ha sido guardado. Descansa, operador.<br />
+                    Tu progreso ha sido guardado. Descansa y renueva tu energía.<br />
                     <span className="text-cyan-400 font-bold">Mañana comienza tu próxima misión.</span>
                   </motion.p>
                 </div>
