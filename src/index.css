@@ -56,8 +56,33 @@ html.optic-noir #app-optical-canvas,
 html.optic-noir body > .fixed.inset-0:not(#kai-sovereign-portal),
 html.optic-noir body > [role="dialog"],
 html.optic-noir .portal-modal-root {
-  filter: grayscale(100%) contrast(1.22) brightness(0.96) !important;
+  filter: grayscale(100%) contrast(1.18) brightness(0.98) !important;
   transition: filter 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* En Noir Oscuro: Definición nítida de bordes para evitar que cajas oscuras se fundan o sobrepongan */
+html.optic-noir #app-optical-canvas .border,
+html.optic-noir #app-optical-canvas [class*="border-white"],
+html.optic-noir #app-optical-canvas [class*="border-cyan"],
+html.optic-noir #app-optical-canvas [class*="border-slate"],
+html.optic-noir #app-optical-canvas [class*="border-emerald"],
+html.optic-noir #app-optical-canvas [class*="border-purple"],
+html.optic-noir #app-optical-canvas [class*="border-amber"] {
+  border-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+/* Divisores nítidos en Noir Oscuro */
+html.optic-noir #app-optical-canvas [class*="border-b"] {
+  border-bottom-color: rgba(255, 255, 255, 0.15) !important;
+}
+html.optic-noir #app-optical-canvas [class*="border-t"] {
+  border-top-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+/* Tarjetas y módulos activos en Noir Oscuro */
+html.optic-noir #app-optical-canvas .optic-active-card {
+  border-color: rgba(255, 255, 255, 0.55) !important;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.12) !important;
 }
 
 /* 3. MODO NOIR CLARO (Manga B&W Táctico en Blanco / Tinta China de Alto Impacto) */
@@ -78,7 +103,8 @@ html.optic-eink .portal-modal-root {
   transition: filter 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
-/* En la estructura previa a la inversión: forzar blanco puro para que al invertirse sea NEGRO AZABACHE PURO (#000000) */
+/* En la estructura previa a la inversión: forzar blanco puro para que al invertirse sea NEGRO AZABACHE PURO (#000000)
+   PRESERVANDO font-weight natural para evitar ensanchamiento de textos y desbordamientos */
 html.optic-eink #app-optical-canvas p,
 html.optic-eink #app-optical-canvas span,
 html.optic-eink #app-optical-canvas h1,
@@ -98,7 +124,6 @@ html.optic-eink #app-optical-canvas b,
 html.optic-eink #app-optical-canvas [class*="text-"] {
   color: #ffffff !important;
   opacity: 1 !important;
-  font-weight: 600 !important;
   text-shadow: none !important;
 }
 
@@ -108,7 +133,6 @@ html.optic-eink #app-optical-canvas h2,
 html.optic-eink #app-optical-canvas h3,
 html.optic-eink #app-optical-canvas h4,
 html.optic-eink #app-optical-canvas .font-anton {
-  font-weight: 800 !important;
   letter-spacing: 0.02em !important;
 }
 
@@ -119,58 +143,47 @@ html.optic-eink #app-optical-canvas svg:not(.ec-interruptor svg) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   BORDES FINOS, NÍTIDOS Y SIMÉTRICOS (PRECISIÓN MANGA 1px / 1.5px)
-   Solo aplicar contornos finos a elementos que explícitamente portan borde.
-   Se respetan bordes direccionales (border-b, border-t) para evitar
-   cajas deformes y desfases en iconos y botones.
+   BORDES FINOS, NÍTIDOS Y SIMÉTRICOS (PRECISIÓN MANGA)
+   Solo aplicar contornos a elementos que explícitamente portan borde.
+   Se respetan estrictamente bordes direccionales (border-b, border-t, etc.)
+   sin inflar border-width globalmente para evitar deformaciones y solapamientos.
    ═══════════════════════════════════════════════════════════════════════ */
 
-/* Bordes generales en elementos que los definen */
-html.optic-eink #app-optical-canvas .border {
+/* Bordes generales en elementos que los definen: color blanco nítido (negro al invertirse) */
+html.optic-eink #app-optical-canvas .border,
+html.optic-eink #app-optical-canvas [class*="border-white"],
+html.optic-eink #app-optical-canvas [class*="border-cyan"],
+html.optic-eink #app-optical-canvas [class*="border-slate"],
+html.optic-eink #app-optical-canvas [class*="border-emerald"],
+html.optic-eink #app-optical-canvas [class*="border-purple"],
+html.optic-eink #app-optical-canvas [class*="border-amber"],
+html.optic-eink #app-optical-canvas [class*="border-rose"],
+html.optic-eink #app-optical-canvas [class*="border-blue"] {
   border-color: #ffffff !important;
-  border-width: 1px !important;
 }
 
-/* Tarjetas y módulos principales con borde fino de 1.5px */
-html.optic-eink #app-optical-canvas [class*="rounded-2xl"].border,
-html.optic-eink #app-optical-canvas [class*="rounded-3xl"].border,
-html.optic-eink #app-optical-canvas [class*="rounded-2xl"][class*="border-white"],
-html.optic-eink #app-optical-canvas [class*="rounded-3xl"][class*="border-white"],
-html.optic-eink #app-optical-canvas [class*="rounded-2xl"][class*="border-cyan"],
-html.optic-eink #app-optical-canvas [class*="rounded-3xl"][class*="border-cyan"],
-html.optic-eink #app-optical-canvas [class*="rounded-2xl"][class*="border-slate"],
-html.optic-eink #app-optical-canvas [class*="rounded-3xl"][class*="border-slate"] {
-  border-color: #ffffff !important;
-  border-width: 1.5px !important;
-}
-
-/* Divisores horizontales y verticales (respetar dirección única para no crear cajas falsas) */
+/* Divisores horizontales y verticales (respetar dirección única estricta sin crear cajas falsas) */
 html.optic-eink #app-optical-canvas [class*="border-b"] {
   border-bottom-color: #ffffff !important;
-  border-bottom-width: 1px !important;
 }
 
 html.optic-eink #app-optical-canvas [class*="border-t"] {
   border-top-color: #ffffff !important;
-  border-top-width: 1px !important;
 }
 
 html.optic-eink #app-optical-canvas [class*="border-l"] {
   border-left-color: #ffffff !important;
-  border-left-width: 1px !important;
 }
 
 html.optic-eink #app-optical-canvas [class*="border-r"] {
   border-right-color: #ffffff !important;
-  border-right-width: 1px !important;
 }
 
-/* Botones, selectores y campos de entrada con borde fino */
+/* Botones, selectores y campos de entrada con borde */
 html.optic-eink #app-optical-canvas button.border,
 html.optic-eink #app-optical-canvas input.border,
 html.optic-eink #app-optical-canvas select.border {
   border-color: #ffffff !important;
-  border-width: 1px !important;
 }
 
 /* Eliminar sombras difusas que generan halos grises sucios */
@@ -181,14 +194,9 @@ html.optic-eink #app-optical-canvas [class*="drop-shadow-"] {
 }
 
 /* Card activa y elementos seleccionados en Noir Claro: Bloque negro con borde fino y simétrico */
-html.optic-eink #app-optical-canvas .optic-active-card,
-html.optic-eink #app-optical-canvas [class*="bg-cyan-400"],
-html.optic-eink #app-optical-canvas [class*="bg-cyan-500"],
-html.optic-eink #app-optical-canvas .chicle-btn.bg-cyan-400,
-html.optic-eink #app-optical-canvas .chicle-btn.bg-cyan-500 {
+html.optic-eink #app-optical-canvas .optic-active-card {
   background-color: #ffffff !important; /* Al invertirse: negro sólido #000000 */
   border-color: #ffffff !important;     /* Al invertirse: borde negro sólido #000000 */
-  border-width: 1.5px !important;
   opacity: 1 !important;
 }
 
@@ -202,12 +210,10 @@ html.optic-eink #app-optical-canvas .optic-active-card h2,
 html.optic-eink #app-optical-canvas .optic-active-card h3,
 html.optic-eink #app-optical-canvas .optic-active-card h4,
 html.optic-eink #app-optical-canvas .optic-active-card div,
-html.optic-eink #app-optical-canvas .optic-active-card svg,
-html.optic-eink #app-optical-canvas [class*="bg-cyan-400"] *,
-html.optic-eink #app-optical-canvas [class*="bg-cyan-500"] * {
+html.optic-eink #app-optical-canvas .optic-active-card svg {
   color: #000000 !important;             /* Al invertirse: blanco puro nítido #ffffff */
   opacity: 1 !important;
-  font-weight: 800 !important;
+  font-weight: 700 !important;
 }
 
 /* Insignia interior dentro de la card activa: Cuadro blanco con letras negras al renderizar */

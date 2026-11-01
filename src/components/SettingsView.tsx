@@ -432,7 +432,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   ];
 
   return (
-    <div ref={chicleContainerRef} className="space-y-6 pb-20">
+    <div ref={chicleContainerRef} className="space-y-6 pb-36 sm:pb-32">
       {/* HEADER & SUB-TABS NAVIGATION */}
       <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-2xl border border-white/10 p-3 sm:p-5 shadow-[0_12px_40px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.12)] relative overflow-hidden space-y-3">
         {/* Micrograno táctil Moxen Vidrio */}

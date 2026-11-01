@@ -1068,20 +1068,26 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
 
   return (
     <div className={`moxen-malla-root space-y-4 ${className}`}>
-      {/* ── BARRA SUPERIOR MINIMALISTA ── */}
-      <div className="flex items-center justify-between gap-2 px-1">
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_#00f0ff]" />
-          <span className="text-xs font-mono font-bold tracking-wider uppercase text-slate-300">
-            Malla Aurora
-          </span>
-          <span className="text-[10px] font-mono text-cyan-400/90 bg-white/[0.04] px-2 py-0.5 rounded-full border border-white/10">
-            {currPreset.badge}
+      {/* ── BARRA SUPERIOR DE CONTROL ── */}
+      <div className="space-y-2 px-1">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_#00f0ff]" />
+            <span className="text-xs font-mono font-bold tracking-wider uppercase text-slate-300">
+              Malla Aurora
+            </span>
+            <span className="text-[10px] font-mono text-slate-400 bg-white/[0.04] px-2 py-0.5 rounded-full border border-white/10">
+              {pointCount} Tonos
+            </span>
+          </div>
+
+          <span className="text-[10px] font-mono font-semibold text-cyan-400/90 uppercase tracking-widest truncate max-w-[160px] sm:max-w-none text-right">
+            {currPreset.name}
           </span>
         </div>
 
-        {/* Preset Pills Minimalistas */}
-        <div className="flex items-center gap-1 overflow-x-auto scrollbar-none py-0.5">
+        {/* Preset Pills: Fila dedicada horizontal con scroll suave y todos los 6 estilos */}
+        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-1 -mx-1 px-1">
           {MOXEN_MALLA_PRESETS.map(p => {
             const isSelected = activePreset === p.id;
             return (
@@ -1089,15 +1095,15 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
                 key={p.id}
                 type="button"
                 onClick={() => handleSelectPreset(p.id)}
-                className={`px-2.5 py-1 rounded-full text-[11px] font-mono font-medium transition-all flex items-center gap-1.5 shrink-0 border cursor-pointer ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-mono font-medium transition-all flex items-center gap-2 shrink-0 border cursor-pointer ${
                   isSelected
-                    ? 'bg-white/15 text-white border-white/30 shadow-[0_0_12px_rgba(255,255,255,0.15)] font-bold'
-                    : 'bg-transparent border-transparent text-slate-400 hover:text-slate-200 hover:bg-white/[0.05]'
+                    ? 'bg-white/15 text-white border-white/40 shadow-[0_0_12px_rgba(255,255,255,0.15)] font-bold ring-1 ring-white/30'
+                    : 'bg-black/30 border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/[0.05]'
                 }`}
                 title={p.desc}
               >
                 <span 
-                  className="w-2 h-2 rounded-full shrink-0 shadow-[0_0_6px_currentColor]"
+                  className="w-2.5 h-2.5 rounded-full shrink-0 shadow-[0_0_6px_currentColor]"
                   style={{ background: p.colors[0], color: p.colors[0] }}
                 />
                 <span>{p.badge}</span>
