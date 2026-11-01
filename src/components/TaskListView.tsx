@@ -672,7 +672,7 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
                 </div>
                 <button
                   type="button"
-                  className="px-4 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-anton text-xs uppercase tracking-wider flex items-center gap-1.5 cursor-pointer"
+                  className="btn-neon-hunter px-4 py-1.5 text-xs tracking-wider flex items-center gap-1.5 cursor-pointer shadow-md"
                 >
                   <span>Activar</span>
                   <ArrowRight className="w-3.5 h-3.5" />

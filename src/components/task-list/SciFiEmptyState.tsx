@@ -74,14 +74,14 @@ export const SciFiEmptyState: React.FC<SciFiEmptyStateProps> = ({
 
         {/* Interactive Buttons */}
         <div className="flex items-center justify-center gap-3 flex-wrap w-full">
-          {/* Primary Create Task Button */}
+          {/* Primary Create Task Button con Neón Cinético Dinámico */}
           <button
             type="button"
             onClick={() => {
               soundFX.playClick();
               onAddTask();
             }}
-            className="min-h-[44px] px-5 py-2.5 rounded-xl sm:rounded-2xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold text-xs sm:text-sm shadow-[0_0_15px_rgba(0,240,255,0.4)] active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer border border-cyan-200"
+            className="btn-neon-hunter min-h-[46px] px-6 py-2.5 rounded-xl text-xs sm:text-sm active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg"
           >
             <Plus className="w-4 h-4 stroke-[3]" />
             <span>Agregar Tarea</span>

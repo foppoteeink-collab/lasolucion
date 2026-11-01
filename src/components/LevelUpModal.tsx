@@ -162,7 +162,7 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({
               soundFX.playClick();
               onClose();
             }}
-            className="chicle-btn w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 hover:opacity-95 text-black font-anton text-sm uppercase tracking-wider shadow-[0_0_25px_rgba(0,240,255,0.4)] active:scale-95 cursor-pointer transition-all flex items-center justify-center gap-2 font-bold"
+            className="btn-neon-hunter w-full py-3.5 rounded-xl text-sm uppercase tracking-wider shadow-lg active:scale-95 cursor-pointer transition-all flex items-center justify-center gap-2 font-bold"
           >
             <span>Asimilar Poder</span>
             <ChevronRight className="w-5 h-5 stroke-[3]" />

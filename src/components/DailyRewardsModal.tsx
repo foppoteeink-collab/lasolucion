@@ -204,7 +204,7 @@ export const DailyRewardsModal: React.FC<DailyRewardsModalProps> = ({
                     <button
                       type="button"
                       onClick={() => handleClaim(reward.day, reward.xp, reward.coins, reward.bonusItem)}
-                      className="w-full mt-2.5 py-2 px-2.5 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-black font-anton tracking-widest uppercase text-xs rounded-xl shadow-[0_0_18px_rgba(245,158,11,0.5)] active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-1.5 chicle-btn"
+                      className="btn-neon-hunter w-full mt-2.5 py-2.5 px-2.5 text-xs tracking-widest uppercase rounded-xl shadow-lg active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-1.5"
                     >
                       <Sparkles className="w-3.5 h-3.5" />
                       <span>¡Reclamar!</span>

@@ -1470,25 +1470,27 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
 
               {/* FILA 4: ACCIONES PRINCIPALES Y SALIR */}
               <div className="flex items-center gap-2 pt-1">
-                {/* Botón Aplicar al Sistema */}
+                {/* Botón Aplicar al Sistema con Neón Cinético Dinámico */}
                 <button
                   type="button"
                   data-action="apply-system"
                   onClick={handleApplyToSystem}
-                  className={`flex-1 py-2.5 px-3 rounded-xl font-anton uppercase tracking-wider text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-[0_0_20px_rgba(0,240,255,0.35)] ${
-                    applyFeedback
-                      ? 'bg-emerald-500 text-black border border-emerald-300 font-black'
-                      : 'bg-gradient-to-r from-cyan-400 via-cyan-500 to-blue-600 hover:from-cyan-300 hover:to-blue-500 text-black font-black'
+                  style={{
+                    '--n1': pointColors[0] || '#00f0ff',
+                    '--n2': pointColors[1] || '#8a2be2',
+                  } as React.CSSProperties}
+                  className={`btn-neon-hunter flex-1 py-3 px-3 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-lg ${
+                    applyFeedback ? 'is-flash' : ''
                   }`}
                 >
                   {applyFeedback ? (
                     <>
-                      <CheckCircle2 className="w-3.5 h-3.5 text-black stroke-[3]" />
-                      <span>¡Atmósfera Activada!</span>
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-300 stroke-[3]" />
+                      <span className="text-emerald-200">¡Atmósfera Activada!</span>
                     </>
                   ) : (
                     <>
-                      <Sparkles className="w-3.5 h-3.5 text-black fill-black" />
+                      <Sparkles className="w-3.5 h-3.5 text-cyan-300 fill-cyan-300" />
                       <span>Aplicar como Fondo</span>
                     </>
                   )}
@@ -1719,24 +1721,26 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
           </label>
         </div>
 
-        {/* FILA 3: BOTÓN ESTELAR MINIMALISTA */}
+        {/* FILA 3: BOTÓN ESTELAR CON NEÓN CINÉTICO DINÁMICO */}
         <button
           type="button"
           onClick={handleApplyToSystem}
-          className={`w-full py-2.5 px-4 rounded-xl font-mono uppercase tracking-wider text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
-            applyFeedback
-              ? 'bg-emerald-500 text-black shadow-[0_0_20px_rgba(16,185,129,0.4)] font-black'
-              : 'bg-gradient-to-r from-cyan-400 to-blue-600 hover:from-cyan-300 hover:to-blue-500 text-black shadow-[0_0_20px_rgba(0,240,255,0.25)]'
+          style={{
+            '--n1': pointColors[0] || '#00f0ff',
+            '--n2': pointColors[1] || '#8a2be2',
+          } as React.CSSProperties}
+          className={`btn-neon-hunter w-full py-3 px-4 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg ${
+            applyFeedback ? 'is-flash' : ''
           }`}
         >
           {applyFeedback ? (
             <>
-              <CheckCircle2 className="w-4 h-4 text-black stroke-[3]" />
-              <span>¡Atmósfera Activada en el Sistema!</span>
+              <CheckCircle2 className="w-4 h-4 text-emerald-300 stroke-[3]" />
+              <span className="text-emerald-200">¡Atmósfera Activada en el Sistema!</span>
             </>
           ) : (
             <>
-              <Sparkles className="w-4 h-4 text-black fill-black" />
+              <Sparkles className="w-4 h-4 text-cyan-300 fill-cyan-300" />
               <span>Aplicar como Fondo del Sistema</span>
             </>
           )}
