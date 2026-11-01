@@ -11,6 +11,7 @@ export interface SatelliteHubItem {
   glowColor: string;
   liveStat: string;
   hasBadge?: boolean;
+  type?: 'page' | 'gadget';
   action: () => void;
 }
 
@@ -310,6 +311,7 @@ export const SatelliteKaiHub: React.FC<SatelliteKaiHubProps> = ({
           const { x, y, scale, opacity, zIndex, isActive, depth } = getItemGeometry(i, rotState);
           // Ícono activo más grande (52px), inactivos entre 32px y 42px
           const iconSizePx = isActive ? 52 : Math.round(32 + 10 * depth);
+          const isGadget = item.type === 'gadget';
 
           return (
             <motion.div
@@ -338,37 +340,88 @@ export const SatelliteKaiHub: React.FC<SatelliteKaiHubProps> = ({
                   soundFX.playClick();
                   onSelect(item);
                 }}
-                className="w-full h-full rounded-full flex items-center justify-center cursor-pointer relative active:scale-90 transition-all duration-200"
-                style={{
-                  background: isActive
-                    ? `radial-gradient(circle at 35% 35%, rgba(255,255,255,0.2) 0%, rgba(2,16,30,0.98) 100%)`
-                    : `rgba(6, 14, 24, ${0.75 + 0.2 * depth})`,
-                  border: isActive
-                    ? `2.5px solid ${item.accentColor}`
-                    : `1.5px solid rgba(148, 163, 184, ${0.15 + 0.3 * depth})`,
-                  boxShadow: isActive
-                    ? `0 0 25px ${item.glowColor}, 0 0 10px ${item.accentColor}, inset 0 0 12px ${item.accentColor}30`
-                    : 'none',
-                }}
+                className={`w-full h-full flex items-center justify-center cursor-pointer relative active:scale-90 transition-all duration-200 ${
+                  isGadget ? '' : 'rounded-full'
+                }`}
+                style={
+                  isGadget
+                    ? { background: 'transparent', border: 'none', boxShadow: 'none' }
+                    : {
+                        background: isActive
+                          ? `radial-gradient(circle at 35% 35%, rgba(255,255,255,0.2) 0%, rgba(2,16,30,0.98) 100%)`
+                          : `rgba(6, 14, 24, ${0.75 + 0.2 * depth})`,
+                        border: isActive
+                          ? `2.5px solid ${item.accentColor}`
+                          : `1.5px solid rgba(148, 163, 184, ${0.15 + 0.3 * depth})`,
+                        boxShadow: isActive
+                          ? `0 0 25px ${item.glowColor}, 0 0 10px ${item.accentColor}, inset 0 0 12px ${item.accentColor}30`
+                          : 'none',
+                      }
+                }
                 title={item.label}
               >
+                {/* Geometría Hexagonal Táctica para Gadgets convocados */}
+                {isGadget && (
+                  <svg
+                    viewBox="0 0 100 100"
+                    className="absolute inset-0 w-full h-full pointer-events-none overflow-visible"
+                  >
+                    <defs>
+                      <radialGradient id={`hex-grad-${item.id}`} cx="35%" cy="35%" r="70%">
+                        <stop offset="0%" stopColor="rgba(255,255,255,0.22)" />
+                        <stop offset="100%" stopColor="rgba(15,7,28,0.98)" />
+                      </radialGradient>
+                    </defs>
+                    <polygon
+                      points="50,4 92,26 92,74 50,96 8,74 8,26"
+                      fill={isActive ? `url(#hex-grad-${item.id})` : `rgba(10, 8, 20, ${0.82 + 0.18 * depth})`}
+                      stroke={isActive ? item.accentColor : `rgba(192, 132, 252, ${0.25 + 0.35 * depth})`}
+                      strokeWidth={isActive ? '4' : '2'}
+                      strokeLinejoin="round"
+                      style={{
+                        filter: isActive ? `drop-shadow(0 0 14px ${item.glowColor})` : 'none',
+                      }}
+                    />
+                  </svg>
+                )}
+
                 {/* Aura pulsante del activo */}
                 {isActive && (
                   <>
                     <div
-                      className="absolute inset-0 rounded-full animate-pulse pointer-events-none"
+                      className={`absolute inset-0 pointer-events-none animate-pulse ${
+                        isGadget ? '' : 'rounded-full'
+                      }`}
                       style={{
                         background: `radial-gradient(circle, ${item.accentColor}35 0%, transparent 70%)`,
                       }}
                     />
                     {/* Anillo de selección exterior giratorio */}
-                    <div
-                      className="absolute -inset-2 rounded-full pointer-events-none animate-spin"
-                      style={{
-                        border: `1.5px dashed ${item.accentColor}60`,
-                        animationDuration: '8s',
-                      }}
-                    />
+                    {isGadget ? (
+                      <svg
+                        viewBox="0 0 120 120"
+                        className="absolute -inset-2.5 w-[calc(100%+20px)] h-[calc(100%+20px)] pointer-events-none animate-spin"
+                        style={{ animationDuration: '9s' }}
+                      >
+                        <polygon
+                          points="60,4 110,30 110,90 60,116 10,90 10,30"
+                          fill="none"
+                          stroke={item.accentColor}
+                          strokeWidth="1.6"
+                          strokeDasharray="4 6"
+                          opacity="0.8"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    ) : (
+                      <div
+                        className="absolute -inset-2 rounded-full pointer-events-none animate-spin"
+                        style={{
+                          border: `1.5px dashed ${item.accentColor}60`,
+                          animationDuration: '8s',
+                        }}
+                      />
+                    )}
                   </>
                 )}
 
@@ -418,12 +471,15 @@ export const SatelliteKaiHub: React.FC<SatelliteKaiHubProps> = ({
                 initial={{ opacity: 0.5, scale: 0.94 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.08, ease: 'easeOut' }}
-                className="font-mono tracking-[0.28em] text-[11px] font-bold uppercase text-white/95 group-hover:text-white transition-colors"
+                className="font-mono tracking-[0.28em] text-[11px] font-bold uppercase text-white/95 group-hover:text-white transition-colors flex items-center gap-1"
                 style={{
                   textShadow: `0 0 10px ${activeItemDisplay.accentColor}80, 0 0 20px ${activeItemDisplay.glowColor}`,
                 }}
               >
-                {activeItemDisplay.label}
+                {activeItemDisplay.type === 'gadget' && (
+                  <span className="text-[10px] font-mono" style={{ color: activeItemDisplay.accentColor }}>⚡</span>
+                )}
+                <span>{activeItemDisplay.label}</span>
               </motion.span>
               <span
                 className="text-[9px] font-mono font-bold group-hover:translate-x-1 transition-transform"

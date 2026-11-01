@@ -5,7 +5,7 @@ import {
   HardDrive, FileSpreadsheet, Cpu, CheckCircle2, Key,
   Coins, Volume2, VolumeX, Target, Sun, Moon, Laptop, ArrowUpRight, CheckCheck,
   SlidersHorizontal, Smartphone, Share, PlusSquare, FlaskConical,
-  Compass, Eye, Layout, Bell, BellOff, BellRing, Zap, Flame, Timer, Palette, ChevronLeft, Wallet, Type, Waves
+  Compass, Eye, Layout, Bell, BellOff, BellRing, Zap, Flame, Timer, Palette, ChevronLeft, Wallet, Type, Lock
 } from 'lucide-react';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 import { GameSettings } from '../types';
@@ -903,7 +903,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       {opticMode === 'aurora' && '🌌 Aurora Neón'}
                       {opticMode === 'noir' && '🌑 Noir Oscuro'}
                       {opticMode === 'eink' && '☀️ Noir Claro'}
-                      {opticMode === 'cobalt' && '🌊 Cobalto Azul'}
+                      {opticMode === 'cobalt' && '🎯 Cobalto Azul'}
                     </span>
                   </p>
                 </div>
@@ -973,7 +973,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   <span className="text-xs font-anton tracking-wider uppercase">Noir Claro</span>
                 </button>
 
-                {/* MODO 4: CYBER COBALTO (AZUL & BLANCO MONOCROMO) */}
+                {/* MODO 4: COBALTO AZUL (ENFOQUE & DETERMINACIÓN) */}
                 <button
                   type="button"
                   onClick={() => {
@@ -986,37 +986,66 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       : 'bg-transparent border-transparent text-slate-400 hover:text-white hover:bg-white/[0.05]'
                   }`}
                 >
-                  <Waves className="w-3.5 h-3.5 shrink-0" />
+                  <Target className="w-3.5 h-3.5 shrink-0 text-blue-400" />
                   <span className="text-xs font-anton tracking-wider uppercase">Cobalto</span>
                 </button>
               </div>
             </div>
 
+            {/* PERSONALIZADOR DE FONDO & COLOR */}
             <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-xl p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
               <span className="vi-grano opacity-5" aria-hidden="true" />
               <div className="relative z-10">
                 <div className="flex items-center gap-2 text-cyan-400 text-xs font-mono font-bold uppercase tracking-widest mb-1">
-                  <Palette className="w-4 h-4 text-cyan-400" /> Personalizador de Atmósfera
+                  <Palette className="w-4 h-4 text-cyan-400" /> Personalizador Visual
                 </div>
                 <h3 className="text-base sm:text-lg font-anton uppercase tracking-wide text-white">
-                  Atmósfera & Fluido Reactivo
+                  Personalizador de Fondo & Color
                 </h3>
                 <p className="text-xs text-slate-400 mt-1">
-                  Fluido interactivo reactivo. Arrastra los nodos o toca para cambiar colores y personalizar el fondo.
+                  Ajusta los tonos y nodos de color de tu fondo.
                 </p>
               </div>
 
-              <div className="relative z-10">
-                <MoxenMalla
-                  activeSystemAuraName={systemAura?.name}
-                  onApplyToSystem={(aura) => {
-                    setSystemAura(aura);
-                  }}
-                  onResetSystem={() => {
-                    setSystemAura(null);
-                  }}
-                />
-              </div>
+              {opticMode !== 'aurora' ? (
+                <div className="relative z-10 p-4 rounded-xl bg-black/40 border border-white/10 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                      <Lock className="w-4 h-4 text-slate-400" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-anton tracking-wider uppercase text-slate-300 block">
+                        Fondo Bloqueado en {opticMode === 'eink' ? 'Noir Claro' : opticMode === 'noir' ? 'Noir Oscuro' : 'Cobalto'}
+                      </span>
+                      <p className="text-[11px] text-slate-400">
+                        El fondo dinámico a color solo está activo en modo Aurora Neón.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFX.playClick();
+                      setOpticMode('aurora');
+                    }}
+                    className="chicle-btn px-3 py-1.5 rounded-lg border border-cyan-400/40 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 text-xs font-anton uppercase tracking-wider shrink-0 cursor-pointer"
+                  >
+                    Activar Aurora
+                  </button>
+                </div>
+              ) : (
+                <div className="relative z-10">
+                  <MoxenMalla
+                    activeSystemAuraName={systemAura?.name}
+                    onApplyToSystem={(aura) => {
+                      setSystemAura(aura);
+                    }}
+                    onResetSystem={() => {
+                      setSystemAura(null);
+                    }}
+                  />
+                </div>
+              )}
             </div>
           </div>
         )}

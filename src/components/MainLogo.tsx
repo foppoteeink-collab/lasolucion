@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import logoImg from '../assets/logo-solucion.png';
+import logoImg from '../assets/logo-letters-only.png';
 
 export interface MainLogoProps {
   text?: string;
@@ -20,13 +20,13 @@ export const MainLogo: React.FC<MainLogoProps> = ({
 }) => {
   const [imageError, setImageError] = useState(false);
 
-  // Calibración de altura proporcional para mantener la proporción exacta 954x164
+  // Calibración de altura proporcional para mantener la proporción exacta 864x129 (letras puras sin caja)
   const sizeClasses = {
-    sm: 'h-[24px] sm:h-[28px]',
-    md: 'h-[32px] sm:h-[38px] lg:h-[42px]',
-    lg: 'h-[44px] sm:h-[50px]',
-    xl: 'h-[58px] sm:h-[66px]',
-    massive: 'h-[76px] sm:h-[90px]',
+    sm: 'h-[22px] sm:h-[26px]',
+    md: 'h-[28px] sm:h-[34px] lg:h-[38px]',
+    lg: 'h-[40px] sm:h-[48px]',
+    xl: 'h-[52px] sm:h-[60px]',
+    massive: 'h-[68px] sm:h-[80px]',
   };
 
   const textSizeClasses = {
@@ -42,17 +42,17 @@ export const MainLogo: React.FC<MainLogoProps> = ({
       onClick={onClick}
       role="banner"
       aria-label="La Solución"
-      className={`relative inline-flex items-center justify-center select-none shrink-0 group transition-transform duration-200 hover:scale-[1.03] ${
+      className={`relative inline-flex items-center justify-center select-none shrink-0 group transition-all duration-200 hover:scale-[1.03] ${
         onClick ? 'cursor-pointer' : ''
       } ${sizeClasses[size]} ${className}`}
-      style={{ aspectRatio: '954 / 164' }}
+      style={{ aspectRatio: '864 / 129' }}
     >
-      {/* Resplandor ambiental de plasma de fondo (Cian y Verde Neón) */}
+      {/* Resplandor ambiental de plasma orgánico (Cian y Esmeralda sin cajas ni límites rígidos) */}
       <motion.div
-        className="absolute inset-0 -z-10 rounded-2xl pointer-events-none"
+        className="absolute inset-x-2 inset-y-1 -z-10 rounded-full pointer-events-none"
         animate={{
-          opacity: [0.35, 0.65, 0.35],
-          scale: [0.96, 1.04, 0.96],
+          opacity: [0.35, 0.6, 0.35],
+          scale: [0.95, 1.05, 0.95],
         }}
         transition={{
           duration: 3.6,
@@ -62,18 +62,18 @@ export const MainLogo: React.FC<MainLogoProps> = ({
         style={{
           background: forceColor
             ? forceColor
-            : 'linear-gradient(90deg, rgba(0, 240, 255, 0.45) 0%, rgba(16, 226, 157, 0.45) 100%)',
-          filter: 'blur(10px)',
+            : 'radial-gradient(ellipse at center, rgba(0, 240, 255, 0.45) 0%, rgba(16, 226, 157, 0.35) 60%, transparent 85%)',
+          filter: 'blur(12px)',
         }}
       />
 
-      {/* Imagen oficial del logo */}
+      {/* Tipografía oficial pura de La Solución (letras flotantes sin caja circundante) */}
       {!imageError ? (
         <img
           src={logoImg}
           alt="La Solución"
           onError={() => setImageError(true)}
-          className="w-full h-full object-contain pointer-events-none drop-shadow-[0_2px_12px_rgba(0,240,255,0.4)] group-hover:drop-shadow-[0_4px_18px_rgba(16,226,157,0.55)] transition-all duration-300"
+          className="w-full h-full object-contain pointer-events-none drop-shadow-[0_2px_12px_rgba(0,240,255,0.45)] group-hover:drop-shadow-[0_4px_22px_rgba(16,226,157,0.7)] group-hover:brightness-105 transition-all duration-300"
           style={forceColor ? { filter: `drop-shadow(0 0 10px ${forceColor})` } : undefined}
         />
       ) : (
@@ -90,11 +90,6 @@ export const MainLogo: React.FC<MainLogoProps> = ({
           {text}
         </h1>
       )}
-
-      {/* Reflejo brillante de luz interactivo al hacer hover */}
-      <div className="absolute inset-0 pointer-events-none rounded-xl overflow-hidden">
-        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-r from-transparent via-cyan-300/25 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
-      </div>
     </div>
   );
 };

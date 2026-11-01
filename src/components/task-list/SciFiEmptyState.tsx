@@ -31,8 +31,8 @@ export const SciFiEmptyState: React.FC<SciFiEmptyStateProps> = ({
       <div className="absolute bottom-2 left-2 w-3 h-3 border-b-2 border-l-2 border-cyan-400/80 rounded-bl-sm pointer-events-none" />
       <div className="absolute bottom-2 right-2 w-3 h-3 border-b-2 border-r-2 border-cyan-400/80 rounded-br-sm pointer-events-none" />
 
-      {/* Subtle Neutral Radial Background Effect (sin borrones oscuros en modo claro) */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(148,163,184,0.08)_0%,transparent_70%)] pointer-events-none" />
+      {/* Subtle Neutral Radial Background Effect (oculto en Noir Claro para papel 100% puro) */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(148,163,184,0.08)_0%,transparent_70%)] pointer-events-none scifi-empty-radial" />
 
       <div className="relative z-10 flex flex-col items-center max-w-lg mx-auto">
         {/* Hologram Badge Icon */}

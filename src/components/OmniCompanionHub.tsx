@@ -108,13 +108,15 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
     [viewportDims.width, viewportDims.height]
   );
 
-  // 9 Secciones con exactamente 1 o 2 palabras y el diseño oficial de La Solución RPG
+  // 12 Elementos divididos en dos hemisferios: Pantallas Principales (círculos) y Gadgets Tácticos (hexágonos)
   const wheelItems: SatelliteHubItem[] = useMemo(
     () => [
+      // ── HEMISFERIO 1: PANTALLAS PRINCIPALES (NAVEGACIÓN CORE) ──
       {
         id: 'missions',
         label: 'Tareas',
         categoryBadge: 'TAREAS',
+        type: 'page',
         icon: <CheckCircle2 className="w-5 h-5" />,
         accentColor: '#00f0ff',
         glowColor: 'rgba(0, 240, 255, 0.45)',
@@ -122,21 +124,10 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
         action: () => setActiveTab('dashboard'),
       },
       {
-        id: 'workshop',
-        label: 'Taller KAI',
-        categoryBadge: 'FORJA',
-        icon: <Palette className="w-5 h-5 text-fuchsia-400" />,
-        accentColor: '#d946ef',
-        glowColor: 'rgba(217, 70, 239, 0.5)',
-        liveStat: stats.kaiShape === 'custom' ? 'Forja IA' : '6 Formas',
-        action: () => {
-          if (onOpenKaiWorkshop) onOpenKaiWorkshop();
-        },
-      },
-      {
         id: 'calendar',
         label: 'Calendario',
         categoryBadge: 'AGENDA',
+        type: 'page',
         icon: <Calendar className="w-5 h-5" />,
         accentColor: '#38bdf8',
         glowColor: 'rgba(56, 189, 248, 0.45)',
@@ -144,19 +135,10 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
         action: () => setActiveTab('dashboard'),
       },
       {
-        id: 'pomodoro',
-        label: 'Hiperenfoque',
-        categoryBadge: 'POMODORO',
-        icon: <Timer className="w-5 h-5" />,
-        accentColor: '#f43f5e',
-        glowColor: 'rgba(244, 63, 94, 0.45)',
-        liveStat: isTimerRunning ? `${formattedTime}` : '25:00 min',
-        action: () => setModalState('isPomodoroOpen', true),
-      },
-      {
         id: 'journal',
         label: 'Diario',
         categoryBadge: 'BITÁCORA',
+        type: 'page',
         icon: <BookOpen className="w-5 h-5" />,
         accentColor: '#38bdf8',
         glowColor: 'rgba(56, 189, 248, 0.45)',
@@ -167,6 +149,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
         id: 'shop',
         label: 'Tienda',
         categoryBadge: 'ARSENAL',
+        type: 'page',
         icon: <ShoppingBag className="w-5 h-5" />,
         accentColor: '#10b981',
         glowColor: 'rgba(16, 185, 129, 0.45)',
@@ -177,6 +160,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
         id: 'skills',
         label: 'Lab Habilidades',
         categoryBadge: 'MAESTRÍA',
+        type: 'page',
         icon: <FlaskConical className="w-5 h-5" />,
         accentColor: '#8b5cf6',
         glowColor: 'rgba(139, 92, 246, 0.45)',
@@ -187,6 +171,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
         id: 'stats',
         label: 'Perfil',
         categoryBadge: 'RANGO',
+        type: 'page',
         icon: <BarChart3 className="w-5 h-5" />,
         accentColor: '#06b6d4',
         glowColor: 'rgba(6, 182, 212, 0.45)',
@@ -194,9 +179,47 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
         action: () => setActiveTab('stats'),
       },
       {
+        id: 'settings',
+        label: 'Ajustes',
+        categoryBadge: 'SISTEMA',
+        type: 'page',
+        icon: <Settings className="w-5 h-5" />,
+        accentColor: '#ec4899',
+        glowColor: 'rgba(236, 72, 153, 0.45)',
+        liveStat: 'Configuración',
+        action: () => setActiveTab('settings'),
+      },
+
+      // ── HEMISFERIO 2: GADGETS TÁCTICOS (INVOCACIONES DEL KAI) ──
+      {
+        id: 'workshop',
+        label: 'Taller KAI',
+        categoryBadge: 'FORJA',
+        type: 'gadget',
+        icon: <Palette className="w-5 h-5 text-fuchsia-400" />,
+        accentColor: '#d946ef',
+        glowColor: 'rgba(217, 70, 239, 0.5)',
+        liveStat: stats.kaiShape === 'custom' ? 'Forja IA' : '6 Formas',
+        action: () => {
+          if (onOpenKaiWorkshop) onOpenKaiWorkshop();
+        },
+      },
+      {
+        id: 'pomodoro',
+        label: 'Hiperenfoque',
+        categoryBadge: 'POMODORO',
+        type: 'gadget',
+        icon: <Timer className="w-5 h-5" />,
+        accentColor: '#f43f5e',
+        glowColor: 'rgba(244, 63, 94, 0.45)',
+        liveStat: isTimerRunning ? `${formattedTime}` : '25:00 min',
+        action: () => setModalState('isPomodoroOpen', true),
+      },
+      {
         id: 'procrastination',
         label: 'Desbloqueo',
         categoryBadge: 'BOOST',
+        type: 'gadget',
         icon: <Zap className="w-5 h-5 animate-pulse" />,
         accentColor: '#f97316',
         glowColor: 'rgba(249, 115, 22, 0.5)',
@@ -213,6 +236,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
         id: 'oracle',
         label: 'Oráculo IA',
         categoryBadge: 'SYNAPSE',
+        type: 'gadget',
         icon: <Sparkles className="w-5 h-5 animate-pulse" />,
         accentColor: '#eab308',
         glowColor: 'rgba(234, 179, 8, 0.5)',
@@ -226,6 +250,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
         id: 'neural',
         label: 'Diagnóstico',
         categoryBadge: 'NEURAL',
+        type: 'gadget',
         icon: <BrainCircuit className="w-5 h-5" />,
         accentColor: '#a855f7',
         glowColor: 'rgba(168, 85, 247, 0.45)',
@@ -233,16 +258,6 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
         action: () => {
           if (onOpenNeuralAnalysis) onOpenNeuralAnalysis();
         },
-      },
-      {
-        id: 'settings',
-        label: 'Ajustes',
-        categoryBadge: 'SISTEMA',
-        icon: <Settings className="w-5 h-5" />,
-        accentColor: '#ec4899',
-        glowColor: 'rgba(236, 72, 153, 0.45)',
-        liveStat: 'Configuración',
-        action: () => setActiveTab('settings'),
       },
     ],
     [
