@@ -4,6 +4,7 @@ import { X, Sparkles, Zap, Check, Target, AlertTriangle } from 'lucide-react';
 import { JUNG_ARCHETYPES, JungArchetype, getArchetypeByName } from '../data/archetypes';
 import { soundFX } from '../utils/audio';
 import { triggerShockwave } from '../utils/celebration';
+import { usePlayerStore } from '../store/usePlayerStore';
 import { MoxenInercia } from './moxen/MoxenInercia';
 
 // Definición cromática de alta fidelidad estética para cada uno de los 12 arquetipos
@@ -341,9 +342,17 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
                     ) : (
                       <button
                         type="button"
-                        onClick={() => {
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onClick={(e) => {
+                          e.stopPropagation();
                           soundFX.playItemEquip();
                           triggerShockwave({ color: 'violet', intensity: 'medium' });
+                          try {
+                            usePlayerStore.getState().setStats((prev) => ({
+                              ...prev,
+                              characterClass: arch.name,
+                            }));
+                          } catch (_) {}
                           onSelectArchetype(arch);
                           onClose();
                         }}

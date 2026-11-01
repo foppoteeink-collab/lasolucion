@@ -182,6 +182,10 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
     // ── Arrastre nativo por Pointer Events de latencia CERO ──
     const onPointerDown = (e: PointerEvent) => {
       if (e.button !== 0) return;
+      const target = e.target as HTMLElement | null;
+      if (target && target.closest('button, a, input, select, textarea, [data-interactive]')) {
+        return; // Nunca capturar ni bloquear interacción sobre botones
+      }
       mide();
       agarre = { id: e.pointerId, px: e.clientX, x0: x, movido: false };
       muestras = [{ t: performance.now(), x: e.clientX }];
@@ -196,7 +200,7 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
     const onPointerMove = (e: PointerEvent) => {
       if (!agarre || e.pointerId !== agarre.id) return;
       const d = e.clientX - agarre.px;
-      if (Math.abs(d) > 3) agarre.movido = true;
+      if (Math.abs(d) > 8) agarre.movido = true;
       x = estira(agarre.x0 + d);
       muestras.push({ t: performance.now(), x: e.clientX });
       while (
