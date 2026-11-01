@@ -369,6 +369,19 @@ export function AppLayout() {
                 />
               </motion.div>
 
+              {/* CARRUSEL DE ARQUETIPOS CINÉTICO (MOXEN INERCIA) EN HOME */}
+              <motion.div variants={itemVariant}>
+                <HomeArchetypeCarousel
+                  currentArchetype={stats?.characterClass || currentArchetype.name}
+                  onSelectArchetype={(arch) => {
+                    setStats((prev: any) => ({
+                      ...prev,
+                      characterClass: arch.name,
+                    }));
+                  }}
+                />
+              </motion.div>
+
               <motion.div variants={itemVariant}>
                 <TaskListView 
                   currentDate={currentViewDate}

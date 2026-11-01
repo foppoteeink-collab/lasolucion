@@ -42,7 +42,6 @@ import { CloudSyncResult } from '../hooks/useCloudSync';
 import { useMoxenChicle } from '../hooks/useMoxenChicle';
 import { ChicleToggle } from './ChicleToggle';
 import { MoxenMalla } from './moxen/MoxenMalla';
-import { MoxenRayas, MoxenRayasTheme, MoxenRayasVariant } from './moxen/MoxenRayas';
 import { MoxenEclipseToggle } from './moxen/MoxenEclipseToggle';
 
 interface SettingsViewProps {
@@ -74,9 +73,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   
   const [activeSubTab, setActiveSubTab] = useState<SettingsSubTab>('preferences');
   const [currentCurrency, setCurrentCurrency] = useState<string>(getSavedCurrencySymbol);
-  const [testRayasProgress, setTestRayasProgress] = useState<number>(0.65);
-  const [testRayasTheme, setTestRayasTheme] = useState<MoxenRayasTheme>('cyan');
-  const [testRayasVariant, setTestRayasVariant] = useState<MoxenRayasVariant>('hero');
   const [savingsTarget, setSavingsTarget] = useState<number>(getSavedSavingsTarget);
   const [audioTesting, setAudioTesting] = useState(false);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(notificationService.getPermission());
@@ -885,49 +881,47 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </div>
         )}
 
-        {/* ===================== TAB 2: APARIENCIA & VISIÓN (ÓPTICA + MALLA + RAYAS) ===================== */}
+        {/* ===================== TAB 2: APARIENCIA & VISIÓN (SISTEMA ÓPTICO & ATMÓSFERA) ===================== */}
         {activeSubTab === 'atmosphere' && (
-          <div className="space-y-6 animate-fade-in">
-            {/* HERO CARD: SISTEMA ÓPTICO TÁCTICO & CONTROL ECLIPSE MOXEN */}
-            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-xl p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
+          <div className="space-y-4 animate-fade-in">
+            {/* HERO CARD COMPACTA: SISTEMA ÓPTICO TÁCTICO & CONTROL ECLIPSE MOXEN */}
+            <div className="w-full rounded-2xl bg-[#030816]/85 backdrop-blur-xl p-4 sm:p-5 border border-white/10 shadow-[0_8px_25px_rgba(0,0,0,0.35)] relative overflow-hidden space-y-3">
               <span className="vi-grano opacity-5" aria-hidden="true" />
               
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
-                <div>
-                  <div className="flex items-center gap-2 text-cyan-400 text-xs font-mono font-bold uppercase tracking-widest mb-1">
-                    <Eye className="w-4 h-4 text-cyan-400" /> Sistema Óptico Táctico
+              {/* CABECERA INTEGRADA: Título + Interruptor Eclipse alineados horizontalmente */}
+              <div className="flex items-center justify-between gap-3 relative z-10">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 text-cyan-400 text-[10px] font-mono font-bold uppercase tracking-widest mb-0.5">
+                    <Eye className="w-3.5 h-3.5 text-cyan-400 shrink-0" /> Sistema Óptico
                   </div>
-                  <h3 className="text-base sm:text-lg font-anton uppercase tracking-wide text-white">
+                  <h3 className="text-sm sm:text-base font-anton uppercase tracking-wide text-white truncate">
                     Modo de Visión & Eclipse Boreal
                   </h3>
-                  <p className="text-xs text-slate-400 mt-1 max-w-lg">
-                    Toca el interruptor cinemático del Eclipse para avanzar entre fases, o selecciona directamente el modo deseado.
-                  </p>
-                </div>
-
-                {/* CONTROL KINÉTICO DEL ECLIPSE */}
-                <div className="flex items-center gap-3 self-start sm:self-auto bg-black/40 p-2 sm:p-2.5 rounded-2xl border border-white/10 shrink-0">
-                  <div className="text-right">
-                    <span className="text-[10px] font-mono text-slate-400 block uppercase">Fase Eclipse</span>
-                    <span className="text-xs font-anton text-cyan-300 uppercase tracking-wider block">
+                  <p className="text-[11px] text-slate-400 truncate">
+                    Fase activa:{' '}
+                    <span className="text-cyan-300 font-bold uppercase">
                       {opticMode === 'aurora' && '🌌 Aurora Neón'}
                       {opticMode === 'noir' && '🌑 Noir Oscuro'}
                       {opticMode === 'eink' && '☀️ Noir Claro'}
                       {opticMode === 'cobalt' && '🌊 Cobalto Azul'}
                     </span>
-                  </div>
+                  </p>
+                </div>
+
+                {/* INTERRUPTOR KINÉTICO DEL ECLIPSE COMPACTO */}
+                <div className="flex items-center gap-2 bg-black/50 p-1.5 sm:p-2 rounded-xl border border-white/10 shrink-0">
                   <MoxenEclipseToggle
                     opticMode={opticMode}
                     onSelectMode={(mode) => {
                       setOpticMode(mode);
                     }}
-                    size="lg"
+                    size="md"
                   />
                 </div>
               </div>
 
-              {/* SELECTOR SEGMENTADO RESPONSIVE DE 4 MODOS */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2 relative z-10">
+              {/* SELECTOR DE 4 MODOS EN BARRA DE PÍLDORAS COMPACTA */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 p-1 bg-black/40 rounded-xl border border-white/10 relative z-10">
                 {/* MODO 1: AURORA NEÓN */}
                 <button
                   type="button"
@@ -935,17 +929,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     soundFX.playClick();
                     setOpticMode('aurora');
                   }}
-                  className={`chicle-btn p-3.5 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                  className={`chicle-btn px-2.5 py-2 rounded-lg border flex items-center justify-center gap-2 transition-all cursor-pointer ${
                     opticMode === 'aurora'
-                      ? 'bg-cyan-500/20 border-cyan-400 text-white shadow-[0_0_18px_rgba(0,240,255,0.35)] ring-1 ring-cyan-400 optic-active-card'
-                      : 'bg-white/[0.03] border-white/10 text-slate-400 hover:text-white hover:border-white/20'
+                      ? 'bg-cyan-500/25 border-cyan-400 text-white shadow-[0_0_12px_rgba(0,240,255,0.35)] ring-1 ring-cyan-400 font-bold optic-active-card'
+                      : 'bg-transparent border-transparent text-slate-400 hover:text-white hover:bg-white/[0.05]'
                   }`}
                 >
-                  <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-cyan-400 via-purple-500 to-pink-500 flex items-center justify-center text-sm shadow-sm optic-inner-badge">
-                    ✨
-                  </div>
-                  <span className="text-xs font-anton tracking-wider uppercase">Aurora Neón</span>
-                  <span className="text-[9px] font-mono text-slate-400">Color Pleno</span>
+                  <span className="text-sm">✨</span>
+                  <span className="text-xs font-anton tracking-wider uppercase">Aurora</span>
                 </button>
 
                 {/* MODO 2: NOIR OSCURO (B&W MANGA) */}
@@ -955,17 +946,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     soundFX.playClick();
                     setOpticMode('noir');
                   }}
-                  className={`chicle-btn p-3.5 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                  className={`chicle-btn px-2.5 py-2 rounded-lg border flex items-center justify-center gap-2 transition-all cursor-pointer ${
                     opticMode === 'noir'
-                      ? 'bg-white/15 border-white text-white shadow-[0_0_18px_rgba(255,255,255,0.25)] ring-1 ring-white optic-active-card'
-                      : 'bg-white/[0.03] border-white/10 text-slate-400 hover:text-white hover:border-white/20'
+                      ? 'bg-white/20 border-white text-white shadow-[0_0_12px_rgba(255,255,255,0.25)] ring-1 ring-white font-bold optic-active-card'
+                      : 'bg-transparent border-transparent text-slate-400 hover:text-white hover:bg-white/[0.05]'
                   }`}
                 >
-                  <div className="w-7 h-7 rounded-lg bg-black border border-white/40 flex items-center justify-center text-xs text-white font-mono font-black optic-inner-badge">
-                    B&W
-                  </div>
+                  <span className="text-sm">🌑</span>
                   <span className="text-xs font-anton tracking-wider uppercase">Noir Oscuro</span>
-                  <span className="text-[9px] font-mono text-slate-400">Manga Táctico</span>
                 </button>
 
                 {/* MODO 3: NOIR CLARO (MANGA B&W TINTA PURA SOBRE PAPEL BLANCO) */}
@@ -975,17 +963,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     soundFX.playClick();
                     setOpticMode('eink');
                   }}
-                  className={`chicle-btn p-3.5 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                  className={`chicle-btn px-2.5 py-2 rounded-lg border flex items-center justify-center gap-2 transition-all cursor-pointer ${
                     opticMode === 'eink'
-                      ? 'bg-white border-white text-black shadow-[0_0_18px_rgba(255,255,255,0.4)] ring-2 ring-white font-bold optic-active-card'
-                      : 'bg-white/[0.03] border-white/10 text-slate-400 hover:text-white hover:border-white/20'
+                      ? 'bg-white border-white text-black shadow-[0_0_12px_rgba(255,255,255,0.4)] ring-2 ring-white font-bold optic-active-card'
+                      : 'bg-transparent border-transparent text-slate-400 hover:text-white hover:bg-white/[0.05]'
                   }`}
                 >
-                  <div className="w-7 h-7 rounded-lg bg-white border border-black/40 flex items-center justify-center text-xs text-black font-mono font-black shadow-sm optic-inner-badge">
-                    B&W
-                  </div>
+                  <span className="text-sm">☀️</span>
                   <span className="text-xs font-anton tracking-wider uppercase">Noir Claro</span>
-                  <span className="text-[9px] font-mono">Manga Blanco</span>
                 </button>
 
                 {/* MODO 4: CYBER COBALTO (AZUL & BLANCO MONOCROMO) */}
@@ -995,17 +980,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     soundFX.playClick();
                     setOpticMode('cobalt');
                   }}
-                  className={`chicle-btn p-3.5 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                  className={`chicle-btn px-2.5 py-2 rounded-lg border flex items-center justify-center gap-2 transition-all cursor-pointer ${
                     opticMode === 'cobalt'
-                      ? 'bg-blue-600/25 border-blue-400 text-blue-200 shadow-[0_0_18px_rgba(96,165,250,0.35)] ring-1 ring-blue-400 optic-active-card'
-                      : 'bg-white/[0.03] border-white/10 text-slate-400 hover:text-white hover:border-white/20'
+                      ? 'bg-blue-600/30 border-blue-400 text-blue-100 shadow-[0_0_12px_rgba(96,165,250,0.35)] ring-1 ring-blue-400 font-bold optic-active-card'
+                      : 'bg-transparent border-transparent text-slate-400 hover:text-white hover:bg-white/[0.05]'
                   }`}
                 >
-                  <div className="w-7 h-7 rounded-lg bg-gradient-to-b from-blue-500 to-indigo-900 border border-blue-300 flex items-center justify-center text-xs text-white optic-inner-badge">
-                    🌊
-                  </div>
-                  <span className="text-xs font-anton tracking-wider uppercase">Cobalto Azul</span>
-                  <span className="text-[9px] font-mono text-slate-400">Zafiro Táctico</span>
+                  <span className="text-sm">🌊</span>
+                  <span className="text-xs font-anton tracking-wider uppercase">Cobalto</span>
                 </button>
               </div>
             </div>
@@ -1034,120 +1016,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     setSystemAura(null);
                   }}
                 />
-              </div>
-            </div>
-
-            {/* Laboratorio de Telemetría Táctica (Moxen Rayas) */}
-            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-xl p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
-              <span className="vi-grano opacity-5" aria-hidden="true" />
-              <div className="relative z-10">
-                <div className="flex items-center gap-2 text-cyan-400 text-xs font-mono font-bold uppercase tracking-widest mb-1">
-                  <Zap className="w-4 h-4 text-cyan-400" /> Laboratorio Moxen Rayas
-                </div>
-                <h3 className="text-base sm:text-lg font-anton uppercase tracking-wide text-white">
-                  Telemetría & Rayas Dinámicas
-                </h3>
-                <p className="text-xs text-slate-400 mt-1">
-                  Física de resorte continuo, contra-desplazamiento a 45° y odómetro numérico mecánico.
-                </p>
-              </div>
-
-              <div className="p-4 rounded-xl bg-black/80 border border-white/10 space-y-4">
-                <MoxenRayas
-                  progress={testRayasProgress}
-                  variant={testRayasVariant}
-                  theme={testRayasTheme}
-                  mode="active"
-                  title="Calibración Táctica Cuántica"
-                  subtitle="Transferencia de paquetes neuronales"
-                  totalUnits={250}
-                  unitLabel="MB"
-                  showOdometer={true}
-                  showTimeRemaining={true}
-                />
-
-                {/* Controles interactivos en vivo */}
-                <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-white/10">
-                  {/* Selector de porcentajes */}
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="text-[10px] font-mono text-slate-400 mr-1 uppercase">Progreso:</span>
-                    <button
-                      type="button"
-                      onClick={() => setTestRayasProgress(0.25)}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
-                        testRayasProgress === 0.25 ? 'bg-cyan-500 text-black' : 'bg-white/10 text-slate-300 hover:text-white'
-                      }`}
-                    >
-                      25%
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setTestRayasProgress(0.7)}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
-                        testRayasProgress === 0.7 ? 'bg-cyan-500 text-black' : 'bg-white/10 text-slate-300 hover:text-white'
-                      }`}
-                    >
-                      70%
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        soundFX.playLevelUp();
-                        setTestRayasProgress(1);
-                      }}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
-                        testRayasProgress === 1 ? 'bg-emerald-400 text-black shadow-[0_0_12px_rgba(52,211,153,0.6)]' : 'bg-white/10 text-slate-300 hover:text-white'
-                      }`}
-                    >
-                      100% (✓)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setTestRayasProgress(0)}
-                      className="px-2 py-1 rounded-lg text-xs font-mono text-slate-400 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
-                    >
-                      0%
-                    </button>
-                  </div>
-
-                  {/* Selector de temas */}
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] font-mono text-slate-400 mr-1 uppercase">Color:</span>
-                    {(['cyan', 'purple', 'amber', 'rose', 'emerald'] as MoxenRayasTheme[]).map((thm) => (
-                      <button
-                        key={thm}
-                        type="button"
-                        onClick={() => setTestRayasTheme(thm)}
-                        className={`w-6 h-6 rounded-full border-2 transition-transform cursor-pointer ${
-                          testRayasTheme === thm ? 'scale-125 border-white' : 'border-transparent opacity-70 hover:opacity-100'
-                        } ${
-                          thm === 'cyan' ? 'bg-cyan-400' :
-                          thm === 'purple' ? 'bg-purple-500' :
-                          thm === 'amber' ? 'bg-amber-400' :
-                          thm === 'rose' ? 'bg-rose-500' : 'bg-emerald-400'
-                        }`}
-                        title={thm}
-                      />
-                    ))}
-                  </div>
-
-                  {/* Selector de tamaño */}
-                  <div className="flex items-center gap-1.5 ml-auto">
-                    <span className="text-[10px] font-mono text-slate-400 mr-1 uppercase">Tamaño:</span>
-                    {(['hero', 'compact', 'slim'] as MoxenRayasVariant[]).map((v) => (
-                      <button
-                        key={v}
-                        type="button"
-                        onClick={() => setTestRayasVariant(v)}
-                        className={`px-2 py-0.5 rounded text-[10px] font-mono uppercase transition-all cursor-pointer ${
-                          testRayasVariant === v ? 'bg-white/20 text-white font-bold' : 'text-slate-400 hover:text-white'
-                        }`}
-                      >
-                        {v}
-                      </button>
-                    ))}
-                  </div>
-                </div>
               </div>
             </div>
           </div>

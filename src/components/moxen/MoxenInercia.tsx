@@ -102,23 +102,20 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
 
     function pinta(dt: number) {
       if (!pista) return;
-      // Inclinación suave con la velocidad (efecto empuje)
-      const vel = dt ? (x - xAntes) / dt : 0;
-      xAntes = x;
-      inclina +=
-        (Math.max(-4, Math.min(4, -vel / 450)) - inclina) * (1 - Math.exp(-dt * 10));
-      pista.style.transform = `translate3d(${x.toFixed(2)}px, 0, 0) skewX(${inclina.toFixed(2)}deg)`;
+      // Posición 100% directa en GPU sin distorsiones ni invalidación de fuentes
+      pista.style.transform = `translate3d(${x.toFixed(2)}px, 0, 0)`;
 
-      /* Paralaje interior: figura hacia el centro y número hacia fuera */
+      /* Paralaje interior continuo: suave y sin saltos abruptos de entrada/salida */
       if (!reduce) {
+        const divisor = anchoVentana || 1;
         capas.forEach((k) => {
-          const d = (k.c + x - anchoVentana / 2) / anchoVentana;
-          if (Math.abs(d) > 0.95) return;
+          const d = (k.c + x - anchoVentana / 2) / divisor;
+          const clampedD = Math.max(-1.5, Math.min(1.5, d));
           if (k.forma) {
-            k.forma.style.translate = `${(-d * 42).toFixed(1)}px 0`;
+            k.forma.style.transform = `translate3d(${(-clampedD * 24).toFixed(1)}px, 0, 0)`;
           }
           if (k.fondo) {
-            k.fondo.style.translate = `${(d * 55).toFixed(1)}px 0`;
+            k.fondo.style.transform = `translate3d(${(clampedD * 36).toFixed(1)}px, 0, 0)`;
           }
         });
       }
@@ -144,9 +141,8 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
 
       quieto =
         !agarre &&
-        Math.abs(x - meta) < 0.3 &&
-        Math.abs(v) < 2 &&
-        Math.abs(inclina) < 0.01;
+        Math.abs(x - meta) < 0.25 &&
+        Math.abs(v) < 1.5;
 
       if (quieto) {
         x = meta;
@@ -181,7 +177,7 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
       despierta();
     }
 
-    // ── Arrastre nativo por Pointer Events ──
+    // ── Arrastre nativo por Pointer Events de latencia CERO ──
     const onPointerDown = (e: PointerEvent) => {
       if (e.button !== 0) return;
       mide();
@@ -198,7 +194,7 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
     const onPointerMove = (e: PointerEvent) => {
       if (!agarre || e.pointerId !== agarre.id) return;
       const d = e.clientX - agarre.px;
-      if (Math.abs(d) > 4) agarre.movido = true;
+      if (Math.abs(d) > 3) agarre.movido = true;
       x = estira(agarre.x0 + d);
       muestras.push({ t: performance.now(), x: e.clientX });
       while (
@@ -207,6 +203,8 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
       ) {
         muestras.shift();
       }
+      // Actualización directa e inmediata para erradicar cualquier latencia táctil
+      pinta(0);
     };
 
     const suelta = (e: PointerEvent) => {
@@ -300,19 +298,23 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
     carruselRef.current = carrusel;
 
     // Actualización GPU en tiempo real de la barra y el odómetro (CERO re-renders de React)
+    let ultimoIndice = -1;
     carrusel.alMover((avance, indice) => {
       if (barraFillRef.current) {
         const fill = 0.08 + 0.92 * avance;
         barraFillRef.current.style.transform = `scaleX(${fill.toFixed(4)})`;
       }
-      if (rodilloActualRef.current) {
-        rodilloActualRef.current.style.transform = `translateY(${-indice * 1.25}em)`;
-      }
-      if (prevBtnRef.current) {
-        prevBtnRef.current.disabled = indice === 0;
-      }
-      if (nextBtnRef.current) {
-        nextBtnRef.current.disabled = indice >= totalItems - 1;
+      if (indice !== ultimoIndice) {
+        ultimoIndice = indice;
+        if (rodilloActualRef.current) {
+          rodilloActualRef.current.style.transform = `translateY(${-indice * 1.25}em)`;
+        }
+        if (prevBtnRef.current) {
+          prevBtnRef.current.disabled = indice === 0;
+        }
+        if (nextBtnRef.current) {
+          nextBtnRef.current.disabled = indice >= totalItems - 1;
+        }
       }
     });
 

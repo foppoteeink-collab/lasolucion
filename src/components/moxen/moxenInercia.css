@@ -50,7 +50,6 @@
   flex: none;
   width: var(--in-ancho);
   height: 355px;
-  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
   position: relative;
   border-radius: 24px;
   overflow: hidden;
@@ -58,9 +57,11 @@
   flex-direction: column;
   justify-content: space-between;
   box-sizing: border-box;
-  contain: layout style paint;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+  touch-action: pan-y;
 }
 
 @media (max-width: 640px) {
@@ -69,15 +70,12 @@
   }
 }
 
-/* Al agarrar, las tarjetas ceden con suavidad para dar peso físico en mano */
-.in-ventana[data-arrastrando] .in-tarjeta {
-  transform: scale(0.965);
-}
-
 /* Capas de paralaje interna aceleradas por GPU */
 .in-forma,
 .in-fondo-num {
-  will-change: translate;
+  will-change: transform;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
 }
