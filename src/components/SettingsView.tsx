@@ -977,7 +977,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   }}
                   className={`chicle-btn p-3.5 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
                     opticMode === 'eink'
-                      ? 'bg-white border-white text-black shadow-[0_0_18px_rgba(255,255,255,0.4)] ring-2 ring-white font-bold'
+                      ? 'bg-white border-white text-black shadow-[0_0_18px_rgba(255,255,255,0.4)] ring-2 ring-white font-bold optic-active-card'
                       : 'bg-white/[0.03] border-white/10 text-slate-400 hover:text-white hover:border-white/20'
                   }`}
                 >
