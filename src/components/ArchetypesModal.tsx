@@ -135,11 +135,11 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-[150] flex items-center justify-center p-2.5 sm:p-4 bg-black/85 backdrop-blur-md animate-fade-in font-sans"
+      className="fixed inset-0 z-[150] flex items-center justify-center p-2 sm:p-4 bg-black/85 backdrop-blur-md animate-fade-in font-sans overflow-hidden"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-4xl max-h-[94dvh] sm:max-h-[90vh] flex flex-col rounded-2xl sm:rounded-3xl bg-[#030712]/95 border border-cyan-500/35 shadow-[0_0_50px_rgba(0,240,255,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] relative overflow-hidden backdrop-blur-2xl text-white text-left"
+        className="w-full max-w-4xl max-h-[96dvh] sm:max-h-[90vh] flex flex-col rounded-2xl sm:rounded-3xl bg-[#030712]/95 border border-cyan-500/35 shadow-[0_0_50px_rgba(0,240,255,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] relative overflow-hidden backdrop-blur-2xl text-white text-left"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Micrograno táctil Moxen Vidrio */}
@@ -150,18 +150,18 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent pointer-events-none" />
 
-        {/* Header con título y switch de vista */}
-        <div className="p-3.5 sm:p-5 border-b border-white/10 flex items-center justify-between bg-[#010810]/80 shrink-0 relative z-10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-cyan-950/80 border border-cyan-400 flex items-center justify-center shadow-[0_0_15px_rgba(0,240,255,0.4)]">
-              <Sparkles className="w-5 h-5 text-cyan-300" />
+        {/* Header compacto con título y botón de cierre */}
+        <div className="px-3.5 py-2.5 sm:px-5 sm:py-3.5 border-b border-white/10 flex items-center justify-between bg-[#010810]/90 shrink-0 relative z-10">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-cyan-950/80 border border-cyan-400 flex items-center justify-center shadow-[0_0_12px_rgba(0,240,255,0.4)]">
+              <Sparkles className="w-4 h-4 text-cyan-300" />
             </div>
             <div>
-              <h3 className="font-anton text-cyan-300 uppercase tracking-wide text-sm sm:text-base">
-                Los 12 Arquetipos Jungianos & Compañeros KAI
+              <h3 className="font-anton text-cyan-300 uppercase tracking-wide text-xs sm:text-base">
+                Los 12 Arquetipos Jungianos & KAI
               </h3>
-              <p className="text-[11px] text-slate-300 font-mono mt-0.5 hidden sm:block">
-                Desliza con inercia para calibrar tu resonancia psicológica en el Sistema
+              <p className="text-[10px] text-slate-400 font-mono hidden sm:block">
+                Navegación cíclica continua · Calibra tu resonancia psíquica en el Sistema
               </p>
             </div>
           </div>
@@ -169,7 +169,7 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={onClose}
-              className="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
+              className="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
               title="Cerrar modal"
             >
               <X className="w-5 h-5" />
@@ -178,7 +178,7 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
         </div>
 
         {/* Contenido: Carrusel Cinético (Moxen Inercia) con Ficha Holográfica de Élite */}
-        <div className="flex-1 overflow-hidden flex flex-col justify-center py-2 sm:py-3 min-h-0">
+        <div className="flex-1 overflow-hidden flex flex-col justify-center py-1 sm:py-2 min-h-0">
           <MoxenInercia
             initialIndex={initialIndex}
             friccion={4}
@@ -195,7 +195,7 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
               return (
                 <div
                   key={arch.id}
-                  className={`relative w-full h-full p-4 sm:p-5 flex flex-col justify-between overflow-hidden rounded-[26px] border select-none transition-all duration-300 ${
+                  className={`relative w-full h-full p-3.5 sm:p-5 flex flex-col justify-between overflow-hidden rounded-[20px] sm:rounded-[24px] border select-none transition-all duration-300 ${
                     isSelected
                       ? 'border-2 shadow-[0_0_35px_rgba(0,0,0,0.8)]'
                       : 'border-white/10 hover:border-white/20'
@@ -223,31 +223,34 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
 
                   {/* 1. Header de Telemetría: Número de Arquetipo + Chip de Bonificación */}
                   <div className="relative z-10 flex items-center justify-between gap-2 shrink-0">
-                    <div className="flex items-center gap-1.5 bg-black/60 px-2.5 py-1 rounded-lg border border-white/10">
+                    <div className="flex items-center gap-1.5 font-mono text-[10px] sm:text-[10.5px] font-bold tracking-widest text-slate-300">
                       <span
-                        className="w-1.5 h-1.5 rounded-full animate-pulse"
-                        style={{ backgroundColor: theme.accent }}
+                        className="w-1.5 h-1.5 rounded-full animate-pulse shadow-sm"
+                        style={{
+                          backgroundColor: theme.accent,
+                          boxShadow: `0 0 8px ${theme.accent}`,
+                        }}
                       />
-                      <span className="text-[10px] font-mono tracking-widest font-black uppercase text-slate-300">
-                        #{cardNum}
-                      </span>
+                      <span>ARQUETIPO #{cardNum}</span>
                     </div>
 
                     <span
-                      className={`text-[10px] font-mono px-2.5 py-1 rounded-full font-bold border flex items-center gap-1.5 backdrop-blur-md ${theme.statPill}`}
+                      className={`text-[9.5px] sm:text-[10px] font-mono px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full font-bold border flex items-center gap-1 backdrop-blur-md ${theme.statPill}`}
                     >
                       <Sparkles className="w-3 h-3" style={{ color: theme.accent }} />
                       {arch.statBonus}
                     </span>
                   </div>
 
-                  {/* 2. Hero de Identidad: Avatar Resonante + Nombre + Sinergia KAI */}
-                  <div className="relative z-10 flex items-center gap-3.5 my-1.5 p-3 rounded-2xl bg-black/35 border border-white/10 backdrop-blur-md shrink-0">
+                  {/* 2. Hero de Identidad (Diseño abierto sin cuadros anidados) */}
+                  <div className="relative z-10 flex items-center gap-3 my-1 sm:my-2 shrink-0">
+                    {/* Medallón Elemental Flotante */}
                     <div
-                      className="in-forma w-14 h-14 rounded-2xl bg-gradient-to-b from-black/90 to-slate-950 border flex items-center justify-center text-3xl shrink-0 transition-transform"
+                      className="in-forma w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl flex items-center justify-center text-2xl sm:text-3xl shrink-0 transition-transform"
                       style={{
-                        borderColor: `${theme.accent}88`,
-                        boxShadow: `0 0 20px ${theme.glow}, inset 0 1px 2px rgba(255,255,255,0.35)`,
+                        background: `radial-gradient(circle, ${theme.accent}33 0%, rgba(3,7,18,0.85) 80%)`,
+                        border: `1.5px solid ${theme.accent}aa`,
+                        boxShadow: `0 0 20px ${theme.glow}, inset 0 1px 2px rgba(255,255,255,0.3)`,
                       }}
                     >
                       <span className="relative z-10 drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)]">
@@ -259,85 +262,67 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
                       <h4 className="font-anton text-base sm:text-lg uppercase tracking-wider text-white truncate drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
                         {arch.name}
                       </h4>
-                      <div className="mt-1 flex items-center gap-1.5 flex-wrap">
-                        <span
-                          className="text-[9.5px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-md font-semibold border flex items-center gap-1"
-                          style={{
-                            backgroundColor: `${theme.accent}15`,
-                            borderColor: `${theme.accent}40`,
-                            color: theme.accent,
-                          }}
-                        >
-                          <span>KAI: {arch.companion?.title}</span>
-                          <span>{arch.companion?.icon}</span>
-                        </span>
-                      </div>
+                      <p
+                        className="text-[10px] sm:text-[11px] font-mono font-medium flex items-center gap-1 mt-0.5 truncate"
+                        style={{ color: theme.accent }}
+                      >
+                        <span className="opacity-75 text-slate-400">KAI:</span>
+                        <span className="font-bold">{arch.companion?.title}</span>
+                        <span>{arch.companion?.icon}</span>
+                      </p>
                     </div>
                   </div>
 
-                  {/* 3. Manifiesto / Descripción Psicológica (Glassmorphism Continuo) */}
-                  <div className="relative z-10 p-3 rounded-xl bg-black/30 border border-white/5 my-1 backdrop-blur-sm">
-                    <p className="text-[11px] sm:text-[11.5px] text-slate-200/90 leading-relaxed font-sans italic">
+                  {/* 3. Manifiesto Psicológico (Estilo códice abierto con barra lateral) */}
+                  <div
+                    className="relative z-10 my-0.5 sm:my-1 pl-3 border-l-2 py-0.5 shrink-0"
+                    style={{ borderColor: `${theme.accent}aa` }}
+                  >
+                    <p className="text-[11px] sm:text-[11.5px] text-slate-200/90 leading-snug sm:leading-relaxed font-sans italic line-clamp-3">
                       &ldquo;{arch.description}&rdquo;
                     </p>
                   </div>
 
-                  {/* 4. Vectores Tácticos de Resonancia (Deseo & Sombra sin cajas toscas) */}
-                  <div className="relative z-10 space-y-1.5 my-1 text-[10px] sm:text-[11px] font-mono">
+                  {/* 4. Vectores Tácticos (Deseo & Sombra abiertos entre líneas divisoras) */}
+                  <div className="relative z-10 space-y-1.5 my-1 sm:my-1.5 py-1.5 sm:py-2 border-t border-b border-white/10 text-[10px] sm:text-[10.5px] font-mono">
                     {/* Impulso Primario (Deseo) */}
-                    <div
-                      className="p-2 rounded-xl border flex items-start gap-2 backdrop-blur-sm"
-                      style={{
-                        backgroundColor: 'rgba(0,0,0,0.35)',
-                        borderColor: `${theme.accent}33`,
-                      }}
-                    >
-                      <Target
-                        className="w-3.5 h-3.5 shrink-0 mt-0.5"
-                        style={{ color: theme.accent }}
-                      />
-                      <div className="leading-tight">
-                        <span
-                          className="font-black text-[9px] uppercase tracking-wider block mb-0.5"
-                          style={{ color: theme.accent }}
-                        >
-                          Impulso Primario · Deseo
-                        </span>
-                        <span className="text-slate-200 font-medium">{arch.desire}</span>
-                      </div>
+                    <div className="flex items-start gap-2">
+                      <span
+                        className="font-black text-[8.5px] sm:text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded shrink-0 mt-0.5"
+                        style={{
+                          backgroundColor: `${theme.accent}25`,
+                          color: theme.accent,
+                        }}
+                      >
+                        DESEO
+                      </span>
+                      <span className="text-slate-200 leading-tight">{arch.desire}</span>
                     </div>
 
                     {/* Punto Ciego (Sombra / Miedo) */}
-                    <div className="p-2 rounded-xl bg-black/35 border border-rose-500/20 flex items-start gap-2 backdrop-blur-sm">
-                      <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-rose-400" />
-                      <div className="leading-tight">
-                        <span className="font-black text-[9px] uppercase tracking-wider text-rose-400 block mb-0.5">
-                          Punto Ciego · Sombra / Miedo
-                        </span>
-                        <span className="text-slate-300 font-medium">{arch.fear}</span>
-                      </div>
+                    <div className="flex items-start gap-2">
+                      <span className="font-black text-[8.5px] sm:text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 shrink-0 mt-0.5">
+                        SOMBRA
+                      </span>
+                      <span className="text-slate-300 leading-tight">{arch.fear}</span>
                     </div>
                   </div>
 
                   {/* 5. Footer: Atributo + Botón de Activación Holográfico */}
-                  <div className="relative z-10 pt-2 border-t border-white/10 flex items-center justify-between gap-2 shrink-0">
-                    <div className="flex items-center gap-1.5 text-[10px] font-mono text-slate-400 uppercase">
+                  <div className="relative z-10 pt-1 flex items-center justify-between gap-2 shrink-0">
+                    <div className="flex items-center gap-1 text-[10px] font-mono text-slate-400 uppercase tracking-wide">
                       <span>Atributo:</span>
-                      <strong
-                        className="font-bold px-2 py-0.5 rounded-md border text-[10px] capitalize"
-                        style={{
-                          backgroundColor: `${theme.accent}15`,
-                          borderColor: `${theme.accent}30`,
-                          color: theme.accent,
-                        }}
+                      <span
+                        className="font-bold capitalize"
+                        style={{ color: theme.accent }}
                       >
                         {arch.primaryStat}
-                      </strong>
+                      </span>
                     </div>
 
                     {isSelected ? (
                       <span
-                        className="py-2 px-3.5 flex items-center justify-center gap-1.5 text-[11px] font-mono font-bold uppercase rounded-xl border shadow-[0_0_15px_rgba(0,0,0,0.6)]"
+                        className="py-1.5 px-3 flex items-center justify-center gap-1.5 text-[10.5px] font-mono font-bold uppercase rounded-xl border shadow-[0_0_15px_rgba(0,0,0,0.6)]"
                         style={{
                           backgroundColor: `${theme.accent}20`,
                           borderColor: theme.accent,
@@ -357,7 +342,7 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
                           onSelectArchetype(arch);
                           onClose();
                         }}
-                        className="py-2 px-4 font-anton uppercase text-[11.5px] rounded-xl cursor-pointer transition-all active:scale-95 flex items-center gap-1.5 font-bold tracking-wide"
+                        className="py-1.5 px-3.5 font-anton uppercase text-[11px] rounded-xl cursor-pointer transition-all active:scale-95 flex items-center gap-1.5 font-bold tracking-wide"
                         style={{
                           background: `linear-gradient(135deg, ${theme.accent}, ${theme.accent}cc)`,
                           color: '#030712',
@@ -365,8 +350,8 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
                           border: `1px solid ${theme.accent}`,
                         }}
                       >
-                        <Zap className="w-3.5 h-3.5 fill-black stroke-black" />
-                        <span>Sincronizar</span>
+                        <Zap className="w-3 h-3 fill-black stroke-black" />
+                        <span>Activar Arquetipo</span>
                       </button>
                     )}
                   </div>
@@ -376,10 +361,10 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
           </MoxenInercia>
         </div>
 
-        {/* Pinned Footer (Ergonomía del Pulgar) */}
-        <div className="p-3 sm:p-4 border-t border-white/10 bg-[#010810]/90 flex items-center justify-between shrink-0 relative z-10">
-          <p className="text-[10px] sm:text-xs text-slate-400 font-mono hidden sm:block">
-            Arrastra con impulso táctil o usa las flechas para explorar los 12 arquetipos.
+        {/* Pinned Footer Compacto (Ergonomía del Pulgar) */}
+        <div className="py-2 px-3 sm:px-4 border-t border-white/10 bg-[#010810]/95 flex items-center justify-between shrink-0 relative z-10">
+          <p className="text-[10px] text-slate-400 font-mono hidden sm:block">
+            Navegación en bucle infinito continua: del #12 pasa al #01 directamente.
           </p>
           <button
             type="button"
@@ -387,7 +372,7 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
               soundFX.playClick();
               onClose();
             }}
-            className="w-full sm:w-auto px-5 py-2.5 bg-white/[0.05] hover:bg-white/10 text-slate-300 hover:text-white font-anton uppercase text-xs rounded-xl cursor-pointer transition-all border border-white/15 active:scale-95 ml-auto"
+            className="w-full sm:w-auto px-4 py-1.5 bg-white/[0.05] hover:bg-white/10 text-slate-300 hover:text-white font-anton uppercase text-xs rounded-xl cursor-pointer transition-all border border-white/15 active:scale-95 ml-auto"
           >
             Volver
           </button>

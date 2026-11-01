@@ -218,7 +218,13 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
       if (x > 0 || x < min) v *= o.goma;
 
       const libre = x + v / o.friccion;
-      meta = o.iman ? paradas[cercana(limita(libre))] : limita(libre);
+      if (loop && (x < min - 30 || (cercana(x) === totalItems - 1 && v < -120))) {
+        meta = paradas[0];
+      } else if (loop && (x > 30 || (cercana(x) === 0 && v > 120))) {
+        meta = paradas[totalItems - 1];
+      } else {
+        meta = o.iman ? paradas[cercana(limita(libre))] : limita(libre);
+      }
 
       if (agarre.movido) {
         ventana.addEventListener(
@@ -306,6 +312,7 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
     // Actualización GPU en tiempo real de la barra y el odómetro (CERO re-renders de React)
     let ultimoIndice = -1;
     carrusel.alMover((avance, indice) => {
+      currentIndexRef.current = indice;
       if (barraFillRef.current) {
         const fill = 0.08 + 0.92 * avance;
         barraFillRef.current.style.transform = `scaleX(${fill.toFixed(4)})`;
