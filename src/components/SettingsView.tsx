@@ -937,11 +937,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   }}
                   className={`chicle-btn p-3.5 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
                     opticMode === 'aurora'
-                      ? 'bg-cyan-500/20 border-cyan-400 text-white shadow-[0_0_18px_rgba(0,240,255,0.35)] ring-1 ring-cyan-400'
+                      ? 'bg-cyan-500/20 border-cyan-400 text-white shadow-[0_0_18px_rgba(0,240,255,0.35)] ring-1 ring-cyan-400 optic-active-card'
                       : 'bg-white/[0.03] border-white/10 text-slate-400 hover:text-white hover:border-white/20'
                   }`}
                 >
-                  <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-cyan-400 via-purple-500 to-pink-500 flex items-center justify-center text-sm shadow-sm">
+                  <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-cyan-400 via-purple-500 to-pink-500 flex items-center justify-center text-sm shadow-sm optic-inner-badge">
                     ✨
                   </div>
                   <span className="text-xs font-anton tracking-wider uppercase">Aurora Neón</span>
@@ -957,11 +957,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   }}
                   className={`chicle-btn p-3.5 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
                     opticMode === 'noir'
-                      ? 'bg-white/15 border-white text-white shadow-[0_0_18px_rgba(255,255,255,0.25)] ring-1 ring-white'
+                      ? 'bg-white/15 border-white text-white shadow-[0_0_18px_rgba(255,255,255,0.25)] ring-1 ring-white optic-active-card'
                       : 'bg-white/[0.03] border-white/10 text-slate-400 hover:text-white hover:border-white/20'
                   }`}
                 >
-                  <div className="w-7 h-7 rounded-lg bg-black border border-white/40 flex items-center justify-center text-xs text-white font-mono font-black">
+                  <div className="w-7 h-7 rounded-lg bg-black border border-white/40 flex items-center justify-center text-xs text-white font-mono font-black optic-inner-badge">
                     B&W
                   </div>
                   <span className="text-xs font-anton tracking-wider uppercase">Noir Oscuro</span>
@@ -981,11 +981,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       : 'bg-white/[0.03] border-white/10 text-slate-400 hover:text-white hover:border-white/20'
                   }`}
                 >
-                  <div className="w-7 h-7 rounded-lg bg-white border border-black/40 flex items-center justify-center text-xs text-black font-mono font-black shadow-sm">
+                  <div className="w-7 h-7 rounded-lg bg-white border border-black/40 flex items-center justify-center text-xs text-black font-mono font-black shadow-sm optic-inner-badge">
                     B&W
                   </div>
                   <span className="text-xs font-anton tracking-wider uppercase">Noir Claro</span>
-                  <span className="text-[9px] font-mono text-slate-400">Manga Blanco</span>
+                  <span className="text-[9px] font-mono">Manga Blanco</span>
                 </button>
 
                 {/* MODO 4: CYBER COBALTO (AZUL & BLANCO MONOCROMO) */}
@@ -997,11 +997,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   }}
                   className={`chicle-btn p-3.5 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
                     opticMode === 'cobalt'
-                      ? 'bg-blue-600/25 border-blue-400 text-blue-200 shadow-[0_0_18px_rgba(96,165,250,0.35)] ring-1 ring-blue-400'
+                      ? 'bg-blue-600/25 border-blue-400 text-blue-200 shadow-[0_0_18px_rgba(96,165,250,0.35)] ring-1 ring-blue-400 optic-active-card'
                       : 'bg-white/[0.03] border-white/10 text-slate-400 hover:text-white hover:border-white/20'
                   }`}
                 >
-                  <div className="w-7 h-7 rounded-lg bg-gradient-to-b from-blue-500 to-indigo-900 border border-blue-300 flex items-center justify-center text-xs text-white">
+                  <div className="w-7 h-7 rounded-lg bg-gradient-to-b from-blue-500 to-indigo-900 border border-blue-300 flex items-center justify-center text-xs text-white optic-inner-badge">
                     🌊
                   </div>
                   <span className="text-xs font-anton tracking-wider uppercase">Cobalto Azul</span>

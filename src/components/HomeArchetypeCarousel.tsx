@@ -1,11 +1,11 @@
 import React, { useState, useMemo } from 'react';
-import { Zap, Check, ChevronDown, ChevronUp, Compass, Sparkles } from 'lucide-react';
+import { Zap, Check, ChevronDown, ChevronUp, Compass } from 'lucide-react';
 import { JUNG_ARCHETYPES, JungArchetype } from '../data/archetypes';
 import { soundFX } from '../utils/audio';
 import { triggerShockwave } from '../utils/celebration';
 import { MoxenInercia } from './moxen/MoxenInercia';
 
-// Definición cromática de alta fidelidad estética para cada uno de los 12 arquetipos
+// Definición cromática de alta fidelidad estética (Sin filtros pesados para 120 FPS limpios)
 const ARCHETYPE_THEMES: Record<
   string,
   {
@@ -19,97 +19,97 @@ const ARCHETYPE_THEMES: Record<
 > = {
   inocente: {
     accent: '#f59e0b',
-    glow: 'rgba(245, 158, 11, 0.35)',
+    glow: 'rgba(245, 158, 11, 0.25)',
     border: 'border-amber-500/50',
-    bgGradient: 'from-amber-500/20 via-yellow-500/5 to-transparent',
+    bgGradient: 'from-[#1c1404] via-[#0d0a02] to-[#040301]',
     roman: 'I',
     statPill: 'bg-amber-500/15 text-amber-300 border-amber-500/40',
   },
   huerfano: {
     accent: '#3b82f6',
-    glow: 'rgba(59, 130, 246, 0.35)',
+    glow: 'rgba(59, 130, 246, 0.25)',
     border: 'border-blue-500/50',
-    bgGradient: 'from-blue-500/20 via-indigo-500/5 to-transparent',
+    bgGradient: 'from-[#06142c] via-[#030a17] to-[#01040a]',
     roman: 'II',
     statPill: 'bg-blue-500/15 text-blue-300 border-blue-500/40',
   },
   heroe: {
     accent: '#ef4444',
-    glow: 'rgba(239, 68, 68, 0.40)',
+    glow: 'rgba(239, 68, 68, 0.25)',
     border: 'border-red-500/50',
-    bgGradient: 'from-red-500/20 via-rose-500/5 to-transparent',
+    bgGradient: 'from-[#220707] via-[#120303] to-[#060101]',
     roman: 'III',
     statPill: 'bg-red-500/15 text-red-300 border-red-500/40',
   },
   cuidador: {
     accent: '#10b981',
-    glow: 'rgba(16, 185, 129, 0.35)',
+    glow: 'rgba(16, 185, 129, 0.25)',
     border: 'border-emerald-500/50',
-    bgGradient: 'from-emerald-500/20 via-teal-500/5 to-transparent',
+    bgGradient: 'from-[#041d14] via-[#020e0a] to-[#010503]',
     roman: 'IV',
     statPill: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40',
   },
   explorador: {
     accent: '#f97316',
-    glow: 'rgba(249, 115, 22, 0.35)',
+    glow: 'rgba(249, 115, 22, 0.25)',
     border: 'border-orange-500/50',
-    bgGradient: 'from-orange-500/20 via-amber-500/5 to-transparent',
+    bgGradient: 'from-[#200f04] via-[#110802] to-[#050201]',
     roman: 'V',
     statPill: 'bg-orange-500/15 text-orange-300 border-orange-500/40',
   },
   rebelde: {
     accent: '#a855f7',
-    glow: 'rgba(168, 85, 247, 0.40)',
+    glow: 'rgba(168, 85, 247, 0.25)',
     border: 'border-purple-500/50',
-    bgGradient: 'from-purple-500/20 via-indigo-500/5 to-transparent',
+    bgGradient: 'from-[#190628] via-[#0d0315] to-[#040107]',
     roman: 'VI',
     statPill: 'bg-purple-500/15 text-purple-300 border-purple-500/40',
   },
   amante: {
     accent: '#f43f5e',
-    glow: 'rgba(244, 63, 94, 0.35)',
+    glow: 'rgba(244, 63, 94, 0.25)',
     border: 'border-rose-500/50',
-    bgGradient: 'from-rose-500/20 via-pink-500/5 to-transparent',
+    bgGradient: 'from-[#22060f] via-[#120308] to-[#050103]',
     roman: 'VII',
     statPill: 'bg-rose-500/15 text-rose-300 border-rose-500/40',
   },
   creador: {
     accent: '#d946ef',
-    glow: 'rgba(217, 70, 239, 0.40)',
+    glow: 'rgba(217, 70, 239, 0.25)',
     border: 'border-fuchsia-500/50',
-    bgGradient: 'from-fuchsia-500/20 via-purple-500/5 to-transparent',
+    bgGradient: 'from-[#210626] via-[#110314] to-[#050106]',
     roman: 'VIII',
     statPill: 'bg-fuchsia-500/15 text-fuchsia-300 border-fuchsia-500/40',
   },
   bufon: {
     accent: '#06b6d4',
-    glow: 'rgba(6, 182, 212, 0.35)',
+    glow: 'rgba(6, 182, 212, 0.25)',
     border: 'border-cyan-500/50',
-    bgGradient: 'from-cyan-500/20 via-teal-500/5 to-transparent',
+    bgGradient: 'from-[#041a22] via-[#020e12] to-[#010406]',
     roman: 'IX',
     statPill: 'bg-cyan-500/15 text-cyan-300 border-cyan-500/40',
   },
   sabio: {
     accent: '#6366f1',
-    glow: 'rgba(99, 102, 241, 0.35)',
+    glow: 'rgba(99, 102, 241, 0.25)',
     border: 'border-indigo-500/50',
-    bgGradient: 'from-indigo-500/20 via-violet-500/5 to-transparent',
+    bgGradient: 'from-[#0b0e27] via-[#050715] to-[#010207]',
     roman: 'X',
     statPill: 'bg-indigo-500/15 text-indigo-300 border-indigo-500/40',
   },
   mago: {
     accent: '#8b5cf6',
-    glow: 'rgba(139, 92, 246, 0.40)',
+    glow: 'rgba(139, 92, 246, 0.25)',
     border: 'border-violet-500/50',
-    bgGradient: 'from-violet-500/20 via-purple-500/5 to-transparent',
+    bgGradient: 'from-[#140828] via-[#0a0415] to-[#030107]',
     roman: 'XI',
     statPill: 'bg-violet-500/15 text-violet-300 border-violet-500/40',
   },
   gobernante: {
     accent: '#eab308',
-    glow: 'rgba(234, 179, 8, 0.35)',
+    glow: 'rgba(234, 179, 8, 0.25)',
     border: 'border-yellow-500/50',
-    bgGradient: 'from-yellow-500/20 via-amber-500/5 to-transparent',
+    bgGradient: 'from-[#1c1704] via-[#0e0b02] to-[#040301]',
     roman: 'XII',
     statPill: 'bg-yellow-500/15 text-yellow-300 border-yellow-500/40',
   },
@@ -148,17 +148,11 @@ export const HomeArchetypeCarousel: React.FC<HomeArchetypeCarouselProps> = ({
   const activeTheme = ARCHETYPE_THEMES[activeArchObj.id] || ARCHETYPE_THEMES.heroe;
 
   return (
-    <section className="relative overflow-hidden rounded-3xl border border-cyan-500/25 bg-gradient-to-b from-[#070b16]/95 via-[#03060e]/95 to-[#010307] p-3 sm:p-4 shadow-[0_8px_32px_rgba(0,0,0,0.6)] backdrop-blur-xl">
-      {/* Halo ambiental dinámico detrás del contenedor */}
-      <div
-        className="absolute -top-12 right-1/4 w-80 h-32 rounded-full blur-3xl pointer-events-none transition-all duration-700"
-        style={{ backgroundColor: activeTheme.glow }}
-      />
-
-      {/* Cabecera táctica refinada */}
+    <section className="relative overflow-hidden rounded-3xl border border-cyan-500/25 bg-[#030712] p-3 sm:p-4 shadow-[0_8px_32px_rgba(0,0,0,0.6)]">
+      {/* Cabecera táctica limpia */}
       <div className="relative z-10 flex items-center justify-between gap-2 pb-2.5 border-b border-white/10">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-cyan-950/90 to-black border border-cyan-400/50 flex items-center justify-center text-cyan-300 shadow-[0_0_15px_rgba(0,240,255,0.25)] shrink-0">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-cyan-950/80 border border-cyan-400/50 flex items-center justify-center text-cyan-300 shadow-[0_0_12px_rgba(0,240,255,0.2)] shrink-0">
             <Compass className="w-4 h-4 text-cyan-300" />
           </div>
           <div>
@@ -177,7 +171,7 @@ export const HomeArchetypeCarousel: React.FC<HomeArchetypeCarouselProps> = ({
         <div className="flex items-center gap-2">
           {/* Chip del arquetipo activo en el sistema */}
           <div
-            className="flex items-center gap-1.5 bg-black/70 px-2.5 py-1 rounded-xl border transition-all duration-300 shadow-[0_0_12px_rgba(0,0,0,0.5)]"
+            className="flex items-center gap-1.5 bg-black/80 px-2.5 py-1 rounded-xl border shadow-[0_0_12px_rgba(0,0,0,0.5)]"
             style={{ borderColor: activeTheme.accent }}
           >
             <span className="text-sm select-none">{activeArchObj.avatar}</span>
@@ -211,7 +205,7 @@ export const HomeArchetypeCarousel: React.FC<HomeArchetypeCarouselProps> = ({
         </div>
       </div>
 
-      {/* Contenido: Carrusel Moxen Inercia con Estética de Coleccionable RPG */}
+      {/* Contenido: Carrusel Moxen Inercia con Estética de Coleccionable RPG (120 FPS sin parpadeo) */}
       {isExpanded && (
         <div className="relative z-10 pt-2.5">
           <MoxenInercia
@@ -230,27 +224,21 @@ export const HomeArchetypeCarousel: React.FC<HomeArchetypeCarouselProps> = ({
               return (
                 <div
                   key={arch.id}
-                  className={`relative w-full h-full p-4 sm:p-5 flex flex-col justify-between overflow-hidden rounded-[24px] border transition-all duration-300 select-none ${
+                  className={`relative w-full h-full p-4 sm:p-5 flex flex-col justify-between overflow-hidden rounded-[24px] border select-none bg-gradient-to-b ${theme.bgGradient} ${
                     isSelected
-                      ? 'border-2 shadow-[0_0_35px_rgba(0,240,255,0.25)]'
-                      : 'border-white/10 hover:border-white/25 hover:shadow-[0_8px_25px_rgba(0,0,0,0.5)]'
+                      ? 'border-2 shadow-[0_0_25px_rgba(0,240,255,0.2)]'
+                      : 'border-white/10'
                   }`}
                   style={{
-                    backgroundColor: '#050912',
                     borderColor: isSelected ? theme.accent : undefined,
                   }}
                 >
-                  {/* Luz ambiental radial propia de cada arquetipo en la parte superior */}
-                  <div
-                    className={`absolute inset-0 bg-gradient-to-b ${theme.bgGradient} pointer-events-none opacity-80`}
-                  />
-
-                  {/* Bisel de luz superior (efecto cristal de alta gama) */}
+                  {/* Bisel de luz superior limpio */}
                   <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
 
                   {/* Número Romano Gigante con Paralaje 3D nativa */}
                   <span
-                    className="in-fondo-num select-none pointer-events-none transition-transform"
+                    className="in-fondo-num select-none pointer-events-none"
                     style={{ color: theme.accent }}
                   >
                     {theme.roman}
@@ -261,12 +249,12 @@ export const HomeArchetypeCarousel: React.FC<HomeArchetypeCarouselProps> = ({
 
                   {/* ── 1. CABECERA DE LA TARJETA ── */}
                   <div className="relative z-10 flex items-center justify-between gap-2">
-                    <span className="text-[10px] font-mono tracking-widest font-black uppercase text-slate-300 bg-black/60 px-2 py-0.5 rounded-lg border border-white/10 backdrop-blur-md">
+                    <span className="text-[10px] font-mono tracking-widest font-black uppercase text-slate-300 bg-black/70 px-2 py-0.5 rounded-lg border border-white/10">
                       {cardNum} · {theme.roman}
                     </span>
 
                     <span
-                      className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold border backdrop-blur-md flex items-center gap-1 ${theme.statPill}`}
+                      className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold border flex items-center gap-1 ${theme.statPill}`}
                     >
                       <span
                         className="w-1.5 h-1.5 rounded-full"
@@ -277,20 +265,15 @@ export const HomeArchetypeCarousel: React.FC<HomeArchetypeCarouselProps> = ({
                   </div>
 
                   {/* ── 2. TALISMÁN CENTRAL CON PARALAJE (.in-forma) ── */}
-                  <div className="relative z-10 flex flex-col items-center justify-center my-auto py-2 text-center">
-                    {/* Contenedor del Talismán con doble anillo y brillo interno */}
+                  <div className="relative z-10 flex flex-col items-center justify-center my-auto py-1 text-center">
+                    {/* Contenedor del Talismán con brillo nítido (sin filtros blur pesados) */}
                     <div
-                      className="in-forma relative w-20 h-20 rounded-2xl bg-gradient-to-br from-black/80 via-[#0a0f1d]/90 to-black/80 border flex items-center justify-center text-4xl shadow-[0_0_25px_rgba(0,0,0,0.8)] backdrop-blur-xl mb-2.5 transition-transform"
+                      className="in-forma relative w-20 h-20 rounded-2xl bg-black/80 border flex items-center justify-center text-4xl mb-2.5 shadow-[0_4px_20px_rgba(0,0,0,0.8)]"
                       style={{
                         borderColor: `${theme.accent}66`,
-                        boxShadow: `0 0 25px ${theme.glow}, inset 0 1px 1px rgba(255,255,255,0.35)`,
+                        boxShadow: `0 0 20px ${theme.glow}, inset 0 1px 1px rgba(255,255,255,0.25)`,
                       }}
                     >
-                      {/* Aura circular interna pulsante */}
-                      <div
-                        className="absolute inset-2 rounded-xl opacity-20 pointer-events-none"
-                        style={{ backgroundColor: theme.accent }}
-                      />
                       <span className="relative z-10 drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
                         {arch.avatar}
                       </span>
@@ -319,12 +302,11 @@ export const HomeArchetypeCarousel: React.FC<HomeArchetypeCarouselProps> = ({
                   <div className="relative z-10 pt-2 border-t border-white/10">
                     {isSelected ? (
                       <div
-                        className="w-full py-2 flex items-center justify-center gap-1.5 text-xs font-mono font-bold uppercase rounded-xl border backdrop-blur-md shadow-[0_0_15px_rgba(0,0,0,0.5)]"
+                        className="w-full py-2 flex items-center justify-center gap-1.5 text-xs font-mono font-bold uppercase rounded-xl border shadow-[0_0_15px_rgba(0,0,0,0.5)]"
                         style={{
                           backgroundColor: `${theme.accent}22`,
                           borderColor: theme.accent,
                           color: theme.accent,
-                          boxShadow: `0 0 16px ${theme.glow}`,
                         }}
                       >
                         <Check className="w-3.5 h-3.5" />
@@ -339,7 +321,7 @@ export const HomeArchetypeCarousel: React.FC<HomeArchetypeCarouselProps> = ({
                           triggerShockwave({ color: 'violet', intensity: 'medium' });
                           onSelectArchetype(arch);
                         }}
-                        className="w-full py-2 bg-gradient-to-r from-white/10 to-white/5 hover:from-white/20 hover:to-white/10 text-white font-anton uppercase text-xs rounded-xl cursor-pointer transition-all border border-white/15 hover:border-white/30 active:scale-95 flex items-center justify-center gap-1.5 font-bold shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
+                        className="w-full py-2 bg-white/10 hover:bg-white/15 active:scale-95 text-white font-anton uppercase text-xs rounded-xl cursor-pointer border border-white/15 hover:border-white/30 flex items-center justify-center gap-1.5 font-bold shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
                         style={{
                           borderColor: `${theme.accent}44`,
                         }}

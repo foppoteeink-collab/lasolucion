@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect } from 'react';
 import './moxenInercia.css';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { soundFX } from '../../utils/audio';
@@ -30,9 +30,10 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
   const pistaRef = useRef<HTMLDivElement>(null);
   const barraFillRef = useRef<HTMLSpanElement>(null);
   const rodilloActualRef = useRef<HTMLDivElement>(null);
-  const carruselRef = useRef<any>(null);
+  const prevBtnRef = useRef<HTMLButtonElement>(null);
+  const nextBtnRef = useRef<HTMLButtonElement>(null);
+  const carruselRef = useRef<{ ir: (i: number) => void; destruir: () => void } | null>(null);
   const currentIndexRef = useRef<number>(initialIndex);
-  const [activeDisplayIndex, setActiveDisplayIndex] = useState<number>(initialIndex);
   const totalItems = children.length;
 
   useEffect(() => {
@@ -46,7 +47,7 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
     const items = Array.from(pista.children) as HTMLElement[];
     if (items.length === 0) return;
 
-    /* Capas de paralaje: la figura (.in-forma) y el número de fondo (.in-fondo-num) */
+    /* Capas de paralaje: figura (.in-forma) y número de fondo (.in-fondo-num) */
     const capas = items.map((it) => {
       const num = it.querySelector('.in-num');
       if (num && !it.querySelector('.in-fondo-num')) {
@@ -79,7 +80,7 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
       inclina = 0,
       xAntes = 0;
 
-    // Los topes y el punto de parada de cada tarjeta (su borde izquierdo)
+    // Los topes y el punto de parada de cada tarjeta
     function mide() {
       if (!ventana || !pista) return;
       min = Math.min(0, ventana.clientWidth - pista.scrollWidth);
@@ -95,30 +96,29 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
     const cercana = (n: number) =>
       paradas.reduce((a, p, i) => (Math.abs(p - n) < Math.abs(paradas[a] - n) ? i : a), 0);
 
-    /* Pasado el tope, la pista cede cada vez menos (goma elástica) */
+    /* Pasado el tope, la pista cede con goma elástica suave */
     const estira = (n: number) =>
       n > 0 ? n * o.goma : n < min ? min + (n - min) * o.goma : n;
 
     function pinta(dt: number) {
       if (!pista) return;
-      // Inclinación con la velocidad
+      // Inclinación suave con la velocidad (efecto empuje)
       const vel = dt ? (x - xAntes) / dt : 0;
       xAntes = x;
       inclina +=
         (Math.max(-4, Math.min(4, -vel / 450)) - inclina) * (1 - Math.exp(-dt * 10));
-      pista.style.transform =
-        'translate3d(' + x.toFixed(2) + 'px, 0, 0) skewX(' + inclina.toFixed(2) + 'deg)';
+      pista.style.transform = `translate3d(${x.toFixed(2)}px, 0, 0) skewX(${inclina.toFixed(2)}deg)`;
 
       /* Paralaje interior: figura hacia el centro y número hacia fuera */
       if (!reduce) {
         capas.forEach((k) => {
           const d = (k.c + x - anchoVentana / 2) / anchoVentana;
-          if (Math.abs(d) > 0.9) return;
+          if (Math.abs(d) > 0.95) return;
           if (k.forma) {
-            k.forma.style.translate = (-d * 46).toFixed(1) + 'px 0';
+            k.forma.style.translate = `${(-d * 42).toFixed(1)}px 0`;
           }
           if (k.fondo) {
-            k.fondo.style.translate = (d * 60).toFixed(1) + 'px 0';
+            k.fondo.style.translate = `${(d * 55).toFixed(1)}px 0`;
           }
         });
       }
@@ -132,7 +132,7 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
       const dt = previo ? Math.min(0.05, (t - previo) / 1000) : 0;
       previo = t;
       if (!agarre && dt) {
-        /* Resorte con amortiguación crítica hacia la parada elegida */
+        /* Resorte con amortiguación crítica idéntica a inercia.js */
         const w = o.friccion;
         for (let h = dt, s; h > 0; h -= s) {
           s = Math.min(h, 1 / 240);
@@ -141,17 +141,26 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
         }
       }
       pinta(dt);
+
       quieto =
         !agarre &&
         Math.abs(x - meta) < 0.3 &&
         Math.abs(v) < 2 &&
         Math.abs(inclina) < 0.01;
+
       if (quieto) {
         x = meta;
         v = 0;
         pinta(0);
         raf = 0;
         previo = 0;
+
+        // Solo notificar al padre cuando el movimiento se asienta completamente (0 lag)
+        const finalIdx = cercana(x);
+        if (currentIndexRef.current !== finalIdx) {
+          currentIndexRef.current = finalIdx;
+          onIndexChange?.(finalIdx);
+        }
         return;
       }
       raf = requestAnimationFrame(paso);
@@ -172,7 +181,7 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
       despierta();
     }
 
-    // ── Arrastre con Pointer Events ──
+    // ── Arrastre nativo por Pointer Events ──
     const onPointerDown = (e: PointerEvent) => {
       if (e.button !== 0) return;
       mide();
@@ -290,7 +299,7 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
 
     carruselRef.current = carrusel;
 
-    // Escuchar movimiento para telemetría GPU y contador mecánico
+    // Actualización GPU en tiempo real de la barra y el odómetro (CERO re-renders de React)
     carrusel.alMover((avance, indice) => {
       if (barraFillRef.current) {
         const fill = 0.08 + 0.92 * avance;
@@ -299,10 +308,11 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
       if (rodilloActualRef.current) {
         rodilloActualRef.current.style.transform = `translateY(${-indice * 1.25}em)`;
       }
-      if (currentIndexRef.current !== indice) {
-        currentIndexRef.current = indice;
-        setActiveDisplayIndex(indice);
-        onIndexChange?.(indice);
+      if (prevBtnRef.current) {
+        prevBtnRef.current.disabled = indice === 0;
+      }
+      if (nextBtnRef.current) {
+        nextBtnRef.current.disabled = indice >= totalItems - 1;
       }
     });
 
@@ -320,6 +330,7 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
   const handleStep = (direction: -1 | 1) => {
     soundFX.playClick();
     const nextIdx = Math.max(0, Math.min(totalItems - 1, currentIndexRef.current + direction));
+    currentIndexRef.current = nextIdx;
     carruselRef.current?.ir(nextIdx);
   };
 
@@ -332,7 +343,7 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
             <span className="text-xs font-mono text-slate-400 uppercase tracking-widest font-bold">
               Arquetipo
             </span>
-            <div className="flex items-center text-xs font-mono font-black text-cyan-300 bg-black/60 px-2 py-0.5 rounded-lg border border-cyan-500/30">
+            <div className="flex items-center text-xs font-mono font-black text-cyan-300 bg-black/80 px-2 py-0.5 rounded-lg border border-cyan-500/30">
               <span className="in-rodillo-box">
                 <b ref={rodilloActualRef} className="in-rodillo-strip">
                   {Array.from({ length: totalItems }).map((_, i) => {
@@ -361,19 +372,21 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
             {/* Flechas tácticas paso a paso */}
             <div className="flex items-center gap-1">
               <button
+                ref={prevBtnRef}
                 type="button"
                 onClick={() => handleStep(-1)}
-                disabled={activeDisplayIndex === 0}
-                className="p-1.5 rounded-lg bg-black/60 border border-white/10 hover:border-cyan-400/60 text-slate-300 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+                disabled={initialIndex === 0}
+                className="p-1.5 rounded-lg bg-black/80 border border-white/10 hover:border-cyan-400/60 text-slate-300 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
                 title="Arquetipo anterior"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <button
+                ref={nextBtnRef}
                 type="button"
                 onClick={() => handleStep(1)}
-                disabled={activeDisplayIndex >= totalItems - 1}
-                className="p-1.5 rounded-lg bg-black/60 border border-white/10 hover:border-cyan-400/60 text-slate-300 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+                disabled={initialIndex >= totalItems - 1}
+                className="p-1.5 rounded-lg bg-black/80 border border-white/10 hover:border-cyan-400/60 text-slate-300 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
                 title="Siguiente arquetipo"
               >
                 <ChevronRight className="w-4 h-4" />
@@ -383,7 +396,7 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
         </div>
       )}
 
-      {/* Ventana de visualización con arrastre inercial nativo de Moxen */}
+      {/* Ventana de visualización con arrastre inercial nativo de Moxen (120 FPS) */}
       <div
         ref={ventanaRef}
         className="in-ventana"
@@ -398,6 +411,7 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
               className="in-tarjeta cursor-pointer"
               onClick={() => {
                 if (idx !== currentIndexRef.current) {
+                  currentIndexRef.current = idx;
                   carruselRef.current?.ir(idx);
                 }
               }}

@@ -252,27 +252,21 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
                 return (
                   <div
                     key={arch.id}
-                    className={`relative w-full h-full p-4 sm:p-5 flex flex-col justify-between overflow-hidden rounded-[24px] border transition-all duration-300 select-none ${
+                    className={`relative w-full h-full p-4 sm:p-5 flex flex-col justify-between overflow-hidden rounded-[24px] border select-none bg-gradient-to-b ${theme.bgGradient} ${
                       isSelected
-                        ? 'border-2 shadow-[0_0_35px_rgba(0,240,255,0.25)]'
-                        : 'border-white/10 hover:border-white/25 hover:shadow-[0_8px_25px_rgba(0,0,0,0.5)]'
+                        ? 'border-2 shadow-[0_0_25px_rgba(0,240,255,0.2)]'
+                        : 'border-white/10'
                     }`}
                     style={{
-                      backgroundColor: '#050912',
                       borderColor: isSelected ? theme.accent : undefined,
                     }}
                   >
-                    {/* Luz ambiental radial superior */}
-                    <div
-                      className={`absolute inset-0 bg-gradient-to-b ${theme.bgGradient} pointer-events-none opacity-80`}
-                    />
-
                     {/* Bisel superior */}
                     <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
 
                     {/* Número Romano Gigante con Paralaje 3D nativa */}
                     <span
-                      className="in-fondo-num select-none pointer-events-none transition-transform"
+                      className="in-fondo-num select-none pointer-events-none"
                       style={{ color: theme.accent }}
                     >
                       {theme.roman}
@@ -283,11 +277,11 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
 
                     {/* Cabecera de la Tarjeta */}
                     <div className="relative z-10 flex items-center justify-between gap-2">
-                      <span className="text-[10px] font-mono tracking-widest font-black uppercase text-slate-300 bg-black/60 px-2 py-0.5 rounded-lg border border-white/10 backdrop-blur-md">
+                      <span className="text-[10px] font-mono tracking-widest font-black uppercase text-slate-300 bg-black/70 px-2 py-0.5 rounded-lg border border-white/10">
                         {cardNum} · {theme.roman}
                       </span>
                       <span
-                        className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold border backdrop-blur-md flex items-center gap-1 ${theme.statPill}`}
+                        className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold border flex items-center gap-1 ${theme.statPill}`}
                       >
                         <span
                           className="w-1.5 h-1.5 rounded-full"
@@ -298,18 +292,14 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
                     </div>
 
                     {/* Avatar Central con paralaje (.in-forma) */}
-                    <div className="relative z-10 flex flex-col items-center justify-center my-auto py-2 text-center">
+                    <div className="relative z-10 flex flex-col items-center justify-center my-auto py-1 text-center">
                       <div
-                        className="in-forma relative w-20 h-20 rounded-2xl bg-gradient-to-br from-black/80 via-[#0a0f1d]/90 to-black/80 border flex items-center justify-center text-4xl shadow-[0_0_25px_rgba(0,0,0,0.8)] backdrop-blur-xl mb-2.5 transition-transform"
+                        className="in-forma relative w-20 h-20 rounded-2xl bg-black/80 border flex items-center justify-center text-4xl mb-2.5 shadow-[0_4px_20px_rgba(0,0,0,0.8)]"
                         style={{
                           borderColor: `${theme.accent}66`,
-                          boxShadow: `0 0 25px ${theme.glow}, inset 0 1px 1px rgba(255,255,255,0.35)`,
+                          boxShadow: `0 0 20px ${theme.glow}, inset 0 1px 1px rgba(255,255,255,0.25)`,
                         }}
                       >
-                        <div
-                          className="absolute inset-2 rounded-xl opacity-20 pointer-events-none"
-                          style={{ backgroundColor: theme.accent }}
-                        />
                         <span className="relative z-10 drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
                           {arch.avatar}
                         </span>
@@ -335,12 +325,11 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
                     <div className="relative z-10 pt-2 border-t border-white/10">
                       {isSelected ? (
                         <div
-                          className="w-full py-2 flex items-center justify-center gap-1.5 text-xs font-mono font-bold uppercase rounded-xl border backdrop-blur-md"
+                          className="w-full py-2 flex items-center justify-center gap-1.5 text-xs font-mono font-bold uppercase rounded-xl border shadow-[0_0_15px_rgba(0,0,0,0.5)]"
                           style={{
                             backgroundColor: `${theme.accent}22`,
                             borderColor: theme.accent,
                             color: theme.accent,
-                            boxShadow: `0 0 16px ${theme.glow}`,
                           }}
                         >
                           <Check className="w-3.5 h-3.5" />
@@ -355,7 +344,7 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
                             onSelectArchetype(arch);
                             onClose();
                           }}
-                          className="w-full py-2 bg-gradient-to-r from-white/10 to-white/5 hover:from-white/20 hover:to-white/10 text-white font-anton uppercase text-xs rounded-xl cursor-pointer transition-all border border-white/15 hover:border-white/30 active:scale-95 flex items-center justify-center gap-1.5 font-bold shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
+                          className="w-full py-2 bg-white/10 hover:bg-white/15 active:scale-95 text-white font-anton uppercase text-xs rounded-xl cursor-pointer border border-white/15 hover:border-white/30 flex items-center justify-center gap-1.5 font-bold shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
                           style={{
                             borderColor: `${theme.accent}44`,
                           }}
