@@ -1263,7 +1263,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <div className="flex items-center justify-between border-b border-white/10 pb-4 relative z-10">
                 <div>
                   <h3 className="text-sm font-anton uppercase tracking-wider text-white flex items-center gap-2">
-                    <Coins className="w-4 h-4 text-amber-400" /> Parámetros de Finanzas & Tesorería
+                    <Coins className="w-4 h-4 text-amber-400" /> Finanzas & Tesorería
                   </h3>
                   <p className="text-xs text-slate-400 mt-0.5">
                     Configura la divisa base para registros diarios, balances y análisis temporal.
@@ -1762,7 +1762,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-[10px] text-slate-500 font-mono">
-                    {geminiApiKey ? '● Clave personalizada activa' : '○ Usando Firebase AI Logic / Modo Heurístico'}
+                    {geminiApiKey ? '● Clave personalizada activa' : '○ Usando Firebase AI Logic / Modo Offline Inteligente'}
                   </span>
                   <div className="flex gap-2">
                     {geminiApiKey && (
