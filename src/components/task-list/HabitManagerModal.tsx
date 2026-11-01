@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   X, 
@@ -114,10 +115,10 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
     return 'Diario';
   };
 
-  return (
+  const modalContent = (
     <AnimatePresence>
       <div 
-        className="fixed inset-0 z-[150] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-fade-in font-sans"
+        className="fixed inset-0 z-[180] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-fade-in font-sans"
         onClick={onClose}
       >
         <motion.div
@@ -427,4 +428,10 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
       </div>
     </AnimatePresence>
   );
+
+  if (typeof document !== 'undefined') {
+    return createPortal(modalContent, document.body);
+  }
+
+  return modalContent;
 };

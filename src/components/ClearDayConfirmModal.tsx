@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { AlertTriangle, Trash2, X, Calendar, Flame, ShieldAlert, Award } from 'lucide-react';
 import { TaskItem, HabitMasteryRecord } from '../types';
 import { getHabitBaseId } from '../intelligence/masteryEngine';
@@ -57,9 +58,9 @@ export const ClearDayConfirmModal: React.FC<ClearDayConfirmModalProps> = ({
 
   const hasHighStreakWarning = trackedItems.some((item) => item.streak > 0 || item.isTracked2166);
 
-  return (
+  const modalContent = (
     <div
-      className="fixed inset-0 z-[120] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
+      className="fixed inset-0 z-[180] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div
@@ -173,4 +174,10 @@ export const ClearDayConfirmModal: React.FC<ClearDayConfirmModalProps> = ({
       </div>
     </div>
   );
+
+  if (typeof document !== 'undefined') {
+    return createPortal(modalContent, document.body);
+  }
+
+  return modalContent;
 };

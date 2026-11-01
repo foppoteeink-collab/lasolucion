@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -112,13 +113,13 @@ export const MonthlyCalendarModal: React.FC<MonthlyCalendarModalProps> = ({
 
   if (!isOpen) return null;
 
-  return (
+  const modalContent = (
     <div
-      className="fixed inset-0 z-[150] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-fade-in"
+      className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-fade-in"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md flex flex-col bg-[#030712]/95 border border-cyan-500/40 rounded-2xl sm:rounded-3xl shadow-[0_0_40px_rgba(0,240,255,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] relative text-left overflow-hidden backdrop-blur-2xl"
+        className="w-full max-w-md max-h-[92dvh] overflow-y-auto scrollbar-none flex flex-col bg-[#030712]/95 border border-cyan-500/40 rounded-2xl sm:rounded-3xl shadow-[0_0_50px_rgba(0,240,255,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] relative text-left backdrop-blur-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Grano esmerilado táctil Moxen Vidrio */}
@@ -300,6 +301,12 @@ export const MonthlyCalendarModal: React.FC<MonthlyCalendarModalProps> = ({
       </div>
     </div>
   );
+
+  if (typeof document !== 'undefined') {
+    return createPortal(modalContent, document.body);
+  }
+
+  return modalContent;
 };
 
 export default MonthlyCalendarModal;

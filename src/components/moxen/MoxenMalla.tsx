@@ -1182,58 +1182,62 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
           </>
         )}
 
-        {/* SIMULACIÓN DE INTERFAZ & EVALUACIÓN DE CONTRASTE EN VIVO */}
+        {/* SIMULACIÓN DE INTERFAZ & EVALUACIÓN DE CONTRASTE (UBICADA A UN LADITO, SIN TAPAR EL CENTRO) */}
         {showSimulatedUI && (
-          <div className="absolute inset-0 z-30 flex items-center justify-center p-3 sm:p-5 pointer-events-none animate-fade-in">
-            <div className="w-full max-w-sm rounded-2xl bg-[#030a18]/85 backdrop-blur-md p-3.5 sm:p-4 border border-white/15 shadow-[0_16px_40px_rgba(0,0,0,0.65)] space-y-2.5 pointer-events-auto transition-all">
-              {/* Cabecera del mock táctico */}
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="w-5 h-5 rounded-md bg-cyan-500/20 border border-cyan-400/50 flex items-center justify-center text-cyan-300 text-xs shrink-0">
-                    ✓
-                  </div>
-                  <div className="min-w-0">
-                    <span className="text-xs font-anton tracking-wider uppercase text-white block leading-tight truncate">
-                      Rutina de Enfoque
-                    </span>
-                    <span className="text-[10px] text-slate-300 font-sans block truncate">
-                      3 de 5 hábitos cumplidos hoy
-                    </span>
-                  </div>
+          <div className="absolute top-11 right-2 sm:right-3 z-30 pointer-events-auto animate-fade-in max-w-[calc(100%-1rem)]">
+            <div className="w-[180px] sm:w-[220px] rounded-xl bg-[#030a18]/90 backdrop-blur-md p-2.5 sm:p-3 border border-white/20 shadow-[0_12px_30px_rgba(0,0,0,0.7)] space-y-2 transition-all">
+              {/* Cabecera del HUD de prueba con botón cerrar rápido */}
+              <div className="flex items-center justify-between pb-1 border-b border-white/10">
+                <div className="flex items-center gap-1.5 text-cyan-400 text-[10px] font-mono font-bold uppercase tracking-wider">
+                  <Eye className="w-3 h-3 text-cyan-400" />
+                  <span>Muestra UI</span>
                 </div>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-cyan-950/70 border border-cyan-400/40 text-cyan-300 shrink-0">
-                  +50 EXP
+                <button
+                  type="button"
+                  onClick={() => setShowSimulatedUI(false)}
+                  className="w-4 h-4 rounded flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                  title="Cerrar muestra"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+
+              {/* Mini tarea de muestra representativa */}
+              <div className="space-y-0.5">
+                <div className="flex items-center justify-between gap-1">
+                  <span className="text-[11px] font-anton tracking-wide uppercase text-white truncate block">
+                    Rutina Diaria
+                  </span>
+                  <span className="text-[9px] font-mono font-bold text-cyan-300 bg-cyan-950/80 px-1 py-0.2 rounded border border-cyan-400/30 shrink-0">
+                    +50 EXP
+                  </span>
+                </div>
+                <span className="text-[10px] text-slate-300 font-sans block truncate">
+                  3/5 hábitos hechos
                 </span>
               </div>
 
               {/* Barra de progreso y telemetría numérica */}
               <div className="space-y-1">
-                <div className="flex items-center justify-between text-[11px] font-mono">
-                  <span className="text-slate-300 font-semibold">Progreso Táctico</span>
-                  <span className="text-white font-bold tracking-wider">75%</span>
+                <div className="flex items-center justify-between text-[10px] font-mono">
+                  <span className="text-slate-300">Progreso</span>
+                  <span className="text-white font-bold">75%</span>
                 </div>
-                <div className="w-full h-2 rounded-full bg-black/50 border border-white/10 overflow-hidden p-0.5">
-                  <div className="w-3/4 h-full rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 shadow-[0_0_8px_rgba(0,240,255,0.6)]" />
+                <div className="w-full h-1.5 rounded-full bg-black/60 border border-white/10 overflow-hidden p-0.5">
+                  <div className="w-3/4 h-full rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 shadow-[0_0_6px_rgba(0,240,255,0.6)]" />
                 </div>
               </div>
 
-              {/* Semáforo de Evaluación de Contraste Inteligente */}
-              <div className={`p-2 rounded-xl border flex items-center gap-2 text-[10px] font-mono ${contrastAnalysis.badgeBg}`}>
-                <span className={`w-2 h-2 rounded-full shrink-0 animate-pulse ${contrastAnalysis.dotBg}`} />
+              {/* Semáforo de Evaluación de Contraste Compacto */}
+              <div className={`p-1.5 rounded-lg border flex items-center gap-1.5 text-[9px] font-mono ${contrastAnalysis.badgeBg}`}>
+                <span className={`w-1.5 h-1.5 rounded-full shrink-0 animate-pulse ${contrastAnalysis.dotBg}`} />
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-1">
-                    <span className="font-bold uppercase tracking-wider truncate">
-                      {contrastAnalysis.label}
-                    </span>
-                    <span className="text-[9px] opacity-80 truncate hidden sm:inline">
-                      {contrastAnalysis.desc}
-                    </span>
-                  </div>
-                  {contrastAnalysis.status === 'warning' && (
-                    <p className="text-[9px] text-rose-200 mt-0.5 leading-snug">
-                      {contrastAnalysis.hint}
-                    </p>
-                  )}
+                  <span className="font-bold uppercase tracking-wider block truncate">
+                    {contrastAnalysis.label}
+                  </span>
+                  <span className="text-[8.5px] opacity-80 block truncate">
+                    {contrastAnalysis.desc}
+                  </span>
                 </div>
               </div>
             </div>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { FileText, X } from 'lucide-react';
 import { TaskItem } from '../../types';
 
@@ -21,9 +22,9 @@ export const TaskNoteModal: React.FC<TaskNoteModalProps> = ({
 }) => {
   if (!task) return null;
 
-  return (
+  const modalContent = (
     <div
-      className="fixed inset-0 z-[150] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md"
+      className="fixed inset-0 z-[180] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md"
       onClick={onClose}
     >
       <div
@@ -107,4 +108,10 @@ export const TaskNoteModal: React.FC<TaskNoteModalProps> = ({
       </div>
     </div>
   );
+
+  if (typeof document !== 'undefined') {
+    return createPortal(modalContent, document.body);
+  }
+
+  return modalContent;
 };
