@@ -13,7 +13,6 @@ const ARCHETYPE_THEMES: Record<
     glow: string;
     border: string;
     bgGradient: string;
-    roman: string;
     statPill: string;
   }
 > = {
@@ -22,7 +21,6 @@ const ARCHETYPE_THEMES: Record<
     glow: 'rgba(245, 158, 11, 0.35)',
     border: 'border-amber-500/50',
     bgGradient: 'from-amber-500/20 via-yellow-500/5 to-transparent',
-    roman: 'I',
     statPill: 'bg-amber-500/15 text-amber-300 border-amber-500/40',
   },
   huerfano: {
@@ -30,7 +28,6 @@ const ARCHETYPE_THEMES: Record<
     glow: 'rgba(59, 130, 246, 0.35)',
     border: 'border-blue-500/50',
     bgGradient: 'from-blue-500/20 via-indigo-500/5 to-transparent',
-    roman: 'II',
     statPill: 'bg-blue-500/15 text-blue-300 border-blue-500/40',
   },
   heroe: {
@@ -38,7 +35,6 @@ const ARCHETYPE_THEMES: Record<
     glow: 'rgba(239, 68, 68, 0.40)',
     border: 'border-red-500/50',
     bgGradient: 'from-red-500/20 via-rose-500/5 to-transparent',
-    roman: 'III',
     statPill: 'bg-red-500/15 text-red-300 border-red-500/40',
   },
   cuidador: {
@@ -46,7 +42,6 @@ const ARCHETYPE_THEMES: Record<
     glow: 'rgba(16, 185, 129, 0.35)',
     border: 'border-emerald-500/50',
     bgGradient: 'from-emerald-500/20 via-teal-500/5 to-transparent',
-    roman: 'IV',
     statPill: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40',
   },
   explorador: {
@@ -54,7 +49,6 @@ const ARCHETYPE_THEMES: Record<
     glow: 'rgba(249, 115, 22, 0.35)',
     border: 'border-orange-500/50',
     bgGradient: 'from-orange-500/20 via-amber-500/5 to-transparent',
-    roman: 'V',
     statPill: 'bg-orange-500/15 text-orange-300 border-orange-500/40',
   },
   rebelde: {
@@ -62,7 +56,6 @@ const ARCHETYPE_THEMES: Record<
     glow: 'rgba(168, 85, 247, 0.40)',
     border: 'border-purple-500/50',
     bgGradient: 'from-purple-500/20 via-indigo-500/5 to-transparent',
-    roman: 'VI',
     statPill: 'bg-purple-500/15 text-purple-300 border-purple-500/40',
   },
   amante: {
@@ -70,7 +63,6 @@ const ARCHETYPE_THEMES: Record<
     glow: 'rgba(244, 63, 94, 0.35)',
     border: 'border-rose-500/50',
     bgGradient: 'from-rose-500/20 via-pink-500/5 to-transparent',
-    roman: 'VII',
     statPill: 'bg-rose-500/15 text-rose-300 border-rose-500/40',
   },
   creador: {
@@ -78,7 +70,6 @@ const ARCHETYPE_THEMES: Record<
     glow: 'rgba(217, 70, 239, 0.40)',
     border: 'border-fuchsia-500/50',
     bgGradient: 'from-fuchsia-500/20 via-purple-500/5 to-transparent',
-    roman: 'VIII',
     statPill: 'bg-fuchsia-500/15 text-fuchsia-300 border-fuchsia-500/40',
   },
   bufon: {
@@ -86,7 +77,6 @@ const ARCHETYPE_THEMES: Record<
     glow: 'rgba(6, 182, 212, 0.35)',
     border: 'border-cyan-500/50',
     bgGradient: 'from-cyan-500/20 via-teal-500/5 to-transparent',
-    roman: 'IX',
     statPill: 'bg-cyan-500/15 text-cyan-300 border-cyan-500/40',
   },
   sabio: {
@@ -94,7 +84,6 @@ const ARCHETYPE_THEMES: Record<
     glow: 'rgba(99, 102, 241, 0.35)',
     border: 'border-indigo-500/50',
     bgGradient: 'from-indigo-500/20 via-violet-500/5 to-transparent',
-    roman: 'X',
     statPill: 'bg-indigo-500/15 text-indigo-300 border-indigo-500/40',
   },
   mago: {
@@ -102,7 +91,6 @@ const ARCHETYPE_THEMES: Record<
     glow: 'rgba(139, 92, 246, 0.40)',
     border: 'border-violet-500/50',
     bgGradient: 'from-violet-500/20 via-purple-500/5 to-transparent',
-    roman: 'XI',
     statPill: 'bg-violet-500/15 text-violet-300 border-violet-500/40',
   },
   gobernante: {
@@ -110,7 +98,6 @@ const ARCHETYPE_THEMES: Record<
     glow: 'rgba(234, 179, 8, 0.35)',
     border: 'border-yellow-500/50',
     bgGradient: 'from-yellow-500/20 via-amber-500/5 to-transparent',
-    roman: 'XII',
     statPill: 'bg-yellow-500/15 text-yellow-300 border-yellow-500/40',
   },
 };
@@ -264,21 +251,10 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
                     {/* Bisel superior */}
                     <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
 
-                    {/* Número Romano Gigante con Paralaje 3D nativa */}
-                    <span
-                      className="in-fondo-num select-none pointer-events-none"
-                      style={{ color: theme.accent }}
-                    >
-                      {theme.roman}
-                    </span>
-
-                    {/* Tag oculto para motor inercial */}
-                    <span className="in-num hidden">{theme.roman}</span>
-
                     {/* Cabecera de la Tarjeta */}
                     <div className="relative z-10 flex items-center justify-between gap-2">
-                      <span className="text-[10px] font-mono tracking-widest font-black uppercase text-slate-300 bg-black/70 px-2 py-0.5 rounded-lg border border-white/10">
-                        {cardNum} · {theme.roman}
+                      <span className="text-[10px] font-mono tracking-widest font-black uppercase text-slate-300 bg-black/70 px-2.5 py-0.5 rounded-lg border border-white/10">
+                        #{cardNum}
                       </span>
                       <span
                         className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold border flex items-center gap-1 ${theme.statPill}`}
