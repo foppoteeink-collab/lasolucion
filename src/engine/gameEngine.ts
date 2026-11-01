@@ -441,9 +441,9 @@ export const handleToggleTask = (taskId: string, e?: any) => {
       if (completedHabitsOrPriority >= 3) {
         triggeredBoss = true;
         stateUI.openSurpriseBoss({
-          archetypeName: 'Comandante de la Procrastinación',
-          buffName: 'Desafío Diario Superado',
-          buffDescription: '¡Alcanzaste 3 hábitos o tareas clave hoy! Reclama 50 XP y 20 Monedas.'
+          archetypeName: 'Ruptura de Inercia',
+          buffName: 'Inercia Superada',
+          buffDescription: '¡Conquistaste 3 misiones o hábitos prioritarios hoy! Tu vitalidad (+50 HP) y recursos se restauran al máximo.'
         });
       }
     }
@@ -612,9 +612,9 @@ export const handleIncrementHabit = (taskId: string, e?: any) => {
       if (completedHabitsOrPriority >= 3) {
         statePlayer.setStats((prev) => ({ ...prev, lastEncounterDate: today }));
         stateUI.openSurpriseBoss({
-          archetypeName: 'Comandante de la Procrastinación',
-          buffName: 'Desafío Diario Superado',
-          buffDescription: '¡Alcanzaste 3 hábitos o tareas clave hoy! Reclama 50 XP y 20 Monedas.'
+          archetypeName: 'Ruptura de Inercia',
+          buffName: 'Inercia Superada',
+          buffDescription: '¡Conquistaste 3 misiones o hábitos prioritarios hoy! Tu vitalidad (+50 HP) y recursos se restauran al máximo.'
         });
       }
     }

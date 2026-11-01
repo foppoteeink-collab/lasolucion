@@ -91,16 +91,16 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
       <span className="vi-grano opacity-5" aria-hidden="true" />
 
       {/* ====================================================================
-          FILA PRINCIPAL ZEN (ULTRA-COMPACTA: ~38px - 42px)
+          FILA PRINCIPAL RESPONSIVE (MÓVIL EN 2 NIVELES / DESKTOP EN 1 LÍNEA)
           ==================================================================== */}
-      <div className="flex items-center justify-between gap-1.5 sm:gap-2 relative z-10">
+      {/* 1. MODO ESCRITORIO / TABLET (>= 640px): BARRA ZEN EN UNA SOLA LÍNEA */}
+      <div className="hidden sm:flex items-center justify-between gap-2 relative z-10">
         {/* BLOQUE IZQUIERDO: Navegación de Fecha Rápida */}
-        <div className="flex items-center gap-1 sm:gap-1.5 min-w-0">
-          {/* Flecha Día Anterior */}
+        <div className="flex items-center gap-1.5 min-w-0">
           <button 
             type="button"
             onClick={handlePrevDay} 
-            className="w-8 h-8 rounded-lg bg-white/[0.04] hover:bg-cyan-950/50 border border-white/10 hover:border-cyan-400/50 text-slate-300 hover:text-cyan-300 flex items-center justify-center transition-all cursor-pointer active:scale-90 shrink-0"
+            className="w-8 h-8 rounded-xl bg-white/[0.04] hover:bg-cyan-950/50 border border-white/10 hover:border-cyan-400/50 text-slate-300 hover:text-cyan-300 flex items-center justify-center transition-all cursor-pointer active:scale-90 shrink-0"
             title="Día anterior"
             aria-label="Día anterior"
           >
@@ -108,20 +108,20 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           </button>
 
           {/* Fecha Actual */}
-          <div className="flex items-center gap-1.5 min-w-0 px-1.5 py-1 rounded-lg bg-black/40 border border-white/5">
-            <span className="text-xs sm:text-sm font-anton uppercase tracking-wide text-white truncate">
-              {dayNameShort} {dayNumber} {monthNameShort}
+          <div className="flex items-center gap-2 min-w-0 px-2.5 py-1 rounded-xl bg-black/40 border border-white/10">
+            <span className="text-sm font-anton uppercase tracking-wide text-white truncate capitalize">
+              {dayNameShort}, {dayNumber} {monthNameShort}
             </span>
 
             {isToday ? (
-              <span className="px-1.5 py-0.2 rounded-md bg-cyan-400 text-black text-[9px] font-anton tracking-wider uppercase shadow-[0_0_8px_rgba(0,240,255,0.6)] shrink-0">
+              <span className="px-1.5 py-0.5 rounded-md bg-cyan-400 text-black text-[9px] font-anton tracking-wider uppercase font-bold shadow-[0_0_8px_rgba(0,240,255,0.6)] shrink-0">
                 Hoy
               </span>
             ) : (
               <button
                 type="button"
                 onClick={handleGoToday}
-                className="px-1.5 py-0.2 rounded-md bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-400/50 text-cyan-300 text-[9px] font-anton tracking-wider uppercase transition-colors cursor-pointer shrink-0 flex items-center gap-0.5"
+                className="px-1.5 py-0.5 rounded-md bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-400/50 text-cyan-300 text-[9px] font-anton tracking-wider uppercase transition-colors cursor-pointer shrink-0 flex items-center gap-0.5"
                 title="Volver a la fecha de hoy"
               >
                 <RotateCcw className="w-2.5 h-2.5" />
@@ -130,11 +130,10 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             )}
           </div>
 
-          {/* Flecha Día Siguiente */}
           <button 
             type="button"
             onClick={handleNextDay} 
-            className="w-8 h-8 rounded-lg bg-white/[0.04] hover:bg-cyan-950/50 border border-white/10 hover:border-cyan-400/50 text-slate-300 hover:text-cyan-300 flex items-center justify-center transition-all cursor-pointer active:scale-90 shrink-0"
+            className="w-8 h-8 rounded-xl bg-white/[0.04] hover:bg-cyan-950/50 border border-white/10 hover:border-cyan-400/50 text-slate-300 hover:text-cyan-300 flex items-center justify-center transition-all cursor-pointer active:scale-90 shrink-0"
             title="Día siguiente"
             aria-label="Día siguiente"
           >
@@ -145,7 +144,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           <button
             type="button"
             onClick={toggleWeekStrip}
-            className={`px-1.5 py-1 rounded-lg border text-[10px] font-mono font-bold flex items-center gap-1 transition-all cursor-pointer active:scale-90 shrink-0 ${
+            className={`px-2 py-1 rounded-xl border text-[11px] font-mono font-bold flex items-center gap-1 transition-all cursor-pointer active:scale-90 shrink-0 ${
               showWeekStrip
                 ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400/60 shadow-[0_0_8px_rgba(0,240,255,0.25)]'
                 : 'bg-white/[0.03] hover:bg-white/[0.08] text-slate-400 hover:text-slate-200 border-white/10'
@@ -153,13 +152,13 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             title={showWeekStrip ? 'Ocultar tira semanal' : 'Ver semana en micro-píldoras'}
             aria-label="Alternar vista semanal"
           >
-            <span>Sem</span>
+            <span>Semana</span>
             {showWeekStrip ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
           </button>
         </div>
 
         {/* BLOQUE DERECHO: Acciones Tácticas (Descanso, Datepicker, + Tarea) */}
-        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 ml-auto">
+        <div className="flex items-center gap-1.5 shrink-0 ml-auto">
           {/* Modo Descanso */}
           <button
             type="button"
@@ -171,7 +170,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               }
             }}
             data-tour="rest-mode-btn"
-            className={`h-8 px-2 sm:px-2.5 rounded-lg border transition-all cursor-pointer flex items-center gap-1.5 active:scale-90 text-xs font-mono font-bold ${
+            className={`h-8 px-2.5 rounded-xl border transition-all cursor-pointer flex items-center gap-1.5 active:scale-90 text-xs font-mono font-bold ${
               isCurrentDateRest
                 ? 'bg-emerald-950/80 text-emerald-300 border-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.35)] ring-1 ring-emerald-400'
                 : 'bg-white/[0.03] text-slate-400 border-white/10 hover:border-emerald-500/50 hover:text-emerald-300'
@@ -179,8 +178,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             title={isCurrentDateRest ? 'Día de descanso activo: sin daño de HP y hábitos protegidos' : 'Activar día de descanso para esta fecha'}
           >
             <span className="text-sm leading-none">{isCurrentDateRest ? '🌿' : '🛡️'}</span>
-            <span className="hidden md:inline text-[11px] font-anton uppercase tracking-wider">
-              {isCurrentDateRest ? 'Descanso' : 'Pausa'}
+            <span className="text-[11px] font-anton uppercase tracking-wider">
+              {isCurrentDateRest ? 'En Descanso' : 'Pausa'}
             </span>
           </button>
 
@@ -191,7 +190,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               soundFX.playClick();
               setIsMonthlyModalOpen(true);
             }}
-            className="w-8 h-8 rounded-lg bg-white/[0.04] hover:bg-cyan-950/50 border border-white/10 hover:border-cyan-400/50 text-slate-300 hover:text-cyan-300 flex items-center justify-center transition-all cursor-pointer active:scale-95"
+            className="w-8 h-8 rounded-xl bg-white/[0.04] hover:bg-cyan-950/50 border border-white/10 hover:border-cyan-400/50 text-slate-300 hover:text-cyan-300 flex items-center justify-center transition-all cursor-pointer active:scale-95"
             title="Abrir Planificador Mensual Completo"
             aria-label="Abrir Planificador Mensual"
           >
@@ -206,13 +205,129 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 soundFX.playClick();
                 onOpenAddModal();
               }}
-              className="chicle-btn h-8 px-2.5 sm:px-3 rounded-lg bg-cyan-400 hover:bg-cyan-300 text-black font-anton text-xs uppercase tracking-wider flex items-center gap-1 shadow-[0_0_12px_rgba(0,240,255,0.4)] cursor-pointer"
+              className="chicle-btn h-8 px-3 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-black font-anton text-xs uppercase tracking-wider flex items-center gap-1 shadow-[0_0_12px_rgba(0,240,255,0.4)] cursor-pointer"
               title="Nueva Tarea, Hábito o Planificación"
             >
               <Plus className="w-3.5 h-3.5 stroke-[3]" />
-              <span className="hidden sm:inline">Tarea</span>
+              <span>Tarea</span>
             </button>
           )}
+        </div>
+      </div>
+
+      {/* 2. MODO MÓVIL (< 640px): NAVEGACIÓN LEGIBLE SIN RECORTES DE TEXTO */}
+      <div className="flex sm:hidden flex-col gap-1.5 relative z-10">
+        {/* FILA 1: FECHA Y ACCIÓN PRINCIPAL */}
+        <div className="flex items-center gap-1.5 justify-between">
+          <div className="flex items-center gap-1 flex-1 min-w-0">
+            <button 
+              type="button"
+              onClick={handlePrevDay} 
+              className="w-8 h-8 rounded-xl bg-white/[0.04] hover:bg-cyan-950/50 border border-white/10 text-slate-300 flex items-center justify-center transition-all cursor-pointer active:scale-90 shrink-0"
+              title="Día anterior"
+              aria-label="Día anterior"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+
+            {/* Fecha Completa en Móvil */}
+            <div className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1 rounded-xl bg-black/50 border border-white/10 min-w-0">
+              <span className="text-xs font-anton uppercase tracking-wider text-white truncate capitalize">
+                {dayNameShort}, {dayNumber} {monthNameShort}
+              </span>
+
+              {isToday ? (
+                <span className="px-1.5 py-0.2 rounded bg-cyan-400 text-black text-[8px] font-anton tracking-wider uppercase font-bold shrink-0">
+                  Hoy
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleGoToday}
+                  className="px-1.5 py-0.2 rounded bg-cyan-950 border border-cyan-400/50 text-cyan-300 text-[8px] font-anton uppercase tracking-wider cursor-pointer shrink-0"
+                  title="Volver a la fecha de hoy"
+                >
+                  Hoy
+                </button>
+              )}
+            </div>
+
+            <button 
+              type="button"
+              onClick={handleNextDay} 
+              className="w-8 h-8 rounded-xl bg-white/[0.04] hover:bg-cyan-950/50 border border-white/10 text-slate-300 flex items-center justify-center transition-all cursor-pointer active:scale-90 shrink-0"
+              title="Día siguiente"
+              aria-label="Día siguiente"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Botón Añadir Tarea Móvil */}
+          {onOpenAddModal && (
+            <button
+              type="button"
+              onClick={() => {
+                soundFX.playClick();
+                onOpenAddModal();
+              }}
+              className="chicle-btn h-8 px-2.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-black font-anton text-xs uppercase tracking-wider flex items-center gap-1 shadow-[0_0_12px_rgba(0,240,255,0.4)] cursor-pointer shrink-0"
+              title="Nueva Tarea o Hábito"
+            >
+              <Plus className="w-3.5 h-3.5 stroke-[3]" />
+              <span>Tarea</span>
+            </button>
+          )}
+        </div>
+
+        {/* FILA 2: SUB-BARRA DE HERRAMIENTAS TÁCTICAS (Semana, Pausa, Mes) */}
+        <div className="grid grid-cols-3 gap-1.5 pt-1 border-t border-white/[0.06]">
+          {/* Alternador Semanal */}
+          <button
+            type="button"
+            onClick={toggleWeekStrip}
+            className={`h-7 px-2 rounded-lg border text-[10px] font-mono font-bold flex items-center justify-center gap-1 transition-all cursor-pointer active:scale-95 ${
+              showWeekStrip
+                ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400/60'
+                : 'bg-white/[0.03] text-slate-400 border-white/10'
+            }`}
+            title="Alternar tira de 7 días"
+          >
+            <span>Semana</span>
+            {showWeekStrip ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+          </button>
+
+          {/* Modo Descanso */}
+          <button
+            type="button"
+            onClick={() => {
+              soundFX.playClick();
+              const wasActivated = toggleRestDay(currentDate);
+              if (wasActivated) soundFX.playItemEquip();
+            }}
+            className={`h-7 px-2 rounded-lg border text-[10px] font-mono font-bold flex items-center justify-center gap-1 transition-all cursor-pointer active:scale-95 ${
+              isCurrentDateRest
+                ? 'bg-emerald-950/80 text-emerald-300 border-emerald-400'
+                : 'bg-white/[0.03] text-slate-400 border-white/10'
+            }`}
+            title="Día de descanso o pausa táctica"
+          >
+            <span>{isCurrentDateRest ? '🌿 Descanso' : '🛡️ Pausa'}</span>
+          </button>
+
+          {/* Calendario Mensual */}
+          <button
+            type="button"
+            onClick={() => {
+              soundFX.playClick();
+              setIsMonthlyModalOpen(true);
+            }}
+            className="h-7 px-2 rounded-lg bg-white/[0.03] hover:bg-white/[0.08] border border-white/10 text-slate-300 flex items-center justify-center gap-1 text-[10px] font-mono font-bold transition-all cursor-pointer active:scale-95"
+            title="Planificador mensual completo"
+          >
+            <CalendarIcon className="w-3 h-3 text-cyan-300" />
+            <span>Mes</span>
+          </button>
         </div>
       </div>
 

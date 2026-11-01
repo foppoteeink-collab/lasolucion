@@ -283,6 +283,64 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
   const [applyFeedback, setApplyFeedback] = useState(false);
   const [auroraSpeed, setAuroraSpeed] = useState<'normal' | 'fast'>('fast');
   const [pointColors, setPointColors] = useState<string[]>(MOXEN_MALLA_PRESETS[0].colors.slice(0, 3));
+  const [showSimulatedUI, setShowSimulatedUI] = useState(false);
+
+  // Análisis inteligente de luminosidad y contraste perceptual para textos de la app
+  const contrastAnalysis = React.useMemo(() => {
+    const activeHexes = pointColors.slice(0, pointCount);
+    if (!activeHexes.length) {
+      return {
+        status: 'optimal',
+        label: 'Contraste Óptimo',
+        desc: 'Excelente nitidez en textos y números.',
+        hint: 'Fondo táctico balanceado.',
+        badgeBg: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40',
+        dotBg: 'bg-emerald-400 shadow-[0_0_8px_#10b981]'
+      };
+    }
+
+    const luminances = activeHexes.map(hex => {
+      const clean = hex.replace('#', '');
+      const r = parseInt(clean.substring(0, 2), 16) / 255 || 0;
+      const g = parseInt(clean.substring(2, 4), 16) / 255 || 0;
+      const b = parseInt(clean.substring(4, 6), 16) / 255 || 0;
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    });
+
+    const maxLum = Math.max(...luminances);
+    const avgLum = luminances.reduce((a, b) => a + b, 0) / luminances.length;
+
+    if (maxLum > 0.76 || avgLum > 0.64) {
+      return {
+        status: 'warning',
+        label: 'Fondo Muy Claro',
+        desc: 'Los textos blancos y números pueden perderse.',
+        hint: 'Oscurece algún nodo para garantizar legibilidad.',
+        badgeBg: 'bg-rose-500/20 text-rose-300 border-rose-500/40',
+        dotBg: 'bg-rose-400 shadow-[0_0_8px_#f43f5e]'
+      };
+    }
+
+    if (maxLum > 0.52 || avgLum > 0.42) {
+      return {
+        status: 'moderate',
+        label: 'Contraste Aceptable',
+        desc: 'Buena lectura, textos secundarios con brillo medio.',
+        hint: 'Ajuste balanceado y legible.',
+        badgeBg: 'bg-amber-500/20 text-amber-300 border-amber-500/40',
+        dotBg: 'bg-amber-400 shadow-[0_0_8px_#f59e0b]'
+      };
+    }
+
+    return {
+      status: 'optimal',
+      label: 'Contraste Óptimo',
+      desc: 'Excelente nitidez en textos, números y badges.',
+      hint: 'Fondo perfecto para la interfaz del sistema.',
+      badgeBg: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40',
+      dotBg: 'bg-emerald-400 shadow-[0_0_8px_#10b981]'
+    };
+  }, [pointColors, pointCount]);
 
   const currPreset = MOXEN_MALLA_PRESETS.find(p => p.id === activePreset) || MOXEN_MALLA_PRESETS[0];
 
@@ -1081,18 +1139,105 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
           </div>
         </div>
 
-        {/* MODO NORMAL: Botón de Pantalla Completa Flotante Minimalista */}
+        {/* MODO NORMAL: Botón de Simulación de Interfaz y Botón de Pantalla Completa */}
         {!isFullscreen && (
-          <button
-            type="button"
-            data-action="toggle-fullscreen"
-            onClick={toggleFullscreen}
-            className="chicle-btn absolute top-3 right-3 z-40 px-2.5 py-1.5 rounded-lg border border-white/15 bg-black/40 hover:bg-black/60 text-white/80 hover:text-white transition-all cursor-pointer backdrop-blur-md flex items-center gap-1.5 text-[11px] font-mono shadow-sm"
-            title="Expandir a pantalla completa"
-          >
-            <Maximize2 className="w-3.5 h-3.5 text-cyan-400" />
-            <span className="hidden sm:inline font-medium">Pantalla Completa</span>
-          </button>
+          <>
+            <button
+              type="button"
+              data-action="toggle-sim-ui"
+              onClick={() => {
+                soundFX.playClick();
+                setShowSimulatedUI(!showSimulatedUI);
+              }}
+              className={`chicle-btn absolute top-3 left-3 z-40 px-2.5 py-1.5 rounded-lg border transition-all cursor-pointer backdrop-blur-md flex items-center gap-1.5 text-[11px] font-mono shadow-sm ${
+                showSimulatedUI
+                  ? 'bg-cyan-500/25 border-cyan-400 text-cyan-200 shadow-[0_0_12px_rgba(0,240,255,0.3)] font-bold'
+                  : 'border-white/15 bg-black/40 hover:bg-black/60 text-white/80 hover:text-white'
+              }`}
+              title="Comprobar cómo se leen los textos y números sobre este fondo"
+            >
+              {showSimulatedUI ? (
+                <>
+                  <EyeOff className="w-3.5 h-3.5 text-cyan-300" />
+                  <span className="font-medium">Ocultar UI</span>
+                </>
+              ) : (
+                <>
+                  <Eye className="w-3.5 h-3.5 text-cyan-400" />
+                  <span className="font-medium">Simular UI</span>
+                </>
+              )}
+            </button>
+
+            <button
+              type="button"
+              data-action="toggle-fullscreen"
+              onClick={toggleFullscreen}
+              className="chicle-btn absolute top-3 right-3 z-40 px-2.5 py-1.5 rounded-lg border border-white/15 bg-black/40 hover:bg-black/60 text-white/80 hover:text-white transition-all cursor-pointer backdrop-blur-md flex items-center gap-1.5 text-[11px] font-mono shadow-sm"
+              title="Expandir a pantalla completa"
+            >
+              <Maximize2 className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="hidden sm:inline font-medium">Pantalla Completa</span>
+            </button>
+          </>
+        )}
+
+        {/* SIMULACIÓN DE INTERFAZ & EVALUACIÓN DE CONTRASTE EN VIVO */}
+        {showSimulatedUI && (
+          <div className="absolute inset-0 z-30 flex items-center justify-center p-3 sm:p-5 pointer-events-none animate-fade-in">
+            <div className="w-full max-w-sm rounded-2xl bg-[#030a18]/85 backdrop-blur-md p-3.5 sm:p-4 border border-white/15 shadow-[0_16px_40px_rgba(0,0,0,0.65)] space-y-2.5 pointer-events-auto transition-all">
+              {/* Cabecera del mock táctico */}
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="w-5 h-5 rounded-md bg-cyan-500/20 border border-cyan-400/50 flex items-center justify-center text-cyan-300 text-xs shrink-0">
+                    ✓
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-xs font-anton tracking-wider uppercase text-white block leading-tight truncate">
+                      Rutina de Enfoque
+                    </span>
+                    <span className="text-[10px] text-slate-300 font-sans block truncate">
+                      3 de 5 hábitos cumplidos hoy
+                    </span>
+                  </div>
+                </div>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-cyan-950/70 border border-cyan-400/40 text-cyan-300 shrink-0">
+                  +50 EXP
+                </span>
+              </div>
+
+              {/* Barra de progreso y telemetría numérica */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-[11px] font-mono">
+                  <span className="text-slate-300 font-semibold">Progreso Táctico</span>
+                  <span className="text-white font-bold tracking-wider">75%</span>
+                </div>
+                <div className="w-full h-2 rounded-full bg-black/50 border border-white/10 overflow-hidden p-0.5">
+                  <div className="w-3/4 h-full rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 shadow-[0_0_8px_rgba(0,240,255,0.6)]" />
+                </div>
+              </div>
+
+              {/* Semáforo de Evaluación de Contraste Inteligente */}
+              <div className={`p-2 rounded-xl border flex items-center gap-2 text-[10px] font-mono ${contrastAnalysis.badgeBg}`}>
+                <span className={`w-2 h-2 rounded-full shrink-0 animate-pulse ${contrastAnalysis.dotBg}`} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="font-bold uppercase tracking-wider truncate">
+                      {contrastAnalysis.label}
+                    </span>
+                    <span className="text-[9px] opacity-80 truncate hidden sm:inline">
+                      {contrastAnalysis.desc}
+                    </span>
+                  </div>
+                  {contrastAnalysis.status === 'warning' && (
+                    <p className="text-[9px] text-rose-200 mt-0.5 leading-snug">
+                      {contrastAnalysis.hint}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* MODO PANTALLA COMPLETA: CABECERA CON SAFE-AREA Y BOTÓN DE SALIDA DESTACADO */}
@@ -1112,8 +1257,27 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
               </span>
             </div>
 
-            {/* Controles de Cabecera: Toggle HUD y Botón Salir */}
+            {/* Controles de Cabecera: Toggle Simular UI, Toggle HUD y Botón Salir */}
             <div className="flex items-center gap-2">
+              {/* Toggle Simulación de Interfaz en Fullscreen */}
+              <button
+                type="button"
+                data-action="toggle-sim-ui-fs"
+                onClick={() => {
+                  soundFX.playClick();
+                  setShowSimulatedUI(!showSimulatedUI);
+                }}
+                className={`chicle-btn px-3 py-2 rounded-xl flex items-center gap-1.5 text-xs font-mono font-bold shadow-lg cursor-pointer backdrop-blur-md border ${
+                  showSimulatedUI
+                    ? 'bg-cyan-500/30 border-cyan-400 text-cyan-200 shadow-[0_0_12px_rgba(0,240,255,0.3)]'
+                    : 'bg-black/80 hover:bg-black/95 border-cyan-500/50 text-cyan-300 hover:text-white'
+                }`}
+                title="Comprobar cómo se leen los textos sobre este fondo"
+              >
+                {showSimulatedUI ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                <span className="hidden sm:inline">{showSimulatedUI ? 'Ocultar UI' : 'Simular UI'}</span>
+              </button>
+
               {/* Toggle Ocultar/Mostrar Controles HUD */}
               <button
                 type="button"
@@ -1373,6 +1537,28 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
 
       {/* ── DOCK DE CONTROL MINIMALISTA (ULTRA-SLIM & ESTILIZADO) ── */}
       <div className="p-2.5 sm:p-3 bg-white/[0.02] border border-white/[0.08] backdrop-blur-xl rounded-2xl space-y-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.37)]">
+        {/* ALERTA INTELIGENTE DE PROTECCIÓN DE CONTRASTE (Solo si el fondo es riesgoso) */}
+        {contrastAnalysis.status === 'warning' && (
+          <div className="p-2 sm:p-2.5 rounded-xl border bg-rose-500/10 border-rose-500/30 flex items-center justify-between gap-2 text-xs font-mono animate-fade-in">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="w-2 h-2 rounded-full bg-rose-400 animate-pulse shrink-0 shadow-[0_0_8px_#f43f5e]" />
+              <span className="text-[11px] text-rose-200 font-bold truncate">
+                Fondo muy claro: algunos textos blancos podrían no verse bien.
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                soundFX.playClick();
+                setShowSimulatedUI(true);
+              }}
+              className="px-2 py-0.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 border border-rose-500/40 text-[10px] font-bold shrink-0 cursor-pointer"
+            >
+              Ver Simulación
+            </button>
+          </div>
+        )}
+
         {/* FILA 1: SELECTOR DE TONOS + VELOCIDAD + HERRAMIENTAS RÁPIDAS */}
         <div className="flex items-center justify-between gap-2">
           {/* Segmented Tonos [ 2 | 3 | 4 ] */}

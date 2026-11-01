@@ -941,16 +941,12 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                     }`}
                   >
                     <div className="flex items-center gap-3.5">
-                      <div className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 relative flex items-center justify-center bg-black/70 rounded-2xl border border-fuchsia-500/30 p-1.5 overflow-hidden shadow-inner">
-                        <KaiVectorGraphics
-                          shapeId="custom"
-                          activeColor="#e879f9"
-                          secondaryColor="#a21caf"
-                          glowFilterId="preview-custom"
-                          has21Days={has21Days}
-                          has66Days={has66Days}
-                          ascensionCrystalsCount={ascensionCrystals}
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 relative flex items-center justify-center bg-black/70 rounded-2xl border border-fuchsia-500/30 p-1 overflow-hidden shadow-inner">
+                        <KAICompanion
                           customForm={stats.kaiCustomForm}
+                          shapeId="custom"
+                          size={60}
+                          interactive={false}
                         />
                       </div>
 

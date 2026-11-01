@@ -589,9 +589,9 @@ export function AppLayout() {
         <SurpriseBossModal
           isOpen={isSurpriseBossOpen}
           onClose={() => setModalState('isSurpriseBossOpen', false)}
-          archetypeName={surpriseBossData?.archetypeName || 'Jefe Sorpresa'}
-          buffName={surpriseBossData?.buffName || 'Recompensa del Jefe'}
-          buffDescription={surpriseBossData?.buffDescription || 'Reclama tu poder.'}
+          archetypeName={surpriseBossData?.archetypeName || 'Ruptura de Inercia'}
+          buffName={surpriseBossData?.buffName || 'Inercia Superada'}
+          buffDescription={surpriseBossData?.buffDescription || '¡Conquistaste 3 misiones o hábitos prioritarios hoy! Tu vitalidad (+50 HP) y recursos se restauran al máximo.'}
         />
       </Suspense>
 
