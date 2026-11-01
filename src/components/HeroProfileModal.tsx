@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { PlayerStats } from '../types';
 import { getRankForLevel } from '../data/defaults';
+import { getArchetypeDisplayName } from '../data/archetypes';
 import { useAuth } from '../context/AuthContext';
 import { CloudSyncResult } from '../hooks/useCloudSync';
 import { soundFX } from '../utils/audio';
@@ -496,7 +497,7 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
                 Arquetipo Psicológico Activo:
               </span>
               <p className="text-xs font-anton text-cyan-300 uppercase truncate mt-0.5">
-                {stats.characterClass || 'El Héroe'}
+                {getArchetypeDisplayName(stats.characterClass)}
               </p>
             </div>
             {onOpenArchetypes && (

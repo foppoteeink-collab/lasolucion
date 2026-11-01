@@ -22,7 +22,7 @@ export interface JungArchetype {
 export const JUNG_ARCHETYPES: JungArchetype[] = [
   {
     id: 'inocente',
-    name: 'El Inocente',
+    name: 'Espíritu Puro',
     avatar: '🕊️',
     desire: 'Vivir tranquilo, feliz y hacer las cosas en paz.',
     fear: 'El conflicto, meter la pata o perder la calma interior.',
@@ -73,7 +73,7 @@ export const JUNG_ARCHETYPES: JungArchetype[] = [
   },
   {
     id: 'huerfano',
-    name: 'El Huérfano (El Aliado)',
+    name: 'Espíritu Aliado',
     avatar: '🤝',
     desire: 'Sentirte parte de un grupo de confianza, encajar y tener gente leal a tu lado.',
     fear: 'Sentirte excluido, que te dejen solo o tener que aparentar lo que no eres.',
@@ -124,7 +124,7 @@ export const JUNG_ARCHETYPES: JungArchetype[] = [
   },
   {
     id: 'heroe',
-    name: 'El Héroe',
+    name: 'Espíritu Heroico',
     avatar: '🛡️',
     desire: 'Superarte día a día, vencer las dificultades y demostrarte de qué estás hecho.',
     fear: 'Rendirte antes de tiempo, quedarte corto o sentirte incapaz frente a un reto.',
@@ -175,7 +175,7 @@ export const JUNG_ARCHETYPES: JungArchetype[] = [
   },
   {
     id: 'cuidador',
-    name: 'El Cuidador',
+    name: 'Alma Protectora',
     avatar: '💖',
     desire: 'Que los tuyos estén bien, protegidos y que nunca les falte apoyo ni cariño.',
     fear: 'Que alguien que quieres sufra por tu culpa o no haber estado ahí cuando te necesitaban.',
@@ -226,7 +226,7 @@ export const JUNG_ARCHETYPES: JungArchetype[] = [
   },
   {
     id: 'explorador',
-    name: 'El Explorador',
+    name: 'Espíritu Libre',
     avatar: '🧭',
     desire: 'Sentirte libre, probar cosas nuevas y salir de la rutina aburrida del día a día.',
     fear: 'La monotonía, sentirte atrapado en una jaula o conformarte con una vida mediocre.',
@@ -277,7 +277,7 @@ export const JUNG_ARCHETYPES: JungArchetype[] = [
   },
   {
     id: 'rebelde',
-    name: 'El Rebelde (El Forajido)',
+    name: 'Fuerza Rebelde',
     avatar: '⚡',
     desire: 'Cambiar lo que no tiene sentido, romper moldes y hacer tu vida bajo tus propias reglas.',
     fear: 'Sentirte sumiso, conformarte con lo injusto o dejar que otros decidan por ti.',
@@ -328,7 +328,7 @@ export const JUNG_ARCHETYPES: JungArchetype[] = [
   },
   {
     id: 'amante',
-    name: 'El Amante',
+    name: 'Corazón Apasionado',
     avatar: '🌹',
     desire: 'Vivir con pasión, sentirte querido y conectar de verdad con las personas que te rodean.',
     fear: 'La soledad, la frialdad en el trato o vivir una vida apagada y sin entusiasmo.',
@@ -379,7 +379,7 @@ export const JUNG_ARCHETYPES: JungArchetype[] = [
   },
   {
     id: 'creador',
-    name: 'El Creador',
+    name: 'Mente Creadora',
     avatar: '🎨',
     desire: 'Darle vida a tus ideas y construir proyectos con tu propio sello personal.',
     fear: 'Quedarte estancado sin inspiración o terminar haciendo cosas genéricas sin alma.',
@@ -430,7 +430,7 @@ export const JUNG_ARCHETYPES: JungArchetype[] = [
   },
   {
     id: 'bufon',
-    name: 'El Bufón',
+    name: 'Espíritu Lúdico',
     avatar: '🃏',
     desire: 'Pasarla bien, reírte a carcajadas y quitarle dramatismo a las presiones diarias.',
     fear: 'El aburrimiento pesado y amargarse la vida por cosas que tienen solución.',
@@ -481,7 +481,7 @@ export const JUNG_ARCHETYPES: JungArchetype[] = [
   },
   {
     id: 'sabio',
-    name: 'El Sabio',
+    name: 'Mente Sabia',
     avatar: '📜',
     desire: 'Entender el porqué de las cosas, aprender sin parar y tener las ideas bien claras.',
     fear: 'Estar desinformado, que te engañen con mentiras o actuar a ciegas sin reflexionar.',
@@ -532,7 +532,7 @@ export const JUNG_ARCHETYPES: JungArchetype[] = [
   },
   {
     id: 'mago',
-    name: 'El Mago',
+    name: 'Mente Alquimista',
     avatar: '🔮',
     desire: 'Transformar tu realidad, cumplir tus metas y hacer que las cosas difíciles parezcan fáciles.',
     fear: 'Quedarte estancado en el mismo lugar o que una mala decisión perjudique tu rumbo.',
@@ -583,7 +583,7 @@ export const JUNG_ARCHETYPES: JungArchetype[] = [
   },
   {
     id: 'gobernante',
-    name: 'El Gobernante',
+    name: 'Voz de Liderazgo',
     avatar: '👑',
     desire: 'Poner orden, tener las riendas de tu vida y construir estabilidad para ti y los tuyos.',
     fear: 'El descontrol, el caos y la falta de rumbo en las cosas que realmente importan.',
@@ -634,20 +634,89 @@ export const JUNG_ARCHETYPES: JungArchetype[] = [
   }
 ];
 
+const LEGACY_NAME_TO_ID: Record<string, string> = {
+  'inocente': 'inocente',
+  'el inocente': 'inocente',
+  'espiritu puro': 'inocente',
+  'huerfano': 'huerfano',
+  'el huerfano': 'huerfano',
+  'el hombre corriente': 'huerfano',
+  'el aliado': 'huerfano',
+  'espiritu aliado': 'huerfano',
+  'heroe': 'heroe',
+  'el heroe': 'heroe',
+  'la heroina': 'heroe',
+  'espiritu heroico': 'heroe',
+  'cuidador': 'cuidador',
+  'el cuidador': 'cuidador',
+  'la protectora': 'cuidador',
+  'el protector': 'cuidador',
+  'alma protectora': 'cuidador',
+  'explorador': 'explorador',
+  'el explorador': 'explorador',
+  'la exploradora': 'explorador',
+  'espiritu libre': 'explorador',
+  'rebelde': 'rebelde',
+  'el rebelde': 'rebelde',
+  'la rebelde': 'rebelde',
+  'el forajido': 'rebelde',
+  'fuerza rebelde': 'rebelde',
+  'amante': 'amante',
+  'el amante': 'amante',
+  'la apasionada': 'amante',
+  'corazon apasionado': 'amante',
+  'creador': 'creador',
+  'el creador': 'creador',
+  'la creadora': 'creador',
+  'mente creadora': 'creador',
+  'bufon': 'bufon',
+  'el bufon': 'bufon',
+  'la bufona': 'bufon',
+  'espiritu ludico': 'bufon',
+  'sabio': 'sabio',
+  'el sabio': 'sabio',
+  'la sabia': 'sabio',
+  'mente sabia': 'sabio',
+  'mago': 'mago',
+  'el mago': 'mago',
+  'la maga': 'mago',
+  'mente alquimista': 'mago',
+  'gobernante': 'gobernante',
+  'el gobernante': 'gobernante',
+  'la lider': 'gobernante',
+  'el lider': 'gobernante',
+  'voz de liderazgo': 'gobernante',
+};
+
 export const getArchetypeByName = (name?: string): JungArchetype => {
-  if (!name) return JUNG_ARCHETYPES[0];
-  const normalize = (str: string) => str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  if (!name) return JUNG_ARCHETYPES[2]; // Default to Espíritu Heroico
+  const normalize = (str: string) => str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
   const normInput = normalize(name);
 
+  // 1. Direct legacy alias lookup
+  const mappedId = LEGACY_NAME_TO_ID[normInput];
+  if (mappedId) {
+    const arch = JUNG_ARCHETYPES.find(a => a.id === mappedId);
+    if (arch) return arch;
+  }
+
+  // 2. Exact match on name or id
   const found = JUNG_ARCHETYPES.find(
     (a) => normalize(a.name) === normInput || normalize(a.id) === normInput
   );
   if (found) return found;
 
+  // 3. Partial substring match
   const partial = JUNG_ARCHETYPES.find(
     (a) => normInput.includes(normalize(a.id)) || normalize(a.name).includes(normInput) || normInput.includes(normalize(a.name))
   );
-  return partial || JUNG_ARCHETYPES[0];
+  return partial || JUNG_ARCHETYPES[2];
+};
+
+export const getArchetypeDisplayName = (nameOrArch?: string | JungArchetype): string => {
+  if (!nameOrArch) return 'Espíritu Heroico';
+  if (typeof nameOrArch === 'object') return nameOrArch.name;
+  return getArchetypeByName(nameOrArch).name;
 };
 
 export const getDailyQuoteForArchetype = (archetype: JungArchetype, quoteIndexOffset: number = 0): string => {

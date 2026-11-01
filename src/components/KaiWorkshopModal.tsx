@@ -329,6 +329,16 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
   // Cargas de Forja (Modo libre de pruebas ilimitadas)
   const forgeCharges: number = stats.kaiNeuralForgeCharges ?? 9999;
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const handleSelectShape = (shapeId: KaiShapeKey) => {
@@ -527,16 +537,6 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
       };
     });
   };
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
 
   return (
     <div className="fixed inset-0 z-[120] bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-fadeIn">

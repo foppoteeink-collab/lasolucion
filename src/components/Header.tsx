@@ -26,6 +26,7 @@ import { useUIStore } from '../store/useUIStore';
 import { getRankForLevel, getCategoryColor } from '../data/defaults';
 import { CloudSyncResult } from '../hooks/useCloudSync';
 import { ArchetypeGlyph } from './ArchetypeGlyph';
+import { getArchetypeDisplayName } from '../data/archetypes';
 
 interface HeaderProps {
   onOpenProfile?: () => void;
@@ -215,11 +216,11 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           </div>
 
-          {/* BLOQUE DERECHO: Recursos (Monedas, Recompensa, Sonido, Auth) */}
-          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+          {/* BLOQUE DERECHO: Recursos y Gadgets Tácticos */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {/* Monedas Micro-chip */}
             <div 
-              className="flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1 rounded-xl bg-surface-card border border-yellow-500/40 text-yellow-300 text-xs sm:text-sm font-anton tracking-wider shadow-[0_0_12px_rgba(234,179,8,0.18)]"
+              className="flex items-center gap-1.5 h-9 px-3 rounded-xl bg-black/50 border border-yellow-500/40 text-yellow-300 text-xs sm:text-sm font-anton tracking-wider shadow-[0_0_12px_rgba(234,179,8,0.18)]"
               title={`${stats.coins || 0} Monedas acumuladas`}
             >
               <Coins className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-400 drop-shadow-[0_0_5px_rgba(234,179,8,0.7)]" />
@@ -230,10 +231,10 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               onClick={() => { soundFX.playClick(); onOpenDailyRewards(); }}
               title="Recompensa Cuántica Diaria"
-              className={`relative p-2 rounded-xl border transition-all cursor-pointer active:scale-95 ${
+              className={`relative flex items-center justify-center w-9 h-9 rounded-xl border transition-all cursor-pointer active:scale-95 ${
                 hasUnclaimedDailyReward
                   ? 'bg-amber-500/20 border-amber-400 text-amber-300 animate-pulse shadow-[0_0_16px_rgba(245,158,11,0.6)]'
-                  : 'bg-surface-card text-cyan-200 border-white/10 hover:border-cyan-400 hover:bg-cyan-950/40'
+                  : 'bg-black/40 text-cyan-200 border-white/10 hover:border-cyan-400 hover:bg-cyan-950/40'
               }`}
             >
               <Gift className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
@@ -242,33 +243,42 @@ export const Header: React.FC<HeaderProps> = ({
               )}
             </button>
 
-            {/* Silenciador de sonido */}
-            <button
-              onClick={toggleSound}
-              className="hidden sm:flex p-2 rounded-xl bg-surface-card text-cyan-300 border border-white/10 hover:border-cyan-400 hover:bg-cyan-950/40 transition-all cursor-pointer active:scale-95"
-              title={soundEnabled ? 'Sonido Activado' : 'Sonido Silenciado'}
-            >
-              {soundEnabled ? <Volume2 className="w-4 h-4 text-cyan-400" /> : <VolumeX className="w-4 h-4 text-zinc-500" />}
-            </button>
+            {/* Cápsula Unificada de Utilidades Tácticas: Sonido + Conexión */}
+            <div className="flex items-center gap-1 p-0.5 bg-black/40 rounded-xl border border-white/10">
+              {/* Silenciador de sonido */}
+              <button
+                onClick={toggleSound}
+                className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-cyan-300 hover:bg-white/10 transition-all cursor-pointer active:scale-95"
+                title={soundEnabled ? 'Sonido Activado' : 'Sonido Silenciado'}
+                aria-label={soundEnabled ? 'Silenciar sonido' : 'Activar sonido'}
+              >
+                {soundEnabled ? <Volume2 className="w-4 h-4 text-cyan-400" /> : <VolumeX className="w-4 h-4 text-zinc-500" />}
+              </button>
 
-            {/* Auth Google */}
-            {user ? (
-              <button
-                onClick={handleSignOut}
-                className="p-2 rounded-xl bg-red-950/30 text-red-400 border border-red-500/30 hover:bg-red-950/50 transition-all cursor-pointer active:scale-95"
-                title="Desconectar Terminal de Google"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
-            ) : (
-              <button
-                onClick={() => { soundFX.playClick(); signInWithGoogle(); }}
-                className="p-2 rounded-xl bg-surface-card text-cyan-300 border border-cyan-500/40 hover:bg-cyan-950/50 transition-all cursor-pointer active:scale-95"
-                title="Conectar con Google"
-              >
-                <LogIn className="w-4 h-4" />
-              </button>
-            )}
+              {/* Separador sutil */}
+              <div className="w-px h-4 bg-white/10" />
+
+              {/* Auth Google */}
+              {user ? (
+                <button
+                  onClick={handleSignOut}
+                  className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-950/40 transition-all cursor-pointer active:scale-95"
+                  title="Desconectar Terminal de Google"
+                  aria-label="Cerrar sesión de Google"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              ) : (
+                <button
+                  onClick={() => { soundFX.playClick(); signInWithGoogle(); }}
+                  className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-cyan-300 hover:bg-cyan-950/40 transition-all cursor-pointer active:scale-95"
+                  title="Conectar con Google"
+                  aria-label="Iniciar sesión con Google"
+                >
+                  <LogIn className="w-4 h-4" />
+                </button>
+              )}
+            </div>
           </div>
 
         </div>
@@ -276,31 +286,31 @@ export const Header: React.FC<HeaderProps> = ({
         {/* ============================================================== */}
         {/* FILA 2: IDENTIDAD DEL CAZADOR (SUB-BARRA RESPONSIVE)           */}
         {/* ============================================================== */}
-        <div className="px-3 sm:px-5 py-1.5 bg-[#010912]/70 relative z-10 flex items-center justify-between gap-2.5 sm:gap-4 border-b border-white/[0.04]">
+        <div className="px-3 sm:px-5 py-1.5 bg-[#030712]/60 relative z-10 flex items-center justify-between gap-2.5 sm:gap-4 border-b border-white/[0.05]">
           {/* Identidad de Cazador: Micro-Avatar + Nivel + Rango */}
           <button
             onClick={() => { soundFX.playClick(); onOpenProfile?.(); }}
-            className="flex items-center gap-2 group shrink-0 cursor-pointer text-left focus:outline-none"
+            className="flex items-center gap-2.5 group shrink-0 cursor-pointer text-left focus:outline-none"
             title={`Perfil Táctico - Nivel ${stats.level} (${displayRankTitle})`}
           >
-            <div className="relative w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-surface-card border border-cyan-400/60 flex items-center justify-center shadow-[0_0_10px_rgba(0,240,255,0.25)] group-hover:scale-105 transition-transform overflow-hidden">
+            <div className="relative w-8 h-8 rounded-xl bg-cyan-950/40 border border-cyan-400/50 flex items-center justify-center shadow-[0_0_12px_rgba(0,240,255,0.2)] group-hover:scale-105 transition-transform overflow-hidden">
               <ArchetypeGlyph
                 archetypeNameOrId={stats.characterClass || 'heroe'}
                 size={18}
                 className="border-none bg-transparent p-0 shadow-none"
                 glow={false}
               />
-              <span className="absolute -bottom-0.5 -right-0.5 bg-black text-cyan-300 text-[8px] font-mono font-black px-1 rounded border border-cyan-400/70">
+              <span className="absolute -bottom-0.5 -right-0.5 bg-cyan-950 text-cyan-300 text-[8px] font-mono font-black px-1 rounded-full border border-cyan-400/80 leading-tight">
                 {stats.level}
               </span>
             </div>
 
             <div className="flex flex-col min-w-0">
-              <span className="text-[11px] sm:text-xs font-anton tracking-wider text-slate-100 truncate group-hover:text-cyan-300 transition-colors leading-none">
+              <span className="text-[11px] sm:text-xs font-anton tracking-wider text-slate-100 truncate group-hover:text-cyan-300 transition-colors leading-none uppercase">
                 {displayRankTitle}
               </span>
               <span className="text-[9px] font-mono text-cyan-400/70 truncate leading-tight mt-0.5">
-                {stats.characterClass || 'El Héroe'}
+                {getArchetypeDisplayName(stats.characterClass)}
               </span>
             </div>
           </button>
@@ -343,7 +353,7 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Racha Activa y Escudo Cuántico */}
           <div className="flex items-center gap-1.5 shrink-0">
             <div 
-              className="flex lg:hidden items-center gap-1 px-1.5 py-0.5 rounded-lg bg-surface-card border border-amber-500/40 text-amber-300 text-[11px] font-anton tracking-wider shadow-[0_0_8px_rgba(245,158,11,0.2)] shrink-0"
+              className="flex lg:hidden items-center gap-1 px-2 py-0.5 rounded-xl bg-amber-950/30 border border-amber-500/40 text-amber-300 text-[11px] font-anton tracking-wider shadow-[0_0_8px_rgba(245,158,11,0.2)] shrink-0"
               title={`Racha Activa: ${stats.streakDays || 0} Días continuos`}
             >
               <Flame className="w-3 h-3 text-amber-400 fill-amber-400/50" />
@@ -352,7 +362,7 @@ export const Header: React.FC<HeaderProps> = ({
 
             {stats.streakShields !== undefined && stats.streakShields > 0 && (
               <div
-                className="flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-surface-card border border-cyan-400/60 text-cyan-300 text-[10px] font-anton tracking-wider shrink-0"
+                className="flex items-center gap-1 px-2 py-0.5 rounded-xl bg-cyan-950/40 border border-cyan-400/60 text-cyan-300 text-[10px] font-anton tracking-wider shrink-0"
                 title={`Escudos Cuánticos: ${stats.streakShields}`}
               >
                 <Shield className="w-3 h-3 text-cyan-400 fill-cyan-400/30" />
@@ -366,29 +376,31 @@ export const Header: React.FC<HeaderProps> = ({
         {/* FILA 3: NAVEGACIÓN TÁCTICA INTEGRADA (DESKTOP & TABLET)        */}
         {/* ============================================================== */}
         {onTabChange && (
-          <div className="hidden sm:flex items-center justify-center gap-1 sm:gap-2 px-3 py-1.5 bg-black/30 relative z-10">
-            {NAV_TABS.map((tab) => {
-              const isActive = activeTab === tab.id;
-              const TabIcon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => {
-                    soundFX.playClick();
-                    onTabChange(tab.id as any);
-                  }}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all font-anton text-xs sm:text-sm whitespace-nowrap cursor-pointer tracking-wider uppercase active:scale-95 ${
-                    isActive
-                      ? 'bg-cyan-400 text-black shadow-[0_0_14px_rgba(0,240,255,0.65)] font-bold'
-                      : 'text-slate-300 hover:text-white hover:bg-white/[0.06]'
-                  }`}
-                >
-                  <TabIcon className="w-3.5 h-3.5" />
-                  <span>{tab.label}</span>
-                </button>
-              );
-            })}
+          <div className="hidden sm:flex items-center justify-center py-2 px-3 relative z-10 bg-gradient-to-b from-black/20 to-black/40 border-t border-white/[0.04]">
+            <div className="p-1 bg-black/50 rounded-2xl border border-white/10 flex items-center gap-1 shadow-inner backdrop-blur-md max-w-full overflow-x-auto scrollbar-none">
+              {NAV_TABS.map((tab) => {
+                const isActive = activeTab === tab.id;
+                const TabIcon = tab.icon;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => {
+                      soundFX.playClick();
+                      onTabChange(tab.id as any);
+                    }}
+                    className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-xl transition-all font-anton text-xs sm:text-sm whitespace-nowrap cursor-pointer tracking-wider uppercase active:scale-95 ${
+                      isActive
+                        ? 'bg-cyan-400 text-black shadow-[0_0_14px_rgba(0,240,255,0.55)] font-bold'
+                        : 'text-slate-400 hover:text-white hover:bg-white/[0.08]'
+                    }`}
+                  >
+                    <TabIcon className="w-3.5 h-3.5 shrink-0" />
+                    <span>{tab.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
 

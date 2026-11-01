@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Zap, Check, ChevronDown, ChevronUp, Compass } from 'lucide-react';
-import { JUNG_ARCHETYPES, JungArchetype } from '../data/archetypes';
+import { JUNG_ARCHETYPES, JungArchetype, getArchetypeByName } from '../data/archetypes';
 import { soundFX } from '../utils/audio';
 import { triggerShockwave } from '../utils/celebration';
 import { MoxenInercia } from './moxen/MoxenInercia';
@@ -113,24 +113,14 @@ export const HomeArchetypeCarousel: React.FC<HomeArchetypeCarouselProps> = ({
 }) => {
   const [isExpanded, setIsExpanded] = useState(true);
 
-  const normalize = (str: string) =>
-    str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
-  const currentNorm = normalize(currentArchetype || 'El Héroe');
+  const activeArchObj = useMemo(() => {
+    return getArchetypeByName(currentArchetype);
+  }, [currentArchetype]);
 
   const initialIndex = useMemo(() => {
-    const idx = JUNG_ARCHETYPES.findIndex(
-      (a) => normalize(a.name) === currentNorm || normalize(a.id) === currentNorm
-    );
+    const idx = JUNG_ARCHETYPES.findIndex((a) => a.id === activeArchObj.id);
     return idx >= 0 ? idx : 0;
-  }, [currentNorm]);
-
-  const activeArchObj = useMemo(() => {
-    return (
-      JUNG_ARCHETYPES.find(
-        (a) => normalize(a.name) === currentNorm || normalize(a.id) === currentNorm
-      ) || JUNG_ARCHETYPES[0]
-    );
-  }, [currentNorm]);
+  }, [activeArchObj.id]);
 
   const activeTheme = ARCHETYPE_THEMES[activeArchObj.id] || ARCHETYPE_THEMES.heroe;
 
@@ -203,8 +193,7 @@ export const HomeArchetypeCarousel: React.FC<HomeArchetypeCarouselProps> = ({
             accentColor={activeTheme.accent}
           >
             {JUNG_ARCHETYPES.map((arch, index) => {
-              const isSelected =
-                currentNorm === normalize(arch.name) || currentNorm === normalize(arch.id);
+              const isSelected = activeArchObj.id === arch.id;
               const cardNum = index + 1 < 10 ? `0${index + 1}` : `${index + 1}`;
               const theme = ARCHETYPE_THEMES[arch.id] || ARCHETYPE_THEMES.heroe;
 

@@ -122,62 +122,79 @@ export const NeuralAnalysisModal: React.FC<NeuralAnalysisModalProps> = ({ isOpen
     }
   }, [isOpen]);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
-      <div className="bg-[#03000a] border border-purple-500/50 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-[0_0_50px_rgba(150,0,255,0.3)] overflow-hidden">
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in">
+      <div className="bg-[#030712]/95 border border-cyan-500/35 rounded-2xl sm:rounded-3xl w-full max-w-2xl max-h-[90dvh] sm:max-h-[88vh] flex flex-col shadow-[0_0_50px_rgba(0,240,255,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] overflow-hidden backdrop-blur-2xl relative text-left">
         
+        {/* Micrograno táctil Moxen Vidrio */}
+        <span className="vi-grano opacity-5" aria-hidden="true" />
+
+        {/* Filamento especular superior */}
+        <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent pointer-events-none" />
+
         {/* Header */}
-        <div className="p-4 sm:p-5 bg-gradient-to-r from-purple-950/60 via-[#050014] to-purple-950/60 border-b border-purple-900/60 flex items-center justify-between">
+        <div className="p-4 sm:p-5 bg-[#040814]/90 border-b border-white/10 flex items-center justify-between relative z-10">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-950 border border-purple-500/50 flex items-center justify-center shadow-[0_0_15px_rgba(150,0,255,0.4)]">
-              <Cpu className="w-5 h-5 text-yellow-300 animate-pulse" />
+            <div className="p-2.5 rounded-xl bg-cyan-500/15 border border-cyan-400/40 text-cyan-300 shadow-[0_0_14px_rgba(0,240,255,0.3)]">
+              <Cpu className="w-5 h-5 text-cyan-300" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-mono uppercase tracking-widest text-purple-300 font-bold bg-purple-900/40 px-2 py-0.5 rounded border border-purple-700/50">
+                <span className="text-[10px] font-anton uppercase tracking-wider text-cyan-300 bg-cyan-950/70 px-2 py-0.5 rounded-lg border border-cyan-500/40">
                   Diagnóstico Holístico
                 </span>
                 {analysisSource === 'ai' && (
-                  <span className="text-[10px] font-mono font-bold bg-emerald-950/90 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/50 shadow-[0_0_10px_rgba(16,185,129,0.3)] flex items-center gap-1">
+                  <span className="text-[10px] font-mono font-bold bg-emerald-950/90 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] flex items-center gap-1">
                     <Sparkles className="w-3 h-3 text-emerald-400 animate-pulse" />
                     <span>Inteligencia KAI Activa</span>
                   </span>
                 )}
                 {analysisSource === 'heuristics' && (
-                  <span className="text-[10px] font-mono font-bold bg-amber-950/90 text-amber-300 px-2 py-0.5 rounded border border-amber-500/50 flex items-center gap-1">
+                  <span className="text-[10px] font-mono font-bold bg-amber-950/90 text-amber-300 px-2 py-0.5 rounded-full border border-amber-500/50 flex items-center gap-1">
                     <ShieldCheck className="w-3 h-3 text-amber-400" />
                     <span>Modo Autónomo Local</span>
                   </span>
                 )}
               </div>
-              <h3 className="text-base sm:text-lg font-anton tracking-wide text-white uppercase mt-0.5">
+              <h3 className="text-base sm:text-lg font-anton tracking-wider text-white uppercase mt-0.5">
                 Diagnóstico Neural Integral
               </h3>
             </div>
           </div>
           <button 
             onClick={() => { soundFX.playClick(); onClose(); }} 
-            className="p-2 hover:bg-white/10 rounded-full transition-colors text-slate-400 hover:text-white cursor-pointer"
+            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 border border-transparent hover:border-white/10 transition-all cursor-pointer active:scale-95"
+            title="Cerrar (Esc)"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-5 overflow-y-auto custom-scrollbar space-y-4 flex-1">
-          <div className="p-4 rounded-xl bg-[#070214] border border-purple-500/30 flex gap-3 items-start">
-            <div className="w-8 h-8 rounded-lg bg-black border border-purple-500/40 flex items-center justify-center shrink-0">
-              <Sparkles className="w-4 h-4 text-purple-400" />
+        <div className="p-4 sm:p-5 overflow-y-auto custom-scrollbar space-y-4 flex-1 relative z-10">
+          <div className="p-4 rounded-2xl bg-[#020712]/90 border border-white/10 flex gap-3.5 items-start shadow-inner">
+            <div className="w-8 h-8 rounded-xl bg-black/60 border border-cyan-500/40 flex items-center justify-center shrink-0 text-cyan-300">
+              <Sparkles className="w-4 h-4 text-cyan-300" />
             </div>
-            <div className="text-xs text-slate-300 font-mono leading-relaxed">
+            <div className="text-xs text-slate-300 font-sans leading-relaxed">
               Diagnóstico integral de tus metas, hábitos y reflexiones, calibrado por tu compañero KAI para optimizar tu rendimiento.
             </div>
           </div>
 
-          <div className="flex items-center justify-between pt-2">
-            <h4 className="text-xs font-mono font-bold text-purple-200 uppercase tracking-wider flex items-center gap-2">
+          <div className="flex items-center justify-between pt-1">
+            <h4 className="text-xs font-anton font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
               <span>Informe de Rendimiento</span>
             </h4>
@@ -185,22 +202,22 @@ export const NeuralAnalysisModal: React.FC<NeuralAnalysisModalProps> = ({ isOpen
               type="button"
               onClick={handleRunAnalysis}
               disabled={isAnalyzing}
-              className="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer shadow transition-all active:scale-95"
+              className="chicle-btn px-3.5 py-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-400 hover:text-black border border-cyan-400/40 text-cyan-200 disabled:opacity-50 text-xs font-anton uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shadow transition-all active:scale-95"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isAnalyzing ? 'animate-spin' : ''}`} />
-              <span>{isAnalyzing ? 'Analizando...' : 'Actualizar Diagnóstico'}</span>
+              <span>{isAnalyzing ? 'Analizando...' : 'Actualizar'}</span>
             </button>
           </div>
 
           {isAnalyzing ? (
-            <div className="p-12 bg-[#040914] border border-purple-900/40 rounded-xl flex flex-col items-center justify-center text-center space-y-3">
-              <Loader2 className="w-8 h-8 text-purple-400 animate-spin" />
-              <p className="text-xs font-mono text-purple-300">
+            <div className="p-12 bg-[#020712]/80 border border-white/10 rounded-2xl flex flex-col items-center justify-center text-center space-y-3">
+              <Loader2 className="w-8 h-8 text-cyan-300 animate-spin" />
+              <p className="text-xs font-mono text-cyan-300">
                 KAI está analizando tus metas, hábitos y reflexiones para calibrar tu rendimiento...
               </p>
             </div>
           ) : error ? (
-            <div className="p-4 bg-rose-950/30 border border-rose-500/40 rounded-xl text-xs font-mono text-rose-300 flex items-center gap-2">
+            <div className="p-4 bg-rose-950/30 border border-rose-500/40 rounded-2xl text-xs font-mono text-rose-300 flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
               <span>{error}</span>
             </div>
@@ -212,25 +229,25 @@ export const NeuralAnalysisModal: React.FC<NeuralAnalysisModalProps> = ({ isOpen
                   <span>Sintetizado con IA:</span>
                 </div>
               )}
-              <div className="p-4 rounded-xl bg-[#040914] border border-purple-950/80 text-xs text-slate-200 font-mono leading-relaxed shadow-inner max-h-[400px] overflow-y-auto space-y-0.5">
+              <div className="p-4 rounded-2xl bg-[#020712]/90 border border-white/10 text-xs text-slate-200 font-sans leading-relaxed shadow-inner max-h-[400px] overflow-y-auto space-y-1">
                 {renderMarkdown(analysisResult)}
               </div>
             </div>
           ) : (
-            <div className="text-center py-10 text-slate-400 text-xs font-mono border border-dashed border-purple-900/50 rounded-xl">
-              Presiona "Actualizar Diagnóstico" para generar tu evaluación de rendimiento.
+            <div className="text-center py-10 text-slate-400 text-xs font-mono border border-dashed border-white/10 rounded-2xl bg-white/[0.01]">
+              Presiona "Actualizar" para generar tu evaluación de rendimiento.
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-[#050014] border-t border-purple-900/40 flex justify-end">
+        <div className="p-4 bg-[#030712]/95 border-t border-white/10 flex justify-end relative z-10">
           <button
             type="button"
             onClick={() => { soundFX.playClick(); onClose(); }}
-            className="px-4 py-2 rounded-xl bg-purple-950 hover:bg-purple-900 text-purple-200 text-xs font-mono font-bold border border-purple-700/50 cursor-pointer transition-colors"
+            className="chicle-btn px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-white text-xs font-anton uppercase tracking-wider cursor-pointer transition-all active:scale-95"
           >
-            Cerrar Módulo
+            Volver al Cockpit
           </button>
         </div>
 

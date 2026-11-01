@@ -44,6 +44,7 @@ import {
 } from 'lucide-react';
 import { getHabitBaseId } from '../intelligence/masteryEngine';
 import { CHARACTER_CLASSES, getRankForLevel } from '../data/defaults';
+import { getArchetypeDisplayName } from '../data/archetypes';
 import { soundFX } from '../utils/audio';
 import {
   ResponsiveContainer,
@@ -587,7 +588,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
         <ArchetypesModal
           isOpen={isArchetypesModalOpen}
           onClose={() => setIsArchetypesModalOpen(false)}
-          currentArchetype={stats.characterClass || 'El Héroe'}
+          currentArchetype={getArchetypeDisplayName(stats.characterClass)}
           onSelectArchetype={(arch) => {
             if (onUpdateStats) {
               onUpdateStats(prev => ({
@@ -727,7 +728,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
                       </p>
                     )}
                     <h2 className="text-base sm:text-lg font-anton uppercase text-white tracking-wide truncate">
-                      {stats.characterClass || 'Héroe del Sistema'}
+                      {getArchetypeDisplayName(stats.characterClass)}
                     </h2>
                     <div className="flex flex-wrap items-center gap-2 mt-0.5">
                       <p className="text-xs text-cyan-300/90 font-bold flex items-center gap-1">
@@ -854,7 +855,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
           {/* MOXEN TELARAÑA: Pentagonal Power Matrix of RPG Attributes */}
           <MoxenTelarana
             attributes={attributesData}
-            characterClass={stats.characterClass || 'Héroe del Sistema'}
+            characterClass={getArchetypeDisplayName(stats.characterClass)}
             title="Matriz de Poder Pentagonal"
           />
 

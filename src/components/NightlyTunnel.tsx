@@ -65,6 +65,16 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
     }
   }, [isOpen]);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   // ── STATS ──────────────────────────────────────────────────
@@ -183,40 +193,46 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4 bg-black/90 backdrop-blur-md">
-      <div className="relative w-full max-w-xl flex flex-col bg-[#001224] border-2 border-cyan-500/50 rounded-2xl sm:rounded-3xl shadow-[0_0_60px_rgba(0,240,255,0.25)] text-white overflow-hidden max-h-[92dvh]">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md">
+      <div className="relative w-full max-w-xl flex flex-col bg-[#030712]/95 border border-cyan-500/35 rounded-2xl sm:rounded-3xl shadow-[0_0_50px_rgba(0,240,255,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] text-white overflow-hidden max-h-[92dvh] backdrop-blur-2xl text-left">
+
+        {/* Micrograno táctil Moxen Vidrio */}
+        <span className="vi-grano opacity-5" aria-hidden="true" />
+
+        {/* Filamento especular superior */}
+        <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent pointer-events-none" />
 
         {/* Ambient Glows */}
-        <div className="absolute -top-24 -right-24 w-60 h-60 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-24 -left-24 w-60 h-60 bg-cyan-600/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -top-24 -right-24 w-60 h-60 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 -left-24 w-60 h-60 bg-cyan-600/10 rounded-full blur-3xl pointer-events-none" />
 
         {/* ── HEADER: Progress Steps ────────────────────────── */}
-        <div className="shrink-0 px-5 pt-5 pb-3 border-b border-cyan-900/50 bg-[#000e1c]">
+        <div className="shrink-0 px-4 sm:px-6 pt-5 pb-3.5 border-b border-white/10 bg-[#040814]/90 relative z-10">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[10px] font-black uppercase tracking-widest text-cyan-400">
+            <span className="text-[10px] font-anton uppercase tracking-widest text-cyan-300">
               Ritual Nocturno · {formattedFullDate}
             </span>
-            <div className={`px-2.5 py-1 rounded-xl border text-sm font-black ${gradeBadgeColor}`}>
+            <div className={`px-2.5 py-1 rounded-xl border text-sm font-anton font-black ${gradeBadgeColor}`}>
               {grade}
             </div>
           </div>
 
           {/* Step Pills */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-0.5">
             {stepConfig.map((s, i) => {
               const Icon = s.icon;
               const isActive = s.id === step;
               const isDone = i < currentStepIdx;
               return (
                 <React.Fragment key={s.id}>
-                  <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border transition-all duration-300 text-[11px] font-black uppercase tracking-wide ${
+                  <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border transition-all duration-300 text-[11px] font-anton uppercase tracking-wider ${
                     isDone
-                      ? 'bg-emerald-950/60 border-emerald-500/40 text-emerald-400'
+                      ? 'bg-emerald-950/60 border-emerald-500/40 text-emerald-300 shadow-[0_0_8px_rgba(16,185,129,0.2)]'
                       : isActive
-                      ? 'bg-cyan-950/60 border-cyan-400/60 text-cyan-300 shadow-[0_0_10px_rgba(0,240,255,0.2)]'
-                      : 'bg-slate-900/40 border-slate-700/30 text-slate-500'
+                      ? 'bg-cyan-950/60 border-cyan-400/70 text-cyan-200 shadow-[0_0_12px_rgba(0,240,255,0.3)]'
+                      : 'bg-white/[0.03] border-white/10 text-slate-400'
                   }`}>
-                    {isDone ? <Check className="w-3 h-3" /> : <Icon className="w-3 h-3" />}
+                    {isDone ? <Check className="w-3 h-3 text-emerald-400 stroke-[3]" /> : <Icon className="w-3.5 h-3.5" />}
                     <span className="hidden sm:inline">{s.label}</span>
                   </div>
                   {i < stepConfig.length - 1 && (

@@ -79,6 +79,16 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
     }
   }, [isOpen, initialPrompt]);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   const handleAutoOrganizeCurrentDay = async () => {
     soundFX.playClick();
     soundFX.playGlitch();
@@ -588,47 +598,61 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
         exit={{ opacity: 0 }}
       >
         <motion.div 
-          className="bg-[#03000a] border-2 border-[#9600ff]/60 w-full max-w-2xl rounded-2xl shadow-[0_0_50px_rgba(150,0,255,0.35)] overflow-hidden flex flex-col max-h-[90vh]"
-          initial={{ scale: 0.9, y: 20 }}
+          className="bg-[#030712]/95 border border-cyan-500/35 w-full max-w-2xl rounded-2xl sm:rounded-3xl shadow-[0_0_50px_rgba(0,240,255,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] overflow-hidden flex flex-col max-h-[90dvh] sm:max-h-[88vh] backdrop-blur-2xl relative text-left"
+          initial={{ scale: 0.95, y: 15 }}
           animate={{ scale: 1, y: 0 }}
-          exit={{ scale: 0.9, y: 20 }}
+          exit={{ scale: 0.95, y: 15 }}
         >
+          {/* Micrograno táctil Moxen Vidrio */}
+          <span className="vi-grano opacity-5" aria-hidden="true" />
+
+          {/* Filamento especular superior */}
+          <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent pointer-events-none" />
+
           {/* Header */}
-          <div className="bg-[#000000] p-4 border-b border-[#9600ff]/50 flex justify-between items-center gap-2">
-            <div className="flex items-center gap-2.5 flex-wrap">
-              <h3 className="text-base sm:text-lg font-black text-white flex items-center gap-2 uppercase tracking-widest font-mono">
-                <Cpu className="w-5 h-5 text-[#d6f421] animate-pulse" />
-                Compañero KAI // Oráculo Neural
-              </h3>
-              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-950/90 border border-emerald-500/60 text-emerald-300 text-[10px] font-mono font-bold shadow-[0_0_10px_rgba(16,185,129,0.25)]">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                <span>Inteligencia KAI Conectada</span>
-              </span>
+          <div className="bg-[#040814]/90 p-4 sm:p-5 border-b border-white/10 flex justify-between items-center gap-3 relative z-10">
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="p-2 rounded-xl bg-cyan-500/15 border border-cyan-400/40 text-cyan-300 shadow-[0_0_14px_rgba(0,240,255,0.3)]">
+                <Cpu className="w-5 h-5 text-cyan-300" />
+              </div>
+              <div>
+                <h3 className="text-base sm:text-lg font-anton uppercase tracking-wider text-white flex items-center gap-2">
+                  Oráculo Neural KAI
+                </h3>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 text-[10px] font-mono font-bold shadow-[0_0_8px_rgba(16,185,129,0.2)] mt-0.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                  <span>Enlace Neural Activo</span>
+                </span>
+              </div>
             </div>
-            <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors text-slate-400 hover:text-white cursor-pointer">
+            <button 
+              onClick={onClose} 
+              className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 border border-transparent hover:border-white/10 transition-all cursor-pointer active:scale-95"
+              title="Cerrar (Esc)"
+            >
               <X className="w-5 h-5" />
             </button>
           </div>
 
           {/* Content */}
-          <div className="p-5 overflow-y-auto custom-scrollbar">
+          <div className="p-4 sm:p-6 overflow-y-auto custom-scrollbar relative z-10 flex-1">
             {!suggestedHabits ? (
               <div className="space-y-4">
-                <div className="bg-[#09001a] border border-[#9600ff]/40 rounded-xl p-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between shadow-[0_0_15px_rgba(150,0,255,0.15)]">
+                <div className="bg-[#020712]/90 border border-white/10 rounded-2xl p-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between shadow-[0_0_20px_rgba(0,0,0,0.5)]">
                   <div className="flex gap-3.5 items-start">
-                    <div className="w-10 h-10 rounded-lg bg-[#000000] border border-[#9600ff] flex items-center justify-center shrink-0 shadow-[0_0_10px_rgba(150,0,255,0.3)]">
-                      <Terminal className="w-5 h-5 text-[#d6f421]" />
+                    <div className="w-10 h-10 rounded-xl bg-black/70 border border-cyan-500/40 flex items-center justify-center shrink-0 shadow-[0_0_12px_rgba(0,240,255,0.25)]">
+                      <Terminal className="w-5 h-5 text-cyan-300" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <span className="text-[11px] font-mono uppercase tracking-widest text-[#d6f421] font-bold bg-[#9600ff]/30 px-2 py-0.5 rounded border border-[#9600ff]/50">
+                        <span className="text-[10px] font-anton uppercase tracking-wider text-cyan-300 bg-cyan-950/70 px-2.5 py-0.5 rounded-lg border border-cyan-500/40">
                           Protocolo de Agenda
                         </span>
                         <span className="text-[10px] text-emerald-400 font-mono font-bold">
-                          Enlace Activo
+                          ● Sincronizado
                         </span>
                       </div>
-                      <p className="text-slate-200 text-xs leading-relaxed font-sans">
+                      <p className="text-slate-300 text-xs leading-relaxed font-sans">
                         Organiza tus misiones de hoy con horarios inteligentes sin choques, o diseña tu semana completa paso a paso.
                       </p>
                     </div>
@@ -636,7 +660,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                   <button
                     type="button"
                     onClick={handleAutoOrganizeCurrentDay}
-                    className="w-full sm:w-auto shrink-0 px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-[#d6f421] to-emerald-400 hover:from-[#e2ff44] hover:to-emerald-300 text-slate-950 font-black text-xs uppercase tracking-wider font-mono shadow-[0_0_20px_rgba(214,244,33,0.35)] flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-95"
+                    className="chicle-btn w-full sm:w-auto shrink-0 px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-emerald-400 hover:opacity-95 text-slate-950 font-anton text-xs uppercase tracking-wider shadow-[0_0_20px_rgba(0,240,255,0.35)] flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95"
                   >
                     <Sparkles className="w-4 h-4 text-slate-950" />
                     <span>Auto-Acomodar Hoy</span>
@@ -644,17 +668,17 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                 </div>
 
                 {/* Mode Tabs: Guided Assistant vs Free Prompt vs Presets vs Neural Analysis */}
-                <div className="flex flex-wrap bg-[#03070d] border border-cyan-900/50 p-1 rounded-xl gap-1">
+                <div className="flex flex-wrap bg-black/40 border border-white/10 p-1.5 rounded-2xl gap-1.5">
                   <button
                     type="button"
                     onClick={() => {
                       soundFX.playClick();
                       setActiveTab('wizard');
                     }}
-                    className={`flex-1 min-w-[100px] py-2 px-2.5 rounded-lg text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    className={`flex-1 min-w-[100px] py-2 px-3 rounded-xl text-xs font-anton uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 ${
                       activeTab === 'wizard'
-                        ? 'bg-gradient-to-r from-cyan-500 to-emerald-400 text-slate-950 shadow-[0_0_15px_rgba(6,182,212,0.4)]'
-                        : 'text-slate-400 hover:text-cyan-300 hover:bg-white/5'
+                        ? 'bg-gradient-to-r from-cyan-400 to-emerald-400 text-slate-950 font-bold shadow-[0_0_15px_rgba(0,240,255,0.4)]'
+                        : 'text-slate-400 hover:text-white hover:bg-white/5'
                     }`}
                   >
                     <Sparkles className="w-3.5 h-3.5" />
@@ -667,10 +691,10 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                       soundFX.playClick();
                       setActiveTab('prompt');
                     }}
-                    className={`flex-1 min-w-[80px] py-2 px-2.5 rounded-lg text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    className={`flex-1 min-w-[80px] py-2 px-3 rounded-xl text-xs font-anton uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 ${
                       activeTab === 'prompt'
-                        ? 'bg-cyan-500 text-slate-950 shadow-[0_0_15px_rgba(6,182,212,0.4)]'
-                        : 'text-slate-400 hover:text-cyan-300 hover:bg-white/5'
+                        ? 'bg-cyan-400 text-slate-950 font-bold shadow-[0_0_15px_rgba(0,240,255,0.4)]'
+                        : 'text-slate-400 hover:text-white hover:bg-white/5'
                     }`}
                   >
                     <Edit3 className="w-3.5 h-3.5" />
@@ -683,10 +707,10 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                       soundFX.playClick();
                       setActiveTab('templates');
                     }}
-                    className={`flex-1 min-w-[80px] py-2 px-2.5 rounded-lg text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    className={`flex-1 min-w-[80px] py-2 px-3 rounded-xl text-xs font-anton uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 ${
                       activeTab === 'templates'
-                        ? 'bg-cyan-500 text-slate-950 shadow-[0_0_15px_rgba(6,182,212,0.4)]'
-                        : 'text-slate-400 hover:text-cyan-300 hover:bg-white/5'
+                        ? 'bg-cyan-400 text-slate-950 font-bold shadow-[0_0_15px_rgba(0,240,255,0.4)]'
+                        : 'text-slate-400 hover:text-white hover:bg-white/5'
                     }`}
                   >
                     <Zap className="w-3.5 h-3.5" />

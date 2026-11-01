@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ShopReward } from '../types';
 import { 
@@ -52,6 +52,16 @@ export const RewardShop: React.FC = () => {
   const [cost, setCost] = useState(150);
   const [icon, setIcon] = useState('🎁');
   const [category, setCategory] = useState<'ocio' | 'comida' | 'descanso' | 'perk'>('ocio');
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isAddModalOpen) {
+        setIsAddModalOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isAddModalOpen]);
 
   const getDiscountedCost = (reward: ShopReward) => {
     if (reward.category === 'descanso') {
@@ -568,32 +578,39 @@ export const RewardShop: React.FC = () => {
       <AnimatePresence>
         {isAddModalOpen && (
           <div 
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#00040A]/85 backdrop-blur-md"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md"
             onClick={() => setIsAddModalOpen(false)}
           >
             <motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="w-full max-w-sm bg-[#0a071c] border border-purple-500/40 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] overflow-hidden"
+              className="w-full max-w-sm bg-[#030712]/95 border border-cyan-500/35 rounded-2xl sm:rounded-3xl shadow-[0_0_50px_rgba(0,240,255,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] overflow-hidden backdrop-blur-2xl relative text-left"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between p-4 border-b border-white/10 bg-white/[0.02]">
+              {/* Micrograno táctil Moxen Vidrio */}
+              <span className="vi-grano opacity-5" aria-hidden="true" />
+
+              {/* Filamento especular superior */}
+              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent pointer-events-none" />
+
+              <div className="flex items-center justify-between p-4 border-b border-white/10 bg-[#040814]/90 relative z-10">
                 <h3 className="text-sm font-anton uppercase tracking-wider text-white flex items-center gap-2">
                   <Flame className="w-4 h-4 text-amber-400" /> Forjar Nuevo Deseo
                 </h3>
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="p-1 rounded-lg text-slate-400 hover:text-white transition-colors cursor-pointer"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                  title="Cerrar (Esc)"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <form onSubmit={handleCreate} className="p-4 space-y-3">
+              <form onSubmit={handleCreate} className="p-4 sm:p-5 space-y-3.5 relative z-10">
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-300 uppercase mb-1 font-mono">
+                  <label className="block text-[11px] font-anton uppercase tracking-wider text-slate-300 mb-1">
                     Nombre del Premio
                   </label>
                   <input
@@ -602,14 +619,14 @@ export const RewardShop: React.FC = () => {
                     placeholder="Ej. Tarde de videojuegos, postre..."
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="w-full px-3 py-2 text-xs font-medium rounded-xl bg-black/60 border border-slate-700 text-white focus:outline-none focus:border-purple-400 transition-all placeholder:text-slate-600"
+                    className="w-full px-3.5 py-2 text-xs font-medium rounded-xl bg-black/60 border border-white/10 text-white focus:outline-none focus:border-cyan-400/80 transition-all placeholder:text-slate-500"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-2.5">
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-300 uppercase mb-1 font-mono flex items-center gap-1">
-                      Costo <Coins className="w-3 h-3 text-amber-400" />
+                    <label className="block text-[11px] font-anton uppercase tracking-wider text-slate-300 mb-1 flex items-center gap-1">
+                      Costo <Coins className="w-3.5 h-3.5 text-amber-400" />
                     </label>
                     <input
                       type="number"
@@ -617,18 +634,18 @@ export const RewardShop: React.FC = () => {
                       max="5000"
                       value={cost}
                       onChange={(e) => setCost(Number(e.target.value))}
-                      className="w-full px-3 py-2 text-xs font-mono font-bold rounded-xl bg-black/60 border border-slate-700 text-amber-300 focus:outline-none focus:border-amber-400 transition-all"
+                      className="w-full px-3.5 py-2 text-xs font-mono font-bold rounded-xl bg-black/60 border border-white/10 text-amber-300 focus:outline-none focus:border-amber-400 transition-all"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-300 uppercase mb-1 font-mono">
+                    <label className="block text-[11px] font-anton uppercase tracking-wider text-slate-300 mb-1">
                       Icono
                     </label>
                     <select
                       value={icon}
                       onChange={(e) => setIcon(e.target.value)}
-                      className="w-full px-3 py-2 text-xs font-medium rounded-xl bg-black/60 border border-slate-700 text-white focus:outline-none focus:border-purple-400 transition-all"
+                      className="w-full px-3 py-2 text-xs font-medium rounded-xl bg-black/60 border border-white/10 text-white focus:outline-none focus:border-cyan-400/80 transition-all cursor-pointer"
                     >
                       <option value="🎁">🎁 Regalo</option>
                       <option value="☕">☕ Café Especial</option>
@@ -644,7 +661,7 @@ export const RewardShop: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-300 uppercase mb-1 font-mono">
+                  <label className="block text-[11px] font-anton uppercase tracking-wider text-slate-300 mb-1">
                     Motivación / Detalle (Opcional)
                   </label>
                   <input
@@ -652,14 +669,14 @@ export const RewardShop: React.FC = () => {
                     placeholder="Ej. Premio merecido por 7 días de racha."
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    className="w-full px-3 py-2 text-xs font-medium rounded-xl bg-black/60 border border-slate-700 text-white focus:outline-none focus:border-purple-400 transition-all placeholder:text-slate-600"
+                    className="w-full px-3.5 py-2 text-xs font-medium rounded-xl bg-black/60 border border-white/10 text-white focus:outline-none focus:border-cyan-400/80 transition-all placeholder:text-slate-500"
                   />
                 </div>
 
                 <div className="pt-2">
                   <button
                     type="submit"
-                    className="w-full py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-anton uppercase tracking-wider rounded-xl shadow-[0_0_15px_rgba(168,85,247,0.4)] transition-all cursor-pointer active:scale-95"
+                    className="chicle-btn w-full py-2.5 bg-gradient-to-r from-cyan-500 to-purple-600 hover:opacity-95 text-white text-xs font-anton uppercase tracking-wider rounded-xl shadow-[0_0_15px_rgba(0,240,255,0.35)] transition-all cursor-pointer active:scale-95"
                   >
                     Guardar Recompensa
                   </button>

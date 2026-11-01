@@ -20,7 +20,7 @@ import {
   LayoutGrid
 } from 'lucide-react';
 import { PlayerStats, KaiShapeKey } from '../types';
-import { JUNG_ARCHETYPES, JungArchetype, getArchetypeByName } from '../data/archetypes';
+import { JUNG_ARCHETYPES, JungArchetype, getArchetypeByName, getArchetypeDisplayName } from '../data/archetypes';
 import { KAI_OFFICIAL_SHAPES, KaiShapeDefinition } from '../data/kaiShapes';
 import { KaiVectorGraphics } from './KaiVectorGraphics';
 import { soundFX } from '../utils/audio';
@@ -156,7 +156,7 @@ export const HunterAwakeningModal: React.FC<HunterAwakeningModalProps> = ({
   const [selectedKaiShape, setSelectedKaiShape] = useState<KaiShapeKey>(stats.kaiShape || 'prism');
 
   // Archetype & Identity states
-  const [selectedArchName, setSelectedArchName] = useState(stats.characterClass || 'El Héroe');
+  const [selectedArchName, setSelectedArchName] = useState(getArchetypeDisplayName(stats.characterClass));
   const [username, setUsername] = useState(
     stats.username && stats.username !== 'CazadorDelSistema' ? stats.username : ''
   );
@@ -166,7 +166,7 @@ export const HunterAwakeningModal: React.FC<HunterAwakeningModalProps> = ({
 
   const normalize = (str: string) =>
     str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
-  const currentNorm = normalize(selectedArchName || 'El Héroe');
+  const currentNorm = normalize(selectedArchName || 'Espíritu Heroico');
 
   const initialIndex = React.useMemo(() => {
     const idx = JUNG_ARCHETYPES.findIndex(

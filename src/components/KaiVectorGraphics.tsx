@@ -315,7 +315,7 @@ export const KaiVectorGraphics: React.FC<KaiVectorGraphicsProps> = ({
               height="154"
               viewBox={originalViewBox}
               preserveAspectRatio="xMidYMid meet"
-              style={{ overflow: 'visible', '--color-aura-activa': lineColor } as React.CSSProperties}
+              style={{ overflow: 'hidden', '--color-aura-activa': lineColor } as React.CSSProperties}
               filter={`url(#${filterId})`}
               dangerouslySetInnerHTML={{ __html: innerContent }}
             />
@@ -343,8 +343,17 @@ export const KaiVectorGraphics: React.FC<KaiVectorGraphicsProps> = ({
         const isPixel = artStyle === 'pixel';
 
         return (
-          <g id={`${gradientId}-custom-multiverse-body`}>
-            {/* Capa Base con Bloom Neón / Sombra de Estilo */}
+          <svg
+            x="8"
+            y="8"
+            width="144"
+            height="154"
+            viewBox="0 0 160 170"
+            preserveAspectRatio="xMidYMid meet"
+            style={{ overflow: 'hidden' }}
+          >
+            <g id={`${gradientId}-custom-multiverse-body`}>
+              {/* Capa Base con Bloom Neón / Sombra de Estilo */}
             <g filter={`url(#${filterId})`}>
               {customForm.polygons?.map((p, idx) => (
                 <polygon
@@ -659,7 +668,8 @@ export const KaiVectorGraphics: React.FC<KaiVectorGraphicsProps> = ({
               </g>
             )}
           </g>
-        );
+        </svg>
+      );
       })()}
 
       {/* ══════════════════════════════════════════════════════════════════════ */}

@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { X, Sparkles, Zap, Check, Target, AlertTriangle, LayoutGrid, SlidersHorizontal } from 'lucide-react';
-import { JUNG_ARCHETYPES, JungArchetype } from '../data/archetypes';
+import { JUNG_ARCHETYPES, JungArchetype, getArchetypeByName } from '../data/archetypes';
 import { soundFX } from '../utils/audio';
 import { triggerShockwave } from '../utils/celebration';
 import { MoxenInercia } from './moxen/MoxenInercia';
@@ -116,17 +116,12 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
   onSelectArchetype,
 }) => {
   const [viewMode, setViewMode] = useState<'carousel' | 'grid'>('carousel');
-
-  const normalize = (str: string) =>
-    str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
-  const currentNorm = normalize(currentArchetype || 'El Héroe');
+  const activeArch = useMemo(() => getArchetypeByName(currentArchetype), [currentArchetype]);
 
   const initialIndex = useMemo(() => {
-    const idx = JUNG_ARCHETYPES.findIndex(
-      (a) => normalize(a.name) === currentNorm || normalize(a.id) === currentNorm
-    );
+    const idx = JUNG_ARCHETYPES.findIndex((a) => a.id === activeArch.id);
     return idx >= 0 ? idx : 0;
-  }, [currentNorm]);
+  }, [activeArch.id]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -231,8 +226,7 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
               accentColor="#00f0ff"
             >
               {JUNG_ARCHETYPES.map((arch, index) => {
-                const isSelected =
-                  currentNorm === normalize(arch.name) || currentNorm === normalize(arch.id);
+                const isSelected = activeArch.id === arch.id;
                 const cardNum = index + 1 < 10 ? `0${index + 1}` : `${index + 1}`;
                 const theme = ARCHETYPE_THEMES[arch.id] || ARCHETYPE_THEMES.heroe;
 
@@ -340,8 +334,7 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
           <div className="p-3 sm:p-5 space-y-4 flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-cyan-500 scrollbar-track-transparent">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {JUNG_ARCHETYPES.map((arch) => {
-                const isSelected =
-                  currentNorm === normalize(arch.name) || currentNorm === normalize(arch.id);
+                const isSelected = activeArch.id === arch.id;
 
                 return (
                   <div

@@ -49,7 +49,7 @@ const INITIAL_PLAYER_STATS: PlayerStats = {
   lastDailyRewardClaimedDate: '',
   rankTitle: 'Chispazo de Voluntad',
   avatarIcon: '🛡️',
-  characterClass: 'El Héroe',
+  characterClass: 'Espíritu Heroico',
   attributes: {
     disciplina: 0,
     fuerza: 0,
@@ -547,7 +547,7 @@ export const usePlayerStore = create<PlayerState>()(
             username: data.username.trim(),
             fullName: data.fullName?.trim() || state.stats.fullName,
             avatarIcon: data.avatarIcon || state.stats.avatarIcon || '🛡️',
-            characterClass: data.characterClass || state.stats.characterClass || 'El Héroe',
+            characterClass: data.characterClass || state.stats.characterClass || 'Espíritu Heroico',
             kaiShape: data.kaiShape || state.stats.kaiShape || 'prism',
             mantra: data.mantra?.trim() || state.stats.mantra,
             hasCompletedAwakening: true,

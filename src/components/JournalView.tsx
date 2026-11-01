@@ -101,6 +101,19 @@ export const JournalView: React.FC<JournalViewProps> = ({
   // Inline Note Editor State
   const [editingTask, setEditingTask] = useState<{ date: string; task: TaskItem } | null>(null);
   const [editText, setEditText] = useState('');
+  const [editingReflectionDate, setEditingReflectionDate] = useState<string | null>(null);
+  const [reflectionText, setReflectionText] = useState('');
+
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (editingTask) setEditingTask(null);
+        if (editingReflectionDate) setEditingReflectionDate(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [editingTask, editingReflectionDate]);
 
   // Daily reflections (stored in localStorage or received from cloud context)
   const [localReflections, setLocalReflections] = useState<Record<string, string>>(() => {
@@ -113,8 +126,6 @@ export const JournalView: React.FC<JournalViewProps> = ({
   });
 
   const reflections = propReflections ?? localReflections;
-  const [editingReflectionDate, setEditingReflectionDate] = useState<string | null>(null);
-  const [reflectionText, setReflectionText] = useState('');
 
   const handleSaveReflection = (date: string) => {
     const trimmed = reflectionText.trim();
@@ -657,12 +668,18 @@ export const JournalView: React.FC<JournalViewProps> = ({
           onClick={() => setEditingTask(null)}
         >
           <div 
-            className="w-full max-w-md max-h-[88dvh] sm:max-h-[84vh] flex flex-col overflow-hidden bg-[#011420] border border-cyan-400/60 rounded-3xl p-4 sm:p-5 shadow-[0_0_35px_rgba(0,240,255,0.25)] text-left relative"
+            className="w-full max-w-md max-h-[88dvh] sm:max-h-[84vh] flex flex-col overflow-hidden bg-[#030712]/95 border border-cyan-500/35 rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-[0_0_50px_rgba(0,240,255,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] text-left relative backdrop-blur-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-3 mb-3 border-b border-cyan-500/30 shrink-0">
+            {/* Micrograno táctil Moxen Vidrio */}
+            <span className="vi-grano opacity-5" aria-hidden="true" />
+
+            {/* Filamento especular superior */}
+            <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent pointer-events-none" />
+
+            <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/10 shrink-0 relative z-10">
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-xl bg-[#000a14] border border-amber-400/50 flex items-center justify-center text-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.25)]">
+                <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-400/40 flex items-center justify-center text-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.25)]">
                   <FileText className="w-4 h-4" />
                 </div>
                 <div className="min-w-0">
@@ -677,13 +694,14 @@ export const JournalView: React.FC<JournalViewProps> = ({
               <button 
                 type="button" 
                 onClick={() => setEditingTask(null)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg cursor-pointer"
+                className="text-slate-400 hover:text-white p-1 rounded-lg cursor-pointer transition-colors"
+                aria-label="Cerrar ventana"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <p className="text-xs text-slate-300 mb-2 font-medium">
+            <p className="text-xs text-slate-300 mb-2 font-medium relative z-10">
               Escribe en qué trabajaste específicamente o puntos clave de repaso:
             </p>
 
@@ -693,7 +711,7 @@ export const JournalView: React.FC<JournalViewProps> = ({
               value={editText}
               onChange={(e) => setEditText(e.target.value)}
               placeholder="Ej. Revisión de vocabulario, 3 series de sentadillas, entrega de mockup al cliente..."
-              className="w-full px-3 py-2 rounded-xl bg-[#000a14] border border-cyan-500/40 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/50 resize-none mb-4"
+              className="w-full px-3 py-2 rounded-xl bg-black/60 border border-white/10 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400/80 focus:ring-1 focus:ring-cyan-400/50 resize-none mb-4 relative z-10"
               onKeyDown={(e) => {
                 if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
                   handleSaveEdit();
@@ -701,7 +719,7 @@ export const JournalView: React.FC<JournalViewProps> = ({
               }}
             />
 
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center justify-between gap-2 relative z-10">
               {editText ? (
                 <button
                   type="button"
@@ -711,7 +729,7 @@ export const JournalView: React.FC<JournalViewProps> = ({
                     soundFX.playClick();
                     setEditingTask(null);
                   }}
-                  className="px-3 py-1.5 rounded-xl bg-red-950/40 text-red-400 hover:text-red-300 text-xs font-bold border border-red-800/60 cursor-pointer"
+                  className="chicle-btn px-3 py-1.5 rounded-xl bg-red-950/40 text-red-400 hover:text-red-300 text-xs font-bold border border-red-800/60 cursor-pointer active:scale-95 transition-all"
                 >
                   Borrar Nota
                 </button>
@@ -722,14 +740,14 @@ export const JournalView: React.FC<JournalViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setEditingTask(null)}
-                  className="px-3.5 py-1.5 rounded-xl bg-[#000a14] text-slate-300 hover:text-white text-xs font-bold border border-cyan-500/30 cursor-pointer"
+                  className="chicle-btn px-3.5 py-1.5 rounded-xl bg-white/5 text-slate-300 hover:text-white text-xs font-bold border border-white/10 cursor-pointer active:scale-95 transition-all"
                 >
                   Cancelar
                 </button>
                 <button
                   type="button"
                   onClick={handleSaveEdit}
-                  className="px-4 py-1.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 text-xs font-anton uppercase tracking-wider border border-cyan-400 shadow-[0_0_12px_rgba(0,240,255,0.4)] cursor-pointer transition"
+                  className="chicle-btn px-4 py-1.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 text-xs font-anton uppercase tracking-wider border border-cyan-400 shadow-[0_0_12px_rgba(0,240,255,0.4)] cursor-pointer transition-all active:scale-95"
                 >
                   Guardar Nota
                 </button>
