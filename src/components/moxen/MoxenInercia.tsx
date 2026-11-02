@@ -231,14 +231,15 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
       }
 
       if (agarre.movido) {
-        ventana.addEventListener(
-          'click',
-          (ev) => {
-            ev.preventDefault();
-            ev.stopPropagation();
-          },
-          { capture: true, once: true }
-        );
+        const swallowClick = (ev: MouseEvent) => {
+          ev.preventDefault();
+          ev.stopPropagation();
+        };
+        ventana.addEventListener('click', swallowClick, { capture: true, once: true });
+        // Evita que el listener se quede congelado si el navegador no dispara click tras soltar
+        setTimeout(() => {
+          ventana.removeEventListener('click', swallowClick, { capture: true });
+        }, 120);
       }
 
       agarre = null;
@@ -249,6 +250,13 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
         pinta(0);
       }
       despierta();
+
+      // Notificar índice preliminar de parada
+      const idxPrevia = cercana(meta);
+      if (currentIndexRef.current !== idxPrevia) {
+        currentIndexRef.current = idxPrevia;
+        onIndexChange?.(idxPrevia);
+      }
     };
 
     const onWheel = (e: WheelEvent) => {
@@ -281,6 +289,10 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
     ventana.addEventListener('keydown', onKeyDown);
 
     mide();
+    if (initialIndex >= 0 && initialIndex < paradas.length) {
+      meta = paradas[initialIndex];
+      x = meta;
+    }
     items.forEach((it, i) => {
       if (i === initialIndex) {
         it.classList.add('in-tarjeta-activa');
@@ -289,6 +301,8 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
         it.classList.add('in-tarjeta-inactiva');
       }
     });
+    pinta(0);
+
     const onResize = () => {
       mide();
       meta = paradas[cercana(meta)];
@@ -298,6 +312,10 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
     window.addEventListener('resize', onResize);
     (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => {
       mide();
+      if (initialIndex >= 0 && initialIndex < paradas.length && meta === 0) {
+        meta = paradas[initialIndex];
+        x = meta;
+      }
       pinta(0);
     });
 
@@ -370,6 +388,7 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
       : Math.max(0, Math.min(totalItems - 1, currentIndexRef.current + direction));
     currentIndexRef.current = nextIdx;
     carruselRef.current?.ir(nextIdx);
+    onIndexChange?.(nextIdx);
   };
 
   return (
@@ -447,10 +466,15 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
             <article
               key={idx}
               className="in-tarjeta cursor-pointer"
-              onClick={() => {
+              onClick={(e) => {
+                const target = e.target as HTMLElement | null;
+                if (target?.closest('button, a, input, select, textarea, [data-interactive]')) {
+                  return;
+                }
                 if (idx !== currentIndexRef.current) {
                   currentIndexRef.current = idx;
                   carruselRef.current?.ir(idx);
+                  onIndexChange?.(idx);
                 }
               }}
             >

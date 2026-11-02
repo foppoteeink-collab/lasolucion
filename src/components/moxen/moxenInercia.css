@@ -4,14 +4,14 @@
    ===================================================================== */
 
 :root {
-  --in-ancho: 300px;
-  --in-hueco: 14px;
-  --in-margen: clamp(1rem, 5vw, 36px);
+  --in-ancho: 285px;
+  --in-hueco: 12px;
+  --in-margen: clamp(1rem, 4vw, 32px);
 }
 
 @media (max-width: 640px) {
   :root {
-    --in-ancho: 270px;
+    --in-ancho: 260px;
     --in-hueco: 10px;
     --in-margen: 16px;
   }
@@ -49,9 +49,9 @@
 .in-tarjeta {
   flex: none;
   width: var(--in-ancho);
-  height: 355px;
+  height: 330px;
   position: relative;
-  border-radius: 20px;
+  border-radius: 18px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -70,8 +70,8 @@
 
 @media (max-width: 640px) {
   .in-tarjeta {
-    height: 335px;
-    border-radius: 18px;
+    height: 305px;
+    border-radius: 16px;
   }
 }
 
