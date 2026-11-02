@@ -139,6 +139,7 @@ export const QuantumCubeLoader: React.FC<QuantumCubeLoaderProps> = ({
   const cssVariables = {
     ...sizeStyles,
     '--qcl-duration': durationStr,
+    '--qcl-color-duration': '6s',
     '--qcl-c1': palette.c1,
     '--qcl-c1-end': palette.c1End,
     '--qcl-c2': palette.c2,

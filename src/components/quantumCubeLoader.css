@@ -49,8 +49,10 @@
     inset 0 -8px 14px rgba(0, 0, 0, 0.35),
     0 8px 22px var(--qcl-glow, rgba(0, 240, 255, 0.35)),
     0 0 24px var(--qcl-glow, rgba(0, 240, 255, 0.35));
-  animation: qcl-squash var(--qcl-duration, 2.1s) cubic-bezier(0.4, 0, 0.2, 1) infinite;
-  will-change: transform;
+  animation:
+    qcl-squash var(--qcl-duration, 2.1s) cubic-bezier(0.4, 0, 0.2, 1) infinite,
+    qcl-color-morph var(--qcl-color-duration, 6s) ease-in-out infinite;
+  will-change: transform, filter;
   transition: background 0.4s ease, box-shadow 0.4s ease;
 }
 
@@ -70,21 +72,26 @@
   will-change: transform, opacity;
 }
 
-/* Cascada armónica entre los 5 cubos */
+/* Cascada armónica entre los 5 cubos con desfase cromático dinámico */
 .qcl-cube-1 { animation-delay: 0s; }
-.qcl-cube-1::before, .qcl-cube-1::after { animation-delay: 0s; }
+.qcl-cube-1::before { animation-delay: 0s, 0s; }
+.qcl-cube-1::after { animation-delay: 0s; }
 
 .qcl-cube-2 { animation-delay: calc(var(--qcl-duration, 2.1s) * 0.08); }
-.qcl-cube-2::before, .qcl-cube-2::after { animation-delay: calc(var(--qcl-duration, 2.1s) * 0.08); }
+.qcl-cube-2::before { animation-delay: calc(var(--qcl-duration, 2.1s) * 0.08), -1.2s; }
+.qcl-cube-2::after { animation-delay: calc(var(--qcl-duration, 2.1s) * 0.08); }
 
 .qcl-cube-3 { animation-delay: calc(var(--qcl-duration, 2.1s) * 0.16); }
-.qcl-cube-3::before, .qcl-cube-3::after { animation-delay: calc(var(--qcl-duration, 2.1s) * 0.16); }
+.qcl-cube-3::before { animation-delay: calc(var(--qcl-duration, 2.1s) * 0.16), -2.4s; }
+.qcl-cube-3::after { animation-delay: calc(var(--qcl-duration, 2.1s) * 0.16); }
 
 .qcl-cube-4 { animation-delay: calc(var(--qcl-duration, 2.1s) * 0.24); }
-.qcl-cube-4::before, .qcl-cube-4::after { animation-delay: calc(var(--qcl-duration, 2.1s) * 0.24); }
+.qcl-cube-4::before { animation-delay: calc(var(--qcl-duration, 2.1s) * 0.24), -3.6s; }
+.qcl-cube-4::after { animation-delay: calc(var(--qcl-duration, 2.1s) * 0.24); }
 
 .qcl-cube-5 { animation-delay: calc(var(--qcl-duration, 2.1s) * 0.32); }
-.qcl-cube-5::before, .qcl-cube-5::after { animation-delay: calc(var(--qcl-duration, 2.1s) * 0.32); }
+.qcl-cube-5::before { animation-delay: calc(var(--qcl-duration, 2.1s) * 0.32), -4.8s; }
+.qcl-cube-5::after { animation-delay: calc(var(--qcl-duration, 2.1s) * 0.32); }
 
 .qcl-cube-1::before {
   background: linear-gradient(145deg, rgba(255, 255, 255, 0.4), transparent 40%), linear-gradient(135deg, var(--qcl-c1), var(--qcl-c1-end));
@@ -154,6 +161,45 @@
   64% {
     transform: translateX(-50%) scaleX(1.15);
     opacity: 0.75;
+  }
+}
+
+/* ── Transición Dinámica Continua de Colores (Cero Estático) ── */
+@keyframes qcl-color-morph {
+  0% {
+    filter: hue-rotate(0deg) saturate(1.2) brightness(1);
+  }
+  25% {
+    filter: hue-rotate(90deg) saturate(1.35) brightness(1.12);
+  }
+  50% {
+    filter: hue-rotate(180deg) saturate(1.25) brightness(1.2);
+  }
+  75% {
+    filter: hue-rotate(270deg) saturate(1.35) brightness(1.12);
+  }
+  100% {
+    filter: hue-rotate(360deg) saturate(1.2) brightness(1);
+  }
+}
+
+/* En modos monocromáticos (Noir y E-Ink): pulsación de brillo de cromo / platino líquido */
+html.optic-noir .qcl-cube::before,
+html.optic-eink .qcl-cube::before {
+  animation:
+    qcl-squash var(--qcl-duration, 2.1s) cubic-bezier(0.4, 0, 0.2, 1) infinite,
+    qcl-noir-morph var(--qcl-color-duration, 5s) ease-in-out infinite;
+}
+
+@keyframes qcl-noir-morph {
+  0%, 100% {
+    filter: brightness(0.9) contrast(1.1);
+  }
+  33% {
+    filter: brightness(1.45) contrast(1.35);
+  }
+  66% {
+    filter: brightness(0.75) contrast(1.2);
   }
 }
 
