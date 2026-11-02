@@ -90,27 +90,7 @@ export const Header: React.FC<HeaderProps> = ({
     }
   }
 
-  const [rainbowColor, setRainbowColor] = React.useState('#00f0ff');
-  React.useEffect(() => {
-    if (isKaiPulsing) return;
-    
-    const cycleColors = [
-      '#00f0ff',
-      '#00f0ff',
-      '#10e29d',
-      '#10e29d',
-      '#00f0ff',
-    ];
-    let i = 0;
-    const interval = setInterval(() => {
-      i = (i + 1) % cycleColors.length;
-      setRainbowColor(cycleColors[i]);
-    }, 2500);
-    
-    return () => clearInterval(interval);
-  }, [isKaiPulsing]);
-
-  const activeHelixColor = isKaiPulsing ? kaiPulseColor : rainbowColor;
+  const activeHelixColor = isKaiPulsing ? kaiPulseColor : '#00f0ff';
 
   return (
     <header className="w-full max-w-6xl mx-auto pointer-events-auto">

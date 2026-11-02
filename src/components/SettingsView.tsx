@@ -997,8 +997,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-xl p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
               <span className="vi-grano opacity-5" aria-hidden="true" />
               <div className="relative z-10">
-                <div className="flex items-center gap-2 text-cyan-400 text-xs font-mono font-bold uppercase tracking-widest mb-1">
-                  <Palette className="w-4 h-4 text-cyan-400" /> Personalizador Visual
+                <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-widest mb-1 transition-colors" style={{ color: 'var(--aura-color-1, #00f0ff)' }}>
+                  <Palette className="w-4 h-4" /> Personalizador Visual
                 </div>
                 <h3 className="text-base sm:text-lg font-anton uppercase tracking-wide text-white">
                   Personalizador de Fondo & Color

@@ -600,15 +600,15 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
   };
 
   return (
-    <div className="scifi-glass-panel rounded-2xl p-3 sm:p-3.5 space-y-2.5 font-sans text-white">
+    <div className="scifi-glass-panel rounded-xl p-2.5 sm:p-3 space-y-2 font-sans text-white">
       {/* Header with Title and Ratio Summary (Ultra-Clean, Sin contador duplicado) */}
       <div className="flex items-center justify-between gap-2 px-0.5">
-        <div className="flex items-center gap-2 min-w-0">
-          <div className="p-1 rounded-lg bg-[#04020e] border border-cyan-500/60 text-cyan-400 shadow-[0_0_10px_rgba(0,240,255,0.3)] shrink-0">
-            <Zap className="w-3.5 h-3.5 fill-cyan-400" />
+        <div className="flex items-center gap-1.5 min-w-0">
+          <div className="p-1 rounded-md bg-[#04020e] border border-cyan-500/60 text-cyan-400 shrink-0">
+            <Zap className="w-3 h-3 fill-cyan-400" />
           </div>
           <h3 className="text-xs font-bold font-anton text-cyan-300 uppercase tracking-wider whitespace-nowrap">
-            Hábitos (Ley 21/66)
+            Hábitos (21/66)
           </h3>
           <button
             type="button"
@@ -616,26 +616,26 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
               soundFX.playClick();
               useUIStore.getState().openTacticalGuide(2);
             }}
-            className="text-[10px] font-mono text-cyan-400/80 hover:text-cyan-200 flex items-center gap-1 px-1.5 py-0.5 rounded-md hover:bg-cyan-950/40 transition-colors cursor-pointer"
+            className="text-[10px] font-mono text-cyan-400/80 hover:text-cyan-200 flex items-center gap-1 px-1 py-0.2 rounded hover:bg-cyan-950/40 transition-colors cursor-pointer"
             title="Ver guía de Orbes de Hábitos y Ley 21/66"
           >
             <span>💡</span>
-            <span className="hidden sm:inline">Guía 21/66</span>
+            <span className="hidden sm:inline">Guía</span>
           </button>
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0 ml-auto">
           {quickHabits.length > 0 && (
-            <div className="text-[10.5px] font-mono text-cyan-300/90 font-bold bg-cyan-950/60 px-2 py-0.5 rounded-md border border-cyan-500/30">
-              {completedHabitsCount}/{quickHabits.length} {completedHabitsCount === 1 ? 'Completado' : 'Completados'}
+            <div className="text-[10px] sm:text-[11px] font-mono text-cyan-300 font-bold bg-cyan-950/60 px-2 py-0.5 rounded-md border border-cyan-500/30">
+              {completedHabitsCount}/{quickHabits.length} {completedHabitsCount === 1 ? 'Listo' : 'Listos'}
             </div>
           )}
 
           <button
             type="button"
             onClick={toggleCollapsed}
-            className="p-1 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer"
-            title={isCollapsed ? 'Desplegar hábitos' : 'Colapsar hábitos'}
+            className="p-1 rounded-md hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer"
+            title={isCollapsed ? 'Desplegar orbes de hábitos' : 'Colapsar orbes de hábitos'}
             aria-label={isCollapsed ? 'Desplegar hábitos' : 'Colapsar hábitos'}
           >
             {isCollapsed ? <ChevronDown className="w-3.5 h-3.5 text-cyan-300" /> : <ChevronUp className="w-3.5 h-3.5 text-slate-400" />}

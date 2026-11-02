@@ -90,9 +90,14 @@ export const TaskFilters: React.FC<TaskFiltersProps> = ({
                 }}
                 className={`px-2.5 py-1.5 rounded-xl text-xs font-anton tracking-wide whitespace-nowrap border transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 uppercase ${
                   isActive
-                    ? 'bg-cyan-400 text-black border-cyan-300 shadow-[0_0_12px_rgba(0,240,255,0.4)]'
+                    ? 'text-black border-transparent'
                     : 'bg-[#011420]/80 border-cyan-500/25 text-slate-300 hover:text-white hover:border-cyan-400/60'
                 }`}
+                style={isActive ? {
+                  background: 'var(--aura-gradient, linear-gradient(135deg, var(--aura-color-1, #00f0ff) 0%, var(--aura-color-2, #8a2be2) 100%))',
+                  color: '#030712',
+                  boxShadow: '0 0 12px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.45)',
+                } : undefined}
               >
                 <TabIcon className={`w-3.5 h-3.5 ${isActive ? 'text-black' : 'text-cyan-400'}`} />
                 <span>{tab.label}</span>

@@ -1078,7 +1078,10 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
       <div className="space-y-2 px-1">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_#00f0ff]" />
+            <span 
+              className="w-2 h-2 rounded-full animate-pulse transition-all" 
+              style={{ background: liveAuraPalette.uiAccent1, boxShadow: `0 0 8px ${liveAuraPalette.uiAccent1}` }}
+            />
             <span className="text-xs font-mono font-bold tracking-wider uppercase text-slate-300">
               Malla Aurora
             </span>
@@ -1087,7 +1090,10 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
             </span>
           </div>
 
-          <span className="text-[10px] font-mono font-semibold text-cyan-400/90 uppercase tracking-widest truncate max-w-[160px] sm:max-w-none text-right">
+          <span 
+            className="text-[10px] font-mono font-semibold uppercase tracking-widest truncate max-w-[160px] sm:max-w-none text-right transition-colors"
+            style={{ color: liveAuraPalette.uiAccent1 }}
+          >
             {currPreset.name}
           </span>
         </div>
@@ -1627,12 +1633,17 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
               }}
               className={`px-2.5 py-1.5 rounded-xl text-xs font-mono font-bold flex items-center gap-1.5 border transition-all cursor-pointer ${
                 auroraSpeed === 'fast'
-                  ? 'bg-cyan-500/15 border-cyan-400/50 text-cyan-300 shadow-[0_0_12px_rgba(0,240,255,0.2)]'
+                  ? 'shadow-[0_0_12px_rgba(255,255,255,0.1)]'
                   : 'bg-black/30 border-white/10 text-slate-400 hover:text-white'
               }`}
+              style={auroraSpeed === 'fast' ? {
+                background: `color-mix(in srgb, ${liveAuraPalette.uiAccent1} 15%, transparent)`,
+                borderColor: `color-mix(in srgb, ${liveAuraPalette.uiAccent1} 50%, transparent)`,
+                color: liveAuraPalette.uiAccent1,
+              } : undefined}
               title="Velocidad Aurora: Normal / Rápida"
             >
-              <Waves className="w-3.5 h-3.5 text-cyan-400" />
+              <Waves className="w-3.5 h-3.5" style={{ color: auroraSpeed === 'fast' ? liveAuraPalette.uiAccent1 : undefined }} />
               <span className="text-[11px] font-mono hidden sm:inline">
                 {auroraSpeed === 'fast' ? 'Viva' : 'Calma'}
               </span>
@@ -1645,7 +1656,7 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
               className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-black/30 hover:bg-black/50 border border-white/10 hover:border-white/25 text-slate-300 hover:text-white text-xs font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer"
               title="Barajar al azar"
             >
-              <Shuffle className="w-3.5 h-3.5 text-cyan-400" />
+              <Shuffle className="w-3.5 h-3.5" style={{ color: liveAuraPalette.uiAccent1 }} />
               <span className="text-[11px] font-mono hidden md:inline">Azar</span>
             </button>
 
@@ -1739,7 +1750,7 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
             className="shrink-0 p-1.5 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white cursor-pointer transition-all flex items-center justify-center"
             title="Seleccionar color personalizado"
           >
-            <Palette className="w-4 h-4 text-cyan-300" />
+            <Palette className="w-4 h-4 transition-colors" style={{ color: liveAuraPalette.uiAccent1 }} />
             <input
               type="color"
               value={pointColors[selectedPointIndex] || '#00f0ff'}

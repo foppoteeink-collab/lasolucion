@@ -56,7 +56,10 @@ export const TaskHeaderHUD: React.FC<TaskHeaderHUDProps> = ({
       )}
 
       {/* Zen Date Header & Single Minimalist Action Button */}
-      <div className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-[#030814]/85 border border-cyan-500/20 flex items-center justify-between gap-2 shadow-[0_2px_12px_rgba(0,0,0,0.5)]">
+      <div 
+        className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-[#030814]/85 border flex items-center justify-between gap-2 shadow-[0_2px_12px_rgba(0,0,0,0.5)] transition-colors"
+        style={{ borderColor: 'rgba(var(--aura-glow-rgb, 0, 240, 255), 0.25)' }}
+      >
         <span className="text-xs sm:text-sm font-bold text-slate-200 font-mono uppercase tracking-wide truncate">
           {formatDateForDisplay(currentDate)}
         </span>
@@ -68,7 +71,7 @@ export const TaskHeaderHUD: React.FC<TaskHeaderHUDProps> = ({
               soundFX.playClick();
               useUIStore.getState().openTacticalGuide(3);
             }}
-            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-white/10 hover:border-cyan-400/50 bg-[#001020]/60 text-slate-400 hover:text-cyan-300 flex items-center justify-center transition-all cursor-pointer active:scale-90"
+            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-white/10 bg-[#001020]/60 text-slate-400 hover:text-white flex items-center justify-center transition-all cursor-pointer active:scale-90"
             title="¿Cómo crear tareas y planificar bloques? Ver guía"
           >
             <HelpCircle className="w-3.5 h-3.5" />
@@ -77,7 +80,12 @@ export const TaskHeaderHUD: React.FC<TaskHeaderHUDProps> = ({
             type="button"
             data-tour="add-task-btn"
             onClick={() => onOpenAddModal('task')}
-            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-cyan-400/50 bg-[#001020] hover:bg-cyan-400 hover:text-black text-cyan-300 shadow-[0_0_12px_rgba(0,240,255,0.25)] flex items-center justify-center transition-all cursor-pointer active:scale-90"
+            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border bg-[#001020] flex items-center justify-center transition-all cursor-pointer active:scale-90"
+            style={{ 
+              borderColor: 'var(--aura-color-1, #00f0ff)',
+              color: 'var(--aura-color-1, #00f0ff)',
+              boxShadow: '0 0 12px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.35)'
+            }}
             title="Centro de Tareas: Añadir Tarea, Hábito u Oráculo"
           >
             <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5]" />

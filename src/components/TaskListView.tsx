@@ -508,36 +508,32 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
   const legendaryTask = useMemo(() => (tasks || []).find((t) => t.isLegendaryBounty), [tasks]);
 
   return (
-    <div className="space-y-4 font-sans tracking-wide pb-28 sm:pb-32">
+    <div className="space-y-2.5 sm:space-y-3 font-sans tracking-wide pb-24 sm:pb-28">
       {/* Calendar Bar */}
       <CalendarView currentDate={currentDate} onChangeDate={onChangeDate} onOpenAddModal={() => openAddModal('task')} />
 
       {/* Quick Habits Strip */}
-      <div className="mb-4">
-        <QuickHabitsWidget
-          tasks={tasks}
-          onIncrementHabit={onIncrementHabit}
-          onOpenAddModal={() => openAddModal('habit')}
-          onOpenEditModal={openEditModal}
-          onOpenHabitManager={() => setIsHabitManagerOpen(true)}
-          onDeleteTask={onDeleteTask}
-          currentDate={currentDate}
-          isDayFinalized={isDayFinalized}
-        />
-      </div>
+      <QuickHabitsWidget
+        tasks={tasks}
+        onIncrementHabit={onIncrementHabit}
+        onOpenAddModal={() => openAddModal('habit')}
+        onOpenEditModal={openEditModal}
+        onOpenHabitManager={() => setIsHabitManagerOpen(true)}
+        onDeleteTask={onDeleteTask}
+        currentDate={currentDate}
+        isDayFinalized={isDayFinalized}
+      />
 
       {/* Daily Boss & Legendary Bounty Drawer */}
       {legendaryTask && (
-        <div className="mb-4">
-          <LegendaryBountyCard
-            task={legendaryTask}
-            onToggle={onToggleTask}
-            onOpenEditModal={openEditModal}
-            onOpenNoteModal={openNoteModal}
-            onDeleteTask={onDeleteTask}
-            isDayEnded={isDayEnded}
-          />
-        </div>
+        <LegendaryBountyCard
+          task={legendaryTask}
+          onToggle={onToggleTask}
+          onOpenEditModal={openEditModal}
+          onOpenNoteModal={openNoteModal}
+          onDeleteTask={onDeleteTask}
+          isDayEnded={isDayEnded}
+        />
       )}
 
       {/* Search & Category Filter Controls */}
@@ -557,10 +553,8 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
         }}
       />
 
-
-
       {/* Task List Timeline */}
-      <div className="space-y-3">
+      <div className="space-y-2.5 sm:space-y-3 pt-0.5">
         {filteredTasks.length === 0 ? (
           <SciFiEmptyState
             totalTasksInDay={tasks.length}

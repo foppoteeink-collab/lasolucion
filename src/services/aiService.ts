@@ -840,9 +840,10 @@ Referencias visuales directas: La obra original "La Solución" (Foppotee 16), el
 - Ojos de Espiral Hipnótica (Trance / Dizzy): Iris formados por espirales concéntricas continuas (@_@) que giran hacia el centro, denotando hiperfoco o trance creativo.
 - Ojos de Símbolo de Dólar ($$) / Cruz de K.O. (X_X): Expresiones cómicas de riqueza mental o desconexión divertida.
 - Ojos Múltiples de Tótem / Oruga: Fila de 3, 4 o 5 ojitos curiosos apilados vertical u horizontalmente en las hendiduras del objeto, mirando en distintas direcciones.
-- Ojos de Mariposa / Espectáculo Gigante (Foppotee): Dos grandes óvalos concéntricos con marco de vitral psicodélico y pestañas estilizadas.
-- Ojos de Visor / Pantalla Analógica: Cuadrícula retro con ondas senoidales, laberintos o estática en su interior (estilo monitor o televisor de tubo).
-- Ojos con Gafas / Monóculo: Gafas redondas de pasta gruesa o monóculo con cadenita colgante que le dan aire de científico loco o erudito cósmico.
+- Ojos con Gafas de Sol Negras / Wayfarer Retro: Gafas oscuras con reflejos blancos que le dan una actitud rebelde, audaz y ultra-cool.
+- Ojos Somnolientos / Párpados Caídos: Ojos semicerrados con bolsas u ojeras de plumilla, cejas relajadas o mirada relajada/zen.
+- Ojos de Asombro Exorbitado: Grandes cuencas circulares con pupilas flotantes diminutas y cejas disparadas hacia arriba en sorpresa absoluta.
+- Ojos con Gafas / Monóculo Erudito: Gafas redondas de pasta gruesa o monóculo con cadenita colgante que le dan aire de científico loco o erudito cósmico.
 - El Tercer Ojo del Prisma: Ojo almendrado central superior con rayos solares o pestañas triangulares, vigilando el cosmos.
 
 3. ATLAS ENCICLOPÉDICO DE BOCAS, DIENTES Y LABIOS (SELECCIONA EL GESTO PERFECTO):
@@ -851,11 +852,13 @@ Referencias visuales directas: La obra original "La Solución" (Foppotee 16), el
 - Mandíbula de Dientes de Tiburón / Sierra: Hilera de dientes triangulares afilados entrelazados en zigzag continuo (feroz pero caricaturesco).
 - Dientes Mellados / Cómicos: Hilera con un diente solitario arriba, dos paletas de conejo separadas o colmillitos de vampiro en las comisuras.
 - Boquita Kaomoji Gatuna (:3) o Puchero: Línea suave en forma de W con mejillas ruborizadas con tramas finas (///).
+- Media Sonrisa Cómplice / Smirk Asimétrico: Curva lateral pícara con una ceja levantada, irradiando confianza y astucia.
+- Boca de Dientes Apretados en Tensión: Línea horizontal tensa con cuadrícula de dientes cerrados, denotando concentración extrema o esfuerzo heroico.
 - Boca con Puntadas / Costuras: Línea horizontal cerrada cosida con pequeñas puntadas verticales de hilo negro.
 - Labios Gruesos Carnosos Psicodélicos: Labios prominentes redondeados estilo máscara africana o arte totémico, con sombra interior y muescas expresivas.
 - Boquita de Silbido o Trompeta en "O": Pequeño círculo fruncido con arrugas radiales, silbando una melodía cósmica.
 - Mandíbula Desencajada de Asombro (D:): Boca rectangular vertical abierta mostrando toda la cavidad oscura en un grito cómico de sorpresa.
-- Lengua Desorbitada Colgante: Lengüita fucsia neón que cae lateralmente o cuelga relajada del labio inferior.
+- Lengua Desorbitada Lateral (Bleh / Pfff): Lengüita fucsia o roja que sale de lado con ojos traviesos o guiñando un ojo.
 
 4. MORFOLOGÍA MONSTRUOSA INTEGRADA AL OBJETO (EL OBJETO ES LA CRIATURA):
 - Cuernos y Crestas Vivas: Cuernos afilados de diablillo, cuernos curvados de carnero, aletas de pez abisal o crestas de dinosaurio que nacen directamente de la estructura del objeto.

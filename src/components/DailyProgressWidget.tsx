@@ -94,21 +94,21 @@ export const DailyProgressWidget: React.FC<DailyProgressWidgetProps> = ({
     : undefined;
 
   return (
-    <div className="px-3.5 py-2.5 sm:px-4 rounded-2xl scifi-glass-panel relative overflow-hidden text-left text-white space-y-2.5">
-      <div className="flex flex-wrap items-center justify-between gap-3 relative z-10">
+    <div className="px-3 py-2 sm:px-4 rounded-xl scifi-glass-panel relative overflow-hidden text-left text-white space-y-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 relative z-10">
         {/* Left: Progress label + inline bar */}
-        <div className="flex items-center gap-3 flex-1 min-w-[200px]">
+        <div className="flex items-center gap-2.5 flex-1 min-w-[160px] sm:min-w-[200px]">
           <div className="flex items-center gap-1.5 shrink-0">
-            <Zap className="w-4 h-4 fill-cyan-400 text-cyan-400" />
-            <span className="text-xs font-black text-white uppercase tracking-wider font-anton">
+            <Zap className="w-3.5 h-3.5 fill-cyan-400 text-cyan-400" />
+            <span className="text-[11px] sm:text-xs font-black text-white uppercase tracking-wider font-anton">
               Progreso
             </span>
-            <span className="text-xs text-cyan-300 font-mono font-bold">
+            <span className="text-[11px] sm:text-xs text-cyan-300 font-mono font-bold">
               {completed}/{total} ({percent}%)
             </span>
           </div>
 
-          <div className="flex-1 max-w-xs">
+          <div className="flex-1 max-w-[140px] sm:max-w-xs">
             <MoxenRayas
               progress={percent}
               variant="compact"
@@ -119,7 +119,7 @@ export const DailyProgressWidget: React.FC<DailyProgressWidgetProps> = ({
         </div>
 
         {/* Right: Horarios + Tesorería + XP */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 ml-auto">
+        <div className="flex items-center gap-1.5 shrink-0 ml-auto">
           {onToggleSchedule && (
             <button
               type="button"
@@ -127,16 +127,16 @@ export const DailyProgressWidget: React.FC<DailyProgressWidgetProps> = ({
                 soundFX.playClick();
                 onToggleSchedule();
               }}
-              className={`px-2.5 py-1 rounded-lg border text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 ${
+              className={`px-2 py-0.5 rounded-lg border text-[11px] font-bold flex items-center gap-1 transition-all cursor-pointer active:scale-95 ${
                 showSchedule
-                  ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400 shadow-[0_0_10px_rgba(0,240,255,0.3)]'
-                  : 'bg-surface-card hover:bg-cyan-950/40 text-slate-300 hover:text-white border-white/10 hover:border-cyan-500/40'
+                  ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400 shadow-[0_0_8px_rgba(0,240,255,0.25)]'
+                  : 'bg-surface-card hover:bg-cyan-950/40 text-slate-300 hover:text-white border-white/10'
               }`}
               title="Ver línea de tiempo de horarios del día"
             >
-              <Timer className="w-3.5 h-3.5 text-cyan-400" />
+              <Timer className="w-3 h-3 text-cyan-400" />
               <span>Horarios</span>
-              {showSchedule ? <ChevronUp className="w-3 h-3 text-cyan-300" /> : <ChevronDown className="w-3 h-3 text-slate-400" />}
+              {showSchedule ? <ChevronUp className="w-2.5 h-2.5 text-cyan-300" /> : <ChevronDown className="w-2.5 h-2.5 text-slate-400" />}
             </button>
           )}
 
@@ -147,17 +147,17 @@ export const DailyProgressWidget: React.FC<DailyProgressWidgetProps> = ({
                 soundFX.playCoin();
                 onOpenFinance();
               }}
-              className={`px-2.5 py-1 rounded-lg border text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 ${
+              className={`px-2 py-0.5 rounded-lg border text-[11px] font-bold flex items-center gap-1 transition-all cursor-pointer active:scale-95 ${
                 todayFinanceBalance > 0
-                  ? 'bg-emerald-950/70 hover:bg-emerald-900/70 text-emerald-300 border-emerald-500/50 shadow-[0_0_10px_rgba(16,185,129,0.3)]'
+                  ? 'bg-emerald-950/70 hover:bg-emerald-900/70 text-emerald-300 border-emerald-500/50'
                   : todayFinanceBalance < 0
-                  ? 'bg-[#fb5607]/15 hover:bg-[#fb5607]/25 text-[#ff7043] border-[#fb5607]/40 shadow-[0_0_10px_rgba(251,86,7,0.25)]'
+                  ? 'bg-[#fb5607]/15 hover:bg-[#fb5607]/25 text-[#ff7043] border-[#fb5607]/40'
                   : 'bg-surface-card hover:bg-emerald-950/40 text-emerald-300 hover:text-white border-emerald-500/30'
               }`}
               title="Abrir Tesorería: registrar ingreso o gasto"
             >
-              <Wallet className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="font-mono">
+              <Wallet className="w-3 h-3 text-emerald-400" />
+              <span className="font-mono text-[10px]">
                 {todayFinanceBalance > 0
                   ? `+${activeCurrencySymbol}${todayFinanceBalance}`
                   : todayFinanceBalance < 0
@@ -167,8 +167,8 @@ export const DailyProgressWidget: React.FC<DailyProgressWidgetProps> = ({
             </button>
           )}
 
-          <div className="hidden xs:flex sm:flex px-2 py-1 rounded-lg bg-surface-card border border-cyan-400/30 text-cyan-300 text-[11px] font-mono font-bold items-center gap-1">
-            <Sparkles className="w-3 h-3 text-cyan-400" />
+          <div className="hidden xs:flex sm:flex px-2 py-0.5 rounded-lg bg-surface-card border border-cyan-400/30 text-cyan-300 text-[10px] font-mono font-bold items-center gap-1">
+            <Sparkles className="w-2.5 h-2.5 text-cyan-400" />
             <span>+{xpEarned}/{xpTotal} XP</span>
           </div>
         </div>
@@ -176,17 +176,15 @@ export const DailyProgressWidget: React.FC<DailyProgressWidgetProps> = ({
 
       {/* Live Active Mission Banner (Shown only when schedule timeline is closed to avoid duplicate) */}
       {!showSchedule && activeTask && (
-        <div className="flex items-center justify-between gap-2 bg-[#002244]/85 px-3 py-2 rounded-xl border border-cyan-400/50 shadow-[0_0_12px_rgba(0,240,255,0.2)] relative z-10">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping shrink-0" />
-            <div className="flex items-center gap-1.5 flex-wrap min-w-0">
-              <span className="text-[10px] uppercase tracking-wider font-mono font-black text-cyan-300 bg-[#001020] px-1.5 py-0.5 rounded border border-cyan-500/40 shrink-0">
-                En curso ({activeTask.timeBlock})
-              </span>
-              <span className="text-xs sm:text-sm font-bold text-white truncate">
-                {activeTask.title}
-              </span>
-            </div>
+        <div className="flex items-center justify-between gap-2 bg-[#001c38]/90 px-2.5 py-1.5 rounded-lg border border-cyan-400/40 relative z-10 text-xs">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping shrink-0" />
+            <span className="text-[9px] uppercase tracking-wider font-mono font-bold text-cyan-300 bg-black/50 px-1 py-0.2 rounded border border-cyan-500/30 shrink-0">
+              En curso {activeTask.timeBlock ? `(${activeTask.timeBlock})` : ''}
+            </span>
+            <span className="text-xs font-bold text-white truncate">
+              {activeTask.title}
+            </span>
           </div>
           {onOpenPomodoroForTask && (
             <button
@@ -195,10 +193,10 @@ export const DailyProgressWidget: React.FC<DailyProgressWidgetProps> = ({
                 soundFX.playPomodoroChime();
                 onOpenPomodoroForTask(activeTask.title, activeTask.category);
               }}
-              className="px-3 py-1 bg-cyan-400 text-black hover:bg-cyan-300 rounded-lg border border-cyan-300 font-anton tracking-wider uppercase cursor-pointer text-xs shadow-[0_0_10px_rgba(0,240,255,0.4)] shrink-0 flex items-center gap-1.5 active:scale-95"
+              className="px-2.5 py-0.5 bg-cyan-400 text-black hover:bg-cyan-300 rounded-md font-anton tracking-wider uppercase cursor-pointer text-[10px] shrink-0 flex items-center gap-1 active:scale-95"
               title="Enfocar en Pomodoro"
             >
-              <Timer className="w-3.5 h-3.5 text-black" />
+              <Timer className="w-3 h-3 text-black" />
               <span>Pomodoro</span>
             </button>
           )}
@@ -213,10 +211,10 @@ export const DailyProgressWidget: React.FC<DailyProgressWidgetProps> = ({
             soundFX.playLevelUp();
             onClaimDailyBonus(25, 10);
           }}
-          className="w-full py-2 px-3 bg-[#d6f421] hover:bg-yellow-300 text-black rounded-xl font-anton tracking-widest uppercase text-xs transition-all shadow-[0_0_15px_rgba(214,244,33,0.45)] flex items-center justify-center gap-2 cursor-pointer relative z-10"
+          className="w-full py-1.5 px-3 bg-[#d6f421] hover:bg-yellow-300 text-black rounded-lg font-anton tracking-wider uppercase text-[11px] transition-all flex items-center justify-center gap-1.5 cursor-pointer relative z-10"
         >
-          <Trophy className="w-4 h-4 text-black" />
-          <span>¡Agenda Completada! Reclamar Bono (+25 XP • +10 🪙)</span>
+          <Trophy className="w-3.5 h-3.5 text-black" />
+          <span>¡Día Completado! Reclamar Bono (+25 XP • +10 🪙)</span>
         </button>
       )}
     </div>
