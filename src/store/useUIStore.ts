@@ -97,6 +97,7 @@ interface UIState {
   toggleZenMode: () => void;
   setOpticMode: (mode: OpticMode) => void;
   setSystemAura: (aura: SystemAuraData | null) => void;
+  triggerTransition: (durationMs?: number) => void;
 }
 
 // Convierte un color HEX a RGB numérico para sombras/glows
@@ -262,7 +263,19 @@ export const useUIStore = create<UIState>((set, get) => ({
   floatingRewards: [],
 
   setActiveTab: (tab) => {
-    set({ activeTab: tab, isTransitioning: false });
+    const currentTab = get().activeTab;
+    if (currentTab === tab) return;
+    set({ activeTab: tab, isTransitioning: true });
+    setTimeout(() => {
+      set({ isTransitioning: false });
+    }, 450);
+  },
+
+  triggerTransition: (durationMs = 1200) => {
+    set({ isTransitioning: true });
+    setTimeout(() => {
+      set({ isTransitioning: false });
+    }, durationMs);
   },
 
   setFocusModeActive: (active) => {

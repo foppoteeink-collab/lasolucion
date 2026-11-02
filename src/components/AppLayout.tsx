@@ -40,6 +40,7 @@ import { DailyBossWidget } from './DailyBossWidget';
 import { DailyScheduleStrip } from './DailyScheduleStrip';
 import { SciFiGridBackground } from './SciFiGridBackground';
 import { TransitionOverlay } from './TransitionOverlay';
+import { QuantumCubeLoader } from './QuantumCubeLoader';
 import { DamageOverlay } from './DamageOverlay';
 import { ShockwaveOverlay } from './ShockwaveOverlay';
 import { DailyProgressWidget } from './DailyProgressWidget';
@@ -755,13 +756,8 @@ export function AppLayout() {
 
 function TabLoadingSkeleton() {
   return (
-    <div className="w-full min-h-[300px] flex flex-col items-center justify-center p-8 space-y-4 animate-pulse">
-      <div className="w-12 h-12 rounded-2xl bg-cyan-950/60 border border-cyan-500/40 flex items-center justify-center shadow-[0_0_15px_rgba(0,240,255,0.2)]">
-        <div className="w-5 h-5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
-      </div>
-      <span className="text-xs font-mono uppercase tracking-widest text-cyan-400">
-        Cargando Módulo...
-      </span>
+    <div className="w-full min-h-[320px] flex flex-col items-center justify-center p-8 space-y-4">
+      <QuantumCubeLoader size="md" speed="slow" showLabel={true} label="CANALIZANDO MÓDULO DEL SISTEMA..." />
     </div>
   );
 }

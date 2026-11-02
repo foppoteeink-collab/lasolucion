@@ -43,6 +43,7 @@ import { useMoxenChicle } from '../hooks/useMoxenChicle';
 import { ChicleToggle } from './ChicleToggle';
 import { MoxenMalla } from './moxen/MoxenMalla';
 import { MoxenEclipseToggle } from './moxen/MoxenEclipseToggle';
+import { QuantumCubeLoader } from './QuantumCubeLoader';
 
 interface SettingsViewProps {
   settings: GameSettings;
@@ -69,7 +70,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [showIOSInstructions, setShowIOSInstructions] = useState(false);
   const game = gameEngine as any;
   const cloudSync = propCloudSync || game?.cloudSync;
-  const { soundEnabled, toggleSound, themeMode, opticMode, setOpticMode, navigationMode, setNavigationMode, zenMode, toggleZenMode, systemAura, setSystemAura } = useUIStore();
+  const { soundEnabled, toggleSound, themeMode, opticMode, setOpticMode, navigationMode, setNavigationMode, zenMode, toggleZenMode, systemAura, setSystemAura, triggerTransition } = useUIStore();
   
   const [activeSubTab, setActiveSubTab] = useState<SettingsSubTab>('preferences');
   const [currentCurrency, setCurrentCurrency] = useState<string>(getSavedCurrencySymbol);
@@ -1046,6 +1047,39 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   />
                 </div>
               )}
+            </div>
+
+            {/* VISTA PREVIA DEL NÚCLEO CUÁNTICO DE CARGA (SINCRONIZADO EN TIEMPO REAL) */}
+            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-xl p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
+              <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2 text-cyan-400 text-xs font-mono font-bold uppercase tracking-widest mb-1">
+                    <Sparkles className="w-4 h-4 text-cyan-400" /> Núcleo Cuántico de Carga
+                  </div>
+                  <h3 className="text-base sm:text-lg font-anton uppercase tracking-wide text-white">
+                    Sincronización de Animación de Carga
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Tus 5 cristales cuánticos reflejan en tiempo real el color de tu atmósfera activa.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFX.playClick();
+                    triggerTransition(1800);
+                  }}
+                  className="chicle-btn px-4 py-2 rounded-xl border border-cyan-400/50 bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 text-xs font-anton uppercase tracking-wider shrink-0 cursor-pointer shadow-[0_0_15px_rgba(0,240,255,0.25)] flex items-center justify-center gap-2"
+                >
+                  <Zap className="w-3.5 h-3.5 text-cyan-300" />
+                  <span>Probar Transición Pantalla Completa</span>
+                </button>
+              </div>
+
+              <div className="relative z-10 py-5 rounded-2xl bg-black/50 border border-white/10 flex flex-col items-center justify-center">
+                <QuantumCubeLoader size="md" speed="slow" showLabel={true} label="NÚCLEO SINCRONIZADO CON ESTA APARIENCIA" />
+              </div>
             </div>
           </div>
         )}
