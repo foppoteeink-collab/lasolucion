@@ -114,6 +114,86 @@ export const hexToRgb = (hex: string): string => {
   return `${r}, ${g}, ${b}`;
 };
 
+/**
+ * Calcula la luminancia percibida relativa sRGB (rango 0 a 1).
+ * Usado para asegurar contraste y legibilidad en elementos interactivos.
+ */
+export const getHexLuminance = (hex: string): number => {
+  let c = hex.replace('#', '').trim();
+  if (c.length === 3) {
+    c = c.split('').map(x => x + x).join('');
+  }
+  const num = parseInt(c, 16);
+  if (isNaN(num)) return 0.5;
+  const r = ((num >> 16) & 255) / 255;
+  const g = ((num >> 8) & 255) / 255;
+  const b = (num & 255) / 255;
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+
+export interface DerivedAuraPalette {
+  c1: string;
+  c2: string;
+  c3: string;
+  c4: string;
+  uiAccent1: string;
+  uiAccent2: string;
+}
+
+/**
+ * Deriva una paleta armónica cuádruple para 2, 3 o 4 colores con protección de legibilidad.
+ * - 2 colores: A -> B -> A -> B (ciclo bicromático puro)
+ * - 3 colores: A -> B -> C -> A (ciclo tridimensional continuo)
+ * - 4 colores: A -> B -> C -> D (espectro completo directo)
+ * Además, garantiza que los acentos de interfaz (botones, textos, halos) usen tonos luminosos
+ * incluso si el usuario seleccionó un nodo negro/sombra en la malla de fondo.
+ */
+export const deriveSystemAuraPalette = (colors: string[] = []): DerivedAuraPalette => {
+  if (!colors || colors.length === 0) {
+    return {
+      c1: '#00f0ff',
+      c2: '#8a2be2',
+      c3: '#ff007f',
+      c4: '#020d18',
+      uiAccent1: '#00f0ff',
+      uiAccent2: '#8a2be2',
+    };
+  }
+
+  const count = colors.length;
+  let c1: string;
+  let c2: string;
+  let c3: string;
+  let c4: string;
+
+  if (count === 2) {
+    c1 = colors[0];
+    c2 = colors[1];
+    c3 = colors[0];
+    c4 = colors[1];
+  } else if (count === 3) {
+    c1 = colors[0];
+    c2 = colors[1];
+    c3 = colors[2];
+    c4 = colors[0];
+  } else {
+    c1 = colors[0];
+    c2 = colors[1];
+    c3 = colors[2];
+    c4 = colors[3] || colors[0];
+  }
+
+  // Filtrar candidatos luminosos para botones y acentos de UI (luminancia >= 0.18)
+  const luminous = colors.filter(c => getHexLuminance(c) >= 0.18);
+  const uiAccent1 = luminous[0] || (getHexLuminance(c1) >= 0.12 ? c1 : '#38bdf8');
+  let uiAccent2 = luminous.find(c => c !== uiAccent1) || (luminous.length > 1 ? luminous[1] : null);
+  if (!uiAccent2) {
+    uiAccent2 = uiAccent1 === '#38bdf8' ? '#818cf8' : uiAccent1;
+  }
+
+  return { c1, c2, c3, c4, uiAccent1, uiAccent2 };
+};
+
 export const applyAuraCssTokens = (aura: SystemAuraData | null) => {
   if (typeof document === 'undefined') return;
   const root = document.documentElement;
@@ -128,17 +208,14 @@ export const applyAuraCssTokens = (aura: SystemAuraData | null) => {
     return;
   }
 
-  const c1 = aura.colors[0] || '#00f0ff';
-  const c2 = aura.colors[1] || aura.colors[0] || '#8a2be2';
-  const c3 = aura.colors[2] || c2;
-  const c4 = aura.colors[3] || '#020d18';
+  const { c1, c2, c3, c4, uiAccent1, uiAccent2 } = deriveSystemAuraPalette(aura.colors);
 
-  root.style.setProperty('--aura-color-1', c1);
-  root.style.setProperty('--aura-color-2', c2);
+  root.style.setProperty('--aura-color-1', uiAccent1);
+  root.style.setProperty('--aura-color-2', uiAccent2);
   root.style.setProperty('--aura-color-3', c3);
   root.style.setProperty('--aura-color-4', c4);
-  root.style.setProperty('--aura-glow-rgb', hexToRgb(c1));
-  root.style.setProperty('--aura-gradient', `linear-gradient(135deg, ${c1} 0%, ${c2} 100%)`);
+  root.style.setProperty('--aura-glow-rgb', hexToRgb(uiAccent1));
+  root.style.setProperty('--aura-gradient', `linear-gradient(135deg, ${uiAccent1} 0%, ${uiAccent2} 100%)`);
 };
 
 export const syncRootTheme = (_mode?: ThemeMode) => {
@@ -344,6 +421,9 @@ export const useUIStore = create<UIState>((set, get) => ({
       } catch (e) {}
     }
     applyOpticMode(mode);
+    if (mode === 'aurora') {
+      applyAuraCssTokens(get().systemAura);
+    }
     set({ opticMode: mode });
   },
 

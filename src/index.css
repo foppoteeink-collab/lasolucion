@@ -261,18 +261,21 @@ html.optic-cobalt .portal-modal-root {
 }
 
 html.optic-cobalt {
-  --aura-color-1: #60a5fa;
-  --aura-color-2: #38bdf8;
+  --aura-color-1: #60a5fa !important;
+  --aura-color-2: #38bdf8 !important;
+  --aura-glow-rgb: 96, 165, 250 !important;
 }
 
 html.optic-noir {
-  --aura-color-1: #ffffff;
-  --aura-color-2: #94a3b8;
+  --aura-color-1: #ffffff !important;
+  --aura-color-2: #94a3b8 !important;
+  --aura-glow-rgb: 255, 255, 255 !important;
 }
 
 html.optic-eink {
-  --aura-color-1: #000000;
-  --aura-color-2: #334155;
+  --aura-color-1: #000000 !important;
+  --aura-color-2: #334155 !important;
+  --aura-glow-rgb: 100, 116, 139 !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -317,7 +320,7 @@ html.optic-eink {
     var(--n1) 0deg,
     color-mix(in srgb, var(--n1) 70%, white) 55deg,
     var(--n2) 130deg,
-    color-mix(in srgb, var(--n2) 70%, #00f0ff) 205deg,
+    color-mix(in srgb, var(--n2) 70%, var(--n1)) 205deg,
     var(--n1) 285deg,
     var(--n1) 360deg
   );

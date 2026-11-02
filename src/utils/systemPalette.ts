@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useUIStore, OpticMode, SystemAuraData } from '../store/useUIStore';
+import { useUIStore, OpticMode, SystemAuraData, deriveSystemAuraPalette } from '../store/useUIStore';
 
 export interface SystemPalette {
   c1: string;
@@ -65,19 +65,14 @@ export function getSystemPalette(
     };
   }
 
-  // 4. Paleta personalizada de Atmósfera / Moxen Malla guardada en Ajustes
+  // 4. Paleta personalizada de Atmósfera / Moxen Malla guardada en Ajustes (2, 3 o 4 colores)
   if (systemAura?.colors && systemAura.colors.length >= 2) {
-    const colors = systemAura.colors;
-    const count = colors.length;
-    const c1 = colors[0];
-    const c2 = colors[1 % count];
-    const c3 = colors[2 % count];
-    const c4 = colors[3 % count];
+    const { c1, c2, c3, c4, uiAccent1, uiAccent2 } = deriveSystemAuraPalette(systemAura.colors);
 
     return {
       c1, c2, c3, c4,
-      glow: `color-mix(in srgb, ${c1} 60%, transparent)`,
-      glowSecondary: `color-mix(in srgb, ${c3} 50%, transparent)`,
+      glow: `color-mix(in srgb, ${uiAccent1} 60%, transparent)`,
+      glowSecondary: `color-mix(in srgb, ${uiAccent2} 50%, transparent)`,
       textColor: 'text-cyan-300',
       gradient: `linear-gradient(135deg, ${c1} 0%, ${c2} 25%, ${c3} 50%, ${c4} 75%, ${c1} 100%)`,
     };

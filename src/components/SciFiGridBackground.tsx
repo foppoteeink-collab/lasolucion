@@ -30,12 +30,16 @@ export const SciFiGridBackground: React.FC = () => {
       {/* Si el Modo Zen está activo, mantenemos un fondo oscuro puro ultra-limpio sin animaciones */}
       {!zenMode && (
         <>
-          {/* MÓVIL: Velo CSS Ligero y Estático (0% carga de GPU/JS en teléfonos) */}
-          <div className="block md:hidden absolute inset-0 pointer-events-none overflow-hidden opacity-80">
+          {/* MÓVIL: Velo CSS Ligero y Estático (0% carga de GPU/JS en teléfonos, sincronizado con la paleta de Aura) */}
+          <div className={`block md:hidden absolute inset-0 pointer-events-none overflow-hidden transition-opacity duration-1000 ${
+            systemAura ? 'opacity-35' : 'opacity-80'
+          }`}>
             <div 
               className="absolute -top-[10%] left-0 right-0 h-[450px] pointer-events-none"
               style={{
-                background: 'radial-gradient(ellipse 80% 50% at 50% 15%, rgba(0, 240, 255, 0.22) 0%, rgba(168, 85, 247, 0.18) 45%, rgba(0, 255, 135, 0.10) 70%, transparent 95%)',
+                background: systemAura?.colors && systemAura.colors.length >= 2
+                  ? 'radial-gradient(ellipse 80% 50% at 50% 15%, color-mix(in srgb, var(--aura-color-1) 24%, transparent) 0%, color-mix(in srgb, var(--aura-color-2) 18%, transparent) 45%, transparent 95%)'
+                  : 'radial-gradient(ellipse 80% 50% at 50% 15%, rgba(0, 240, 255, 0.22) 0%, rgba(168, 85, 247, 0.18) 45%, rgba(0, 255, 135, 0.10) 70%, transparent 95%)',
                 filter: 'blur(30px)',
               }}
             />

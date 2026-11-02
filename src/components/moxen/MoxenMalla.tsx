@@ -1,10 +1,11 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import './moxenMalla.css';
 import { 
   Sparkles, RotateCcw, Copy, Check, Shuffle, Maximize2, Minimize2, 
   Palette, CheckCircle2, Zap, Waves, Flame, Eye, EyeOff, X
 } from 'lucide-react';
 import { soundFX } from '../../utils/audio';
+import { deriveSystemAuraPalette } from '../../store/useUIStore';
 
 export interface MoxenMallaPreset {
   id: string;
@@ -340,6 +341,11 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
       badgeBg: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40',
       dotBg: 'bg-emerald-400 shadow-[0_0_8px_#10b981]'
     };
+  }, [pointColors, pointCount]);
+
+  // Paleta reactiva en tiempo real para botones y acentos de interfaz sincronizados con los 2, 3 o 4 colores
+  const liveAuraPalette = useMemo(() => {
+    return deriveSystemAuraPalette(pointColors.slice(0, pointCount));
   }, [pointColors, pointCount]);
 
   const currPreset = MOXEN_MALLA_PRESETS.find(p => p.id === activePreset) || MOXEN_MALLA_PRESETS[0];
@@ -1482,8 +1488,8 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
                   data-action="apply-system"
                   onClick={handleApplyToSystem}
                   style={{
-                    '--n1': pointColors[0] || '#00f0ff',
-                    '--n2': pointColors[1] || '#8a2be2',
+                    '--n1': liveAuraPalette.uiAccent1,
+                    '--n2': liveAuraPalette.uiAccent2,
                   } as React.CSSProperties}
                   className={`btn-neon-hunter flex-1 py-3 px-3 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-lg ${
                     applyFeedback ? 'is-flash' : ''
@@ -1496,7 +1502,10 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
                     </>
                   ) : (
                     <>
-                      <Sparkles className="w-3.5 h-3.5 text-cyan-300 fill-cyan-300" />
+                      <Sparkles
+                        className="w-3.5 h-3.5 transition-colors"
+                        style={{ color: liveAuraPalette.uiAccent1, fill: liveAuraPalette.uiAccent1 }}
+                      />
                       <span>Aplicar como Fondo</span>
                     </>
                   )}
@@ -1732,8 +1741,8 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
           type="button"
           onClick={handleApplyToSystem}
           style={{
-            '--n1': pointColors[0] || '#00f0ff',
-            '--n2': pointColors[1] || '#8a2be2',
+            '--n1': liveAuraPalette.uiAccent1,
+            '--n2': liveAuraPalette.uiAccent2,
           } as React.CSSProperties}
           className={`btn-neon-hunter w-full py-3 px-4 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg ${
             applyFeedback ? 'is-flash' : ''
@@ -1746,7 +1755,10 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
             </>
           ) : (
             <>
-              <Sparkles className="w-4 h-4 text-cyan-300 fill-cyan-300" />
+              <Sparkles
+                className="w-4 h-4 transition-colors"
+                style={{ color: liveAuraPalette.uiAccent1, fill: liveAuraPalette.uiAccent1 }}
+              />
               <span>Aplicar como Fondo del Sistema</span>
             </>
           )}
