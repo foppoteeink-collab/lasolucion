@@ -197,27 +197,32 @@ const renderStyleMiniPreview = (styleId: KaiMultiverseStyle) => {
 
     case 'doodle':
       return (
-        <svg viewBox="0 0 50 50" className="w-10 h-10 drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">
-          {/* Organic doodle face - hand-drawn feel */}
-          <ellipse cx="25" cy="23" rx="14" ry="16" fill="none" stroke="#0f172a" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
-          {/* Cross-hatching shadow lines */}
-          <line x1="13" y1="26" x2="37" y2="30" stroke="#0f172a" strokeWidth="0.8" opacity="0.4" />
-          <line x1="13" y1="29" x2="37" y2="33" stroke="#0f172a" strokeWidth="0.8" opacity="0.4" />
-          <line x1="13" y1="32" x2="30" y2="36" stroke="#0f172a" strokeWidth="0.8" opacity="0.4" />
-          {/* Doodle eyes */}
-          <circle cx="19" cy="20" r="4" fill="white" stroke="#0f172a" strokeWidth="2.2" />
-          <circle cx="31" cy="20" r="4" fill="white" stroke="#0f172a" strokeWidth="2.2" />
-          <circle cx="19" cy="21" r="2" fill="#0f172a" />
-          <circle cx="31" cy="21" r="2" fill="#0f172a" />
-          {/* Doodle smile */}
-          <path d="M19,29 Q25,34 31,29" fill="none" stroke="#0f172a" strokeWidth="2.2" strokeLinecap="round" />
-          {/* Posca color accent touches */}
-          <circle cx="19" cy="20" r="1.5" fill="#f59e0b" opacity="0.7" />
-          <circle cx="31" cy="20" r="1.5" fill="#f59e0b" opacity="0.7" />
-          {/* Doodle stars orbiting */}
-          <path d="M6,10 L7,8 L8,10 L6,9 L8,9Z" fill="#0f172a" />
-          <path d="M42,14 L43,12 L44,14 L42,13 L44,13Z" fill="#0f172a" />
-          <path d="M40,38 L41,36 L42,38 L40,37 L42,37Z" fill="#0f172a" />
+        <svg viewBox="0 0 50 50" className="w-10 h-10 drop-shadow-[0_2px_6px_rgba(6,182,212,0.4)]">
+          {/* Foppotee Totem Head with antenna ears */}
+          <path d="M14,14 L11,5 L19,11 L31,11 L39,5 L36,14 L39,30 L11,30 Z" fill="#06b6d4" stroke="#0a0a0c" strokeWidth="2" strokeLinejoin="round" />
+          {/* Accordion neck folds */}
+          <line x1="16" y1="33" x2="34" y2="33" stroke="#0a0a0c" strokeWidth="2.2" strokeLinecap="round" />
+          <line x1="18" y1="36" x2="32" y2="36" stroke="#ec4899" strokeWidth="2.2" strokeLinecap="round" />
+          <line x1="20" y1="39" x2="30" y2="39" stroke="#facc15" strokeWidth="2.2" strokeLinecap="round" />
+          {/* Hypnotic eyes */}
+          <circle cx="19" cy="18" r="4.5" fill="white" stroke="#0a0a0c" strokeWidth="1.8" />
+          <circle cx="31" cy="18" r="4.5" fill="white" stroke="#0a0a0c" strokeWidth="1.8" />
+          {/* Concentric pupils */}
+          <circle cx="19" cy="18" r="2.2" fill="#0a0a0c" />
+          <circle cx="31" cy="18" r="2.2" fill="#0a0a0c" />
+          <circle cx="18" cy="17" r="0.9" fill="#06b6d4" />
+          <circle cx="30" cy="17" r="0.9" fill="#06b6d4" />
+          {/* Classic Foppotee toothed grid smile */}
+          <rect x="18" y="24" width="14" height="4" rx="1.5" fill="white" stroke="#0a0a0c" strokeWidth="1.4" />
+          <line x1="22" y1="24" x2="22" y2="28" stroke="#0a0a0c" strokeWidth="1.2" />
+          <line x1="25" y1="24" x2="25" y2="28" stroke="#0a0a0c" strokeWidth="1.2" />
+          <line x1="28" y1="24" x2="28" y2="28" stroke="#0a0a0c" strokeWidth="1.2" />
+          {/* Chest Reactor - The Prisma Triangle */}
+          <polygon points="25,41 29,48 21,48" fill="#facc15" stroke="#0a0a0c" strokeWidth="1.4" />
+          <circle cx="25" cy="45.5" r="0.8" fill="#0a0a0c" />
+          {/* Orbiting micro-sparks */}
+          <path d="M5,12 L6.5,8 L8,12 L5,10 L8,10Z" fill="#ec4899" />
+          <path d="M42,16 L43.5,12 L45,16 L42,14 L45,14Z" fill="#facc15" />
         </svg>
       );
 

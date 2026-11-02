@@ -807,14 +807,63 @@ Inspirándote en las referencias, dótalo de uno de los sistemas oculares cinema
 
       case 'doodle':
         return {
-          styleTitle: 'DOODLE ART A MANO / STREET POSCA',
-          keywordsEn: 'dynamic hand-drawn doodle art illustration, Keith Haring and Mr Doodle aesthetic, energetic organic black marker linework, selective vibrant Posca paint color accents, spontaneous action vibes',
+          styleTitle: 'FOPPOTEE INK DOODLE ART / ARTE DE TINTA CÓSMICO Y PSICODÉLICO (GÉNESIS LA SOLUCIÓN)',
+          keywordsEn: 'authentic Foppotee Ink psychedelic doodle art illustration, dynamic organic hand-drawn black ink contours, Keith Haring and visionary street art linework, vibrant marker color fills, totemic creature design with tiered accordion neck, chest reactor emblem with concentric geometric ripples, optical checkerboards and cross-hatching, orbiting micro-doodle critters and glyphs, living vibrant ink organism',
           promptBody: `
-✏️ ESTILO MAESTRO: DOODLE ART A MANO Y POSCA URBANO
-- Eres un Artista Urbano de cuaderno de bocetos y muralismo (estilo Keith Haring, Mr. Doodle y marcadores Posca).
-- TÉCNICA: Trazo orgánico de marcador acrílico negro grueso (stroke="#000000" stroke-width="3.6" a "4.8" con puntas redondeadas).
-- COLOR: Blanco y negro dominante con rellenos selectivos planos de marcador Posca (1 o 2 acentos vivos). Sombreados mediante tramados de líneas paralelas (hatching).
-- DETALLES: Pequeñas líneas de acción, garabatos, estrellitas o coronitas doodle flotando alrededor del personaje.
+🌀 ESTILO MAESTRO: FOPPOTEE INK DOODLE ART / ARTE DE TINTA CÓSMICO Y PSICODÉLICO (EL GÉNESIS DE LA SOLUCIÓN)
+Referencias visuales directas: La obra original "La Solución" (Foppotee 16), el universo de tótems robot y criaturas cósmicas de Foppotee Ink, el códice de glifos modulares y la fusión orgánica con tecnología (casetes, teclados, baterías y circuitos vivos).
+
+1. PRINCIPIO SAGRADO DEL DOODLE VIVO (EL OBJETO NO SE ENCASILLA, SE TRANSFORMA EN ORGANISMO DE TINTA):
+- ¡NO encasilles al objeto en una caja aburrida ni lo deformes en un robot rígido prefabricado!
+- CUALQUIERA que sea el objeto fotografiado (una taza, un control, un casete, unas llaves, una fruta o una herramienta):
+  * Sus contornos, ranuras, esquinas y curvaturas reales se convierten en el cuerpo vivo del doodle.
+  * Su superficie se puebla con tramas de tinta fluidas, espirales, lunares, franjas cebra y patrones geométricos.
+  * El objeto debe ser 100% RECONOCIBLE a primer golpe de vista, pero vibrando como un organismo cósmico dibujado a mano con plumilla y marcadores acrílicos de alto impacto.
+
+2. CATÁLOGO ROBUSTO DE OJOS Y MIRADAS FOPPOTEE INK:
+Inspirándote en las obras maestras de Foppotee Ink, dótalo del sistema ocular que mejor dialogue con la forma del objeto:
+- Ojos de Mariposa / Espectáculo Gigante: Dos grandes óvalos concéntricos dominantes con doble contorno de vitral psicodélico, pestañas estilizadas y pupilas de botón negro profundo.
+- Ojos Espirales e Hipnóticos: Iris formados por espirales continuas que rotan hacia adentro, transmitiendo trance creativo, energía mental y visión profunda.
+- Ojos de Visor / Pantalla Analógica: Cuadrícula o monitor retro con ondas senoidales, laberintos o estática en su interior (estilo televisor o casco cyberpunk de tinta).
+- Ojos Múltiples de Tótem: Filas de 3 a 5 pequeños ojitos curiosos apilados en crestas, hombros o aristas del objeto, vigilando en múltiples direcciones.
+- Ojos Chibi de Frijolito Pícaro: Dos óvalos negros sencillos y tiernos con un punto blanco de reflejo, amigables, traviesos y cómplices.
+- El Tercer Ojo del Prisma: Ojo almendrado central en la parte superior o frente con rayos solares o pestañas de diamante, observando el cosmos.
+
+3. CATÁLOGO ROBUSTO DE BOCAS Y EXPRESIONES FOPPOTEE:
+- Sonrisa de Rejilla Dentada (El Sello Clásico Foppotee): Boca rectangular o curva amplia con dientes planos en bloque continuo blanco divididos por líneas de tinta negra (estilo tótem sonriente o pantalla de rejilla analógica).
+- Boca de Labios Gruesos Carnosos: Labios carnosos curvados estilo máscara ancestral/afrofuturista, con sombra interior y pequeños colmillitos simétricos.
+- Mueca de Diente Solitario o Colmillito: Sonrisa pícara asimétrica con un solo diente cuadrado sobresaliendo, transmitiendo humor callejero y espontaneidad.
+- Boca Elástica de Trazo Puro: Una curva ondulante de tinta fluida que se abre en los extremos con hoyuelos circulares y gran carisma.
+- Sonrisa con Lengüita Saliente: Boquita abierta con lengüita redondeada rellena de color rosa/magenta fluorescente brillante.
+
+4. ANATOMÍA, CUELLOS Y REACTORES EN EL PECHO:
+- Cuello de Acordeón Escalonado: En las articulaciones o bajo la cabeza, capas elásticas escalonadas como anillos concéntricos o fuelles de acordeón que le dan flexibilidad y presencia de tótem alienígena.
+- El Núcleo / Reactor en el Pecho: Todo doodle de Foppotee lleva en su torso un epicentro de energía:
+  * El Prisma Cuántico (triángulo con ojo o punto central, el símbolo de La Solución).
+  * Diamante / Rombo concéntrico en capas multicolor.
+  * Escudo hexagonal concéntrico o cruz solar geométrica.
+  * Espiral concéntrica hipnótica de poder.
+- Extremidades de Tinta y Conectores:
+  * Bracitos elásticos de manguera de goma con manitas de 3 deditos enguantados.
+  * O pines/bornes robóticos laterales con pequeños remaches que sobresalen como antenas de conexión.
+  * Pies rectangulares o zapatitos planos y firmes que anclan al personaje a la mesa con peso de escultura.
+- Orejas, Cuernos y Antenas Superiores:
+  * Orejitas de robot/conejo geométricas con franjas interiores.
+  * Cuernos flotantes triangulares en suspensión que no tocan directamente la cabeza.
+  * Antenas de televisión analógica con bolitas terminales de señal.
+
+5. TEXTURAS, TRAMAS ÓPTICAS Y EL ECOSISTEMA ORBITANTE:
+- Tramas Ópticas de Alto Contraste: Tableros de ajedrez curvos que se deforman hacia el horizonte, líneas de velocidad paralelas, tramas cruzadas (cross-hatching) y lunares orgánicos.
+- Códice de Glifos Modulares: Pequeñas baldosas o parches sobre el cuerpo del objeto con mini-laberintos, flores psicodélicas, ondas de señal Wi-Fi, soles, pirámides y micro-caritas sonrientes.
+- El Ecosistema Flotante (Micro-Doodles Orbitantes): Alrededor del personaje flotan pequeñas chispas de energía de 4 puntas, mini-coronitas de rey, notas musicales, rayos y pequeños fantasmas o frijolitos doodle que llenan el aire de dinamismo.
+
+6. TÉCNICA VECTORIAL Y PALETA DE COLOR OBLIGATORIA:
+- LÍNEA DE TINTA NEGRA MAESTRA: stroke="#0a0a0c" con grosores orgánicos (contorno maestro stroke-width="3.2" a "4.2", tramas internas "1.4" a "2.0"), stroke-linejoin="round" y stroke-linecap="round".
+- PALETA DE COLOR FOPPOTEE INK:
+  * Base: Colores originales del objeto fotografiado.
+  * Acentos Saturados: Amarillo cálido/sol (#facc15), magenta flúor (#ec4899), cian eléctrico (#06b6d4), verde lima (#84cc16) y naranja fuego (#f97316).
+  * Áreas en Blanco y Negro de Alto Contraste: Para tramas ópticas y tableros de ajedrez que hacen estallar el color.
+- LIBRE DE FONDO RECTANGULAR: 100% fondo transparente con una sombra de contacto suave bajo la base (<ellipse cx="150" cy="275" rx="70" ry="10" fill="#000000" opacity="0.45"/>).
 `,
         };
 
