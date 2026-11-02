@@ -32,7 +32,7 @@ function wrapIndex(idx: number, len: number) {
 const ANCHOR_ANGLE = Math.PI; // 180°
 
 // Radio del anillo orbital (más amplio para mayor espacio y presencia)
-const ORBIT_RADIUS = 84;
+const ORBIT_RADIUS = 104;
 
 export const SatelliteKaiHub: React.FC<SatelliteKaiHubProps> = ({
   items,

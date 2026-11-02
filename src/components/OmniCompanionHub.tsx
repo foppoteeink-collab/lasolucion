@@ -108,7 +108,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
     [viewportDims.width, viewportDims.height]
   );
 
-  // 12 Elementos divididos en dos hemisferios: Pantallas Principales (círculos) y Gadgets Tácticos (hexágonos)
+  // 9 Elementos divididos en dos hemisferios: Pantallas Principales (círculos) y Gadgets Tácticos (hexágonos)
   const wheelItems: SatelliteHubItem[] = useMemo(
     () => [
       // ── HEMISFERIO 1: PANTALLAS PRINCIPALES (NAVEGACIÓN CORE) ──
@@ -121,17 +121,6 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
         accentColor: '#00f0ff',
         glowColor: 'rgba(0, 240, 255, 0.45)',
         liveStat: pendingTodayTasks > 0 ? `${pendingTodayTasks} pendientes` : 'Completas',
-        action: () => setActiveTab('dashboard'),
-      },
-      {
-        id: 'calendar',
-        label: 'Calendario',
-        categoryBadge: 'AGENDA',
-        type: 'page',
-        icon: <Calendar className="w-5 h-5" />,
-        accentColor: '#38bdf8',
-        glowColor: 'rgba(56, 189, 248, 0.45)',
-        liveStat: 'Misiones & Agenda',
         action: () => setActiveTab('dashboard'),
       },
       {
@@ -216,47 +205,20 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
         action: () => setModalState('isPomodoroOpen', true),
       },
       {
-        id: 'procrastination',
-        label: 'Desbloqueo',
-        categoryBadge: 'BOOST',
-        type: 'gadget',
-        icon: <Zap className="w-5 h-5 animate-pulse" />,
-        accentColor: '#f97316',
-        glowColor: 'rgba(249, 115, 22, 0.5)',
-        liveStat: 'Micro-impulso 2 min',
-        action: () => {
-          if (onOpenOracleWithPrompt) {
-            onOpenOracleWithPrompt(
-              'KAI, estoy procrastinando y me cuesta arrancar. Dame una micro-estrategia de 2 minutos para desbloquearme ahora mismo.'
-            );
-          }
-        },
-      },
-      {
         id: 'oracle',
         label: 'Oráculo IA',
-        categoryBadge: 'SYNAPSE',
-        type: 'gadget',
-        icon: <Sparkles className="w-5 h-5 animate-pulse" />,
-        accentColor: '#eab308',
-        glowColor: 'rgba(234, 179, 8, 0.5)',
-        liveStat: 'Guía & Tríada',
-        action: () => {
-          setActiveTab('dashboard');
-          openTaskForm('oracle');
-        },
-      },
-      {
-        id: 'neural',
-        label: 'Diagnóstico',
         categoryBadge: 'NEURAL',
         type: 'gadget',
-        icon: <BrainCircuit className="w-5 h-5" />,
-        accentColor: '#a855f7',
-        glowColor: 'rgba(168, 85, 247, 0.45)',
-        liveStat: 'Claridad mental',
+        icon: <Sparkles className="w-5 h-5 text-amber-300 animate-pulse" />,
+        accentColor: '#eab308',
+        glowColor: 'rgba(234, 179, 8, 0.55)',
+        liveStat: 'Mente & Estrategia',
         action: () => {
-          if (onOpenNeuralAnalysis) onOpenNeuralAnalysis();
+          if (onOpenOracleWithPrompt) {
+            onOpenOracleWithPrompt();
+          } else {
+            openTaskForm('oracle');
+          }
         },
       },
     ],
@@ -319,10 +281,10 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
     const currentRight = isDesktop ? 20 : 10;
     const currentBottom = isDesktop ? 24 : (navigationMode === 'classic' ? 80 : 16);
 
-    // KAI tiene tamaño 64 en el menú desplegado (svgWidth ~102px, svgHeight ~109px).
+    // KAI tiene tamaño 86 en el menú desplegado (svgWidth ~118px, svgHeight ~125px).
     // Su centro real está a la mitad exacta de su masa visual:
-    const kaiHalfWidth = 51;
-    const kaiHalfHeight = 55;
+    const kaiHalfWidth = 59;
+    const kaiHalfHeight = 63;
 
     // Centro exacto absoluto de la pantalla tanto en móvil como en computadora
     const targetX = -(viewportDims.width / 2 - (currentRight + kaiHalfWidth));
@@ -431,7 +393,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
             >
               <HoloCompanion
                 archetype={archetype}
-                size={isMenuOpen ? 64 : 56}
+                size={isMenuOpen ? 86 : 70}
                 interactive={true}
                 onClick={handleCompanionClick}
                 auraState={auraState}
