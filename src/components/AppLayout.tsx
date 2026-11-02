@@ -29,6 +29,7 @@ const DayTemplatesModal = lazy(() => import('./DayTemplatesModal').then(m => ({ 
 const OracleModal = lazy(() => import('./OracleModal').then(m => ({ default: m.OracleModal })));
 const NeuralAnalysisModal = lazy(() => import('./NeuralAnalysisModal').then(m => ({ default: m.NeuralAnalysisModal })));
 const HunterAwakeningModal = lazy(() => import('./HunterAwakeningModal').then(m => ({ default: m.HunterAwakeningModal })));
+const KaiWelcomeOnboarding = lazy(() => import('./common/KaiWelcomeOnboarding').then(m => ({ default: m.KaiWelcomeOnboarding })));
 const DailyRewardsModal = lazy(() => import('./DailyRewardsModal').then(m => ({ default: m.DailyRewardsModal })));
 const LevelUpModal = lazy(() => import('./LevelUpModal').then(m => ({ default: m.LevelUpModal })));
 const NightlyTunnel = lazy(() => import('./NightlyTunnel').then(m => ({ default: m.NightlyTunnel })));
@@ -79,7 +80,10 @@ export function AppLayout() {
     setModalState,
     setDeleteConfirmTask,
     toggleTheme,
-    toggleSound
+    toggleSound,
+    isTacticalGuideOpen,
+    tacticalGuideInitialStep,
+    closeTacticalGuide
   } = useUIStore();
 
   const { stats, setStats } = usePlayerStore();
@@ -665,30 +669,18 @@ export function AppLayout() {
         />
       </Suspense>
 
-      {/* Hunter Awakening Ceremony Onboarding Modal */}
+      {/* Onboarding y Guía de Bienvenida Cálida de KAI */}
       <Suspense fallback={null}>
-        <HunterAwakeningModal
-          isOpen={isAwakeningOpen}
-          onClose={() => setIsAwakeningOpen(false)}
-          stats={stats}
-          onCompleteAwakening={(data) => {
+        <KaiWelcomeOnboarding
+          isOpen={isAwakeningOpen || isTacticalGuideOpen}
+          initialStep={isTacticalGuideOpen ? (tacticalGuideInitialStep || 1) : 1}
+          onClose={() => {
             setIsAwakeningOpen(false);
-            usePlayerStore.getState().completeAwakening(data);
-            if (cloudSync?.forceSyncNow) {
-              cloudSync.forceSyncNow();
-            }
-            // Disparar automáticamente la Guía Táctica para el nuevo operador
-            setTimeout(() => {
-              useUIStore.getState().openTacticalGuide(1);
-            }, 600);
+            closeTacticalGuide();
           }}
+          stats={stats}
           cloudSync={cloudSync}
         />
-      </Suspense>
-
-      {/* Tour Táctico Interactivo con Spotlight de KAI */}
-      <Suspense fallback={null}>
-        <KaiInteractiveSpotlightTour />
       </Suspense>
 
       {/* Cyberpunk Floating Pomodoro Pop-up Modal */}

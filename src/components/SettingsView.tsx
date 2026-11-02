@@ -1211,16 +1211,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-cyan-400" />
                   <h3 className="text-xs font-anton text-cyan-400 uppercase tracking-wider">
-                    Manual y Guía Táctica de KAI
+                    Bienvenida y Tutorial Guiado de KAI
                   </h3>
                 </div>
                 <span className="text-[10px] font-mono font-bold text-cyan-300 bg-cyan-950/70 border border-cyan-500/40 px-2 py-0.5 rounded-full">
-                  6 Módulos
+                  5 Pasos
                 </span>
               </div>
 
               <p className="text-xs text-slate-300 leading-relaxed relative z-10">
-                Repasa el tutorial guiado sobre Energía Vital (HP), la Ley 21/66, Modo Foco y la Tienda.
+                Repasa cómo funciona la app, dónde están las pestañas, cómo crear y marcar tareas y cómo aprovechar la Inteligencia Artificial de KAI.
               </p>
 
               <div className="flex flex-wrap items-center gap-3 pt-1 relative z-10">
@@ -1233,7 +1233,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   className="chicle-btn px-4 py-2 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-black font-anton text-xs uppercase tracking-wider transition-all cursor-pointer shadow-[0_0_12px_rgba(0,240,255,0.4)] flex items-center gap-1.5 active:scale-95"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
-                  <span>Repasar Guía Táctica</span>
+                  <span>Repasar Tutorial de KAI</span>
                 </button>
 
                 <button

@@ -47,6 +47,7 @@ import { soundFX } from '../../utils/audio';
 import { getHabitBaseId, computeHabitStreak } from '../../intelligence/masteryEngine';
 import { getTodayDateString, addDaysToDateString } from '../../utils/date';
 import { HABIT_ENERGY_DETAILS, detectHabitEnergy } from '../../utils/habitEnergyDetector';
+import { useSystemPalette } from '../../utils/systemPalette';
 
 interface AuraTheme {
   border: string;
@@ -466,6 +467,8 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
   const isRestDay = Boolean(currentDate && restDays?.[currentDate]);
   const [selectedHabitForProtocol, setSelectedHabitForProtocol] = useState<TaskItem | null>(null);
   const [activatedNotice, setActivatedNotice] = useState<string | null>(null);
+  const [completedShockwaveId, setCompletedShockwaveId] = useState<string | null>(null);
+  const systemPalette = useSystemPalette();
   const togglingOrbsRef = React.useRef<Set<string>>(new Set());
 
   // Strictly select dedicated quick/discipline habits for 21/66 day tracking, deduplicated by title and ID
@@ -667,7 +670,7 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
             </div>
           )}
 
-          {/* Fila Horizontal de Orbes Circulares (Estilo Historias de Instagram - Fine-Line 48px) */}
+          {/* Fila Horizontal de Orbes Circulares (Estilo Historias de Instagram - Fine-Line 48px con Moxen Constancia) */}
           <div className="flex items-center gap-3.5 overflow-x-auto no-scrollbar py-1 px-0.5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {quickHabits.map((qh, idx) => {
           const current = qh.currentCount || 0;
@@ -687,9 +690,24 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
           );
           const streakGoal = qh.targetStreak ? String(qh.targetStreak) : (currentStreak >= 21 ? '66' : '21');
 
-          // Aura de Kai detection and theming
-          const energyKey: HabitEnergyType = (qh.habitEnergyType as any) || detectHabitEnergy(qh.title, qh.category as any);
-          const auraTheme = AURA_THEMES[energyKey] || AURA_THEMES.purification;
+          // Degradados cinéticos de Moxen Constancia derivados del Personalizador de Fondo y Color (Aura del Sistema)
+          const paletteSteps = [
+            { start: systemPalette.c1, end: systemPalette.c2, glow: systemPalette.glow },
+            { start: systemPalette.c2, end: systemPalette.c3, glow: systemPalette.glowSecondary },
+            { start: systemPalette.c3, end: systemPalette.c4, glow: systemPalette.glow },
+            { start: systemPalette.c4, end: systemPalette.c1, glow: systemPalette.glowSecondary },
+          ];
+          const step = paletteSteps[idx % paletteSteps.length];
+          const startColor = step.start;
+          const endColor = isFinished ? '#10b981' : step.end;
+          const glowFilterColor = isFinished ? 'rgba(16, 185, 129, 0.7)' : step.glow;
+          const safeGradId = `moxen-grad-${(qh.id || String(idx)).replace(/[^a-zA-Z0-9_-]/g, '')}`;
+
+          // Posición de la cabeza redondeada y reflejo especular de Moxen Constancia
+          const angle = -Math.PI / 2 + (progressPct / 100) * 2 * Math.PI;
+          const hx = 24 + 21 * Math.cos(angle);
+          const hy = 24 + 21 * Math.sin(angle);
+          const hasHead = progressPct > 3 && progressPct < 100;
 
           const todayStr = getTodayDateString();
           const reconciliationLimit = addDaysToDateString(todayStr, -2);
@@ -708,7 +726,7 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
               key={qh.id ? `qh-orb-${qh.id}-${idx}` : `qh-orb-${idx}`}
               className="flex flex-col items-center w-14 shrink-0 select-none group"
             >
-              {/* Círculo Principal de 48x48 con Anillo SVG Fino y Emoji */}
+              {/* Círculo Principal de 48x48 con Anillo SVG Moxen Constancia y Núcleo Vidrio Obsidian */}
               <div
                 {...(idx === 0 ? { 'data-tour': 'habit-orb' } : {})}
                 onClick={(e) => {
@@ -740,6 +758,12 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                     return;
                   }
 
+                  const nextCount = isCounterHabit ? current + 1 : (isFinished ? 0 : 1);
+                  if (!isFinished && nextCount >= target) {
+                    setCompletedShockwaveId(qh.id);
+                    setTimeout(() => setCompletedShockwaveId(null), 700);
+                  }
+
                   onIncrementHabit(qh.id, e);
                 }}
                 className={`w-12 h-12 relative flex items-center justify-center cursor-pointer transition-transform duration-150 active:scale-95 ${
@@ -758,6 +782,11 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                 }
                 aria-label={`${qh.title}: ${current} de ${target} completado`}
               >
+                {/* Shockwave de Celebración Moxen al completar */}
+                {completedShockwaveId === qh.id && (
+                  <div className="absolute inset-[-4px] rounded-full border-2 border-emerald-400 pointer-events-none animate-moxen-shockwave z-30" />
+                )}
+
                 {/* Micro-Llama Superior de Racha (Sólo si streak > 0) */}
                 {currentStreak > 0 && (
                   <div
@@ -774,65 +803,112 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                   </div>
                 )}
 
-                {/* Anillo Circular SVG Fino (48x48, r=21, strokeWidth=2) */}
-                <svg className="w-12 h-12 absolute inset-0 -rotate-90 pointer-events-none" viewBox="0 0 48 48">
+                {/* Anillo Circular SVG Moxen Constancia (48x48, r=21, strokeWidth=2.8 con degradado cónico dinámico) */}
+                <svg className="w-12 h-12 absolute inset-0 -rotate-90 pointer-events-none overflow-visible" viewBox="0 0 48 48">
+                  <defs>
+                    <linearGradient id={safeGradId} x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor={startColor} />
+                      <stop offset="100%" stopColor={endColor} />
+                    </linearGradient>
+                  </defs>
+
                   {/* Track de fondo tenue */}
                   <circle
                     cx="24"
                     cy="24"
                     r="21"
                     stroke="currentColor"
-                    className="text-white/10"
-                    strokeWidth="2"
+                    className="text-white/[0.08]"
+                    strokeWidth="2.8"
                     fill="none"
                   />
-                  {/* Trazo activo de progreso - Conserva siempre el color del Aura de Kai */}
+
+                  {/* Trazo activo de progreso - Degradado reactivo a la paleta del Personalizador */}
                   <circle
                     cx="24"
                     cy="24"
                     r="21"
-                    stroke={auraTheme.strokeColor}
-                    strokeWidth="2"
+                    stroke={`url(#${safeGradId})`}
+                    strokeWidth="2.8"
                     strokeLinecap="round"
                     fill="none"
                     style={{
                       strokeDasharray: 132,
                       strokeDashoffset: strokeDashoffset,
                       filter: progressPct > 0
-                        ? `drop-shadow(0 0 2px ${auraTheme.strokeColor})`
+                        ? `drop-shadow(0 0 3px ${glowFilterColor})`
                         : 'none',
-                      transition: 'stroke-dashoffset 0.4s ease, stroke 0.3s ease',
+                      transition: 'stroke-dashoffset 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), stroke 0.3s ease',
                     }}
                   />
+
+                  {/* Cabeza redondeada con brillo especular de Moxen Constancia */}
+                  {hasHead && (
+                    <>
+                      <circle cx={hx} cy={hy} r="2.2" fill={endColor} />
+                      <circle cx={hx - 0.4} cy={hy - 0.4} r="0.8" fill="rgba(255, 255, 255, 0.75)" />
+                    </>
+                  )}
+
+                  {/* Punto de cierre superior con brillo al completar */}
+                  {isFinished && (
+                    <>
+                      <circle cx="24" cy="3" r="2.2" fill="#10b981" />
+                      <circle cx="23.6" cy="2.6" r="0.8" fill="rgba(255, 255, 255, 0.85)" />
+                    </>
+                  )}
                 </svg>
 
-                {/* Núcleo Central del Círculo (Fondo Oscuro Limpio y Emoji en 38x38) */}
+                {/* Núcleo Central del Círculo (Vidrio Obsidian 3D con luz cenital) */}
                 <div
-                  className={`w-[38px] h-[38px] rounded-full flex items-center justify-center transition-all bg-[#040814] border ${
-                    isFinished ? auraTheme.activeBorder : auraTheme.border
-                  } group-hover:border-white/30`}
+                  className={`w-[38px] h-[38px] rounded-full flex items-center justify-center transition-all duration-300 relative z-[2] select-none ${
+                    isFinished
+                      ? 'bg-gradient-to-b from-[#06241a] to-[#020d09] border border-emerald-500/60 shadow-[0_0_12px_rgba(16,185,129,0.35),inset_0_1px_2px_rgba(255,255,255,0.15)]'
+                      : 'bg-gradient-to-b from-[#0b1428] to-[#040712] border border-white/10 group-hover:border-white/25 shadow-[inset_0_1px_2px_rgba(255,255,255,0.1),0_2px_8px_rgba(0,0,0,0.6)]'
+                  }`}
                 >
-                  <span className="text-base select-none leading-none">
+                  <span className="text-base select-none leading-none filter drop-shadow-sm">
                     {renderDisplayIcon(qh.quickIcon, qh.title, 'text-base')}
                   </span>
                 </div>
 
-                {/* Micro-Badge Inferior Derecho: [0/8] o [✓] (Único elemento con acento verde al completar) */}
+                {/* Micro-Badge Inferior Derecho con Odómetro Cinético */}
                 <div
-                  className={`absolute -bottom-0.5 -right-0.5 px-1 py-0 rounded-full border text-[8px] font-mono font-bold leading-tight flex items-center justify-center shadow-md z-10 ring-2 ring-[#070510] ${
+                  className={`absolute -bottom-0.5 -right-0.5 px-1 py-0 rounded-full border text-[8px] font-mono font-bold leading-tight flex items-center justify-center shadow-md z-10 ring-2 ring-[#070510] transition-all duration-300 ${
                     isFinished
-                      ? 'bg-emerald-950 border-emerald-400 text-emerald-300 shadow-[0_0_6px_rgba(16,185,129,0.7)]'
+                      ? 'bg-emerald-950 border-emerald-400 text-emerald-300 shadow-[0_0_8px_rgba(16,185,129,0.7)]'
                       : isCounterHabit
-                      ? 'bg-[#060a14] border-cyan-500/60 text-cyan-200'
+                      ? 'bg-[#060a18] border-cyan-500/50 text-cyan-200'
                       : 'bg-[#060a14] border-white/20 text-gray-400'
                   }`}
                 >
                   {isFinished ? (
-                    <Check className="w-2 h-2 text-emerald-400 stroke-[3]" />
+                    <Check className="w-2.5 h-2.5 text-emerald-300 stroke-[3]" />
                   ) : isCounterHabit ? (
-                    `${current}/${target}`
+                    <div className="flex items-center overflow-hidden h-[12px] leading-[12px]">
+                      <span className="inline-block h-[12px] overflow-hidden">
+                        <span
+                          className="block transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
+                          style={{ transform: `translateY(-${Math.min(current, target) * 12}px)` }}
+                        >
+                          {Array.from({ length: Math.max(target + 1, current + 1) }, (_, i) => (
+                            <span key={i} className="block h-[12px] leading-[12px] text-center">
+                              {i}
+                            </span>
+                          ))}
+                        </span>
+                      </span>
+                      <span className="opacity-50 text-[7px] mx-0.5">/</span>
+                      <span>{target}</span>
+                    </div>
                   ) : (
-                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400/60" />
+                    <span
+                      className="w-1.5 h-1.5 rounded-full"
+                      style={{
+                        backgroundColor: endColor,
+                        boxShadow: `0 0 4px ${endColor}`,
+                      }}
+                    />
                   )}
                 </div>
               </div>
