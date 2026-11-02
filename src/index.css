@@ -498,12 +498,30 @@ html.noir-mode #app-optical-canvas {
 
 .text-cyan-400,
 .text-cyan-300,
-.text-cyan-200 {
+.text-cyan-200,
+.text-cyan-500 {
   color: var(--aura-color-1, #00f0ff) !important;
 }
 
-.bg-cyan-500 {
+.bg-cyan-500,
+.bg-cyan-400 {
   background-color: var(--aura-color-1, #00f0ff) !important;
+}
+
+/* Sincronización automática de todas las barras de progreso cuánticas y filamentos */
+.bg-gradient-to-r.from-cyan-600.via-cyan-400.to-cyan-300,
+.bg-gradient-to-r.from-cyan-400.to-blue-500,
+.bg-gradient-to-r.from-cyan-400.via-sky-400.to-indigo-500,
+.bg-gradient-to-r.from-cyan-500.to-blue-600 {
+  background-image: linear-gradient(90deg, var(--aura-color-1, #00f0ff) 0%, var(--aura-color-2, #8a2be2) 100%) !important;
+}
+
+.border-cyan-400\/30,
+.border-cyan-400\/40,
+.border-cyan-400\/50,
+.border-cyan-400\/60,
+.border-cyan-400\/70 {
+  border-color: rgba(var(--aura-glow-rgb, 0, 240, 255), 0.45) !important;
 }
 
 .shadow-\[0_4px_30px_rgba\(0\,240\,255\,0\.12\)\] {

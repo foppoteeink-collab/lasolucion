@@ -491,68 +491,96 @@ export function AppLayout() {
       {/* MAIN NAVIGATION BAR (Keep backdrop blur here for spatial depth) */}
       {navigationMode === 'classic' && (
         <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#030712]/90 backdrop-blur-2xl border-t border-white/10 shadow-[0px_-6px_30px_rgba(0,0,0,0.7)] px-2 pt-2 pb-safe font-sans tracking-wide">
-          {/* Filamento especular superior */}
-          <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-cyan-400/35 to-transparent pointer-events-none" />
+          {/* Filamento especular superior dinámico */}
+          <div 
+            className="absolute top-0 inset-x-0 h-px pointer-events-none" 
+            style={{ background: 'linear-gradient(90deg, transparent, rgba(var(--aura-glow-rgb, 0, 240, 255), 0.35), transparent)' }}
+          />
 
           <div className="flex items-center justify-around gap-1 max-w-md mx-auto">
             <button
               onClick={() => { soundFX.playClick(); setActiveTab('stats'); }}
-              className={`flex flex-col items-center justify-center flex-1 h-12 rounded-xl transition-all active:scale-95 cursor-pointer ${
+              className={`flex flex-col items-center justify-center flex-1 h-12 rounded-xl transition-all active:scale-95 cursor-pointer font-anton font-bold ${
                 activeTab === 'stats'
-                  ? 'bg-cyan-400 text-black font-anton font-bold shadow-[0_0_14px_rgba(0,240,255,0.6)]'
-                  : 'text-slate-400 hover:text-cyan-300 hover:bg-white/5'
+                  ? 'text-black'
+                  : 'text-slate-400 hover:text-white hover:bg-white/5'
               }`}
+              style={activeTab === 'stats' ? {
+                background: 'var(--aura-gradient, linear-gradient(135deg, var(--aura-color-1, #00f0ff) 0%, var(--aura-color-2, #8a2be2) 100%))',
+                color: '#030712',
+                boxShadow: '0 0 16px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.65)',
+              } : undefined}
             >
               <Shield className="w-4 h-4 mb-0.5" />
-              <span className="text-[10px] font-anton uppercase tracking-wider">Héroe</span>
+              <span className="text-[10px] uppercase tracking-wider">Héroe</span>
             </button>
             
             <button
               onClick={() => { soundFX.playClick(); setActiveTab('dashboard'); }}
-              className={`flex flex-col items-center justify-center flex-1 h-12 rounded-xl transition-all active:scale-95 cursor-pointer ${
+              className={`flex flex-col items-center justify-center flex-1 h-12 rounded-xl transition-all active:scale-95 cursor-pointer font-anton font-bold ${
                 activeTab === 'dashboard'
-                  ? 'bg-cyan-400 text-black font-anton font-bold shadow-[0_0_14px_rgba(0,240,255,0.6)]'
-                  : 'text-slate-400 hover:text-cyan-300 hover:bg-white/5'
+                  ? 'text-black'
+                  : 'text-slate-400 hover:text-white hover:bg-white/5'
               }`}
+              style={activeTab === 'dashboard' ? {
+                background: 'var(--aura-gradient, linear-gradient(135deg, var(--aura-color-1, #00f0ff) 0%, var(--aura-color-2, #8a2be2) 100%))',
+                color: '#030712',
+                boxShadow: '0 0 16px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.65)',
+              } : undefined}
             >
               <Swords className="w-4 h-4 mb-0.5" />
-              <span className="text-[10px] font-anton uppercase tracking-wider">Tareas</span>
+              <span className="text-[10px] uppercase tracking-wider">Tareas</span>
             </button>
             
             <button
               onClick={() => { soundFX.playClick(); setActiveTab('journal'); }}
-              className={`flex flex-col items-center justify-center flex-1 h-12 rounded-xl transition-all active:scale-95 cursor-pointer ${
+              className={`flex flex-col items-center justify-center flex-1 h-12 rounded-xl transition-all active:scale-95 cursor-pointer font-anton font-bold ${
                 activeTab === 'journal'
-                  ? 'bg-cyan-400 text-black font-anton font-bold shadow-[0_0_14px_rgba(0,240,255,0.6)]'
-                  : 'text-slate-400 hover:text-cyan-300 hover:bg-white/5'
+                  ? 'text-black'
+                  : 'text-slate-400 hover:text-white hover:bg-white/5'
               }`}
+              style={activeTab === 'journal' ? {
+                background: 'var(--aura-gradient, linear-gradient(135deg, var(--aura-color-1, #00f0ff) 0%, var(--aura-color-2, #8a2be2) 100%))',
+                color: '#030712',
+                boxShadow: '0 0 16px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.65)',
+              } : undefined}
             >
               <BookOpen className="w-4 h-4 mb-0.5" />
-              <span className="text-[10px] font-anton uppercase tracking-wider">Bitácora</span>
+              <span className="text-[10px] uppercase tracking-wider">Bitácora</span>
             </button>
             
             <button
               onClick={() => { soundFX.playClick(); setActiveTab('shop'); }}
-              className={`flex flex-col items-center justify-center flex-1 h-12 rounded-xl transition-all active:scale-95 cursor-pointer ${
+              className={`flex flex-col items-center justify-center flex-1 h-12 rounded-xl transition-all active:scale-95 cursor-pointer font-anton font-bold ${
                 activeTab === 'shop'
-                  ? 'bg-cyan-400 text-black font-anton font-bold shadow-[0_0_14px_rgba(0,240,255,0.6)]'
-                  : 'text-slate-400 hover:text-cyan-300 hover:bg-white/5'
+                  ? 'text-black'
+                  : 'text-slate-400 hover:text-white hover:bg-white/5'
               }`}
+              style={activeTab === 'shop' ? {
+                background: 'var(--aura-gradient, linear-gradient(135deg, var(--aura-color-1, #00f0ff) 0%, var(--aura-color-2, #8a2be2) 100%))',
+                color: '#030712',
+                boxShadow: '0 0 16px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.65)',
+              } : undefined}
             >
               <ShoppingBag className="w-4 h-4 mb-0.5" />
-              <span className="text-[10px] font-anton uppercase tracking-wider">Tienda</span>
+              <span className="text-[10px] uppercase tracking-wider">Tienda</span>
             </button>
 
             <button
               onClick={() => { soundFX.playClick(); setActiveTab('skills'); }}
-              className={`flex flex-col items-center justify-center flex-1 h-12 rounded-xl transition-all active:scale-95 cursor-pointer ${
+              className={`flex flex-col items-center justify-center flex-1 h-12 rounded-xl transition-all active:scale-95 cursor-pointer font-anton font-bold ${
                 activeTab === 'skills'
-                  ? 'bg-cyan-400 text-black font-anton font-bold shadow-[0_0_14px_rgba(0,240,255,0.6)]'
-                  : 'text-slate-400 hover:text-cyan-300 hover:bg-white/5'
+                  ? 'text-black'
+                  : 'text-slate-400 hover:text-white hover:bg-white/5'
               }`}
+              style={activeTab === 'skills' ? {
+                background: 'var(--aura-gradient, linear-gradient(135deg, var(--aura-color-1, #00f0ff) 0%, var(--aura-color-2, #8a2be2) 100%))',
+                color: '#030712',
+                boxShadow: '0 0 16px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.65)',
+              } : undefined}
             >
               <FlaskConical className="w-4 h-4 mb-0.5" />
-              <span className="text-[10px] font-anton uppercase tracking-wider">Lab</span>
+              <span className="text-[10px] uppercase tracking-wider">Lab</span>
             </button>
           </div>
         </nav>

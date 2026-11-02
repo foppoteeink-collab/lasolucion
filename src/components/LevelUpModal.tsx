@@ -103,7 +103,7 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({
           <div className="my-5 p-4 rounded-2xl bg-[#040d1a]/80 border border-cyan-500/30 shadow-[0_0_25px_rgba(0,240,255,0.15)] relative overflow-hidden">
             <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none" />
             <p className="text-[10px] font-mono uppercase tracking-widest text-cyan-300/80 mb-1">Rango Evolutivo Asignado</p>
-            <p className="text-xl sm:text-2xl font-anton text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-white to-amber-300 uppercase tracking-wider leading-tight">
+            <p className="text-xl sm:text-2xl font-anton text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-100 to-cyan-300 uppercase tracking-wider leading-tight drop-shadow-[0_0_14px_rgba(0,240,255,0.7)]">
               {newRankTitle}
             </p>
           </div>

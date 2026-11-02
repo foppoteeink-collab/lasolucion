@@ -1220,7 +1220,14 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
                   <span className="text-[11px] font-anton tracking-wide uppercase text-white truncate block">
                     Rutina Diaria
                   </span>
-                  <span className="text-[9px] font-mono font-bold text-cyan-300 bg-cyan-950/80 px-1 py-0.2 rounded border border-cyan-400/30 shrink-0">
+                  <span 
+                    className="text-[9px] font-mono font-bold px-1 py-0.2 rounded border shrink-0 transition-colors"
+                    style={{
+                      color: liveAuraPalette.uiAccent1,
+                      borderColor: `color-mix(in srgb, ${liveAuraPalette.uiAccent1} 50%, transparent)`,
+                      backgroundColor: 'rgba(0, 0, 0, 0.7)'
+                    }}
+                  >
                     +50 EXP
                   </span>
                 </div>
@@ -1233,10 +1240,16 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
               <div className="space-y-1">
                 <div className="flex items-center justify-between text-[10px] font-mono">
                   <span className="text-slate-300">Progreso</span>
-                  <span className="text-white font-bold">75%</span>
+                  <span className="font-bold" style={{ color: liveAuraPalette.uiAccent1 }}>75%</span>
                 </div>
                 <div className="w-full h-1.5 rounded-full bg-black/60 border border-white/10 overflow-hidden p-0.5">
-                  <div className="w-3/4 h-full rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 shadow-[0_0_6px_rgba(0,240,255,0.6)]" />
+                  <div 
+                    className="w-3/4 h-full rounded-full transition-all duration-300"
+                    style={{
+                      background: `linear-gradient(90deg, ${liveAuraPalette.uiAccent1} 0%, ${liveAuraPalette.uiAccent2} 100%)`,
+                      boxShadow: `0 0 8px ${liveAuraPalette.uiAccent1}`
+                    }}
+                  />
                 </div>
               </div>
 

@@ -120,8 +120,11 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Micrograno táctil Moxen Vidrio */}
         <span className="vi-grano opacity-5" aria-hidden="true" />
         
-        {/* Filo de luz superior especular */}
-        <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-cyan-400/40 to-transparent pointer-events-none" />
+        {/* Filo de luz superior especular dinámico */}
+        <div 
+          className="absolute top-0 inset-x-0 h-px pointer-events-none" 
+          style={{ background: 'linear-gradient(90deg, transparent, rgba(var(--aura-glow-rgb, 0, 240, 255), 0.4), transparent)' }}
+        />
 
         {/* ============================================================== */}
         {/* FILA 1: LOGO, MINI-HUD Y RECURSOS MAESTROS                     */}
@@ -178,16 +181,23 @@ export const Header: React.FC<HeaderProps> = ({
             className="hidden lg:flex items-center gap-3.5 flex-1 max-w-sm mx-auto px-3 py-1 rounded-xl bg-black/40 border border-white/5 cursor-pointer hover:border-cyan-500/30 transition-all group"
             title={`EXP: ${stats.currentXp}/${stats.requiredXp} | HP: ${stats.hp || 100}/${stats.maxHp || 100} - Clic para ver perfil`}
           >
-            {/* Barra EXP */}
+            {/* Barra EXP Sincronizada con la Personalización del Usuario */}
             <div className="flex-1 flex flex-col gap-0.5">
               <div className="flex items-center justify-between text-[9px] font-mono font-bold leading-none">
-                <span className="text-cyan-400 tracking-wider">EXP</span>
-                <span className="text-cyan-300 font-mono">{stats.currentXp}/{stats.requiredXp}</span>
+                <span className="tracking-wider transition-colors" style={{ color: 'var(--aura-color-1, #00f0ff)' }}>EXP</span>
+                <span className="font-mono transition-colors" style={{ color: 'var(--aura-color-1, #00f0ff)' }}>{stats.currentXp}/{stats.requiredXp}</span>
               </div>
-              <div className="h-1.5 bg-black/90 rounded-full border border-cyan-500/30 p-[0.5px] overflow-hidden">
+              <div 
+                className="h-1.5 bg-black/90 rounded-full border p-[0.5px] overflow-hidden transition-colors"
+                style={{ borderColor: 'rgba(var(--aura-glow-rgb, 0, 240, 255), 0.35)' }}
+              >
                 <div
-                  className="h-full bg-gradient-to-r from-cyan-600 via-cyan-400 to-cyan-300 rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(0,240,255,0.7)]"
-                  style={{ width: `${xpPercent}%` }}
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{ 
+                    width: `${xpPercent}%`,
+                    background: 'linear-gradient(90deg, var(--aura-color-1, #00f0ff) 0%, var(--aura-color-2, #8a2be2) 100%)',
+                    boxShadow: '0 0 8px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.7)'
+                  }}
                 />
               </div>
             </div>
@@ -288,91 +298,116 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* ============================================================== */}
-        {/* FILA 2: IDENTIDAD DEL CAZADOR (SUB-BARRA RESPONSIVE)           */}
+        {/* FILA 2: IDENTIDAD DEL CAZADOR (SUB-BARRA RESPONSIVE DUAL HUD)  */}
         {/* ============================================================== */}
-        <div className="px-2.5 sm:px-5 py-1 sm:py-1.5 bg-[#030712]/60 relative z-10 flex items-center justify-between gap-1.5 sm:gap-4 border-b border-white/[0.05]">
-          {/* Identidad de Cazador: Micro-Avatar + Nivel + Rango */}
-          <button
-            onClick={() => { soundFX.playClick(); onOpenProfile?.(); }}
-            className="flex items-center gap-1.5 sm:gap-2.5 group shrink-0 cursor-pointer text-left focus:outline-none max-w-[125px] sm:max-w-none"
-            title={`Perfil Táctico - Nivel ${stats.level} (${displayRankTitle})`}
-          >
-            <div className="relative w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-cyan-950/40 border border-cyan-400/50 flex items-center justify-center shadow-[0_0_12px_rgba(0,240,255,0.2)] group-hover:scale-105 transition-transform overflow-hidden shrink-0">
-              <ArchetypeGlyph
-                archetypeNameOrId={stats.characterClass || 'heroe'}
-                size={16}
-                className="border-none bg-transparent p-0 shadow-none"
-                glow={false}
-              />
-              <span className="absolute -bottom-0.5 -right-0.5 bg-cyan-950 text-cyan-300 text-[7px] sm:text-[8px] font-mono font-black px-0.5 sm:px-1 rounded-full border border-cyan-400/80 leading-tight">
-                {stats.level}
-              </span>
-            </div>
+        <div className="px-2.5 sm:px-5 py-1.5 sm:py-2 bg-[#030712]/80 relative z-10 flex flex-col gap-1 sm:gap-1.5 border-b border-white/[0.05]">
+          {/* Sub-fila 1: Identidad con TÍTULO COMPLETO + Racha */}
+          <div className="flex items-center justify-between gap-2">
+            {/* Botón de Perfil: Avatar + Chip Nivel + Nombre Completo del Rango */}
+            <button
+              onClick={() => { soundFX.playClick(); onOpenProfile?.(); }}
+              className="flex items-center gap-2 group flex-1 min-w-0 cursor-pointer text-left focus:outline-none"
+              title={`Perfil Táctico - Nivel ${stats.level} (${displayRankTitle})`}
+            >
+              {/* Micro-Avatar con Glifo de Arquetipo */}
+              <div 
+                className="relative w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-black/60 border flex items-center justify-center group-hover:scale-105 transition-all overflow-hidden shrink-0"
+                style={{
+                  borderColor: 'rgba(var(--aura-glow-rgb, 0, 240, 255), 0.4)',
+                  boxShadow: '0 0 10px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.2)'
+                }}
+              >
+                <ArchetypeGlyph
+                  archetypeNameOrId={stats.characterClass || 'heroe'}
+                  size={16}
+                  className="border-none bg-transparent p-0 shadow-none"
+                  glow={false}
+                />
+              </div>
 
-            <div className="flex flex-col min-w-0">
-              <span className="text-[10px] sm:text-xs font-anton tracking-wider text-slate-100 truncate group-hover:text-cyan-300 transition-colors leading-none uppercase">
-                {displayRankTitle}
-              </span>
-              <span className="text-[8px] sm:text-[9px] font-mono text-cyan-400/70 truncate leading-tight mt-0.5">
-                {getArchetypeDisplayName(stats.characterClass)}
-              </span>
-            </div>
-          </button>
+              {/* Bloque de Identidad: Chip Nivel + Nombre del Nivel Completo */}
+              <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                <span 
+                  className="text-[9px] sm:text-[10px] font-mono font-black bg-black/80 border px-1.5 py-0.5 rounded-md shrink-0 leading-tight transition-colors"
+                  style={{
+                    color: 'var(--aura-color-1, #00f0ff)',
+                    borderColor: 'rgba(var(--aura-glow-rgb, 0, 240, 255), 0.6)',
+                    boxShadow: '0 0 8px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.25)'
+                  }}
+                >
+                  NV. {stats.level}
+                </span>
+                <span className="text-xs sm:text-sm font-sans font-bold text-white tracking-tight truncate group-hover:text-cyan-300 transition-colors leading-tight">
+                  {displayRankTitle}
+                </span>
+                <span className="hidden sm:inline-block text-[10px] font-mono text-cyan-400/70 truncate shrink-0">
+                  • {getArchetypeDisplayName(stats.characterClass)}
+                </span>
+              </div>
+            </button>
 
-          {/* Calibradores Cuánticos en Mobile / Pantallas medianas */}
+            {/* Racha Activa y Escudos Cuánticos */}
+            <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+              <div 
+                className="flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 py-0.5 rounded-lg sm:rounded-xl bg-amber-950/30 border border-amber-500/40 text-amber-300 text-[10px] sm:text-[11px] font-anton tracking-wider shadow-[0_0_8px_rgba(245,158,11,0.2)] shrink-0"
+                title={`Racha Activa: ${stats.streakDays || 0} Días continuos`}
+              >
+                <Flame className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-amber-400 fill-amber-400/50" />
+                <span><AnimatedNumber value={stats.streakDays} /></span>
+              </div>
+
+              {stats.streakShields !== undefined && stats.streakShields > 0 && (
+                <div
+                  className="flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 py-0.5 rounded-lg sm:rounded-xl bg-cyan-950/40 border border-cyan-400/60 text-cyan-300 text-[9px] sm:text-[10px] font-anton tracking-wider shrink-0"
+                  title={`Escudos Cuánticos: ${stats.streakShields}`}
+                >
+                  <Shield className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-cyan-400 fill-cyan-400/30" />
+                  <span>{stats.streakShields}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Sub-fila 2: Calibradores Cuánticos EXP & HP (Visibles y legibles en Mobile) */}
           <div 
             onClick={() => { soundFX.playClick(); onOpenProfile?.(); }}
-            className="flex lg:hidden items-center gap-1.5 sm:gap-3 flex-1 min-w-[60px] max-w-[130px] sm:max-w-xs cursor-pointer group"
+            className="flex lg:hidden items-center gap-2 sm:gap-3 w-full cursor-pointer group pt-0.5"
             title={`EXP: ${stats.currentXp}/${stats.requiredXp} | HP: ${stats.hp || 100}/${stats.maxHp || 100}`}
           >
-            {/* Barra EXP */}
+            {/* Barra EXP Móvil Sincronizada */}
             <div className="flex-1 flex flex-col gap-0.5 min-w-0">
-              <div className="flex items-center justify-between text-[7px] sm:text-[8px] font-mono font-bold leading-none">
-                <span className="text-cyan-400">EXP</span>
-                <span className="text-cyan-300 font-mono truncate">{stats.currentXp}/{stats.requiredXp}</span>
+              <div className="flex items-center justify-between text-[7.5px] sm:text-[8.5px] font-mono font-bold leading-none">
+                <span className="transition-colors" style={{ color: 'var(--aura-color-1, #00f0ff)' }}>EXP</span>
+                <span className="font-mono transition-colors" style={{ color: 'var(--aura-color-1, #00f0ff)' }}>{stats.currentXp}/{stats.requiredXp} ({Math.round(xpPercent)}%)</span>
               </div>
-              <div className="h-1 sm:h-1.5 bg-black/90 rounded-full border border-cyan-500/30 p-[0.5px] overflow-hidden">
+              <div 
+                className="h-1 sm:h-1.5 bg-black/90 rounded-full border p-[0.5px] overflow-hidden transition-colors"
+                style={{ borderColor: 'rgba(var(--aura-glow-rgb, 0, 240, 255), 0.35)' }}
+              >
                 <div
-                  className="h-full bg-gradient-to-r from-cyan-600 via-cyan-400 to-cyan-300 rounded-full transition-all duration-500"
-                  style={{ width: `${xpPercent}%` }}
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{
+                    width: `${xpPercent}%`,
+                    background: 'linear-gradient(90deg, var(--aura-color-1, #00f0ff) 0%, var(--aura-color-2, #8a2be2) 100%)',
+                    boxShadow: '0 0 6px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.6)'
+                  }}
                 />
               </div>
             </div>
 
             {/* Barra HP */}
             <div className="flex-1 flex flex-col gap-0.5 min-w-0">
-              <div className="flex items-center justify-between text-[7px] sm:text-[8px] font-mono font-bold leading-none">
+              <div className="flex items-center justify-between text-[7.5px] sm:text-[8.5px] font-mono font-bold leading-none">
                 <span className="text-rose-400">HP</span>
-                <span className="text-rose-300 font-mono truncate">{stats.hp || 100}/{stats.maxHp || 100}</span>
+                <span className="text-rose-300/90 font-mono">{stats.hp || 100}/{stats.maxHp || 100}</span>
               </div>
               <div className="h-1 sm:h-1.5 bg-black/90 rounded-full border border-rose-500/30 p-[0.5px] overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-rose-600 to-red-400 rounded-full transition-all duration-500"
+                  className="h-full bg-gradient-to-r from-rose-600 to-red-400 rounded-full transition-all duration-500 shadow-[0_0_6px_rgba(244,63,94,0.6)]"
                   style={{ width: `${hpPercent}%` }}
                 />
               </div>
             </div>
-          </div>
-
-          {/* Racha Activa y Escudo Cuántico */}
-          <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
-            <div 
-              className="flex lg:hidden items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 py-0.5 rounded-lg sm:rounded-xl bg-amber-950/30 border border-amber-500/40 text-amber-300 text-[10px] sm:text-[11px] font-anton tracking-wider shadow-[0_0_8px_rgba(245,158,11,0.2)] shrink-0"
-              title={`Racha Activa: ${stats.streakDays || 0} Días continuos`}
-            >
-              <Flame className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-amber-400 fill-amber-400/50" />
-              <span><AnimatedNumber value={stats.streakDays} /></span>
-            </div>
-
-            {stats.streakShields !== undefined && stats.streakShields > 0 && (
-              <div
-                className="flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 py-0.5 rounded-lg sm:rounded-xl bg-cyan-950/40 border border-cyan-400/60 text-cyan-300 text-[9px] sm:text-[10px] font-anton tracking-wider shrink-0"
-                title={`Escudos Cuánticos: ${stats.streakShields}`}
-              >
-                <Shield className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-cyan-400 fill-cyan-400/30" />
-                <span>{stats.streakShields}</span>
-              </div>
-            )}
           </div>
         </div>
 
