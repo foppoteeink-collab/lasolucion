@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Cpu, Terminal, Loader2, ShieldCheck, Database, Radio, Sparkles } from 'lucide-react';
 import { soundFX } from '../../utils/audio';
 import { MoxenRayas } from '../moxen/MoxenRayas';
+import { QuantumCubeLoader } from '../QuantumCubeLoader';
 
 interface OracleTheatricalLoaderProps {
   userContext?: {
@@ -170,9 +171,14 @@ export const OracleTheatricalLoader: React.FC<OracleTheatricalLoaderProps> = ({ 
             <span>{decryptedText || 'INICIALIZANDO...'}</span>
             <span className="text-slate-500 text-[10px] font-normal">Fase {currentStageIndex + 1}/{DECRYPTION_STAGES.length}</span>
           </div>
-          <p className="text-slate-400 text-[11px] leading-relaxed mb-4">
+          <p className="text-slate-400 text-[11px] leading-relaxed mb-2">
             {activeStage?.desc}
           </p>
+        </div>
+
+        {/* Núcleo Cuántico de Espera Dinámico con los 5 Cubos */}
+        <div className="py-2 flex items-center justify-center my-1 pointer-events-none">
+          <QuantumCubeLoader size="sm" speed="slow" showLabel={false} />
         </div>
 
         {/* Live log stream */}

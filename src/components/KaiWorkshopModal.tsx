@@ -31,6 +31,7 @@ import { KaiShapeKey, KaiCustomForm, KaiMultiverseStyle, KaiTemperament } from '
 import { soundFX } from '../utils/audio';
 import { triggerShockwave } from '../utils/celebration';
 import { forgeKaiFromImage } from '../services/aiService';
+import { QuantumCubeLoader } from './QuantumCubeLoader';
 
 export const KAI_TEMPERAMENTS = [
   {
@@ -1321,9 +1322,9 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                     <div className="absolute bottom-1 w-28 h-4 bg-fuchsia-500/15 blur-md rounded-full pointer-events-none" />
 
                     {isForging ? (
-                      <div className="text-center p-3 text-cyan-300 space-y-2 z-10 animate-pulse flex flex-col items-center">
-                        <div className="w-12 h-12 rounded-full bg-cyan-950/70 border border-cyan-400 flex items-center justify-center shadow-[0_0_20px_rgba(0,240,255,0.4)]">
-                          <Loader2 className="w-6 h-6 text-cyan-300 animate-spin" />
+                      <div className="text-center p-3 text-cyan-300 space-y-3 z-10 animate-pulse flex flex-col items-center">
+                        <div className="py-1">
+                          <QuantumCubeLoader size="sm" speed="slow" showLabel={false} />
                         </div>
                         <div className="space-y-0.5 max-w-[180px]">
                           <span className="text-xs font-bold text-white block truncate">

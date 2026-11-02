@@ -6,6 +6,7 @@ import { useAppStore } from '../store/useAppStore';
 import { soundFX } from '../utils/audio';
 import { generateProceduralAnalysis } from '../utils/proceduralHeuristics';
 import { generateNeuralAnalysisAI } from '../services/aiService';
+import { QuantumCubeLoader } from './QuantumCubeLoader';
 
 // Converts Gemini markdown to styled JSX elements
 function renderMarkdown(text: string): React.ReactNode[] {
@@ -210,9 +211,9 @@ export const NeuralAnalysisModal: React.FC<NeuralAnalysisModalProps> = ({ isOpen
           </div>
 
           {isAnalyzing ? (
-            <div className="p-12 bg-[#020712]/80 border border-white/10 rounded-2xl flex flex-col items-center justify-center text-center space-y-3">
-              <Loader2 className="w-8 h-8 text-cyan-300 animate-spin" />
-              <p className="text-xs font-mono text-cyan-300">
+            <div className="p-10 bg-[#020712]/80 border border-white/10 rounded-2xl flex flex-col items-center justify-center text-center space-y-4 shadow-inner">
+              <QuantumCubeLoader size="md" speed="slow" showLabel={false} />
+              <p className="text-xs font-mono text-cyan-300 max-w-sm">
                 KAI está analizando tus metas, hábitos y reflexiones para calibrar tu rendimiento...
               </p>
             </div>
