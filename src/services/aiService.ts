@@ -818,11 +818,20 @@ Referencias visuales directas: La obra original "La Solución" (Foppotee 16), el
 - CUALQUIERA que sea el objeto fotografiado (una taza, un control, un casete, unas llaves, una fruta, un libro o una herramienta):
   * Sus contornos, ranuras, esquinas y curvaturas reales se convierten en la anatomía viva del personaje.
   * Su superficie se puebla con tramas de tinta fluidas, espirales, lunares, franjas cebra y patrones geométricos de Foppotee Ink.
-  * Adopta rasgos de monstruo/tótem directamente en su cuerpo: cuernos que brotan de su corona, ojos múltiples en sus relieves o crestas con espinas.
+  * Adopta rasgos de monstruo/tótem directamente en su cuerpo: cuernos que brotan de su corona, crestas o antenas.
   * Cobra vida con extremidades Rubberhose elásticas y gesticulación expresiva (camina, saluda o posa con actitud).
   * El objeto debe ser 100% RECONOCIBLE a primer golpe de vista, pero convertido en un ser cósmico de tinta pura.
 
-2. ATLAS ENCICLOPÉDICO DE OJOS Y MIRADAS (SELECCIONA LA COMBINACIÓN MÁS EXPRESIVA PARA EL OBJETO):
+2. REGLA SAGRADA DE ANCLAJE FACIAL Y COHESIÓN (¡CERO OJOS O BOCAS FLOTANDO O DISPERSOS!):
+- COHESIÓN DEL ROSTRO: Los ojos y la boca DEBEN formar una unidad facial coherente, simétrica y reconocible sobre la "cara" frontal del objeto.
+- ¡ESTRICTAMENTE PROHIBIDO poner los ojos en una esquina y la boca en otra parte lejana, en las piernas, o flotando en el aire fuera del cuerpo!
+- COORDENADAS ANATÓMICAS DE REFERENCIA EN viewBox="0 0 300 300":
+  * Eje central vertical del personaje: X ≈ 150.
+  * Ojos: Situados juntos en la mitad superior del objeto (Y ≈ 110 - 135), separados equilibradamente del centro (X ≈ 130 y X ≈ 170, o un solo cíclope centrado en X = 150).
+  * Boca: Situada INMEDIATAMENTE debajo de los ojos (Y ≈ 150 - 175), a solo 20 a 35 píxeles de distancia de los ojos, perfectamente alineada al centro X ≈ 150.
+  * Ojos y boca deben estar dibujados directamente SOBRE la masa del objeto, formando un triángulo facial natural y carismático que se lee al instante.
+
+3. ATLAS ENCICLOPÉDICO DE OJOS Y MIRADAS (SELECCIONA LA COMBINACIÓN MÁS EXPRESIVA PARA EL OBJETO):
 - Ojos "Pie-Cut" Vintage (Animación Clásica 1930s): Grandes óvalos negros con un triángulo blanco rebanado ("corte de pastel") en la esquina superior, cejas arqueadas de plumilla y pestañas audaces.
 - Ojos de Cíclope Colosal: Un único gran ojo esférico dominante centrado en el objeto con pupilas concéntricas o de ranura vertical mística.
 - Ojos en Antenas Telescópicas / Cuernos: Dos globos oculares montados sobre tallitos o tentáculos elásticos que nacen de la parte superior del objeto.
@@ -956,6 +965,11 @@ DIRECTIVAS GENERALES DE INTEGRACIÓN:
    - Si el objeto emite fuego, energía, chispas o vapor (ej: encendedor, vape), añade una flama o efecto estilizado en la cúspide según el estilo.
    - Sombra de contacto suave en la base (<ellipse cy="275" ...>) para apoyarlo con presencia sólida en el suelo.
    - 100% libre de fondo exterior rectangular (el SVG debe ser transparente para flotar en la interfaz de la app).
+
+3. ANCLAJE ANATÓMICO Y COHESIÓN FACIAL (¡REGLA OBLIGATORIA!):
+   - El rostro completo (ojos, cejas y boca) DEBE estar ubicado DENTRO de la masa superior o frontal del objeto, formando un triángulo facial compacto, simétrico y centrado sobre el eje vertical X ≈ 150.
+   - La boca debe situarse INMEDIATAMENTE debajo de los ojos (a solo 20 a 35px de distancia vertical), NUNCA separada en esquinas, en las piernas ni flotando fuera del cuerpo.
+   - ¡CERO desconexión espacial! La cara debe ser una unidad armónica que se reconozca al primer vistazo.
 
 ${promptDescription ? `- Instrucción especial del operador: "${promptDescription}".` : ''}
 
