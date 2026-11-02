@@ -1,0 +1,174 @@
+/* =====================================================================
+   Quantum Cube Loader · Motor de Carga Cuántica para La Solución
+   Sincronizado dinámicamente con «Apariencia & Visión» (useUIStore)
+   Acelerado 100% por GPU con rebote orgánico a 120 FPS
+   ===================================================================== */
+
+.qcl-stage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--qcl-gap, 18px);
+  height: var(--qcl-height, 100px);
+}
+
+.qcl-stage::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  width: calc(100% - 10px);
+  height: 18px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.7) 0%, transparent 75%);
+  filter: blur(12px);
+  pointer-events: none;
+}
+
+.qcl-cube {
+  position: relative;
+  width: var(--qcl-size, 34px);
+  height: var(--qcl-size, 34px);
+  flex: 0 0 var(--qcl-size, 34px);
+  border-radius: 10px;
+  transform: translateY(0);
+  animation: qcl-jump var(--qcl-duration, 2.1s) cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  will-change: transform;
+}
+
+.qcl-cube::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -8px 14px rgba(0, 0, 0, 0.35),
+    0 8px 22px var(--qcl-glow, rgba(0, 240, 255, 0.35)),
+    0 0 24px var(--qcl-glow, rgba(0, 240, 255, 0.35));
+  animation: qcl-squash var(--qcl-duration, 2.1s) cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  will-change: transform;
+  transition: background 0.4s ease, box-shadow 0.4s ease;
+}
+
+.qcl-cube::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -16px;
+  width: 22px;
+  height: 5px;
+  transform: translateX(-50%) scaleX(1);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.7);
+  filter: blur(3.5px);
+  opacity: 0.65;
+  animation: qcl-shadow var(--qcl-duration, 2.1s) cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  will-change: transform, opacity;
+}
+
+/* Cascada armónica entre los 5 cubos */
+.qcl-cube-1 { animation-delay: 0s; }
+.qcl-cube-1::before, .qcl-cube-1::after { animation-delay: 0s; }
+
+.qcl-cube-2 { animation-delay: calc(var(--qcl-duration, 2.1s) * 0.08); }
+.qcl-cube-2::before, .qcl-cube-2::after { animation-delay: calc(var(--qcl-duration, 2.1s) * 0.08); }
+
+.qcl-cube-3 { animation-delay: calc(var(--qcl-duration, 2.1s) * 0.16); }
+.qcl-cube-3::before, .qcl-cube-3::after { animation-delay: calc(var(--qcl-duration, 2.1s) * 0.16); }
+
+.qcl-cube-4 { animation-delay: calc(var(--qcl-duration, 2.1s) * 0.24); }
+.qcl-cube-4::before, .qcl-cube-4::after { animation-delay: calc(var(--qcl-duration, 2.1s) * 0.24); }
+
+.qcl-cube-5 { animation-delay: calc(var(--qcl-duration, 2.1s) * 0.32); }
+.qcl-cube-5::before, .qcl-cube-5::after { animation-delay: calc(var(--qcl-duration, 2.1s) * 0.32); }
+
+.qcl-cube-1::before {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.4), transparent 40%), linear-gradient(135deg, var(--qcl-c1), var(--qcl-c1-end));
+}
+.qcl-cube-2::before {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.4), transparent 40%), linear-gradient(135deg, var(--qcl-c2), var(--qcl-c2-end));
+}
+.qcl-cube-3::before {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.4), transparent 40%), linear-gradient(135deg, var(--qcl-c3), var(--qcl-c3-end));
+}
+.qcl-cube-4::before {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.4), transparent 40%), linear-gradient(135deg, var(--qcl-c4), var(--qcl-c4-end));
+}
+.qcl-cube-5::before {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.4), transparent 40%), linear-gradient(135deg, var(--qcl-c5), var(--qcl-c5-end));
+}
+
+@keyframes qcl-jump {
+  0%, 18%, 74%, 100% {
+    transform: translateY(0);
+  }
+  26% {
+    transform: translateY(5px);
+  }
+  45% {
+    transform: translateY(var(--qcl-jump, -32px));
+  }
+  64% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes qcl-squash {
+  0%, 18%, 74%, 100% {
+    transform: scaleX(1) scaleY(1);
+  }
+  26% {
+    transform: scaleX(1.15) scaleY(0.85);
+  }
+  38% {
+    transform: scaleX(0.92) scaleY(1.10);
+  }
+  45% {
+    transform: scaleX(0.98) scaleY(1.03);
+  }
+  64% {
+    transform: scaleX(1.12) scaleY(0.88);
+  }
+  70% {
+    transform: scaleX(1) scaleY(1);
+  }
+}
+
+@keyframes qcl-shadow {
+  0%, 18%, 74%, 100% {
+    transform: translateX(-50%) scaleX(1);
+    opacity: 0.65;
+  }
+  26% {
+    transform: translateX(-50%) scaleX(1.15);
+    opacity: 0.8;
+  }
+  45% {
+    transform: translateX(-50%) scaleX(0.45);
+    opacity: 0.18;
+  }
+  64% {
+    transform: translateX(-50%) scaleX(1.15);
+    opacity: 0.75;
+  }
+}
+
+@media (max-width: 480px) {
+  .qcl-stage {
+    --qcl-size: 28px;
+    --qcl-gap: 13px;
+    --qcl-jump: -25px;
+    --qcl-height: 85px;
+  }
+  .qcl-cube {
+    border-radius: 7.5px;
+  }
+  .qcl-cube::after {
+    width: 18px;
+    bottom: -13px;
+  }
+}

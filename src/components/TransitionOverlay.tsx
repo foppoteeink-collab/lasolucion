@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { SciFiLogo } from './SciFiLogo';
 import { MainLogo } from './MainLogo';
+import { QuantumCubeLoader } from './QuantumCubeLoader';
 
 interface TransitionOverlayProps {
   isVisible: boolean;
@@ -25,16 +26,10 @@ export const TransitionOverlay: React.FC<TransitionOverlayProps> = ({ isVisible 
       onTransitionEnd={onAnimationEnd}
     >
       <div 
-        className={`flex flex-col items-center gap-6 transition-all duration-200 ${isVisible ? 'scale-100 opacity-100' : 'scale-110 opacity-0'}`}
+        className={`flex flex-col items-center gap-5 transition-all duration-200 ${isVisible ? 'scale-100 opacity-100' : 'scale-110 opacity-0'}`}
       >
-        <div className="relative mb-2 flex items-center justify-center">
-          {/* Resplandor optimizado (GPU friendly) en lugar de drop-shadow sobre SVG */}
-          <div className="absolute inset-0 bg-[#00f0ff] blur-2xl opacity-30 rounded-full scale-125"></div>
-          
-          <div className="relative z-10">
-            {/* @ts-ignore */}
-            <l-helix size="90" speed="2.5" color="#00f0ff"></l-helix>
-          </div>
+        <div className="relative mb-1 flex items-center justify-center">
+          <QuantumCubeLoader size="md" speed="slow" showLabel={false} />
         </div>
         <MainLogo key={isVisible ? 'visible' : 'hidden'} size="lg" speed="fast" />
       </div>
