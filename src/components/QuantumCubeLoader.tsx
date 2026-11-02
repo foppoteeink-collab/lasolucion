@@ -22,30 +22,39 @@ export const QuantumCubeLoader: React.FC<QuantumCubeLoaderProps> = ({
   // Derivación dinámica de colores sincronizada con «Apariencia & Visión» de Ajustes
   const palette = useSystemPalette();
 
-  // Dimensiones configurables
+  // Dimensiones configurables calibradas para máxima sutileza y elegancia sci-fi
   const sizeStyles = useMemo(() => {
     switch (size) {
       case 'sm':
         return {
-          '--qcl-size': '26px',
-          '--qcl-gap': '12px',
-          '--qcl-height': '75px',
-          '--qcl-jump': '-24px',
+          '--qcl-size': '14px',
+          '--qcl-gap': '7px',
+          '--qcl-height': '46px',
+          '--qcl-jump': '-11px',
+          '--qcl-radius': '4.5px',
+          '--qcl-shadow-w': '11px',
+          '--qcl-shadow-b': '-9px',
         } as React.CSSProperties;
       case 'lg':
         return {
-          '--qcl-size': '42px',
-          '--qcl-gap': '22px',
-          '--qcl-height': '125px',
-          '--qcl-jump': '-40px',
+          '--qcl-size': '26px',
+          '--qcl-gap': '14px',
+          '--qcl-height': '76px',
+          '--qcl-jump': '-20px',
+          '--qcl-radius': '7.5px',
+          '--qcl-shadow-w': '18px',
+          '--qcl-shadow-b': '-13px',
         } as React.CSSProperties;
       case 'md':
       default:
         return {
-          '--qcl-size': '34px',
-          '--qcl-gap': '18px',
-          '--qcl-height': '100px',
-          '--qcl-jump': '-32px',
+          '--qcl-size': '20px',
+          '--qcl-gap': '10px',
+          '--qcl-height': '58px',
+          '--qcl-jump': '-15px',
+          '--qcl-radius': '6px',
+          '--qcl-shadow-w': '14px',
+          '--qcl-shadow-b': '-11px',
         } as React.CSSProperties;
     }
   }, [size]);
