@@ -27,12 +27,9 @@ export const QuantumCubeLoader: React.FC<QuantumCubeLoaderProps> = ({
     // 1. Modo Noir Oscuro (Manga B&W Monocromático)
     if (opticMode === 'noir') {
       return {
-        c1: '#ffffff', c1End: '#cbd5e1',
-        c2: '#cbd5e1', c2End: '#94a3b8',
-        c3: '#94a3b8', c3End: '#64748b',
-        c4: '#64748b', c4End: '#cbd5e1',
-        c5: '#ffffff', c5End: '#94a3b8',
-        glow: 'rgba(255, 255, 255, 0.35)',
+        c1: '#ffffff', c2: '#cbd5e1', c3: '#94a3b8', c4: '#64748b',
+        glow: 'rgba(255, 255, 255, 0.4)',
+        glowSecondary: 'rgba(148, 163, 184, 0.25)',
         textColor: 'text-slate-200',
       };
     }
@@ -40,12 +37,9 @@ export const QuantumCubeLoader: React.FC<QuantumCubeLoaderProps> = ({
     // 2. Modo Cobalto Azul (Enfoque & Determinación)
     if (opticMode === 'cobalt') {
       return {
-        c1: '#60a5fa', c1End: '#38bdf8',
-        c2: '#38bdf8', c2End: '#1d4ed8',
-        c3: '#1d4ed8', c3End: '#0284c7',
-        c4: '#0284c7', c4End: '#60a5fa',
-        c5: '#60a5fa', c5End: '#1d4ed8',
+        c1: '#60a5fa', c2: '#38bdf8', c3: '#1d4ed8', c4: '#0284c7',
         glow: 'rgba(96, 165, 250, 0.45)',
+        glowSecondary: 'rgba(29, 78, 216, 0.35)',
         textColor: 'text-blue-300',
       };
     }
@@ -53,12 +47,9 @@ export const QuantumCubeLoader: React.FC<QuantumCubeLoaderProps> = ({
     // 3. Modo Noir Claro (Tinta E-Ink)
     if (opticMode === 'eink') {
       return {
-        c1: '#e2e8f0', c1End: '#94a3b8',
-        c2: '#94a3b8', c2End: '#64748b',
-        c3: '#64748b', c3End: '#475569',
-        c4: '#475569', c4End: '#334155',
-        c5: '#e2e8f0', c5End: '#475569',
+        c1: '#f8fafc', c2: '#e2e8f0', c3: '#94a3b8', c4: '#475569',
         glow: 'rgba(200, 200, 200, 0.25)',
+        glowSecondary: 'rgba(100, 116, 139, 0.2)',
         textColor: 'text-slate-300',
       };
     }
@@ -73,24 +64,21 @@ export const QuantumCubeLoader: React.FC<QuantumCubeLoaderProps> = ({
       const c4 = colors[3 % count];
 
       return {
-        c1, c1End: c2,
-        c2, c2End: c3,
-        c3, c3End: c4,
-        c4, c4End: c1,
-        c5: c1, c5End: c3,
+        c1, c2, c3, c4,
         glow: `color-mix(in srgb, ${c1} 60%, transparent)`,
+        glowSecondary: `color-mix(in srgb, ${c3} 50%, transparent)`,
         textColor: 'text-cyan-300',
       };
     }
 
-    // 5. Paleta Aurora Neón por defecto (Cian Neón, Verde Ártico, Púrpura)
+    // 5. Paleta Oficial de Malla Aurora Boreal (Verde Ártico, Cian Neón, Púrpura Monarca y Plasma Magenta)
     return {
-      c1: '#00ffaa', c1End: '#00d0ff',
-      c2: '#00d0ff', c2End: '#7000ff',
-      c3: '#7000ff', c3End: '#ff00aa',
-      c4: '#ff00aa', c4End: '#00ffaa',
-      c5: '#00ffaa', c5End: '#7000ff',
-      glow: 'rgba(0, 240, 255, 0.4)',
+      c1: '#00ffaa', // Verde Ártico
+      c2: '#00d0ff', // Cian Neón
+      c3: '#7000ff', // Púrpura Monarca
+      c4: '#ff00aa', // Plasma Magenta
+      glow: 'rgba(0, 240, 255, 0.45)', // Resplandor Cian Neón
+      glowSecondary: 'rgba(112, 0, 255, 0.35)', // Resplandor Púrpura
       textColor: 'text-cyan-300',
     };
   }, [opticMode, systemAura]);
@@ -139,18 +127,13 @@ export const QuantumCubeLoader: React.FC<QuantumCubeLoaderProps> = ({
   const cssVariables = {
     ...sizeStyles,
     '--qcl-duration': durationStr,
-    '--qcl-color-duration': '6s',
+    '--qcl-color-duration': '7s',
     '--qcl-c1': palette.c1,
-    '--qcl-c1-end': palette.c1End,
     '--qcl-c2': palette.c2,
-    '--qcl-c2-end': palette.c2End,
     '--qcl-c3': palette.c3,
-    '--qcl-c3-end': palette.c3End,
     '--qcl-c4': palette.c4,
-    '--qcl-c4-end': palette.c4End,
-    '--qcl-c5': palette.c5,
-    '--qcl-c5-end': palette.c5End,
     '--qcl-glow': palette.glow,
+    '--qcl-glow-secondary': palette.glowSecondary,
   } as React.CSSProperties;
 
   return (

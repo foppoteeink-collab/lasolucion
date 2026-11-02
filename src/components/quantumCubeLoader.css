@@ -43,17 +43,18 @@
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.35);
   box-shadow:
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.45),
-    inset 0 -8px 14px rgba(0, 0, 0, 0.35),
-    0 8px 22px var(--qcl-glow, rgba(0, 240, 255, 0.35)),
-    0 0 24px var(--qcl-glow, rgba(0, 240, 255, 0.35));
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -8px 14px rgba(0, 0, 0, 0.4),
+    0 8px 24px var(--qcl-glow, rgba(0, 240, 255, 0.4)),
+    0 0 24px var(--qcl-glow-secondary, rgba(112, 0, 255, 0.3));
+  background-size: 100% 100%, 300% 300%;
   animation:
     qcl-squash var(--qcl-duration, 2.1s) cubic-bezier(0.4, 0, 0.2, 1) infinite,
-    qcl-color-morph var(--qcl-color-duration, 6s) ease-in-out infinite;
-  will-change: transform, filter;
-  transition: background 0.4s ease, box-shadow 0.4s ease;
+    qcl-aurora-wave var(--qcl-color-duration, 7s) ease-in-out infinite;
+  will-change: transform, background-position;
+  transition: box-shadow 0.4s ease;
 }
 
 .qcl-cube::after {
@@ -72,41 +73,52 @@
   will-change: transform, opacity;
 }
 
-/* Cascada armónica entre los 5 cubos con desfase cromático dinámico */
+/* Cascada armónica entre los 5 cubos con desfase cromático de la Malla */
 .qcl-cube-1 { animation-delay: 0s; }
 .qcl-cube-1::before { animation-delay: 0s, 0s; }
 .qcl-cube-1::after { animation-delay: 0s; }
 
 .qcl-cube-2 { animation-delay: calc(var(--qcl-duration, 2.1s) * 0.08); }
-.qcl-cube-2::before { animation-delay: calc(var(--qcl-duration, 2.1s) * 0.08), -1.2s; }
+.qcl-cube-2::before { animation-delay: calc(var(--qcl-duration, 2.1s) * 0.08), -1.4s; }
 .qcl-cube-2::after { animation-delay: calc(var(--qcl-duration, 2.1s) * 0.08); }
 
 .qcl-cube-3 { animation-delay: calc(var(--qcl-duration, 2.1s) * 0.16); }
-.qcl-cube-3::before { animation-delay: calc(var(--qcl-duration, 2.1s) * 0.16), -2.4s; }
+.qcl-cube-3::before { animation-delay: calc(var(--qcl-duration, 2.1s) * 0.16), -2.8s; }
 .qcl-cube-3::after { animation-delay: calc(var(--qcl-duration, 2.1s) * 0.16); }
 
 .qcl-cube-4 { animation-delay: calc(var(--qcl-duration, 2.1s) * 0.24); }
-.qcl-cube-4::before { animation-delay: calc(var(--qcl-duration, 2.1s) * 0.24), -3.6s; }
+.qcl-cube-4::before { animation-delay: calc(var(--qcl-duration, 2.1s) * 0.24), -4.2s; }
 .qcl-cube-4::after { animation-delay: calc(var(--qcl-duration, 2.1s) * 0.24); }
 
 .qcl-cube-5 { animation-delay: calc(var(--qcl-duration, 2.1s) * 0.32); }
-.qcl-cube-5::before { animation-delay: calc(var(--qcl-duration, 2.1s) * 0.32), -4.8s; }
+.qcl-cube-5::before { animation-delay: calc(var(--qcl-duration, 2.1s) * 0.32), -5.6s; }
 .qcl-cube-5::after { animation-delay: calc(var(--qcl-duration, 2.1s) * 0.32); }
 
+/* Gradientes multidimensionales formados EXCLUSIVAMENTE por los 4 colores de la Malla activa */
 .qcl-cube-1::before {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.4), transparent 40%), linear-gradient(135deg, var(--qcl-c1), var(--qcl-c1-end));
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.45), transparent 42%),
+    linear-gradient(135deg, var(--qcl-c1) 0%, var(--qcl-c2) 25%, var(--qcl-c3) 50%, var(--qcl-c4) 75%, var(--qcl-c1) 100%);
 }
 .qcl-cube-2::before {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.4), transparent 40%), linear-gradient(135deg, var(--qcl-c2), var(--qcl-c2-end));
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.45), transparent 42%),
+    linear-gradient(135deg, var(--qcl-c2) 0%, var(--qcl-c3) 25%, var(--qcl-c4) 50%, var(--qcl-c1) 75%, var(--qcl-c2) 100%);
 }
 .qcl-cube-3::before {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.4), transparent 40%), linear-gradient(135deg, var(--qcl-c3), var(--qcl-c3-end));
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.45), transparent 42%),
+    linear-gradient(135deg, var(--qcl-c3) 0%, var(--qcl-c4) 25%, var(--qcl-c1) 50%, var(--qcl-c2) 75%, var(--qcl-c3) 100%);
 }
 .qcl-cube-4::before {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.4), transparent 40%), linear-gradient(135deg, var(--qcl-c4), var(--qcl-c4-end));
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.45), transparent 42%),
+    linear-gradient(135deg, var(--qcl-c4) 0%, var(--qcl-c1) 25%, var(--qcl-c2) 50%, var(--qcl-c3) 75%, var(--qcl-c4) 100%);
 }
 .qcl-cube-5::before {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.4), transparent 40%), linear-gradient(135deg, var(--qcl-c5), var(--qcl-c5-end));
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.45), transparent 42%),
+    linear-gradient(135deg, var(--qcl-c1) 0%, var(--qcl-c3) 25%, var(--qcl-c2) 50%, var(--qcl-c4) 75%, var(--qcl-c1) 100%);
 }
 
 @keyframes qcl-jump {
@@ -164,22 +176,16 @@
   }
 }
 
-/* ── Transición Dinámica Continua de Colores (Cero Estático) ── */
-@keyframes qcl-color-morph {
+/* ── Oleaje Cromático Dinámico a través de los 4 colores de la Malla (Cero Estático, Cero distorsión) ── */
+@keyframes qcl-aurora-wave {
   0% {
-    filter: hue-rotate(0deg) saturate(1.2) brightness(1);
-  }
-  25% {
-    filter: hue-rotate(90deg) saturate(1.35) brightness(1.12);
+    background-position: 0% 0%, 0% 50%;
   }
   50% {
-    filter: hue-rotate(180deg) saturate(1.25) brightness(1.2);
-  }
-  75% {
-    filter: hue-rotate(270deg) saturate(1.35) brightness(1.12);
+    background-position: 0% 0%, 100% 50%;
   }
   100% {
-    filter: hue-rotate(360deg) saturate(1.2) brightness(1);
+    background-position: 0% 0%, 0% 50%;
   }
 }
 
