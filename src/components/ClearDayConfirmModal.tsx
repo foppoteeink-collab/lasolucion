@@ -176,8 +176,7 @@ export const ClearDayConfirmModal: React.FC<ClearDayConfirmModalProps> = ({
   );
 
   if (typeof document !== 'undefined') {
-    const portalTarget = document.getElementById('app-optical-canvas') || document.body;
-    return createPortal(modalContent, portalTarget);
+    return createPortal(modalContent, document.body);
   }
 
   return modalContent;

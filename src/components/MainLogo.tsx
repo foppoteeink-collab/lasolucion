@@ -22,11 +22,11 @@ export const MainLogo: React.FC<MainLogoProps> = ({
 
   // Calibración de altura proporcional para mantener la proporción exacta 864x129 (letras puras sin caja)
   const sizeClasses = {
-    sm: 'h-[22px] sm:h-[26px]',
-    md: 'h-[28px] sm:h-[34px] lg:h-[38px]',
-    lg: 'h-[40px] sm:h-[48px]',
-    xl: 'h-[52px] sm:h-[60px]',
-    massive: 'h-[68px] sm:h-[80px]',
+    sm: 'h-[20px] sm:h-[24px]',
+    md: 'h-[22px] sm:h-[32px] lg:h-[38px]',
+    lg: 'h-[36px] sm:h-[46px]',
+    xl: 'h-[50px] sm:h-[60px]',
+    massive: 'h-[64px] sm:h-[80px]',
   };
 
   const textSizeClasses = {

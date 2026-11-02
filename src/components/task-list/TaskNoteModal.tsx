@@ -110,8 +110,7 @@ export const TaskNoteModal: React.FC<TaskNoteModalProps> = ({
   );
 
   if (typeof document !== 'undefined') {
-    const portalTarget = document.getElementById('app-optical-canvas') || document.body;
-    return createPortal(modalContent, portalTarget);
+    return createPortal(modalContent, document.body);
   }
 
   return modalContent;

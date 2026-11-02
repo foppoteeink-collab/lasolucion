@@ -430,8 +430,7 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
   );
 
   if (typeof document !== 'undefined') {
-    const portalTarget = document.getElementById('app-optical-canvas') || document.body;
-    return createPortal(modalContent, portalTarget);
+    return createPortal(modalContent, document.body);
   }
 
   return modalContent;

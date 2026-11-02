@@ -141,15 +141,13 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
 
   if (!isOpen || typeof document === 'undefined') return null;
 
-  const portalTarget = document.getElementById('app-optical-canvas') || document.body;
-
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-2 sm:p-4 bg-black/85 backdrop-blur-md animate-fade-in font-sans overflow-hidden portal-modal-root"
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-2 sm:p-4 bg-black/85 backdrop-blur-md animate-fade-in font-sans overflow-y-auto portal-modal-root"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-4xl max-h-[96dvh] sm:max-h-[90vh] flex flex-col rounded-2xl sm:rounded-3xl bg-[#030712]/95 border border-cyan-500/35 shadow-[0_0_50px_rgba(0,240,255,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] relative overflow-hidden backdrop-blur-2xl text-white text-left m-auto"
+        className="w-full max-w-4xl max-h-[96dvh] sm:max-h-[90vh] flex flex-col rounded-2xl sm:rounded-3xl bg-[#030712]/95 border border-cyan-500/35 shadow-[0_0_50px_rgba(0,240,255,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] relative overflow-hidden backdrop-blur-2xl text-white text-left"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Micrograno táctil Moxen Vidrio */}
@@ -395,6 +393,6 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
         </div>
       </div>
     </div>,
-    portalTarget
+    document.body
   );
 };

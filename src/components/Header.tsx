@@ -126,10 +126,10 @@ export const Header: React.FC<HeaderProps> = ({
         {/* ============================================================== */}
         {/* FILA 1: LOGO, MINI-HUD Y RECURSOS MAESTROS                     */}
         {/* ============================================================== */}
-        <div className="px-3 sm:px-5 py-2 sm:py-2.5 flex items-center justify-between gap-3 relative z-10 border-b border-white/[0.05]">
+        <div className="px-2.5 sm:px-5 py-1.5 sm:py-2.5 flex items-center justify-between gap-1.5 sm:gap-3 relative z-10 border-b border-white/[0.05]">
           
           {/* BLOQUE IZQUIERDO: Logo Principal Kinético */}
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             {/* Hélice cuántica: Visible en desktop/tablet */}
             <div className="hidden sm:flex relative group items-center justify-center p-1">
               <AnimatePresence>
@@ -216,14 +216,14 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           </div>
 
-          {/* BLOQUE DERECHO: Recursos y Gadgets Tácticos */}
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          {/* BLOQUE DERECHO: Recursos y Gadgets Tácticos (Compacto y ultra-resistente en Mobile) */}
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             {/* Monedas Micro-chip */}
             <div 
-              className="flex items-center gap-1.5 h-9 px-3 rounded-xl bg-black/50 border border-yellow-500/40 text-yellow-300 text-xs sm:text-sm font-anton tracking-wider shadow-[0_0_12px_rgba(234,179,8,0.18)]"
+              className="flex items-center gap-1 sm:gap-1.5 h-7 sm:h-9 px-2 sm:px-3 rounded-lg sm:rounded-xl bg-black/50 border border-yellow-500/40 text-yellow-300 text-[11px] sm:text-xs md:text-sm font-anton tracking-wider shadow-[0_0_12px_rgba(234,179,8,0.18)] shrink-0"
               title={`${stats.coins || 0} Monedas acumuladas`}
             >
-              <Coins className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-400 drop-shadow-[0_0_5px_rgba(234,179,8,0.7)]" />
+              <Coins className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400 drop-shadow-[0_0_5px_rgba(234,179,8,0.7)]" />
               <span><AnimatedNumber value={stats.coins} /></span>
             </div>
 
@@ -231,51 +231,55 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               onClick={() => { soundFX.playClick(); onOpenDailyRewards(); }}
               title="Recompensa Cuántica Diaria"
-              className={`relative flex items-center justify-center w-9 h-9 rounded-xl border transition-all cursor-pointer active:scale-95 ${
+              className={`relative flex items-center justify-center w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl border transition-all cursor-pointer active:scale-95 shrink-0 ${
                 hasUnclaimedDailyReward
                   ? 'bg-amber-500/20 border-amber-400 text-amber-300 animate-pulse shadow-[0_0_16px_rgba(245,158,11,0.6)]'
                   : 'bg-black/40 text-cyan-200 border-white/10 hover:border-cyan-400 hover:bg-cyan-950/40'
               }`}
             >
-              <Gift className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+              <Gift className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5" />
               {hasUnclaimedDailyReward && (
-                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-amber-400 rounded-full border border-black shadow-[0_0_8px_rgba(245,158,11,0.9)] animate-ping" />
+                <span className="absolute -top-1 -right-1 w-2 sm:w-2.5 h-2 sm:h-2.5 bg-amber-400 rounded-full border border-black shadow-[0_0_8px_rgba(245,158,11,0.9)] animate-ping" />
               )}
             </button>
 
             {/* Cápsula Unificada de Utilidades Tácticas: Sonido + Conexión */}
-            <div className="flex items-center gap-1 p-0.5 bg-black/40 rounded-xl border border-white/10">
+            <div className="flex items-center gap-0.5 sm:gap-1 p-0.5 bg-black/50 rounded-lg sm:rounded-xl border border-white/15 shrink-0">
               {/* Silenciador de sonido */}
               <button
                 onClick={toggleSound}
-                className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-cyan-300 hover:bg-white/10 transition-all cursor-pointer active:scale-95"
+                className="flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-md sm:rounded-lg text-slate-200 hover:text-cyan-300 hover:bg-white/10 transition-all cursor-pointer active:scale-95"
                 title={soundEnabled ? 'Sonido Activado' : 'Sonido Silenciado'}
                 aria-label={soundEnabled ? 'Silenciar sonido' : 'Activar sonido'}
               >
-                {soundEnabled ? <Volume2 className="w-4 h-4 text-cyan-400" /> : <VolumeX className="w-4 h-4 text-zinc-500" />}
+                {soundEnabled ? (
+                  <Volume2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-400" />
+                ) : (
+                  <VolumeX className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-300" />
+                )}
               </button>
 
               {/* Separador sutil */}
-              <div className="w-px h-4 bg-white/10" />
+              <div className="w-px h-3 sm:h-4 bg-white/15" />
 
               {/* Auth Google */}
               {user ? (
                 <button
                   onClick={handleSignOut}
-                  className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-950/40 transition-all cursor-pointer active:scale-95"
+                  className="flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-md sm:rounded-lg text-red-300 hover:text-red-200 hover:bg-red-950/40 transition-all cursor-pointer active:scale-95"
                   title="Desconectar Terminal de Google"
                   aria-label="Cerrar sesión de Google"
                 >
-                  <LogOut className="w-4 h-4" />
+                  <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-300" />
                 </button>
               ) : (
                 <button
                   onClick={() => { soundFX.playClick(); signInWithGoogle(); }}
-                  className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-cyan-300 hover:bg-cyan-950/40 transition-all cursor-pointer active:scale-95"
+                  className="flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-md sm:rounded-lg text-cyan-300 hover:text-white hover:bg-cyan-950/40 transition-all cursor-pointer active:scale-95"
                   title="Conectar con Google"
                   aria-label="Iniciar sesión con Google"
                 >
-                  <LogIn className="w-4 h-4" />
+                  <LogIn className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-300" />
                 </button>
               )}
             </div>
@@ -286,30 +290,30 @@ export const Header: React.FC<HeaderProps> = ({
         {/* ============================================================== */}
         {/* FILA 2: IDENTIDAD DEL CAZADOR (SUB-BARRA RESPONSIVE)           */}
         {/* ============================================================== */}
-        <div className="px-3 sm:px-5 py-1.5 bg-[#030712]/60 relative z-10 flex items-center justify-between gap-2.5 sm:gap-4 border-b border-white/[0.05]">
+        <div className="px-2.5 sm:px-5 py-1 sm:py-1.5 bg-[#030712]/60 relative z-10 flex items-center justify-between gap-1.5 sm:gap-4 border-b border-white/[0.05]">
           {/* Identidad de Cazador: Micro-Avatar + Nivel + Rango */}
           <button
             onClick={() => { soundFX.playClick(); onOpenProfile?.(); }}
-            className="flex items-center gap-2.5 group shrink-0 cursor-pointer text-left focus:outline-none"
+            className="flex items-center gap-1.5 sm:gap-2.5 group shrink-0 cursor-pointer text-left focus:outline-none max-w-[125px] sm:max-w-none"
             title={`Perfil Táctico - Nivel ${stats.level} (${displayRankTitle})`}
           >
-            <div className="relative w-8 h-8 rounded-xl bg-cyan-950/40 border border-cyan-400/50 flex items-center justify-center shadow-[0_0_12px_rgba(0,240,255,0.2)] group-hover:scale-105 transition-transform overflow-hidden">
+            <div className="relative w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-cyan-950/40 border border-cyan-400/50 flex items-center justify-center shadow-[0_0_12px_rgba(0,240,255,0.2)] group-hover:scale-105 transition-transform overflow-hidden shrink-0">
               <ArchetypeGlyph
                 archetypeNameOrId={stats.characterClass || 'heroe'}
-                size={18}
+                size={16}
                 className="border-none bg-transparent p-0 shadow-none"
                 glow={false}
               />
-              <span className="absolute -bottom-0.5 -right-0.5 bg-cyan-950 text-cyan-300 text-[8px] font-mono font-black px-1 rounded-full border border-cyan-400/80 leading-tight">
+              <span className="absolute -bottom-0.5 -right-0.5 bg-cyan-950 text-cyan-300 text-[7px] sm:text-[8px] font-mono font-black px-0.5 sm:px-1 rounded-full border border-cyan-400/80 leading-tight">
                 {stats.level}
               </span>
             </div>
 
             <div className="flex flex-col min-w-0">
-              <span className="text-[11px] sm:text-xs font-anton tracking-wider text-slate-100 truncate group-hover:text-cyan-300 transition-colors leading-none uppercase">
+              <span className="text-[10px] sm:text-xs font-anton tracking-wider text-slate-100 truncate group-hover:text-cyan-300 transition-colors leading-none uppercase">
                 {displayRankTitle}
               </span>
-              <span className="text-[9px] font-mono text-cyan-400/70 truncate leading-tight mt-0.5">
+              <span className="text-[8px] sm:text-[9px] font-mono text-cyan-400/70 truncate leading-tight mt-0.5">
                 {getArchetypeDisplayName(stats.characterClass)}
               </span>
             </div>
@@ -318,16 +322,16 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Calibradores Cuánticos en Mobile / Pantallas medianas */}
           <div 
             onClick={() => { soundFX.playClick(); onOpenProfile?.(); }}
-            className="flex lg:hidden items-center gap-2 sm:gap-3 flex-1 max-w-xs cursor-pointer group"
+            className="flex lg:hidden items-center gap-1.5 sm:gap-3 flex-1 min-w-[60px] max-w-[130px] sm:max-w-xs cursor-pointer group"
             title={`EXP: ${stats.currentXp}/${stats.requiredXp} | HP: ${stats.hp || 100}/${stats.maxHp || 100}`}
           >
             {/* Barra EXP */}
-            <div className="flex-1 flex flex-col gap-0.5">
-              <div className="flex items-center justify-between text-[8px] font-mono font-bold leading-none">
+            <div className="flex-1 flex flex-col gap-0.5 min-w-0">
+              <div className="flex items-center justify-between text-[7px] sm:text-[8px] font-mono font-bold leading-none">
                 <span className="text-cyan-400">EXP</span>
-                <span className="text-cyan-300">{stats.currentXp}/{stats.requiredXp}</span>
+                <span className="text-cyan-300 font-mono truncate">{stats.currentXp}/{stats.requiredXp}</span>
               </div>
-              <div className="h-1.5 bg-black/90 rounded-full border border-cyan-500/30 p-[0.5px] overflow-hidden">
+              <div className="h-1 sm:h-1.5 bg-black/90 rounded-full border border-cyan-500/30 p-[0.5px] overflow-hidden">
                 <div
                   className="h-full bg-gradient-to-r from-cyan-600 via-cyan-400 to-cyan-300 rounded-full transition-all duration-500"
                   style={{ width: `${xpPercent}%` }}
@@ -336,12 +340,12 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
 
             {/* Barra HP */}
-            <div className="flex-1 flex flex-col gap-0.5">
-              <div className="flex items-center justify-between text-[8px] font-mono font-bold leading-none">
+            <div className="flex-1 flex flex-col gap-0.5 min-w-0">
+              <div className="flex items-center justify-between text-[7px] sm:text-[8px] font-mono font-bold leading-none">
                 <span className="text-rose-400">HP</span>
-                <span className="text-rose-300">{stats.hp || 100}/{stats.maxHp || 100}</span>
+                <span className="text-rose-300 font-mono truncate">{stats.hp || 100}/{stats.maxHp || 100}</span>
               </div>
-              <div className="h-1.5 bg-black/90 rounded-full border border-rose-500/30 p-[0.5px] overflow-hidden">
+              <div className="h-1 sm:h-1.5 bg-black/90 rounded-full border border-rose-500/30 p-[0.5px] overflow-hidden">
                 <div
                   className="h-full bg-gradient-to-r from-rose-600 to-red-400 rounded-full transition-all duration-500"
                   style={{ width: `${hpPercent}%` }}
@@ -351,21 +355,21 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* Racha Activa y Escudo Cuántico */}
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
             <div 
-              className="flex lg:hidden items-center gap-1 px-2 py-0.5 rounded-xl bg-amber-950/30 border border-amber-500/40 text-amber-300 text-[11px] font-anton tracking-wider shadow-[0_0_8px_rgba(245,158,11,0.2)] shrink-0"
+              className="flex lg:hidden items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 py-0.5 rounded-lg sm:rounded-xl bg-amber-950/30 border border-amber-500/40 text-amber-300 text-[10px] sm:text-[11px] font-anton tracking-wider shadow-[0_0_8px_rgba(245,158,11,0.2)] shrink-0"
               title={`Racha Activa: ${stats.streakDays || 0} Días continuos`}
             >
-              <Flame className="w-3 h-3 text-amber-400 fill-amber-400/50" />
+              <Flame className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-amber-400 fill-amber-400/50" />
               <span><AnimatedNumber value={stats.streakDays} /></span>
             </div>
 
             {stats.streakShields !== undefined && stats.streakShields > 0 && (
               <div
-                className="flex items-center gap-1 px-2 py-0.5 rounded-xl bg-cyan-950/40 border border-cyan-400/60 text-cyan-300 text-[10px] font-anton tracking-wider shrink-0"
+                className="flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 py-0.5 rounded-lg sm:rounded-xl bg-cyan-950/40 border border-cyan-400/60 text-cyan-300 text-[9px] sm:text-[10px] font-anton tracking-wider shrink-0"
                 title={`Escudos Cuánticos: ${stats.streakShields}`}
               >
-                <Shield className="w-3 h-3 text-cyan-400 fill-cyan-400/30" />
+                <Shield className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-cyan-400 fill-cyan-400/30" />
                 <span>{stats.streakShields}</span>
               </div>
             )}

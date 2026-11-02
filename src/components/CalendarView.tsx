@@ -205,7 +205,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 soundFX.playClick();
                 onOpenAddModal();
               }}
-              className="chicle-btn h-8 px-3 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-black font-anton text-xs uppercase tracking-wider flex items-center gap-1 shadow-[0_0_12px_rgba(0,240,255,0.4)] cursor-pointer"
+              className="btn-neon-hunter h-8 px-3 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1 shadow-lg cursor-pointer"
               title="Nueva Tarea, Hábito o Planificación"
             >
               <Plus className="w-3.5 h-3.5 stroke-[3]" />
@@ -271,7 +271,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 soundFX.playClick();
                 onOpenAddModal();
               }}
-              className="chicle-btn h-8 px-2.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-black font-anton text-xs uppercase tracking-wider flex items-center gap-1 shadow-[0_0_12px_rgba(0,240,255,0.4)] cursor-pointer shrink-0"
+              className="btn-neon-hunter h-8 px-2.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1 shadow-lg cursor-pointer shrink-0"
               title="Nueva Tarea o Hábito"
             >
               <Plus className="w-3.5 h-3.5 stroke-[3]" />

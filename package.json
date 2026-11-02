@@ -11,7 +11,6 @@
     "lint": "tsc --noEmit",
     "deploy": "firebase deploy --only hosting"
   },
-
   "dependencies": {
     "@google/genai": "^2.4.0",
     "@tailwindcss/vite": "^4.1.14",
@@ -38,6 +37,7 @@
     "dotenv": "^17.2.3",
     "esbuild": "^0.25.0",
     "express": "^4.21.2",
+    "firebase-tools": "^15.34.2",
     "tailwindcss": "^4.1.14",
     "tsx": "^4.21.0",
     "typescript": "~5.8.2",

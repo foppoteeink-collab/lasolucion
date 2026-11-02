@@ -135,13 +135,13 @@ export const SurpriseBossModal: React.FC<SurpriseBossModalProps> = ({
                </p>
             </div>
 
-            {/* Botón de Acción */}
+            {/* Botón de Acción Principal Cinético Neon */}
             <button
               type="button"
               onClick={handleClaim}
-              className="chicle-btn w-full py-3 bg-gradient-to-r from-cyan-400 to-emerald-400 hover:opacity-95 text-black font-anton rounded-xl text-xs sm:text-sm uppercase tracking-wider transition-all shadow-[0_0_20px_rgba(0,240,255,0.4)] active:scale-95 cursor-pointer flex items-center justify-center gap-2 font-bold"
+              className="btn-neon-hunter w-full py-3.5 rounded-xl text-xs sm:text-sm uppercase tracking-wider shadow-lg active:scale-95 cursor-pointer transition-all flex items-center justify-center gap-2 font-bold"
             >
-              <Zap className="w-4 h-4 fill-black text-black" />
+              <Zap className="w-4 h-4 text-cyan-300" />
               <span>Asimilar Recompensa (+HP)</span>
             </button>
           </div>

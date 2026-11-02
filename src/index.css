@@ -85,6 +85,12 @@ html.optic-noir #app-optical-canvas .optic-active-card {
   box-shadow: 0 0 15px rgba(255, 255, 255, 0.12) !important;
 }
 
+/* Preservación de visibilidad nítida para iconos de cabecera en Noir Oscuro y Cobalto */
+html.optic-noir header svg,
+html.optic-cobalt header svg {
+  opacity: 1 !important;
+}
+
 /* 3. MODO NOIR CLARO (Manga B&W Táctico en Blanco / Tinta China de Alto Impacto) */
 html.optic-eink {
   background-color: #ffffff !important;
@@ -901,31 +907,36 @@ body.modal-open-hide-floating .omni-companion-hub-root {
 }
 
 /* ==========================================================================
-   DIRECTIVA INTERACCIÓN "MOXEN CHICLE" (BOTONES ELÁSTICOS & DEFORMACIÓN FLUIDA)
+   DIRECTIVA INTERACCIÓN "MOXEN TÁCTIL OBSIDIAN" (BOTONES FIRMES & MICRO-COMPRESIÓN)
    ========================================================================== */
 .chicle-btn {
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.45), background-color 0.3s ease !important;
+  transition: transform 0.12s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.2s ease, filter 0.15s ease, background-color 0.2s ease !important;
   transform-origin: center center;
   will-change: transform;
   user-select: none;
 }
 
 .chicle-btn:hover {
-  transform: scale(1.07, 0.96) skewX(-4deg) translateY(-2px) !important;
+  transform: translateY(-1px) !important;
+  filter: brightness(1.08) !important;
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.3) !important;
 }
 
 .chicle-btn:active {
-  transform: scale(0.90, 1.15) skewX(6deg) translateY(2px) !important;
-  transition: transform 0.12s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+  transform: scale(0.96) translateY(0px) !important;
+  filter: brightness(0.96) !important;
+  transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1) !important;
 }
 
 .chicle-btn:disabled,
 .chicle-btn[disabled] {
   transform: none !important;
+  filter: none !important;
+  box-shadow: none !important;
   pointer-events: none !important;
 }
 
