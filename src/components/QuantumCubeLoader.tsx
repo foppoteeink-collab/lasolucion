@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { useUIStore } from '../store/useUIStore';
+import { useSystemPalette } from '../utils/systemPalette';
 import './quantumCubeLoader.css';
 
 export interface QuantumCubeLoaderProps {
@@ -19,69 +19,8 @@ export const QuantumCubeLoader: React.FC<QuantumCubeLoaderProps> = ({
   showLabel = false,
   className = '',
 }) => {
-  const systemAura = useUIStore((s) => s.systemAura);
-  const opticMode = useUIStore((s) => s.opticMode);
-
   // Derivación dinámica de colores sincronizada con «Apariencia & Visión» de Ajustes
-  const palette = useMemo(() => {
-    // 1. Modo Noir Oscuro (Manga B&W Monocromático)
-    if (opticMode === 'noir') {
-      return {
-        c1: '#ffffff', c2: '#cbd5e1', c3: '#94a3b8', c4: '#64748b',
-        glow: 'rgba(255, 255, 255, 0.4)',
-        glowSecondary: 'rgba(148, 163, 184, 0.25)',
-        textColor: 'text-slate-200',
-      };
-    }
-
-    // 2. Modo Cobalto Azul (Enfoque & Determinación)
-    if (opticMode === 'cobalt') {
-      return {
-        c1: '#60a5fa', c2: '#38bdf8', c3: '#1d4ed8', c4: '#0284c7',
-        glow: 'rgba(96, 165, 250, 0.45)',
-        glowSecondary: 'rgba(29, 78, 216, 0.35)',
-        textColor: 'text-blue-300',
-      };
-    }
-
-    // 3. Modo Noir Claro (Tinta E-Ink)
-    if (opticMode === 'eink') {
-      return {
-        c1: '#f8fafc', c2: '#e2e8f0', c3: '#94a3b8', c4: '#475569',
-        glow: 'rgba(200, 200, 200, 0.25)',
-        glowSecondary: 'rgba(100, 116, 139, 0.2)',
-        textColor: 'text-slate-300',
-      };
-    }
-
-    // 4. Paleta personalizada de Atmósfera / Moxen Malla guardada en Ajustes
-    if (systemAura?.colors && systemAura.colors.length >= 2) {
-      const colors = systemAura.colors;
-      const count = colors.length;
-      const c1 = colors[0];
-      const c2 = colors[1 % count];
-      const c3 = colors[2 % count];
-      const c4 = colors[3 % count];
-
-      return {
-        c1, c2, c3, c4,
-        glow: `color-mix(in srgb, ${c1} 60%, transparent)`,
-        glowSecondary: `color-mix(in srgb, ${c3} 50%, transparent)`,
-        textColor: 'text-cyan-300',
-      };
-    }
-
-    // 5. Paleta Oficial de Malla Aurora Boreal (Verde Ártico, Cian Neón, Púrpura Monarca y Plasma Magenta)
-    return {
-      c1: '#00ffaa', // Verde Ártico
-      c2: '#00d0ff', // Cian Neón
-      c3: '#7000ff', // Púrpura Monarca
-      c4: '#ff00aa', // Plasma Magenta
-      glow: 'rgba(0, 240, 255, 0.45)', // Resplandor Cian Neón
-      glowSecondary: 'rgba(112, 0, 255, 0.35)', // Resplandor Púrpura
-      textColor: 'text-cyan-300',
-    };
-  }, [opticMode, systemAura]);
+  const palette = useSystemPalette();
 
   // Dimensiones configurables
   const sizeStyles = useMemo(() => {

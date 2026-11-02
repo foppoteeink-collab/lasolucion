@@ -1025,3 +1025,36 @@ body.modal-open-hide-floating .omni-companion-hub-root {
   background: linear-gradient(112deg, transparent 42%, var(--vi-reflejo) 49%, var(--vi-reflejo) 51%, transparent 58%);
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   OLEAJE CROMÁTICO DE MALLA AURORA: LOGO «LA SOLUCIÓN» Y ELEMENTOS VIVOS
+   ═══════════════════════════════════════════════════════════════════════ */
+@keyframes logo-aurora-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+  25% {
+    background-position: 100% 0%;
+  }
+  50% {
+    background-position: 100% 100%;
+  }
+  75% {
+    background-position: 0% 100%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.main-logo-aurora-fill {
+  background-size: 320% 320% !important;
+  animation: logo-aurora-flow 7s ease-in-out infinite;
+  will-change: background-position;
+}
+
+.main-logo-aurora-text {
+  background-size: 320% 320% !important;
+  animation: logo-aurora-flow 7s ease-in-out infinite;
+  will-change: background-position;
+}
+

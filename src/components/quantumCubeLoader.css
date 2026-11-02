@@ -49,10 +49,10 @@
     inset 0 -8px 14px rgba(0, 0, 0, 0.4),
     0 8px 24px var(--qcl-glow, rgba(0, 240, 255, 0.4)),
     0 0 24px var(--qcl-glow-secondary, rgba(112, 0, 255, 0.3));
-  background-size: 100% 100%, 300% 300%;
+  background-size: 100% 100%, 350% 350% !important;
   animation:
     qcl-squash var(--qcl-duration, 2.1s) cubic-bezier(0.4, 0, 0.2, 1) infinite,
-    qcl-aurora-wave var(--qcl-color-duration, 7s) ease-in-out infinite;
+    qcl-aurora-wave var(--qcl-color-duration, 6s) ease-in-out infinite;
   will-change: transform, background-position;
   transition: box-shadow 0.4s ease;
 }
@@ -94,29 +94,30 @@
 .qcl-cube-5::before { animation-delay: calc(var(--qcl-duration, 2.1s) * 0.32), -5.6s; }
 .qcl-cube-5::after { animation-delay: calc(var(--qcl-duration, 2.1s) * 0.32); }
 
-/* Gradientes multidimensionales formados EXCLUSIVAMENTE por los 4 colores de la Malla activa */
+/* Gradientes multidimensionales formados EXCLUSIVAMENTE por los 4 colores de la Malla activa
+   (Uso de background-image para preservar background-size y habilitar el movimiento fluido interno) */
 .qcl-cube-1::before {
-  background:
+  background-image:
     linear-gradient(145deg, rgba(255, 255, 255, 0.45), transparent 42%),
     linear-gradient(135deg, var(--qcl-c1) 0%, var(--qcl-c2) 25%, var(--qcl-c3) 50%, var(--qcl-c4) 75%, var(--qcl-c1) 100%);
 }
 .qcl-cube-2::before {
-  background:
+  background-image:
     linear-gradient(145deg, rgba(255, 255, 255, 0.45), transparent 42%),
     linear-gradient(135deg, var(--qcl-c2) 0%, var(--qcl-c3) 25%, var(--qcl-c4) 50%, var(--qcl-c1) 75%, var(--qcl-c2) 100%);
 }
 .qcl-cube-3::before {
-  background:
+  background-image:
     linear-gradient(145deg, rgba(255, 255, 255, 0.45), transparent 42%),
     linear-gradient(135deg, var(--qcl-c3) 0%, var(--qcl-c4) 25%, var(--qcl-c1) 50%, var(--qcl-c2) 75%, var(--qcl-c3) 100%);
 }
 .qcl-cube-4::before {
-  background:
+  background-image:
     linear-gradient(145deg, rgba(255, 255, 255, 0.45), transparent 42%),
     linear-gradient(135deg, var(--qcl-c4) 0%, var(--qcl-c1) 25%, var(--qcl-c2) 50%, var(--qcl-c3) 75%, var(--qcl-c4) 100%);
 }
 .qcl-cube-5::before {
-  background:
+  background-image:
     linear-gradient(145deg, rgba(255, 255, 255, 0.45), transparent 42%),
     linear-gradient(135deg, var(--qcl-c1) 0%, var(--qcl-c3) 25%, var(--qcl-c2) 50%, var(--qcl-c4) 75%, var(--qcl-c1) 100%);
 }
@@ -181,12 +182,49 @@
   0% {
     background-position: 0% 0%, 0% 50%;
   }
+  25% {
+    background-position: 0% 0%, 100% 0%;
+  }
   50% {
-    background-position: 0% 0%, 100% 50%;
+    background-position: 0% 0%, 100% 100%;
+  }
+  75% {
+    background-position: 0% 0%, 0% 100%;
   }
   100% {
     background-position: 0% 0%, 0% 50%;
   }
+}
+
+/* ── Oleaje Cromático Dinámico para el Logo Principal «LA SOLUCIÓN» ── */
+@keyframes logo-aurora-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+  25% {
+    background-position: 100% 0%;
+  }
+  50% {
+    background-position: 100% 100%;
+  }
+  75% {
+    background-position: 0% 100%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.main-logo-aurora-fill {
+  background-size: 320% 320% !important;
+  animation: logo-aurora-flow 7s ease-in-out infinite;
+  will-change: background-position;
+}
+
+.main-logo-aurora-text {
+  background-size: 320% 320% !important;
+  animation: logo-aurora-flow 7s ease-in-out infinite;
+  will-change: background-position;
 }
 
 /* En modos monocromáticos (Noir y E-Ink): pulsación de brillo de cromo / platino líquido */
