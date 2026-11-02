@@ -847,81 +847,63 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                 )}
               </div>
             ) : (
-              <div className="space-y-4">
-                {notice ? (
-                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 flex items-start justify-between gap-3">
-                    <div className="flex items-start gap-3">
-                      <Sparkles className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-xs font-mono font-bold text-amber-300 uppercase tracking-wider">Aviso del Sistema</p>
-                        <p className="text-xs text-amber-200/90 font-mono mt-0.5">{notice}</p>
-                      </div>
+              <div className="space-y-3.5">
+                {/* Notice solo si es una advertencia real */}
+                {notice && !notice.includes('optimizada y libre de choques') && (
+                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl px-3 py-2 flex items-center justify-between gap-2 text-xs font-mono text-amber-200">
+                    <div className="flex items-center gap-2 truncate">
+                      <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                      <span className="truncate">{notice}</span>
                     </div>
                     <button
                       type="button"
                       onClick={() => handleGenerate()}
                       disabled={isLoading}
-                      className="px-2.5 py-1 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-200 text-[11px] font-mono font-bold rounded-lg shrink-0 flex items-center gap-1.5 cursor-pointer transition-colors"
-                      title="Reintentar enlace con KAI"
+                      className="text-amber-300 hover:text-amber-100 font-bold underline shrink-0 cursor-pointer"
                     >
-                      <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
-                      <span>Reintentar con KAI</span>
+                      Reintentar
                     </button>
-                  </div>
-                ) : (
-                  <div className="bg-emerald-950/40 border border-emerald-500/40 rounded-xl p-3 flex items-center justify-between gap-3 shadow-[0_0_15px_rgba(16,185,129,0.15)]">
-                    <div className="flex items-center gap-2.5">
-                      <Sparkles className="w-4 h-4 text-emerald-400 shrink-0 animate-pulse" />
-                      <p className="text-xs font-mono font-bold text-emerald-300">
-                        Agenda calibrada en tiempo real por tu compañero KAI
-                      </p>
-                    </div>
-                    <span className="text-[10px] font-mono text-emerald-400/80 uppercase tracking-wider shrink-0 hidden sm:inline">
-                      Conexión Activa
-                    </span>
                   </div>
                 )}
 
-                <div className="bg-cyan-950/40 border border-cyan-500/30 rounded-xl p-4">
-                  <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
-                    <h4 className="text-cyan-300 font-bold flex items-center gap-2 font-mono text-sm uppercase tracking-wider">
-                      <CheckCircle2 className="w-5 h-5 text-cyan-400" />
-                      Editor Visual de Bloques ({suggestedHabits.length})
+                {/* Cabecera Limpia: Sin disclaimers ni párrafos explicativos */}
+                <div className="flex items-center justify-between py-1 border-b border-white/10">
+                  <div className="flex items-center gap-2.5">
+                    <h4 className="text-white font-anton text-sm uppercase tracking-wider flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                      Agenda Propuesta
                     </h4>
-                    <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 text-[11px] font-mono font-bold">
+                      {suggestedHabits.length} bloques
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleAddNewManualBlock}
+                      className="px-2.5 py-1 bg-cyan-500 hover:bg-cyan-400 text-slate-950 rounded-lg text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-1 cursor-pointer transition-all active:scale-95 shadow-[0_0_10px_rgba(6,182,212,0.3)]"
+                      title="Añadir un bloque de horario manualmente"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Añadir</span>
+                    </button>
+                    {suggestedHabits.length > 5 && (
                       <button
                         type="button"
-                        onClick={handleAddNewManualBlock}
-                        className="px-3 py-1 bg-cyan-500 hover:bg-cyan-400 text-slate-950 rounded-lg text-xs font-mono font-black uppercase tracking-wider flex items-center gap-1 cursor-pointer transition-all active:scale-95 shadow-[0_0_12px_rgba(6,182,212,0.3)]"
-                        title="Añadir un bloque de horario manualmente"
+                        onClick={handleSynthesizeExisting}
+                        className="px-2.5 py-1 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white rounded-lg text-xs font-mono flex items-center gap-1 cursor-pointer transition-all active:scale-95"
+                        title="Consolidar tareas fragmentadas"
                       >
-                        <Plus className="w-3.5 h-3.5" />
-                        <span>Añadir Bloque</span>
+                        <Layers className="w-3.5 h-3.5 text-cyan-400" />
+                        <span>Sintetizar</span>
                       </button>
-                      {suggestedHabits.length > 4 && (
-                        <button
-                          type="button"
-                          onClick={handleSynthesizeExisting}
-                          className="px-2.5 py-1 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/40 text-cyan-200 rounded-lg text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer transition-all active:scale-95"
-                          title="Consolidar tareas fragmentadas en bloques maestros"
-                        >
-                          <Layers className="w-3.5 h-3.5 text-cyan-400" />
-                          <span>Sintetizar</span>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                  <p className="text-xs text-slate-300">
-                    Ajusta los bloques visualmente: puedes <strong className="text-cyan-300">cambiar horas, categorías, días o sumar bloques manuales</strong> antes de inyectar a tu agenda.
-                  </p>
-                  <div className="mt-2.5 pt-2 border-t border-cyan-800/40 flex items-center gap-2 text-[11px] text-cyan-300/80 font-mono">
-                    <ShieldCheck className="w-4 h-4 text-cyan-400 shrink-0" />
-                    <span>Desligado de Hábitos 21/66 Días: Estas tareas son directivas de agenda y no modifican tu progreso de Maltz ni maestría de hábitos.</span>
+                    )}
                   </div>
                 </div>
 
-                {/* Tactical Diagnostic Panel (Heuristic AI / Mathematical Engine) */}
-                {diagnostic && (
+                {/* Tactical Diagnostic Panel: Solo si hay choques reales */}
+                {diagnostic && diagnostic.conflicts.length > 0 && (
                   <TacticalDiagnosticPanel
                     diagnostic={diagnostic}
                     onQuickFixConflict={handleQuickFixConflict}
@@ -929,12 +911,12 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                   />
                 )}
 
-                <div className="space-y-4">
-                  {/* Day filter selector */}
-                  <div className="flex bg-[#03070d] border border-cyan-950 rounded-xl p-1 overflow-x-auto custom-scrollbar">
+                <div className="space-y-3">
+                  {/* Selector de días compacto */}
+                  <div className="flex bg-[#03070d] border border-white/10 rounded-xl p-1 overflow-x-auto custom-scrollbar">
                     <button
                       onClick={() => setPreviewDay('all')}
-                      className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-mono font-bold uppercase tracking-wider transition-all cursor-pointer ${previewDay === 'all' ? 'bg-cyan-500 text-slate-950 shadow-[0_0_12px_rgba(6,182,212,0.4)]' : 'text-slate-400 hover:text-cyan-300 hover:bg-white/5'}`}
+                      className={`flex-shrink-0 px-3 py-1 rounded-lg text-[11px] font-mono font-bold uppercase tracking-wider transition-all cursor-pointer ${previewDay === 'all' ? 'bg-cyan-500 text-slate-950 shadow-[0_0_10px_rgba(6,182,212,0.4)]' : 'text-slate-400 hover:text-white'}`}
                     >
                       Todos
                     </button>
@@ -944,7 +926,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                         <button
                           key={dayNum}
                           onClick={() => setPreviewDay(dayNum)}
-                          className={`flex-1 min-w-[38px] px-2 py-1.5 rounded-lg text-xs font-mono font-bold uppercase tracking-wider transition-all cursor-pointer ${previewDay === dayNum ? 'bg-cyan-500 text-slate-950 shadow-[0_0_12px_rgba(6,182,212,0.4)]' : 'text-slate-400 hover:text-cyan-300 hover:bg-white/5'}`}
+                          className={`flex-1 min-w-[34px] px-2 py-1 rounded-lg text-[11px] font-mono font-bold uppercase tracking-wider transition-all cursor-pointer ${previewDay === dayNum ? 'bg-cyan-500 text-slate-950 shadow-[0_0_10px_rgba(6,182,212,0.4)]' : 'text-slate-400 hover:text-white'}`}
                         >
                           {label}
                         </button>
@@ -952,7 +934,8 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                     })}
                   </div>
 
-                  <div className="space-y-2.5">
+                  {/* Lista de bloques limpia y minimalista */}
+                  <div className="space-y-2">
                     {suggestedHabits
                       .filter(habit => {
                         if (previewDay === 'all') return true;
@@ -971,18 +954,17 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                         return true;
                       })
                       .map((habit, idx) => {
-                        const isAdded = addedHabitIds.has(habit.id);
                         const isEditing = editingId === habit.id;
                         const conflict = hasConflict(habit);
                         const relatedConflict = getConflictForHabit(habit.id);
 
                         if (isEditing) {
                           return (
-                            <div key={habit.id ? `${habit.id}-${idx}` : `sugg-edit-${idx}`} className="bg-[#0b1625] border-2 border-cyan-400 p-4 rounded-xl space-y-3.5 shadow-[0_0_20px_rgba(6,182,212,0.25)]">
+                            <div key={habit.id ? `${habit.id}-${idx}` : `sugg-edit-${idx}`} className="bg-[#0b1625] border-2 border-cyan-400 p-3.5 rounded-2xl space-y-3 shadow-[0_0_20px_rgba(6,182,212,0.25)]">
                               <div className="flex items-center justify-between">
                                 <span className="text-xs font-mono font-bold text-cyan-300 uppercase tracking-wider flex items-center gap-1.5">
                                   <Edit3 className="w-3.5 h-3.5 text-cyan-400" />
-                                  Editando Bloque de Agenda
+                                  Editar Bloque
                                 </span>
                                 <div className="flex items-center gap-2">
                                   <button
@@ -1005,7 +987,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                               </div>
 
                               <div>
-                                <label className="text-[11px] font-mono text-slate-400 block mb-1">Título de la Actividad / Tarea:</label>
+                                <label className="text-[10px] font-mono text-slate-400 block mb-1">Título de la Actividad / Tarea:</label>
                                 <input
                                   type="text"
                                   value={editTitle}
@@ -1016,7 +998,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
 
                               {/* Category & Icon Picker */}
                               <div>
-                                <label className="text-[11px] font-mono text-slate-400 block mb-1">Categoría & Icono:</label>
+                                <label className="text-[10px] font-mono text-slate-400 block mb-1">Categoría & Icono:</label>
                                 <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
                                   {[
                                     { id: 'rutina', label: 'Rutina', icon: '⚡' },
@@ -1046,10 +1028,10 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                                 </div>
                               </div>
 
-                              {/* Time Selection: Dual Inputs + Quick nudges */}
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-black/40 border border-slate-800/80 p-3 rounded-xl">
+                              {/* Time Selection */}
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-black/40 border border-slate-800/80 p-2.5 rounded-xl">
                                 <div>
-                                  <label className="text-[11px] font-mono text-cyan-300 block mb-1">Franja Horaria:</label>
+                                  <label className="text-[10px] font-mono text-cyan-300 block mb-1">Franja Horaria:</label>
                                   <div className="flex items-center gap-2">
                                     <input
                                       type="time"
@@ -1074,7 +1056,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                                 </div>
 
                                 <div>
-                                  <label className="text-[11px] font-mono text-slate-400 block mb-1">Frecuencia:</label>
+                                  <label className="text-[10px] font-mono text-slate-400 block mb-1">Frecuencia:</label>
                                   <div className="flex gap-1.5">
                                     <button
                                       type="button"
@@ -1110,7 +1092,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
 
                               {/* Days Toggles */}
                               <div>
-                                <label className="text-[11px] font-mono text-slate-400 block mb-1">Días Asignados:</label>
+                                <label className="text-[10px] font-mono text-slate-400 block mb-1">Días Asignados:</label>
                                 <div className="flex gap-1">
                                   {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map((dName, dIdx) => {
                                     const dNum = dIdx === 6 ? 0 : dIdx + 1;
@@ -1140,10 +1122,10 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                                 <button
                                   type="button"
                                   onClick={saveEditingHabit}
-                                  className="px-5 py-2 bg-gradient-to-r from-cyan-400 to-emerald-400 hover:from-cyan-300 hover:to-emerald-300 text-slate-950 font-black text-xs rounded-lg font-mono cursor-pointer flex items-center gap-1.5 shadow-[0_0_15px_rgba(6,182,212,0.4)]"
+                                  className="px-4 py-2 bg-gradient-to-r from-cyan-400 to-emerald-400 hover:from-cyan-300 hover:to-emerald-300 text-slate-950 font-bold text-xs rounded-lg font-mono cursor-pointer flex items-center gap-1.5 shadow-[0_0_12px_rgba(6,182,212,0.4)]"
                                 >
                                   <Check className="w-3.5 h-3.5" />
-                                  <span>Guardar Ajustes del Bloque</span>
+                                  <span>Guardar Cambios</span>
                                 </button>
                               </div>
                             </div>
@@ -1153,138 +1135,77 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                         return (
                           <div 
                             key={habit.id ? `${habit.id}-${idx}` : `sugg-${idx}`} 
-                            className={`bg-[#07111c] border p-3 rounded-xl flex flex-col gap-2 group transition-colors ${
-                              conflict ? 'border-amber-500/60 hover:border-amber-400 bg-amber-950/10' : 'border-cyan-900/40 hover:border-cyan-500/40'
+                            className={`bg-[#060b14]/90 border p-2.5 sm:p-3 rounded-2xl flex items-center justify-between gap-3 group transition-all hover:border-cyan-500/40 hover:bg-[#081220] ${
+                              conflict ? 'border-amber-500/60 bg-amber-950/20' : 'border-white/10'
                             }`}
                           >
-                            <div className="flex items-center justify-between gap-3">
-                              <div className="flex items-center gap-3 min-w-0 flex-1">
-                                <div className="w-10 h-10 rounded-lg bg-cyan-950/60 border border-cyan-500/20 flex items-center justify-center shrink-0">
-                                  {renderHabitIcon(habit.quickIcon, habit.title, 'w-6 h-6')}
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                  <div className="flex items-center gap-2">
-                                    <p className="text-sm font-bold text-slate-100 truncate">{habit.title}</p>
-                                    {conflict && (
-                                      <span className="px-1.5 py-0.5 rounded bg-amber-950/80 border border-amber-500/50 text-amber-300 text-[10px] font-mono font-semibold shrink-0" title="Existe otro bloque asignado a las mismas horas">
-                                        ⚠️ Choque
-                                      </span>
-                                    )}
-                                  </div>
-                                  <div className="flex items-center gap-2 mt-0.5 text-xs text-slate-400 font-mono">
-                                    {habit.timeBlock ? (
-                                      <span className="text-cyan-400 font-semibold flex items-center gap-1">
-                                        <Clock className="w-3 h-3" />
-                                        {habit.timeBlock}
-                                      </span>
-                                    ) : (
-                                      <span className="text-slate-500">Sin hora fijada</span>
-                                    )}
-                                    <span>•</span>
-                                    <span className="text-slate-300">
-                                      {habit.frequencyType === 'daily' ? 'Ciclo Diario' : 
-                                       habit.specificDays?.map(mapDayToString).join(', ')}
-                                    </span>
-                                  </div>
-                                </div>
+                            <div 
+                              onClick={() => startEditingHabit(habit)}
+                              className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer"
+                              title="Toca para editar horario o nombre"
+                            >
+                              {/* Franja horaria limpia */}
+                              <div className="shrink-0 px-2.5 py-1 rounded-xl bg-cyan-950/70 border border-cyan-500/30 text-cyan-300 font-mono text-xs font-bold shadow-[0_0_8px_rgba(0,240,255,0.15)] flex items-center gap-1.5">
+                                <Clock className="w-3 h-3 text-cyan-400" />
+                                <span>{habit.timeBlock || 'Sin hora'}</span>
                               </div>
-                              
-                              <div className="flex items-center gap-1.5 shrink-0">
-                                <button
-                                  type="button"
-                                  onClick={() => startEditingHabit(habit)}
-                                  className="p-1.5 text-slate-400 hover:text-cyan-300 hover:bg-white/5 rounded-lg transition-colors cursor-pointer"
-                                  title="Editar título, horario o días"
-                                >
-                                  <Edit3 className="w-4 h-4" />
-                                </button>
 
-                                <button
-                                  type="button"
-                                  onClick={() => handleAddSingleRoutine(habit)}
-                                  disabled={isAdded}
-                                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
-                                    isAdded 
-                                      ? 'bg-emerald-950/60 border border-emerald-500/40 text-emerald-300' 
-                                      : 'bg-cyan-600 hover:bg-cyan-500 text-slate-950 active:scale-95'
-                                  }`}
-                                  title={isAdded ? 'Añadida a la agenda' : 'Agregar individualmente a la agenda'}
-                                >
-                                  {isAdded ? (
-                                    <>
-                                      <Check className="w-3.5 h-3.5" />
-                                      <span>Agregada</span>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Plus className="w-3.5 h-3.5" />
-                                      <span>Agregar</span>
-                                    </>
+                              {/* Icono de la tarea */}
+                              <div className="w-7 h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                                {renderHabitIcon(habit.quickIcon, habit.title, 'w-4 h-4')}
+                              </div>
+
+                              {/* Título y frecuencia */}
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <p className="text-xs sm:text-sm font-bold text-slate-100 truncate group-hover:text-cyan-200 transition-colors">
+                                    {habit.title}
+                                  </p>
+                                  {conflict && (
+                                    <span className="px-1.5 py-0.5 rounded bg-amber-950/90 border border-amber-500/60 text-amber-300 text-[10px] font-mono font-bold shrink-0 animate-pulse">
+                                      ⚠️ Choque
+                                    </span>
                                   )}
-                                </button>
-                                
-                                <button
-                                  onClick={() => handleRemoveHabit(habit.id)}
-                                  className="text-slate-500 hover:text-red-400 p-1.5 opacity-60 group-hover:opacity-100 transition-opacity cursor-pointer rounded-lg hover:bg-white/5"
-                                  title="Descartar de la lista"
-                                >
-                                  <X className="w-4 h-4" />
-                                </button>
+                                </div>
+                                <p className="text-[10px] text-slate-400 font-mono mt-0.5 truncate">
+                                  {habit.frequencyType === 'daily'
+                                    ? 'Todos los días'
+                                    : habit.specificDays?.map(mapDayToString).join(', ') || 'Días específicos'}
+                                </p>
                               </div>
                             </div>
+                            
+                            {/* Acciones Rápidas */}
+                            <div className="flex items-center gap-1 shrink-0">
+                              {relatedConflict && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleQuickFixConflict(relatedConflict)}
+                                  className="px-2 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/50 text-amber-300 font-mono text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-all active:scale-95"
+                                  title="Resolver choque automáticamente"
+                                >
+                                  <Zap className="w-3 h-3 text-amber-400" />
+                                  <span className="hidden sm:inline">Resolver</span>
+                                </button>
+                              )}
 
-                            {/* Quick Nudge / Tactical Shift Bar */}
-                            {habit.timeBlock && (
-                              <div className="pt-2 border-t border-cyan-950/60 flex flex-wrap items-center justify-between gap-1.5 text-[11px] font-mono">
-                                <div className="flex items-center gap-1">
-                                  <span className="text-slate-500 text-[10px] uppercase font-bold mr-0.5">Ajuste:</span>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleNudgeHabit(habit.id, -15)}
-                                    className="px-1.5 py-0.5 rounded bg-black/50 hover:bg-cyan-950/80 border border-slate-800 hover:border-cyan-500/50 text-slate-300 hover:text-cyan-300 cursor-pointer transition-colors"
-                                    title="Adelantar 15 min"
-                                  >
-                                    -15m
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleNudgeHabit(habit.id, 15)}
-                                    className="px-1.5 py-0.5 rounded bg-black/50 hover:bg-cyan-950/80 border border-slate-800 hover:border-cyan-500/50 text-slate-300 hover:text-cyan-300 cursor-pointer transition-colors"
-                                    title="Postergar 15 min"
-                                  >
-                                    +15m
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleNudgeHabit(habit.id, 30)}
-                                    className="px-1.5 py-0.5 rounded bg-black/50 hover:bg-cyan-950/80 border border-slate-800 hover:border-cyan-500/50 text-slate-300 hover:text-cyan-300 cursor-pointer transition-colors"
-                                    title="Postergar 30 min"
-                                  >
-                                    +30m
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleNudgeHabit(habit.id, 0, 15)}
-                                    className="px-1.5 py-0.5 rounded bg-black/50 hover:bg-cyan-950/80 border border-slate-800 hover:border-cyan-500/50 text-slate-400 hover:text-cyan-300 cursor-pointer transition-colors"
-                                    title="Alargar duración +15m"
-                                  >
-                                    +15m dur
-                                  </button>
-                                </div>
+                              <button
+                                type="button"
+                                onClick={() => startEditingHabit(habit)}
+                                className="p-1.5 text-slate-400 hover:text-cyan-300 hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
+                                title="Editar bloque"
+                              >
+                                <Edit3 className="w-4 h-4" />
+                              </button>
 
-                                {relatedConflict && (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleQuickFixConflict(relatedConflict)}
-                                    className="px-2 py-0.5 rounded bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/50 text-amber-300 font-bold flex items-center gap-1 cursor-pointer transition-all active:scale-95 text-[11px]"
-                                    title="Resolver choque automáticamente en 1 clic"
-                                  >
-                                    <Zap className="w-3 h-3 text-amber-400" />
-                                    <span>Auto-resolver Choque</span>
-                                  </button>
-                                )}
-                              </div>
-                            )}
+                              <button
+                                onClick={() => handleRemoveHabit(habit.id)}
+                                className="text-slate-500 hover:text-red-400 p-1.5 hover:bg-red-950/30 rounded-lg transition-colors cursor-pointer"
+                                title="Descartar de la lista"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
                           </div>
                         );
                       })}
@@ -1292,35 +1213,27 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                     {suggestedHabits.length === 0 && (
                       <p className="text-center text-slate-500 py-8 text-sm font-mono">Cola vacía. Todas las directivas fueron descartadas.</p>
                     )}
-                    {suggestedHabits.length > 0 && suggestedHabits.filter(habit => {
-                        if (previewDay === 'all') return true;
-                        if (habit.frequencyType === 'daily') return true;
-                        return habit.specificDays?.includes(previewDay);
-                      }).length === 0 && (
-                      <p className="text-center text-slate-500 py-8 text-sm font-mono">No hay directivas asignadas a este ciclo.</p>
-                    )}
                   </div>
                 </div>
 
-                <div className="pt-3 border-t border-cyan-950/60 space-y-3">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-[#03070d] border border-cyan-900/40 rounded-xl p-2.5">
-                    <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider font-bold">
-                      Modo de Inyección:
-                    </span>
-                    <div className="flex items-center gap-1.5">
+                {/* Pie de Acción Minimalista */}
+                <div className="pt-3 border-t border-white/10 space-y-2.5">
+                  <div className="flex items-center justify-between gap-2 px-1 text-[11px] font-mono text-slate-400">
+                    <span>Modo de inyección:</span>
+                    <div className="flex items-center gap-1 bg-black/50 p-0.5 rounded-lg border border-white/10">
                       <button
                         type="button"
                         onClick={() => {
                           soundFX.playClick();
                           setInjectMode('replace_pending');
                         }}
-                        className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold transition-all cursor-pointer ${
+                        className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition-all cursor-pointer ${
                           injectMode === 'replace_pending'
-                            ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/60 shadow-[0_0_10px_rgba(6,182,212,0.2)]'
-                            : 'text-slate-400 hover:text-slate-200 bg-black/40 border border-slate-800'
+                            ? 'bg-cyan-500 text-slate-950 shadow-sm'
+                            : 'text-slate-400 hover:text-white'
                         }`}
                       >
-                        Reemplazar Pendientes (Limpio)
+                        Reemplazar pendientes
                       </button>
                       <button
                         type="button"
@@ -1328,34 +1241,38 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                           soundFX.playClick();
                           setInjectMode('merge');
                         }}
-                        className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold transition-all cursor-pointer ${
+                        className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition-all cursor-pointer ${
                           injectMode === 'merge'
-                            ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/60 shadow-[0_0_10px_rgba(6,182,212,0.2)]'
-                            : 'text-slate-400 hover:text-slate-200 bg-black/40 border border-slate-800'
+                            ? 'bg-cyan-500 text-slate-950 shadow-sm'
+                            : 'text-slate-400 hover:text-white'
                         }`}
                       >
-                        Combinar con Actuales
+                        Combinar
                       </button>
                     </div>
                   </div>
 
-                  <div className="flex gap-3">
+                  <div className="flex gap-2.5">
                     <button
+                      type="button"
                       onClick={() => {
+                        soundFX.playClick();
                         setSuggestedHabits(null);
                         setAddedHabitIds(new Set());
                         setEditingId(null);
                       }}
-                      className="flex-1 py-3 bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold uppercase tracking-wider text-xs rounded-xl transition-colors font-mono cursor-pointer"
+                      className="px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 font-anton uppercase tracking-wider text-xs rounded-xl transition-all cursor-pointer active:scale-95"
                     >
-                      Reconfigurar
+                      Volver
                     </button>
                     <button
+                      type="button"
                       onClick={handleAcceptSchedule}
                       disabled={suggestedHabits.length === 0}
-                      className="flex-1 py-3 bg-cyan-500 hover:bg-cyan-400 disabled:bg-slate-800 disabled:text-slate-500 text-slate-950 font-black uppercase tracking-wider text-xs rounded-xl transition-colors shadow-[0_0_20px_rgba(6,182,212,0.4)] flex items-center justify-center gap-2 cursor-pointer"
+                      className="flex-1 py-3 bg-gradient-to-r from-cyan-400 via-teal-400 to-emerald-400 hover:opacity-95 disabled:opacity-40 text-slate-950 font-anton uppercase tracking-wider text-xs rounded-xl transition-all shadow-[0_0_25px_rgba(0,240,255,0.35)] flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
                     >
-                      Aplicar a mi Agenda <ChevronRight className="w-4 h-4" />
+                      <span>Aplicar Agenda a mi Día ({suggestedHabits.length} misiones)</span>
+                      <ChevronRight className="w-4 h-4 text-slate-950" />
                     </button>
                   </div>
                 </div>
