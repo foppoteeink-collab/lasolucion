@@ -48,7 +48,7 @@ export const FloatingJuiceOverlay: React.FC = React.memo(() => {
         let icon = <Zap className="w-4 h-4 text-cyan-300 inline mr-1 shrink-0" />;
         let textStyle = 'text-cyan-300 shadow-[0_0_12px_rgba(0,240,255,0.8)] border-cyan-400/80 bg-[#001830]/90';
 
-        if (p.type === 'coin' || p.type === 'coins') {
+        if (p.type === 'coins') {
           icon = <Coins className="w-4 h-4 text-amber-300 inline mr-1 shrink-0" />;
           textStyle = 'text-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.8)] border-amber-400/80 bg-[#1c1200]/90';
         } else if (p.type === 'boss' || p.type === 'critical' || p.isCrit) {

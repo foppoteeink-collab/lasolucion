@@ -130,6 +130,9 @@ const HZ = 240;
 const acota = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 const mezcla = (a: number, b: number, t: number) => a + (b - a) * t;
 
+const XS_POINTS = 48;
+const xsBuffer = new Float64Array(XS_POINTS + 1);
+
 export const ChicleToggle: React.FC<ChicleToggleProps> = ({
   checked,
   onChange,
@@ -256,19 +259,19 @@ export const ChicleToggle: React.FC<ChicleToggleProps> = ({
     g.translate(E, E + H / 2);
 
     const p = perfil();
-    const N = 48;
-    const xs: number[] = [];
+    const N = XS_POINTS;
     for (let i = 0; i <= N; i++) {
-      xs.push(p.a + ((p.b - p.a) * (1 - Math.cos((Math.PI * i) / N))) / 2);
+      xsBuffer[i] = p.a + ((p.b - p.a) * (1 - Math.cos((Math.PI * i) / N))) / 2;
     }
 
     g.beginPath();
-    xs.forEach((x, i) => {
+    for (let i = 0; i <= N; i++) {
+      const x = xsBuffer[i];
       if (i === 0) g.moveTo(x, -p.h(x));
       else g.lineTo(x, -p.h(x));
-    });
+    }
     for (let i = N; i >= 0; i--) {
-      g.lineTo(xs[i], p.h(xs[i]));
+      g.lineTo(xsBuffer[i], p.h(xsBuffer[i]));
     }
     g.closePath();
 

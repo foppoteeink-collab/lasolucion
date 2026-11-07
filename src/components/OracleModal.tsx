@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Icon } from './common/Icon';
-import { CustomHabit, TaskItem } from '../types';
+import { CustomHabit, TaskItem, TaskCategory } from '../types';
 import * as gameEngine from '../engine/gameEngine';
 import { usePlayerStore } from '../store/usePlayerStore';
 import { useTaskStore } from '../store/useTaskStore';
@@ -367,7 +367,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
       return {
         ...h,
         title: editTitle.trim() || h.title,
-        category: (editCategory as any) || h.category,
+        category: editCategory || h.category,
         quickIcon: editIcon || h.quickIcon,
         timeBlock: normalizedTime || undefined,
         frequencyType: editFreq,
@@ -404,7 +404,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
     const oracleTask: TaskItem = {
       id: `oracle-task-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
       title: habit.title,
-      category: (habit.category === 'habito' ? 'rutina' : habit.category) as any,
+      category: habit.category === 'habito' ? 'rutina' : habit.category,
       description: habit.description || `Misión táctica del Oráculo para ${habit.timeBlock || 'el día'}`,
       xpReward: habit.xpReward || 20,
       coinReward: habit.coinReward || 10,
@@ -442,7 +442,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
     const newCustomHabits: CustomHabit[] = suggestedHabits.map((h, idx) => ({
       id: h.id || `hab-ai-${Date.now()}-${idx}-${Math.random().toString(36).substring(2, 6)}`,
       title: h.title,
-      category: (h.category === 'habito' ? 'rutina' : h.category) as any,
+      category: h.category === 'habito' ? 'rutina' : h.category,
       description: h.description || '',
       xpReward: h.xpReward || 20,
       coinReward: h.coinReward || 10,
@@ -503,7 +503,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
       const createDateTask = (dStr: string): TaskItem => ({
         id: `oracle-task-${dStr}-${index}-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
         title: h.title,
-        category: (h.category === 'habito' ? 'rutina' : h.category) as any,
+        category: h.category === 'habito' ? 'rutina' : h.category,
         description: h.description || '',
         xpReward: h.xpReward || 20,
         coinReward: h.coinReward || 10,
@@ -589,13 +589,13 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
     setSuggestedHabits(sortByChronologicalTime(updated));
   };
 
-  const handleFillGap = (gap: ScheduleGap, title: string, category: string, icon: string) => {
+  const handleFillGap = (gap: ScheduleGap, title: string, category: TaskCategory, icon: string) => {
     if (!suggestedHabits) return;
     soundFX.playClick();
     const newHabit: CustomHabit = {
       id: `routine-gap-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
       title,
-      category: (category as any) || 'rutina',
+      category: category || 'rutina',
       frequencyType: 'daily',
       timeBlock: `${gap.startTime} - ${gap.endTime}`,
       quickIcon: icon,
@@ -1214,14 +1214,14 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                               <div>
                                 <label className="text-[10px] font-mono text-slate-400 block mb-1">Categoría & Icono:</label>
                                 <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
-                                  {[
-                                    { id: 'rutina', label: 'Rutina', icon: '⚡' },
-                                    { id: 'entrenamiento', label: 'Entreno', icon: '🏋️' },
-                                    { id: 'limpieza', label: 'Limpieza', icon: '🧹' },
-                                    { id: 'comida', label: 'Comida', icon: '🍲' },
-                                    { id: 'creativo', label: 'Creativo', icon: '🎨' },
-                                    { id: 'intelecto', label: 'Estudio', icon: '💻' }
-                                  ].map(cat => (
+                                  {([
+                                    { id: 'rutina' as TaskCategory, label: 'Rutina', icon: '⚡' },
+                                    { id: 'entrenamiento' as TaskCategory, label: 'Entreno', icon: '🏋️' },
+                                    { id: 'limpieza' as TaskCategory, label: 'Limpieza', icon: '🧹' },
+                                    { id: 'comida' as TaskCategory, label: 'Comida', icon: '🍲' },
+                                    { id: 'creativo' as TaskCategory, label: 'Creativo', icon: '🎨' },
+                                    { id: 'estudio' as TaskCategory, label: 'Estudio', icon: '💻' }
+                                  ] as const).map(cat => (
                                     <button
                                       key={cat.id}
                                       type="button"

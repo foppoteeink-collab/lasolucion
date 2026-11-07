@@ -524,6 +524,9 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
       (lienzo.getContext('experimental-webgl') as WebGLRenderingContext | null);
 
     let prog: WebGLProgram | null = null;
+    let vsShader: WebGLShader | null = null;
+    let fsShader: WebGLShader | null = null;
+    let quadBuf: WebGLBuffer | null = null;
     const U: Record<string, WebGLUniformLocation | null> = {};
 
     if (gl) {
@@ -538,18 +541,18 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
         }
         return s;
       };
-      const vs = sh(gl.VERTEX_SHADER, VERT);
-      const fs = sh(gl.FRAGMENT_SHADER, FRAG);
-      if (vs && fs) {
+      vsShader = sh(gl.VERTEX_SHADER, VERT);
+      fsShader = sh(gl.FRAGMENT_SHADER, FRAG);
+      if (vsShader && fsShader) {
         prog = gl.createProgram();
         if (prog) {
-          gl.attachShader(prog, vs);
-          gl.attachShader(prog, fs);
+          gl.attachShader(prog, vsShader);
+          gl.attachShader(prog, fsShader);
           gl.linkProgram(prog);
           if (gl.getProgramParameter(prog, gl.LINK_STATUS)) {
             gl.useProgram(prog);
-            const buf = gl.createBuffer();
-            gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+            quadBuf = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, quadBuf);
             gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
             const loc = gl.getAttribLocation(prog, 'a');
             gl.enableVertexAttribArray(loc);
@@ -941,6 +944,15 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
       capa.removeEventListener('pointercancel', onPointerUp);
       if (raf) cancelAnimationFrame(raf);
       capa.querySelectorAll('.ml-punto').forEach(el => el.remove());
+      if (gl) {
+        if (quadBuf) gl.deleteBuffer(quadBuf);
+        if (prog) {
+          if (vsShader) { gl.detachShader(prog, vsShader); gl.deleteShader(vsShader); }
+          if (fsShader) { gl.detachShader(prog, fsShader); gl.deleteShader(fsShader); }
+          gl.deleteProgram(prog);
+        }
+        gl.getExtension('WEBGL_lose_context')?.loseContext();
+      }
     };
   }, []);
 

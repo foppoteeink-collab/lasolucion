@@ -55,7 +55,7 @@ export const ScrollReveal: React.FC<ScrollRevealProps> = ({
       }}
       viewport={{
         once,
-        margin: margin as any,
+        margin,
         amount: 0.1,
       }}
       transition={{

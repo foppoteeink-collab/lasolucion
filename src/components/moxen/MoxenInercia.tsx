@@ -46,6 +46,7 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
     if (!pista) return;
 
     const o = { friccion, goma, iman };
+    let inerciaTimer: ReturnType<typeof setTimeout> | null = null;
     const items = Array.from(pista.children) as HTMLElement[];
     if (items.length === 0) return;
 
@@ -265,8 +266,8 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
       x = limita(x - e.deltaX);
       meta = x;
       v = 0;
-      clearTimeout((ventana as any).__inercia);
-      (ventana as any).__inercia = setTimeout(() => o.iman && ir(cercana(x)), 140);
+      if (inerciaTimer) clearTimeout(inerciaTimer);
+      inerciaTimer = setTimeout(() => o.iman && ir(cercana(x)), 140);
       despierta();
     };
 
@@ -327,6 +328,7 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
       },
       destruir() {
         if (raf) cancelAnimationFrame(raf);
+        if (inerciaTimer) clearTimeout(inerciaTimer);
         ventana.removeEventListener('pointerdown', onPointerDown);
         ventana.removeEventListener('pointermove', onPointerMove);
         ventana.removeEventListener('pointerup', suelta);

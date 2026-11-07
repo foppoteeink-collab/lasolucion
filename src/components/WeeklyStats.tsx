@@ -2,7 +2,7 @@ import React, { useState, useMemo, lazy, Suspense } from 'react';
 import { HoloCompanion } from './HoloCompanion';
 import { ScrollReveal } from './common/ScrollReveal';
 import { IntelligenceOverlay } from '../intelligence/IntelligenceOverlay';
-import { PlayerStats, PomodoroSession, TaskItem, HabitMasteryRecord, FinancialTransaction } from '../types';
+import { PlayerStats, PomodoroSession, TaskItem, HabitMasteryRecord, FinancialTransaction, HabitEnergyType, TaskCategory } from '../types';
 import { CloudSyncResult } from '../hooks/useCloudSync';
 
 const FinanceDashboard = lazy(() => import("./FinanceDashboard").then(m => ({ default: m.FinanceDashboard })));
@@ -187,13 +187,22 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
     return { maxDailyXp, maxPomodoro, maxHabitStreak, totalTasksDone };
   }, [tasksByDate, pomodoroSessions, habitMastery, stats.streakDays]);
 
+interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
+  baseId: string;
+  currentStreak: number;
+  highestStreak: number;
+  isMastered: boolean;
+  habitEnergyType?: HabitEnergyType;
+  category?: TaskCategory;
+}
+
   // --- TRACKED HABITS (Strictly 21/66 Days System) ---
   const trackedHabits = useMemo(() => {
-    const map = new Map<string, any>();
+    const map = new Map<string, TrackedHabitRecord>();
 
     // 1. Gather all habits from habitMastery
     Object.entries(habitMastery || {}).forEach(([baseId, record]) => {
-      map.set(baseId, { ...(record as any), baseId });
+      map.set(baseId, { ...record, baseId, currentStreak: record.currentStreak ?? 0, highestStreak: record.highestStreak ?? 0, isMastered: Boolean(record.isMastered) });
     });
 
     // 2. Also check tasksByDate for any tracked 21/66 habit

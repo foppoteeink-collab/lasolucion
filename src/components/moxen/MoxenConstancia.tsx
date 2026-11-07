@@ -119,6 +119,35 @@ export const MoxenConstancia: React.FC<MoxenConstanciaProps> = ({
     return Math.round(((p1 + p2 + p3) / 3) * 100);
   }, [selectedDay, focusGoal, tasksGoal, habitsGoal]);
 
+interface SparkParticle {
+  active: boolean;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  vida: number;
+  dura: number;
+  r: number;
+  c: string;
+  estrella: boolean;
+}
+
+const POOL_SIZE = 90;
+const createParticlePool = (): SparkParticle[] => {
+  return Array.from({ length: POOL_SIZE }, () => ({
+    active: false,
+    x: 0,
+    y: 0,
+    vx: 0,
+    vy: 0,
+    vida: 0,
+    dura: 1,
+    r: 2,
+    c: '#ffffff',
+    estrella: false,
+  }));
+};
+
   // Spring states for rings
   const springVals = useRef<{ x: number; v: number; meta: number }[]>([
     { x: 0, v: 0, meta: 0 },
@@ -127,8 +156,8 @@ export const MoxenConstancia: React.FC<MoxenConstanciaProps> = ({
   ]);
   const glowSpring = useRef<{ x: number; v: number; meta: number }>({ x: 0, v: 0, meta: 0 });
 
-  // Spark particles simulation
-  const particles = useRef<any[]>([]);
+  // Spark particles simulation with Object Pooling (Zero allocations during 60 FPS loop)
+  const particlePool = useRef<SparkParticle[]>(createParticlePool());
   const destello = useRef<{ t: number; cx: number; cy: number; e: number } | null>(null);
 
   const triggerCelebration = () => {
@@ -139,25 +168,26 @@ export const MoxenConstancia: React.FC<MoxenConstanciaProps> = ({
     const escala = 1;
 
     destello.current = { t: 0, cx, cy, e: escala };
-    particles.current = [];
+    let pIdx = 0;
 
     METAS.forEach((m, i) => {
       for (let j = 0; j < 30; j++) {
+        if (pIdx >= particlePool.current.length) break;
+        const p = particlePool.current[pIdx++];
         const a = azar() * 6.2832;
         const r = RADIOS_LOGICAL[i] * escala;
         const v = (100 + azar() * 220) * escala;
         const tang = (azar() - 0.5) * 0.7 * v;
-        particles.current.push({
-          x: cx + Math.cos(a) * r,
-          y: cy + Math.sin(a) * r,
-          vx: Math.cos(a) * v - Math.sin(a) * tang,
-          vy: Math.sin(a) * v + Math.cos(a) * tang,
-          vida: 0,
-          dura: 0.8 + azar() * 0.7,
-          r: (1.4 + azar() * 2.2) * escala,
-          c: azar() < 0.25 ? '#ffffff' : azar() < 0.5 ? m.c1 : m.base,
-          estrella: azar() < 0.2
-        });
+        p.active = true;
+        p.x = cx + Math.cos(a) * r;
+        p.y = cy + Math.sin(a) * r;
+        p.vx = Math.cos(a) * v - Math.sin(a) * tang;
+        p.vy = Math.sin(a) * v + Math.cos(a) * tang;
+        p.vida = 0;
+        p.dura = 0.8 + azar() * 0.7;
+        p.r = (1.4 + azar() * 2.2) * escala;
+        p.c = azar() < 0.25 ? '#ffffff' : azar() < 0.5 ? m.c1 : m.base;
+        p.estrella = azar() < 0.2;
       }
     });
   };
@@ -330,11 +360,12 @@ export const MoxenConstancia: React.FC<MoxenConstanciaProps> = ({
         }
       }
 
-      for (let i = particles.current.length - 1; i >= 0; i--) {
-        const p = particles.current[i];
+      for (let i = 0; i < particlePool.current.length; i++) {
+        const p = particlePool.current[i];
+        if (!p.active) continue;
         p.vida += dt;
         if (p.vida >= p.dura) {
-          particles.current.splice(i, 1);
+          p.active = false;
           continue;
         }
         p.vx *= 1 - 1.2 * dt;
@@ -437,10 +468,10 @@ export const MoxenConstancia: React.FC<MoxenConstanciaProps> = ({
                 key={m.id}
                 className={`co-fila ${isCompleted ? 'is-ok' : ''}`}
                 style={{
-                  ['--c' as any]: m.base,
-                  ['--c0' as any]: m.c0,
-                  ['--c1' as any]: m.c1
-                }}
+                  '--c': m.base,
+                  '--c0': m.c0,
+                  '--c1': m.c1,
+                } as React.CSSProperties}
               >
                 <div className="co-punto" />
 

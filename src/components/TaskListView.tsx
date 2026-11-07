@@ -231,7 +231,7 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
     setNewNotes(task.notes || '');
 
     if (customHabit) {
-      setFormFrequency((customHabit.frequencyType as any) === 'weekly' ? 'specific_days' : (customHabit.frequencyType as any) || 'daily');
+      setFormFrequency(customHabit.frequencyType === 'specific_days' || customHabit.frequencyType === 'weekly' ? 'specific_days' : 'daily');
       setFormSpecificDays(customHabit.specificDays || []);
     } else if (is2166) {
       setFormFrequency('daily');
@@ -317,7 +317,7 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
     setQuickIcon(habit.quickIcon || '⚡');
     setHabitEnergyType(habit.habitEnergyType || detectHabitEnergy(habit.title, habit.category));
     setTargetStreak(habit.targetStreak || 21);
-    setFormFrequency((habit.frequencyType as any) === 'specific_days' ? 'specific_days' : (habit.frequencyType as any) === 'once' ? 'once' : 'daily');
+    setFormFrequency(habit.frequencyType === 'specific_days' || habit.frequencyType === 'weekly' ? 'specific_days' : 'daily');
     setFormSpecificDays(habit.specificDays || []);
     setInitialModalTab('habit');
     setIsLocalAddModalOpen(true);
@@ -340,7 +340,7 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
       const normTitle = newTitle.trim().toLowerCase();
       const existingIndex = (customHabits || []).findIndex(
         (h) =>
-          (editingTaskId && (h.id === editingTaskId || h.id === getHabitBaseId({ id: editingTaskId, title: newTitle.trim() } as any))) ||
+          (editingTaskId && (h.id === editingTaskId || h.id === getHabitBaseId({ id: editingTaskId, title: newTitle.trim() }))) ||
           (h.title && h.title.toLowerCase().trim() === normTitle)
       );
 
@@ -354,7 +354,7 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
         category: newCategory,
         xpReward: (Number(newXp) || 10) * (isLegendary ? 2 : 1),
         coinReward: (Number(newCoins) || 4) * (isLegendary ? 2 : 1),
-        frequencyType: (formFrequency === 'specific_days' ? 'specific_days' : 'daily') as any,
+        frequencyType: formFrequency === 'specific_days' ? 'specific_days' : 'daily',
         specificDays: formFrequency === 'specific_days' ? formSpecificDays : undefined,
         targetCount: isHabitType ? (Number(habitTarget) || 1) : 1,
         unit: isHabitType ? (habitUnit.trim() || 'veces') : 'vez',
