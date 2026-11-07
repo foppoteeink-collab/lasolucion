@@ -950,9 +950,18 @@ export const executeDeleteTask = (deleteEverywhere = false) => {
 };
 export const handleClaimDailyReward = (day: number, xp: number, coins: number, bonusItem?: string) => {
   const { player: statePlayer, ui: stateUI } = getEngineContext();
+  const todayStr = getTodayDateString();
+  
+  // Antifraude: Prevenir reclamos duplicados en la misma jornada
+  if (statePlayer.stats?.lastDailyRewardClaimedDate === todayStr) {
+    return;
+  }
   
   if (xp > 0 || coins > 0) {
-    statePlayer.setStats((prev) => checkLevelUp(prev, xp, coins));
+    statePlayer.setStats((prev) => ({
+      ...checkLevelUp(prev, xp, coins),
+      lastDailyRewardClaimedDate: todayStr
+    }));
     
     if (typeof window !== 'undefined') {
        stateUI.addFloatingEffect({ x: window.innerWidth / 2, y: window.innerHeight / 2 - 20, text: `+${xp} XP`, type: 'xp' });
@@ -960,15 +969,25 @@ export const handleClaimDailyReward = (day: number, xp: number, coins: number, b
          stateUI.addFloatingEffect({ x: window.innerWidth / 2, y: window.innerHeight / 2 - 40, text: `+${coins} Monedas`, type: 'coins' });
        }, 150);
     }
+  } else {
+    statePlayer.setStats((prev) => ({
+      ...prev,
+      lastDailyRewardClaimedDate: todayStr
+    }));
   }
   
   soundFX.playTaskComplete();
 };
 export const handleConfirmFinishDay = (bonusXp: number, bonusCoins: number) => {
-  safeLogEvent('daily_closure_executed');
   const { player: statePlayer, task: stateTask, ui: stateUI } = getEngineContext();
-  
   const currentDate = stateTask.currentViewDate;
+  
+  // Antifraude: Si el día ya fue finalizado, evitar duplicación de bonificaciones de cierre
+  if (statePlayer.stats?.finalizedDays?.[currentDate]) {
+    return;
+  }
+
+  safeLogEvent('daily_closure_executed');
   const now = new Date();
   const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   const dayTasks = stateTask.tasksByDate[currentDate] || [];
@@ -1145,6 +1164,7 @@ export const handleSaveHabits = (habits: CustomHabit[]) => {
   soundFX.playClick();
 };
 export const handleClaimBossBounty = () => {
+  if (hasClaimedBossToday()) return;
   const xpReward = 50;
   const coinReward = 20;
   const hpReward = 50;
@@ -1258,8 +1278,12 @@ export const handleRedeemReward = (reward?: ShopReward) => {
 
 export const handleAddCustomReward = (newReward?: ShopReward) => {
   if (!newReward) return;
+  const validatedReward: ShopReward = {
+    ...newReward,
+    cost: Math.max(1, Math.min(100000, Number(newReward.cost) || 10)),
+  };
   const { app } = getEngineContext();
-  app.setShopRewards(prev => [...prev, newReward]);
+  app.setShopRewards(prev => [...prev, validatedReward]);
   soundFX.playClick();
 };
 

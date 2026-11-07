@@ -256,9 +256,13 @@ export const usePlayerStore = create<PlayerState>()(
       }),
 
       purchaseItem: (cost, logic) => {
+        if (typeof cost !== 'number' || Number.isNaN(cost) || cost <= 0) {
+          return false;
+        }
         let purchased = false;
         set((state) => {
-          if ((state.stats.coins || 0) >= cost) {
+          const currentCoins = state.stats.coins || 0;
+          if (currentCoins >= cost) {
             purchased = true;
             const updates = logic ? logic(state.stats) : {};
             if (updates.streakShields !== undefined) {
@@ -267,7 +271,7 @@ export const usePlayerStore = create<PlayerState>()(
             return {
               stats: {
                 ...state.stats,
-                coins: (state.stats.coins || 0) - cost,
+                coins: Math.max(0, currentCoins - cost),
                 ...updates
               }
             };
