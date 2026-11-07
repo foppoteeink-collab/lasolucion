@@ -82,25 +82,27 @@ export const TaskFilters: React.FC<TaskFiltersProps> = ({
           className="flex-1"
         />
 
-        {/* Compact Search + Category Drawer Toggle */}
+        {/* Search + Category Drawer Toggle (Ergonomía táctil h-9/h-10 y contraste WCAG) */}
         <div className="flex items-center gap-1.5 justify-end shrink-0">
-          <div className="relative flex-1 sm:w-40">
-            <Icon name="search" className="w-3 h-3 text-cyan-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <div className="relative flex-1 sm:w-44">
+            <Icon name="search" className="w-3.5 h-3.5 text-cyan-400/80 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Buscar..."
-              className="w-full h-7 bg-[#011420]/80 border border-cyan-500/25 rounded-full pl-7 pr-6 py-0.5 text-[11px] text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 transition-all"
+              placeholder="Buscar tareas u objetivos..."
+              aria-label="Buscar tareas u objetivos"
+              className="w-full h-9 sm:h-10 bg-[#011420]/90 border border-cyan-500/35 rounded-xl pl-8 pr-8 py-1.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/40 transition-all font-mono"
             />
             {searchTerm && (
               <button
                 type="button"
                 onClick={() => onSearchChange('')}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white cursor-pointer"
-                title="Limpiar"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-white rounded-full hover:bg-white/10 active:scale-90 transition-transform cursor-pointer"
+                title="Limpiar búsqueda"
+                aria-label="Limpiar búsqueda"
               >
-                <Icon name="x" className="w-3 h-3" />
+                <Icon name="x" className="w-3.5 h-3.5" />
               </button>
             )}
           </div>

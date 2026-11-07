@@ -1,7 +1,6 @@
 
 
-import { logEvent } from 'firebase/analytics';
-import { analytics } from '../firebase';
+import { safeLogEvent } from '../firebase';
 import { 
   ThemeMode, ActiveTab, PlayerStats, CustomHabit, 
   DayTemplate, RecallItem, PomodoroSession, ShopReward 
@@ -450,7 +449,7 @@ export const handleToggleTask = (taskId: string, e?: any) => {
   if (!wasCompleted) {
     soundFX.playTaskComplete();
     try {
-      logEvent(analytics, 'task_completed', {
+      safeLogEvent('task_completed', {
         category: task.category,
         priority: task.priority || 'media',
         is_retroactive: isRetroactive,
@@ -535,7 +534,7 @@ export const handleToggleTask = (taskId: string, e?: any) => {
       if (impactPoints >= 3.0) {
         triggeredBoss = true;
         try {
-          logEvent(analytics, 'boss_defeated', { trigger: 'weighted_impact_points', points: impactPoints });
+          safeLogEvent('boss_defeated', { trigger: 'weighted_impact_points', points: impactPoints });
         } catch {}
         triggerBossEmojiConfetti();
         if (typeof window !== 'undefined') {
@@ -566,7 +565,7 @@ export const handleToggleTask = (taskId: string, e?: any) => {
       if (wasChestFound) {
         soundFX.playLevelUp(); // Extra sound for chest
         try {
-          logEvent(analytics, 'milestone_chest_unlocked', { completed_today: completedTodayCount });
+          safeLogEvent('milestone_chest_unlocked', { completed_today: completedTodayCount });
         } catch {}
         stateUI.addFloatingEffect({
           x: hitX,
@@ -664,16 +663,10 @@ export const handleIncrementHabit = (taskId: string, e?: any) => {
   const newCount = currentCount + 1;
   const isNowCompleted = newCount >= targetCount;
 
-  stateTask.updateTask(date, taskId, {
-    currentCount: newCount,
-    completed: isNowCompleted,
-    completedAt: isNowCompleted ? (task.completedAt || new Date().toISOString()) : undefined
-  });
-
   soundFX.playTaskComplete();
   try {
     hapticPresets.click();
-    logEvent(analytics, 'habit_incremented', {
+    safeLogEvent('habit_incremented', {
       habit_id: task.id,
       completed: isNowCompleted
     });
@@ -702,6 +695,17 @@ export const handleIncrementHabit = (taskId: string, e?: any) => {
     xpReward = Math.floor(xpReward * affinityMultiplier);
     coinReward = Math.floor(coinReward * affinityMultiplier);
   }
+
+  const totalAwardedCoins = (task.awardedCoins || 0) + (coinReward || 0);
+  const totalAwardedXp = (task.awardedXp || 0) + (xpReward || 0);
+
+  stateTask.updateTask(date, taskId, {
+    currentCount: newCount,
+    completed: isNowCompleted,
+    completedAt: isNowCompleted ? (task.completedAt || new Date().toISOString()) : undefined,
+    awardedCoins: totalAwardedCoins,
+    awardedXp: totalAwardedXp
+  });
 
   const hitX = e?.clientX || (typeof window !== 'undefined' ? window.innerWidth / 2 : 200);
   const hitY = e?.clientY || (typeof window !== 'undefined' ? window.innerHeight / 2 : 200);
@@ -771,7 +775,7 @@ export const handleIncrementHabit = (taskId: string, e?: any) => {
       if (impactPoints >= 3.0) {
         statePlayer.setStats((prev) => ({ ...prev, lastEncounterDate: today }));
         try {
-          logEvent(analytics, 'boss_defeated', { trigger: 'habit_weighted_impact', points: impactPoints });
+          safeLogEvent('boss_defeated', { trigger: 'habit_weighted_impact', points: impactPoints });
         } catch {}
         triggerBossEmojiConfetti();
         if (typeof window !== 'undefined') {
@@ -829,17 +833,19 @@ export const handleResetHabit = (taskId: string, e?: any) => {
   }
 
   soundFX.playClick();
-  const xpReward = task.awardedXp || task.xpReward || 0;
-  const coinReward = task.awardedCoins || task.coinReward || 0;
+  const xpReward = task.awardedXp !== undefined ? task.awardedXp : (task.completed ? (task.xpReward || 0) : 0);
+  const coinReward = task.awardedCoins !== undefined ? task.awardedCoins : (task.completed ? (task.coinReward || 0) : 0);
 
   stateTask.updateTask(date, taskId, {
     currentCount: 0,
     completed: false,
     completedAt: undefined,
-    rewardClaimed: false
+    rewardClaimed: false,
+    awardedCoins: 0,
+    awardedXp: 0
   });
 
-  if (task.completed && (xpReward > 0 || coinReward > 0)) {
+  if (xpReward > 0 || coinReward > 0) {
     statePlayer.setStats((prev) => ({
       ...prev,
       currentXp: Math.max(0, (prev.currentXp || 0) - xpReward),
@@ -959,7 +965,7 @@ export const handleClaimDailyReward = (day: number, xp: number, coins: number, b
   soundFX.playTaskComplete();
 };
 export const handleConfirmFinishDay = (bonusXp: number, bonusCoins: number) => {
-  logEvent(analytics, 'daily_closure_executed');
+  safeLogEvent('daily_closure_executed');
   const { player: statePlayer, task: stateTask, ui: stateUI } = getEngineContext();
   
   const currentDate = stateTask.currentViewDate;
@@ -1242,7 +1248,7 @@ export const handleRedeemReward = (reward?: ShopReward) => {
   const { player: statePlayer, app: stateApp } = getEngineContext();
   const success = statePlayer.purchaseItem(reward.cost);
   if (success) {
-    logEvent(analytics, 'shop_reward_redeemed');
+    safeLogEvent('shop_reward_redeemed');
     stateApp.setShopRewards(prev =>
       prev.map(r => (r.id === reward.id ? { ...r, unlockedCount: (r.unlockedCount || 0) + 1 } : r))
     );

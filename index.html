@@ -31,6 +31,7 @@
         } catch (e) {}
 
         function recoverFromStaleCache(reason) {
+          if (typeof navigator !== 'undefined' && !navigator.onLine) return;
           try {
             var guardKey = 'pwa_recover_' + BUILD_REV;
             if (sessionStorage.getItem(guardKey) === '1') return;
@@ -65,13 +66,13 @@
           }
         }, true);
 
-        // Boot watchdog: if React hasn't mounted within 4 seconds, auto-heal caches & SW
+        // Boot watchdog: if React hasn't mounted within 10 seconds, auto-heal caches & SW
         setTimeout(function() {
           var root = document.getElementById('root');
           if (!window.__LA_SOLUCION_MOUNTED__ && (!root || !root.firstElementChild)) {
             recoverFromStaleCache('boot-watchdog');
           }
-        }, 4000);
+        }, 10000);
 
         if ('serviceWorker' in navigator) {
           navigator.serviceWorker.addEventListener('message', function(event) {
@@ -93,9 +94,8 @@
               })
               .catch(function() {});
           };
-          if (document.readyState === 'complete') {
-            registerAppSW();
-          } else {
+          registerAppSW();
+          if (document.readyState !== 'complete') {
             window.addEventListener('load', registerAppSW);
           }
         }

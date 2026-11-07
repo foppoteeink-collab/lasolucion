@@ -1,3 +1,31 @@
+/* ========================================================================== */
+/* DESIGN TOKENS SISTÉMICOS TÁCTICOS (FASE 2)                                 */
+/* ========================================================================== */
+:root {
+  --tactical-cyan: #00f0ff;
+  --tactical-cyan-glow: rgba(0, 240, 255, 0.25);
+  --tactical-surface-dark: #030712;
+  --tactical-surface-card: #040d1a;
+  --tactical-border-dim: rgba(255, 255, 255, 0.1);
+  --tactical-border-cyan: rgba(0, 240, 255, 0.3);
+}
+
+.shadow-tactical-glow {
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.25);
+}
+
+.shadow-tactical-card {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.shadow-tactical-amber {
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.25);
+}
+
+.shadow-tactical-emerald {
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+}
+
 .les-item {
   display: flex;
   align-items: stretch;
@@ -72,7 +100,7 @@
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Efecto Shimmer de barrido de luz automático */
+/* Efecto Shimmer de barrido de luz táctico (optimizado a 60 FPS, reactivo al hover) */
 .btn-neon-hunter::before {
   content: '';
   position: absolute;
@@ -83,47 +111,40 @@
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.45) 50%,
+    rgba(255, 255, 255, 0.4) 50%,
     transparent 100%
   );
   transform: skewX(-22deg);
-  animation: hunter-shimmer 3.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  transition: none;
   pointer-events: none;
 }
 
-@keyframes hunter-shimmer {
-  0% {
-    left: -120%;
-  }
-  30% {
-    left: 200%;
-  }
-  100% {
-    left: 200%;
-  }
+.btn-neon-hunter:hover::before {
+  left: 200%;
+  transition: left 0.7s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Animación de latido y resplandor para llamar la atención en Iniciar Jornada */
+/* Animación calibrada de latido táctico (ergonómica, sin saturar OLED ni forzar repintados) */
 @keyframes hunter-callout-glow {
   0%, 100% {
     transform: scale(1);
-    box-shadow: 0 0 14px rgba(0, 240, 255, 0.45), 0 6px 20px rgba(0, 0, 0, 0.7);
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.3), 0 4px 14px rgba(0, 0, 0, 0.6);
   }
   50% {
-    transform: scale(1.035);
-    box-shadow: 0 0 28px rgba(0, 240, 255, 0.9), 0 0 45px rgba(0, 240, 255, 0.45), 0 8px 24px rgba(0, 0, 0, 0.9);
+    transform: scale(1.02);
+    box-shadow: 0 0 18px rgba(0, 240, 255, 0.55), 0 6px 18px rgba(0, 0, 0, 0.7);
   }
 }
 
-/* Animación de latido y resplandor en Cerrar Jornada */
+/* Animación calibrada de latido ámbar */
 @keyframes hunter-callout-glow-amber {
   0%, 100% {
     transform: scale(1);
-    box-shadow: 0 0 14px rgba(245, 158, 11, 0.45), 0 6px 20px rgba(0, 0, 0, 0.7);
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.3), 0 4px 14px rgba(0, 0, 0, 0.6);
   }
   50% {
-    transform: scale(1.035);
-    box-shadow: 0 0 28px rgba(245, 158, 11, 0.9), 0 0 45px rgba(245, 158, 11, 0.45), 0 8px 24px rgba(0, 0, 0, 0.9);
+    transform: scale(1.02);
+    box-shadow: 0 0 18px rgba(245, 158, 11, 0.55), 0 6px 18px rgba(0, 0, 0, 0.7);
   }
 }
 
@@ -146,5 +167,27 @@
 
 .animate-bounce-x {
   animation: bounce-x 1.4s ease-in-out infinite;
+}
+
+/* ========================================================================== */
+/* GEOMETRÍA TÁCTICA COHESIVA Y CONTROL DE LUMINANCIA PASIVA                 */
+/* ========================================================================== */
+.tactical-chamfer-box {
+  clip-path: polygon(
+    0 8px, 8px 0,
+    calc(100% - 8px) 0, 100% 8px,
+    100% calc(100% - 8px), calc(100% - 8px) 100%,
+    8px 100%, 0 calc(100% - 8px)
+  );
+}
+
+.tactical-border-idle {
+  border-color: rgba(6, 182, 212, 0.18);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tactical-border-idle:hover {
+  border-color: rgba(6, 182, 212, 0.45);
+  box-shadow: 0 0 8px rgba(6, 182, 212, 0.2);
 }
 

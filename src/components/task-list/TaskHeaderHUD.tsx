@@ -69,15 +69,17 @@ export const TaskHeaderHUD: React.FC<TaskHeaderHUDProps> = ({
             type="button"
             data-tour="add-task-btn"
             onClick={() => onOpenAddModal('task')}
-            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border bg-[#001020] flex items-center justify-center transition-all cursor-pointer active:scale-90"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border bg-[#001020] flex items-center justify-center transition-all cursor-pointer active:scale-90 relative"
             style={{ 
               borderColor: 'var(--aura-color-1, #00f0ff)',
               color: 'var(--aura-color-1, #00f0ff)',
-              boxShadow: '0 0 12px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.35)'
+              boxShadow: '0 0 10px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.25)'
             }}
             title="Centro de Tareas: Añadir Tarea, Hábito u Oráculo"
+            aria-label="Añadir nueva tarea, hábito u objetivo"
           >
-            <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5]" />
+            <span className="absolute -inset-1.5 pointer-events-auto" aria-hidden="true" />
+            <Plus className="w-4 h-4 stroke-[2.5]" />
           </button>
         </div>
       </div>
@@ -88,7 +90,7 @@ export const TaskHeaderHUD: React.FC<TaskHeaderHUDProps> = ({
           <div className="flex items-center gap-2.5">
             <Lock className="w-4 h-4 text-indigo-400 shrink-0" />
             <span className="text-xs font-bold text-white">
-              Jornada Sellada ({finalizedInfo?.finalizedAt ? new Date(finalizedInfo.finalizedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Hoy'})
+              Ciclo Consolidado ({finalizedInfo?.finalizedAt ? new Date(finalizedInfo.finalizedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Hoy'})
             </span>
           </div>
 

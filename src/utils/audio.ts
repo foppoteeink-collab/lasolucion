@@ -2,6 +2,7 @@
 // Redesigned for premium, pleasant, and highly polished RPG gamified audio
 
 import { useUIStore } from '../store/useUIStore';
+import { hapticPresets } from './haptics';
 
 const isPomodoroFocusActive = (): boolean => {
   try {
@@ -16,7 +17,9 @@ class SoundFX {
   private soundEnabled: boolean = true;
   private masterGain: GainNode | null = null;
   private masterFilter: BiquadFilterNode | null = null;
+  private masterCompressor: DynamicsCompressorNode | null = null;
   private suspendedForBackground = false;
+  private recentClickTimestamps: number[] = [];
 
   constructor() {
     // AudioContext will be initialized on first user interaction to comply with browser autoplay policies
@@ -45,17 +48,30 @@ class SoundFX {
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (AudioCtx) {
         this.ctx = new AudioCtx();
-        // Master Bus
+        // Dynamic night detection: gentle rolloff after 22:00 (10 PM) or before 06:00
+        const currentHour = new Date().getHours();
+        const isNight = currentHour >= 22 || currentHour < 6;
+
+        // Master Bus: Calibrated for ergonomic pleasantness and high dynamic headroom
         this.masterGain = this.ctx.createGain();
-        this.masterGain.gain.value = 0.6; // Global volume reduction for pleasantness
+        this.masterGain.gain.value = isNight ? 0.42 : 0.55;
         
-        // Gentle master lowpass filter to remove harsh digital highs
+        // Gentle master lowpass filter: 9500Hz normal, 4800Hz in late night for acoustic relaxation
         this.masterFilter = this.ctx.createBiquadFilter();
         this.masterFilter.type = 'lowpass';
-        this.masterFilter.frequency.value = 12000;
+        this.masterFilter.frequency.value = isNight ? 4800 : 9500;
+
+        // Master Dynamics Compressor/Limiter to prevent clipping on mobile speakers & high-resonance peaks
+        this.masterCompressor = this.ctx.createDynamicsCompressor();
+        this.masterCompressor.threshold.setValueAtTime(-14, this.ctx.currentTime);
+        this.masterCompressor.knee.setValueAtTime(10, this.ctx.currentTime);
+        this.masterCompressor.ratio.setValueAtTime(8, this.ctx.currentTime);
+        this.masterCompressor.attack.setValueAtTime(0.003, this.ctx.currentTime);
+        this.masterCompressor.release.setValueAtTime(0.12, this.ctx.currentTime);
         
         this.masterGain.connect(this.masterFilter);
-        this.masterFilter.connect(this.ctx.destination);
+        this.masterFilter.connect(this.masterCompressor);
+        this.masterCompressor.connect(this.ctx.destination);
       }
     }
     if (this.ctx && this.ctx.state === 'suspended') {
@@ -129,34 +145,47 @@ class SoundFX {
     osc.stop(stopTime + 0.1);
   }
 
-  // 1. CLICK - Sci-Fi Cybernetic UI Click / Micro-blip
+  // 1. CLICK - Sci-Fi Cybernetic UI Click / Micro-blip (Anti-Fatigue Calibrated)
   public playClick() {
+    hapticPresets.click();
     if (!this.soundEnabled) return;
     this.initCtx();
     if (!this.ctx) return;
     const now = this.ctx.currentTime;
+
+    // Anti-ametralladora / Rate Limiter to prevent auditory sensory overload on rapid spam
+    const nowMs = typeof performance !== 'undefined' ? performance.now() : Date.now();
+    this.recentClickTimestamps = this.recentClickTimestamps.filter(t => nowMs - t < 450);
+    const isRapidSpam = this.recentClickTimestamps.length >= 3;
+    this.recentClickTimestamps.push(nowMs);
     
-    // Crisp high-tech transient chirp (1900Hz -> 650Hz fast ramp)
+    // Organic micro-pitch jitter (±3.5%) to eliminate mechanical monotony
+    const jitter = 1 + (Math.random() * 0.07 - 0.035);
+    const startFreq = 960 * jitter;
+    const endFreq = 340 * jitter;
+    
+    // Warm low-fatigue transient chirp (960Hz -> 340Hz)
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
     osc.type = 'sine';
     
-    osc.frequency.setValueAtTime(1900, now);
-    osc.frequency.exponentialRampToValueAtTime(650, now + 0.018);
+    osc.frequency.setValueAtTime(startFreq, now);
+    osc.frequency.exponentialRampToValueAtTime(endFreq, now + 0.016);
     
+    const peakGain = isRapidSpam ? 0.035 : 0.075;
     gain.gain.setValueAtTime(0.001, now);
-    gain.gain.linearRampToValueAtTime(0.14, now + 0.002);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.035);
+    gain.gain.linearRampToValueAtTime(peakGain, now + 0.002);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.028);
     
     osc.connect(gain);
     gain.connect(this.getDestination()!);
-    this.safeDisconnectOnEnd(osc, [gain], 80);
+    this.safeDisconnectOnEnd(osc, [gain], 60);
     osc.start(now);
-    osc.stop(now + 0.04);
+    osc.stop(now + 0.032);
 
-    // Micro mechanical switch noise burst (5ms) for tactile cyber snap
+    // Warm tactile switch snap (1800Hz gentle bandpass instead of harsh 3500Hz)
     try {
-      const bufferSize = Math.floor(this.ctx.sampleRate * 0.006);
+      const bufferSize = Math.floor(this.ctx.sampleRate * 0.005);
       const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
       const data = buffer.getChannelData(0);
       for (let i = 0; i < bufferSize; i++) {
@@ -166,11 +195,12 @@ class SoundFX {
       noise.buffer = buffer;
       const noiseFilter = this.ctx.createBiquadFilter();
       noiseFilter.type = 'bandpass';
-      noiseFilter.frequency.value = 3500;
-      noiseFilter.Q.value = 2;
+      noiseFilter.frequency.value = 1800; // Shifted down from 3500Hz away from human ear resonance
+      noiseFilter.Q.value = 1.3;
       const noiseGain = this.ctx.createGain();
-      noiseGain.gain.setValueAtTime(0.08, now);
-      noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.006);
+      const peakNoise = isRapidSpam ? 0.008 : 0.022; // Substantially attenuated to eliminate ear fatigue
+      noiseGain.gain.setValueAtTime(peakNoise, now);
+      noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.005);
 
       noise.connect(noiseFilter);
       noiseFilter.connect(noiseGain);
@@ -403,8 +433,9 @@ class SoundFX {
     this.playTone('sine', 2637.02, now + 0.025, 0.005, 0.05, 0.01, 0.28, 0.10); // E7
   }
 
-  // 3. TASK COMPLETE - Sci-Fi System Execution Confirmation
+  // 3. TASK COMPLETE - Sci-Fi System Execution Confirmation (Calibrated for Low Acoustic Fatigue)
   public playTaskComplete() {
+    hapticPresets.taskComplete();
     if (!this.soundEnabled) return;
     this.initCtx();
     if (!this.ctx) return;
@@ -414,26 +445,31 @@ class SoundFX {
     const sub = this.ctx.createOscillator();
     const subGain = this.ctx.createGain();
     sub.type = 'sine';
-    sub.frequency.setValueAtTime(110, now);
-    sub.frequency.exponentialRampToValueAtTime(45, now + 0.12);
-    subGain.gain.setValueAtTime(0.18, now);
-    subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+    sub.frequency.setValueAtTime(105, now);
+    sub.frequency.exponentialRampToValueAtTime(42, now + 0.12);
+    subGain.gain.setValueAtTime(0.15, now);
+    subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.13);
     sub.connect(subGain);
     subGain.connect(this.getDestination()!);
+    this.safeDisconnectOnEnd(sub, [subGain], 160);
     sub.start(now);
-    sub.stop(now + 0.15);
+    sub.stop(now + 0.14);
 
-    // 2. Ascending Tech Chime (D5, A5, D6)
-    const notes = [587.33, 880.00, 1174.66]; 
+    // 2. Ascending Organic Chime (D5, A5, D6 with subtle micro-detuning to prevent habituation)
+    const organicJitter = 1 + (Math.random() * 0.03 - 0.015);
+    const notes = [587.33 * organicJitter, 880.00 * organicJitter, 1174.66 * organicJitter]; 
     notes.forEach((freq, idx) => {
       const time = now + idx * 0.045;
-      this.playTone('sine', freq, time, 0.01, 0.06, 0.02, 0.35, 0.13);
-      this.playTone('triangle', freq * 2, time, 0.005, 0.03, 0.005, 0.15, 0.04);
+      // Warm fundamental sine body
+      this.playTone('sine', freq, time, 0.012, 0.07, 0.02, 0.30, 0.11);
+      // Soft high sparkle harmonic (attenuated to prevent ear fatigue)
+      this.playTone('triangle', freq * 2, time, 0.008, 0.04, 0.005, 0.12, 0.025);
     });
   }
 
   // 4. LEVEL UP - Triumphant Orchestral Synth Swell
   public playLevelUp() {
+    hapticPresets.levelUp();
     if (!this.soundEnabled) return;
     this.initCtx();
     if (!this.ctx) return;

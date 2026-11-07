@@ -33,27 +33,51 @@ function computeSourceBuildRev(): string {
   return `rev-${Math.floor(maxMtime)}`;
 }
 
-function generateSelfHealingServiceWorker(buildRev: string): string {
+function generateSelfHealingServiceWorker(buildRev: string, additionalAssets: string[] = []): string {
+  const allCoreAssets = [
+    '/',
+    '/index.html',
+    '/manifest.webmanifest',
+    '/manifest.json',
+    '/icon.svg',
+    '/apple-touch-icon.png',
+    '/pwa-192x192.png',
+    '/pwa-512x512.png',
+    '/pwa-maskable-512x512.png',
+    ...additionalAssets
+  ];
+
   return `/**
- * La Solución - Self-Healing Network-First PWA Service Worker
+ * La Solución - Self-Healing Network-First PWA Service Worker with Resilient Offline Support
  * Build Revision: ${buildRev}
  */
 const SW_VERSION = '${buildRev}';
+const CACHE_NAME = 'la-solucion-cache-' + SW_VERSION;
+const CORE_ASSETS = ${JSON.stringify(allCoreAssets, null, 2)};
 
 self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(CORE_ASSETS).catch((err) => {
+        console.warn('[SW] Core precache partial fail:', err);
+      });
+    })
+  );
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
-      let hadLegacyCaches = false;
       try {
         const keys = await caches.keys();
-        if (keys.length > 0) {
-          hadLegacyCaches = true;
-          await Promise.all(keys.map((key) => caches.delete(key)));
-        }
+        await Promise.all(
+          keys.map((key) => {
+            if (key !== CACHE_NAME) {
+              return caches.delete(key);
+            }
+          })
+        );
       } catch (e) {}
 
       try {
@@ -67,11 +91,6 @@ self.addEventListener('activate', (event) => {
         });
         for (const client of windowClients) {
           client.postMessage({ type: 'SW_ACTIVATED', version: SW_VERSION });
-          if (hadLegacyCaches && 'navigate' in client) {
-            try {
-              await client.navigate(client.url);
-            } catch (e) {}
-          }
         }
       } catch (e) {}
     })()
@@ -91,33 +110,81 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
 
-  // Navigation requests: always fetch fresh index.html from network
+  // 1. Navigation requests: Network-First with Offline Cache Fallback
   if (req.mode === 'navigate') {
     event.respondWith(
-      fetch(req, { cache: 'no-store' }).catch(() => caches.match('/index.html') || fetch(req))
+      fetch(req)
+        .then(async (networkRes) => {
+          if (networkRes.ok) {
+            const cache = await caches.open(CACHE_NAME);
+            cache.put('/index.html', networkRes.clone());
+            cache.put(req, networkRes.clone());
+          }
+          return networkRes;
+        })
+        .catch(async () => {
+          const cached = await caches.match(req) || await caches.match('/index.html') || await caches.match('/');
+          if (cached) return cached;
+          return new Response('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>La Solución - Offline</title></head><body><h1>Modo sin conexión</h1><p>Conéctate a internet para inicializar la aplicación.</p></body></html>', {
+            headers: { 'Content-Type': 'text/html; charset=utf-8' }
+          });
+        })
     );
     return;
   }
 
-  // JS/CSS chunks under /assets/: detect if Firebase rewrite returned HTML for a deleted old chunk hash
-  if (url.pathname.startsWith('/assets/') && (url.pathname.endsWith('.js') || url.pathname.endsWith('.css'))) {
+  // 2. Chunks and Static Assets under /assets/: Cache-First with Dynamic Fallback & Stale Guard
+  if (url.pathname.startsWith('/assets/')) {
     event.respondWith(
-      fetch(req).then(async (res) => {
-        const contentType = res.headers.get('content-type') || '';
-        if (res.status === 404 || contentType.includes('text/html')) {
-          if (event.clientId) {
-            try {
-              const client = await self.clients.get(event.clientId);
-              if (client && 'navigate' in client) {
-                client.navigate('/?_v=' + SW_VERSION);
-              }
-            } catch (e) {}
-          }
-          return new Response('', { status: 404, statusText: 'Chunk Outdated' });
+      caches.match(req).then(async (cachedRes) => {
+        if (cachedRes) {
+          return cachedRes;
         }
-        return res;
+        try {
+          const networkRes = await fetch(req);
+          const contentType = networkRes.headers.get('content-type') || '';
+          if (networkRes.status === 404 || contentType.includes('text/html')) {
+            if (event.clientId) {
+              try {
+                const client = await self.clients.get(event.clientId);
+                if (client && 'navigate' in client) {
+                  client.navigate('/?_v=' + SW_VERSION);
+                }
+              } catch (e) {}
+            }
+            return new Response('', { status: 404, statusText: 'Chunk Outdated' });
+          }
+          if (networkRes.ok) {
+            const cache = await caches.open(CACHE_NAME);
+            cache.put(req, networkRes.clone());
+          }
+          return networkRes;
+        } catch (fetchErr) {
+          return cachedRes || new Response('', { status: 503, statusText: 'Offline' });
+        }
       })
     );
+    return;
+  }
+
+  // 3. Static root assets (icons, manifest, etc.)
+  if (url.pathname.match(/\\.(png|svg|ico|webmanifest|json)$/i)) {
+    event.respondWith(
+      caches.match(req).then(async (cachedRes) => {
+        if (cachedRes) return cachedRes;
+        try {
+          const networkRes = await fetch(req);
+          if (networkRes.ok) {
+            const cache = await caches.open(CACHE_NAME);
+            cache.put(req, networkRes.clone());
+          }
+          return networkRes;
+        } catch (e) {
+          return cachedRes || new Response('', { status: 503, statusText: 'Offline' });
+        }
+      })
+    );
+    return;
   }
 });
 
@@ -174,9 +241,19 @@ export default defineConfig(() => {
               JSON.stringify({ rev: dynamicRev }),
               'utf-8'
             );
+            let additionalAssets: string[] = [];
+            try {
+              const assetsDir = path.resolve(distDir, 'assets');
+              if (fs.existsSync(assetsDir)) {
+                additionalAssets = fs.readdirSync(assetsDir)
+                  .filter((f) => f.endsWith('.js') || f.endsWith('.css'))
+                  .map((f) => `/assets/${f}`);
+              }
+            } catch {}
+
             fs.writeFileSync(
               path.join(distDir, 'sw.js'),
-              generateSelfHealingServiceWorker(dynamicRev),
+              generateSelfHealingServiceWorker(dynamicRev, additionalAssets),
               'utf-8'
             );
             fs.writeFileSync(

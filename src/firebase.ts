@@ -1,7 +1,7 @@
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, Auth } from 'firebase/auth';
 import { getAI, GoogleAIBackend, AI } from 'firebase/ai';
-import { getAnalytics, Analytics } from 'firebase/analytics';
+import { getAnalytics, isSupported, Analytics, logEvent } from 'firebase/analytics';
 import {
   getFirestore,
   initializeFirestore,
@@ -24,15 +24,30 @@ try {
 export { app, firebaseConfig };
 
 let analyticsInstance: Analytics | null = null;
-try {
-  if (app) {
-    analyticsInstance = getAnalytics(app);
-  }
-} catch (e) {
-  console.warn('Firebase getAnalytics failed:', e);
+if (typeof window !== 'undefined' && app) {
+  isSupported()
+    .then((supported) => {
+      if (supported && (!('onLine' in navigator) || navigator.onLine)) {
+        try {
+          analyticsInstance = getAnalytics(app);
+        } catch {}
+      }
+    })
+    .catch(() => {});
 }
 
 export const analytics = analyticsInstance as Analytics;
+
+export const safeLogEvent = (eventName: string, params?: Record<string, any>) => {
+  if (typeof window === 'undefined' || (typeof navigator !== 'undefined' && !navigator.onLine)) return;
+  try {
+    if (analyticsInstance) {
+      logEvent(analyticsInstance, eventName, params);
+    }
+  } catch (e) {
+    // Suppress offline telemetry fetch failures gracefully
+  }
+};
 
 let aiInstance: AI | null = null;
 try {

@@ -260,7 +260,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
     }
     if (isDraggingRef.current) return;
     const now = Date.now();
-    if (now < lastToggleTimeRef.current || now - lastToggleTimeRef.current < 300) return;
+    if (now < lastToggleTimeRef.current || now - lastToggleTimeRef.current < 160) return;
     lastToggleTimeRef.current = now;
     soundFX.playClick();
     setIsMenuOpen((prev) => !prev);
@@ -269,8 +269,8 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
   const handleSelectItem = useCallback((item: SatelliteHubItem) => {
     soundFX.playClick();
     setIsMenuOpen(false);
-    // Bloquear reactivación inmediata por eventos de clic sintéticos o rebote
-    lastToggleTimeRef.current = Date.now() + 600;
+    // Bloqueo anti-rebote mínimo (150ms) sin introducir latencia perceptible
+    lastToggleTimeRef.current = Date.now() + 150;
     try {
       item.action();
     } catch (err) {
@@ -392,7 +392,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
             >
               <HoloCompanion
                 archetype={archetype}
-                size={isMenuOpen ? 86 : 70}
+                size={isMenuOpen ? 80 : 58}
                 interactive={true}
                 onClick={handleCompanionClick}
                 auraState={auraState}
@@ -403,7 +403,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
             </motion.div>
           </div>
 
-          {/* Botón Inteligente de Jornada acoplado JUSTO DEBAJO de KAI en Modo Nexus con borde resplandeciente dinámico */}
+          {/* Botón Inteligente de Jornada acoplado con rendimiento táctico a 60 FPS */}
           <AnimatePresence mode="wait">
             {!isMenuOpen && dayStatus === 'idle' && (
               <motion.button
@@ -420,30 +420,23 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
                   opacity: 1,
                   y: 0,
                   scale: 1,
-                  boxShadow: [
-                    '0 0 12px rgba(0,240,255,0.55), 0 0 24px rgba(214,244,33,0.35), inset 0 0 8px rgba(255,255,255,0.45)',
-                    '0 0 24px rgba(0,240,255,0.95), 0 0 42px rgba(214,244,33,0.7), inset 0 0 14px rgba(255,255,255,0.8)',
-                    '0 0 12px rgba(0,240,255,0.55), 0 0 24px rgba(214,244,33,0.35), inset 0 0 8px rgba(255,255,255,0.45)',
-                  ],
                 }}
                 exit={{ opacity: 0, y: -6, scale: 0.85, transition: { duration: 0.15 } }}
                 transition={{
                   opacity: { duration: 0.18 },
                   scale: { duration: 0.18 },
-                  boxShadow: { duration: 2.2, repeat: Infinity, ease: 'easeInOut' },
                 }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
                 title="Activar jornada oficial e iniciar el día"
-                className="btn-neon-hunter mt-1 px-4 py-2 text-[11.5px] sm:text-xs font-black tracking-wider uppercase flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-400 via-[#d6f421] to-cyan-300 text-[#020617] border-2 border-cyan-100 ring-2 ring-cyan-400/70 shrink-0 cursor-pointer whitespace-nowrap"
+                className="btn-neon-hunter mt-3.5 px-3.5 py-1.5 text-xs font-black tracking-wider uppercase flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-cyan-400 via-[#d6f421] to-cyan-300 text-[#020617] border-2 border-cyan-100 ring-2 ring-cyan-400/70 shadow-[0_0_12px_rgba(0,240,255,0.35)] shrink-0 cursor-pointer whitespace-nowrap active:scale-95 transition-all"
               >
-                <span className="relative flex h-2.5 w-2.5 shrink-0">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-700 opacity-80" />
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-cyan-950" />
+                <span className="relative flex h-2 w-2 shrink-0">
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-950" />
                 </span>
                 <Icon name="sun" className="w-3.5 h-3.5 text-[#020617] shrink-0" />
-                <span>Iniciar Jornada</span>
-                <Icon name="arrowRight" className="w-3.5 h-3.5 text-[#020617] shrink-0 animate-bounce-x" />
+                <span>DESPLEGAR</span>
+                <Icon name="arrowRight" className="w-3.5 h-3.5 text-[#020617] shrink-0" />
               </motion.button>
             )}
 
@@ -462,30 +455,23 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
                   opacity: 1,
                   y: 0,
                   scale: 1,
-                  boxShadow: [
-                    '0 0 12px rgba(245,158,11,0.55), 0 0 24px rgba(253,224,71,0.35), inset 0 0 8px rgba(255,255,255,0.45)',
-                    '0 0 24px rgba(245,158,11,0.95), 0 0 42px rgba(253,224,71,0.7), inset 0 0 14px rgba(255,255,255,0.8)',
-                    '0 0 12px rgba(245,158,11,0.55), 0 0 24px rgba(253,224,71,0.35), inset 0 0 8px rgba(255,255,255,0.45)',
-                  ],
                 }}
                 exit={{ opacity: 0, y: -6, scale: 0.85, transition: { duration: 0.15 } }}
                 transition={{
                   opacity: { duration: 0.18 },
                   scale: { duration: 0.18 },
-                  boxShadow: { duration: 2.2, repeat: Infinity, ease: 'easeInOut' },
                 }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                title="Cerrar jornada y registrar inicio de descanso"
-                className="btn-neon-hunter mt-1 px-4 py-2 text-[11.5px] sm:text-xs font-black tracking-wider uppercase flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-300 text-[#020617] border-2 border-amber-100 ring-2 ring-amber-400/70 shrink-0 cursor-pointer whitespace-nowrap"
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
+                title="Consolidar jornada y registrar inicio de descanso"
+                className="btn-neon-hunter mt-3.5 px-3.5 py-1.5 text-xs font-black tracking-wider uppercase flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-300 text-[#020617] border-2 border-amber-100 ring-2 ring-amber-400/70 shadow-[0_0_12px_rgba(245,158,11,0.35)] shrink-0 cursor-pointer whitespace-nowrap active:scale-95 transition-all"
               >
-                <span className="relative flex h-2.5 w-2.5 shrink-0">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-700 opacity-80" />
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-950" />
+                <span className="relative flex h-2 w-2 shrink-0">
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-950" />
                 </span>
                 <Icon name="moon" className="w-3.5 h-3.5 text-[#020617] shrink-0" />
-                <span>Cerrar Jornada</span>
-                <Icon name="arrowRight" className="w-3.5 h-3.5 text-[#020617] shrink-0 animate-bounce-x" />
+                <span>CONSOLIDAR</span>
+                <Icon name="arrowRight" className="w-3.5 h-3.5 text-[#020617] shrink-0" />
               </motion.button>
             )}
           </AnimatePresence>

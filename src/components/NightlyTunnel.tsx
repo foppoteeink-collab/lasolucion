@@ -28,7 +28,7 @@ type TunnelStep = 'evaluation' | 'reward' | 'seal';
 const stepConfig = [
   { id: 'evaluation', label: 'Evaluación', icon: 'moon' as const, color: 'cyan' },
   { id: 'reward',     label: 'Recompensa', icon: 'gift' as const, color: 'amber' },
-  { id: 'seal',       label: 'Sellar',     icon: 'star' as const, color: 'indigo' },
+  { id: 'seal',       label: 'Consolidar', icon: 'star' as const, color: 'indigo' },
 ] as const;
 
 export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
@@ -376,29 +376,29 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
                       : 'bg-rose-950/50 border-rose-500/60 text-rose-300'
                   }`}>
                     {contractEval.succeeded
-                      ? '🔥 ¡Contrato de Sobrecarga Superado (≥85%)! +250 XP y +100🪙 recuperadas'
-                      : `⚠️ Contrato de Sobrecarga (${completionRate}% / 85%): Si consolidas ahora se quemarán tus ${contractEval.burnedCoins}🪙`}
+                      ? '🔥 ¡Protocolo de Rendimiento Superado (≥85%)! +250 XP y +100🪙 liberadas'
+                      : `⚠️ Protocolo de Rendimiento (${completionRate}% / 85%): Eficiencia insuficiente. Fondos de garantía (${contractEval.burnedCoins}🪙) no liberados.`}
                   </div>
                 )}
 
-                {/* Journal (Intrinsic Satisfaction Prompt) */}
+                {/* Journal (KAI Tactical Debriefing Prompt) */}
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-2">
                     <label className="text-xs font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1.5">
-                      <Icon name="bookOpen" className="w-3.5 h-3.5 text-indigo-400" /> Bitácora de Presencia & Orgullo Personal
+                      <Icon name="bookOpen" className="w-3.5 h-3.5 text-indigo-400" /> KAI // Debriefing de Estabilidad Operativa
                     </label>
                     <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border transition-all ${
                       hasValidReflection
                         ? 'bg-emerald-950/70 border-emerald-500/60 text-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.25)]'
                         : 'bg-cyan-950/50 border-cyan-800/60 text-cyan-300/80'
                     }`}>
-                      {hasValidReflection ? '✨ ¡Bonus Reflexión Activo! (+15 XP / +5🪙)' : 'Escribe una frase (+15 XP / +5🪙)'}
+                      {hasValidReflection ? '✨ ¡Registro Válido! (+15 XP / +5🪙)' : 'Registra un reporte (+15 XP / +5🪙)'}
                     </span>
                   </div>
                   <textarea
                     value={reflectionText}
                     onChange={e => setReflectionText(e.target.value)}
-                    placeholder="¿Qué bloque cumplido hoy te dio mayor paz mental u orgullo personal? (Mín. 15 caracteres para +15 XP / +5🪙)"
+                    placeholder="KAI // Identifica la operación ejecutada hoy que consolidó mayor estabilidad mental y dominio de foco (mín. 15 caracteres):"
                     className="w-full bg-[#000a14] border border-cyan-900/70 rounded-xl p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 resize-none h-16"
                   />
                 </div>
@@ -517,7 +517,7 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
                     transition={{ delay: 0.2 }}
                     className="text-2xl font-black text-white uppercase tracking-wide mb-2"
                   >
-                    Jornada Sellada
+                    Ciclo Operativo Consolidado
                   </motion.h3>
                   <motion.p
                     initial={{ opacity: 0, y: 10 }}
@@ -525,8 +525,8 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
                     transition={{ delay: 0.35 }}
                     className="text-sm text-slate-400 leading-relaxed max-w-sm"
                   >
-                    Tu progreso ha sido guardado. Descansa y renueva tu energía.<br />
-                    <span className="text-cyan-400 font-bold">Mañana comienza tu próxima misión.</span>
+                    Tu rendimiento ha sido asegurado en el núcleo de datos. Descansa y regenera tu energía.<br />
+                    <span className="text-cyan-400 font-bold">Mañana inicia tu siguiente ciclo operativo.</span>
                   </motion.p>
                 </div>
 
@@ -575,9 +575,9 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
               }`}
             >
               {dayConsolidated ? (
-                <><Icon name="check" className="w-5 h-5 animate-bounce" /> ¡Jornada Consolidada! → Cargando recompensa...</>
+                <><Icon name="check" className="w-5 h-5 animate-bounce" /> ¡Ciclo Consolidado! → Cargando recompensa...</>
               ) : (
-                <><Icon name="sparkles" className="w-4 h-4" /> Consolidar Jornada (+{totalBonusXp} XP / +{totalBonusCoins} Monedas)</>
+                <><Icon name="sparkles" className="w-4 h-4" /> Consolidar Ciclo (+{totalBonusXp} XP / +{totalBonusCoins} Monedas)</>
               )}
             </button>
           )}
@@ -639,7 +639,7 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
                 disabled={sealed}
                 className="flex-1 py-3.5 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-700 hover:from-indigo-500 hover:to-purple-600 text-white shadow-[0_0_25px_rgba(99,102,241,0.4)] active:scale-[0.98] transition-all cursor-pointer"
               >
-                <Icon name="moon" className="w-4 h-4" /> Sellar Jornada y Descansar
+                <Icon name="moon" className="w-4 h-4" /> Consolidar Ciclo y Entrar en Reposo
               </button>
             </div>
           )}

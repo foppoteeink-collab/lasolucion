@@ -28,8 +28,7 @@ import {
   Shield,
   Lightbulb
 } from 'lucide-react';
-import { logEvent } from 'firebase/analytics';
-import { analytics } from '../../firebase';
+import { safeLogEvent } from '../../firebase';
 import { KAICompanion } from '../KAICompanion';
 import { soundFX } from '../../utils/audio';
 import { triggerShockwave } from '../../utils/celebration';
@@ -225,7 +224,7 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
 
     setIsTaskCompletedInModal(true);
 
-    logEvent(analytics, 'task_completed_first');
+    safeLogEvent('task_completed_first');
     
     // Actualizar tarea en el store si existe
     if (createdTaskId) {
@@ -267,7 +266,7 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
     claimTutorialReward();
     markTutorialGuideSeen('introWalkthrough');
     markTutorialGuideSeen('welcomeOnboarding');
-    logEvent(analytics, 'onboarding_completed');
+    safeLogEvent('onboarding_completed');
 
     // 3. Forzar sync si existe
     if (cloudSync?.forceSyncNow) {

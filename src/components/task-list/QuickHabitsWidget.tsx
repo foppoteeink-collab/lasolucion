@@ -815,19 +815,32 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                   <div className="absolute inset-[-4px] rounded-full border-2 border-emerald-400 pointer-events-none animate-moxen-shockwave z-30" />
                 )}
 
-                {/* Micro-Llama Superior de Racha posicionada en el borde exterior para no cubrir el icono */}
+                {/* Micro-Llama Superior de Racha posicionada en el borde exterior con hitbox accesible WCAG 44x44px */}
                 {currentStreak > 0 && (
                   <div
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Racha: ${currentStreak} días para ${qh.title}. Toca para configurar protocolo.`}
                     onClick={(e) => {
                       e.stopPropagation();
                       soundFX.playClick();
                       setSelectedHabitForProtocol(qh);
                     }}
-                    className="absolute -top-2 left-1/2 -translate-x-1/2 bg-[#050914]/95 border border-amber-500/75 px-1.5 py-[1px] rounded-full flex items-center gap-0.5 z-20 shadow-[0_0_8px_rgba(245,158,11,0.35)] cursor-pointer hover:scale-105 transition-transform ring-1 ring-[#070510]"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        soundFX.playClick();
+                        setSelectedHabitForProtocol(qh);
+                      }
+                    }}
+                    className="absolute -top-2 left-1/2 -translate-x-1/2 bg-[#050914]/95 border border-amber-500/80 px-2 py-0.5 rounded-full flex items-center gap-0.5 z-20 shadow-[0_0_8px_rgba(245,158,11,0.35)] cursor-pointer hover:scale-105 active:scale-95 transition-transform ring-1 ring-[#070510]"
                     title={`Racha: ${currentStreak} días (Meta: ${streakGoal}d)`}
                   >
-                    <Flame className="w-2 h-2 text-amber-400 fill-amber-400 shrink-0" />
-                    <span className="text-[8px] font-mono font-black text-amber-300 leading-none">{currentStreak}</span>
+                    {/* Hitbox táctil invisible de 44x44px para evitar descarte o fallos de puntería */}
+                    <span className="absolute -inset-2.5 -top-3 w-[44px] h-[44px] left-1/2 -translate-x-1/2 pointer-events-auto" aria-hidden="true" />
+                    <Flame className="w-2.5 h-2.5 text-amber-400 fill-amber-400 shrink-0" />
+                    <span className="text-[10.5px] font-mono font-bold text-amber-300 leading-none">{currentStreak}</span>
                   </div>
                 )}
 
@@ -840,13 +853,13 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                     </linearGradient>
                   </defs>
 
-                  {/* Track de fondo con resplandor sutil */}
+                  {/* Track de fondo con contraste accesible WCAG 1.4.11 (≥3.0:1) */}
                   <circle
                     cx="24"
                     cy="24"
                     r="21"
                     stroke="currentColor"
-                    className="text-cyan-400/20"
+                    className="text-cyan-400/40"
                     strokeWidth="2.8"
                     fill="none"
                   />
@@ -866,7 +879,7 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                       filter: progressPct > 0
                         ? `drop-shadow(0 0 4px ${glowFilterColor})`
                         : 'none',
-                      transition: 'stroke-dashoffset 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), stroke 0.3s ease',
+                      transition: 'stroke-dashoffset 180ms cubic-bezier(0.16, 1, 0.3, 1), stroke 180ms ease',
                     }}
                   />
 
@@ -909,38 +922,25 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                   }`}
                 />
 
-                {/* Micro-Badge Inferior Derecho con Odómetro Cinético en el perímetro exterior */}
+                {/* Badge Inferior Táctico de Progreso (Optimizado para legibilidad WCAG 2.1) */}
                 <div
-                  className={`absolute -bottom-1.5 -right-1.5 px-1.5 py-[1px] rounded-full border font-mono font-bold leading-none flex items-center justify-center shadow-md z-20 ring-1 ring-[#070510] transition-all duration-300 ${
+                  className={`absolute -bottom-1 -right-1 px-2 py-[2px] rounded-full border font-mono font-bold leading-none flex items-center justify-center shadow-md z-20 ring-1 ring-[#070510] transition-all duration-200 ${
                     isFinished
-                      ? 'bg-emerald-950 border-emerald-400 text-emerald-300 shadow-[0_0_8px_rgba(16,185,129,0.7)]'
+                      ? 'bg-emerald-950 border-emerald-400 text-emerald-300 shadow-[0_0_8px_rgba(16,185,129,0.5)]'
                       : isCounterHabit
-                      ? 'bg-[#050914]/95 border-cyan-400/60 text-cyan-200 shadow-[0_0_6px_rgba(0,240,255,0.25)]'
+                      ? 'bg-[#050914] border-cyan-400/70 text-cyan-200 shadow-[0_0_6px_rgba(0,240,255,0.25)]'
                       : 'bg-[#060a14] border-white/20 text-gray-400 p-0.5'
                   }`}
                 >
                   {isFinished ? (
-                    <Check className="w-2 h-2 text-emerald-300 stroke-[3]" />
+                    <Check className="w-2.5 h-2.5 text-emerald-300 stroke-[3]" />
                   ) : isCounterHabit ? (
-                    <div className="flex items-center overflow-hidden h-[10px] leading-[10px] tabular-nums font-mono text-[8.5px]">
-                      <span className="inline-block h-[10px] overflow-hidden">
-                        <span
-                          className="block transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
-                          style={{ transform: `translateY(-${Math.min(current, target) * 10}px)` }}
-                        >
-                          {Array.from({ length: Math.max(target + 1, current + 1) }, (_, i) => (
-                            <span key={i} className="block h-[10px] leading-[10px] text-center">
-                              {i}
-                            </span>
-                          ))}
-                        </span>
-                      </span>
-                      <span className="opacity-60 text-[7.5px] mx-[1px]">/</span>
-                      <span className="text-[8.5px]">{target}</span>
-                    </div>
+                    <span className="tabular-nums font-mono text-[11px] font-bold text-cyan-200 tracking-tight">
+                      {current}<span className="text-cyan-400/70 mx-0.5">/</span>{target}
+                    </span>
                   ) : (
                     <span
-                      className="w-1 h-1 rounded-full"
+                      className="w-1.5 h-1.5 rounded-full"
                       style={{
                         backgroundColor: endColor,
                         boxShadow: `0 0 2px ${endColor}`,
@@ -957,7 +957,7 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                   soundFX.playClick();
                   setSelectedHabitForProtocol(qh);
                 }}
-                className="text-[10px] text-slate-300 hover:text-white font-medium max-w-[56px] truncate text-center mt-1 transition-colors block cursor-pointer select-none leading-tight"
+                className="text-[11px] text-slate-200 hover:text-white font-medium max-w-[62px] truncate text-center mt-1 transition-colors block cursor-pointer select-none leading-tight"
                 title={`${qh.title} - Toca para configurar`}
               >
                 {shortLabel}

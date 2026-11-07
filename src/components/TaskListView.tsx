@@ -483,7 +483,7 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
   const legendaryTask = useMemo(() => (tasks || []).find((t) => t.isLegendaryBounty), [tasks]);
 
   return (
-    <div className="flex flex-col gap-2 font-sans tracking-wide pb-24 sm:pb-28">
+    <div className="flex flex-col gap-2 font-sans tracking-wide pb-32 sm:pb-36">
       {/* Unified Dashboard Header Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-2">
         <div className="lg:col-span-4">

@@ -19,6 +19,7 @@ if (typeof window !== 'undefined') {
 }
 
 if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' }).catch(() => {});
   let refreshing = false;
 
   // Global utility for hard clearing app cache and service workers
@@ -61,6 +62,7 @@ if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
   });
 
   const checkSWUpdate = async () => {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) return;
     try {
       const reg = await navigator.serviceWorker.getRegistration();
       if (reg) {

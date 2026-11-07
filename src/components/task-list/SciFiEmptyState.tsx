@@ -51,24 +51,24 @@ export const SciFiEmptyState: React.FC<SciFiEmptyStateProps> = ({
         </div>
 
         {/* Headline */}
-        <h3 className="text-base sm:text-xl font-bold text-white tracking-wide mb-1.5 drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">
+        <h3 className="text-base sm:text-lg font-bold text-white tracking-wide mb-1.5 drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">
           {searchTerm
             ? 'Sin resultados'
             : selectedCategory !== 'todos'
-            ? `Sin tareas en: ${selectedCategory}`
+            ? `Sector vacío: ${selectedCategory}`
             : activeFilter !== 'todos'
-            ? `Sin tareas en este filtro`
-            : 'Todo al día — Sin tareas pendientes'}
+            ? `Filtro sin misiones`
+            : 'SECTOR DESPEJADO'}
         </h3>
 
         {/* Descriptive Body Copy */}
         <p className="text-xs sm:text-sm text-slate-300 font-sans leading-relaxed mb-6">
           {searchTerm ? (
-            <>Sin resultados para <span className="text-cyan-300 font-bold">"{searchTerm}"</span>.</>
+            <>Sin coincidencias para <span className="text-cyan-300 font-bold">"{searchTerm}"</span>.</>
           ) : isFiltered ? (
-            'No hay tareas en este filtro. Ajusta tus filtros o crea una nueva tarea.'
+            'Sin registros en esta vista. Ajusta filtros o asigna una misión.'
           ) : (
-            'Todo al día. Crea una tarea o activa una plantilla para arrancar.'
+            'Sin misiones pendientes. Inicia una pauta o descansa.'
           )}
         </p>
 
@@ -81,10 +81,10 @@ export const SciFiEmptyState: React.FC<SciFiEmptyStateProps> = ({
               soundFX.playClick();
               onAddTask();
             }}
-            className="btn-neon-hunter min-h-[46px] px-6 py-2.5 rounded-xl text-xs sm:text-sm active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg"
+            className="btn-neon-hunter min-h-[44px] px-5 py-2 rounded-xl text-xs sm:text-sm active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg uppercase font-black tracking-wider"
           >
             <Plus className="w-4 h-4 stroke-[3]" />
-            <span>Agregar Tarea</span>
+            <span>NUEVA MISIÓN</span>
           </button>
 
           {/* Reset Routine Button */}
@@ -95,10 +95,10 @@ export const SciFiEmptyState: React.FC<SciFiEmptyStateProps> = ({
                 soundFX.playClick();
                 onResetDay();
               }}
-              className="min-h-[44px] px-5 py-2.5 rounded-xl sm:rounded-2xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/50 hover:border-amber-400 font-black text-xs sm:text-sm shadow-[0_0_12px_rgba(245,158,11,0.25)] active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="min-h-[42px] px-4 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/50 hover:border-amber-400 font-bold text-xs sm:text-sm shadow-[0_0_12px_rgba(245,158,11,0.25)] active:scale-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer uppercase tracking-wider"
             >
               <RefreshCw className="w-4 h-4 text-amber-400" />
-              <span>Restablecer Tareas del Día</span>
+              <span>REINICIAR PAUTA</span>
             </button>
           )}
 
@@ -110,10 +110,10 @@ export const SciFiEmptyState: React.FC<SciFiEmptyStateProps> = ({
                 soundFX.playClick();
                 onClearFilters();
               }}
-              className="min-h-[44px] px-5 py-2.5 rounded-xl sm:rounded-2xl bg-blue-900/40 hover:bg-blue-800/60 text-blue-200 border border-blue-500/50 font-bold text-xs sm:text-sm active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="min-h-[42px] px-4 py-2 rounded-xl bg-blue-900/40 hover:bg-blue-800/60 text-blue-200 border border-blue-500/50 font-bold text-xs sm:text-sm active:scale-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer uppercase tracking-wider"
             >
               <FilterX className="w-4 h-4 text-cyan-400" />
-              <span>Ver Todas las Tareas</span>
+              <span>VER TODAS</span>
             </button>
           )}
         </div>
