@@ -16,13 +16,13 @@ export interface ShareCardPayload {
 export const generateAndShareLegacyCard = async (payload: ShareCardPayload): Promise<boolean> => {
   if (typeof window === 'undefined' || typeof document === 'undefined') return false;
 
-  try {
-    const canvas = document.createElement('canvas');
-    canvas.width = 1080;
-    canvas.height = 1920;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return false;
+  const canvas = document.createElement('canvas');
+  canvas.width = 1080;
+  canvas.height = 1920;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return false;
 
+  try {
     // 1. Fondo Obsidiana Profundo con Gradiente Radial Sci-Fi
     const bgGrad = ctx.createLinearGradient(0, 0, 0, 1920);
     bgGrad.addColorStop(0, '#020612');
@@ -167,5 +167,10 @@ export const generateAndShareLegacyCard = async (payload: ShareCardPayload): Pro
   } catch (err) {
     console.warn('Share card generation cancelled or failed:', err);
     return false;
+  } finally {
+    // FORCED CLEANUP: Clear 2D context and reset canvas dimensions to 0 to immediately release ~8.3MB GPU backing store
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    canvas.width = 0;
+    canvas.height = 0;
   }
 };

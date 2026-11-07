@@ -210,13 +210,16 @@ const setFocusModeActive = useUIStore(s => s.setFocusModeActive);
       } catch (e) {}
       triggerShockwave({ color: 'cyan', intensity: 'medium' });
 
+      // Preservar la fecha y hora exacta de terminación real (evita que un Pomodoro que venció a las 23:55
+      // se atribuya erróneamente a las 08:00 AM del día siguiente al despertar el teléfono)
+      const sessionEndDate = targetEndTime ? new Date(targetEndTime) : new Date();
       const completedSession: PomodoroSession = {
-        id: `pomo-${Date.now()}`,
-        date: getTodayDateString(),
+        id: `pomo-${targetEndTime || Date.now()}`,
+        date: getTodayDateString(sessionEndDate),
         durationMinutes: Math.round(initialTimeLeft / 60) || 25,
         taskTitle: taskTitle || 'Bloque de Foco',
         category: category,
-        completedAt: new Date().toISOString(),
+        completedAt: sessionEndDate.toISOString(),
         xpEarned: 25,
         coinsEarned: 8,
       };
@@ -248,7 +251,7 @@ const setFocusModeActive = useUIStore(s => s.setFocusModeActive);
       setInitialTimeLeft(WORK_TIME);
       setTimeLeft(WORK_TIME);
     }
-  }, [mode, taskTitle, category, initialTimeLeft, SHORT_BREAK, WORK_TIME, handlePomodoroComplete]);
+  }, [mode, taskTitle, category, initialTimeLeft, SHORT_BREAK, WORK_TIME, handlePomodoroComplete, targetEndTime]);
 
   // Main Background Tick Interval (500ms for high precision RTC)
   useEffect(() => {

@@ -93,6 +93,7 @@ export interface PlayerStats {
     activatedAtDate: string;
   };
   rankTitle: string;
+  kaiVoiceTone?: 'coach' | 'disciplinado' | 'ordenado';
   username?: string;
   fullName?: string;
   bio?: string;

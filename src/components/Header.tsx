@@ -65,8 +65,42 @@ export const Header: React.FC<HeaderProps> = ({
   onTabChange,
 }) => {
   const { user, signInWithGoogle, signOut: authSignOut } = useAuth();
-  const { stats } = usePlayerStore();
-  const { soundEnabled, toggleSound } = useUIStore();
+
+  // Atomic selectors for PlayerStore: Prevents full HUD re-renders on sleepLogs, finalizedDays, restDays, inventory updates
+  const level = usePlayerStore((s) => s.stats.level || 1);
+  const currentXp = usePlayerStore((s) => s.stats.currentXp || 0);
+  const requiredXp = usePlayerStore((s) => s.stats.requiredXp || 100);
+  const hp = usePlayerStore((s) => s.stats.hp ?? 100);
+  const maxHp = usePlayerStore((s) => s.stats.maxHp || 100);
+  const coins = usePlayerStore((s) => s.stats.coins || 0);
+  const streakDays = usePlayerStore((s) => s.stats.streakDays || 0);
+  const streakShields = usePlayerStore((s) => s.stats.streakShields || 0);
+  const characterClass = usePlayerStore((s) => s.stats.characterClass || 'Espíritu Heroico');
+  const avatarIcon = usePlayerStore((s) => s.stats.avatarIcon || '🛡️');
+  const rawFullName = usePlayerStore((s) => s.stats.fullName);
+  const rawUsername = usePlayerStore((s) => s.stats.username);
+  const ascensionTier = usePlayerStore((s) => s.stats.ascensionTier || 0);
+
+  const stats = React.useMemo(() => ({
+    level,
+    currentXp,
+    requiredXp,
+    hp,
+    maxHp,
+    coins,
+    streakDays,
+    streakShields,
+    characterClass,
+    avatarIcon,
+    fullName: rawFullName,
+    username: rawUsername,
+    ascensionTier,
+  }), [level, currentXp, requiredXp, hp, maxHp, coins, streakDays, streakShields, characterClass, avatarIcon, rawFullName, rawUsername, ascensionTier]);
+
+  // Atomic selectors for UIStore: Only re-render when sound toggle changes
+  const soundEnabled = useUIStore((s) => s.soundEnabled);
+  const toggleSound = useUIStore((s) => s.toggleSound);
+
   const { isPomodoroOpen, mode: timerMode, category: timerCategory } = useTimer();
 
   const handleSignOut = authSignOut;

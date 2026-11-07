@@ -53,6 +53,7 @@ function generateSelfHealingServiceWorker(buildRev: string, additionalAssets: st
  */
 const SW_VERSION = '${buildRev}';
 const CACHE_NAME = 'la-solucion-cache-' + SW_VERSION;
+const FONTS_CACHE_NAME = 'la-solucion-fonts-v1';
 const CORE_ASSETS = ${JSON.stringify(allCoreAssets, null, 2)};
 
 self.addEventListener('install', (event) => {
@@ -77,7 +78,7 @@ self.addEventListener('activate', (event) => {
         const keys = await caches.keys();
         await Promise.all(
           keys.map((key) => {
-            if (key !== CACHE_NAME) {
+            if (key !== CACHE_NAME && key !== FONTS_CACHE_NAME) {
               return caches.delete(key);
             }
           })
@@ -107,11 +108,55 @@ self.addEventListener('message', (event) => {
   }
 });
 
+// Background Sync: Triggers offline write queue flush when network reconnects
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'sync-cloud-mutations') {
+    event.waitUntil(
+      self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+        for (const client of clients) {
+          client.postMessage({ type: 'BACKGROUND_SYNC_TRIGGER' });
+        }
+      })
+    );
+  }
+});
+
+// Periodic Background Sync for installed PWAs
+self.addEventListener('periodicsync', (event) => {
+  if (event.tag === 'sync-tasks-periodic' || event.tag === 'sync-cloud-mutations') {
+    event.waitUntil(
+      self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+        for (const client of clients) {
+          client.postMessage({ type: 'BACKGROUND_SYNC_TRIGGER' });
+        }
+      })
+    );
+  }
+});
+
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
 
   const url = new URL(req.url);
+
+  // 0. External Fonts (Google Fonts & WebFonts): Stale-While-Revalidate with Dedicated Cache
+  if (url.origin === 'https://fonts.googleapis.com' || url.origin === 'https://fonts.gstatic.com') {
+    event.respondWith(
+      caches.open(FONTS_CACHE_NAME).then(async (cache) => {
+        const cachedRes = await cache.match(req);
+        const fetchPromise = fetch(req).then((networkRes) => {
+          if (networkRes.ok) {
+            cache.put(req, networkRes.clone());
+          }
+          return networkRes;
+        }).catch(() => cachedRes);
+        return cachedRes || fetchPromise;
+      })
+    );
+    return;
+  }
+
   if (url.origin !== self.location.origin) return;
 
   // 1. Navigation requests: Network-First with Offline Cache Fallback
@@ -155,8 +200,8 @@ self.addEventListener('fetch', (event) => {
             if (event.clientId) {
               try {
                 const client = await self.clients.get(event.clientId);
-                if (client && 'navigate' in client) {
-                  client.navigate('/?_v=' + SW_VERSION);
+                if (client) {
+                  client.postMessage({ type: 'CHUNK_MISSING', url: req.url });
                 }
               } catch (e) {}
             }

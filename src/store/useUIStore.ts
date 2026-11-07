@@ -49,6 +49,8 @@ interface UIState {
   zenFont: string; // FONT PARA MODO ZEN
   timeFormat: '12h' | '24h';
   systemAura: SystemAuraData | null;
+  handDominance: 'right' | 'left';
+  glowIntensity: 'off' | 'tactical' | 'neon';
   
   // Modales
   isDailyRewardsOpen: boolean;
@@ -102,6 +104,9 @@ interface UIState {
   setOpticMode: (mode: OpticMode) => void;
   setSystemAura: (aura: SystemAuraData | null) => void;
   triggerTransition: (durationMs?: number) => void;
+  setHandDominance: (dominance: 'right' | 'left') => void;
+  toggleHandDominance: () => void;
+  setGlowIntensity: (level: 'off' | 'tactical' | 'neon') => void;
 }
 
 // Convierte un color HEX a RGB numérico para sombras/glows
@@ -302,6 +307,35 @@ const getSavedSystemAura = (): SystemAuraData | null => {
   return null;
 };
 
+export const applyGlowIntensity = (level: 'off' | 'tactical' | 'neon') => {
+  if (typeof document === 'undefined') return;
+  document.documentElement.setAttribute('data-glow', level);
+};
+
+const getSavedGlowIntensity = (): 'off' | 'tactical' | 'neon' => {
+  if (typeof window !== 'undefined') {
+    try {
+      const saved = localStorage.getItem('taskquest_glow_intensity') as 'off' | 'tactical' | 'neon';
+      if (['off', 'tactical', 'neon'].includes(saved)) {
+        applyGlowIntensity(saved);
+        return saved;
+      }
+    } catch (e) {}
+  }
+  applyGlowIntensity('tactical');
+  return 'tactical';
+};
+
+const getSavedHandDominance = (): 'right' | 'left' => {
+  if (typeof window !== 'undefined') {
+    try {
+      const saved = localStorage.getItem('taskquest_hand_dominance') as 'right' | 'left';
+      if (saved === 'right' || saved === 'left') return saved;
+    } catch (e) {}
+  }
+  return 'right';
+};
+
 const getSavedTimeFormat = (): '12h' | '24h' => {
   if (typeof window !== 'undefined') {
     try {
@@ -327,6 +361,8 @@ export const useUIStore = create<UIState>((set, get) => ({
   zenFont: 'Indie Flower',
   timeFormat: getSavedTimeFormat(),
   systemAura: getSavedSystemAura(),
+  handDominance: getSavedHandDominance(),
+  glowIntensity: getSavedGlowIntensity(),
   
   isDailyRewardsOpen: false,
   isLevelUpOpen: false,
@@ -611,5 +647,29 @@ export const useUIStore = create<UIState>((set, get) => ({
       } catch (e) {}
     }
     set({ timeFormat: fmt });
+  },
+
+  setHandDominance: (dominance) => {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('taskquest_hand_dominance', dominance);
+      } catch (e) {}
+    }
+    set({ handDominance: dominance });
+  },
+
+  toggleHandDominance: () => {
+    const next = get().handDominance === 'right' ? 'left' : 'right';
+    get().setHandDominance(next);
+  },
+
+  setGlowIntensity: (level) => {
+    applyGlowIntensity(level);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('taskquest_glow_intensity', level);
+      } catch (e) {}
+    }
+    set({ glowIntensity: level });
   }
 }));

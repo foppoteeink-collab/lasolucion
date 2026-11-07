@@ -26,11 +26,17 @@ interface SidebarNavItem {
   label: string;
   icon: IconName;
   accentColor: string;
-  badgeText?: string;
+  badgeText?: React.ReactNode;
   type: 'page' | 'gadget';
   isActive?: boolean;
   onClick: () => void;
 }
+
+const LivePomodoroBadge: React.FC = () => {
+  const { isRunning, formattedTime } = useTimer();
+  if (!isRunning) return null;
+  return <span className="tabular-nums">{formattedTime}</span>;
+};
 
 export const SidebarHUD: React.FC<SidebarHUDProps> = ({
   onOpenOracleWithPrompt,
@@ -39,11 +45,46 @@ export const SidebarHUD: React.FC<SidebarHUDProps> = ({
   archetype = 'sabio',
   onDesktopExpandChange,
 }) => {
-  const { activeTab, setActiveTab, setModalState, isPomodoroOpen, openTaskForm } = useUIStore();
-  const { stats } = usePlayerStore();
-  const { tasksByDate } = useTaskStore();
+  // Atomic selectors for UIStore
+  const activeTab = useUIStore((s) => s.activeTab);
+  const setActiveTab = useUIStore((s) => s.setActiveTab);
+  const setModalState = useUIStore((s) => s.setModalState);
+  const isPomodoroOpen = useUIStore((s) => s.isPomodoroOpen);
+  const openTaskForm = useUIStore((s) => s.openTaskForm);
+
+  // Atomic selectors for PlayerStore
+  const level = usePlayerStore((s) => s.stats.level || 1);
+  const currentXp = usePlayerStore((s) => s.stats.currentXp || 0);
+  const requiredXp = usePlayerStore((s) => s.stats.requiredXp || 100);
+  const hp = usePlayerStore((s) => s.stats.hp ?? 100);
+  const maxHp = usePlayerStore((s) => s.stats.maxHp || 100);
+  const coins = usePlayerStore((s) => s.stats.coins || 0);
+  const streakDays = usePlayerStore((s) => s.stats.streakDays || 0);
+  const characterClass = usePlayerStore((s) => s.stats.characterClass);
+  const rawFullName = usePlayerStore((s) => s.stats.fullName);
+  const rawUsername = usePlayerStore((s) => s.stats.username);
+
+  const stats = useMemo(() => ({
+    level,
+    currentXp,
+    requiredXp,
+    hp,
+    maxHp,
+    coins,
+    streakDays,
+    characterClass,
+    fullName: rawFullName,
+    username: rawUsername,
+  }), [level, currentXp, requiredXp, hp, maxHp, coins, streakDays, characterClass, rawFullName, rawUsername]);
+
+  // Atomic selectors for TaskStore: Select count primitives instead of the entire tasksByDate dictionary
+  const todayStr = getTodayDateString();
+  const completedTodayTasks = useTaskStore((s) => (s.tasksByDate[todayStr] || []).filter(t => t.completed).length);
+  const pendingTodayTasks = useTaskStore((s) => (s.tasksByDate[todayStr] || []).filter(t => !t.completed).length);
+
   const { user } = useAuth();
-  const { isRunning: isTimerRunning, formattedTime } = useTimer();
+  // Timer isRunning only: DO NOT consume formattedTime here to prevent 1 Hz re-renders of this 900-line HUD!
+  const { isRunning: isTimerRunning } = useTimer();
   const { dayStatus, startDay, finishDay } = useDayCycle();
 
   const [isDesktopHovered, setIsDesktopHovered] = useState(false);
@@ -171,12 +212,6 @@ export const SidebarHUD: React.FC<SidebarHUDProps> = ({
     return () => window.removeEventListener('keydown', onKey);
   }, [isMobileOpen]);
 
-  // Datos en vivo del jugador y tareas
-  const todayStr = getTodayDateString();
-  const todayTasks = tasksByDate[todayStr] || [];
-  const completedTodayTasks = todayTasks.filter((t) => t.completed).length;
-  const pendingTodayTasks = todayTasks.filter((t) => !t.completed).length;
-
   const auraState: CompanionAuraState = useMemo(() => {
     if (isPomodoroOpen || isTimerRunning) return 'focus_trance';
     const currentHour = new Date().getHours();
@@ -297,7 +332,7 @@ export const SidebarHUD: React.FC<SidebarHUDProps> = ({
         label: 'Foco',
         icon: 'timer',
         accentColor: '#f43f5e',
-        badgeText: isTimerRunning ? formattedTime : undefined,
+        badgeText: isTimerRunning ? <LivePomodoroBadge /> : undefined,
         type: 'gadget',
         onClick: () => {
           soundFX.playClick();
@@ -348,7 +383,6 @@ export const SidebarHUD: React.FC<SidebarHUDProps> = ({
     ],
     [
       isTimerRunning,
-      formattedTime,
       setModalState,
       onOpenOracleWithPrompt,
       openTaskForm,

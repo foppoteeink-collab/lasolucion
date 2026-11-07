@@ -9,26 +9,43 @@ import * as gameEngine from '../engine/gameEngine';
 
 export type DayCycleStatus = 'idle' | 'active_hidden' | 'ready_to_close' | 'finished';
 
+const EMPTY_TASKS_ARRAY: any[] = [];
+
+/**
+ * Calculates current minutes in the logical 24h+ timeline of the day.
+ * If the current time is between 00:00 and 02:59 AM, it is within the night-owl
+ * grace period of the previous calendar day, so hours are projected as (h + 24).
+ * Example: 01:30 AM -> (1 + 24) * 60 + 30 = 1530 min.
+ */
+export const getLogicalNowMinutes = (d: Date = new Date()): number => {
+  const h = d.getHours();
+  const m = d.getMinutes();
+  return (h < 3 ? h + 24 : h) * 60 + m;
+};
+
 export const useDayCycle = () => {
-  const stats = usePlayerStore((s) => s.stats);
-  const tasksByDate = useTaskStore((s) => s.tasksByDate);
-  const startedDays = useTaskStore((s) => s.startedDays);
+  const today = getTodayDateString();
+
+  // Atomic selectors for PlayerStore to prevent re-renders on XP/coins/HP changes
+  const isFinished = usePlayerStore((s) => Boolean(s.stats.finalizedDays?.[today]));
+  const todaySleep = usePlayerStore((s) => s.stats.sleepLogs?.[today]);
+
+  // Atomic selectors for TaskStore
+  const todayTasks = useTaskStore((s) => s.tasksByDate[today] || EMPTY_TASKS_ARRAY);
+  const isStartedInStore = useTaskStore((s) => Boolean(s.startedDays?.[today]));
+
+  // App & UI Store
   const notificationSettings = useAppStore((s) => s.notificationSettings);
   const setModalState = useUIStore((s) => s.setModalState);
-  const today = getTodayDateString();
 
   // Optimistic flag so clicking 'Iniciar Jornada' hides the button in 0ms
   const [justStartedDate, setJustStartedDate] = useState<string | null>(null);
 
-  const [nowMinutes, setNowMinutes] = useState<number>(() => {
-    const d = new Date();
-    return d.getHours() * 60 + d.getMinutes();
-  });
+  const [logicalMinutes, setLogicalMinutes] = useState<number>(() => getLogicalNowMinutes());
 
   useEffect(() => {
     const updateClock = () => {
-      const d = new Date();
-      setNowMinutes(d.getHours() * 60 + d.getMinutes());
+      setLogicalMinutes(getLogicalNowMinutes());
     };
     const interval = setInterval(updateClock, 15000);
     window.addEventListener('focus', updateClock);
@@ -39,18 +56,15 @@ export const useDayCycle = () => {
   }, []);
 
   const dayStatus: DayCycleStatus = useMemo(() => {
-    const isFinished = Boolean(stats.finalizedDays?.[today]);
     if (isFinished) return 'finished';
 
-    const todaySleep = stats.sleepLogs?.[today];
     const isStarted = Boolean(
       justStartedDate === today ||
-      startedDays?.[today] ||
+      isStartedInStore ||
       todaySleep?.wakeTime ||
       todaySleep?.completedAt
     );
 
-    const todayTasks = tasksByDate[today] || [];
     const agendaTasks = todayTasks.filter((t) => t && t.title && !isQuickMicroHabit(t));
 
     // Calcular hora de inicio y fin laboral según bloques horarios o configuración del usuario
@@ -83,7 +97,7 @@ export const useDayCycle = () => {
       // Aparece dinámicamente al inicio de la hora laboral (con ventana previa de 15 min)
       const startThresholdMin = Math.max(0, baseWorkStartMin - 15);
 
-      if (nowMinutes >= startThresholdMin) {
+      if (logicalMinutes >= startThresholdMin) {
         return 'idle';
       }
       return 'active_hidden';
@@ -102,12 +116,12 @@ export const useDayCycle = () => {
     // Umbral: 20 minutos antes de la hora de finalización configurada (ventana de 15-20 min previos)
     const closeThresholdMin = Math.max(0, configuredEndMin - 20);
 
-    if (nowMinutes >= closeThresholdMin) {
+    if (logicalMinutes >= closeThresholdMin) {
       return 'ready_to_close';
     }
 
     return 'active_hidden';
-  }, [stats.sleepLogs, stats.finalizedDays, startedDays, tasksByDate, notificationSettings, today, nowMinutes, justStartedDate]);
+  }, [isFinished, todaySleep, isStartedInStore, todayTasks, notificationSettings, today, logicalMinutes, justStartedDate]);
 
   const startDay = () => {
     setJustStartedDate(today);

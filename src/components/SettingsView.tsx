@@ -5,7 +5,7 @@ import {
   HardDrive, FileSpreadsheet, Cpu, CheckCircle2, Key,
   Coins, Volume2, VolumeX, Target, Sun, Moon, ArrowUpRight, CheckCheck,
   SlidersHorizontal, Smartphone, Share, PlusSquare, FlaskConical,
-  Compass, Eye, Layout, Bell, BellOff, BellRing, Zap, Flame, Timer, Palette, ChevronLeft, Wallet, Type, Lock
+  Compass, Eye, Layout, Bell, BellOff, BellRing, Zap, Flame, Timer, Palette, ChevronLeft, Wallet, Type, Lock, Hand
 } from 'lucide-react';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 import { GameSettings } from '../types';
@@ -29,6 +29,7 @@ import { ScenarioSimulatorPanel } from './ScenarioSimulatorPanel';
 import { GoogleDriveSyncCard } from './GoogleDriveSyncCard';
 import { restoreAppState } from '../services/googleDriveService';
 import { KAI_OFFICIAL_SHAPES } from '../data/kaiShapes';
+import { KAI_VOICE_TONE_CONFIG, KaiVoiceTone } from '../data/kaiVoiceMatrix';
 import { KaiVectorGraphics } from './KaiVectorGraphics';
 import { 
   SUPPORTED_CURRENCIES, 
@@ -113,7 +114,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     zenMode, toggleZenMode, 
     timeFormat, setTimeFormat, 
     systemAura, setSystemAura, triggerTransition,
-    zenFont, setZenFont 
+    zenFont, setZenFont,
+    handDominance, setHandDominance,
+    glowIntensity, setGlowIntensity
   } = useUIStore();
   
   const [activeSubTab, setActiveSubTab] = useState<SettingsSubTab>('preferences');
@@ -835,6 +838,104 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 </div>
               </div>
 
+              {/* MANO DOMINANTE (ERGONOMÍA BIOMECÁNICA DEL PULGAR) */}
+              <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h4 className="text-sm font-anton tracking-wider uppercase text-white flex items-center gap-2 mb-1">
+                    <Hand className="w-4 h-4 text-cyan-400" /> Mano Dominante (Alcance del Pulgar)
+                  </h4>
+                  <p className="text-xs text-slate-400">
+                    Posiciona el orbe de KAI y los controles dinámicos en el arco natural de tu mano preferida.
+                  </p>
+                </div>
+                <div className="flex items-center gap-1.5 bg-black/40 p-1 rounded-2xl border border-white/10 self-start sm:self-auto">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFX.playClick();
+                      setHandDominance('right');
+                    }}
+                    className={`chicle-btn flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all cursor-pointer ${
+                      handDominance === 'right'
+                        ? 'bg-cyan-400 text-black font-bold shadow-[0_0_14px_rgba(0,240,255,0.6)]'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <span>Diestra (Derecha)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFX.playClick();
+                      setHandDominance('left');
+                    }}
+                    className={`chicle-btn flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all cursor-pointer ${
+                      handDominance === 'left'
+                        ? 'bg-cyan-400 text-black font-bold shadow-[0_0_14px_rgba(0,240,255,0.6)]'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <span>Zurda (Izquierda)</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* CALIBRACIÓN DE RESPLANDOR NEÓN (CONTROL DE BLOOM) */}
+              <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h4 className="text-sm font-anton tracking-wider uppercase text-white flex items-center gap-2 mb-1">
+                    <Sparkles className="w-4 h-4 text-amber-400" /> Resplandor Neón (Control de Bloom)
+                  </h4>
+                  <p className="text-xs text-slate-400">
+                    Regula la emisión luminosa de halos y sombras para confort visual en sesiones nocturnas.
+                  </p>
+                </div>
+                <div className="flex items-center gap-1.5 bg-black/40 p-1 rounded-2xl border border-white/10 self-start sm:self-auto">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFX.playClick();
+                      setGlowIntensity('off');
+                    }}
+                    className={`chicle-btn px-3 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all cursor-pointer ${
+                      glowIntensity === 'off'
+                        ? 'bg-white text-black font-bold shadow-[0_0_10px_rgba(255,255,255,0.5)]'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <span>Apagado</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFX.playClick();
+                      setGlowIntensity('tactical');
+                    }}
+                    className={`chicle-btn px-3 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all cursor-pointer ${
+                      glowIntensity === 'tactical'
+                        ? 'bg-cyan-400 text-black font-bold shadow-[0_0_12px_rgba(0,240,255,0.5)]'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <span>Táctico (50%)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFX.playClick();
+                      setGlowIntensity('neon');
+                    }}
+                    className={`chicle-btn px-3 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all cursor-pointer ${
+                      glowIntensity === 'neon'
+                        ? 'bg-cyan-300 text-black font-bold shadow-[0_0_18px_rgba(0,240,255,0.9)]'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <span>Neón Puro</span>
+                  </button>
+                </div>
+              </div>
+
               {/* Modo Zen / Rendimiento Limpio */}
               <div className="flex items-center justify-between gap-4 py-2 border-t border-white/10">
                 <div>
@@ -1130,6 +1231,59 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         {/* ===================== TAB 2: JUEGO & KAI ===================== */}
         {activeSubTab === 'gameplay' && (
           <div className="space-y-6 animate-fade-in">
+            {/* PERSONALIDAD & VOZ DE KAI */}
+            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-xl p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
+              <span className="vi-grano opacity-5" aria-hidden="true" />
+
+              <div className="flex items-center justify-between relative z-10">
+                <h3 className="text-xs font-anton text-cyan-400 uppercase tracking-wider flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-cyan-400" /> Personalidad de KAI (Copiloto)
+                </h3>
+                <span className="text-[11px] font-mono text-slate-400">8-12 palabras por aviso</span>
+              </div>
+
+              <p className="text-xs text-slate-300 relative z-10">
+                Elige cómo se comunica KAI contigo. Mensajes breves, directos y adaptados a tu estilo de crecimiento personal.
+              </p>
+
+              {/* Selector de Tonos */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 relative z-10">
+                {(Object.entries(KAI_VOICE_TONE_CONFIG) as [KaiVoiceTone, typeof KAI_VOICE_TONE_CONFIG[KaiVoiceTone]][]).map(([toneKey, config]) => {
+                  const isSelected = (stats.kaiVoiceTone || 'coach') === toneKey;
+                  return (
+                    <button
+                      key={toneKey}
+                      type="button"
+                      onClick={() => {
+                        soundFX.playClick();
+                        usePlayerStore.getState().setKaiVoiceTone(toneKey);
+                      }}
+                      className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between gap-2 ${
+                        isSelected
+                          ? 'bg-cyan-950/60 border-cyan-400/80 shadow-[0_0_16px_rgba(0,240,255,0.25)] ring-1 ring-cyan-400/50'
+                          : 'bg-white/[0.02] border-white/10 hover:border-white/20 hover:bg-white/[0.04]'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-anton tracking-wider uppercase text-white font-bold">
+                          {config.label}
+                        </span>
+                        {isSelected && (
+                          <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_6px_rgba(0,240,255,0.8)]" />
+                        )}
+                      </div>
+                      <p className="text-[11px] text-slate-400 leading-snug">
+                        {config.description}
+                      </p>
+                      <div className="pt-2 border-t border-white/[0.08] text-[10.5px] italic text-cyan-300/90 font-mono">
+                        "{config.preview}"
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* MECÁNICAS RPG */}
             <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-xl p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
               <span className="vi-grano opacity-5" aria-hidden="true" />

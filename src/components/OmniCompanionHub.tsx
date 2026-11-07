@@ -10,6 +10,7 @@ import { useTimer } from '../context/TimerContext';
 import { soundFX } from '../utils/audio';
 import { getTodayDateString } from '../utils/date';
 import { useDayCycle } from '../hooks/useDayCycle';
+import { getKaiPhrase } from '../data/kaiVoiceMatrix';
 
 interface OmniCompanionHubProps {
   onOpenOracleWithPrompt?: (promptText?: string) => void;
@@ -19,6 +20,35 @@ interface OmniCompanionHubProps {
   archetype?: string;
 }
 
+const OmniPomodoroBadge: React.FC<{
+  isOpen: boolean;
+  onToggle: () => void;
+}> = React.memo(({ isOpen, onToggle }) => {
+  const { isRunning, formattedTime } = useTimer();
+  if (!isRunning && !isOpen) return null;
+
+  return (
+    <motion.button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        soundFX.playClick();
+        onToggle();
+      }}
+      initial={{ opacity: 0, y: 3 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      className="mb-1 px-2.5 py-1 rounded-full bg-cyan-950/95 border border-cyan-400 text-[9px] font-mono font-bold text-cyan-300 shadow-[0_0_10px_rgba(0,240,255,0.4)] hover:bg-cyan-900/90 hover:border-cyan-300 hover:text-white flex items-center gap-1.5 shrink-0 cursor-pointer transition"
+      title={isOpen ? 'Minimizar temporizador' : 'Abrir temporizador de foco'}
+    >
+      <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping shrink-0" />
+      <span>FOCO: {formattedTime}</span>
+    </motion.button>
+  );
+});
+OmniPomodoroBadge.displayName = 'OmniPomodoroBadge';
+
 export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
   onOpenOracleWithPrompt,
   onOpenNeuralAnalysis,
@@ -26,22 +56,35 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
   onOpenFinance,
   archetype = 'sabio',
 }) => {
-  const { setActiveTab, setModalState, isPomodoroOpen, navigationMode, openTaskForm } = useUIStore();
-  const { stats } = usePlayerStore();
-  const { tasksByDate } = useTaskStore();
-  const { isRunning: isTimerRunning, formattedTime } = useTimer();
+  // Atomic selectors for UIStore
+  const setActiveTab = useUIStore((s) => s.setActiveTab);
+  const setModalState = useUIStore((s) => s.setModalState);
+  const isPomodoroOpen = useUIStore((s) => s.isPomodoroOpen);
+  const navigationMode = useUIStore((s) => s.navigationMode);
+  const handDominance = useUIStore((s) => s.handDominance);
+  const openTaskForm = useUIStore((s) => s.openTaskForm);
+
+  // Atomic selectors for PlayerStore
+  const coins = usePlayerStore((s) => s.stats.coins || 0);
+  const level = usePlayerStore((s) => s.stats.level || 1);
+  const rankTitle = usePlayerStore((s) => s.stats.rankTitle || 'Chispazo de Voluntad');
+  const kaiShape = usePlayerStore((s) => s.stats.kaiShape || 'prism');
+  const kaiVoiceTone = usePlayerStore((s) => s.stats.kaiVoiceTone || 'coach');
+  const [kaiSpeech, setKaiSpeech] = useState<string | null>(null);
+
+  // Atomic selectors for TaskStore: counts only
+  const todayStr = getTodayDateString();
+  const completedTodayTasks = useTaskStore((s) => (s.tasksByDate[todayStr] || []).filter(t => t.completed).length);
+  const pendingTodayTasks = useTaskStore((s) => (s.tasksByDate[todayStr] || []).filter(t => !t.completed).length);
+
+  // Only timer isRunning needed here; formattedTime is isolated in OmniPomodoroBadge
+  const { isRunning: isTimerRunning } = useTimer();
   const { dayStatus, startDay, finishDay } = useDayCycle();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [hasRecentVictory, setHasRecentVictory] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const isDraggingRef = useRef(false);
-
-  // Detección de tareas del día
-  const todayStr = getTodayDateString();
-  const todayTasks = tasksByDate[todayStr] || [];
-  const completedTodayTasks = todayTasks.filter((t) => t.completed).length;
-  const pendingTodayTasks = todayTasks.filter((t) => !t.completed).length;
 
   const isStreakAtRisk = useMemo(() => {
     const currentHour = new Date().getHours();
@@ -132,7 +175,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
         icon: <Icon name="shoppingBag" className="w-5 h-5" />,
         accentColor: '#10b981',
         glowColor: 'rgba(16, 185, 129, 0.45)',
-        liveStat: `${stats.coins || 0} Monedas`,
+        liveStat: `${coins} Monedas`,
         action: () => setActiveTab('shop'),
       },
       {
@@ -154,7 +197,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
         icon: <Icon name="barChart" className="w-5 h-5" />,
         accentColor: '#06b6d4',
         glowColor: 'rgba(6, 182, 212, 0.45)',
-        liveStat: `Nivel ${stats.level || 1} • ${stats.rankTitle || 'En Progreso'}`,
+        liveStat: `Nivel ${level} • ${rankTitle}`,
         action: () => setActiveTab('stats'),
       },
       {
@@ -189,7 +232,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
         icon: <Icon name="timer" className="w-5 h-5" />,
         accentColor: '#f43f5e',
         glowColor: 'rgba(244, 63, 94, 0.45)',
-        liveStat: isTimerRunning ? `${formattedTime}` : '25:00 min',
+        liveStat: isTimerRunning ? 'En curso' : '25:00 min',
         action: () => setModalState('isPomodoroOpen', true),
       },
       {
@@ -226,17 +269,17 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
     [
       pendingTodayTasks,
       isTimerRunning,
-      formattedTime,
-      stats.coins,
-      stats.level,
-      stats.kaiShape,
+      coins,
+      level,
+      rankTitle,
+      kaiShape,
       setActiveTab,
       setModalState,
       onOpenOracleWithPrompt,
-      onOpenNeuralAnalysis,
-      onOpenKaiWorkshop,
-      onOpenFinance,
       openTaskForm,
+      onOpenFinance,
+      onOpenKaiWorkshop,
+      onOpenNeuralAnalysis,
     ]
   );
 
@@ -279,9 +322,9 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
   }, []);
 
   const openOffset = useMemo(() => {
-    // Detectamos posición base de KAI en reposo
+    // Detectamos posición base de KAI en reposo considerando mano dominante
     const isDesktop = viewportDims.width >= 640;
-    const currentRight = isDesktop ? 20 : 10;
+    const currentSide = isDesktop ? 20 : 10;
     const currentBottom = isDesktop ? 24 : (navigationMode === 'classic' ? 80 : 16);
 
     // KAI tiene tamaño 86 en el menú desplegado (svgWidth ~118px, svgHeight ~125px).
@@ -290,14 +333,16 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
     const kaiHalfHeight = 63;
 
     // Centro exacto absoluto de la pantalla tanto en móvil como en computadora
-    const targetX = -(viewportDims.width / 2 - (currentRight + kaiHalfWidth));
+    const targetX = handDominance === 'left'
+      ? (viewportDims.width / 2 - (currentSide + kaiHalfWidth))
+      : -(viewportDims.width / 2 - (currentSide + kaiHalfWidth));
     const targetY = -(viewportDims.height / 2 - (currentBottom + kaiHalfHeight));
 
     return {
       x: Math.round(targetX),
       y: Math.round(targetY),
     };
-  }, [viewportDims.width, viewportDims.height, navigationMode]);
+  }, [viewportDims.width, viewportDims.height, navigationMode, handDominance]);
 
   return (
     <>
@@ -318,7 +363,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
         )}
       </AnimatePresence>
 
-      {/* DRON HOLOGRÁFICO FLOTANTE KAI */}
+      {/* DRON HOLOGRÁFICO FLOTANTE KAI (Adaptativo para diestros y zurdos) */}
       <motion.div
         drag={!isMenuOpen}
         dragMomentum={false}
@@ -331,12 +376,17 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
         onMouseLeave={() => setIsHovered(false)}
         className={`fixed z-[60] pointer-events-auto select-none touch-none will-change-transform omni-companion-hub-root ${
           navigationMode === 'classic'
-            ? 'bottom-20 sm:bottom-6 right-2.5 sm:right-5'
-            : 'bottom-4 sm:bottom-6 right-2.5 sm:right-5'
+            ? handDominance === 'left'
+              ? 'bottom-20 sm:bottom-6 left-2.5 sm:left-5'
+              : 'bottom-20 sm:bottom-6 right-2.5 sm:right-5'
+            : handDominance === 'left'
+              ? 'bottom-4 sm:bottom-6 left-2.5 sm:left-5'
+              : 'bottom-4 sm:bottom-6 right-2.5 sm:right-5'
         }`}
         style={{
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-          paddingRight: 'env(safe-area-inset-right, 0px)',
+          paddingRight: handDominance === 'left' ? undefined : 'env(safe-area-inset-right, 0px)',
+          paddingLeft: handDominance === 'left' ? 'env(safe-area-inset-left, 0px)' : undefined,
           touchAction: 'none',
         }}
         initial={{ scale: 0.8, opacity: 0 }}
@@ -350,25 +400,28 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
         transition={{ type: 'spring', damping: 25, stiffness: 300, mass: 0.7 }}
       >
         <div className="relative flex flex-col items-center touch-none">
-          {/* Badge de pomodoro si está corriendo */}
-          {(isPomodoroOpen || isTimerRunning) && !isMenuOpen && (
-            <motion.button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                soundFX.playClick();
-                setModalState('isPomodoroOpen', !isPomodoroOpen);
-              }}
-              initial={{ opacity: 0, y: 3 }}
-              animate={{ opacity: 1, y: 0 }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="mb-1 px-2.5 py-1 rounded-full bg-cyan-950/95 border border-cyan-400 text-[9px] font-mono font-bold text-cyan-300 shadow-[0_0_10px_rgba(0,240,255,0.4)] hover:bg-cyan-900/90 hover:border-cyan-300 hover:text-white flex items-center gap-1.5 shrink-0 cursor-pointer transition"
-              title={isPomodoroOpen ? 'Minimizar temporizador' : 'Abrir temporizador de foco'}
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping shrink-0" />
-              <span>FOCO: {formattedTime}</span>
-            </motion.button>
+          {/* Micro-Transmisión de KAI (8-12 palabras contextuales) */}
+          <AnimatePresence>
+            {kaiSpeech && (
+              <motion.div
+                initial={{ opacity: 0, y: 8, scale: 0.94 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -6, scale: 0.94 }}
+                transition={{ duration: 0.2 }}
+                className="absolute -top-12 right-0 sm:right-auto sm:left-1/2 sm:-translate-x-1/2 max-w-[260px] px-3 py-1.5 rounded-xl bg-[#040d1a]/95 border border-cyan-400/50 shadow-tactical-glow text-white text-[11px] font-medium leading-tight text-center z-50 pointer-events-none"
+              >
+                <span className="text-cyan-300 font-bold mr-1">KAI:</span>
+                <span>"{kaiSpeech}"</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Badge de pomodoro si está corriendo (aislado en micro-componente para 0 re-renders a 1 Hz) */}
+          {!isMenuOpen && (
+            <OmniPomodoroBadge
+              isOpen={isPomodoroOpen}
+              onToggle={() => setModalState('isPomodoroOpen', !isPomodoroOpen)}
+            />
           )}
 
           {/* KAI CON EXPANSIÓN DE BURBUJAS GOOEY (#mbe-goo) */}
@@ -414,6 +467,9 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
                   e.stopPropagation();
                   soundFX.playClick();
                   startDay();
+                  const phrase = getKaiPhrase('DAY_START', kaiVoiceTone);
+                  setKaiSpeech(phrase);
+                  setTimeout(() => setKaiSpeech(null), 3600);
                 }}
                 initial={{ opacity: 0, y: -4, scale: 0.92 }}
                 animate={{

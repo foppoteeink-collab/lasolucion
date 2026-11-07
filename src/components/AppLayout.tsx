@@ -59,38 +59,45 @@ import { SimulationBanner } from './SimulationBanner';
 import { DayCycleController } from './DayCycleController';
 import { getTodayDateString } from '../utils/date';
 
-export function AppLayout() {
-          const {
-    activeTab,
-    isTransitioning,
-    themeMode,
-    navigationMode,
-    soundEnabled,
-    isDailyRewardsOpen,
-    isLevelUpOpen,
-    isFinishDayOpen,
-    isDayTemplatesOpen,
-    isPomodoroOpen,
-    isNightlyReflectionOpen,
-    isSurpriseBossOpen,
-    surpriseBossData,
-    deleteConfirmTask,
-    floatingEffects,
-    floatingRewards,
-    zenMode,
-    setActiveTab,
-    setModalState,
-    setDeleteConfirmTask,
-    toggleTheme,
-    toggleSound,
-    isTacticalGuideOpen,
-    tacticalGuideInitialStep,
-    closeTacticalGuide
-  } = useUIStore();
+const EMPTY_TASKS_ARRAY: any[] = [];
 
-  const { stats, setStats } = usePlayerStore();
-  const { tasksByDate, setTasksByDate, customHabits, setCustomHabits, currentViewDate, setCurrentViewDate } = useTaskStore();
-  const tasks = tasksByDate[currentViewDate] || [];
+export function AppLayout() {
+  // Atomic selectors for UIStore: Only subscribe to relevant UI state
+  const activeTab = useUIStore((s) => s.activeTab);
+  const isTransitioning = useUIStore((s) => s.isTransitioning);
+  const themeMode = useUIStore((s) => s.themeMode);
+  const soundEnabled = useUIStore((s) => s.soundEnabled);
+  const navigationMode = useUIStore((s) => s.navigationMode);
+  const isDailyRewardsOpen = useUIStore((s) => s.isDailyRewardsOpen);
+  const isLevelUpOpen = useUIStore((s) => s.isLevelUpOpen);
+  const isFinishDayOpen = useUIStore((s) => s.isFinishDayOpen);
+  const isDayTemplatesOpen = useUIStore((s) => s.isDayTemplatesOpen);
+  const isPomodoroOpen = useUIStore((s) => s.isPomodoroOpen);
+  const isNightlyReflectionOpen = useUIStore((s) => s.isNightlyReflectionOpen);
+  const isSurpriseBossOpen = useUIStore((s) => s.isSurpriseBossOpen);
+  const surpriseBossData = useUIStore((s) => s.surpriseBossData);
+  const deleteConfirmTask = useUIStore((s) => s.deleteConfirmTask);
+  const floatingRewards = useUIStore((s) => s.floatingRewards);
+  const setActiveTab = useUIStore((s) => s.setActiveTab);
+  const setModalState = useUIStore((s) => s.setModalState);
+  const setDeleteConfirmTask = useUIStore((s) => s.setDeleteConfirmTask);
+  const isTacticalGuideOpen = useUIStore((s) => s.isTacticalGuideOpen);
+  const tacticalGuideInitialStep = useUIStore((s) => s.tacticalGuideInitialStep);
+  const closeTacticalGuide = useUIStore((s) => s.closeTacticalGuide);
+
+  // PlayerStore state and mutator
+  const stats = usePlayerStore((s) => s.stats);
+  const setStats = usePlayerStore((s) => s.setStats);
+  const lastDailyRewardClaimedDate = stats.lastDailyRewardClaimedDate;
+
+  // Atomic selectors for TaskStore: Select current date tasks only, NOT the entire dictionary!
+  const currentViewDate = useTaskStore((s) => s.currentViewDate);
+  const setCurrentViewDate = useTaskStore((s) => s.setCurrentViewDate);
+  const customHabits = useTaskStore((s) => s.customHabits);
+  const setCustomHabits = useTaskStore((s) => s.setCustomHabits);
+  const setTasksByDate = useTaskStore((s) => s.setTasksByDate);
+  const tasks = useTaskStore((s) => s.tasksByDate[s.currentViewDate] || EMPTY_TASKS_ARRAY);
+
   const [isOracleOpen, setIsOracleOpen] = React.useState(false);
   const [oracleInitialPrompt, setOracleInitialPrompt] = React.useState<string | undefined>(undefined);
   const [isNeuralAnalysisOpen, setIsNeuralAnalysisOpen] = React.useState(false);
@@ -429,7 +436,6 @@ export function AppLayout() {
                 <motion.div variants={itemVariant} className="w-full">
                   <Suspense fallback={<TabLoadingSkeleton />}>
                     <JournalView 
-                      tasksByDate={tasksByDate}
                       stats={stats}
                       currentDate={currentViewDate}
                       reflections={reflections}
@@ -464,7 +470,6 @@ export function AppLayout() {
                     <WeeklyStats 
                       stats={stats} 
                       onUpdateStats={setStats} 
-                      tasksByDate={tasksByDate} 
                       pomodoroSessions={pomodoroSessions} 
                       habitMastery={habitMastery} 
                       expenses={expenses} 
@@ -615,7 +620,7 @@ export function AppLayout() {
           onClaimDailyReward={handleClaimDailyReward}
           onAddJournalEntry={(note) => {
             const today = getTodayDateString();
-            const taskList = tasksByDate[today] || [];
+            const taskList = useTaskStore.getState().tasksByDate[today] || [];
             if (taskList.length > 0) {
               handleUpdateTaskNote(taskList[0].id, note);
             }
@@ -680,7 +685,7 @@ export function AppLayout() {
 
           {/* Offline Status Badge & PWA Install Banner */}
           <PWAInstallBanner />
-          <OfflineIndicator />
+          <OfflineIndicator cloudSync={cloudSync} />
 
         </div>
         {/* FIN #app-optical-canvas */}

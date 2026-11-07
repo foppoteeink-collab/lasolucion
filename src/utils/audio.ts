@@ -2,7 +2,7 @@
 // Redesigned for premium, pleasant, and highly polished RPG gamified audio
 
 import { useUIStore } from '../store/useUIStore';
-import { hapticPresets } from './haptics';
+import { hapticPresets, triggerHaptic } from './haptics';
 
 const isPomodoroFocusActive = (): boolean => {
   try {
@@ -247,6 +247,67 @@ class SoundFX {
     punchGain.connect(this.getDestination()!);
     punchOsc.start(now);
     punchOsc.stop(now + 0.1);
+  }
+
+  // 1.2 PNEUMATIC SEAL - Airtight tactical decompression & plasma purge for closing operational cycles
+  public playPneumaticSeal() {
+    triggerHaptic([35, 45, 70]);
+    if (!this.soundEnabled) return;
+    this.initCtx();
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+
+    // 1. Hydraulic Sub Chamber Resonance (62Hz -> 28Hz)
+    const subOsc = this.ctx.createOscillator();
+    const subGain = this.ctx.createGain();
+    subOsc.type = 'sine';
+    subOsc.frequency.setValueAtTime(62, now);
+    subOsc.frequency.exponentialRampToValueAtTime(28, now + 0.42);
+
+    subGain.gain.setValueAtTime(0.001, now);
+    subGain.gain.linearRampToValueAtTime(0.32, now + 0.02);
+    subGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.48);
+
+    subOsc.connect(subGain);
+    subGain.connect(this.getDestination()!);
+    this.safeDisconnectOnEnd(subOsc, [subGain], 500);
+    subOsc.start(now);
+    subOsc.stop(now + 0.5);
+
+    // 2. Decompression Air Release / Pink-filtered Plasma Vent
+    try {
+      const bufferSize = Math.floor(this.ctx.sampleRate * 0.45);
+      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      let b0 = 0, b1 = 0, b2 = 0;
+      for (let i = 0; i < bufferSize; i++) {
+        const white = Math.random() * 2 - 1;
+        // Soft pink noise approximation for natural air hiss
+        b0 = 0.99886 * b0 + white * 0.0555179;
+        b1 = 0.99332 * b1 + white * 0.0750759;
+        b2 = 0.96900 * b2 + white * 0.1538520;
+        data[i] = (b0 + b1 + b2 + white * 0.5362) * 0.11 * (1 - i / bufferSize);
+      }
+      const noise = this.ctx.createBufferSource();
+      noise.buffer = buffer;
+
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(2600, now);
+      filter.frequency.exponentialRampToValueAtTime(380, now + 0.42);
+
+      const noiseGain = this.ctx.createGain();
+      noiseGain.gain.setValueAtTime(0.001, now);
+      noiseGain.gain.linearRampToValueAtTime(0.12, now + 0.03);
+      noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.44);
+
+      noise.connect(filter);
+      filter.connect(noiseGain);
+      noiseGain.connect(this.getDestination()!);
+      this.safeDisconnectOnEnd(noise, [filter, noiseGain], 460);
+      noise.start(now);
+      noise.stop(now + 0.45);
+    } catch (e) {}
   }
 
   // 1.2 GLITCH UI - Fast cybernetic data stutter

@@ -149,10 +149,10 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
         x: typeof window !== 'undefined' ? window.innerWidth / 2 : 200,
         y: typeof window !== 'undefined' ? window.innerHeight / 2 : 200,
         text: `⚡ ARQUETIPO SINTONIZADO: ${arch.name.toUpperCase()}`,
-        type: 'custom' as any,
+        type: 'custom',
         isCrit: true,
         colorClass: 'text-cyan-300 bg-[#001830]/95 border-cyan-400 shadow-[0_0_25px_rgba(34,211,238,0.9)]',
-      } as any);
+      });
     } catch (_) {}
     onSelectArchetype(arch);
     onClose();

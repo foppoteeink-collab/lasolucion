@@ -238,7 +238,7 @@ export function buildSvgFromCustomForm(customForm: KaiCustomForm): string {
   const artStyle = customForm.artStyle || 'neon-geometry';
   const polygonsSvg = (customForm.polygons || [])
     .map((p) => {
-      const op = (p as any).fillOpacity ? ` fill-opacity="${(p as any).fillOpacity}"` : '';
+      const op = p.fillOpacity ? ` fill-opacity="${p.fillOpacity}"` : '';
       return `<polygon points="${p.points}"${op} />`;
     })
     .join('\n    ');

@@ -28,10 +28,10 @@ export const spawnBossEmojiExplosion = (originX?: number, originY?: number) => {
         x: Math.max(20, Math.min(window.innerWidth - 220, centerX + offsetX)),
         y: Math.max(60, centerY + offsetY),
         text: item.text,
-        type: 'custom' as any,
+        type: 'custom',
         isCrit: true,
         colorClass: item.color,
-      } as any);
+      });
     }, index * 70);
   });
 };
@@ -44,7 +44,7 @@ export const FloatingJuiceOverlay: React.FC = React.memo(() => {
 
   return (
     <div className="fixed inset-0 pointer-events-none z-[9999] overflow-hidden select-none will-change-transform">
-      {particles.map((p: any) => {
+      {particles.map((p: FloatingEffect) => {
         let icon = <Zap className="w-4 h-4 text-cyan-300 inline mr-1 shrink-0" />;
         let textStyle = 'text-cyan-300 shadow-[0_0_12px_rgba(0,240,255,0.8)] border-cyan-400/80 bg-[#001830]/90';
 

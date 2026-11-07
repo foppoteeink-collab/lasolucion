@@ -158,7 +158,7 @@ export const DAILY_BOSSES: BossInfo[] = [
     title: 'Erosión de Motivación Intrínseca',
     avatar: '🗿',
     maxHp: 100,
-    weaknessCategory: 'voluntad' as any,
+    weaknessCategory: 'habito',
     weaknessLabel: 'Compromiso con el Propósito',
     quote: '"¿Para qué esforzarse si el resultado final no cambiará el universo?..."',
     defeatQuote: 'Monolito pulverizado. Voluntad renovada con fuego.',

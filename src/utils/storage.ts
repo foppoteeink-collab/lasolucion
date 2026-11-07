@@ -51,6 +51,22 @@ export const safeSetItem = (key: string, value: string): void => {
   }
 };
 
+const debounceTimers: Record<string, any> = {};
+
+/**
+ * Pipelined debounced localStorage writer to prevent synchronous main-thread chokes during rapid bursts of updates
+ */
+export const debouncedSetItem = (key: string, value: string, delayMs = 300): void => {
+  if (typeof window === 'undefined' || (window as any).__isResettingAccount) return;
+  if (debounceTimers[key]) {
+    clearTimeout(debounceTimers[key]);
+  }
+  debounceTimers[key] = setTimeout(() => {
+    delete debounceTimers[key];
+    safeSetItem(key, value);
+  }, delayMs);
+};
+
 export const safeRemoveItem = (key: string): void => {
   try {
     if (typeof window !== 'undefined' && window.localStorage) {

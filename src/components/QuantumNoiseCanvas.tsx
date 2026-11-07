@@ -167,6 +167,7 @@ export const QuantumNoiseCanvas: React.FC = () => {
       time += delta * 1000;
 
       ctx.clearRect(0, 0, width, height);
+      ctx.globalCompositeOperation = 'lighter';
 
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
@@ -253,10 +254,7 @@ export const QuantumNoiseCanvas: React.FC = () => {
   return (
     <canvas
       ref={canvasRef}
-      className="absolute inset-0 pointer-events-none z-0"
-      style={{
-        mixBlendMode: 'screen',
-      }}
+      className="absolute inset-0 pointer-events-none z-0 opacity-90"
       aria-hidden="true"
     />
   );

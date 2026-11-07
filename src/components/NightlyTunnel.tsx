@@ -11,6 +11,7 @@ import { HoloCompanion } from './HoloCompanion';
 import { usePlayerStore } from '../store/usePlayerStore';
 import { evaluateOverchargeContract } from '../utils/level3Systems';
 import { generateAndShareLegacyCard } from '../utils/shareCardGenerator';
+import { getKaiPhrase } from '../data/kaiVoiceMatrix';
 
 interface NightlyTunnelProps {
   isOpen: boolean;
@@ -171,8 +172,8 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
     onConfirmFinishDay(totalBonusXp, totalBonusCoins, customBedtime);
     setDayConsolidated(true);
 
-    // Auto advance to reward step
-    setTimeout(() => setStep('reward'), 1200);
+    // Auto advance to reward step (calibrado a 450ms)
+    setTimeout(() => setStep('reward'), 450);
   };
 
   const handleClaimReward = (reward: typeof DAILY_REWARDS[number]) => {
@@ -181,17 +182,17 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
     triggerShockwave({ color: 'gold', intensity: 'epic' });
     onClaimDailyReward(reward.day, reward.xp, reward.coins, reward.bonusItem);
     setRewardClaimed(true);
-    setTimeout(() => setStep('seal'), 1000);
+    setTimeout(() => setStep('seal'), 400);
   };
 
   const handleSkipReward = () => setStep('seal');
 
   const handleSeal = () => {
     setSealed(true);
-    soundFX.playClick();
+    soundFX.playPneumaticSeal();
     setTimeout(() => {
       onClose();
-    }, 900);
+    }, 550);
   };
 
   // ── STEP INDEX ────────────────────────────────────────────
@@ -290,10 +291,11 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
                         {evolution.stageLabel}
                       </span>
                     </div>
-                    <p className="text-xs italic text-slate-300 leading-relaxed">
-                      {completedToday.length > 0
-                        ? `"¡Gran trabajo hoy! Completaste el ${completionRate}% de tus tareas."`
-                        : '"Hoy fue un día de descanso. Mañana renacerá tu energía."'}
+                    <p className="text-xs italic text-slate-300 leading-relaxed font-sans">
+                      "{getKaiPhrase(
+                        completionRate >= 80 ? 'NIGHTLY_CLOSE_SUCCESS' : 'NIGHTLY_CLOSE_HARD',
+                        stats.kaiVoiceTone || 'coach'
+                      )}"
                     </p>
                   </div>
                 </div>

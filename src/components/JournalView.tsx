@@ -34,9 +34,10 @@ import {
 import { SmartRecallModal } from './SmartRecallModal';
 import { WeeklyReportModal } from './WeeklyReportModal';
 import { ScrollReveal } from './common/ScrollReveal';
+import { useTaskStore } from '../store/useTaskStore';
 
 interface JournalViewProps {
-  tasksByDate: Record<string, TaskItem[]>;
+  tasksByDate?: Record<string, TaskItem[]>;
   stats?: PlayerStats;
   currentDate?: string;
   reflections?: Record<string, string>;
@@ -62,7 +63,7 @@ const CATEGORY_LABELS: Record<TaskCategory, { label: string; textClass: string }
 };
 
 export const JournalView: React.FC<JournalViewProps> = ({
-  tasksByDate,
+  tasksByDate: propTasksByDate,
   stats,
   currentDate,
   reflections: propReflections,
@@ -73,6 +74,8 @@ export const JournalView: React.FC<JournalViewProps> = ({
   onAddRecallAsTask,
   onRewardEarned,
 }) => {
+  const storeTasksByDate = useTaskStore((s) => s.tasksByDate);
+  const tasksByDate = propTasksByDate || storeTasksByDate;
   const activeStats = useMemo(() => stats || loadSavedStats(), [stats]);
   const activeDate = currentDate || getTodayDateString();
 

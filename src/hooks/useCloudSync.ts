@@ -31,6 +31,13 @@ import {
 } from '../utils/storage';
 import { getRankForLevel, generateDailyTasks } from '../data/defaults';
 import { getTodayDateString } from '../utils/date';
+import {
+  enqueueOutboxOperation,
+  getPendingOutboxOperations,
+  removeOutboxOperations,
+  subscribeToOutboxCount,
+  requestBackgroundSync
+} from '../services/offlineOutboxService';
 
 export type SyncStatus = 'synced' | 'saving' | 'offline' | 'error' | 'local';
 
@@ -40,6 +47,7 @@ export interface CloudSyncResult {
   forceSyncNow: () => Promise<boolean>;
   pullFromCloudNow?: () => Promise<boolean>;
   isOnline: boolean;
+  pendingOutboxCount: number;
 }
 
 const sanitizeForFirestore = (obj: any): any => {
@@ -465,6 +473,12 @@ export const useCloudSync = (
   const [isOnline, setIsOnline] = useState<boolean>(() => {
     return typeof navigator !== 'undefined' ? navigator.onLine : true;
   });
+  const [pendingOutboxCount, setPendingOutboxCount] = useState<number>(0);
+
+  // Subscribe to persistent IndexedDB outbox queue count
+  useEffect(() => {
+    return subscribeToOutboxCount(setPendingOutboxCount);
+  }, []);
 
   // Tracking flags to avoid infinite cyclic write/read loops
   const isApplyingRemoteRef = useRef(false);
@@ -472,7 +486,7 @@ export const useCloudSync = (
   const isSavingRef = useRef(false);
   const saveDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Monitor network status and trigger automatic sync when online status changes
+  // Monitor network status, Service Worker Background Sync triggers and visibility change
   useEffect(() => {
     const handleOnline = () => {
       setIsOnline(true);
@@ -489,11 +503,33 @@ export const useCloudSync = (
       }
     };
 
+    const handleVisibility = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible' && navigator.onLine && user) {
+        performSave();
+      }
+    };
+
+    let swCleanup: (() => void) | undefined;
+    if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+      const handleSWMessage = (event: MessageEvent) => {
+        if (event.data?.type === 'BACKGROUND_SYNC_TRIGGER' && user) {
+          console.log('[CloudSync] Background Sync trigger received from Service Worker, syncing outbox...');
+          performSave();
+        }
+      };
+      navigator.serviceWorker.addEventListener('message', handleSWMessage);
+      swCleanup = () => navigator.serviceWorker.removeEventListener('message', handleSWMessage);
+    }
+
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
+    document.addEventListener('visibilitychange', handleVisibility);
+
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      document.removeEventListener('visibilitychange', handleVisibility);
+      swCleanup?.();
     };
   }, [user]);
 
@@ -525,14 +561,18 @@ export const useCloudSync = (
         return true;
       }
 
+      const liveStats = usePlayerStore.getState().stats || stats;
+      const liveTaskState = useTaskStore.getState();
+
       // NETWORK CHECK: If offline, transition syncStatus gracefully without network error
       if (typeof navigator !== 'undefined' && !navigator.onLine) {
         setSyncStatus('offline');
+        if (user) {
+          enqueueOutboxOperation('FULL_SYNC_SNAPSHOT', { activeViewDate: liveTaskState.currentViewDate }, user.uid).catch(() => {});
+        }
         return false;
       }
 
-      const liveStats = usePlayerStore.getState().stats || stats;
-      const liveTaskState = useTaskStore.getState();
       const rawTasksData = overrideData?.tasksByDate || liveTaskState.tasksByDate || tasksByDate;
       const habitsData = overrideData?.customHabits || liveTaskState.customHabits || customHabits;
 
@@ -598,6 +638,16 @@ export const useCloudSync = (
         setLastSyncTime(new Date());
         setSyncStatus('synced');
         isSavingRef.current = false;
+
+        // Desencolar y limpiar operaciones pendientes en IndexedDB tras sync exitoso
+        if (user) {
+          getPendingOutboxOperations(user.uid).then((ops) => {
+            if (ops.length > 0) {
+              removeOutboxOperations(ops.map((o) => o.id)).catch(() => {});
+            }
+          }).catch(() => {});
+        }
+
         return true;
       } catch (err: any) {
         isSavingRef.current = false;
@@ -619,6 +669,9 @@ export const useCloudSync = (
         // Network error handling: fallback gracefully to offline mode
         if (typeof navigator !== 'undefined' && !navigator.onLine) {
           setSyncStatus('offline');
+          if (user) {
+            enqueueOutboxOperation('FULL_SYNC_SNAPSHOT', { activeViewDate: liveTaskState.currentViewDate }, user.uid).catch(() => {});
+          }
         } else {
           setSyncStatus('error');
         }
@@ -1183,5 +1236,6 @@ export const useCloudSync = (
     forceSyncNow,
     pullFromCloudNow,
     isOnline,
+    pendingOutboxCount,
   };
 };

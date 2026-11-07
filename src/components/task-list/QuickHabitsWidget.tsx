@@ -1064,7 +1064,7 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                       type="button"
                       onClick={() => handleDecrementHabit(qh)}
                       disabled={(qh.currentCount || 0) <= 0 && !qh.completed}
-                      className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/20 text-slate-200 text-xs font-mono font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer active:scale-95"
+                      className="min-h-[36px] min-w-[36px] px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/20 text-slate-200 text-xs font-mono font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer active:scale-95 flex items-center justify-center"
                       title="Restar 1 al contador de hoy"
                     >
                       -1
@@ -1074,53 +1074,34 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                       type="button"
                       onClick={(e) => handleResetHabitToday(qh, e)}
                       disabled={(qh.currentCount || 0) === 0 && !qh.completed}
-                      className="px-2.5 py-1 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 border border-rose-500/40 text-rose-300 text-xs font-bold transition-all flex items-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer active:scale-95"
+                      className="min-h-[36px] px-3 py-1.5 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 border border-rose-500/40 text-rose-300 text-xs font-bold transition-all flex items-center gap-1.5 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer active:scale-95"
                       title="Reiniciar contador a 0 para hoy"
                     >
-                      <RotateCcw className="w-3 h-3" />
-                      <span>Reiniciar hoy</span>
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>Reiniciar</span>
                     </button>
                   </div>
                 </div>
 
-                {/* Science Note */}
-                <div className="p-3 rounded-xl bg-surface-card border border-white/10 text-xs text-slate-300 space-y-1">
-                  <span className="font-bold text-cyan-300 flex items-center gap-1">
-                    <Sparkles className="w-3.5 h-3.5 text-cyan-400" /> Protocolo Ley 21/66 (Neuroplasticidad)
-                  </span>
-                  <p className="text-[11px] text-slate-400 leading-relaxed">
-                    Mantén tu racha diaria en este hábito para ganar y desbloquear el Aura y la Forma Maestra para Kai.
-                  </p>
-                </div>
-
-                {/* 21 Days — Aura for Kai */}
-                <div className={`p-4 rounded-xl border space-y-2.5 transition-all ${
+                {/* 21 Días — Sinóptico de Neuroplasticidad */}
+                <div className={`p-3.5 rounded-xl border space-y-2 transition-all ${
                   has21 
                     ? 'bg-purple-950/40 border-purple-500/60 shadow-[0_0_15px_rgba(168,85,247,0.2)]'
                     : 'bg-black/40 border-white/10'
                 }`}>
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-bold text-purple-300 flex items-center gap-1.5">
-                      <Zap className="w-4 h-4 text-purple-400" />
-                      <span>Meta 21 Días: {energyDetail.auraName21}</span>
-                      {qh.targetStreak === 21 && (
-                        <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-purple-900/80 border border-purple-400/60 text-purple-200">
-                          Tu Meta
-                        </span>
-                      )}
+                      <Zap className="w-3.5 h-3.5 text-purple-400" />
+                      <span>Meta 21 Días · {energyDetail.auraName21}</span>
                     </span>
                     <span className="font-mono font-bold text-purple-200">
                       {streak}/21d ({p21}%)
                     </span>
                   </div>
 
-                  <p className="text-[11px] text-slate-300 leading-relaxed">
-                    {energyDetail.auraDesc21}
-                  </p>
-
                   <div className="w-full h-2 bg-black/60 rounded-full border border-purple-900/60 overflow-hidden">
                     <div 
-                      className={`h-full rounded-full transition-all duration-500 ${
+                      className={`h-full rounded-full transition-all duration-300 ${
                         has21 ? 'bg-purple-400 shadow-[0_0_8px_rgba(168,85,247,0.8)]' : 'bg-purple-600/70'
                       }`}
                       style={{ width: `${p21}%` }}
@@ -1129,39 +1110,30 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
 
                   <div className="text-[11px] font-mono flex items-center justify-between">
                     <span className={has21 ? 'text-emerald-400 font-bold' : 'text-slate-400'}>
-                      {has21 ? '✓ ¡Aura desbloqueada para Kai!' : `Faltan ${Math.max(0, 21 - streak)} días para desbloquear el aura`}
+                      {has21 ? '✓ Aura desbloqueada para KAI' : `${Math.max(0, 21 - streak)} días restantes para fijar el hábito`}
                     </span>
                   </div>
                 </div>
 
-                {/* 66 Days — Master Form */}
-                <div className={`p-4 rounded-xl border space-y-2.5 transition-all ${
+                {/* 66 Días — Sinóptico de Maestría */}
+                <div className={`p-3.5 rounded-xl border space-y-2 transition-all ${
                   has66 
                     ? 'bg-amber-950/40 border-amber-500/60 shadow-[0_0_15px_rgba(245,158,11,0.2)]'
                     : 'bg-black/40 border-white/10'
                 }`}>
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-bold text-amber-300 flex items-center gap-1.5">
-                      <Trophy className="w-4 h-4 text-amber-400" />
-                      <span>Meta 66 Días: {energyDetail.masterForm66}</span>
-                      {qh.targetStreak === 66 && (
-                        <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-amber-900/80 border border-amber-400/60 text-amber-200">
-                          Tu Meta
-                        </span>
-                      )}
+                      <Trophy className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Meta 66 Días · {energyDetail.masterForm66}</span>
                     </span>
                     <span className="font-mono font-bold text-amber-200">
                       {streak}/66d ({p66}%)
                     </span>
                   </div>
 
-                  <p className="text-[11px] text-slate-300 leading-relaxed">
-                    {energyDetail.masterDesc66}
-                  </p>
-
                   <div className="w-full h-2 bg-black/60 rounded-full border border-amber-900/60 overflow-hidden">
                     <div 
-                      className={`h-full rounded-full transition-all duration-500 ${
+                      className={`h-full rounded-full transition-all duration-300 ${
                         has66 ? 'bg-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.8)]' : 'bg-amber-600/70'
                       }`}
                       style={{ width: `${p66}%` }}
@@ -1170,7 +1142,7 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
 
                   <div className="text-[11px] font-mono flex items-center justify-between">
                     <span className={has66 ? 'text-emerald-400 font-bold' : 'text-slate-400'}>
-                      {has66 ? '★ ¡Automatización total & Forma Maestra!' : `Faltan ${Math.max(0, 66 - streak)} días para la maestría`}
+                      {has66 ? '★ Automatización total & Forma Maestra' : `${Math.max(0, 66 - streak)} días restantes para automatizar`}
                     </span>
                   </div>
                 </div>

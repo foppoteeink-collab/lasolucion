@@ -220,9 +220,23 @@ export const useTaskStore = create<TaskState>()(
                 playerStats?.historicalArchiveSummary,
                 14
               );
-              state.tasksByDate = compacted.hotTasksByDate;
+              
               if (compacted.prunedTasksCount > 0) {
-                void persistColdArchiveToIndexedDB(compacted.coldArchivedByDate);
+                // Two-Phase Commit: Keep hot state intact until cold archive persistence is confirmed
+                void persistColdArchiveToIndexedDB(compacted.coldArchivedByDate).then((success) => {
+                  if (success) {
+                    useTaskStore.getState().setTasksByDate(compacted.hotTasksByDate);
+                    usePlayerStore.getState().setStats((prev) => ({
+                      ...prev,
+                      historicalArchiveSummary: compacted.updatedSummary,
+                    }));
+                  } else {
+                    console.warn('[Storage] Cold archive persist failed; retaining tasks in hot state to prevent data loss.');
+                  }
+                });
+                state.tasksByDate = sanitized;
+              } else {
+                state.tasksByDate = sanitized;
               }
             } else {
               state.tasksByDate = sanitized;

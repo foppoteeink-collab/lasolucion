@@ -290,12 +290,65 @@ export const compactHistoricalTasksByDate = (
   };
 };
 
+/**
+ * Detects if an error is a Storage QuotaExceededError in WebKit, Blink, or Gecko
+ */
+export const isQuotaExceededError = (err: unknown): boolean => {
+  if (!err || typeof err !== 'object') return false;
+  const anyErr = err as any;
+  return (
+    anyErr.name === 'QuotaExceededError' ||
+    anyErr.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
+    anyErr.code === 22 ||
+    anyErr.code === 1014 ||
+    (typeof anyErr.message === 'string' && anyErr.message.toLowerCase().includes('quota'))
+  );
+};
+
+/**
+ * Checks current storage quota and usage via StorageManager API
+ */
+export const checkStorageQuota = async (): Promise<{
+  quotaMb: number;
+  usageMb: number;
+  percentUsed: number;
+} | null> => {
+  if (typeof navigator === 'undefined' || !navigator.storage || !navigator.storage.estimate) {
+    return null;
+  }
+  try {
+    const estimate = await navigator.storage.estimate();
+    const quotaMb = Math.round((estimate.quota || 0) / (1024 * 1024));
+    const usageMb = Math.round((estimate.usage || 0) / (1024 * 1024));
+    const percentUsed = quotaMb > 0 ? Math.round((usageMb / quotaMb) * 100) : 0;
+    return { quotaMb, usageMb, percentUsed };
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Requests persistent storage to prevent Safari WebKit 7-day eviction
+ */
+export const requestPersistentStorage = async (): Promise<boolean> => {
+  if (typeof navigator === 'undefined' || !navigator.storage || !navigator.storage.persist) {
+    return false;
+  }
+  try {
+    const isPersisted = await navigator.storage.persisted();
+    if (isPersisted) return true;
+    return await navigator.storage.persist();
+  } catch {
+    return false;
+  }
+};
+
 export const persistColdArchiveToIndexedDB = async (
   coldArchivedByDate: Record<string, TaskItem[]>
-): Promise<void> => {
-  if (typeof window === 'undefined' || !('indexedDB' in window)) return;
+): Promise<boolean> => {
+  if (typeof window === 'undefined' || !('indexedDB' in window)) return false;
   const dates = Object.keys(coldArchivedByDate);
-  if (dates.length === 0) return;
+  if (dates.length === 0) return true;
 
   return new Promise((resolve) => {
     try {
@@ -316,19 +369,33 @@ export const persistColdArchiveToIndexedDB = async (
           }
           tx.oncomplete = () => {
             db.close();
-            resolve();
+            resolve(true);
           };
-          tx.onerror = () => {
+          tx.onerror = (e) => {
+            if (isQuotaExceededError(tx.error || e)) {
+              console.error('[ColdArchive] QuotaExceededError in IndexedDB write. Storage quota exhausted.');
+            } else {
+              console.warn('[ColdArchive] Transaction error in IndexedDB:', e);
+            }
             db.close();
-            resolve();
+            resolve(false);
           };
-        } catch {
-          resolve();
+        } catch (err) {
+          if (isQuotaExceededError(err)) {
+            console.error('[ColdArchive] QuotaExceededError caught during write execution:', err);
+          } else {
+            console.warn('[ColdArchive] Write execution failed:', err);
+          }
+          resolve(false);
         }
       };
-      request.onerror = () => resolve();
-    } catch {
-      resolve();
+      request.onerror = (e) => {
+        console.warn('[ColdArchive] Open failed in IndexedDB:', e);
+        resolve(false);
+      };
+    } catch (err) {
+      console.warn('[ColdArchive] Unexpected error persisting to IndexedDB:', err);
+      resolve(false);
     }
   });
 };

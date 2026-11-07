@@ -107,7 +107,7 @@ export const FinanceDashboard: React.FC<FinanceDashboardProps> = ({ expenses, se
     
     // Expenses & Manual Incomes from expenses store
     expenses.forEach(ex => {
-      const type = (ex as any).type || 'expense';
+      const type = ex.type || 'expense';
       const [y, m, d] = (ex.date || '').split('-').map(Number);
       const timestamp = new Date(y, (m || 1) - 1, d || 1).getTime();
 
@@ -117,7 +117,7 @@ export const FinanceDashboard: React.FC<FinanceDashboardProps> = ({ expenses, se
         type: type,
         description: ex.description,
         amount: Number(ex.amount) || 0,
-        category: (ex as any).category || (type === 'income' ? 'Ingreso General' : 'Gasto General'),
+        category: ex.category || (type === 'income' ? 'Ingreso General' : 'Gasto General'),
         timestamp
       });
     });

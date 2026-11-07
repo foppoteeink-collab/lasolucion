@@ -1,5 +1,5 @@
-@import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Ms+Madi&family=Indie+Flower&family=Young+Serif&display=swap');
+@import "tailwindcss";
 @import "./styles/components.css";
 @custom-variant dark (&:where(.dark, .dark *));
 

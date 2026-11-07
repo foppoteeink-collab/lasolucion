@@ -34,6 +34,7 @@ interface PlayerState {
   markTutorialGuideSeen: (guideKey: string) => void;
   resetTutorialGuides: () => void;
   claimTutorialReward: () => boolean;
+  setKaiVoiceTone: (tone: 'coach' | 'disciplinado' | 'ordenado') => void;
 }
 
 const INITIAL_PLAYER_STATS: PlayerStats = {
@@ -72,6 +73,7 @@ const INITIAL_PLAYER_STATS: PlayerStats = {
   kaiNeuralForgeCharges: 9999, // Modo Libre: Cargas ilimitadas para pruebas de IA
   frozenHabits: {},
   synapticBoosters: 0,
+  kaiVoiceTone: 'coach',
 };
 
 export const usePlayerStore = create<PlayerState>()(
@@ -624,7 +626,14 @@ export const usePlayerStore = create<PlayerState>()(
           };
         });
         return claimed;
-      }
+      },
+
+      setKaiVoiceTone: (tone) => set((state) => ({
+        stats: {
+          ...state.stats,
+          kaiVoiceTone: tone,
+        }
+      })),
     }),
     {
       name: 'quantum-os-player-stats',

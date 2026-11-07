@@ -24,6 +24,7 @@ import { getHabitBaseId } from '../intelligence/masteryEngine';
 import { CHARACTER_CLASSES, getRankForLevel } from '../data/defaults';
 import { getArchetypeDisplayName } from '../data/archetypes';
 import { soundFX } from '../utils/audio';
+import { useTaskStore } from '../store/useTaskStore';
 import {
   ResponsiveContainer,
   BarChart,
@@ -45,7 +46,7 @@ export interface WeeklyStatsProps {
   setExpenses: React.Dispatch<React.SetStateAction<FinancialTransaction[]>>;
   stats: PlayerStats;
   onUpdateStats?: (updater: PlayerStats | ((prev: PlayerStats) => PlayerStats)) => void;
-  tasksByDate: Record<string, TaskItem[]>;
+  tasksByDate?: Record<string, TaskItem[]>;
   pomodoroSessions: PomodoroSession[];
   habitMastery?: Record<string, HabitMasteryRecord>;
   cloudSync?: CloudSyncResult;
@@ -92,7 +93,7 @@ const AnimatedCounter = ({ value, duration = 1200, prefix = "", suffix = "" }: {
 export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
   stats,
   onUpdateStats,
-  tasksByDate,
+  tasksByDate: propTasksByDate,
   pomodoroSessions,
   habitMastery = {},
   expenses,
@@ -102,6 +103,8 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
   onOpenKaiWorkshop,
   onOpenSkills
 }) => {
+  const storeTasksByDate = useTaskStore((s) => s.tasksByDate);
+  const tasksByDate = propTasksByDate || storeTasksByDate;
   const [activeSubTab, setActiveSubTab] = useState<StatsSubTab>('hero');
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isRanksModalOpen, setIsRanksModalOpen] = useState(false);
