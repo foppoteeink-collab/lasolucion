@@ -8,6 +8,7 @@ import { useAppStore } from './store/useAppStore';
 import { notificationService } from './utils/notifications';
 import { scheduleAll } from './utils/notificationScheduler';
 import { getTodayDateString } from './utils/date';
+import { requestPersistentStorage } from './utils/level3Systems';
 
 const EMPTY_TASKS: any[] = [];
 
@@ -19,6 +20,13 @@ export default function App() {
 
   useEffect(() => {
     ensureTodayTasks();
+
+    // P0: Request persistent storage to protect against Safari WebKit 7-day eviction
+    void requestPersistentStorage().then((persisted) => {
+      if (persisted) {
+        console.log('[Storage] WebKit/Blink Persistent Storage granted.');
+      }
+    }).catch(() => {});
 
     // Iniciar scheduler de notificaciones en tiempo real
     notificationService.startNotificationScheduler(() => {

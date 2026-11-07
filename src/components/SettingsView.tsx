@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { 
   Settings, Sparkles, Activity, ShieldAlert, ShieldCheck, Shield, LogOut, User, LogIn, 
   Cloud, CloudOff, Download, Upload, Database, Check, RefreshCw, 
@@ -24,7 +24,7 @@ import {
 import { useTaskStore } from '../store/useTaskStore';
 import { usePlayerStore } from '../store/usePlayerStore';
 import { getTodayDateString } from '../utils/date';
-import { OracleModal } from './OracleModal';
+const OracleModal = lazy(() => import('./OracleModal').then(m => ({ default: m.OracleModal })));
 import { ScenarioSimulatorPanel } from './ScenarioSimulatorPanel';
 import { GoogleDriveSyncCard } from './GoogleDriveSyncCard';
 import { restoreAppState } from '../services/googleDriveService';
@@ -2129,10 +2129,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         )}
       </div>
 
-      <OracleModal 
-        isOpen={isOracleOpen}
-        onClose={() => setIsOracleOpen(false)}
-      />
+      {isOracleOpen && (
+        <Suspense fallback={null}>
+          <OracleModal 
+            isOpen={isOracleOpen}
+            onClose={() => setIsOracleOpen(false)}
+          />
+        </Suspense>
+      )}
     </div>
   );
 };

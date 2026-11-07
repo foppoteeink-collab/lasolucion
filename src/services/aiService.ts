@@ -117,14 +117,19 @@ async function fetchGeminiPrompt(promptText: string, modelName: string = 'gemini
   const apiKeyToTry = getEffectiveGeminiApiKey();
   if (apiKeyToTry) {
     for (const modelToTry of candidateModels) {
+      let shouldStopLoop = false;
       try {
         return await withRetry(async () => {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 14000);
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelToTry}:generateContent?key=${apiKeyToTry}`;
+            // Header-based authentication to prevent API key exposure in query parameters and proxy logs
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelToTry}:generateContent`;
             const res = await fetch(url, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: { 
+                'Content-Type': 'application/json',
+                'x-goog-api-key': apiKeyToTry
+              },
               body: JSON.stringify({
                 contents: [{ parts: [{ text: sanitizedPrompt }] }],
                 generationConfig: { temperature: 0.25, maxOutputTokens: 8192 },
@@ -135,6 +140,11 @@ async function fetchGeminiPrompt(promptText: string, modelName: string = 'gemini
             
             if (!res.ok) {
                 const errText = await res.text();
+                // If rate limited or unauthorized, do not hammer other candidate models
+                if (res.status === 429 || res.status === 403) {
+                  shouldStopLoop = true;
+                  throw new Error(`CRITICAL_API_LIMIT_${res.status}: ${errText.slice(0, 200)}`);
+                }
                 throw new Error(`${res.status} ${errText}`);
             }
 
@@ -146,8 +156,12 @@ async function fetchGeminiPrompt(promptText: string, modelName: string = 'gemini
             }
             throw new Error('No text returned');
         });
-      } catch (err) {
-        console.warn(`[Gemini API] (${modelToTry}) failed:`, err);
+      } catch (err: any) {
+        console.warn(`[Gemini API] (${modelToTry}) failed:`, err?.message || err);
+        if (shouldStopLoop || err?.message?.includes('CRITICAL_API_LIMIT')) {
+          console.warn('[Gemini API] Aborting candidate model loop due to quota/permission limit.');
+          break;
+        }
         // try next model
       }
     }

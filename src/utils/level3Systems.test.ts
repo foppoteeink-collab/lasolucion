@@ -151,3 +151,46 @@ test('5 & 7. Time Blocks & Hot/Cold 14-Day Compactor: counts conquered blocks an
   assert.equal(compacted.updatedSummary.totalCompletedCount, 1);
   assert.equal(compacted.updatedSummary.byCategory.estudio, 1);
 });
+
+test('P0 Cloud Sync: Coin reconciliation respects spending without infinite gold glitch', async () => {
+  const { mergePlayerStats } = await import('../hooks/useCloudSync');
+  
+  // Case A: Local spent coins (100 -> 50) at T=2000, remote snapshot still has 100 at T=1000
+  const localStats = createMockStats({ coins: 50, coinsLastUpdated: 2000 });
+  const remoteStats = createMockStats({ coins: 100, coinsLastUpdated: 1000 });
+
+  const merged = mergePlayerStats(localStats, remoteStats);
+  assert.equal(merged.coins, 50, 'Local coin spending must NOT be reverted to 100 by stale remote snapshot');
+  assert.equal(merged.coinsLastUpdated, 2000);
+
+  // Case B: Remote gained coins legitimately at T=3000
+  const newerRemoteStats = createMockStats({ coins: 150, coinsLastUpdated: 3000 });
+  const mergedWithRemote = mergePlayerStats(localStats, newerRemoteStats);
+  assert.equal(mergedWithRemote.coins, 150, 'Newer remote coin state must be accepted');
+});
+
+test('P0 Cloud Sync: Deleted tasks with tombstones are NEVER resurrected by remote snapshots', async () => {
+  const { mergeTasksByDate } = await import('../hooks/useCloudSync');
+
+  const localTasks = {
+    '2026-11-06': [
+      { id: 'task-active', title: 'Active Task', category: 'trabajo', xpReward: 10, coinReward: 2, completed: false } as TaskItem,
+    ]
+  };
+
+  const remoteTasks = {
+    '2026-11-06': [
+      { id: 'task-active', title: 'Active Task', category: 'trabajo', xpReward: 10, coinReward: 2, completed: false } as TaskItem,
+      { id: 'task-deleted', title: 'Deleted Task', category: 'personal', xpReward: 10, coinReward: 2, completed: false } as TaskItem,
+    ]
+  };
+
+  const tombstones = {
+    'task-deleted': '2026-11-06T12:00:00Z',
+  };
+
+  const merged = mergeTasksByDate(localTasks, remoteTasks, tombstones);
+  assert.equal(merged['2026-11-06'].length, 1);
+  assert.equal(merged['2026-11-06'][0].id, 'task-active');
+  assert.equal(merged['2026-11-06'].some(t => t.id === 'task-deleted'), false, 'Tombstoned task must not be resurrected');
+});

@@ -97,6 +97,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = (props) => {
   const catStyle = getCategoryStyle(task.category);
   const rarity = getRarityBadge(task);
   const { mainTime, subPeriod, rangeSubtitle } = parseScheduleTimeColumns(task.timeBlock, timeFormat);
+  const isCounterHabit = Boolean((task.isHabit || task.category === 'habito' || task.isQuickHabit || task.isTracked2166 || (task.targetCount && task.targetCount > 1)) && task.targetCount && task.targetCount > 1);
   const hexToRgba = (hex: string, alpha: number): string => {
     const cleanHex = hex.replace('#', '');
     const r = parseInt(cleanHex.substring(0, 2), 16) || 0;
@@ -134,11 +135,62 @@ const TaskCardComponent: React.FC<TaskCardProps> = (props) => {
       <div style={infoBoxStyle} className={"flex-1 min-w-0 px-2.5 py-2 sm:px-3.5 sm:py-2.5 flex items-center justify-between gap-2 sm:gap-3 relative isolate rounded-xl border backdrop-blur-xl group-hover:brightness-110 " + (isMenuOpen ? "ring-1 ring-cyan-500/40 shadow-[0_0_15px_rgba(0,240,255,0.25)] " : "") + (isCompleted ? "opacity-90" : "")}>
         <span className="vi-grano" aria-hidden="true" />
         <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
-          <motion.button type="button" whileTap={{ scale: 1.0 }} onClick={(e) => { if (isTogglingRef.current) return; isTogglingRef.current = true; setTimeout(() => { isTogglingRef.current = false; }, 350); soundFX.playClick(); if (isFutureDay) { useUIStore.getState().addFloatingEffect({ x: e.clientX || 200, y: (e.clientY || 200) - 20, text: '⏳ Día futuro: modo planificación', type: 'streak' }); return; } onToggle(task.id, e); }} disabled={isDayEnded} style={isCompleted ? undefined : { borderColor: hexToRgba(activeLineColor, 0.40), boxShadow: '0 0 10px ' + hexToRgba(activeLineColor, 0.18) }} className={"w-9 h-9 sm:w-10 sm:h-10 border flex items-center justify-center transition-all cursor-pointer shrink-0 relative select-none " + (isCompleted ? "bg-gradient-to-br from-emerald-400 to-emerald-500 border-emerald-300 text-slate-950 shadow-[0_0_14px_rgba(16,185,129,0.55)] rounded-xl" : isFutureDay ? "bg-black/40 text-cyan-400/60 hover:bg-white/[0.04] rounded-xl" : "bg-black/45 text-white hover:bg-black/30 hover:scale-[1.0] rounded-xl")} title={isFutureDay ? 'Día futuro: modo planificación' : isCompleted ? 'Desmarcar tarea' : 'Marcar como completada'} aria-label={isCompleted ? "Desmarcar tarea: " + task.title : "Completar tarea: " + task.title}>
-            {isCompleted ? <motion.div initial={{ scale: 0.4, rotate: -25 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring', stiffness: 520, damping: 22 }}><Icon name="check" className="w-5 h-5 stroke-[3] text-black" /></motion.div> : <div className="flex items-center justify-center">{getCategoryIcon(task.category, activeLineColor)}{isFutureDay && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-cyan-400 ring-2 ring-black" />}</div>}
+          <motion.button 
+            type="button" 
+            whileTap={{ scale: 1.0 }} 
+            onClick={(e) => { 
+              if (isTogglingRef.current) return; 
+              isTogglingRef.current = true; 
+              setTimeout(() => { isTogglingRef.current = false; }, 350); 
+              soundFX.playClick(); 
+              if (isFutureDay) { 
+                useUIStore.getState().addFloatingEffect({ x: e.clientX || 200, y: (e.clientY || 200) - 20, text: '⏳ Día futuro: modo planificación', type: 'streak' }); 
+                return; 
+              } 
+              if (isCounterHabit && onIncrementHabit) {
+                onIncrementHabit(task.id, e);
+              } else {
+                onToggle(task.id, e);
+              }
+            }} 
+            disabled={isDayEnded} 
+            style={isCompleted ? undefined : { borderColor: hexToRgba(activeLineColor, 0.40), boxShadow: '0 0 10px ' + hexToRgba(activeLineColor, 0.18) }} 
+            className={"w-9 h-9 sm:w-10 sm:h-10 border flex items-center justify-center transition-all cursor-pointer shrink-0 relative select-none " + (isCompleted ? "bg-gradient-to-br from-emerald-400 to-emerald-500 border-emerald-300 text-slate-950 shadow-[0_0_14px_rgba(16,185,129,0.55)] rounded-xl" : isFutureDay ? "bg-black/40 text-cyan-400/60 hover:bg-white/[0.04] rounded-xl" : "bg-black/45 text-white hover:bg-black/30 hover:scale-[1.0] rounded-xl")} 
+            title={isFutureDay ? 'Día futuro: modo planificación' : isCounterHabit ? (isCompleted ? `${task.title} - Completado hoy` : `${task.title} - Toca para sumar +1 (${task.currentCount || 0}/${task.targetCount})`) : isCompleted ? 'Desmarcar tarea' : 'Marcar como completada'} 
+            aria-label={isCompleted ? "Desmarcar tarea: " + task.title : isCounterHabit ? "Sumar +1 a " + task.title : "Completar tarea: " + task.title}
+          >
+            {isCompleted ? (
+              <motion.div initial={{ scale: 0.4, rotate: -25 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring', stiffness: 520, damping: 22 }}>
+                <Icon name="check" className="w-5 h-5 stroke-[3] text-black" />
+              </motion.div>
+            ) : isCounterHabit ? (
+              <div className="flex flex-col items-center justify-center leading-none">
+                <span className="text-[11px] font-mono font-black text-cyan-300">{task.currentCount || 0}</span>
+                <span className="text-[8px] font-mono text-cyan-400/60 leading-none">/{task.targetCount}</span>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center">
+                {getCategoryIcon(task.category, activeLineColor)}
+                {isFutureDay && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-cyan-400 ring-2 ring-black" />}
+              </div>
+            )}
           </motion.button>
           <div className="min-w-0 flex-1">
-            <h4 onClick={() => handleEdit && handleEdit(task)} className="text-[14px] sm:text-[15.5px] font-semibold text-[#f1f5f9] leading-snug truncate cursor-pointer hover:text-cyan-300 transition-colors m-0" title={task.title + " - Toca para configurar"}>
+            <h4 
+              onClick={(e) => {
+                if (isCounterHabit && onIncrementHabit && !isCompleted) {
+                  if (isTogglingRef.current) return;
+                  isTogglingRef.current = true;
+                  setTimeout(() => { isTogglingRef.current = false; }, 350);
+                  soundFX.playClick();
+                  onIncrementHabit(task.id, e);
+                } else if (!isCounterHabit && handleEdit) {
+                  handleEdit(task);
+                }
+              }} 
+              className={"text-[14px] sm:text-[15.5px] font-semibold leading-snug truncate m-0 transition-colors " + (isCounterHabit && !isCompleted ? "cursor-pointer hover:text-cyan-300" : isCounterHabit ? "text-slate-300" : "cursor-pointer hover:text-cyan-300 text-[#f1f5f9]")} 
+              title={isCounterHabit ? (isCompleted ? `${task.title} - Completado hoy` : `${task.title} - Toca para sumar +1 (${task.currentCount || 0}/${task.targetCount})`) : `${task.title} - Toca para configurar`}
+            >
               <SlashText text={task.title} isCompleted={isCompleted} className={isCompleted ? 'text-slate-300' : 'text-[#f1f5f9]'} slashColor={catStyle.slashColor} />
             </h4>
             <div className="text-[#94a3b8] text-[10.5px] sm:text-[11.5px] mt-0.5 flex items-center gap-1.5 flex-nowrap overflow-x-auto no-scrollbar leading-tight">
@@ -169,13 +221,25 @@ const TaskCardComponent: React.FC<TaskCardProps> = (props) => {
                   <button type="button" onClick={(e) => { e.stopPropagation(); if (onOpenNoteModal) onOpenNoteModal(task); }} className="inline-flex items-center gap-1 text-purple-300 hover:text-purple-200 cursor-pointer font-mono text-[10.5px] transition-colors shrink-0" title={task.notes}><Icon name="fileText" className="w-2.5 h-2.5 text-purple-400" /><span>Nota</span></button>
                 </>
               )}
-              {task.isHabit && task.targetCount && task.targetCount > 1 && (
-                <span className="inline-flex items-center gap-1.5 ml-1 shrink-0">
-                  <span className={"font-mono font-bold " + catStyle.textIcon}>{task.currentCount || 0}/{task.targetCount} {task.unit || 'veces'}</span>
-                  {!isDayEnded && !isFutureDay && onIncrementHabit && (
-                    <button type="button" onClick={(e) => { e.stopPropagation(); soundFX.playClick(); onIncrementHabit(task.id, e); }} className={"px-1.5 py-0.2 rounded text-black text-[9px] font-bold uppercase transition-all cursor-pointer active:scale-95 " + catStyle.checkboxBorder.split(' ')[0]} title="Sumar +1">+1</button>
+              {isCounterHabit && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!isDayEnded && !isFutureDay && onIncrementHabit) {
+                      soundFX.playClick();
+                      onIncrementHabit(task.id, e);
+                    }
+                  }}
+                  disabled={isDayEnded || isFutureDay}
+                  className={"inline-flex items-center gap-1.5 ml-1 shrink-0 px-2 py-0.5 rounded-md border font-mono text-[10.5px] font-bold transition-all cursor-pointer active:scale-95 " + (isCompleted ? "bg-emerald-950/70 border-emerald-500/40 text-emerald-300" : "bg-[#040e1b] border-cyan-500/40 text-cyan-200 hover:border-cyan-300 hover:bg-cyan-950/80 shadow-[0_0_8px_rgba(0,240,255,0.15)]")}
+                  title={isCompleted ? "Meta cumplida hoy" : "Toca para sumar +1"}
+                >
+                  <span className={catStyle.textIcon}>{task.currentCount || 0}/{task.targetCount} {task.unit || 'veces'}</span>
+                  {!isDayEnded && !isFutureDay && !isCompleted && onIncrementHabit && (
+                    <span className={"px-1 py-0.2 rounded text-black text-[9px] font-bold uppercase " + catStyle.checkboxBorder.split(' ')[0]}>+1</span>
                   )}
-                </span>
+                </button>
               )}
             </div>
           </div>

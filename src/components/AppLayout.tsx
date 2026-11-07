@@ -15,9 +15,7 @@ import { Header } from './Header';
 import { FloatingGainEffect } from './FloatingGainEffect';
 import { FloatingEffectsOverlay } from './FloatingEffectsOverlay';
 import { FloatingJuiceOverlay } from './FloatingJuiceOverlay';
-import { DeleteConfirmModal } from './DeleteConfirmModal';
 import { TaskListView } from './TaskListView';
-import { PomodoroTimer } from './PomodoroTimer';
 
 // Lazy Loaded Secondary Tabs & Modals (Code-Splitting for Instant PWA Launch)
 const WeeklyStats = lazy(() => import('./WeeklyStats').then(m => ({ default: m.WeeklyStats })));
@@ -36,6 +34,10 @@ const NightlyTunnel = lazy(() => import('./NightlyTunnel').then(m => ({ default:
 const SurpriseBossModal = lazy(() => import('./SurpriseBossModal').then(m => ({ default: m.SurpriseBossModal })));
 const HunterCollapseModal = lazy(() => import('./HunterCollapseModal').then(m => ({ default: m.HunterCollapseModal })));
 const KaiInteractiveSpotlightTour = lazy(() => import('./common/KaiInteractiveSpotlightTour').then(m => ({ default: m.KaiInteractiveSpotlightTour })));
+const DeleteConfirmModal = lazy(() => import('./DeleteConfirmModal').then(m => ({ default: m.DeleteConfirmModal })));
+const PomodoroTimer = lazy(() => import('./PomodoroTimer').then(m => ({ default: m.PomodoroTimer })));
+const DailyFinanceModal = lazy(() => import('./DailyFinanceModal').then(m => ({ default: m.DailyFinanceModal })));
+const KaiWorkshopModal = lazy(() => import('./KaiWorkshopModal').then(m => ({ default: m.KaiWorkshopModal })));
 
 import { DailyBossWidget } from './DailyBossWidget';
 import { DailyScheduleStrip } from './DailyScheduleStrip';
@@ -46,7 +48,6 @@ import { DamageOverlay } from './DamageOverlay';
 import { ShockwaveOverlay } from './ShockwaveOverlay';
 import { DailyProgressWidget } from './DailyProgressWidget';
 import { DailyFinanceWidget } from './DailyFinanceWidget';
-import { DailyFinanceModal } from './DailyFinanceModal';
 import { calculateDayFinanceTotals } from '../utils/finance';
 import { ScrollReveal } from './common/ScrollReveal';
 import { OfflineIndicator } from './OfflineIndicator';
@@ -54,7 +55,6 @@ import { NotificationToastOverlay } from './NotificationToastOverlay';
 import { PWAInstallBanner } from './PWAInstallBanner';
 import { OmniCompanionHub } from './OmniCompanionHub';
 import { SidebarHUD } from './SidebarHUD';
-import { KaiWorkshopModal } from './KaiWorkshopModal';
 import { SimulationBanner } from './SimulationBanner';
 import { DayCycleController } from './DayCycleController';
 import { getTodayDateString } from '../utils/date';
@@ -75,6 +75,7 @@ export function AppLayout() {
   const isPomodoroOpen = useUIStore((s) => s.isPomodoroOpen);
   const isNightlyReflectionOpen = useUIStore((s) => s.isNightlyReflectionOpen);
   const isSurpriseBossOpen = useUIStore((s) => s.isSurpriseBossOpen);
+  const isHunterCollapseOpen = useUIStore((s) => s.isHunterCollapseOpen);
   const surpriseBossData = useUIStore((s) => s.surpriseBossData);
   const deleteConfirmTask = useUIStore((s) => s.deleteConfirmTask);
   const floatingRewards = useUIStore((s) => s.floatingRewards);
@@ -519,128 +520,152 @@ export function AppLayout() {
       {/* Navegación en Modo Barra delegada íntegramente a SidebarHUD */}
 
       {/* Day Routine Templates Modal */}
-      <Suspense fallback={null}>
-        <DayTemplatesModal 
-          isOpen={isDayTemplatesOpen}
-          onClose={() => setIsDayTemplatesOpen(false)}
-          currentDate={currentViewDate}
-          currentTasks={tasks}
-          onApplyTemplate={handleApplyTemplate}
-        />
-      </Suspense>
+      {isDayTemplatesOpen && (
+        <Suspense fallback={null}>
+          <DayTemplatesModal 
+            isOpen={isDayTemplatesOpen}
+            onClose={() => setIsDayTemplatesOpen(false)}
+            currentDate={currentViewDate}
+            currentTasks={tasks}
+            onApplyTemplate={handleApplyTemplate}
+          />
+        </Suspense>
+      )}
 
       {/* Daily Rewards Modal */}
-      <Suspense fallback={null}>
-        <DailyRewardsModal
-          isOpen={isDailyRewardsOpen}
-          onClose={() => setIsDailyRewardsOpen(false)}
-          stats={stats}
-          onClaimReward={handleClaimDailyReward}
-        />
-      </Suspense>
+      {isDailyRewardsOpen && (
+        <Suspense fallback={null}>
+          <DailyRewardsModal
+            isOpen={isDailyRewardsOpen}
+            onClose={() => setIsDailyRewardsOpen(false)}
+            stats={stats}
+            onClaimReward={handleClaimDailyReward}
+          />
+        </Suspense>
+      )}
 
       {/* Level Up Celebration Modal */}
-      <Suspense fallback={null}>
-        <LevelUpModal
-          isOpen={isLevelUpOpen}
-          onClose={() => setIsLevelUpOpen(false)}
-          newLevel={levelUpData?.level || 1}
-          newRankTitle={levelUpData?.rank || 'Aventurero'}
-          stats={stats}
-        />
-      </Suspense>
+      {isLevelUpOpen && (
+        <Suspense fallback={null}>
+          <LevelUpModal
+            isOpen={isLevelUpOpen}
+            onClose={() => setIsLevelUpOpen(false)}
+            newLevel={levelUpData?.level || 1}
+            newRankTitle={levelUpData?.rank || 'Aventurero'}
+            stats={stats}
+          />
+        </Suspense>
+      )}
 
-      <Suspense fallback={null}>
-        <SurpriseBossModal
-          isOpen={isSurpriseBossOpen}
-          onClose={() => setModalState('isSurpriseBossOpen', false)}
-          archetypeName={surpriseBossData?.archetypeName || 'Ruptura de Inercia'}
-          buffName={surpriseBossData?.buffName || 'Inercia Superada'}
-          buffDescription={surpriseBossData?.buffDescription || '¡Conquistaste 3 misiones o hábitos prioritarios hoy! Tu vitalidad (+50 HP) y recursos se restauran al máximo.'}
-        />
-      </Suspense>
+      {isSurpriseBossOpen && (
+        <Suspense fallback={null}>
+          <SurpriseBossModal
+            isOpen={isSurpriseBossOpen}
+            onClose={() => setModalState('isSurpriseBossOpen', false)}
+            archetypeName={surpriseBossData?.archetypeName || 'Ruptura de Inercia'}
+            buffName={surpriseBossData?.buffName || 'Inercia Superada'}
+            buffDescription={surpriseBossData?.buffDescription || '¡Conquistaste 3 misiones o hábitos prioritarios hoy! Tu vitalidad (+50 HP) y recursos se restauran al máximo.'}
+          />
+        </Suspense>
+      )}
 
       {deleteConfirmTask && (
-        <DeleteConfirmModal
-          task={deleteConfirmTask}
-          onClose={() => setDeleteConfirmTask(null)}
-          onConfirm={executeDeleteTask}
-        />
+        <Suspense fallback={null}>
+          <DeleteConfirmModal
+            task={deleteConfirmTask}
+            onClose={() => setDeleteConfirmTask(null)}
+            onConfirm={executeDeleteTask}
+          />
+        </Suspense>
       )}
 
       {/* Hunter Collapse / Revival Modal */}
-      <Suspense fallback={null}>
-        <HunterCollapseModal />
-      </Suspense>
+      {isHunterCollapseOpen && (
+        <Suspense fallback={null}>
+          <HunterCollapseModal />
+        </Suspense>
+      )}
 
       {/* Oracle AI Wizard Modal */}
-      <Suspense fallback={null}>
-        <OracleModal 
-          isOpen={isOracleOpen}
-          initialPrompt={oracleInitialPrompt}
-          onClose={() => {
-            setIsOracleOpen(false);
-            setOracleInitialPrompt(undefined);
-          }}
-        />
-      </Suspense>
+      {isOracleOpen && (
+        <Suspense fallback={null}>
+          <OracleModal 
+            isOpen={isOracleOpen}
+            initialPrompt={oracleInitialPrompt}
+            onClose={() => {
+              setIsOracleOpen(false);
+              setOracleInitialPrompt(undefined);
+            }}
+          />
+        </Suspense>
+      )}
 
       {/* Neural Analysis Modal (Separate Diagnostic Module) */}
-      <Suspense fallback={null}>
-        <NeuralAnalysisModal
-          isOpen={isNeuralAnalysisOpen}
-          onClose={() => setIsNeuralAnalysisOpen(false)}
-        />
-      </Suspense>
+      {isNeuralAnalysisOpen && (
+        <Suspense fallback={null}>
+          <NeuralAnalysisModal
+            isOpen={isNeuralAnalysisOpen}
+            onClose={() => setIsNeuralAnalysisOpen(false)}
+          />
+        </Suspense>
+      )}
 
       {/* Daily Finance Express Modal */}
-      <DailyFinanceModal
-        isOpen={isFinanceModalOpen}
-        onClose={() => setIsFinanceModalOpen(false)}
-        currentDate={currentViewDate}
-        tasks={tasks}
-        onOpenStats={() => {
-          setIsFinanceModalOpen(false);
-          setActiveTab('stats');
-        }}
-      />
+      {isFinanceModalOpen && (
+        <Suspense fallback={null}>
+          <DailyFinanceModal
+            isOpen={isFinanceModalOpen}
+            onClose={() => setIsFinanceModalOpen(false)}
+            currentDate={currentViewDate}
+            tasks={tasks}
+            onOpenStats={() => {
+              setIsFinanceModalOpen(false);
+              setActiveTab('stats');
+            }}
+          />
+        </Suspense>
+      )}
 
       {/* Nightly Tunnel — Sequential End-of-Day Flow (Evaluation + Reward + Seal) */}
-      <Suspense fallback={null}>
-        <NightlyTunnel
-          isOpen={isNightlyReflectionOpen || isFinishDayOpen}
-          onClose={() => {
-            setIsNightlyReflectionOpen(false);
-            setIsFinishDayOpen(false);
-          }}
-          stats={stats}
-          allTasks={tasks}
-          pomodoroSessions={pomodoroSessions}
-          onConfirmFinishDay={handleConfirmFinishDayLocal}
-          onClaimDailyReward={handleClaimDailyReward}
-          onAddJournalEntry={(note) => {
-            const today = getTodayDateString();
-            const taskList = useTaskStore.getState().tasksByDate[today] || [];
-            if (taskList.length > 0) {
-              handleUpdateTaskNote(taskList[0].id, note);
-            }
-            handleSaveReflection(today, note);
-          }}
-        />
-      </Suspense>
+      {(isNightlyReflectionOpen || isFinishDayOpen) && (
+        <Suspense fallback={null}>
+          <NightlyTunnel
+            isOpen={isNightlyReflectionOpen || isFinishDayOpen}
+            onClose={() => {
+              setIsNightlyReflectionOpen(false);
+              setIsFinishDayOpen(false);
+            }}
+            stats={stats}
+            allTasks={tasks}
+            pomodoroSessions={pomodoroSessions}
+            onConfirmFinishDay={handleConfirmFinishDayLocal}
+            onClaimDailyReward={handleClaimDailyReward}
+            onAddJournalEntry={(note) => {
+              const today = getTodayDateString();
+              const taskList = useTaskStore.getState().tasksByDate[today] || [];
+              if (taskList.length > 0) {
+                handleUpdateTaskNote(taskList[0].id, note);
+              }
+              handleSaveReflection(today, note);
+            }}
+          />
+        </Suspense>
+      )}
 
       {/* Onboarding y Guía de Bienvenida Cálida de KAI */}
-      <Suspense fallback={null}>
-        <KaiWelcomeOnboarding
-          isOpen={isAwakeningOpen}
-          initialStep={1}
-          onClose={() => {
-            setIsAwakeningOpen(false);
-          }}
-          stats={stats}
-          cloudSync={cloudSync}
-        />
-      </Suspense>
+      {isAwakeningOpen && (
+        <Suspense fallback={null}>
+          <KaiWelcomeOnboarding
+            isOpen={isAwakeningOpen}
+            initialStep={1}
+            onClose={() => {
+              setIsAwakeningOpen(false);
+            }}
+            stats={stats}
+            cloudSync={cloudSync}
+          />
+        </Suspense>
+      )}
 
       {/* Cyberpunk Floating Pomodoro Pop-up Modal */}
       <AnimatePresence>
@@ -665,23 +690,29 @@ export function AppLayout() {
               className="w-full max-w-lg my-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              <PomodoroTimer 
-                onSessionComplete={handlePomodoroComplete} 
-                initialTaskTitle={pomodoroPreFill.title}
-                initialCategory={pomodoroPreFill.category}
-                onClose={() => setModalState('isPomodoroOpen', false)}
-              />
+              <Suspense fallback={null}>
+                <PomodoroTimer 
+                  onSessionComplete={handlePomodoroComplete} 
+                  initialTaskTitle={pomodoroPreFill.title}
+                  initialCategory={pomodoroPreFill.category}
+                  onClose={() => setModalState('isPomodoroOpen', false)}
+                />
+              </Suspense>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
           {/* TALLER CUÁNTICO DE KAI (Adaptable a Modos Ópticos Noir, Cobalto y Aurora) */}
-          <KaiWorkshopModal
-            isOpen={isKaiWorkshopOpen}
-            onClose={() => setIsKaiWorkshopOpen(false)}
-            onOpenShop={() => setActiveTab('shop')}
-          />
+          {isKaiWorkshopOpen && (
+            <Suspense fallback={null}>
+              <KaiWorkshopModal
+                isOpen={isKaiWorkshopOpen}
+                onClose={() => setIsKaiWorkshopOpen(false)}
+                onOpenShop={() => setActiveTab('shop')}
+              />
+            </Suspense>
+          )}
 
           {/* Offline Status Badge & PWA Install Banner */}
           <PWAInstallBanner />

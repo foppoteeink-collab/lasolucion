@@ -94,6 +94,9 @@ export const usePlayerStore = create<PlayerState>()(
             ? currentStreak
             : (raw.previousStreak ?? state.stats.previousStreak);
 
+        const coinsChanged = raw.coins !== undefined && raw.coins !== state.stats.coins;
+        const coinsLastUpdated = raw.coinsLastUpdated ?? (coinsChanged ? Date.now() : state.stats.coinsLastUpdated);
+
         const nextStats: PlayerStats = {
           ...raw,
           characterClass: raw.characterClass ? getArchetypeDisplayName(raw.characterClass) : state.stats.characterClass,
@@ -101,6 +104,7 @@ export const usePlayerStore = create<PlayerState>()(
           rankTitle: expectedRank,
           requiredXp: calculateRequiredXp(lvl),
           previousStreak: preservedPreviousStreak,
+          coinsLastUpdated,
         };
         return { stats: nextStats };
       }),
@@ -134,7 +138,8 @@ export const usePlayerStore = create<PlayerState>()(
           requiredXp: requiredXp,
           rankTitle: rankTitle,
           totalXpEarned: (state.stats.totalXpEarned || 0) + xp,
-          coins: (state.stats.coins || 0) + coins
+          coins: (state.stats.coins || 0) + coins,
+          coinsLastUpdated: coins > 0 ? Date.now() : state.stats.coinsLastUpdated,
         };
 
         if (didLevelUp) {
@@ -272,6 +277,7 @@ export const usePlayerStore = create<PlayerState>()(
               stats: {
                 ...state.stats,
                 coins: Math.max(0, currentCoins - cost),
+                coinsLastUpdated: Date.now(),
                 ...updates
               }
             };

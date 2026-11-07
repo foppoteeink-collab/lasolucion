@@ -7,22 +7,41 @@ rules_version = '2';
 // Root Collection: users
 // Document ID: {userId} (matches request.auth.uid)
 // Fields in users/{userId}:
-//   - stats: map (contains nested player progression state, size <= 60)
-//       - level: number (current player level)
-//       - currentXp: number (XP gained toward next level)
-//       - requiredXp: number (XP threshold for level up)
-//       - totalXpEarned: number (cumulative lifetime XP)
-//       - coins: number (in-game gold currency)
-//       - hp: number (current health points)
-//       - maxHp: number (maximum health capacity)
-//       - streakDays: number (current consecutive day streak)
-//       - streakShields: number (protective streak shields remaining)
-//       - currentStreak: number (legacy streak alias)
-//       - highestStreak: number (all-time peak streak record)
-//       - totalFocusMinutes: number (cumulative focus session minutes)
+//   - stats: map (contains nested player progression state, size <= 80)
+//       - level: number (current player level: 1 to 500)
+//       - currentXp: number (XP gained toward next level: >= 0)
+//       - requiredXp: number (XP threshold for level up: >= 1)
+//       - totalXpEarned: number (cumulative lifetime XP: >= 0)
+//       - coins: number (in-game gold currency: 0 to 10,000,000)
+//       - hp: number (current health points: 0 to 10,000)
+//       - maxHp: number (maximum health capacity: 10 to 10,000)
+//       - streakDays: number (current consecutive day streak: 0 to 3,650)
+//       - streakShields: number (protective streak shields: 0 to 10)
+//       - previousStreak: number (saved streak before reset: 0 to 3,650)
+//       - currentStreak: number (legacy streak alias: 0 to 3,650)
+//       - highestStreak: number (all-time peak streak record: 0 to 3,650)
+//       - totalFocusMinutes: number (cumulative focus session minutes: >= 0)
+//       - reRollDice: number (0 to 100)
+//       - focusPotionExpiresAt: number (timestamp ms)
+//       - unopenedBoxes: number (0 to 1,000)
+//       - kaiNeuralForgeCharges: number (0 to 1,000)
+//       - ascensionCrystals: number (0 to 100,000)
+//       - synapticBoosters: number (0 to 1,000)
+//       - tacticalEnergyVials: number (0 to 1,000)
+//       - archetypeEvolutionCores: number (0 to 1,000)
+//       - ascensionTier: number (0 to 100)
+//       - legacyTotalXp: number (>= 0)
+//       - lastTimezoneOffset: number (-840 to 840)
+//       - timezoneShieldExpiresAt: number (timestamp ms)
+//       - age: number (0 to 150)
 //       - lastActiveDate: string (YYYY-MM-DD, <= 50 chars)
 //       - lastDailyRewardClaimedDate: string (YYYY-MM-DD, <= 50 chars)
 //       - lastBossDefeatedDate: string (YYYY-MM-DD, <= 50 chars)
+//       - lastCompletedDate: string (YYYY-MM-DD, <= 50 chars)
+//       - lastEncounterDate: string (YYYY-MM-DD, <= 50 chars)
+//       - hiddenBossTaskId: string (<= 100 chars)
+//       - hiddenBossDate: string (<= 50 chars)
+//       - hiddenBossDefeatedDate: string (<= 50 chars)
 //       - rankTitle: string (<= 100 chars)
 //       - username: string (<= 100 chars)
 //       - fullName: string (<= 150 chars)
@@ -32,11 +51,26 @@ rules_version = '2';
 //       - mainGoal: string (<= 500 chars)
 //       - characterClass: string (<= 100 chars)
 //       - avatarIcon: string (<= 100 chars)
+//       - kaiShape: string (<= 50 chars)
+//       - kaiAuraColor: string (<= 50 chars)
+//       - kaiParticleEffect: string (<= 100 chars)
+//       - kaiVoiceTone: string (<= 50 chars)
+//       - hasCompletedAwakening: bool
+//       - hasClaimedTutorialReward: bool
 //       - attributes: map (RPG stats: disciplina, fuerza, etc., size <= 20)
+//       - activeDailyBuff: map (size <= 20)
+//       - kaiCustomForm: map (size <= 40) or null
 //       - inventory: list (size <= 200)
+//       - kaiVault: list (size <= 100)
 //       - finalizedDays: map (size <= 3650)
 //       - sleepLogs: map (size <= 3650)
 //       - restDays: map (size <= 3650)
+//       - phaseHistory: map (size <= 50)
+//       - frozenHabits: map (size <= 100)
+//       - seenTutorialGuides: map (size <= 50)
+//       - closedDaysLog: map (size <= 3650)
+//       - activeOverchargeContract: map (size <= 20) or null
+//       - historicalArchiveSummary: map (size <= 20)
 //   - customHabits: list (configured routine templates, size <= 200)
 //   - habitMastery: map (mastery records per habit key, size <= 500)
 //   - reflections: map (daily journal notes keyed by date, size <= 3650)
@@ -50,8 +84,9 @@ rules_version = '2';
 //   - activeViewDate: string (<= 20 chars)
 //   - lastUpdated: string (<= 50 chars)
 //   - tasksByDate: map (legacy compatibility only, size <= 35)
+//   - uid: string (matches request.auth.uid)
 //   - Legacy Root Fields: level, currentXp, requiredXp, totalXpEarned, coins,
-//       hp, maxHp, streakDays, currentStreak, highestStreak, etc. (validated if present)
+//       hp, maxHp, streakDays, currentStreak, highestStreak, etc. (strictly bound if present)
 //
 // Subcollections under users/{userId}:
 // 1. task_months/{monthId}
@@ -62,24 +97,27 @@ rules_version = '2';
 //      - title: string (<= 300 chars)
 //      - category: string (<= 50 chars)
 //      - priority: string ('baja'|'media'|'alta'|'epica' | 'low'|'medium'|'high'|'epic')
-//      - xpReward: number
-//      - coinReward / goldReward: number
+//      - xpReward: number (0 to 1,000)
+//      - coinReward / goldReward: number (0 to 500)
 //      - completed: bool
 //      - status: string ('todo'|'completed'|'failed'|'cancelled')
 // 3. pomodoro_history/{sessionId}
 //      - id: string (<= 100 chars)
-//      - duration / durationMinutes: number
-//      - timestamp: number
+//      - duration / durationMinutes: number (<= 86400 / <= 1440)
+//      - timestamp: number (>= 0)
+//      - xpEarned: number (0 to 1,000)
+//      - coinsEarned: number (0 to 500)
 //      - taskName / taskTitle: string (<= 300 chars)
 // 4. custom_habits/{habitId}
 //      - id: string (<= 100 chars)
 //      - title: string (<= 300 chars)
-//      - xpReward, coinReward / goldReward: number
+//      - xpReward: number (0 to 1,000)
+//      - coinReward / goldReward: number (0 to 500)
 //      - frequency / frequencyType: string (<= 100 chars)
 // 5. shop_rewards/{rewardId}
 //      - id: string (<= 100 chars)
 //      - title: string (<= 300 chars)
-//      - cost: number
+//      - cost: number (0 to 100,000, strictly non-negative)
 //      - icon, category: string (<= 100 chars)
 // 6. settings/{settingId}
 //      - data / value: string (<= 50000 chars) or map/number/bool
@@ -114,6 +152,54 @@ service cloud.firestore {
       return request.resource.data;
     }
 
+    // Explicit account reset state: level resets to 1 and cumulative XP resets to 0
+    function isExplicitReset(stats) {
+      return stats is map
+        && ('level' in stats && stats.level == 1)
+        && ('totalXpEarned' in stats && stats.totalXpEarned == 0);
+    }
+
+    // Enforces monotonic streak progression: +1 per day max, allow reset to 0, or restore via revive/highest record
+    function isValidStreakUpdate(oldStats, newStats) {
+      return !('streakDays' in newStats)
+        || !('streakDays' in oldStats)
+        || !(oldStats.streakDays is number)
+        || !(newStats.streakDays is number)
+        || newStats.streakDays == 0
+        || newStats.streakDays <= oldStats.streakDays + 1
+        || newStats.streakDays <= 7
+        || ('previousStreak' in oldStats && oldStats.previousStreak is number && newStats.streakDays <= oldStats.previousStreak)
+        || ('previousStreak' in newStats && newStats.previousStreak is number && newStats.streakDays <= newStats.previousStreak)
+        || ('highestStreak' in oldStats && oldStats.highestStreak is number && newStats.streakDays <= oldStats.highestStreak);
+    }
+
+    // Delta validation for modern player stats: prevents XP regression, level regression, and negative coins
+    function isValidStatsDelta(oldStats, newStats) {
+      return isExplicitReset(newStats) || (
+        (!('totalXpEarned' in oldStats) || !('totalXpEarned' in newStats) || !(oldStats.totalXpEarned is number) || !(newStats.totalXpEarned is number) || newStats.totalXpEarned >= oldStats.totalXpEarned)
+        && (!('level' in oldStats) || !('level' in newStats) || !(oldStats.level is number) || !(newStats.level is number) || newStats.level >= oldStats.level)
+        && isValidStreakUpdate(oldStats, newStats)
+        && (!('coins' in newStats) || (newStats.coins is number && newStats.coins >= 0))
+      );
+    }
+
+    // Delta validation for legacy root stats: prevents XP regression, level regression, and negative coins
+    function isValidLegacyDelta(oldData, newData) {
+      return (('level' in newData && newData.level == 1) && ('totalXpEarned' in newData && newData.totalXpEarned == 0)) || (
+        (!('totalXpEarned' in oldData) || !('totalXpEarned' in newData) || !(oldData.totalXpEarned is number) || !(newData.totalXpEarned is number) || newData.totalXpEarned >= oldData.totalXpEarned)
+        && (!('level' in oldData) || !('level' in newData) || !(oldData.level is number) || !(newData.level is number) || newData.level >= oldData.level)
+        && (!('streakDays' in oldData) || !('streakDays' in newData) || !(oldData.streakDays is number) || !(newData.streakDays is number) || newData.streakDays <= oldData.streakDays + 1 || newData.streakDays == 0 || newData.streakDays <= 7)
+        && (!('coins' in newData) || (newData.coins is number && newData.coins >= 0))
+      );
+    }
+
+    // Comprehensive document-level update guard: prevents UID tampering and verifies economy progression
+    function isValidUserDocUpdate(oldData, newData) {
+      return (!('uid' in oldData) || !('uid' in newData) || newData.uid == oldData.uid)
+        && (!('stats' in oldData) || !(oldData.stats is map) || !('stats' in newData) || !(newData.stats is map) || isValidStatsDelta(oldData.stats, newData.stats))
+        && isValidLegacyDelta(oldData, newData);
+    }
+
     // ===============================================================
     // Domain Validators
     // ===============================================================
@@ -121,27 +207,33 @@ service cloud.firestore {
     // Validates the nested PlayerStats map stored in modern user documents
     function isValidStatsMap(stats) {
       return stats is map
-        && stats.size() <= 60
-        && (!('level' in stats) || stats.level is number)
-        && (!('currentXp' in stats) || stats.currentXp is number)
-        && (!('requiredXp' in stats) || stats.requiredXp is number)
-        && (!('totalXpEarned' in stats) || stats.totalXpEarned is number)
-        && (!('coins' in stats) || stats.coins is number)
-        && (!('hp' in stats) || stats.hp is number)
-        && (!('maxHp' in stats) || stats.maxHp is number)
-        && (!('streakDays' in stats) || stats.streakDays is number)
-        && (!('streakShields' in stats) || stats.streakShields is number)
-        && (!('previousStreak' in stats) || stats.previousStreak is number)
-        && (!('currentStreak' in stats) || stats.currentStreak is number)
-        && (!('highestStreak' in stats) || stats.highestStreak is number)
-        && (!('totalFocusMinutes' in stats) || stats.totalFocusMinutes is number)
-        && (!('reRollDice' in stats) || stats.reRollDice is number)
+        && stats.size() <= 80
+        && (!('level' in stats) || (stats.level is number && stats.level >= 1 && stats.level <= 500))
+        && (!('currentXp' in stats) || (stats.currentXp is number && stats.currentXp >= 0))
+        && (!('requiredXp' in stats) || (stats.requiredXp is number && stats.requiredXp >= 1))
+        && (!('totalXpEarned' in stats) || (stats.totalXpEarned is number && stats.totalXpEarned >= 0))
+        && (!('coins' in stats) || (stats.coins is number && stats.coins >= 0 && stats.coins <= 10000000))
+        && (!('hp' in stats) || (stats.hp is number && stats.hp >= 0 && stats.hp <= 10000))
+        && (!('maxHp' in stats) || (stats.maxHp is number && stats.maxHp >= 10 && stats.maxHp <= 10000))
+        && (!('streakDays' in stats) || (stats.streakDays is number && stats.streakDays >= 0 && stats.streakDays <= 3650))
+        && (!('streakShields' in stats) || (stats.streakShields is number && stats.streakShields >= 0 && stats.streakShields <= 10))
+        && (!('previousStreak' in stats) || (stats.previousStreak is number && stats.previousStreak >= 0 && stats.previousStreak <= 3650))
+        && (!('currentStreak' in stats) || (stats.currentStreak is number && stats.currentStreak >= 0 && stats.currentStreak <= 3650))
+        && (!('highestStreak' in stats) || (stats.highestStreak is number && stats.highestStreak >= 0 && stats.highestStreak <= 3650))
+        && (!('totalFocusMinutes' in stats) || (stats.totalFocusMinutes is number && stats.totalFocusMinutes >= 0))
+        && (!('reRollDice' in stats) || (stats.reRollDice is number && stats.reRollDice >= 0 && stats.reRollDice <= 100))
         && (!('focusPotionExpiresAt' in stats) || stats.focusPotionExpiresAt is number)
-        && (!('unopenedBoxes' in stats) || stats.unopenedBoxes is number)
-        && (!('kaiNeuralForgeCharges' in stats) || stats.kaiNeuralForgeCharges is number)
-        && (!('ascensionCrystals' in stats) || stats.ascensionCrystals is number)
-        && (!('synapticBoosters' in stats) || stats.synapticBoosters is number)
-        && (!('age' in stats) || stats.age is number)
+        && (!('unopenedBoxes' in stats) || (stats.unopenedBoxes is number && stats.unopenedBoxes >= 0 && stats.unopenedBoxes <= 1000))
+        && (!('kaiNeuralForgeCharges' in stats) || (stats.kaiNeuralForgeCharges is number && stats.kaiNeuralForgeCharges >= 0 && stats.kaiNeuralForgeCharges <= 1000))
+        && (!('ascensionCrystals' in stats) || (stats.ascensionCrystals is number && stats.ascensionCrystals >= 0 && stats.ascensionCrystals <= 100000))
+        && (!('synapticBoosters' in stats) || (stats.synapticBoosters is number && stats.synapticBoosters >= 0 && stats.synapticBoosters <= 1000))
+        && (!('tacticalEnergyVials' in stats) || (stats.tacticalEnergyVials is number && stats.tacticalEnergyVials >= 0 && stats.tacticalEnergyVials <= 1000))
+        && (!('archetypeEvolutionCores' in stats) || (stats.archetypeEvolutionCores is number && stats.archetypeEvolutionCores >= 0 && stats.archetypeEvolutionCores <= 1000))
+        && (!('ascensionTier' in stats) || (stats.ascensionTier is number && stats.ascensionTier >= 0 && stats.ascensionTier <= 100))
+        && (!('legacyTotalXp' in stats) || (stats.legacyTotalXp is number && stats.legacyTotalXp >= 0))
+        && (!('lastTimezoneOffset' in stats) || (stats.lastTimezoneOffset is number && stats.lastTimezoneOffset >= -840 && stats.lastTimezoneOffset <= 840))
+        && (!('timezoneShieldExpiresAt' in stats) || stats.timezoneShieldExpiresAt is number)
+        && (!('age' in stats) || (stats.age is number && stats.age >= 0 && stats.age <= 150))
         && (!('lastActiveDate' in stats) || (stats.lastActiveDate is string && stats.lastActiveDate.size() <= 50))
         && (!('lastDailyRewardClaimedDate' in stats) || (stats.lastDailyRewardClaimedDate is string && stats.lastDailyRewardClaimedDate.size() <= 50))
         && (!('lastBossDefeatedDate' in stats) || (stats.lastBossDefeatedDate is string && stats.lastBossDefeatedDate.size() <= 50))
@@ -162,6 +254,7 @@ service cloud.firestore {
         && (!('kaiShape' in stats) || (stats.kaiShape is string && stats.kaiShape.size() <= 50))
         && (!('kaiAuraColor' in stats) || (stats.kaiAuraColor is string && stats.kaiAuraColor.size() <= 50))
         && (!('kaiParticleEffect' in stats) || (stats.kaiParticleEffect is string && stats.kaiParticleEffect.size() <= 100))
+        && (!('kaiVoiceTone' in stats) || (stats.kaiVoiceTone is string && stats.kaiVoiceTone.size() <= 50))
         && (!('hasCompletedAwakening' in stats) || stats.hasCompletedAwakening is bool)
         && (!('hasClaimedTutorialReward' in stats) || stats.hasClaimedTutorialReward is bool)
         && (!('attributes' in stats) || (stats.attributes is map && stats.attributes.size() <= 20))
@@ -174,33 +267,36 @@ service cloud.firestore {
         && (!('restDays' in stats) || (stats.restDays is map && stats.restDays.size() <= 3650))
         && (!('phaseHistory' in stats) || (stats.phaseHistory is map && stats.phaseHistory.size() <= 50))
         && (!('frozenHabits' in stats) || (stats.frozenHabits is map && stats.frozenHabits.size() <= 100))
-        && (!('seenTutorialGuides' in stats) || (stats.seenTutorialGuides is map && stats.seenTutorialGuides.size() <= 50));
+        && (!('seenTutorialGuides' in stats) || (stats.seenTutorialGuides is map && stats.seenTutorialGuides.size() <= 50))
+        && (!('closedDaysLog' in stats) || (stats.closedDaysLog is map && stats.closedDaysLog.size() <= 3650))
+        && (!('activeOverchargeContract' in stats) || stats.activeOverchargeContract == null || (stats.activeOverchargeContract is map && stats.activeOverchargeContract.size() <= 20))
+        && (!('historicalArchiveSummary' in stats) || (stats.historicalArchiveSummary is map && stats.historicalArchiveSummary.size() <= 20));
     }
 
     // Validates flat legacy fields directly at the document root for backward compatibility
     function isValidLegacyStats(data) {
-      return (!('level' in data) || data.level is number)
-        && (!('currentXp' in data) || data.currentXp is number)
-        && (!('requiredXp' in data) || data.requiredXp is number)
-        && (!('totalXpEarned' in data) || data.totalXpEarned is number)
-        && (!('coins' in data) || data.coins is number)
-        && (!('hp' in data) || data.hp is number)
-        && (!('maxHp' in data) || data.maxHp is number)
-        && (!('totalFocusMinutes' in data) || data.totalFocusMinutes is number)
-        && (!('currentStreak' in data) || data.currentStreak is number)
-        && (!('highestStreak' in data) || data.highestStreak is number)
-        && (!('streakDays' in data) || data.streakDays is number)
-        && (!('streakShields' in data) || data.streakShields is number)
+      return (!('level' in data) || (data.level is number && data.level >= 1 && data.level <= 500))
+        && (!('currentXp' in data) || (data.currentXp is number && data.currentXp >= 0))
+        && (!('requiredXp' in data) || (data.requiredXp is number && data.requiredXp >= 1))
+        && (!('totalXpEarned' in data) || (data.totalXpEarned is number && data.totalXpEarned >= 0))
+        && (!('coins' in data) || (data.coins is number && data.coins >= 0 && data.coins <= 10000000))
+        && (!('hp' in data) || (data.hp is number && data.hp >= 0 && data.hp <= 10000))
+        && (!('maxHp' in data) || (data.maxHp is number && data.maxHp >= 10 && data.maxHp <= 10000))
+        && (!('totalFocusMinutes' in data) || (data.totalFocusMinutes is number && data.totalFocusMinutes >= 0))
+        && (!('currentStreak' in data) || (data.currentStreak is number && data.currentStreak >= 0 && data.currentStreak <= 3650))
+        && (!('highestStreak' in data) || (data.highestStreak is number && data.highestStreak >= 0 && data.highestStreak <= 3650))
+        && (!('streakDays' in data) || (data.streakDays is number && data.streakDays >= 0 && data.streakDays <= 3650))
+        && (!('streakShields' in data) || (data.streakShields is number && data.streakShields >= 0 && data.streakShields <= 10))
         && (!('lastCompletedDate' in data) || (data.lastCompletedDate is string && data.lastCompletedDate.size() <= 50))
         && (!('lastActiveDate' in data) || (data.lastActiveDate is string && data.lastActiveDate.size() <= 50))
-        && (!('totalTasksCompleted' in data) || data.totalTasksCompleted is number)
+        && (!('totalTasksCompleted' in data) || (data.totalTasksCompleted is number && data.totalTasksCompleted >= 0))
         && (!('theme' in data) || (data.theme is string && data.theme.size() <= 50));
     }
 
     // Comprehensive validator for /users/{userId} documents (supports modern useCloudSync and legacy accounts)
     function isValidUserDocument(data) {
       return data.keys().size() > 0
-        && data.keys().size() <= 35
+        && data.keys().size() <= 40
         && (!('stats' in data) || isValidStatsMap(data.stats))
         && isValidLegacyStats(data)
         && (!('customHabits' in data) || (data.customHabits is list && data.customHabits.size() <= 200))
@@ -248,31 +344,31 @@ service cloud.firestore {
         && (!('type' in data) || (data.type in ['daily', 'weekly', 'habit', 'one-time', 'monthly', 'yearly']))
         && (!('category' in data) || (data.category is string && data.category.size() <= 50))
         && (!('priority' in data) || (data.priority in ['baja', 'media', 'alta', 'epica', 'low', 'medium', 'high', 'epic']))
-        && (!('xpReward' in data) || data.xpReward is number)
-        && (!('coinReward' in data) || data.coinReward is number)
-        && (!('goldReward' in data) || data.goldReward is number)
-        && (!('awardedXp' in data) || data.awardedXp is number)
-        && (!('awardedCoins' in data) || data.awardedCoins is number)
+        && (!('xpReward' in data) || (data.xpReward is number && data.xpReward >= 0 && data.xpReward <= 1000))
+        && (!('coinReward' in data) || (data.coinReward is number && data.coinReward >= 0 && data.coinReward <= 500))
+        && (!('goldReward' in data) || (data.goldReward is number && data.goldReward >= 0 && data.goldReward <= 500))
+        && (!('awardedXp' in data) || (data.awardedXp is number && data.awardedXp >= 0 && data.awardedXp <= 1000))
+        && (!('awardedCoins' in data) || (data.awardedCoins is number && data.awardedCoins >= 0 && data.awardedCoins <= 500))
         && (!('rewardClaimed' in data) || data.rewardClaimed is bool)
-        && (!('estimatedMinutes' in data) || data.estimatedMinutes is number)
-        && (!('actualMinutes' in data) || data.actualMinutes is number)
+        && (!('estimatedMinutes' in data) || (data.estimatedMinutes is number && data.estimatedMinutes >= 0 && data.estimatedMinutes <= 1440))
+        && (!('actualMinutes' in data) || (data.actualMinutes is number && data.actualMinutes >= 0 && data.actualMinutes <= 1440))
         && (!('timeBlock' in data) || (data.timeBlock is string && data.timeBlock.size() <= 50))
         && (!('reminderTime' in data) || (data.reminderTime is string && data.reminderTime.size() <= 20))
         && (!('isHabit' in data) || data.isHabit is bool)
-        && (!('targetCount' in data) || data.targetCount is number)
-        && (!('currentCount' in data) || data.currentCount is number)
+        && (!('targetCount' in data) || (data.targetCount is number && data.targetCount >= 0 && data.targetCount <= 10000))
+        && (!('currentCount' in data) || (data.currentCount is number && data.currentCount >= 0 && data.currentCount <= 10000))
         && (!('unit' in data) || (data.unit is string && data.unit.size() <= 50))
         && (!('isQuickHabit' in data) || data.isQuickHabit is bool)
         && (!('isTracked2166' in data) || data.isTracked2166 is bool)
         && (!('quickIcon' in data) || (data.quickIcon is string && data.quickIcon.size() <= 100))
         && (!('isLegendaryBounty' in data) || data.isLegendaryBounty is bool)
-        && (!('incomeAmount' in data) || data.incomeAmount is number)
+        && (!('incomeAmount' in data) || (data.incomeAmount is number && data.incomeAmount >= 0 && data.incomeAmount <= 10000000))
         && (!('isCustom' in data) || data.isCustom is bool)
         && (!('isLocked' in data) || data.isLocked is bool)
         && (!('lockedReason' in data) || (data.lockedReason is string && data.lockedReason.size() <= 300))
         && (!('habitEnergyType' in data) || (data.habitEnergyType is string && data.habitEnergyType.size() <= 50))
         && (!('chestAwarded' in data) || data.chestAwarded is bool)
-        && (!('targetStreak' in data) || data.targetStreak is number)
+        && (!('targetStreak' in data) || (data.targetStreak is number && (data.targetStreak == 21 || data.targetStreak == 66)))
         && (!('tags' in data) || (data.tags is list && data.tags.size() <= 20));
     }
 
@@ -281,16 +377,16 @@ service cloud.firestore {
       return data.keys().hasAll(['id'])
         && data.keys().size() <= 20
         && data.id is string && data.id.size() > 0 && data.id.size() <= 100
-        && (!('duration' in data) || data.duration is number)
-        && (!('durationMinutes' in data) || data.durationMinutes is number)
-        && (!('timestamp' in data) || data.timestamp is number)
+        && (!('duration' in data) || (data.duration is number && data.duration >= 0 && data.duration <= 86400))
+        && (!('durationMinutes' in data) || (data.durationMinutes is number && data.durationMinutes >= 0 && data.durationMinutes <= 1440))
+        && (!('timestamp' in data) || (data.timestamp is number && data.timestamp >= 0))
         && (!('date' in data) || (data.date is string && data.date.size() <= 50))
         && (!('taskName' in data) || (data.taskName is string && data.taskName.size() <= 300))
         && (!('taskTitle' in data) || (data.taskTitle is string && data.taskTitle.size() <= 300))
         && (!('category' in data) || (data.category is string && data.category.size() <= 50))
         && (!('completedAt' in data) || (data.completedAt is string && data.completedAt.size() <= 50))
-        && (!('xpEarned' in data) || data.xpEarned is number)
-        && (!('coinsEarned' in data) || data.coinsEarned is number);
+        && (!('xpEarned' in data) || (data.xpEarned is number && data.xpEarned >= 0 && data.xpEarned <= 1000))
+        && (!('coinsEarned' in data) || (data.coinsEarned is number && data.coinsEarned >= 0 && data.coinsEarned <= 500));
     }
 
     // Validates custom habit templates under /users/{userId}/custom_habits/{habitId}
@@ -305,19 +401,19 @@ service cloud.firestore {
         && (!('category' in data) || (data.category is string && data.category.size() <= 50))
         && (!('daysOfWeek' in data) || (data.daysOfWeek is list && data.daysOfWeek.size() <= 7))
         && (!('specificDays' in data) || (data.specificDays is list && data.specificDays.size() <= 7))
-        && (!('xpReward' in data) || data.xpReward is number)
-        && (!('goldReward' in data) || data.goldReward is number)
-        && (!('coinReward' in data) || data.coinReward is number)
+        && (!('xpReward' in data) || (data.xpReward is number && data.xpReward >= 0 && data.xpReward <= 1000))
+        && (!('goldReward' in data) || (data.goldReward is number && data.goldReward >= 0 && data.goldReward <= 500))
+        && (!('coinReward' in data) || (data.coinReward is number && data.coinReward >= 0 && data.coinReward <= 500))
         && (!('timeBlock' in data) || (data.timeBlock is string && data.timeBlock.size() <= 50))
         && (!('reminderTime' in data) || (data.reminderTime is string && data.reminderTime.size() <= 20))
         && (!('isQuickHabit' in data) || data.isQuickHabit is bool)
         && (!('isTracked2166' in data) || data.isTracked2166 is bool)
         && (!('quickIcon' in data) || (data.quickIcon is string && data.quickIcon.size() <= 100))
-        && (!('targetCount' in data) || data.targetCount is number)
+        && (!('targetCount' in data) || (data.targetCount is number && data.targetCount >= 0 && data.targetCount <= 10000))
         && (!('unit' in data) || (data.unit is string && data.unit.size() <= 50))
         && (!('isLegendaryBounty' in data) || data.isLegendaryBounty is bool)
         && (!('habitEnergyType' in data) || (data.habitEnergyType is string && data.habitEnergyType.size() <= 50))
-        && (!('targetStreak' in data) || data.targetStreak is number);
+        && (!('targetStreak' in data) || (data.targetStreak is number && (data.targetStreak == 21 || data.targetStreak == 66)));
     }
 
     // Validates game shop rewards under /users/{userId}/shop_rewards/{rewardId}
@@ -327,10 +423,10 @@ service cloud.firestore {
         && data.id is string && data.id.size() > 0 && data.id.size() <= 100
         && data.title is string && data.title.size() <= 300
         && (!('description' in data) || (data.description is string && data.description.size() <= 1000))
-        && (!('cost' in data) || data.cost is number)
+        && (!('cost' in data) || (data.cost is number && data.cost >= 0 && data.cost <= 100000))
         && (!('icon' in data) || (data.icon is string && data.icon.size() <= 100))
         && (!('category' in data) || (data.category is string && data.category.size() <= 50))
-        && (!('unlockedCount' in data) || data.unlockedCount is number)
+        && (!('unlockedCount' in data) || (data.unlockedCount is number && data.unlockedCount >= 0 && data.unlockedCount <= 10000))
         && (!('isCustom' in data) || data.isCustom is bool)
         && (!('isPurchased' in data) || data.isPurchased is bool);
     }
@@ -350,7 +446,7 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isOwner(userId) && isValidId(userId);
       allow create: if isOwner(userId) && isValidId(userId) && isValidUserDocument(incoming());
-      allow update: if isOwner(userId) && isValidId(userId) && isValidUserDocument(incoming());
+      allow update: if isOwner(userId) && isValidId(userId) && isValidUserDocument(incoming()) && isValidUserDocUpdate(resource.data, incoming());
       allow delete: if isOwner(userId) && isValidId(userId);
 
       // Monthly task shards
@@ -364,32 +460,32 @@ service cloud.firestore {
       // Individual task documents
       match /tasks/{taskId} {
         allow read: if isOwner(userId) && isValidId(userId);
-        allow create: if isOwner(userId) && isValidId(userId) && isValidId(taskId) && isValidTaskItem(incoming());
-        allow update: if isOwner(userId) && isValidId(userId) && isValidId(taskId) && isValidTaskItem(incoming());
+        allow create: if isOwner(userId) && isValidId(userId) && isValidId(taskId) && isValidTaskItem(incoming()) && incoming().id == taskId;
+        allow update: if isOwner(userId) && isValidId(userId) && isValidId(taskId) && isValidTaskItem(incoming()) && incoming().id == taskId;
         allow delete: if isOwner(userId) && isValidId(userId) && isValidId(taskId);
       }
 
       // Pomodoro focus history
       match /pomodoro_history/{sessionId} {
         allow read: if isOwner(userId) && isValidId(userId);
-        allow create: if isOwner(userId) && isValidId(userId) && isValidId(sessionId) && isValidPomodoroSession(incoming());
-        allow update: if isOwner(userId) && isValidId(userId) && isValidId(sessionId) && isValidPomodoroSession(incoming());
+        allow create: if isOwner(userId) && isValidId(userId) && isValidId(sessionId) && isValidPomodoroSession(incoming()) && incoming().id == sessionId;
+        allow update: if isOwner(userId) && isValidId(userId) && isValidId(sessionId) && isValidPomodoroSession(incoming()) && incoming().id == sessionId;
         allow delete: if isOwner(userId) && isValidId(userId) && isValidId(sessionId);
       }
 
       // Custom habits
       match /custom_habits/{habitId} {
         allow read: if isOwner(userId) && isValidId(userId);
-        allow create: if isOwner(userId) && isValidId(userId) && isValidId(habitId) && isValidCustomHabit(incoming());
-        allow update: if isOwner(userId) && isValidId(userId) && isValidId(habitId) && isValidCustomHabit(incoming());
+        allow create: if isOwner(userId) && isValidId(userId) && isValidId(habitId) && isValidCustomHabit(incoming()) && incoming().id == habitId;
+        allow update: if isOwner(userId) && isValidId(userId) && isValidId(habitId) && isValidCustomHabit(incoming()) && incoming().id == habitId;
         allow delete: if isOwner(userId) && isValidId(userId) && isValidId(habitId);
       }
 
       // Shop rewards
       match /shop_rewards/{rewardId} {
         allow read: if isOwner(userId) && isValidId(userId);
-        allow create: if isOwner(userId) && isValidId(userId) && isValidId(rewardId) && isValidShopReward(incoming());
-        allow update: if isOwner(userId) && isValidId(userId) && isValidId(rewardId) && isValidShopReward(incoming());
+        allow create: if isOwner(userId) && isValidId(userId) && isValidId(rewardId) && isValidShopReward(incoming()) && incoming().id == rewardId;
+        allow update: if isOwner(userId) && isValidId(userId) && isValidId(rewardId) && isValidShopReward(incoming()) && incoming().id == rewardId;
         allow delete: if isOwner(userId) && isValidId(userId) && isValidId(rewardId);
       }
 

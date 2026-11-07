@@ -30,7 +30,7 @@ import {
   safeSetItem,
 } from '../utils/storage';
 import { getRankForLevel, generateDailyTasks } from '../data/defaults';
-import { getTodayDateString } from '../utils/date';
+import { getTodayDateString, addDaysToDateString } from '../utils/date';
 import {
   enqueueOutboxOperation,
   getPendingOutboxOperations,
@@ -78,11 +78,43 @@ export function mergePlayerStats(local: PlayerStats, remote: PlayerStats): Playe
   if (!local) return remote;
   if (!remote) return local;
 
-  // CRITICAL: Protect streaks, level, total XP, and coins from regressing
+  // CRITICAL: Protect streaks, level, and total XP from regressing
   const streakDays = Math.max(local.streakDays || 0, remote.streakDays || 0);
   const level = Math.max(local.level || 1, remote.level || 1);
   const totalXpEarned = Math.max(local.totalXpEarned || 0, remote.totalXpEarned || 0);
-  const coins = Math.max(local.coins || 0, remote.coins || 0);
+
+  // COIN CONFLICT RESOLUTION (P0 Bug Fix):
+  // Coins are a spendable resource. Using Math.max() creates an infinite gold glitch
+  // when coins are spent on one device while another was offline.
+  let coins = local.coins ?? remote.coins ?? 0;
+  let coinsLastUpdated = Math.max(local.coinsLastUpdated || 0, remote.coinsLastUpdated || 0) || undefined;
+
+  if (local.coins !== undefined && remote.coins !== undefined && local.coins !== remote.coins) {
+    if (local.coinsLastUpdated && remote.coinsLastUpdated) {
+      if (local.coinsLastUpdated >= remote.coinsLastUpdated) {
+        coins = local.coins;
+        coinsLastUpdated = local.coinsLastUpdated;
+      } else {
+        coins = remote.coins;
+        coinsLastUpdated = remote.coinsLastUpdated;
+      }
+    } else if (local.coinsLastUpdated && !remote.coinsLastUpdated) {
+      coins = local.coins;
+      coinsLastUpdated = local.coinsLastUpdated;
+    } else if (!local.coinsLastUpdated && remote.coinsLastUpdated) {
+      coins = remote.coins;
+      coinsLastUpdated = remote.coinsLastUpdated;
+    } else {
+      // Fallback: If neither has a timestamp, correlate with XP gains
+      if ((local.totalXpEarned || 0) > (remote.totalXpEarned || 0)) {
+        coins = local.coins;
+      } else if ((remote.totalXpEarned || 0) > (local.totalXpEarned || 0)) {
+        coins = remote.coins;
+      } else {
+        coins = local.coins;
+      }
+    }
+  }
 
   // Preserve local XP if local level is higher or equal; otherwise use remote XP
   const currentXp = (local.level || 1) > (remote.level || 1)
@@ -173,6 +205,7 @@ export function mergePlayerStats(local: PlayerStats, remote: PlayerStats): Playe
     requiredXp,
     totalXpEarned,
     coins,
+    coinsLastUpdated,
     streakDays,
     lastActiveDate,
     lastDailyRewardClaimedDate,
@@ -214,13 +247,16 @@ const isDefaultDayOnePlaceholder = (t: TaskItem): boolean => {
  */
 export function mergeTasksByDate(
   local: Record<string, TaskItem[]>,
-  remote: Record<string, TaskItem[]>
+  remote: Record<string, TaskItem[]>,
+  tombstones?: Record<string, string>
 ): Record<string, TaskItem[]> {
   const allDates = new Set([...Object.keys(local || {}), ...Object.keys(remote || {})]);
   const result: Record<string, TaskItem[]> = {};
   const anyRemoteHasCustomSchedule = Object.values(remote || {}).some(list =>
     Array.isArray(list) && list.some(t => t && !isDefaultDayOnePlaceholder(t) && !t.isQuickHabit && !t.isTracked2166)
   );
+
+  const effectiveTombstones = tombstones || (typeof window !== 'undefined' ? useTaskStore.getState().taskTombstones || {} : {});
 
   for (const dateKey of allDates) {
     const localList = local[dateKey] || [];
@@ -234,6 +270,8 @@ export function mergeTasksByDate(
     // 1. Add remote tasks first, preserving completion status and habit progress
     for (const task of remoteList) {
       if (task && (task.id || task.title)) {
+        // P0 Anti-Resurrection Guard: Skip deleted tasks with active tombstones
+        if ((task.id && effectiveTombstones[task.id]) || task.isDeleted) continue;
         if (anyRemoteHasCustomSchedule && isDefaultDayOnePlaceholder(task)) continue;
         const isCompleted = Boolean(
           task.completed ||
@@ -250,6 +288,8 @@ export function mergeTasksByDate(
     // 2. Process local tasks: keep local completion status while allowing deduplicateTasksForDay to merge by ID or activity
     for (const localTask of localList) {
       if (!localTask || (!localTask.id && !localTask.title)) continue;
+      // P0 Anti-Resurrection Guard: Skip deleted tasks with active tombstones
+      if ((localTask.id && effectiveTombstones[localTask.id]) || localTask.isDeleted) continue;
       if (remoteHasCustomSchedule && isDefaultDayOnePlaceholder(localTask)) continue;
 
       const isLocalCompleted = Boolean(
@@ -585,18 +625,41 @@ export const useCloudSync = (
         const tasksData = propagateTodayCompletions(rawTasksData || {}, todayKey, activeViewDate);
         const finalBridgeTasks = tasksData;
 
+        // 1 MiB Document Protection Guard:
+        // Window date-keyed logs (reflections, sleepLogs, finalizedDays) to the last 90 days in the hot doc.
+        const cutoffDate90 = addDaysToDateString(todayKey, -90);
+        const windowDateMap = (map: any) => {
+          if (!map || typeof map !== 'object') return map;
+          const result: Record<string, any> = {};
+          for (const [k, v] of Object.entries(map)) {
+            if (k >= cutoffDate90) {
+              result[k] = v;
+            }
+          }
+          return result;
+        };
+
+        const windowedStats = {
+          ...liveStats,
+          finalizedDays: windowDateMap(liveStats.finalizedDays),
+          sleepLogs: windowDateMap(liveStats.sleepLogs),
+          closedDaysLog: windowDateMap(liveStats.closedDaysLog),
+        };
+
+        const windowedReflections = windowDateMap(reflections);
+
         const dataToSave = overrideData || {
-          stats: liveStats,
+          stats: windowedStats,
           habitMastery,
           customHabits: habitsData,
-          reflections,
+          reflections: windowedReflections,
           shopRewards,
           pomodoroSessions: Array.isArray(pomodoroSessions) ? pomodoroSessions.slice(-100) : [],
           notifications: Array.isArray(notifications) ? notifications.slice(-50) : [],
           gameSettings,
           skillTree,
           companion,
-          expenses,
+          expenses: Array.isArray(expenses) ? expenses.slice(-100) : [],
           activeViewDate,
           lastUpdated: new Date().toISOString(),
         };
@@ -617,12 +680,15 @@ export const useCloudSync = (
             try {
               const batch = writeBatch(db);
               const tasksByMonth: Record<string, Record<string, TaskItem[]>> = {};
+              const tombstones = liveTaskState.taskTombstones || {};
               for (const [date, tasks] of Object.entries(finalBridgeTasks)) {
                 const match = date.match(/^(\d{4})-(\d{2})/);
                 if (match) {
                   const monthKey = `${match[1]}_${match[2]}`;
                   if (!tasksByMonth[monthKey]) tasksByMonth[monthKey] = {};
-                  tasksByMonth[monthKey][date] = sanitizeForFirestore(tasks);
+                  // Filter out any deleted or tombstoned tasks
+                  const activeTasks = (tasks || []).filter(t => t && !t.isDeleted && !tombstones[t.id]);
+                  tasksByMonth[monthKey][date] = sanitizeForFirestore(activeTasks);
                 }
               }
               for (const [monthKey, monthTasks] of Object.entries(tasksByMonth)) {

@@ -14,6 +14,7 @@ interface TaskState {
   customHabits: CustomHabit[];
   currentViewDate: string;
   startedDays: Record<string, boolean>;
+  taskTombstones: Record<string, string>; // taskId -> deletedAt ISO string (P0: anti-resurrection)
   
   setTasksByDate: (updater: Record<string, TaskItem[]> | ((prev: Record<string, TaskItem[]>) => Record<string, TaskItem[]>)) => void;
   setCustomHabits: (updater: CustomHabit[] | ((prev: CustomHabit[]) => CustomHabit[])) => void;
@@ -24,6 +25,7 @@ interface TaskState {
   addTask: (date: string, task: TaskItem) => void;
   updateTask: (date: string, taskId: string, updates: Partial<TaskItem>) => void;
   deleteTask: (date: string, taskId: string) => void;
+  recordTaskTombstone: (taskId: string) => void;
   toggleTaskCompletion: (date: string, taskId: string) => void;
   uncheckAllTasksForDate: (date: string) => void;
   lockTasksForDate: (date: string) => void;
@@ -37,6 +39,7 @@ export const useTaskStore = create<TaskState>()(
       customHabits: deduplicateHabits(loadCustomHabits()),
       currentViewDate: getTodayDateString(),
       startedDays: {},
+      taskTombstones: {},
 
       ensureTodayTasks: () => {
         const state = get();
@@ -166,8 +169,31 @@ export const useTaskStore = create<TaskState>()(
       }),
       
       deleteTask: (date, taskId) => set((state) => { 
-        return { tasksByDate: { ...state.tasksByDate, [date]: (state.tasksByDate[date] || []).filter(t => t.id !== taskId) } }; 
+        const nowIso = new Date().toISOString();
+        const cutoffMs = Date.now() - 30 * 24 * 60 * 60 * 1000;
+        const nextTombstones: Record<string, string> = {};
+        for (const [id, ts] of Object.entries(state.taskTombstones || {})) {
+          if (new Date(ts).getTime() >= cutoffMs) {
+            nextTombstones[id] = ts;
+          }
+        }
+        nextTombstones[taskId] = nowIso;
+
+        return { 
+          taskTombstones: nextTombstones,
+          tasksByDate: { 
+            ...state.tasksByDate, 
+            [date]: (state.tasksByDate[date] || []).filter(t => t.id !== taskId) 
+          } 
+        }; 
       }),
+
+      recordTaskTombstone: (taskId) => set((state) => ({
+        taskTombstones: {
+          ...state.taskTombstones,
+          [taskId]: new Date().toISOString(),
+        }
+      })),
       
       toggleTaskCompletion: (date, taskId) => set((state) => { 
         const tasks = state.tasksByDate[date] || [];
@@ -211,7 +237,12 @@ export const useTaskStore = create<TaskState>()(
           const logicalToday = getTodayDateString();
           state.currentViewDate = logicalToday;
           if (state.tasksByDate) {
-            const sanitized = sanitizeTasksByDate(state.tasksByDate);
+            const tombstones = state.taskTombstones || {};
+            const cleanedByDate: Record<string, TaskItem[]> = {};
+            for (const [d, list] of Object.entries(state.tasksByDate)) {
+              cleanedByDate[d] = (list || []).filter(t => t && !t.isDeleted && !tombstones[t.id]);
+            }
+            const sanitized = sanitizeTasksByDate(cleanedByDate);
             if (Object.keys(sanitized).length > 20) {
               const playerStats = usePlayerStore.getState().stats;
               const compacted = compactHistoricalTasksByDate(

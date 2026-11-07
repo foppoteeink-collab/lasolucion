@@ -10,16 +10,18 @@ import { detectHabitEnergy } from '../utils/habitEnergyDetector';
 
 // Subcomponents
 import { CalendarView } from './CalendarView';
-import { ClearDayConfirmModal } from './ClearDayConfirmModal';
 import { TaskFilters } from './task-list/TaskFilters';
 import { QuickHabitsWidget } from './task-list/QuickHabitsWidget';
 import { LegendaryBountyCard } from './task-list/LegendaryBountyCard';
 import { TaskCard } from './task-list/TaskCard';
-import { TaskNoteModal } from './task-list/TaskNoteModal';
 import { SciFiEmptyState } from './task-list/SciFiEmptyState';
-import { SleepScheduleModal } from './task-list/SleepScheduleModal';
-import { TaskFormModal } from './task-list/TaskFormModal';
-import { HabitManagerModal } from './task-list/HabitManagerModal';
+
+// Lazy Loaded Modals for Zero First-Paint Overhead
+const ClearDayConfirmModal = React.lazy(() => import('./ClearDayConfirmModal').then(m => ({ default: m.ClearDayConfirmModal })));
+const TaskNoteModal = React.lazy(() => import('./task-list/TaskNoteModal').then(m => ({ default: m.TaskNoteModal })));
+const SleepScheduleModal = React.lazy(() => import('./task-list/SleepScheduleModal').then(m => ({ default: m.SleepScheduleModal })));
+const TaskFormModal = React.lazy(() => import('./task-list/TaskFormModal').then(m => ({ default: m.TaskFormModal })));
+const HabitManagerModal = React.lazy(() => import('./task-list/HabitManagerModal').then(m => ({ default: m.HabitManagerModal })));
 
 interface TaskListViewProps {
   currentDate: string;
@@ -571,107 +573,120 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
         )}
       </div>
 
-      {/* Modals */}
-      <SleepScheduleModal
-        isOpen={isSleepModalOpen}
-        onClose={() => setIsSleepModalOpen(false)}
-        onSave={handleSaveSleep}
-        sleepBedtime={sleepBedtime}
-        setSleepBedtime={setSleepBedtime}
-        sleepWakeTime={sleepWakeTime}
-        setSleepWakeTime={setSleepWakeTime}
-        sleepTargetTask={sleepTargetTask}
-        calculateSleepHours={calculateSleepHours}
-      />
+      {/* Modals rendered on-demand with Zero First-Paint Overhead */}
+      {isSleepModalOpen && (
+        <React.Suspense fallback={null}>
+          <SleepScheduleModal
+            isOpen={isSleepModalOpen}
+            onClose={() => setIsSleepModalOpen(false)}
+            onSave={handleSaveSleep}
+            sleepBedtime={sleepBedtime}
+            setSleepBedtime={setSleepBedtime}
+            sleepWakeTime={sleepWakeTime}
+            setSleepWakeTime={setSleepWakeTime}
+            sleepTargetTask={sleepTargetTask}
+            calculateSleepHours={calculateSleepHours}
+          />
+        </React.Suspense>
+      )}
 
-      <TaskFormModal
-        isOpen={isModalOpen}
-        onClose={closeAndResetModal}
-        initialTab={currentInitialTab}
-        onOpenOracle={onOpenOracle}
-        onOpenTemplates={onOpenTemplates}
-        editingTaskId={editingTaskId}
-        newTitle={newTitle}
-        setNewTitle={setNewTitle}
-        newCategory={newCategory}
-        setNewCategory={setNewCategory}
-        newStartTime={newStartTime}
-        setNewStartTime={setNewStartTime}
-        newEndTime={newEndTime}
-        setNewEndTime={setNewEndTime}
-        newXp={newXp}
-        setNewXp={setNewXp}
-        newCoins={newCoins}
-        setNewCoins={setNewCoins}
-        isHabitType={isHabitType}
-        setIsHabitType={setIsHabitType}
-        habitTarget={habitTarget}
-        setHabitTarget={setHabitTarget}
-        habitUnit={habitUnit}
-        setNewHabitUnit={setHabitUnit}
-        isLegendary={isLegendary}
-        setIsLegendary={setIsLegendary}
-        isTracked2166={isTracked2166}
-        setIsTracked2166={setIsTracked2166}
-        isQuickHabit={isQuickHabit}
-        setIsQuickHabit={setIsQuickHabit}
-        quickIcon={quickIcon}
-        setQuickIcon={setQuickIcon}
-        formFrequency={formFrequency}
-        setFormFrequency={setFormFrequency}
-        formSpecificDays={formSpecificDays}
-        toggleSpecificDay={toggleSpecificDay}
-        newIncomeAmount={newIncomeAmount}
-        setNewIncomeAmount={setNewIncomeAmount}
-        newNotes={newNotes}
-        setNewNotes={setNewNotes}
-        habitEnergyType={habitEnergyType}
-        setHabitEnergyType={setHabitEnergyType}
-        targetStreak={targetStreak}
-        setTargetStreak={setTargetStreak}
-        onSubmit={handleCreateTask}
-      />
-
+      {isModalOpen && (
+        <React.Suspense fallback={null}>
+          <TaskFormModal
+            isOpen={isModalOpen}
+            onClose={closeAndResetModal}
+            initialTab={currentInitialTab}
+            onOpenOracle={onOpenOracle}
+            onOpenTemplates={onOpenTemplates}
+            editingTaskId={editingTaskId}
+            newTitle={newTitle}
+            setNewTitle={setNewTitle}
+            newCategory={newCategory}
+            setNewCategory={setNewCategory}
+            newStartTime={newStartTime}
+            setNewStartTime={setNewStartTime}
+            newEndTime={newEndTime}
+            setNewEndTime={setNewEndTime}
+            newXp={newXp}
+            setNewXp={setNewXp}
+            newCoins={newCoins}
+            setNewCoins={setNewCoins}
+            isHabitType={isHabitType}
+            setIsHabitType={setIsHabitType}
+            habitTarget={habitTarget}
+            setHabitTarget={setHabitTarget}
+            habitUnit={habitUnit}
+            setNewHabitUnit={setHabitUnit}
+            isLegendary={isLegendary}
+            setIsLegendary={setIsLegendary}
+            isTracked2166={isTracked2166}
+            setIsTracked2166={setIsTracked2166}
+            isQuickHabit={isQuickHabit}
+            setIsQuickHabit={setIsQuickHabit}
+            quickIcon={quickIcon}
+            setQuickIcon={setQuickIcon}
+            formFrequency={formFrequency}
+            setFormFrequency={setFormFrequency}
+            formSpecificDays={formSpecificDays}
+            toggleSpecificDay={toggleSpecificDay}
+            newIncomeAmount={newIncomeAmount}
+            setNewIncomeAmount={setNewIncomeAmount}
+            newNotes={newNotes}
+            setNewNotes={setNewNotes}
+            habitEnergyType={habitEnergyType}
+            setHabitEnergyType={setHabitEnergyType}
+            targetStreak={targetStreak}
+            setTargetStreak={setTargetStreak}
+            onSubmit={handleCreateTask}
+          />
+        </React.Suspense>
+      )}
 
       {isHabitManagerOpen && (
-        <HabitManagerModal
-          isOpen={isHabitManagerOpen}
-          onClose={() => setIsHabitManagerOpen(false)}
-          customHabits={customHabits}
-          onSaveHabits={onSaveHabits}
-          onOpenAddModal={openAddModal}
-          onEditHabit={handleEditHabit}
-        />
+        <React.Suspense fallback={null}>
+          <HabitManagerModal
+            isOpen={isHabitManagerOpen}
+            onClose={() => setIsHabitManagerOpen(false)}
+            customHabits={customHabits}
+            onSaveHabits={onSaveHabits}
+            onOpenAddModal={openAddModal}
+            onEditHabit={handleEditHabit}
+          />
+        </React.Suspense>
       )}
 
       {noteTargetTask && (
-        <TaskNoteModal
-          task={noteTargetTask}
-          noteText={taskNoteText}
-          onNoteChange={setTaskNoteText}
-          onClose={() => setNoteTargetTask(null)}
-          onSave={handleSaveTaskNote}
-          onDelete={() => {
-            if (noteTargetTask && onEditTask) {
-              onEditTask(noteTargetTask.id, { notes: undefined });
-            }
-            setNoteTargetTask(null);
-          }}
-        />
+        <React.Suspense fallback={null}>
+          <TaskNoteModal
+            task={noteTargetTask}
+            noteText={taskNoteText}
+            onNoteChange={setTaskNoteText}
+            onClose={() => setNoteTargetTask(null)}
+            onSave={handleSaveTaskNote}
+            onDelete={() => {
+              if (noteTargetTask && onEditTask) {
+                onEditTask(noteTargetTask.id, { notes: undefined });
+              }
+              setNoteTargetTask(null);
+            }}
+          />
+        </React.Suspense>
       )}
 
-      {onClearDay && (
-        <ClearDayConfirmModal
-          isOpen={isClearModalOpen}
-          onClose={() => setIsClearModalOpen(false)}
-          onConfirm={() => {
-            onClearDay();
-            setIsClearModalOpen(false);
-          }}
-          currentDate={currentDate}
-          tasks={tasks}
-          habitMastery={habitMastery}
-        />
+      {isClearModalOpen && onClearDay && (
+        <React.Suspense fallback={null}>
+          <ClearDayConfirmModal
+            isOpen={isClearModalOpen}
+            onClose={() => setIsClearModalOpen(false)}
+            onConfirm={() => {
+              onClearDay();
+              setIsClearModalOpen(false);
+            }}
+            currentDate={currentDate}
+            tasks={tasks}
+            habitMastery={habitMastery}
+          />
+        </React.Suspense>
       )}
     </div>
   );

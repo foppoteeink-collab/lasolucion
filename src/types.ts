@@ -58,6 +58,8 @@ export interface TaskItem {
   habitEnergyType?: HabitEnergyType;
   chestAwarded?: boolean;
   targetStreak?: 21 | 66;
+  isDeleted?: boolean;
+  deletedAt?: string;
 }
 
 export interface PlayerStats {
@@ -66,6 +68,7 @@ export interface PlayerStats {
   requiredXp: number;
   totalXpEarned: number;
   coins: number;
+  coinsLastUpdated?: number; // Timestamp in ms tracking the latest gain or spending of coins
   hp: number;
   maxHp: number;
   streakDays: number;

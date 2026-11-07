@@ -930,11 +930,13 @@ export const executeDeleteTask = (deleteEverywhere = false) => {
        let modified = false;
        Object.keys(updatedTasksByDate).forEach(dateKey => {
          const list = updatedTasksByDate[dateKey] || [];
-         const pruned = list.filter(t => 
-           t.id !== task.id && 
-           t.id !== baseId && 
-           (t.title || '').toLowerCase().trim() !== targetTitle
-         );
+         const pruned = list.filter(t => {
+           const isMatch = t.id === task.id || t.id === baseId || (t.title || '').toLowerCase().trim() === targetTitle;
+           if (isMatch && t.id) {
+             store.recordTaskTombstone(t.id);
+           }
+           return !isMatch;
+         });
          if (pruned.length !== list.length) {
            updatedTasksByDate[dateKey] = pruned;
            modified = true;

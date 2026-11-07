@@ -835,12 +835,10 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                       }
                     }}
                     className="absolute -top-2 left-1/2 -translate-x-1/2 bg-[#050914]/95 border border-amber-500/80 px-2 py-0.5 rounded-full flex items-center gap-0.5 z-20 shadow-[0_0_8px_rgba(245,158,11,0.35)] cursor-pointer hover:scale-105 active:scale-95 transition-transform ring-1 ring-[#070510]"
-                    title={`Racha: ${currentStreak} días (Meta: ${streakGoal}d)`}
+                    title={`Racha: ${currentStreak} días (Meta: ${streakGoal}d) - Toca para ver detalles`}
                   >
-                    {/* Hitbox táctil invisible de 44x44px para evitar descarte o fallos de puntería */}
-                    <span className="absolute -inset-2.5 -top-3 w-[44px] h-[44px] left-1/2 -translate-x-1/2 pointer-events-auto" aria-hidden="true" />
-                    <Flame className="w-2.5 h-2.5 text-amber-400 fill-amber-400 shrink-0" />
-                    <span className="text-[10.5px] font-mono font-bold text-amber-300 leading-none">{currentStreak}</span>
+                    <Flame className="w-2.5 h-2.5 text-amber-400 fill-amber-400 shrink-0 pointer-events-none" />
+                    <span className="text-[10.5px] font-mono font-bold text-amber-300 leading-none pointer-events-none">{currentStreak}</span>
                   </div>
                 )}
 
@@ -950,15 +948,46 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                 </div>
               </motion.div>
 
-              {/* Etiqueta Corta Inferior (Tono neutral slate-300 - Tocar abre modal) */}
+              {/* Etiqueta Corta Inferior: Dispara el contador del hábito (+1) */}
               <span
                 onClick={(e) => {
                   e.stopPropagation();
-                  soundFX.playClick();
-                  setSelectedHabitForProtocol(qh);
+                  if (isLocked) return;
+                  if (isFutureDay) {
+                    soundFX.playClick();
+                    useUIStore.getState().addFloatingEffect({
+                      x: e.clientX,
+                      y: e.clientY - 20,
+                      text: '⏳ Día futuro: modo planificación',
+                      type: 'coins',
+                    });
+                    return;
+                  }
+                  if (togglingOrbsRef.current.has(qh.id)) return;
+                  togglingOrbsRef.current.add(qh.id);
+                  setTimeout(() => {
+                    togglingOrbsRef.current.delete(qh.id);
+                  }, 350);
+
+                  if (isCounterHabit && isFinished) {
+                    soundFX.playClick();
+                    return;
+                  }
+
+                  const nextCount = isCounterHabit ? current + 1 : (isFinished ? 0 : 1);
+                  if (!isFinished && nextCount >= target) {
+                    setCompletedShockwaveId(qh.id);
+                    setTimeout(() => setCompletedShockwaveId(null), 700);
+                  }
+
+                  onIncrementHabit(qh.id, e);
                 }}
-                className="text-[11px] text-slate-200 hover:text-white font-medium max-w-[62px] truncate text-center mt-1 transition-colors block cursor-pointer select-none leading-tight"
-                title={`${qh.title} - Toca para configurar`}
+                className="text-[11px] text-slate-200 hover:text-cyan-300 active:scale-95 font-medium max-w-[62px] truncate text-center mt-1 transition-all block cursor-pointer select-none leading-tight"
+                title={
+                  isCounterHabit
+                    ? `${qh.title} (${current}/${target}) - Toca para sumar +1`
+                    : `${qh.title} - Toca para completar`
+                }
               >
                 {shortLabel}
               </span>
