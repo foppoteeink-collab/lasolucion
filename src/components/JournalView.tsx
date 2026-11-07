@@ -48,17 +48,17 @@ interface JournalViewProps {
   onRewardEarned?: (xp: number, coins: number, text?: string) => void;
 }
 
-const CATEGORY_LABELS: Record<TaskCategory, { label: string; color: string }> = {
-  clientes: { label: 'Clientes', color: 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-500/40' },
-  entrenamiento: { label: 'Entreno', color: 'bg-red-100 text-red-800 border-red-300 dark:bg-red-950 dark:text-red-300 dark:border-red-500/40' },
-  estudio: { label: 'Estudio', color: 'bg-purple-100 text-purple-800 border-purple-300 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-500/40' },
-  creativo: { label: 'Creativo', color: 'bg-pink-100 text-pink-800 border-pink-300 dark:bg-pink-950 dark:text-pink-300 dark:border-pink-500/40' },
-  trabajo: { label: 'Trabajo', color: 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-500/40' },
-  comida: { label: 'Comida', color: 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-500/40' },
-  limpieza: { label: 'Limpieza', color: 'bg-teal-100 text-teal-800 border-teal-300 dark:bg-teal-950 dark:text-teal-300 dark:border-teal-500/40' },
-  pomodoro: { label: 'Foco', color: 'bg-rose-100 text-rose-800 border-rose-300 dark:bg-rose-950 dark:text-rose-300 dark:border-rose-500/40' },
-  rutina: { label: 'Rutina', color: 'bg-slate-100 text-slate-800 border-slate-300 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-600/40' },
-  habito: { label: 'Hábito', color: 'bg-cyan-100 text-cyan-800 border-cyan-300 dark:bg-cyan-950 dark:text-cyan-300 dark:border-cyan-500/40' },
+const CATEGORY_LABELS: Record<TaskCategory, { label: string; textClass: string }> = {
+  clientes: { label: 'Clientes', textClass: 'text-emerald-400' },
+  entrenamiento: { label: 'Entreno', textClass: 'text-rose-400' },
+  estudio: { label: 'Estudio', textClass: 'text-purple-400' },
+  creativo: { label: 'Creativo', textClass: 'text-pink-400' },
+  trabajo: { label: 'Trabajo', textClass: 'text-sky-400' },
+  comida: { label: 'Comida', textClass: 'text-amber-400' },
+  limpieza: { label: 'Limpieza', textClass: 'text-teal-400' },
+  pomodoro: { label: 'Foco', textClass: 'text-rose-400' },
+  rutina: { label: 'Rutina', textClass: 'text-slate-400' },
+  habito: { label: 'Hábito', textClass: 'text-cyan-400' },
 };
 
 export const JournalView: React.FC<JournalViewProps> = ({
@@ -280,16 +280,16 @@ export const JournalView: React.FC<JournalViewProps> = ({
 
         {/* Row 2: Metrics Strip & Action Buttons */}
         <div className="mt-4 pt-3.5 border-t border-cyan-500/30 grid grid-cols-2 sm:flex sm:flex-wrap sm:items-center justify-between gap-2.5 relative z-10">
-          {/* Smart Recall Button */}
+          {/* Botón Repaso Inteligente */}
           <button
             onClick={() => { soundFX.playClick(); setIsRecallOpen(true); }}
             className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-2xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/70 text-amber-300 text-xs font-anton tracking-wider uppercase shadow-[0_0_15px_rgba(245,158,11,0.25)] transition-all cursor-pointer min-h-[42px]"
             title="Iniciar sesión de repaso espaciado de misiones"
           >
             <Brain className="w-4 h-4 text-amber-400 animate-pulse shrink-0" />
-            <span className="whitespace-nowrap">Smart Recall</span>
+            <span className="whitespace-nowrap">Repaso Inteligente</span>
             {dueRecallCount > 0 ? (
-              <span className="px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 font-black text-[11px] animate-bounce shrink-0">
+              <span className="px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 font-black text-[11px] tabular-nums font-mono animate-bounce shrink-0">
                 {dueRecallCount}
               </span>
             ) : (
@@ -311,12 +311,12 @@ export const JournalView: React.FC<JournalViewProps> = ({
 
           <div className="px-3.5 py-1.5 rounded-2xl bg-[#04020e] border border-amber-500/40 text-center flex items-center justify-between sm:justify-center sm:flex-col gap-2 sm:gap-0">
             <span className="text-[10px] uppercase font-bold text-cyan-300/80 font-mono">Total Notas</span>
-            <span className="text-sm sm:text-base font-black text-amber-400 font-mono">{totalNotesCount}</span>
+            <span className="text-sm sm:text-base font-black text-amber-400 font-mono tabular-nums">{totalNotesCount}</span>
           </div>
 
           <div className="px-3.5 py-1.5 rounded-2xl bg-[#04020e] border border-cyan-500/40 text-center flex items-center justify-between sm:justify-center sm:flex-col gap-2 sm:gap-0">
             <span className="text-[10px] uppercase font-bold text-cyan-300/80 font-mono">Días Activos</span>
-            <span className="text-sm sm:text-base font-black text-cyan-400 font-mono">{daysWithNotesCount}</span>
+            <span className="text-sm sm:text-base font-black text-cyan-400 font-mono tabular-nums">{daysWithNotesCount}</span>
           </div>
         </div>
 
@@ -343,50 +343,43 @@ export const JournalView: React.FC<JournalViewProps> = ({
             )}
           </div>
 
-          {/* Date Range Tabs */}
+          {/* Date Range Chips */}
           <div className="sm:col-span-6 flex items-center justify-between sm:justify-end gap-1.5 overflow-x-auto">
-            <div className="flex items-center gap-1 p-1 rounded-xl bg-[#000a14] border border-cyan-500/30 text-xs">
-              <button
-                onClick={() => { soundFX.playClick(); setDateRange('7'); }}
-                className={`px-2.5 py-1 rounded-lg font-bold transition-colors cursor-pointer ${
-                  dateRange === '7' ? 'bg-cyan-400 text-slate-950 font-black' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                7 días
-              </button>
-              <button
-                onClick={() => { soundFX.playClick(); setDateRange('14'); }}
-                className={`px-2.5 py-1 rounded-lg font-bold transition-colors cursor-pointer ${
-                  dateRange === '14' ? 'bg-cyan-400 text-slate-950 font-black' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                14 días
-              </button>
-              <button
-                onClick={() => { soundFX.playClick(); setDateRange('30'); }}
-                className={`px-2.5 py-1 rounded-lg font-bold transition-colors cursor-pointer ${
-                  dateRange === '30' ? 'bg-cyan-400 text-slate-950 font-black' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                30 días
-              </button>
-              <button
-                onClick={() => { soundFX.playClick(); setDateRange('all'); }}
-                className={`px-2.5 py-1 rounded-lg font-bold transition-colors cursor-pointer ${
-                  dateRange === 'all' ? 'bg-cyan-400 text-slate-950 font-black' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Todo
-              </button>
+            <div
+              className="mf-8-menu-chip-group mf-chip-group mf-chip-group--compact mf-chip-group--nowrap"
+              role="listbox"
+              aria-label="Rango de días"
+            >
+              {(['7', '14', '30', 'all'] as const).map((range) => {
+                const isActive = dateRange === range;
+                const label = range === 'all' ? 'Todo' : `${range} días`;
+                return (
+                  <button
+                    key={range}
+                    type="button"
+                    role="option"
+                    aria-selected={isActive}
+                    onClick={() => { soundFX.playClick(); setDateRange(range); }}
+                    className={`mf-8-menu-chip-group__chip mf-chip mf-chip--sm ${
+                      isActive ? 'mf-8-menu-chip-group__chip--active mf-chip--active' : ''
+                    }`}
+                  >
+                    <Calendar className="w-3 h-3 shrink-0" />
+                    <span>{label}</span>
+                  </button>
+                );
+              })}
             </div>
 
             {/* Toggle: Only with notes */}
             <button
+              type="button"
+              aria-selected={onlyWithNotes}
               onClick={() => { soundFX.playClick(); setOnlyWithNotes(!onlyWithNotes); }}
-              className={`px-2.5 py-1.5 rounded-xl border text-[11px] font-bold flex items-center gap-1 transition-colors cursor-pointer ${
-                onlyWithNotes 
-                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/60'
-                  : 'bg-[#000a14] text-slate-400 border-cyan-500/30 hover:text-white'
+              className={`mf-8-menu-chip-group__chip mf-chip mf-chip--sm ${
+                onlyWithNotes
+                  ? 'mf-8-menu-chip-group__chip--active mf-chip--active'
+                  : ''
               }`}
               title="Alternar entre ver solo misiones con notas o todas las misiones"
             >
@@ -396,31 +389,42 @@ export const JournalView: React.FC<JournalViewProps> = ({
           </div>
         </div>
 
-        {/* Category Pills */}
-        <div className="mt-3 flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+        {/* Category Filter Chips (mf-8-menu-chip-group) */}
+        <div
+          className="mt-3 mf-8-menu-chip-group mf-chip-group mf-chip-group--compact"
+          role="listbox"
+          aria-label="Filtro por categoría de bitácora"
+        >
           <button
-            onClick={() => setSelectedCategory('all')}
-            className={`px-2.5 py-1 rounded-lg text-xs font-bold whitespace-nowrap transition-colors cursor-pointer ${
-              selectedCategory === 'all'
-                ? 'bg-cyan-400 text-slate-950 shadow-[0_0_10px_rgba(0,240,255,0.4)]'
-                : 'bg-[#000a14] text-slate-400 hover:text-white border border-cyan-500/20'
+            type="button"
+            role="option"
+            aria-selected={selectedCategory === 'all'}
+            onClick={() => { soundFX.playClick(); setSelectedCategory('all'); }}
+            className={`mf-8-menu-chip-group__chip mf-chip mf-chip--sm ${
+              selectedCategory === 'all' ? 'mf-8-menu-chip-group__chip--active mf-chip--active' : ''
             }`}
           >
-            Todas las Categorías
+            <Filter className="w-3 h-3 shrink-0" />
+            <span>Todas las Categorías</span>
           </button>
-          {Object.entries(CATEGORY_LABELS).map(([cat, { label }]) => (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-2 py-0.5 rounded-lg text-xs font-bold whitespace-nowrap transition-colors cursor-pointer ${
-                selectedCategory === cat
-                  ? 'bg-amber-400 text-slate-950 font-black shadow-[0_0_8px_rgba(245,158,11,0.4)]'
-                  : 'bg-[#000a14] text-slate-400 hover:text-white border border-cyan-500/20'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
+          {Object.entries(CATEGORY_LABELS).map(([cat, { label }]) => {
+            const isActive = selectedCategory === cat;
+            return (
+              <button
+                key={cat}
+                type="button"
+                role="option"
+                aria-selected={isActive}
+                onClick={() => { soundFX.playClick(); setSelectedCategory(cat); }}
+                className={`mf-8-menu-chip-group__chip mf-chip mf-chip--sm ${
+                  isActive ? 'mf-8-menu-chip-group__chip--active mf-chip--active' : ''
+                }`}
+              >
+                <Tag className="w-3 h-3 shrink-0" />
+                <span>{label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -571,39 +575,43 @@ export const JournalView: React.FC<JournalViewProps> = ({
                     </div>
                   ) : (
                     tasks.map((task, idx) => {
-                      const catInfo = CATEGORY_LABELS[task.category] || { label: task.category, color: 'bg-[#000a14] text-slate-300 border-slate-700' };
+                      const catInfo = CATEGORY_LABELS[task.category] || { label: task.category, textClass: 'text-slate-300' };
 
                       return (
                         <div
                           key={task.id ? `journal-task-${task.id}-${idx}` : `journal-task-${idx}`}
-                          className="p-3 sm:p-3.5 rounded-2xl bg-[#000a14] border border-cyan-500/20 hover:border-cyan-400/50 transition-all flex flex-col gap-2 relative group shadow-sm"
+                          className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.08] hover:border-cyan-500/30 transition-colors flex flex-col gap-2 relative group"
                         >
                           {/* Task Top Row */}
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex items-start gap-2 min-w-0">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-start gap-2.5 min-w-0">
                               <div className={`mt-0.5 w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
                                 task.completed 
-                                  ? 'bg-emerald-500/30 border-emerald-400 text-emerald-300' 
-                                  : 'border-slate-600 text-transparent'
+                                  ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300' 
+                                  : 'border-white/20 text-transparent'
                               }`}>
                                 <CheckCircle2 className="w-3 h-3" />
                               </div>
                               <div className="min-w-0">
-                                <h3 className={`text-xs sm:text-sm font-black truncate leading-snug ${
-                                  task.completed ? 'line-through text-slate-500' : 'text-white'
+                                <h3 className={`text-sm font-semibold truncate leading-snug ${
+                                  task.completed ? 'line-through text-slate-500' : 'text-slate-100'
                                 }`}>
                                   {task.title}
                                 </h3>
-                                <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
-                                  <span className={`px-1.5 py-0.2 rounded text-[8px] sm:text-[9px] uppercase font-bold border ${catInfo.color}`}>
+                                <div className="flex items-center gap-1.5 flex-wrap text-xs text-slate-400 mt-1">
+                                  <span className={`font-medium ${catInfo.textClass}`}>
                                     {catInfo.label}
                                   </span>
                                   {task.timeBlock && (
-                                    <span className="text-[9px] font-mono text-cyan-300 bg-cyan-950/60 px-1.5 py-0.2 rounded border border-cyan-800/40">
-                                      {task.timeBlock}
-                                    </span>
+                                    <>
+                                      <span className="text-slate-600">·</span>
+                                      <span className="tabular-nums font-mono text-cyan-300">
+                                        {task.timeBlock}
+                                      </span>
+                                    </>
                                   )}
-                                  <span className="text-[9px] font-mono font-bold text-amber-400">
+                                  <span className="text-slate-600">·</span>
+                                  <span className="tabular-nums font-mono font-medium text-amber-400">
                                     +{task.xpReward} XP
                                   </span>
                                 </div>
@@ -614,7 +622,7 @@ export const JournalView: React.FC<JournalViewProps> = ({
                             <button
                               type="button"
                               onClick={() => handleStartEdit(date, task)}
-                              className="p-1.5 rounded-lg bg-[#001020] hover:bg-amber-500/20 text-slate-400 hover:text-amber-300 border border-cyan-500/30 hover:border-amber-400/50 transition-colors shrink-0 cursor-pointer"
+                              className="min-w-[36px] min-h-[36px] p-2 rounded-lg bg-white/[0.03] hover:bg-amber-500/10 text-slate-400 hover:text-amber-300 border border-white/[0.08] hover:border-amber-400/40 transition-colors shrink-0 cursor-pointer flex items-center justify-center"
                               title={task.notes ? 'Editar nota' : 'Agregar nota'}
                             >
                               <Edit3 className="w-3.5 h-3.5" />
@@ -625,15 +633,15 @@ export const JournalView: React.FC<JournalViewProps> = ({
                           {task.notes ? (
                             <div 
                               onClick={() => handleStartEdit(date, task)}
-                              className="p-2.5 rounded-xl bg-[#001428] border border-amber-500/40 hover:border-amber-400 transition-colors cursor-pointer group/note"
+                              className="p-3 rounded-lg bg-amber-500/[0.04] border border-amber-500/20 hover:border-amber-500/40 transition-colors cursor-pointer group/note"
                             >
-                              <div className="flex items-start gap-2">
+                              <div className="flex items-start gap-2.5">
                                 <FileText className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
                                 <div className="flex-1 min-w-0">
-                                  <span className="text-[10px] uppercase font-anton tracking-wider text-amber-400 block mb-0.5">
+                                  <span className="text-[11px] font-mono uppercase tracking-wider text-amber-400 block mb-1">
                                     Qué se trabajó:
                                   </span>
-                                  <p className="text-xs text-amber-100 font-sans leading-relaxed whitespace-pre-wrap">
+                                  <p className="text-xs text-amber-100/90 font-sans leading-relaxed whitespace-pre-wrap">
                                     {task.notes}
                                   </p>
                                 </div>
@@ -643,10 +651,10 @@ export const JournalView: React.FC<JournalViewProps> = ({
                             <button
                               type="button"
                               onClick={() => handleStartEdit(date, task)}
-                              className="py-1 px-2.5 rounded-lg border border-dashed border-cyan-500/30 hover:border-amber-400/60 text-slate-400 hover:text-amber-300 text-left text-[11px] font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
+                              className="min-h-[36px] py-2 px-3 rounded-lg border border-dashed border-white/[0.12] hover:border-amber-400/50 text-slate-400 hover:text-amber-300 text-left text-xs font-sans flex items-center gap-2 transition-colors cursor-pointer"
                             >
-                              <FileText className="w-3 h-3 text-slate-500" />
-                              <span>Sin notas registradas. Haz clic para anotar qué trabajaste en esta misión.</span>
+                              <FileText className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                              <span>Sin notas registradas. Clic para anotar el progreso de esta misión.</span>
                             </button>
                           )}
                         </div>

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Apuntes · Moxen</title>
+<link rel="stylesheet" href="https://api.fontshare.com/v2/css?f%5B%5D=gambetta@500&f%5B%5D=satoshi@400,500&display=swap">
+<link rel="stylesheet" href="apuntes.css">
+<!-- ?tema=claro es el escritorio de pasteles de siempre; ?tema=oscuro, el mismo escritorio de noche -->
+<script>if (/[?&]tema=claro/.test(location.search)) document.documentElement.dataset.tema = 'claro'; else if (/[?&]tema=oscuro/.test(location.search)) document.documentElement.dataset.tema = 'oscuro';</script>
+</head>
+<body>
+  <!-- data-apuntes: la escena entera. apuntes.js pinta las carpetas, las notas y el editor
+       (ver su cabecera para poner tus notas y enganchar el guardado a tu aplicación) -->
+  <main class="ap-escritorio" data-apuntes>
+    <div class="ap-fondo" aria-hidden="true">
+      <i class="ap-mancha ap-m1"></i><i class="ap-mancha ap-m2"></i><i class="ap-mancha ap-m3"></i><i class="ap-mancha ap-m4"></i><i class="ap-grano"></i>
+    </div>
+
+    <!-- la ventana: vidrio esmerilado con semáforos, barra lateral, lista y editor -->
+    <section class="ap-ventana" data-ventana aria-label="Apuntes">
+      <aside class="ap-lado">
+        <div class="ap-luces" role="group" aria-label="Controles de la ventana">
+          <button type="button" class="ap-luz ap-cierra" data-luz="cierra" aria-label="Cerrar la ventana"><svg viewBox="0 0 10 10" aria-hidden="true"><path d="m2.6 2.6 4.8 4.8M7.4 2.6 2.6 7.4"/></svg></button>
+          <button type="button" class="ap-luz ap-minimiza" data-luz="minimiza" aria-label="Minimizar la ventana"><svg viewBox="0 0 10 10" aria-hidden="true"><path d="M2.2 5h5.6"/></svg></button>
+          <button type="button" class="ap-luz ap-maximiza" data-luz="maximiza" aria-label="Ampliar la ventana" aria-pressed="false"><svg viewBox="0 0 10 10" aria-hidden="true"><path d="M2.8 7.2V2.8h4.4"/><path d="M7.2 2.8v4.4H2.8" opacity="0"/><path d="m2.8 7.2 4.4-4.4"/></svg></button>
+        </div>
+        <nav class="ap-carpetas" aria-label="Carpetas">
+          <p class="ap-etq">Carpetas</p>
+          <ul data-carpetas></ul>
+        </nav>
+        <p class="ap-lado-pie"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v12M6 10l6 6 6-6M5 20h14"/></svg>Arrastra una nota a una carpeta</p>
+      </aside>
+
+      <div class="ap-main">
+        <header class="ap-barra">
+          <h1 class="ap-barra-t"><span class="ap-rc ap-barra-n" data-barra-t><i>Todas las notas</i></span><span class="ap-barra-c"><span class="ap-rc" data-barra-c><i>0</i></span></span></h1>
+          <label class="ap-busca">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.500"/><path d="m20 20-4.200-4.200"/></svg>
+            <input type="search" data-busca placeholder="Buscar" aria-label="Buscar en las notas" autocomplete="off" spellcheck="false">
+          </label>
+          <button type="button" class="ap-nueva" data-nueva aria-keyshortcuts="Control+N Meta+N"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Nueva nota</span></button>
+        </header>
+
+        <div class="ap-cols">
+          <section class="ap-lista" aria-label="Lista de notas">
+            <div class="ap-lista-scroll" data-lista-scroll>
+              <p class="ap-etq ap-etq-l" data-et-fij><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 4 5 5-3 1-3.500 3.500.5 4.500-2 2-3.500-3.500L5 20.500M9 13l-3-3 2-2 4.500.5L16 5"/></svg>Fijadas</p>
+              <ul class="ap-notas" data-fijadas role="listbox" aria-label="Notas fijadas"></ul>
+              <p class="ap-etq ap-etq-l" data-et-notas>Notas</p>
+              <ul class="ap-notas" data-notas role="listbox" aria-label="Notas"></ul>
+              <div class="ap-vacia" data-vacia hidden>
+                <svg viewBox="0 0 64 64" aria-hidden="true"><rect x="12" y="8" width="40" height="48" rx="8"/><path d="M22 22h20M22 31h20M22 40h11"/></svg>
+                <p>No hay notas aquí</p>
+                <button type="button" data-vacia-b>Crear una nota</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="ap-editor" data-editor aria-label="Editor de la nota">
+            <div class="ap-papel ap-p0" data-papel>
+              <div class="ap-ola" data-ola aria-hidden="true"></div>
+              <i class="ap-aro" data-aro aria-hidden="true"></i>
+              <div class="ap-ed-cab">
+                <div class="ap-carp-chip">
+                  <button type="button" class="ap-chip" data-chip aria-haspopup="menu" aria-expanded="false"><i class="ap-chip-pt" data-chip-pt></i><span data-chip-t>Ideas</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></button>
+                  <div class="ap-menu" data-menu role="menu" aria-label="Mover a la carpeta" hidden></div>
+                </div>
+                <span class="ap-ed-edit" data-edit>Editada hoy</span>
+                <button type="button" class="ap-icono" data-fija aria-pressed="false" aria-label="Fijar la nota" title="Fijar la nota"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 4 5 5-3 1-3.500 3.500.5 4.500-2 2-3.500-3.500L5 20.500M9 13l-3-3 2-2 4.500.5L16 5"/></svg></button>
+                <button type="button" class="ap-icono" data-borra aria-label="Eliminar la nota" title="Eliminar la nota"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12M10.500 11v5M13.500 11v5"/></svg></button>
+              </div>
+              <h2 class="ap-titulo" data-titulo contenteditable="true" role="textbox" aria-label="Título de la nota" data-ph="Sin título" spellcheck="false"></h2>
+              <div class="ap-cuerpo" data-cuerpo contenteditable="true" role="textbox" aria-multiline="true" aria-label="Texto de la nota" data-ph="Empieza a escribir…" spellcheck="false"></div>
+              <div class="ap-ed-pie">
+                <div class="ap-papeles" role="radiogroup" aria-label="Color del papel" data-papeles></div>
+                <span class="ap-estado" data-estado aria-live="polite"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5.500 12.500 4.300 4.300L18.500 8"/></svg><span data-estado-t>Guardado</span></span>
+                <span class="ap-palabras"><span class="ap-rc" data-palabras><i>0</i></span> palabras</span>
+              </div>
+              <svg class="ap-chinche" data-chinche viewBox="0 0 48 64" aria-hidden="true">
+                <ellipse class="ap-ch-som" cx="26" cy="58" rx="13" ry="4"/>
+                <path class="ap-ch-aguja" d="M24 32v26"/>
+                <ellipse class="ap-ch-pie" cx="24" cy="30" rx="15" ry="6"/>
+                <path class="ap-ch-cuerpo" d="M13 18a11 11 0 0 1 22 0l2.500 12.500a14.500 5.500 0 0 1-27 0z"/>
+                <ellipse class="ap-ch-tapa" cx="24" cy="16" rx="11" ry="4.500"/>
+                <path class="ap-ch-brillo" d="M17 20c.4 3 1 5.500 1.700 8"/>
+              </svg>
+            </div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <!-- el dock: el ícono de Apuntes vuelve a abrir la ventana -->
+    <nav class="ap-dock" data-dock aria-label="Dock">
+      <i class="ap-dock-deco ap-d1" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 8a2 2 0 0 1 2-2h4l2 2.500h6a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/></svg></i>
+      <i class="ap-dock-deco ap-d2" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7.500"/><path d="M12 4.500v15M4.500 12h15"/></svg></i>
+      <button type="button" class="ap-dock-app" data-dock-app aria-label="Apuntes: abrir la ventana" aria-pressed="true">
+        <span class="ap-icono-app" aria-hidden="true"><i></i><b></b><b></b><b></b></span>
+        <span class="ap-corre" data-corre></span>
+      </button>
+      <i class="ap-dock-deco ap-d3" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 4c-3.500 4-5 6.500-5 9a5 5 0 0 0 10 0c0-2.500-1.500-5-5-9z"/></svg></i>
+      <span class="ap-dock-sep" aria-hidden="true"></span>
+      <button type="button" class="ap-dock-mini" data-dock-mini aria-label="Restaurar la ventana de Apuntes" hidden><span class="ap-mini-papel"><i></i><i></i><i></i></span></button>
+    </nav>
+    <p class="ap-oculto" aria-live="polite" data-vivo></p>
+  </main>
+
+  <script src="apuntes.js"></script>
+  <script>
+    /* Sin opciones usa las notas de ejemplo. Ver la cabecera de apuntes.js para poner las tuyas
+       y para enterarte de cada cambio (guardar, mover, fijar, cambiar de papel). */
+    Apuntes(document.querySelector('[data-apuntes]'));
+  </script>
+</body>
+</html>

@@ -46,6 +46,8 @@ interface UIState {
   screenFlash: 'damage' | 'heal' | 'buff' | null;
   isFocusModeActive: boolean; // INMUNIZADOR DE FLUJO
   zenMode: boolean; // MODO ZEN (REDUCCIÓN DE ESTÍMULOS / AHORRO BATERÍA)
+  zenFont: string; // FONT PARA MODO ZEN
+  timeFormat: '12h' | '24h';
   systemAura: SystemAuraData | null;
   
   // Modales
@@ -95,6 +97,8 @@ interface UIState {
   setNavigationMode: (mode: NavigationMode) => void;
   toggleNavigationMode: () => void;
   toggleZenMode: () => void;
+  setZenFont: (font: string) => void;
+  setTimeFormat: (fmt: '12h' | '24h') => void;
   setOpticMode: (mode: OpticMode) => void;
   setSystemAura: (aura: SystemAuraData | null) => void;
   triggerTransition: (durationMs?: number) => void;
@@ -298,6 +302,16 @@ const getSavedSystemAura = (): SystemAuraData | null => {
   return null;
 };
 
+const getSavedTimeFormat = (): '12h' | '24h' => {
+  if (typeof window !== 'undefined') {
+    try {
+      const saved = localStorage.getItem('taskquest_time_format');
+      if (saved === '12h' || saved === '24h') return saved;
+    } catch (e) {}
+  }
+  return '12h';
+};
+
 let modalTransitionTimeout: ReturnType<typeof setTimeout> | null = null;
 
 export const useUIStore = create<UIState>((set, get) => ({
@@ -310,6 +324,8 @@ export const useUIStore = create<UIState>((set, get) => ({
   screenFlash: null,
   isFocusModeActive: false,
   zenMode: getSavedZenMode(),
+  zenFont: 'Indie Flower',
+  timeFormat: getSavedTimeFormat(),
   systemAura: getSavedSystemAura(),
   
   isDailyRewardsOpen: false,
@@ -412,6 +428,10 @@ export const useUIStore = create<UIState>((set, get) => ({
       } catch (e) {}
     }
     set({ zenMode: next });
+  },
+
+  setZenFont: (font: string) => {
+    set({ zenFont: font });
   },
 
   setOpticMode: (mode) => {
@@ -582,5 +602,14 @@ export const useUIStore = create<UIState>((set, get) => ({
 
   removeFloatingReward: (id) => set((state) => ({
     floatingRewards: state.floatingRewards.filter(r => r.id !== id)
-  }))
+  })),
+
+  setTimeFormat: (fmt) => {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('taskquest_time_format', fmt);
+      } catch (e) {}
+    }
+    set({ timeFormat: fmt });
+  }
 }));

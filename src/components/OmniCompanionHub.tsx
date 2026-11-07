@@ -1,19 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import {
-  CheckCircle2,
-  Calendar,
-  Timer,
-  BookOpen,
-  ShoppingBag,
-  BarChart3,
-  Zap,
-  Sparkles,
-  BrainCircuit,
-  Settings,
-  Palette,
-  FlaskConical
-} from 'lucide-react';
+import { Icon } from './common/Icon';
 import { HoloCompanion, CompanionAuraState } from './HoloCompanion';
 import { SatelliteKaiHub, SatelliteHubItem } from './SatelliteKaiHub';
 import { useUIStore } from '../store/useUIStore';
@@ -22,11 +9,13 @@ import { useTaskStore } from '../store/useTaskStore';
 import { useTimer } from '../context/TimerContext';
 import { soundFX } from '../utils/audio';
 import { getTodayDateString } from '../utils/date';
+import { useDayCycle } from '../hooks/useDayCycle';
 
 interface OmniCompanionHubProps {
   onOpenOracleWithPrompt?: (promptText?: string) => void;
   onOpenNeuralAnalysis?: () => void;
   onOpenKaiWorkshop?: () => void;
+  onOpenFinance?: () => void;
   archetype?: string;
 }
 
@@ -34,12 +23,14 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
   onOpenOracleWithPrompt,
   onOpenNeuralAnalysis,
   onOpenKaiWorkshop,
+  onOpenFinance,
   archetype = 'sabio',
 }) => {
   const { setActiveTab, setModalState, isPomodoroOpen, navigationMode, openTaskForm } = useUIStore();
   const { stats } = usePlayerStore();
   const { tasksByDate } = useTaskStore();
   const { isRunning: isTimerRunning, formattedTime } = useTimer();
+  const { dayStatus, startDay, finishDay } = useDayCycle();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [hasRecentVictory, setHasRecentVictory] = useState(false);
@@ -108,16 +99,15 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
     [viewportDims.width, viewportDims.height]
   );
 
-  // 9 Elementos divididos en dos hemisferios: Pantallas Principales (círculos) y Gadgets Tácticos (hexágonos)
+  // Burbujas del Menú KAI con íconos SVG Clear Stamp y efecto Gooey
   const wheelItems: SatelliteHubItem[] = useMemo(
     () => [
-      // ── HEMISFERIO 1: PANTALLAS PRINCIPALES (NAVEGACIÓN CORE) ──
       {
         id: 'missions',
         label: 'Tareas',
         categoryBadge: 'TAREAS',
         type: 'page',
-        icon: <CheckCircle2 className="w-5 h-5" />,
+        icon: <Icon name="checkCircle" className="w-5 h-5" />,
         accentColor: '#00f0ff',
         glowColor: 'rgba(0, 240, 255, 0.45)',
         liveStat: pendingTodayTasks > 0 ? `${pendingTodayTasks} pendientes` : 'Completas',
@@ -128,7 +118,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
         label: 'Diario',
         categoryBadge: 'BITÁCORA',
         type: 'page',
-        icon: <BookOpen className="w-5 h-5" />,
+        icon: <Icon name="bookOpen" className="w-5 h-5" />,
         accentColor: '#38bdf8',
         glowColor: 'rgba(56, 189, 248, 0.45)',
         liveStat: 'Reflexión diaria',
@@ -139,7 +129,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
         label: 'Tienda',
         categoryBadge: 'ARSENAL',
         type: 'page',
-        icon: <ShoppingBag className="w-5 h-5" />,
+        icon: <Icon name="shoppingBag" className="w-5 h-5" />,
         accentColor: '#10b981',
         glowColor: 'rgba(16, 185, 129, 0.45)',
         liveStat: `${stats.coins || 0} Monedas`,
@@ -147,10 +137,10 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
       },
       {
         id: 'skills',
-        label: 'Lab Habilidades',
+        label: 'Lab',
         categoryBadge: 'MAESTRÍA',
         type: 'page',
-        icon: <FlaskConical className="w-5 h-5" />,
+        icon: <Icon name="flask" className="w-5 h-5" />,
         accentColor: '#8b5cf6',
         glowColor: 'rgba(139, 92, 246, 0.45)',
         liveStat: 'Árbol de talentos',
@@ -161,7 +151,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
         label: 'Perfil',
         categoryBadge: 'RANGO',
         type: 'page',
-        icon: <BarChart3 className="w-5 h-5" />,
+        icon: <Icon name="barChart" className="w-5 h-5" />,
         accentColor: '#06b6d4',
         glowColor: 'rgba(6, 182, 212, 0.45)',
         liveStat: `Nivel ${stats.level || 1} • ${stats.rankTitle || 'En Progreso'}`,
@@ -172,33 +162,31 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
         label: 'Ajustes',
         categoryBadge: 'SISTEMA',
         type: 'page',
-        icon: <Settings className="w-5 h-5" />,
+        icon: <Icon name="settings" className="w-5 h-5" />,
         accentColor: '#ec4899',
         glowColor: 'rgba(236, 72, 153, 0.45)',
         liveStat: 'Configuración',
         action: () => setActiveTab('settings'),
       },
-
-      // ── HEMISFERIO 2: GADGETS TÁCTICOS (INVOCACIONES DEL KAI) ──
       {
         id: 'workshop',
         label: 'Taller KAI',
         categoryBadge: 'FORJA',
         type: 'gadget',
-        icon: <Palette className="w-5 h-5 text-fuchsia-400" />,
+        icon: <Icon name="palette" className="w-5 h-5" />,
         accentColor: '#d946ef',
         glowColor: 'rgba(217, 70, 239, 0.5)',
-        liveStat: stats.kaiShape === 'custom' ? 'Forja IA' : '6 Formas',
+        liveStat: '',
         action: () => {
           if (onOpenKaiWorkshop) onOpenKaiWorkshop();
         },
       },
       {
         id: 'pomodoro',
-        label: 'Hiperenfoque',
+        label: 'Foco',
         categoryBadge: 'POMODORO',
         type: 'gadget',
-        icon: <Timer className="w-5 h-5" />,
+        icon: <Icon name="timer" className="w-5 h-5" />,
         accentColor: '#f43f5e',
         glowColor: 'rgba(244, 63, 94, 0.45)',
         liveStat: isTimerRunning ? `${formattedTime}` : '25:00 min',
@@ -206,10 +194,10 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
       },
       {
         id: 'oracle',
-        label: 'Oráculo IA',
+        label: 'Oráculo',
         categoryBadge: 'NEURAL',
         type: 'gadget',
-        icon: <Sparkles className="w-5 h-5 text-amber-300 animate-pulse" />,
+        icon: <Icon name="sparkles" className="w-5 h-5" />,
         accentColor: '#eab308',
         glowColor: 'rgba(234, 179, 8, 0.55)',
         liveStat: 'Mente & Estrategia',
@@ -219,6 +207,19 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
           } else {
             openTaskForm('oracle');
           }
+        },
+      },
+      {
+        id: 'finance',
+        label: 'Finanzas',
+        categoryBadge: 'FINANZAS',
+        type: 'gadget',
+        icon: <Icon name="wallet" className="w-5 h-5" />,
+        accentColor: '#10b981',
+        glowColor: 'rgba(16, 185, 129, 0.45)',
+        liveStat: 'Ingresos/Gastos',
+        action: () => {
+          if (onOpenFinance) onOpenFinance();
         },
       },
     ],
@@ -234,6 +235,8 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
       onOpenOracleWithPrompt,
       onOpenNeuralAnalysis,
       onOpenKaiWorkshop,
+      onOpenFinance,
+      openTaskForm,
     ]
   );
 
@@ -368,18 +371,14 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
             </motion.button>
           )}
 
-          {/* KAI CON ANILLO ORBITAL 360° */}
+          {/* KAI CON EXPANSIÓN DE BURBUJAS GOOEY (#mbe-goo) */}
           <div className="relative touch-none flex items-center justify-center z-[70]">
-            {/* ÓRBITA PLANETARIA 360° */}
-            <AnimatePresence>
-              {isMenuOpen && (
-                <SatelliteKaiHub
-                  items={wheelItems}
-                  onClose={() => setIsMenuOpen(false)}
-                  onSelect={handleSelectItem}
-                />
-              )}
-            </AnimatePresence>
+            <SatelliteKaiHub
+              items={wheelItems}
+              isOpen={isMenuOpen}
+              onClose={() => setIsMenuOpen(false)}
+              onSelect={handleSelectItem}
+            />
 
             {/* KAI SE HACE UN POCO MÁS GRANDE CUANDO SE ACTIVA */}
             <motion.div
@@ -403,6 +402,93 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
               />
             </motion.div>
           </div>
+
+          {/* Botón Inteligente de Jornada acoplado JUSTO DEBAJO de KAI en Modo Nexus con borde resplandeciente dinámico */}
+          <AnimatePresence mode="wait">
+            {!isMenuOpen && dayStatus === 'idle' && (
+              <motion.button
+                key="nexus-start-day"
+                type="button"
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  soundFX.playClick();
+                  startDay();
+                }}
+                initial={{ opacity: 0, y: -4, scale: 0.92 }}
+                animate={{
+                  opacity: 1,
+                  y: 0,
+                  scale: 1,
+                  boxShadow: [
+                    '0 0 12px rgba(0,240,255,0.55), 0 0 24px rgba(214,244,33,0.35), inset 0 0 8px rgba(255,255,255,0.45)',
+                    '0 0 24px rgba(0,240,255,0.95), 0 0 42px rgba(214,244,33,0.7), inset 0 0 14px rgba(255,255,255,0.8)',
+                    '0 0 12px rgba(0,240,255,0.55), 0 0 24px rgba(214,244,33,0.35), inset 0 0 8px rgba(255,255,255,0.45)',
+                  ],
+                }}
+                exit={{ opacity: 0, y: -6, scale: 0.85, transition: { duration: 0.15 } }}
+                transition={{
+                  opacity: { duration: 0.18 },
+                  scale: { duration: 0.18 },
+                  boxShadow: { duration: 2.2, repeat: Infinity, ease: 'easeInOut' },
+                }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                title="Activar jornada oficial e iniciar el día"
+                className="btn-neon-hunter mt-1 px-4 py-2 text-[11.5px] sm:text-xs font-black tracking-wider uppercase flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-400 via-[#d6f421] to-cyan-300 text-[#020617] border-2 border-cyan-100 ring-2 ring-cyan-400/70 shrink-0 cursor-pointer whitespace-nowrap"
+              >
+                <span className="relative flex h-2.5 w-2.5 shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-700 opacity-80" />
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-cyan-950" />
+                </span>
+                <Icon name="sun" className="w-3.5 h-3.5 text-[#020617] shrink-0" />
+                <span>Iniciar Jornada</span>
+                <Icon name="arrowRight" className="w-3.5 h-3.5 text-[#020617] shrink-0 animate-bounce-x" />
+              </motion.button>
+            )}
+
+            {!isMenuOpen && dayStatus === 'ready_to_close' && (
+              <motion.button
+                key="nexus-close-day"
+                type="button"
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  soundFX.playClick();
+                  finishDay();
+                }}
+                initial={{ opacity: 0, y: -4, scale: 0.92 }}
+                animate={{
+                  opacity: 1,
+                  y: 0,
+                  scale: 1,
+                  boxShadow: [
+                    '0 0 12px rgba(245,158,11,0.55), 0 0 24px rgba(253,224,71,0.35), inset 0 0 8px rgba(255,255,255,0.45)',
+                    '0 0 24px rgba(245,158,11,0.95), 0 0 42px rgba(253,224,71,0.7), inset 0 0 14px rgba(255,255,255,0.8)',
+                    '0 0 12px rgba(245,158,11,0.55), 0 0 24px rgba(253,224,71,0.35), inset 0 0 8px rgba(255,255,255,0.45)',
+                  ],
+                }}
+                exit={{ opacity: 0, y: -6, scale: 0.85, transition: { duration: 0.15 } }}
+                transition={{
+                  opacity: { duration: 0.18 },
+                  scale: { duration: 0.18 },
+                  boxShadow: { duration: 2.2, repeat: Infinity, ease: 'easeInOut' },
+                }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                title="Cerrar jornada y registrar inicio de descanso"
+                className="btn-neon-hunter mt-1 px-4 py-2 text-[11.5px] sm:text-xs font-black tracking-wider uppercase flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-300 text-[#020617] border-2 border-amber-100 ring-2 ring-amber-400/70 shrink-0 cursor-pointer whitespace-nowrap"
+              >
+                <span className="relative flex h-2.5 w-2.5 shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-700 opacity-80" />
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-950" />
+                </span>
+                <Icon name="moon" className="w-3.5 h-3.5 text-[#020617] shrink-0" />
+                <span>Cerrar Jornada</span>
+                <Icon name="arrowRight" className="w-3.5 h-3.5 text-[#020617] shrink-0 animate-bounce-x" />
+              </motion.button>
+            )}
+          </AnimatePresence>
         </div>
       </motion.div>
     </>

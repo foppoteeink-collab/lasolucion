@@ -46,7 +46,12 @@ export const DailyProgressWidget: React.FC<DailyProgressWidgetProps> = ({
   currencySymbol,
 }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [claimedLocal, setClaimedLocal] = useState(false);
   const activeCurrencySymbol = currencySymbol || getSavedCurrencySymbol();
+
+  useEffect(() => {
+    setClaimedLocal(false);
+  }, [currentDate]);
 
   useEffect(() => {
     // 30s interval provides accurate timeblock tracking without draining battery
@@ -94,21 +99,21 @@ export const DailyProgressWidget: React.FC<DailyProgressWidgetProps> = ({
     : undefined;
 
   return (
-    <div className="px-3 py-2 sm:px-4 rounded-xl scifi-glass-panel relative overflow-hidden text-left text-white space-y-2">
-      <div className="flex flex-wrap items-center justify-between gap-2 relative z-10">
-        {/* Left: Progress label + inline bar */}
-        <div className="flex items-center gap-2.5 flex-1 min-w-[160px] sm:min-w-[200px]">
-          <div className="flex items-center gap-1.5 shrink-0">
-            <Zap className="w-3.5 h-3.5 fill-cyan-400 text-cyan-400" />
-            <span className="text-[11px] sm:text-xs font-black text-white uppercase tracking-wider font-anton">
-              Progreso
-            </span>
-            <span className="text-[11px] sm:text-xs text-cyan-300 font-mono font-bold">
-              {completed}/{total} ({percent}%)
-            </span>
-          </div>
+    <div className="px-3 sm:px-4 py-2 rounded-xl scifi-glass-panel relative overflow-hidden text-left text-white space-y-1.5 border border-cyan-500/30 shadow-[0_4px_20px_rgba(0,0,0,0.4)]">
+      {/* Grano esmerilado táctil */}
+      <span className="vi-grano opacity-5" aria-hidden="true" />
 
-          <div className="flex-1 max-w-[140px] sm:max-w-xs">
+      <div className="flex items-center justify-between gap-2 relative z-10">
+        {/* Left: Progress label + compact inline bar */}
+        <div className="flex items-center gap-1.5 sm:gap-2.5 min-w-0 flex-1">
+          <Zap className="w-4 h-4 fill-cyan-400 text-cyan-400 shrink-0" />
+          <span className="text-xs font-black text-white uppercase tracking-wider font-anton shrink-0">
+            Progreso
+          </span>
+          <span className="text-xs text-cyan-300 font-mono font-bold shrink-0 tabular-nums">
+            {completed}/{total} ({percent}%)
+          </span>
+          <div className="w-16 xs:w-24 sm:w-36 shrink-0">
             <MoxenRayas
               progress={percent}
               variant="compact"
@@ -118,8 +123,9 @@ export const DailyProgressWidget: React.FC<DailyProgressWidgetProps> = ({
           </div>
         </div>
 
-        {/* Right: Horarios + Tesorería + XP */}
-        <div className="flex items-center gap-1.5 shrink-0 ml-auto">
+        {/* Right Action Cluster: Tesorería (Ingresos/Gastos) + Horarios + XP */}
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          {/* Botón Horarios del Día */}
           {onToggleSchedule && (
             <button
               type="button"
@@ -127,62 +133,35 @@ export const DailyProgressWidget: React.FC<DailyProgressWidgetProps> = ({
                 soundFX.playClick();
                 onToggleSchedule();
               }}
-              className={`px-2 py-0.5 rounded-lg border text-[11px] font-bold flex items-center gap-1 transition-all cursor-pointer active:scale-95 ${
+              className={`h-8 sm:h-9 min-w-[36px] px-2 sm:px-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1 transition-all cursor-pointer active:scale-95 ${
                 showSchedule
                   ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400 shadow-[0_0_8px_rgba(0,240,255,0.25)]'
                   : 'bg-surface-card hover:bg-cyan-950/40 text-slate-300 hover:text-white border-white/10'
               }`}
               title="Ver línea de tiempo de horarios del día"
+              aria-label="Ver horarios del día"
             >
-              <Timer className="w-3 h-3 text-cyan-400" />
-              <span>Horarios</span>
-              {showSchedule ? <ChevronUp className="w-2.5 h-2.5 text-cyan-300" /> : <ChevronDown className="w-2.5 h-2.5 text-slate-400" />}
+              {showSchedule ? <ChevronUp className="w-5 h-5 text-cyan-300 shrink-0" /> : <ChevronDown className="w-5 h-5 text-slate-400 shrink-0" />}
             </button>
           )}
 
-          {enableFinance && onOpenFinance && (
-            <button
-              type="button"
-              onClick={() => {
-                soundFX.playCoin();
-                onOpenFinance();
-              }}
-              className={`px-2 py-0.5 rounded-lg border text-[11px] font-bold flex items-center gap-1 transition-all cursor-pointer active:scale-95 ${
-                todayFinanceBalance > 0
-                  ? 'bg-emerald-950/70 hover:bg-emerald-900/70 text-emerald-300 border-emerald-500/50'
-                  : todayFinanceBalance < 0
-                  ? 'bg-[#fb5607]/15 hover:bg-[#fb5607]/25 text-[#ff7043] border-[#fb5607]/40'
-                  : 'bg-surface-card hover:bg-emerald-950/40 text-emerald-300 hover:text-white border-emerald-500/30'
-              }`}
-              title="Abrir Tesorería: registrar ingreso o gasto"
-            >
-              <Wallet className="w-3 h-3 text-emerald-400" />
-              <span className="font-mono text-[10px]">
-                {todayFinanceBalance > 0
-                  ? `+${activeCurrencySymbol}${todayFinanceBalance}`
-                  : todayFinanceBalance < 0
-                  ? `-${activeCurrencySymbol}${Math.abs(todayFinanceBalance)}`
-                  : `${activeCurrencySymbol}0`}
-              </span>
-            </button>
-          )}
-
-          <div className="hidden xs:flex sm:flex px-2 py-0.5 rounded-lg bg-surface-card border border-cyan-400/30 text-cyan-300 text-[10px] font-mono font-bold items-center gap-1">
-            <Sparkles className="w-2.5 h-2.5 text-cyan-400" />
+          {/* XP del día en pantallas medianas y grandes */}
+          <div className="hidden md:flex h-8 sm:h-9 px-2.5 rounded-xl bg-surface-card border border-cyan-400/30 text-cyan-300 text-xs font-mono font-bold items-center gap-1.5 tabular-nums">
+            <Sparkles className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
             <span>+{xpEarned}/{xpTotal} XP</span>
           </div>
         </div>
       </div>
 
-      {/* Live Active Mission Banner (Shown only when schedule timeline is closed to avoid duplicate) */}
+      {/* Integrated Active Mission / Creative Block inside the Progress Card */}
       {!showSchedule && activeTask && (
-        <div className="flex items-center justify-between gap-2 bg-[#001c38]/90 px-2.5 py-1.5 rounded-lg border border-cyan-400/40 relative z-10 text-xs">
-          <div className="flex items-center gap-1.5 min-w-0">
-            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping shrink-0" />
-            <span className="text-[9px] uppercase tracking-wider font-mono font-bold text-cyan-300 bg-black/50 px-1 py-0.2 rounded border border-cyan-500/30 shrink-0">
-              En curso {activeTask.timeBlock ? `(${activeTask.timeBlock})` : ''}
+        <div className="flex items-center justify-between gap-2 bg-[#001c38]/95 px-3 py-2 rounded-xl border border-cyan-400/50 relative z-10 shadow-[0_0_15px_rgba(0,240,255,0.2)]">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shrink-0" />
+            <span className="text-[10px] uppercase font-mono font-bold text-cyan-300 shrink-0">
+              {activeTask.timeBlock ? activeTask.timeBlock.split('-')[0].trim() : 'AHORA'}:
             </span>
-            <span className="text-xs font-bold text-white truncate">
+            <span className="font-bold text-white truncate text-xs sm:text-sm">
               {activeTask.title}
             </span>
           </div>
@@ -193,21 +172,21 @@ export const DailyProgressWidget: React.FC<DailyProgressWidgetProps> = ({
                 soundFX.playPomodoroChime();
                 onOpenPomodoroForTask(activeTask.title, activeTask.category);
               }}
-              className="px-2.5 py-0.5 bg-cyan-400 text-black hover:bg-cyan-300 rounded-md font-anton tracking-wider uppercase cursor-pointer text-[10px] shrink-0 flex items-center gap-1 active:scale-95"
-              title="Enfocar en Pomodoro"
+              className="px-2.5 py-1 bg-cyan-400 text-black hover:bg-cyan-300 rounded-lg font-anton uppercase text-[11px] shrink-0 flex items-center gap-1 shadow-[0_0_10px_rgba(0,240,255,0.4)] cursor-pointer"
             >
-              <Timer className="w-3 h-3 text-black" />
-              <span>Pomodoro</span>
+              <Timer className="w-3.5 h-3.5" />
+              <span>Foco</span>
             </button>
           )}
         </div>
       )}
 
       {/* 100% Daily Completion Bonus Banner */}
-      {isAllCompleted && onClaimDailyBonus && !hasClaimedToday && (
+      {isAllCompleted && onClaimDailyBonus && !hasClaimedToday && !claimedLocal && (
         <button
           type="button"
           onClick={() => {
+            setClaimedLocal(true);
             soundFX.playLevelUp();
             onClaimDailyBonus(25, 10);
           }}

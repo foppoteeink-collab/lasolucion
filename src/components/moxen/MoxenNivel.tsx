@@ -14,13 +14,16 @@ export const MoxenNivel: React.FC<MoxenNivelProps> = ({
   level,
   currentXp,
   requiredXp,
-  rankTitle = 'Cazador',
+  rankTitle = 'Iniciado',
   onOpenRanks
 }) => {
   const percent = Math.min(100, Math.max(0, Math.floor((currentXp / Math.max(1, requiredXp)) * 100)));
 
+  const isNearLevelUp = percent >= 85;
+  const pulseClasses = isNearLevelUp ? "animate-pulse shadow-[0_0_20px_rgba(0,240,255,0.3)]" : "";
+
   return (
-    <div className="p-4 rounded-2xl bg-gradient-to-r from-[#0b1022] to-[#040817] border border-cyan-500/40 shadow-[0_4px_25px_rgba(0,240,255,0.15)] relative overflow-hidden">
+    <div className={`p-4 rounded-2xl bg-gradient-to-r from-[#0b1022] to-[#040817] border border-cyan-500/40 shadow-[0_4px_25px_rgba(0,240,255,0.15)] relative overflow-hidden ${pulseClasses}`}>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-xl bg-cyan-950/80 border border-cyan-400 flex items-center justify-center text-cyan-300 font-black shadow-[0_0_10px_rgba(0,240,255,0.4)] shrink-0">

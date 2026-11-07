@@ -369,31 +369,38 @@ export function generateProceduralSchedule(userPrompt: string, userContext: any,
     ];
   }
 
-  // Pre-split compound structures from Wizard, Templates, and natural Spanish
-  const normalizedInput = rawInput
-    .replace(/;\s*/g, '\n')
-    // Protect "desconexión (nocturna)? y (dormir|descanso|acostarse)" from getting broken into fragments
-    .replace(/desconexi[oó]n\s+(?:nocturna\s+)?y\s+(?:dormir|descanso|acostarse)/gi, 'Desconexión nocturna y descanso')
-    // Protect "ejercicio y entrenamiento / gimnasio"
-    .replace(/(?:ejercicio|deporte)\s+y\s+(?:entrenamiento|gimnasio|gym)/gi, 'Entrenamiento físico y deporte')
-    // Protect "cena saludable y tiempo libre / descanso"
-    .replace(/cena\s+(?:saludable\s+)?y\s+(?:tiempo\s+libre|descanso|lectura)/gi, 'Cena saludable y descanso')
-    // Smart split of work with lunch: "trabajo de 09:00 a 17:00 con almuerzo de 13:00 a 14:00"
-    .replace(/((?:bloque\s+laboral|trabajo|oficina|jornada|estudio)[^.\n]*?)\s+de\s+(\d{1,2}(?::\d{2})?)\s*a\s*(\d{1,2}(?::\d{2})?)\s+con\s+almuerzo\s+de\s+(\d{1,2}(?::\d{2})?)\s*a\s*(\d{1,2}(?::\d{2})?)/gi,
-      (_m, prefix, sw, ew, sl, el) => `${prefix} (Turno Mañana) de ${sw} a ${sl}\nAlmuerzo y Pausa de Recarga de ${sl} a ${el}\n${prefix} (Turno Tarde) de ${el} a ${ew}`)
-    // Split "Despertar a las X y cena/entrenamiento a las Y"
-    .replace(/\s+y\s+(?=(?:cena|almuerzo|entrenamiento|gimnasio|segundo\s+turno|bloque|estudio|lectura|limpieza)\b)/gi, '\n')
-    // Split ", y segundo turno..." or ": primer turno..."
-    .replace(/,?\s*y\s+segundo\s+turno/gi, '\nSegundo turno laboral')
-    .replace(/en\s+jornada\s+partida:\s*primer\s+turno/gi, ' - Primer turno')
-    // Split remaining "con almuerzo de 13:00 a 14:00" into its own block
-    .replace(/\s+con\s+(?=almuerzo\s+de\s+\d)/gi, '\n')
-    // Split commas before day names or time expressions (supporting plural days)
-    .replace(/(?:,\s*|\.\s*)(?=(?:de\s+lunes|lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bados?|domingos?)\b)/gi, '\n')
-    .replace(/\s+(?:y\s+de\s+|\by\s+(?=\d{1,2}(?::\d{2})?\s*(?:am|pm|a\b|-|–|—|de\s+la\s+tarde)))/gi, '\n')
-    // Split comma-separated lists if there are no newlines or if comma is followed by action/time
-    .replace(/,\s+(?=(?:a\s+las\s+\d|de\s+\d|\d{1,2}(?::\d{2})?\s*(?:am|pm|h)|ir\s+a|trabajar|estudiar|entrenar|hacer|limpiar|cocinar|almorzar|cenar|desayunar|leer|meditar))/gi, '\n')
-    .replace(/(?<=[.!?])\s+(?=[a-záéíóúA-Z0-9ÁÉÍÓÚ])/g, '\n');
+  // Check if user already provided a structured multi-line schedule with explicit HH:mm times
+  const structuredTimeLineCount = rawInput
+    .split(/\r?\n+/)
+    .filter(l => /\d{1,2}:\d{2}/.test(l)).length;
+
+  // Pre-split compound structures only when input is freeform prose (not an already-formatted line-by-line schedule)
+  const normalizedInput = structuredTimeLineCount >= 2
+    ? rawInput
+    : rawInput
+        .replace(/;\s*/g, '\n')
+        // Protect "desconexión (nocturna)? y (dormir|descanso|acostarse)" from getting broken into fragments
+        .replace(/desconexi[oó]n\s+(?:nocturna\s+)?y\s+(?:dormir|descanso|acostarse)/gi, 'Desconexión nocturna y descanso')
+        // Protect "ejercicio y entrenamiento / gimnasio"
+        .replace(/(?:ejercicio|deporte)\s+y\s+(?:entrenamiento|gimnasio|gym)/gi, 'Entrenamiento físico y deporte')
+        // Protect "cena saludable y tiempo libre / descanso"
+        .replace(/cena\s+(?:saludable\s+)?y\s+(?:tiempo\s+libre|descanso|lectura)/gi, 'Cena saludable y descanso')
+        // Smart split of work with lunch: "trabajo de 09:00 a 17:00 con almuerzo de 13:00 a 14:00"
+        .replace(/((?:bloque\s+laboral|trabajo|oficina|jornada|estudio)[^.\n]*?)\s+de\s+(\d{1,2}(?::\d{2})?)\s*a\s*(\d{1,2}(?::\d{2})?)\s+con\s+almuerzo\s+de\s+(\d{1,2}(?::\d{2})?)\s*a\s*(\d{1,2}(?::\d{2})?)/gi,
+          (_m, prefix, sw, ew, sl, el) => `${prefix} (Turno Mañana) de ${sw} a ${sl}\nAlmuerzo y Pausa de Recarga de ${sl} a ${el}\n${prefix} (Turno Tarde) de ${el} a ${ew}`)
+        // Split "Despertar a las X y cena/entrenamiento a las Y"
+        .replace(/\s+y\s+(?=(?:cena|almuerzo|entrenamiento|gimnasio|segundo\s+turno|bloque|estudio|lectura|limpieza)\b[^.\n]*?\b(?:a\s+las|de\s+\d|\d{1,2}:\d{2}))/gi, '\n')
+        // Split ", y segundo turno..." or ": primer turno..."
+        .replace(/,?\s*y\s+segundo\s+turno/gi, '\nSegundo turno laboral')
+        .replace(/en\s+jornada\s+partida:\s*primer\s+turno/gi, ' - Primer turno')
+        // Split remaining "con almuerzo de 13:00 a 14:00" into its own block
+        .replace(/\s+con\s+(?=almuerzo\s+de\s+\d)/gi, '\n')
+        // Split commas before day names or time expressions (supporting plural days)
+        .replace(/(?:,\s*|\.\s*)(?=(?:de\s+lunes|lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bados?|domingos?)\b)/gi, '\n')
+        .replace(/\s+(?:y\s+de\s+|\by\s+(?=\d{1,2}(?::\d{2})?\s*(?:am|pm|a\b|-|–|—|de\s+la\s+tarde)))/gi, '\n')
+        // Split comma-separated lists if there are no newlines or if comma is followed by action/time
+        .replace(/,\s+(?=(?:a\s+las\s+\d|de\s+\d|\d{1,2}(?::\d{2})?\s*(?:am|pm|h)|ir\s+a|trabajar|estudiar|entrenar|hacer|limpiar|cocinar|almorzar|cenar|desayunar|leer|meditar))/gi, '\n')
+        .replace(/(?<=[.!?])\s+(?=[a-záéíóúA-Z0-9ÁÉÍÓÚ])/g, '\n');
 
   let rawLines = normalizedInput
     .split(/\r?\n+/)
@@ -416,15 +423,65 @@ export function generateProceduralSchedule(userPrompt: string, userContext: any,
   const globalLv = /de\s+lunes\s+a\s+viernes|l-v/i.test(rawInput);
   const globalLs = /de\s+lunes\s+a\s+s[aá]bado|l-s/i.test(rawInput);
 
+  // Track active day section header (e.g. "LUNES", "MARTES", "LUNES A VIERNES") across lines
+  let activeDayContext: number[] | null = null;
+  const dayTokenMap: Record<string, number> = {
+    lunes: 1, lun: 1,
+    martes: 2, mar: 2,
+    miercoles: 3, miércoles: 3, mie: 3, mié: 3,
+    jueves: 4, jue: 4,
+    viernes: 5, vie: 5,
+    sabado: 6, sábado: 6, sabados: 6, sábados: 6, sab: 6, sáb: 6,
+    domingo: 0, domingos: 0, dom: 0
+  };
+
   rawLines.forEach((line, lineIdx) => {
     let cleanLine = line
       .replace(/^\|+/, '')
       .replace(/\|+$/, '')
       .replace(/\|/g, ' ')
-      .replace(/^[-\s*•#\d.:)]+/, '')
+      // Strip bullet symbols or numbered list prefixes like "1) " or "1. " only when NOT followed by colon/time
+      .replace(/^[-*•#\s]+/, '')
+      .replace(/^\d{1,2}[.)]\s+(?!\d)/, '')
       .trim();
 
-    if (!cleanLine || cleanLine.length < 3) return;
+    if (!cleanLine || cleanLine.length < 2) return;
+
+    // Check if this line is a standalone Day Section Header (e.g. "LUNES", "MARTES:", "SÁBADOS", "LUNES A VIERNES:")
+    const hasTimeInLine = timeRangeRegex.test(cleanLine) || explicitSingleTimeRegex.test(cleanLine);
+    const headerNormalized = cleanLine.replace(/[:.\-—–*()[\]]+/g, '').trim().toLowerCase();
+
+    if (!hasTimeInLine) {
+      if (/^(?:de\s+)?lunes\s+a\s+viernes$|^l-v$|^d[ií]as\s+de\s+semana$|^entre\s+semana$/i.test(headerNormalized)) {
+        activeDayContext = [1, 2, 3, 4, 5];
+        return;
+      }
+      if (/^(?:de\s+)?lunes\s+a\s+s[aá]bados?$|^l-s$/i.test(headerNormalized)) {
+        activeDayContext = [1, 2, 3, 4, 5, 6];
+        return;
+      }
+      if (/^fines?\s+de\s+semana$|^s[aá]bados?\s+y\s+domingos?$/i.test(headerNormalized)) {
+        activeDayContext = [0, 6];
+        return;
+      }
+      if (/^(?:todos\s+los\s+d[ií]as|diario|rutina\s+diaria)$/i.test(headerNormalized)) {
+        activeDayContext = [0, 1, 2, 3, 4, 5, 6];
+        return;
+      }
+      const headerTokens = headerNormalized.split(/[\s,y]+/).filter(Boolean);
+      if (
+        headerTokens.length > 0 &&
+        headerTokens.every(tk => dayTokenMap[tk] !== undefined || tk === 'los' || tk === 'el' || tk === 'dia' || tk === 'día')
+      ) {
+        const matchedDays = headerTokens
+          .filter(tk => dayTokenMap[tk] !== undefined)
+          .map(tk => dayTokenMap[tk]);
+        if (matchedDays.length > 0) {
+          activeDayContext = Array.from(new Set(matchedDays)).sort((a, b) => a - b);
+          return;
+        }
+      }
+    }
 
     const lower = cleanLine.toLowerCase();
 
@@ -446,13 +503,13 @@ export function generateProceduralSchedule(userPrompt: string, userContext: any,
     let xp = 25;
     let coins = 10;
     let defaultDurationMins = 60;
-    let preferredStartMins = 9 * 60 + lineIdx * 60;
+    let preferredStartMins = 9 * 60 + (lineIdx % 8) * 60;
 
     const isWorkRelated = lower.includes('cliente') || lower.includes('trabaj') || lower.includes('oficina') || lower.includes('laboral') || lower.includes('reunion') || lower.includes('llamada') || lower.includes('turno') || lower.includes('deep work') || lower.includes('proyecto');
 
-    if (lower.includes('despertar') || lower.includes('levantar') || lower.includes('desayun')) {
+    if (lower.includes('despertar') || lower.includes('levant') || lower.includes('desayun') || lower.includes('duch') || lower.includes('prepar')) {
       category = 'rutina';
-      icon = '☀️';
+      icon = lower.includes('duch') ? '🚿' : '☀️';
       xp = 20;
       coins = 8;
       defaultDurationMins = 30;
@@ -464,7 +521,7 @@ export function generateProceduralSchedule(userPrompt: string, userContext: any,
       coins = 8;
       defaultDurationMins = 30;
       preferredStartMins = 23 * 60;
-    } else if (lower.includes('gym') || lower.includes('gimnasio') || lower.includes('entren') || lower.includes('correr') || lower.includes('pesas') || lower.includes('deporte') || lower.includes('crossfit') || lower.includes('cardio') || lower.includes('funcional') || lower.includes('ejercicio') || lower.includes('físic') || lower.includes('fisic')) {
+    } else if (lower.includes('gym') || lower.includes('gimnasio') || lower.includes('entren') || lower.includes('correr') || lower.includes('pesas') || lower.includes('deporte') || lower.includes('crossfit') || lower.includes('cardio') || lower.includes('funcional') || lower.includes('ejercicio') || lower.includes('físic') || lower.includes('fisic') || lower.includes('glúteo') || lower.includes('gluteo') || lower.includes('pierna')) {
       category = 'entrenamiento';
       icon = '🏋️';
       xp = 35;
@@ -485,21 +542,21 @@ export function generateProceduralSchedule(userPrompt: string, userContext: any,
       coins = 15;
       defaultDurationMins = 180;
       preferredStartMins = 9 * 60;
-    } else if (lower.includes('comida') || lower.includes('comer') || lower.includes('almuerzo') || lower.includes('almorzar') || lower.includes('cena') || lower.includes('cocinar')) {
+    } else if (lower.includes('comida') || lower.includes('comer') || lower.includes('almuerzo') || lower.includes('almorzar') || lower.includes('cena') || lower.includes('ceno') || lower.includes('cocinar')) {
       category = 'comida';
       icon = '🥗';
       xp = 15;
       coins = 6;
       defaultDurationMins = 60;
-      preferredStartMins = lower.includes('cena') ? 20 * 60 + 30 : 13 * 60;
-    } else if (lower.includes('limp') || lower.includes('orden') || lower.includes('casa') || lower.includes('hogar') || lower.includes('lavar')) {
+      preferredStartMins = (lower.includes('cena') || lower.includes('ceno')) ? 20 * 60 + 30 : 13 * 60;
+    } else if (lower.includes('limp') || lower.includes('orden') || lower.includes('casa') || lower.includes('hogar') || lower.includes('lavar') || lower.includes('barro') || lower.includes('trapeo') || lower.includes('baño') || lower.includes('patio') || lower.includes('polvo') || lower.includes('vidrio') || lower.includes('cocina') || lower.includes('nevera')) {
       category = 'limpieza';
       icon = '🧹';
       xp = 20;
       coins = 8;
       defaultDurationMins = 45;
       preferredStartMins = 19 * 60 + 30;
-    } else if (lower.includes('dibuj') || lower.includes('creativ') || lower.includes('escrib') || lower.includes('video') || lower.includes('musica') || lower.includes('diseñ') || lower.includes('contenido') || lower.includes('edición')) {
+    } else if (lower.includes('dibuj') || lower.includes('creativ') || lower.includes('escrib') || lower.includes('video') || lower.includes('musica') || lower.includes('diseñ') || lower.includes('contenido') || lower.includes('edición') || lower.includes('canva') || lower.includes('capcut') || lower.includes('animaci') || lower.includes('redes')) {
       category = 'creativo';
       icon = '🎨';
       xp = 25;
@@ -537,12 +594,15 @@ export function generateProceduralSchedule(userPrompt: string, userContext: any,
     if (lower.includes('lunes a viernes') || lower.includes('l-v') || lower.includes('laborables') || lower.includes('dias de semana') || lower.includes('días de semana')) {
       freq = 'specific_days';
       specificDays = [1, 2, 3, 4, 5];
+      activeDayContext = [1, 2, 3, 4, 5];
     } else if (lower.includes('fin de semana') || lower.includes('fines de semana') || lower.includes('sabado y domingo') || lower.includes('sábado y domingo')) {
       freq = 'specific_days';
       specificDays = [0, 6];
+      activeDayContext = [0, 6];
     } else if (lower.includes('lunes a sabado') || lower.includes('lunes a sábado') || lower.includes('l-s')) {
       freq = 'specific_days';
       specificDays = [1, 2, 3, 4, 5, 6];
+      activeDayContext = [1, 2, 3, 4, 5, 6];
     } else {
       const dayArr: number[] = [];
       if (/\b(?:lun|lunes)\b/i.test(cleanLine)) dayArr.push(1);
@@ -556,6 +616,13 @@ export function generateProceduralSchedule(userPrompt: string, userContext: any,
       if (dayArr.length > 0 && dayArr.length < 7) {
         freq = 'specific_days';
         specificDays = Array.from(new Set(dayArr)).sort((a, b) => a - b);
+        // If line started with a day name (e.g. "LUNES: 05:30 a 06:00..."), also update activeDayContext
+        if (/^(?:los\s+|el\s+)?(?:lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bados?|domingos?)\b/i.test(cleanLine)) {
+          activeDayContext = specificDays;
+        }
+      } else if (activeDayContext && activeDayContext.length > 0) {
+        freq = activeDayContext.length >= 7 ? 'daily' : 'specific_days';
+        specificDays = [...activeDayContext];
       } else if (globalLv) {
         freq = 'specific_days';
         specificDays = [1, 2, 3, 4, 5];
@@ -565,7 +632,7 @@ export function generateProceduralSchedule(userPrompt: string, userContext: any,
       }
     }
 
-    if (isWorkRelated && freq === 'daily' && !lower.includes('todos los dias') && !lower.includes('a diario') && !lower.includes('toda la semana') && !lower.includes('fin de semana')) {
+    if (isWorkRelated && freq === 'daily' && !activeDayContext && !lower.includes('todos los dias') && !lower.includes('a diario') && !lower.includes('toda la semana') && !lower.includes('fin de semana')) {
       freq = 'specific_days';
       specificDays = [1, 2, 3, 4, 5];
     }
@@ -577,13 +644,14 @@ export function generateProceduralSchedule(userPrompt: string, userContext: any,
       .replace(/(?:l-v|lunes a viernes|fines de semana|fin de semana|laborables|todos los d[ií]as|a diario|diario)/gi, '')
       .replace(/con\s+desglose\s+por\s+grupo\s+muscular\s+seg[uú]n\s+el\s+d[ií]a/gi, '(Rutina por Grupo Muscular)')
       .replace(/\s+/g, ' ')
-      .replace(/^[-\s*•\d.:|#\[\](),;]+/g, '')
+      .replace(/^[-\s*•.:|#\[\](),;]+/g, '')
       .replace(/[\s,.;:-]+$/g, '')
       .replace(/\b(?:de|a|en|por|para|los|las|el|la|y|con|días|dias)\s*$/i, '')
       .replace(/[\s,.;:-]+$/g, '')
       .trim();
 
-    if (!cleanTitle || cleanTitle.length < 3) {
+    if (!cleanTitle || cleanTitle.length < 2) {
+      if (!timeBlock) return; // Ignore empty non-time fragments
       if (isWorkRelated) cleanTitle = 'Bloque Laboral / Productivo';
       else if (category === 'entrenamiento') cleanTitle = 'Entrenamiento Físico';
       else if (category === 'comida') cleanTitle = 'Almuerzo & Recarga';

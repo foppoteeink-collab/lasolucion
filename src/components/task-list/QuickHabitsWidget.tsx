@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'motion/react';
 import {
   Zap,
   Plus,
@@ -35,6 +36,7 @@ import {
   ShieldAlert,
   ChevronDown,
   ChevronUp,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { TaskItem, CustomHabit, HabitEnergyType } from '../../types';
 import { INITIAL_CUSTOM_HABITS } from '../../data/defaults';
@@ -48,6 +50,7 @@ import { getHabitBaseId, computeHabitStreak } from '../../intelligence/masteryEn
 import { getTodayDateString, addDaysToDateString } from '../../utils/date';
 import { HABIT_ENERGY_DETAILS, detectHabitEnergy } from '../../utils/habitEnergyDetector';
 import { useSystemPalette } from '../../utils/systemPalette';
+import { Icon } from '../common/Icon';
 
 interface AuraTheme {
   border: string;
@@ -495,10 +498,10 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
 
   // Hydrate custom habits into active day if quickHabits list for today is empty
   React.useEffect(() => {
-    if (quickHabits.length === 0 && customHabits.length > 0) {
+    if (tasks.length === 0 && customHabits.length > 0) {
       gameEngine.injectHabitsToExistingDays(customHabits);
     }
-  }, [quickHabits.length, customHabits.length]);
+  }, []); // Run only on mount
 
   // Helper to activate a preset habit
   const handleActivatePreset = (preset: Omit<CustomHabit, 'id'>) => {
@@ -580,13 +583,7 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
     (qh) => qh.completed || (qh.currentCount || 0) >= (qh.targetCount || 1)
   ).length;
 
-  const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
-    try {
-      return localStorage.getItem('taskquest_habits_collapsed') === 'true';
-    } catch {
-      return false;
-    }
-  });
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
 
   const toggleCollapsed = () => {
     soundFX.playClick();
@@ -600,34 +597,45 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
   };
 
   return (
-    <div className="scifi-glass-panel rounded-xl p-2.5 sm:p-3 space-y-2 font-sans text-white">
-      {/* Header with Title and Ratio Summary (Ultra-Clean, Sin contador duplicado) */}
-      <div className="flex items-center justify-between gap-2 px-0.5">
-        <div className="flex items-center gap-1.5 min-w-0">
+    <div className="scifi-glass-panel rounded-2xl p-2 sm:p-3 space-y-1 border border-cyan-500/30 shadow-[0_2px_15px_rgba(0,0,0,0.45)] relative overflow-hidden font-sans text-white">
+      {/* Grano esmerilado táctil */}
+      <span className="vi-grano opacity-5" aria-hidden="true" />
+      {/* Header with Title and Ratio Summary (Clean, Sin solapamiento en mobile) */}
+      <div className="flex items-center justify-between gap-1.5 sm:gap-2 px-0.5 flex-nowrap">
+        {/* Lado Izquierdo: Título y Guía */}
+        <div className="flex items-center gap-1.5 min-w-0 shrink-0">
           <div className="p-1 rounded-md bg-[#04020e] border border-cyan-500/60 text-cyan-400 shrink-0">
             <Zap className="w-3 h-3 fill-cyan-400" />
           </div>
           <h3 className="text-xs font-bold font-anton text-cyan-300 uppercase tracking-wider whitespace-nowrap">
-            Hábitos (21/66)
+            Hábitos
           </h3>
-          <button
-            type="button"
-            onClick={() => {
-              soundFX.playClick();
-              useUIStore.getState().openTacticalGuide(2);
-            }}
-            className="text-[10px] font-mono text-cyan-400/80 hover:text-cyan-200 flex items-center gap-1 px-1 py-0.2 rounded hover:bg-cyan-950/40 transition-colors cursor-pointer"
-            title="Ver guía de Orbes de Hábitos y Ley 21/66"
-          >
-            <span>💡</span>
-            <span className="hidden sm:inline">Guía</span>
-          </button>
+          <span className="hidden sm:inline-block text-[10px] font-mono text-cyan-400/60 tabular-nums">
+            (21/66)
+          </span>
         </div>
 
-        <div className="flex items-center gap-1.5 shrink-0 ml-auto">
+        {/* Lado Derecho: Botón Gestionar + Contador + Chevron */}
+        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 ml-auto">
+          {onOpenHabitManager && (
+            <button
+              type="button"
+              onClick={() => {
+                soundFX.playClick();
+                onOpenHabitManager();
+              }}
+              className="text-[10px] sm:text-[11px] font-mono font-bold text-cyan-300 hover:text-white bg-cyan-950/80 hover:bg-cyan-900/90 px-1.5 sm:px-2 py-0.5 rounded-md border border-cyan-500/40 hover:border-cyan-400 flex items-center gap-1 transition-all cursor-pointer shadow-[0_0_8px_rgba(0,240,255,0.2)] active:scale-95 whitespace-nowrap"
+              title="Gestionar, editar o eliminar hábitos y rutinas"
+            >
+              <SlidersHorizontal className="w-3 h-3 text-cyan-400" />
+              <span>Gestionar</span>
+            </button>
+          )}
+
           {quickHabits.length > 0 && (
-            <div className="text-[10px] sm:text-[11px] font-mono text-cyan-300 font-bold bg-cyan-950/60 px-2 py-0.5 rounded-md border border-cyan-500/30">
-              {completedHabitsCount}/{quickHabits.length} {completedHabitsCount === 1 ? 'Listo' : 'Listos'}
+            <div className="text-[10px] sm:text-[11px] font-mono text-cyan-300 font-bold bg-cyan-950/60 px-1.5 sm:px-2 py-0.5 rounded-md border border-cyan-500/30 whitespace-nowrap tabular-nums">
+              <span>{completedHabitsCount}/{quickHabits.length}</span>
+              <span className="hidden sm:inline ml-1">{completedHabitsCount === 1 ? 'Listo' : 'Listos'}</span>
             </div>
           )}
 
@@ -727,8 +735,28 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
               className="flex flex-col items-center w-14 shrink-0 select-none group"
             >
               {/* Círculo Principal de 48x48 con Anillo SVG Moxen Constancia y Núcleo Vidrio Obsidian */}
-              <div
+              <motion.div
                 {...(idx === 0 ? { 'data-tour': 'habit-orb' } : {})}
+                whileHover={{ scale: 1.05 }}
+                animate={{
+                  boxShadow: isFinished
+                    ? [
+                        "0 0 8px rgba(16, 185, 129, 0.35), inset 0 0 4px rgba(16, 185, 129, 0.2)",
+                        "0 0 16px rgba(16, 185, 129, 0.65), inset 0 0 8px rgba(16, 185, 129, 0.35)"
+                      ]
+                    : [
+                        "0 0 6px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.22), inset 0 0 4px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.12)",
+                        "0 0 14px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.48), inset 0 0 8px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.24)"
+                      ],
+                }}
+                transition={{
+                  boxShadow: {
+                    repeat: Infinity,
+                    repeatType: "reverse",
+                    duration: 1.8,
+                    ease: "easeInOut",
+                  },
+                }}
                 onClick={(e) => {
                   if (isLocked) return;
 
@@ -766,7 +794,7 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
 
                   onIncrementHabit(qh.id, e);
                 }}
-                className={`w-12 h-12 relative flex items-center justify-center cursor-pointer transition-transform duration-150 active:scale-95 ${
+                className={`w-12 h-12 rounded-full relative flex items-center justify-center cursor-pointer transition-transform duration-150 active:scale-95 ${
                   isLocked ? 'cursor-not-allowed opacity-60' : ''
                 }`}
                 title={
@@ -787,7 +815,7 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                   <div className="absolute inset-[-4px] rounded-full border-2 border-emerald-400 pointer-events-none animate-moxen-shockwave z-30" />
                 )}
 
-                {/* Micro-Llama Superior de Racha (Sólo si streak > 0) */}
+                {/* Micro-Llama Superior de Racha posicionada en el borde exterior para no cubrir el icono */}
                 {currentStreak > 0 && (
                   <div
                     onClick={(e) => {
@@ -795,11 +823,11 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                       soundFX.playClick();
                       setSelectedHabitForProtocol(qh);
                     }}
-                    className="absolute -top-1 left-1/2 -translate-x-1/2 bg-black/95 border border-amber-500/70 px-1 py-0 rounded-full flex items-center gap-0.5 z-20 shadow-sm cursor-pointer hover:scale-105 transition-transform ring-2 ring-[#070510]"
+                    className="absolute -top-2 left-1/2 -translate-x-1/2 bg-[#050914]/95 border border-amber-500/75 px-1.5 py-[1px] rounded-full flex items-center gap-0.5 z-20 shadow-[0_0_8px_rgba(245,158,11,0.35)] cursor-pointer hover:scale-105 transition-transform ring-1 ring-[#070510]"
                     title={`Racha: ${currentStreak} días (Meta: ${streakGoal}d)`}
                   >
-                    <Flame className="w-2 h-2 text-amber-400 fill-amber-400" />
-                    <span className="text-[8px] font-mono font-black text-amber-300 leading-tight">{currentStreak}</span>
+                    <Flame className="w-2 h-2 text-amber-400 fill-amber-400 shrink-0" />
+                    <span className="text-[8px] font-mono font-black text-amber-300 leading-none">{currentStreak}</span>
                   </div>
                 )}
 
@@ -812,13 +840,13 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                     </linearGradient>
                   </defs>
 
-                  {/* Track de fondo tenue */}
+                  {/* Track de fondo con resplandor sutil */}
                   <circle
                     cx="24"
                     cy="24"
                     r="21"
                     stroke="currentColor"
-                    className="text-white/[0.08]"
+                    className="text-cyan-400/20"
                     strokeWidth="2.8"
                     fill="none"
                   />
@@ -836,7 +864,7 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                       strokeDasharray: 132,
                       strokeDashoffset: strokeDashoffset,
                       filter: progressPct > 0
-                        ? `drop-shadow(0 0 3px ${glowFilterColor})`
+                        ? `drop-shadow(0 0 4px ${glowFilterColor})`
                         : 'none',
                       transition: 'stroke-dashoffset 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), stroke 0.3s ease',
                     }}
@@ -861,57 +889,66 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
 
                 {/* Núcleo Central del Círculo (Vidrio Obsidian 3D con luz cenital) */}
                 <div
-                  className={`w-[38px] h-[38px] rounded-full flex items-center justify-center transition-all duration-300 relative z-[2] select-none ${
+                  className={`w-[36px] h-[36px] rounded-full flex items-center justify-center transition-all duration-300 relative z-[2] select-none ${
                     isFinished
                       ? 'bg-gradient-to-b from-[#06241a] to-[#020d09] border border-emerald-500/60 shadow-[0_0_12px_rgba(16,185,129,0.35),inset_0_1px_2px_rgba(255,255,255,0.15)]'
-                      : 'bg-gradient-to-b from-[#0b1428] to-[#040712] border border-white/10 group-hover:border-white/25 shadow-[inset_0_1px_2px_rgba(255,255,255,0.1),0_2px_8px_rgba(0,0,0,0.6)]'
+                      : 'bg-gradient-to-b from-[#0b1428] to-[#040712] border border-cyan-500/25 group-hover:border-cyan-400/50 shadow-[inset_0_1px_2px_rgba(255,255,255,0.1),0_2px_8px_rgba(0,0,0,0.6)]'
                   }`}
                 >
                   <span className="text-base select-none leading-none filter drop-shadow-sm">
-                    {renderDisplayIcon(qh.quickIcon, qh.title, 'text-base')}
+                    <Icon name={qh.quickIcon} className="w-4 h-4" />
                   </span>
                 </div>
 
-                {/* Micro-Badge Inferior Derecho con Odómetro Cinético */}
+                {/* Borde exterior resplandeciente de energía */}
                 <div
-                  className={`absolute -bottom-0.5 -right-0.5 px-1 py-0 rounded-full border text-[8px] font-mono font-bold leading-tight flex items-center justify-center shadow-md z-10 ring-2 ring-[#070510] transition-all duration-300 ${
+                  className={`absolute inset-[-3px] rounded-full border pointer-events-none transition-colors duration-300 ${
+                    isFinished
+                      ? 'border-emerald-400/50 shadow-[0_0_10px_rgba(16,185,129,0.3)]'
+                      : 'border-cyan-400/35 group-hover:border-cyan-300/60 shadow-[0_0_8px_rgba(var(--aura-glow-rgb,0,240,255),0.2)]'
+                  }`}
+                />
+
+                {/* Micro-Badge Inferior Derecho con Odómetro Cinético en el perímetro exterior */}
+                <div
+                  className={`absolute -bottom-1.5 -right-1.5 px-1.5 py-[1px] rounded-full border font-mono font-bold leading-none flex items-center justify-center shadow-md z-20 ring-1 ring-[#070510] transition-all duration-300 ${
                     isFinished
                       ? 'bg-emerald-950 border-emerald-400 text-emerald-300 shadow-[0_0_8px_rgba(16,185,129,0.7)]'
                       : isCounterHabit
-                      ? 'bg-[#060a18] border-cyan-500/50 text-cyan-200'
-                      : 'bg-[#060a14] border-white/20 text-gray-400'
+                      ? 'bg-[#050914]/95 border-cyan-400/60 text-cyan-200 shadow-[0_0_6px_rgba(0,240,255,0.25)]'
+                      : 'bg-[#060a14] border-white/20 text-gray-400 p-0.5'
                   }`}
                 >
                   {isFinished ? (
-                    <Check className="w-2.5 h-2.5 text-emerald-300 stroke-[3]" />
+                    <Check className="w-2 h-2 text-emerald-300 stroke-[3]" />
                   ) : isCounterHabit ? (
-                    <div className="flex items-center overflow-hidden h-[12px] leading-[12px]">
-                      <span className="inline-block h-[12px] overflow-hidden">
+                    <div className="flex items-center overflow-hidden h-[10px] leading-[10px] tabular-nums font-mono text-[8.5px]">
+                      <span className="inline-block h-[10px] overflow-hidden">
                         <span
                           className="block transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
-                          style={{ transform: `translateY(-${Math.min(current, target) * 12}px)` }}
+                          style={{ transform: `translateY(-${Math.min(current, target) * 10}px)` }}
                         >
                           {Array.from({ length: Math.max(target + 1, current + 1) }, (_, i) => (
-                            <span key={i} className="block h-[12px] leading-[12px] text-center">
+                            <span key={i} className="block h-[10px] leading-[10px] text-center">
                               {i}
                             </span>
                           ))}
                         </span>
                       </span>
-                      <span className="opacity-50 text-[7px] mx-0.5">/</span>
-                      <span>{target}</span>
+                      <span className="opacity-60 text-[7.5px] mx-[1px]">/</span>
+                      <span className="text-[8.5px]">{target}</span>
                     </div>
                   ) : (
                     <span
-                      className="w-1.5 h-1.5 rounded-full"
+                      className="w-1 h-1 rounded-full"
                       style={{
                         backgroundColor: endColor,
-                        boxShadow: `0 0 4px ${endColor}`,
+                        boxShadow: `0 0 2px ${endColor}`,
                       }}
                     />
                   )}
                 </div>
-              </div>
+              </motion.div>
 
               {/* Etiqueta Corta Inferior (Tono neutral slate-300 - Tocar abre modal) */}
               <span
@@ -940,7 +977,7 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
             className="w-12 h-12 rounded-full border border-dashed border-cyan-500/40 hover:border-cyan-400 bg-white/[0.02] hover:bg-cyan-950/40 flex items-center justify-center transition-all cursor-pointer group active:scale-95 shadow-[0_0_8px_rgba(0,240,255,0.1)]"
             title="Crear un nuevo hábito (Ley 21/66)"
           >
-            <Plus className="w-4 h-4 text-cyan-400 group-hover:scale-110 transition-transform" />
+            <Icon name="plus" className="w-4 h-4 text-cyan-400 group-hover:scale-110 transition-transform" />
           </button>
           <span className="text-[10px] text-slate-400 group-hover:text-cyan-200 font-medium text-center mt-1 select-none leading-tight">
             Nuevo
@@ -1141,18 +1178,34 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
 
               {/* Footer Actions */}
               <div className="pt-3 border-t border-cyan-900/60 flex items-center justify-between gap-2 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => {
-                    const target = selectedHabitForProtocol;
-                    setSelectedHabitForProtocol(null);
-                    onOpenEditModal(target);
-                  }}
-                  className="px-3 py-1.5 rounded-xl bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-600/60 hover:border-cyan-400 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
-                >
-                  <Edit3 className="w-3.5 h-3.5" />
-                  <span>Configurar Hábito</span>
-                </button>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const target = selectedHabitForProtocol;
+                      setSelectedHabitForProtocol(null);
+                      onOpenEditModal(target);
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-600/60 hover:border-cyan-400 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                    <span>Configurar</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const target = selectedHabitForProtocol;
+                      setSelectedHabitForProtocol(null);
+                      if (target) onDeleteTask(target.id);
+                    }}
+                    className="px-2.5 py-1.5 rounded-xl bg-red-950/60 hover:bg-red-900/80 text-red-300 border border-red-500/40 hover:border-red-400 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95"
+                    title="Eliminar este hábito permanentemente"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                    <span>Eliminar</span>
+                  </button>
+                </div>
 
                 <button
                   type="button"

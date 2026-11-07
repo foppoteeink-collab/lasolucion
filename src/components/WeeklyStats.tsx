@@ -19,29 +19,7 @@ import { MoxenNivel } from './moxen/MoxenNivel';
 
 import { getTodayDateString, addDaysToDateString, parseLocalDate, formatDateFullSpanish } from '../utils/date';
 import { HABIT_ENERGY_DETAILS, detectHabitEnergy } from '../utils/habitEnergyDetector';
-import {
-  TrendingUp,
-  Clock,
-  CheckCircle2,
-  Zap,
-  Flame,
-  Award,
-  PieChart as PieChartIcon,
-  Calendar,
-  CalendarDays,
-  Brain,
-  Shield,
-  Coins,
-  Sparkles,
-  Trophy,
-  Target,
-  Edit2,
-  Activity,
-  ChevronDown,
-  ChevronUp,
-  Briefcase,
-  Quote
-} from 'lucide-react';
+import { Icon } from './common/Icon';
 import { getHabitBaseId } from '../intelligence/masteryEngine';
 import { CHARACTER_CLASSES, getRankForLevel } from '../data/defaults';
 import { getArchetypeDisplayName } from '../data/archetypes';
@@ -498,7 +476,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
         <div className="bg-[#001830]/95 backdrop-blur-md border border-cyan-500/50 p-2.5 rounded-xl shadow-[0_0_20px_rgba(0,240,255,0.25)]">
           <p className="text-white text-[10px] uppercase tracking-wider font-bold mb-1">{label}</p>
           <p className="text-white text-sm font-mono font-black flex items-center gap-1.5">
-            <Clock className="w-3.5 h-3.5 text-cyan-400" />
+            <Icon name="timer" className="w-3.5 h-3.5 text-cyan-400" />
             {payload[0].value} min
           </p>
         </div>
@@ -513,7 +491,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
         <div className="bg-[#001830]/95 backdrop-blur-md border border-fuchsia-500/50 p-2.5 rounded-xl shadow-[0_0_20px_rgba(217,70,239,0.25)] z-30">
           <p className="text-fuchsia-300 text-[10px] uppercase tracking-wider font-bold mb-1">{payload[0].name}</p>
           <p className="text-white text-sm font-mono font-black flex items-center gap-1.5">
-            <CheckCircle2 className="w-3.5 h-3.5 text-fuchsia-400" />
+            <Icon name="checkCircle" className="w-3.5 h-3.5 text-fuchsia-400" />
             {payload[0].value} tareas
           </p>
         </div>
@@ -528,7 +506,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
       return (
         <div className="bg-[#001830]/95 backdrop-blur-md border border-purple-500/50 p-3 rounded-xl shadow-[0_0_20px_rgba(168,85,247,0.3)] text-white text-xs max-w-xs space-y-1.5">
           <p className="font-anton uppercase tracking-wider text-purple-300 text-sm flex items-center gap-1.5">
-            <Brain className="w-3.5 h-3.5 text-purple-400" />
+            <Icon name="brain" className="w-3.5 h-3.5 text-purple-400" />
             {data.fullName}
           </p>
           <div className="flex items-center justify-between font-mono">
@@ -601,79 +579,79 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
       </Suspense>
 
       {/* ─────────────────────────────────────────────────────────────────── */}
-      {/* 4 MASTER SUB-TABS SELECTOR (TACTICAL SCI-FI SWITCHER)              */}
+      {/* 4 MASTER SUB-TABS SELECTOR (MOXEN CHIP MENU GROUP)                 */}
       {/* ─────────────────────────────────────────────────────────────────── */}
-      <div className="sticky top-0 z-30 mb-4 p-1 sm:p-1.5 rounded-2xl bg-[#030612]/95 backdrop-blur-md border border-cyan-500/40 shadow-[0_4px_25px_rgba(0,240,255,0.15)] grid grid-cols-4 gap-1 sm:gap-1.5">
+      <div
+        className="sticky top-0 z-30 mb-4 mf-8-menu-chip-group mf-chip-group justify-start sm:justify-center backdrop-blur-xl"
+        role="listbox"
+        aria-label="Secciones de Perfil y Estadísticas"
+      >
         <button
           type="button"
+          role="option"
+          aria-selected={activeSubTab === 'hero'}
           onClick={() => {
             soundFX.playClick();
             setActiveSubTab('hero');
           }}
-          className={`py-2 px-1 sm:px-3 rounded-xl font-anton text-[11px] sm:text-xs uppercase tracking-wider flex items-center justify-center gap-1 sm:gap-1.5 transition-all cursor-pointer ${
-            activeSubTab === 'hero'
-              ? 'bg-gradient-to-r from-cyan-400 to-blue-600 text-black shadow-[0_0_15px_rgba(0,240,255,0.5)] font-black'
-              : 'text-slate-300 hover:text-cyan-300 hover:bg-white/5 border border-transparent'
+          className={`mf-8-menu-chip-group__chip mf-chip flex-1 sm:flex-initial ${
+            activeSubTab === 'hero' ? 'mf-8-menu-chip-group__chip--active mf-chip--active' : ''
           }`}
         >
-          <Shield className="w-3.5 h-3.5 shrink-0" />
+          <Icon name="shield" className="w-3.5 h-3.5 shrink-0" />
           <span>Héroe</span>
         </button>
 
         <button
           type="button"
+          role="option"
+          aria-selected={activeSubTab === 'neuro'}
           onClick={() => {
             soundFX.playClick();
             setActiveSubTab('neuro');
           }}
-          className={`py-2 px-1 sm:px-3 rounded-xl font-anton text-[11px] sm:text-xs uppercase tracking-wider flex items-center justify-center gap-1 sm:gap-1.5 transition-all cursor-pointer ${
-            activeSubTab === 'neuro'
-              ? 'bg-gradient-to-r from-purple-500 to-fuchsia-600 text-white shadow-[0_0_15px_rgba(168,85,247,0.5)] font-black'
-              : 'text-slate-300 hover:text-purple-300 hover:bg-white/5 border border-transparent'
+          className={`mf-8-menu-chip-group__chip mf-chip flex-1 sm:flex-initial ${
+            activeSubTab === 'neuro' ? 'mf-8-menu-chip-group__chip--active mf-chip--active' : ''
           }`}
         >
-          <Brain className="w-3.5 h-3.5 shrink-0" />
+          <Icon name="brain" className="w-3.5 h-3.5 shrink-0" />
           <span className="sm:hidden">Hábitos</span>
           <span className="hidden sm:inline">Hábitos 21/66</span>
           {trackedHabits.length > 0 && (
-            <span className={`hidden sm:inline-block px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold ${
-              activeSubTab === 'neuro' ? 'bg-black/50 text-purple-200' : 'bg-purple-900/60 text-purple-300'
-            }`}>
-              {trackedHabits.length}
-            </span>
+            <span className="mf-chip__badge">{trackedHabits.length}</span>
           )}
         </button>
 
         <button
           type="button"
+          role="option"
+          aria-selected={activeSubTab === 'energy'}
           onClick={() => {
             soundFX.playClick();
             setActiveSubTab('energy');
           }}
-          className={`py-2 px-1 sm:px-3 rounded-xl font-anton text-[11px] sm:text-xs uppercase tracking-wider flex items-center justify-center gap-1 sm:gap-1.5 transition-all cursor-pointer ${
-            activeSubTab === 'energy'
-              ? 'bg-gradient-to-r from-cyan-500 to-indigo-600 text-white shadow-[0_0_15px_rgba(0,240,255,0.5)] font-black'
-              : 'text-slate-300 hover:text-cyan-300 hover:bg-white/5 border border-transparent'
+          className={`mf-8-menu-chip-group__chip mf-chip flex-1 sm:flex-initial ${
+            activeSubTab === 'energy' ? 'mf-8-menu-chip-group__chip--active mf-chip--active' : ''
           }`}
         >
-          <Zap className="w-3.5 h-3.5 shrink-0" />
+          <Icon name="zap" className="w-3.5 h-3.5 shrink-0" />
           <span className="sm:hidden">Foco</span>
           <span className="hidden sm:inline">Energía & Foco</span>
         </button>
 
         <button
           type="button"
+          role="option"
+          aria-selected={activeSubTab === 'finance'}
           onClick={() => {
             soundFX.playClick();
             setActiveSubTab('finance');
           }}
-          className={`py-2 px-1 sm:px-3 rounded-xl font-anton text-[11px] sm:text-xs uppercase tracking-wider flex items-center justify-center gap-1 sm:gap-1.5 transition-all cursor-pointer ${
-            activeSubTab === 'finance'
-              ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-black shadow-[0_0_15px_rgba(245,158,11,0.5)] font-black'
-              : 'text-slate-300 hover:text-amber-300 hover:bg-white/5 border border-transparent'
+          className={`mf-8-menu-chip-group__chip mf-chip flex-1 sm:flex-initial ${
+            activeSubTab === 'finance' ? 'mf-8-menu-chip-group__chip--active mf-chip--active' : ''
           }`}
         >
-          <Coins className="w-3.5 h-3.5 shrink-0" />
+          <Icon name="coins" className="w-3.5 h-3.5 shrink-0" />
           <span>Finanzas</span>
         </button>
       </div>
@@ -694,14 +672,14 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
                 className="absolute top-4 right-4 z-20 p-2 bg-[#04020e] rounded-xl border border-cyan-500/60 text-cyan-300 hover:bg-cyan-950/60 hover:text-white transition-colors cursor-pointer shadow-[0_0_10px_rgba(0,240,255,0.2)]"
                 title="Editar tu Perfil"
               >
-                <Edit2 className="w-4 h-4" />
+                <Icon name="edit" className="w-4 h-4" />
               </button>
             )}
 
             <div>
               <div className="flex items-center justify-between mb-3 pb-2.5 border-b border-cyan-500/30 pr-12">
                 <h3 className="text-xs font-anton uppercase tracking-wider text-white flex items-center gap-1.5">
-                  <Shield className="w-3.5 h-3.5 text-cyan-400" />
+                  <Icon name="shield" className="w-3.5 h-3.5 text-cyan-400" />
                   Ficha de Héroe del Sistema
                 </h3>
                 <span className="text-xs font-anton px-2.5 py-0.5 rounded-lg bg-cyan-400 text-black border border-cyan-300 shadow-[0_0_10px_rgba(0,240,255,0.5)] uppercase">
@@ -732,7 +710,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
                     </h2>
                     <div className="flex flex-wrap items-center gap-2 mt-0.5">
                       <p className="text-xs text-cyan-300/90 font-bold flex items-center gap-1">
-                        <Award className="w-3.5 h-3.5 text-cyan-400" />
+                        <Icon name="award" className="w-3.5 h-3.5 text-cyan-400" />
                         {displayRankTitle}
                       </p>
                       <button
@@ -749,7 +727,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
 
                     <div className="flex flex-wrap items-center gap-2 mt-1">
                       <p className="text-[11px] text-amber-300 font-bold flex items-center gap-1">
-                        <Sparkles className="w-3 h-3 text-amber-400" />
+                        <Icon name="sparkles" className="w-3 h-3 text-amber-400" />
                         {selectedClassOption.statBonus}
                       </p>
                       <button
@@ -767,11 +745,11 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
                     {/* Quick Badges */}
                     <div className="flex items-center gap-2 mt-2">
                       <span className="flex items-center gap-1 text-[11px] font-anton text-amber-300 bg-[#04020e] px-2.5 py-0.5 rounded-lg border border-amber-500/50">
-                        <Coins className="w-3 h-3 text-amber-400" />
+                        <Icon name="coins" className="w-3 h-3 text-amber-400" />
                         {stats.coins}
                       </span>
                       <span className="flex items-center gap-1 text-[11px] font-anton text-amber-400 bg-[#04020e] px-2.5 py-0.5 rounded-lg border border-amber-500/50">
-                        <Flame className="w-3 h-3 text-amber-400" />
+                        <Icon name="flame" className="w-3 h-3 text-amber-400" />
                         {stats.streakDays}d
                       </span>
                     </div>
@@ -801,7 +779,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
                     </div>
                     <div className="text-[10px] text-cyan-300/80 flex items-center gap-1 mt-0.5">
                       <span className="text-cyan-400 font-bold underline">Taller KAI 🎨</span>
-                      <Sparkles className="w-3 h-3 text-amber-300" />
+                      <Icon name="sparkles" className="w-3 h-3 text-amber-300" />
                     </div>
                   </div>
                 </div>
@@ -811,7 +789,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
               <div className="flex flex-wrap items-center gap-2 mb-3">
                 {stats.profession && (
                   <span className="text-[10px] bg-[#04020e] text-cyan-300 px-2.5 py-1 rounded-lg border border-cyan-500/40 font-mono flex items-center gap-1">
-                    <Briefcase className="w-3 h-3 text-cyan-400" /> {stats.profession}
+                    <Icon name="briefcase" className="w-3 h-3 text-cyan-400" /> {stats.profession}
                   </span>
                 )}
                 {stats.age && (
@@ -821,14 +799,14 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
                 )}
                 {stats.mainGoal && (
                   <span className="text-[10px] bg-[#04020e] text-amber-300 px-2.5 py-1 rounded-lg border border-amber-500/40 font-mono flex items-center gap-1">
-                    <Target className="w-3 h-3 text-amber-400" /> Meta: {stats.mainGoal}
+                    <Icon name="target" className="w-3 h-3 text-amber-400" /> Meta: {stats.mainGoal}
                   </span>
                 )}
               </div>
 
               {stats.mantra && (
                 <div className="w-full mb-3 p-2.5 rounded-xl bg-cyan-950/30 border border-cyan-500/30 text-xs font-mono text-cyan-200 italic flex items-center gap-2">
-                  <Quote className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <Icon name="quote" className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                   <span>"{stats.mantra}"</span>
                 </div>
               )}
@@ -867,7 +845,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 relative z-10">
                 <div>
                   <div className="flex items-center gap-1.5 text-emerald-400 text-[10px] sm:text-xs font-mono font-bold uppercase tracking-widest">
-                    <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
+                    <Icon name="trendingUp" className="w-3.5 h-3.5 text-emerald-400" />
                     Tu Evolución
                   </div>
                   <h3 className="text-sm sm:text-lg font-anton uppercase tracking-wide text-white mt-0.5">
@@ -881,7 +859,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
 
               {/* Guide box */}
               <div className="p-2 sm:p-2.5 rounded-xl bg-emerald-950/30 border border-emerald-500/20 text-[10px] sm:text-[11px] text-emerald-200 font-mono mb-3 flex items-center gap-2 relative z-10">
-                <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
+                <Icon name="sparkles" className="w-4 h-4 text-emerald-400 shrink-0" />
                 <span className="leading-tight">
                   <strong>Cronología:</strong> Registro histórico con la fecha exacta en la que alcanzaste cada una de las 10 fases.
                 </span>
@@ -939,35 +917,35 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
           {/* Récords de Leyenda */}
           <div className="space-y-3">
             <div className="flex items-center gap-2 text-yellow-400">
-              <Trophy className="w-4 h-4 text-yellow-400" />
+              <Icon name="trophy" className="w-4 h-4 text-yellow-400" />
               <h3 className="text-xs sm:text-sm font-black uppercase tracking-widest">Tus Récords de Leyenda</h3>
             </div>
 
             <div className="bg-gradient-to-br from-[#120a00] to-[#0a0500] p-3 sm:p-4 rounded-2xl border border-yellow-900/50 shadow-[0_4px_20px_rgba(234,179,8,0.05)]">
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
                 <div className="flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-xl bg-black/40 border border-yellow-900/40">
-                  <div className="p-2 sm:p-2.5 bg-yellow-500/20 rounded-xl text-yellow-400 shrink-0"><Zap className="w-4 h-4 sm:w-5 sm:h-5" /></div>
+                  <div className="p-2 sm:p-2.5 bg-yellow-500/20 rounded-xl text-yellow-400 shrink-0"><Icon name="zap" className="w-4 h-4 sm:w-5 sm:h-5" /></div>
                   <div className="min-w-0">
                     <p className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-wider truncate">Máximo XP / Día</p>
                     <p className="text-base sm:text-xl font-black text-yellow-400 truncate">{maxDailyXp} <span className="text-[10px] text-yellow-600">XP</span></p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-xl bg-black/40 border border-purple-900/40">
-                  <div className="p-2 sm:p-2.5 bg-purple-500/20 rounded-xl text-purple-400 shrink-0"><Clock className="w-4 h-4 sm:w-5 sm:h-5" /></div>
+                  <div className="p-2 sm:p-2.5 bg-purple-500/20 rounded-xl text-purple-400 shrink-0"><Icon name="timer" className="w-4 h-4 sm:w-5 sm:h-5" /></div>
                   <div className="min-w-0">
                     <p className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-wider truncate">Deep Work Máx.</p>
                     <p className="text-base sm:text-xl font-black text-purple-300 truncate">{maxPomodoro} <span className="text-[10px] text-purple-400 font-bold">MIN</span></p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-xl bg-black/40 border border-orange-900/40">
-                  <div className="p-2 sm:p-2.5 bg-orange-500/20 rounded-xl text-orange-400 shrink-0"><Flame className="w-4 h-4 sm:w-5 sm:h-5" /></div>
+                  <div className="p-2 sm:p-2.5 bg-orange-500/20 rounded-xl text-orange-400 shrink-0"><Icon name="flame" className="w-4 h-4 sm:w-5 sm:h-5" /></div>
                   <div className="min-w-0">
                     <p className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-wider truncate">Racha Récord</p>
                     <p className="text-base sm:text-xl font-black text-orange-400 truncate">{maxHabitStreak} <span className="text-[10px] text-orange-400 font-bold">DÍAS</span></p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-xl bg-black/40 border border-cyan-900/40">
-                  <div className="p-2 sm:p-2.5 bg-cyan-500/20 rounded-xl text-cyan-400 shrink-0"><Target className="w-4 h-4 sm:w-5 sm:h-5" /></div>
+                  <div className="p-2 sm:p-2.5 bg-cyan-500/20 rounded-xl text-cyan-400 shrink-0"><Icon name="target" className="w-4 h-4 sm:w-5 sm:h-5" /></div>
                   <div className="min-w-0">
                     <p className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-wider truncate">Tareas Totales</p>
                     <p className="text-base sm:text-xl font-black text-cyan-400 truncate">{totalTasksDone} <span className="text-[10px] text-cyan-600">TAR.</span></p>
@@ -990,7 +968,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
 
             <div className="relative z-10">
               <div className="flex items-center gap-2 mb-1.5">
-                <Brain className="w-5 h-5 text-purple-400" />
+                <Icon name="brain" className="w-5 h-5 text-purple-400" />
                 <h2 className="text-base font-bold text-white">
                   Ley 21 / 66 Días: Automatización de Hábitos
                 </h2>
@@ -1003,7 +981,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
                 <div className="p-3 sm:p-3.5 rounded-xl bg-black/40 border border-purple-500/30 space-y-1.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-purple-300 flex items-center gap-1.5">
-                      <Zap className="w-3.5 h-3.5 text-purple-400" />
+                      <Icon name="zap" className="w-3.5 h-3.5 text-purple-400" />
                       Fase 1: 1 a 21 Días
                     </span>
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-900/60 text-purple-200 border border-purple-500/40">
@@ -1018,7 +996,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
                 <div className="p-3 sm:p-3.5 rounded-xl bg-black/40 border border-amber-500/30 space-y-1.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
-                      <Award className="w-3.5 h-3.5 text-amber-400" />
+                      <Icon name="award" className="w-3.5 h-3.5 text-amber-400" />
                       Fase 2: 22 a 66 Días
                     </span>
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-900/60 text-amber-200 border border-amber-500/40">
@@ -1043,7 +1021,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-4 relative z-10">
               <div>
                 <h3 className="text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-300 via-fuchsia-300 to-amber-300 flex items-center gap-2 uppercase tracking-widest">
-                  <Activity className="w-4 h-4 text-purple-400" />
+                  <Icon name="activity" className="w-4 h-4 text-purple-400" />
                   Curva Cuántica de Neuroplasticidad
                 </h3>
                 <p className="text-xs text-slate-400 mt-0.5">
@@ -1065,7 +1043,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
 
             {/* Guide box */}
             <div className="p-2 sm:p-2.5 rounded-xl bg-purple-950/30 border border-purple-500/20 text-[10px] sm:text-[11px] text-purple-200 font-mono mb-3 flex items-center gap-2 relative z-10">
-              <Brain className="w-4 h-4 text-purple-400 shrink-0" />
+              <Icon name="brain" className="w-4 h-4 text-purple-400 shrink-0" />
               <span className="leading-tight">
                 <strong>Curva de hábito:</strong> 21 días supera la resistencia inicial; 66 días automatiza la conducta.
               </span>
@@ -1073,7 +1051,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
 
             {neuroChartData.length === 0 ? (
               <div className="py-12 text-center text-slate-400 border border-dashed border-purple-900/40 rounded-2xl bg-black/20">
-                <Brain className="w-10 h-10 text-purple-400 mx-auto mb-2 opacity-60" />
+                <Icon name="brain" className="w-10 h-10 text-purple-400 mx-auto mb-2 opacity-60" />
                 <p className="text-sm font-bold text-purple-200">No hay hábitos en seguimiento activo</p>
                 <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
                   Crea tu primer hábito desde la pestaña de Tareas Diarias para ver tu curva de neuroplasticidad.
@@ -1148,7 +1126,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-fuchsia-400">
-                <Award className="w-5 h-5" />
+                <Icon name="award" className="w-5 h-5" />
                 <h3 className="text-sm font-black uppercase tracking-widest">Vitrina de Hábitos Activos</h3>
               </div>
               <span className="text-xs font-mono text-slate-400">
@@ -1211,7 +1189,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
                     <div className="relative z-10 p-2.5 rounded-xl bg-black/40 border border-white/10 space-y-1.5 text-xs font-mono">
                       <div className="flex items-center justify-between">
                         <span className="text-slate-400 text-[10px] uppercase font-bold flex items-center gap-1">
-                          <Sparkles className="w-3 h-3 text-purple-400" /> Aura 21d Kai:
+                          <Icon name="sparkles" className="w-3 h-3 text-purple-400" /> Aura 21d Kai:
                         </span>
                         <span className={`font-bold text-[11px] ${isFormed ? 'text-purple-300' : 'text-slate-500'}`}>
                           {isFormed ? `✅ ${energyDetail.auraName21}` : `🔒 ${energyDetail.auraName21} (${Math.max(0, 21 - currentStreak)}d restantes)`}
@@ -1220,7 +1198,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
 
                       <div className="flex items-center justify-between border-t border-white/5 pt-1">
                         <span className="text-slate-400 text-[10px] uppercase font-bold flex items-center gap-1">
-                          <Award className="w-3 h-3 text-amber-400" /> Maestría 66d Kai:
+                          <Icon name="award" className="w-3 h-3 text-amber-400" /> Maestría 66d Kai:
                         </span>
                         <span className={`font-bold text-[11px] ${isMastered ? 'text-amber-300' : 'text-slate-500'}`}>
                           {isMastered ? `✅ ${energyDetail.masterForm66}` : `🔒 ${energyDetail.masterForm66} (${Math.max(0, 66 - currentStreak)}d restantes)`}
@@ -1265,50 +1243,57 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
           {/* Time Range Selector */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-gradient-to-r from-[#0a0f25] to-[#050a18] p-3 rounded-2xl border border-cyan-900/50 shadow-[0_4px_20px_rgba(0,240,255,0.05)] gap-3">
             <h2 className="text-cyan-400 font-black text-sm px-2 flex items-center gap-2 uppercase tracking-widest">
-              <TrendingUp className="w-4 h-4" /> Periodo Operativo de Foco
+              <Icon name="trendingUp" className="w-4 h-4" /> Periodo Operativo de Foco
             </h2>
-            <div className="flex items-center bg-[#03060f]/80 p-1.5 rounded-xl border border-cyan-900/40 backdrop-blur-sm mx-auto sm:mx-0 w-full sm:w-auto">
+            <div
+              className="mf-8-menu-chip-group mf-chip-group mf-chip-group--compact mf-chip-group--nowrap mx-auto sm:mx-0 w-full sm:w-auto justify-center"
+              role="listbox"
+              aria-label="Periodo operativo de foco"
+            >
               <button
+                type="button"
+                role="option"
+                aria-selected={timeRange === 'semanal'}
                 onClick={() => {
                   soundFX.playClick();
                   setTimeRange('semanal');
                 }}
-                className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                  timeRange === 'semanal'
-                    ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-white border border-cyan-500/50 shadow-[0_0_15px_rgba(0,240,255,0.25)]'
-                    : 'text-white hover:text-cyan-400 hover:bg-white/5 border border-transparent'
+                className={`mf-8-menu-chip-group__chip mf-chip mf-chip--sm flex-1 sm:flex-none ${
+                  timeRange === 'semanal' ? 'mf-8-menu-chip-group__chip--active mf-chip--active' : ''
                 }`}
               >
-                <Calendar className="w-3.5 h-3.5" />
-                Semanal
+                <Icon name="calendar" className="w-3.5 h-3.5" />
+                <span>Semanal</span>
               </button>
               <button
+                type="button"
+                role="option"
+                aria-selected={timeRange === 'mensual'}
                 onClick={() => {
                   soundFX.playClick();
                   setTimeRange('mensual');
                 }}
-                className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                  timeRange === 'mensual'
-                    ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-white border border-cyan-500/50 shadow-[0_0_15px_rgba(0,240,255,0.25)]'
-                    : 'text-white hover:text-cyan-400 hover:bg-white/5 border border-transparent'
+                className={`mf-8-menu-chip-group__chip mf-chip mf-chip--sm flex-1 sm:flex-none ${
+                  timeRange === 'mensual' ? 'mf-8-menu-chip-group__chip--active mf-chip--active' : ''
                 }`}
               >
-                <CalendarDays className="w-3.5 h-3.5" />
-                Mensual
+                <Icon name="calendarDays" className="w-3.5 h-3.5" />
+                <span>Mensual</span>
               </button>
               <button
+                type="button"
+                role="option"
+                aria-selected={timeRange === 'anual'}
                 onClick={() => {
                   soundFX.playClick();
                   setTimeRange('anual');
                 }}
-                className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                  timeRange === 'anual'
-                    ? 'bg-gradient-to-r from-fuchsia-500/20 to-purple-500/20 text-fuchsia-300 border border-fuchsia-500/50 shadow-[0_0_15px_rgba(217,70,239,0.25)]'
-                    : 'text-white hover:text-fuchsia-400 hover:bg-white/5 border border-transparent'
+                className={`mf-8-menu-chip-group__chip mf-chip mf-chip--sm flex-1 sm:flex-none ${
+                  timeRange === 'anual' ? 'mf-8-menu-chip-group__chip--active mf-chip--active' : ''
                 }`}
               >
-                <Award className="w-3.5 h-3.5" />
-                Anual
+                <Icon name="award" className="w-3.5 h-3.5" />
+                <span>Anual</span>
               </button>
             </div>
           </div>
@@ -1317,7 +1302,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <div className="p-4 rounded-2xl bg-gradient-to-br from-[#0c072b] to-[#050a18] border border-cyan-800/50 shadow-[0_8px_20px_rgba(0,240,255,0.1)] text-white relative overflow-hidden">
               <div className="flex items-center gap-2 text-white text-[11px] uppercase tracking-wider font-black mb-1">
-                <CheckCircle2 className="w-3.5 h-3.5 text-cyan-400" />
+                <Icon name="checkCircle" className="w-3.5 h-3.5 text-cyan-400" />
                 <span>Tareas</span>
               </div>
               <span className="text-3xl font-black text-cyan-300 font-mono">
@@ -1328,7 +1313,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
 
             <div className="p-4 rounded-2xl bg-gradient-to-br from-[#0c072b] to-[#050a18] border border-orange-800/50 shadow-[0_8px_20px_rgba(249,115,22,0.1)] text-white relative overflow-hidden">
               <div className="flex items-center gap-2 text-orange-300 text-[11px] uppercase tracking-wider font-black mb-1">
-                <Flame className="w-3.5 h-3.5 text-orange-400" />
+                <Icon name="flame" className="w-3.5 h-3.5 text-orange-400" />
                 <span>Racha</span>
               </div>
               <div className="flex items-baseline gap-1.5">
@@ -1342,7 +1327,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
 
             <div className="p-4 rounded-2xl bg-gradient-to-br from-[#0c072b] to-[#050a18] border border-purple-800/50 shadow-[0_8px_20px_rgba(168,85,247,0.1)] text-white relative overflow-hidden">
               <div className="flex items-center gap-2 text-purple-300 text-[11px] uppercase tracking-wider font-black mb-1">
-                <Zap className="w-3.5 h-3.5 text-purple-400" />
+                <Icon name="zap" className="w-3.5 h-3.5 text-purple-400" />
                 <span>Nivel</span>
               </div>
               <span className="text-3xl font-black text-purple-400 font-mono">
@@ -1353,7 +1338,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
 
             <div className="p-4 rounded-2xl bg-gradient-to-br from-[#0c072b] to-[#050a18] border border-blue-800/50 shadow-[0_8px_20px_rgba(59,130,246,0.1)] text-white relative overflow-hidden">
               <div className="flex items-center gap-2 text-white text-[11px] uppercase tracking-wider font-black mb-1">
-                <Clock className="w-3.5 h-3.5 text-blue-400" />
+                <Icon name="timer" className="w-3.5 h-3.5 text-blue-400" />
                 <span>Minutos Foco</span>
               </div>
               <div className="flex items-baseline gap-1.5">
@@ -1370,14 +1355,14 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
           <div className="p-3.5 sm:p-6 rounded-3xl bg-gradient-to-b from-[#0a0f25] to-[#030612] border border-cyan-900/50 shadow-[0_10px_30px_rgba(0,240,255,0.08)] flex flex-col relative overflow-hidden">
             <div className="flex items-center justify-between mb-3 relative z-10">
               <h3 className="text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-400 flex items-center gap-2 uppercase tracking-widest">
-                <TrendingUp className="w-4 h-4 text-cyan-400" />
+                <Icon name="trendingUp" className="w-4 h-4 text-cyan-400" />
                 Flujo de Foco ({timeRange === 'semanal' ? '7 Días' : timeRange === 'mensual' ? '30 Días' : '12 Meses'})
               </h3>
             </div>
 
             {/* Guide box */}
             <div className="p-2 sm:p-2.5 rounded-xl bg-cyan-950/30 border border-cyan-500/20 text-[10px] sm:text-[11px] text-cyan-200 font-mono mb-3 flex items-center gap-2 relative z-10">
-              <Clock className="w-4 h-4 text-cyan-400 shrink-0" />
+              <Icon name="timer" className="w-4 h-4 text-cyan-400 shrink-0" />
               <span className="leading-tight">
                 <strong>¿Cómo interpretarlo?</strong> Muestra tus minutos de concentración profunda acumulados por día. La línea discontinua naranja marca tu objetivo de 60 min.
               </span>
@@ -1460,7 +1445,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
             {/* Pie Chart */}
             <div className="p-3.5 sm:p-5 rounded-3xl bg-gradient-to-b from-[#0a0f25] to-[#030612] border border-pink-900/40 shadow-[0_10px_30px_rgba(236,72,153,0.08)] flex flex-col items-center">
               <h3 className="text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-rose-500 uppercase tracking-widest mb-1 self-start flex items-center gap-2">
-                <PieChartIcon className="w-4 h-4 text-pink-400" />
+                <Icon name="pieChart" className="w-4 h-4 text-pink-400" />
                 Distribución de Productividad
               </h3>
               <p className="text-[10px] text-slate-400 mb-2 self-start font-mono">
@@ -1502,7 +1487,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
             <div className="p-3.5 sm:p-5 rounded-3xl bg-[#001830] border border-cyan-900/40 flex flex-col justify-between">
               <div>
                 <h3 className="text-sm font-black text-cyan-400 uppercase tracking-widest mb-1 flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-cyan-400" />
+                  <Icon name="timer" className="w-4 h-4 text-cyan-400" />
                   Auditoría Deep Work ({timeRange})
                 </h3>
                 <p className="text-[10px] text-slate-400 mb-2 font-mono">
@@ -1542,10 +1527,10 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
               className="w-full flex items-center justify-between text-xs font-anton uppercase tracking-wider text-cyan-300 hover:text-white transition-colors cursor-pointer"
             >
               <span className="flex items-center gap-2">
-                <Activity className="w-4 h-4 text-cyan-400" />
+                <Icon name="activity" className="w-4 h-4 text-cyan-400" />
                 Radiografía Anual de Consistencia Cuántica (Heatmap 365 Días)
               </span>
-              {isAnnualHeatmapOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              {isAnnualHeatmapOpen ? <Icon name="chevronUp" className="w-4 h-4" /> : <Icon name="chevronDown" className="w-4 h-4" />}
             </button>
 
             {isAnnualHeatmapOpen && (

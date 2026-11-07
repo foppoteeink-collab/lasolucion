@@ -2,6 +2,7 @@ import { getGenerativeModel } from 'firebase/ai';
 import { firebaseAI, firebaseConfig } from '../firebase';
 import { autoArrangeSchedule, cleanScheduleTitle } from '../utils/timeUtils';
 import { generateProceduralSchedule, generateProceduralAnalysis } from '../utils/proceduralHeuristics';
+import { parseDays } from '../data/defaults';
 import { KaiCustomForm, KaiMultiverseStyle, KaiTemperament } from '../types';
 
 export function getEffectiveGeminiApiKey(): string | null {
@@ -12,6 +13,26 @@ export function getEffectiveGeminiApiKey(): string | null {
   return null;
 }
 
+export function hasActiveGeminiKey(): boolean {
+  return Boolean(getEffectiveGeminiApiKey());
+}
+
+export function saveGeminiApiKey(key: string): void {
+  if (typeof window !== 'undefined') {
+    if (key && key.trim()) {
+      window.localStorage.setItem('lasolucion_gemini_api_key', key.trim());
+    } else {
+      window.localStorage.removeItem('lasolucion_gemini_api_key');
+    }
+  }
+}
+
+export function removeGeminiApiKey(): void {
+  if (typeof window !== 'undefined') {
+    window.localStorage.removeItem('lasolucion_gemini_api_key');
+  }
+}
+
 interface RateLimitState {
   lastCallTimestamp: number;
   countToday: number;
@@ -19,8 +40,8 @@ interface RateLimitState {
 }
 
 const RATE_LIMIT_STORAGE_KEY = 'lasolucion_ai_ratelimit_v1';
-const MIN_COOLDOWN_MS = 8000; // 8 seconds minimum between calls
-const MAX_CALLS_PER_DAY = 20;
+const MIN_COOLDOWN_MS = 3000; // 3 seconds minimum between calls
+const MAX_CALLS_PER_DAY = 35;
 
 function checkAndConsumeRateLimit(): { allowed: boolean; reason?: string } {
   if (typeof window === 'undefined') return { allowed: true };
@@ -37,11 +58,11 @@ function checkAndConsumeRateLimit(): { allowed: boolean; reason?: string } {
     const timeSinceLast = now - (state.lastCallTimestamp || 0);
     if (timeSinceLast < MIN_COOLDOWN_MS) {
       const waitSec = Math.ceil((MIN_COOLDOWN_MS - timeSinceLast) / 1000);
-      return { allowed: false, reason: `Cooldown activo: Espera ${waitSec}s antes de otra consulta.` };
+      return { allowed: false, reason: `Tiempo de espera activo: Espera ${waitSec}s antes de otra consulta.` };
     }
 
     if (state.countToday >= MAX_CALLS_PER_DAY) {
-      return { allowed: false, reason: 'Límite diario alcanzado (20 consultas/día).' };
+      return { allowed: false, reason: 'Límite diario alcanzado.' };
     }
 
     state.lastCallTimestamp = now;
@@ -53,7 +74,25 @@ function checkAndConsumeRateLimit(): { allowed: boolean; reason?: string } {
   }
 }
 
-async function fetchGeminiPrompt(promptText: string, modelName: string = 'gemini-2.5-flash'): Promise<string | null> {
+
+const withRetry = async <T>(
+  fn: () => Promise<T>,
+  retries = 3,
+  delay = 1000
+): Promise<T> => {
+  try {
+    return await fn();
+  } catch (err: any) {
+    if (retries > 0 && (err.status === 500 || err.message?.includes('500'))) {
+      console.warn(`[AI Service] Retrying due to 500 error. Retries left: ${retries}`);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      return withRetry(fn, retries - 1, delay * 2);
+    }
+    throw err;
+  }
+};
+
+async function fetchGeminiPrompt(promptText: string, modelName: string = 'gemini-3.1-flash-lite'): Promise<string | null> {
   if (!promptText || typeof promptText !== 'string' || !promptText.trim()) {
     return null;
   }
@@ -64,13 +103,12 @@ async function fetchGeminiPrompt(promptText: string, modelName: string = 'gemini
     return null;
   }
 
-  const sanitizedPrompt = promptText.trim().slice(0, 4000);
+  const sanitizedPrompt = promptText.trim().slice(0, 12000);
   const candidateModels = Array.from(
     new Set([
-      modelName || 'gemini-2.5-flash',
-      'gemini-2.5-flash',
-      'gemini-2.0-flash',
-      'gemini-1.5-flash',
+      modelName || 'gemini-3.1-flash-lite',
+      'gemini-3.1-flash-lite',
+      'gemini-3.8-flash',
       'gemini-flash-latest'
     ])
   );
@@ -80,28 +118,36 @@ async function fetchGeminiPrompt(promptText: string, modelName: string = 'gemini
   if (apiKeyToTry) {
     for (const modelToTry of candidateModels) {
       try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 12000);
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelToTry}:generateContent?key=${apiKeyToTry}`;
-        const res = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: sanitizedPrompt }] }],
-            generationConfig: { temperature: 0.35, maxOutputTokens: 8192 },
-          }),
-          signal: controller.signal,
+        return await withRetry(async () => {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 14000);
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelToTry}:generateContent?key=${apiKeyToTry}`;
+            const res = await fetch(url, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [{ parts: [{ text: sanitizedPrompt }] }],
+                generationConfig: { temperature: 0.25, maxOutputTokens: 8192 },
+              }),
+              signal: controller.signal,
+            });
+            clearTimeout(timeoutId);
+            
+            if (!res.ok) {
+                const errText = await res.text();
+                throw new Error(`${res.status} ${errText}`);
+            }
+
+            const data = await res.json();
+            const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (text && text.trim()) {
+              console.log(`[Gemini API] ✓ Response from ${modelToTry}`);
+              return text;
+            }
+            throw new Error('No text returned');
         });
-        clearTimeout(timeoutId);
-        if (res.ok) {
-          const data = await res.json();
-          const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (text && text.trim()) {
-            console.log(`[Gemini API] ✓ Response from ${modelToTry}`);
-            return text;
-          }
-        }
       } catch (err) {
+        console.warn(`[Gemini API] (${modelToTry}) failed:`, err);
         // try next model
       }
     }
@@ -111,19 +157,22 @@ async function fetchGeminiPrompt(promptText: string, modelName: string = 'gemini
   if (firebaseAI) {
     for (const modelToTry of candidateModels) {
       try {
-        const model = getGenerativeModel(firebaseAI, {
-          model: modelToTry,
-          generationConfig: {
-            temperature: 0.35,
-            maxOutputTokens: 8192,
-          },
+        return await withRetry(async () => {
+            const model = getGenerativeModel(firebaseAI, {
+              model: modelToTry,
+              generationConfig: {
+                temperature: 0.25,
+                maxOutputTokens: 8192,
+              },
+            });
+            const result = await model.generateContent(sanitizedPrompt);
+            const text = result.response.text();
+            if (text && text.trim()) {
+              console.log(`[Firebase AI Logic] ✓ Response from ${modelToTry}`);
+              return text;
+            }
+            throw new Error('No text returned');
         });
-        const result = await model.generateContent(sanitizedPrompt);
-        const text = result.response.text();
-        if (text && text.trim()) {
-          console.log(`[Firebase AI Logic] ✓ Response from ${modelToTry}`);
-          return text;
-        }
       } catch (err: any) {
         console.warn(`[Firebase AI Logic] (${modelToTry}) unavailable:`, err?.message || err);
       }
@@ -142,36 +191,38 @@ export async function generateScheduleFrontend(
   if (!prompt) throw new Error("Falta el prompt del usuario.");
 
   const isMasterBlocks = mode === 'master_blocks';
-  const maxBlocks = isMasterBlocks ? 7 : 10;
+  const maxBlocks = isMasterBlocks ? 12 : 20;
+
 
   const modeDirective = isMasterBlocks
     ? `MODO ESTRATÉGICO: "BLOQUES MAESTROS" (Consolidación y Claridad)
-       - Sintetiza el día en un máximo de 5 a 7 bloques maestros claros, equilibrados y sin saturar la agenda.
-       - Si hay varias micro-tareas similares, agrúpalas en un solo bloque coherente con un título limpio (NUNCA uses la palabra "(Consolidado)").`
+       - Si el usuario pide diseñar un día desde cero sin horarios detallados, estructura entre 5 y 7 bloques claros.
+       - Si el usuario proporciona su propia lista de actividades y horarios, respeta TODOS sus bloques sin omitir ninguno.`
     : `MODO ESTRATÉGICO: "DETALLADO" (Granularidad Ordenada)
-       - Estructura el día en un máximo de 7 a 10 bloques bien distribuidos sin choques de horario.`;
+       - Respeta cada actividad individual paso a paso sin choques de horario.`;
 
   const systemInstruction = `
-    Eres KAI, el estratega táctico de alto rendimiento y neuroplasticidad de La Solución.
-    Tu misión es analizar la solicitud del usuario y transformarla en una AGENDA DIARIA LIMPIA, EQUILIBRADA Y 100% LIBRE DE CHOQUES DE HORARIO.
-    Comunícate con claridad, calidez motivacional y enfoque constructivo libre de culpa, respetando los tiempos de descanso y optimizando la energía mental.
+    Eres KAI, el estratega táctico de rendimiento, organización y neuroplasticidad de La Solución.
+    Tu misión es analizar la solicitud de cualquier operador y transformarla en una AGENDA DIARIA REALISTA, ESTRUCTURADA Y 100% LIBRE DE SOLAPAMIENTOS DE HORARIO.
 
     ${modeDirective}
 
     CONTEXTO DEL OPERADOR:
-    - Profesión/Ocupación: ${userContext?.profession || 'No especificada'}
+    - Ocupación: ${userContext?.profession || 'No especificada'}
     - Objetivo Principal: ${userContext?.mainGoal || 'No especificado'}
-    - Clase/Rango: ${userContext?.class || 'Ninguna'} (${userContext?.rank || 'Principiante'})
+    - Perfil RPG: ${userContext?.class || 'Aventurero'} (Nivel ${userContext?.level || 1})
 
-    REGLAS OBLIGATORIAS DE HORARIO Y ESTRUCTURA:
-    1. CANTIDAD IDEAL: Genera entre 5 y ${maxBlocks} bloques en total para el día (máximo ${maxBlocks}).
-    2. BLOQUES REALISTAS DE TRABAJO/ESTUDIO: Un bloque laboral o de estudio puede durar 4, 5, 6, 7 u 8 horas (ej. "09:00 - 17:00" o "08:30 - 16:30"). Si la jornada incluye pausa de almuerzo (ej. 13:00 - 14:00), estructura el trabajo en Turno Mañana ("09:00 - 13:00") y Turno Tarde ("14:00 - 17:00"), con el almuerzo en medio ("13:00 - 14:00").
-    3. FORMATO DE HORA ESTRICTO "HH:mm - HH:mm" (24h, entre 06:00 y 23:45). Ejemplo: "07:30 - 08:30", "09:00 - 13:00", "13:00 - 14:00", "14:00 - 18:00", "18:30 - 19:45", "20:30 - 21:30", "23:00 - 23:30".
-    4. CERO SOLAPAMIENTOS: Ningún bloque puede solaparse con otro en el mismo día. Sigue el flujo cronológico natural: mañana -> trabajo/estudio -> almuerzo -> turno tarde -> entrenamiento/creativo/hogar -> cena -> desconexión/descanso. La cena SIEMPRE va antes de la desconexión nocturna o descanso.
-    5. TÍTULOS LIMPIOS Y EJECUTABLES: Prohibido usar textos como "(Consolidado)", "Tarea extra:", o "Horario Semanal Completo".
-    6. DÍAS DE LA SEMANA EXACTOS: Si una actividad es de fin de semana (ej. "Clase de los sábados"), usa frequencyType: "specific_days" y specificDays: [6]. Si es de lunes a viernes, specificDays: [1,2,3,4,5]. Si es diaria (despertar, comidas, descanso nocturno), frequencyType: "daily" y specificDays: [0,1,2,3,4,5,6].
-    7. PROHIBICIÓN TOTAL DE MICRO-HÁBITOS (beber agua, contar pasos, cepillado de dientes).
-    8. CATEGORÍAS PERMITIDAS: "rutina", "entrenamiento", "comida", "intelecto", "limpieza", "creativo".
+    DIRECTIVAS GENERALES DE PLANIFICACIÓN:
+    1. FIDELIDAD TOTAL AL MENSAJE DEL USUARIO: Si el usuario proporciona horarios específicos para sus actividades, respeta sus horas exactas expresadas sin alterar sus bloques ni agregar tiempos vacíos no solicitados.
+    2. ADAPTABILIDAD LIBRE DE BLOQUES: Genera la cantidad exacta de bloques que responda a lo solicitado por el operador (desde agendas sintéticas de 4 bloques hasta rutinas detalladas o semanales de 10+ bloques).
+    3. FORMATO DE HORA ESTRICTO "HH:mm - HH:mm" (24h, entre 05:00 y 23:59). Cero solapamientos de tiempo en un mismo día.
+    4. TÍTULOS ACCIONABLES Y NEUTROS: Conserva la esencia de la actividad descrita por el usuario. Prohibido usar muletillas como "(Consolidado)" o "Tarea extra".
+    5. ASIGNACIÓN Y AGRUPACIÓN EXACTA DE DÍAS (0=Domingo, 1=Lunes, 2=Martes, 3=Miércoles, 4=Jueves, 5=Viernes, 6=Sábado):
+       - Si una misma actividad ocurre a la misma hora varios días (ej. Lunes a Viernes), agrúpala en UN SOLO objeto con frequencyType: "specific_days" y specificDays: [1, 2, 3, 4, 5].
+       - Si una actividad varía según el día (ej. diferentes entrenamientos, limpiezas o proyectos en Lunes, Martes, Miércoles, Jueves, Viernes o Sábado), crea un objeto para cada variación con su día exacto en specificDays (ej. [1] para Lunes, [2] para Martes, [6] para Sábado).
+       - Rutina Diaria (7 días): frequencyType: "daily", specificDays: [0, 1, 2, 3, 4, 5, 6].
+    6. SIN MICRO-HÁBITOS TRIVIALES: Ignora micro-hábitos triviales como beber agua o lavarse los dientes.
+    7. CATEGORÍAS PERMITIDAS: "rutina", "entrenamiento", "comida", "intelecto", "limpieza", "creativo".
 
     Devuelve ÚNICAMENTE un array JSON ESTRICTO sin formato Markdown. Ejemplo:
     [
@@ -194,7 +245,7 @@ export async function generateScheduleFrontend(
   let generatedText = "";
   const fullPrompt = systemInstruction + "\n\nSolicitud del usuario:\n" + prompt;
 
-  const text = await fetchGeminiPrompt(fullPrompt, 'gemini-2.5-flash');
+  const text = await fetchGeminiPrompt(fullPrompt, 'gemini-3.1-flash-lite');
   if (text) {
     generatedText = text;
   }
@@ -205,7 +256,7 @@ export async function generateScheduleFrontend(
     return {
       habits: autoArrangeSchedule(rawProcedural, mode, maxBlocks),
       source: "heuristic_engine",
-      notice: "Agenda optimizada y libre de choques generada por el Motor Neural KAI."
+      notice: "⚠️ Generada por el Motor Local Offline (Conecta tu clave de Gemini para IA en vivo)."
     };
   }
 
@@ -230,23 +281,23 @@ export async function generateScheduleFrontend(
   }
 
   habits = (Array.isArray(habits) ? habits : []).map((h: any, idx: number) => {
-    let sDays = h.specificDays;
-    if (sDays === undefined || sDays === null) {
-      sDays = (h.frequencyType === 'specific_days') ? [1,2,3,4,5] : [0,1,2,3,4,5,6];
-    } else if (!Array.isArray(sDays)) {
-      sDays = [sDays];
+    let parsedDays = h.specificDays !== undefined && h.specificDays !== null ? parseDays(h.specificDays) : [];
+    if (parsedDays.length === 0) {
+      parsedDays = (h.frequencyType === 'specific_days') ? [1, 2, 3, 4, 5] : [0, 1, 2, 3, 4, 5, 6];
     }
+    const isSpecific = parsedDays.length > 0 && parsedDays.length < 7;
     return {
       ...h,
       id: h.id || `hab-ai-${Date.now()}-${idx}`,
       title: cleanScheduleTitle(h.title) || h.title,
+      frequencyType: isSpecific ? 'specific_days' : 'daily',
       isQuickHabit: false,
       isTracked2166: false,
-      specificDays: sDays
+      specificDays: parsedDays
     };
   });
 
-  // Guarantee zero time collisions and clean daily cap before returning!
+  // Guarantee zero time collisions and clean daily arrangement before returning!
   const arrangedHabits = autoArrangeSchedule(habits, mode, maxBlocks);
 
   return {
@@ -335,7 +386,7 @@ ${historyContext}
     - Proporciona exactamente 3 acciones tácticas concretas y ejecutables que el cliente debe priorizar hoy para maximizar la productividad y mantener la trayectoria de crecimiento.
   `;
 
-  const text = await fetchGeminiPrompt(prompt, 'gemini-2.5-flash');
+  const text = await fetchGeminiPrompt(prompt, 'gemini-3.1-flash-lite');
   if (text) {
     return { analysis: text, source: 'ai' };
   }

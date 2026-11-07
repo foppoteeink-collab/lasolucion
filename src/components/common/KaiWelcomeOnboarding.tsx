@@ -28,6 +28,8 @@ import {
   Shield,
   Lightbulb
 } from 'lucide-react';
+import { logEvent } from 'firebase/analytics';
+import { analytics } from '../../firebase';
 import { KAICompanion } from '../KAICompanion';
 import { soundFX } from '../../utils/audio';
 import { triggerShockwave } from '../../utils/celebration';
@@ -165,7 +167,7 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
 
   // Estados de personalización
   const [username, setUsername] = useState(
-    stats.username && stats.username !== 'CazadorDelSistema' ? stats.username : ''
+    stats.username && stats.username !== 'CazadorDelSistema' && stats.username !== 'UsuarioDelSistema' && stats.username.toLowerCase() !== 'cazador' ? stats.username : ''
   );
   const [selectedDesire, setSelectedDesire] = useState<string>('procrastination');
   const [selectedArchId, setSelectedArchId] = useState<string>(() => {
@@ -223,6 +225,8 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
 
     setIsTaskCompletedInModal(true);
 
+    logEvent(analytics, 'task_completed_first');
+    
     // Actualizar tarea en el store si existe
     if (createdTaskId) {
       useTaskStore.getState().updateTask(todayStr, createdTaskId, {
@@ -263,6 +267,7 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
     claimTutorialReward();
     markTutorialGuideSeen('introWalkthrough');
     markTutorialGuideSeen('welcomeOnboarding');
+    logEvent(analytics, 'onboarding_completed');
 
     // 3. Forzar sync si existe
     if (cloudSync?.forceSyncNow) {
@@ -293,14 +298,12 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
             </div>
             <div>
               <div className="text-[10px] font-mono font-bold tracking-wider uppercase text-cyan-400">
-                Guía de Bienvenida // Paso {step} de 5
+                Guía de Bienvenida // Paso {step} de 3
               </div>
               <h2 className="text-sm sm:text-base font-anton tracking-wide text-white flex items-center gap-2">
                 {step === 1 && 'Conoce a KAI, tu Compañero'}
                 {step === 2 && 'Tu Primera Victoria en Vivo'}
-                {step === 3 && 'KAI: Tu Centro de Mando & Pestañas'}
-                {step === 4 && 'Cómo Usar la Inteligencia IA de KAI'}
-                {step === 5 && '¡Todo Listo para Empezar!'}
+                {step === 3 && '¡Todo Listo para Empezar!'}
               </h2>
             </div>
           </div>
@@ -624,355 +627,14 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
                 transition={{ duration: 0.2 }}
                 className="space-y-4"
               >
-                {/* KAI: Centro de navegación principal */}
                 <div className="p-4 rounded-2xl bg-gradient-to-r from-cyan-950/40 via-blue-950/25 to-indigo-950/40 border border-cyan-400/40 space-y-2.5 text-left">
-                  <div className="flex items-center gap-2 text-cyan-300 text-xs font-mono font-bold uppercase tracking-wider">
-                    <Sparkles className="w-4 h-4 text-cyan-400" />
-                    <span>¡KAI es tu Centro de Mando Principal!</span>
-                  </div>
-                  
-                  <div className="flex items-start gap-3.5">
-                    <div className="w-14 h-14 shrink-0 rounded-2xl bg-cyan-950/60 border border-cyan-400/60 flex items-center justify-center shadow-[0_0_15px_rgba(0,240,255,0.35)]">
-                      <KAICompanion
-                        shapeId="prism"
-                        size={50}
-                        interactive={false}
-                        auraState="normal"
-                      />
-                    </div>
-                    <div className="text-xs sm:text-sm text-slate-200 leading-relaxed space-y-1">
-                      <p>
-                        Para pasar de pestañas, <strong>lo más importante y rápido es tocar a KAI</strong> en la esquina inferior derecha ↘️.
-                      </p>
-                      <p className="text-xs text-slate-300">
-                        Al tocar el orbe de KAI se despliegan sus satélites flotantes y viajas al instante a <strong>Tareas, Bitácora, Tienda o Laboratorio</strong> con un solo toque, dejando tu pantalla limpia y sin estorbos.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Simulador de mundos */}
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold text-slate-300">
-                    Toca cada mundo al que KAI te lleva para ver qué hay en él:
-                  </label>
-
-                  {/* Barra satélite de demostración */}
-                  <div className="grid grid-cols-4 gap-1 p-1 rounded-2xl bg-black/60 border border-white/10 shadow-inner">
-                    <button
-                      type="button"
-                      onClick={() => { soundFX.playClick(); setActiveTabDemo('tareas'); }}
-                      className={`flex flex-col items-center justify-center py-2 px-1 rounded-xl transition-all cursor-pointer ${
-                        activeTabDemo === 'tareas'
-                          ? 'bg-cyan-400 text-black font-anton font-bold shadow-[0_0_12px_rgba(0,240,255,0.6)]'
-                          : 'text-slate-400 hover:text-white'
-                      }`}
-                    >
-                      <Swords className="w-4 h-4 mb-0.5" />
-                      <span className="text-[10px] uppercase font-anton tracking-wider">Tareas</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => { soundFX.playClick(); setActiveTabDemo('bitacora'); }}
-                      className={`flex flex-col items-center justify-center py-2 px-1 rounded-xl transition-all cursor-pointer ${
-                        activeTabDemo === 'bitacora'
-                          ? 'bg-cyan-400 text-black font-anton font-bold shadow-[0_0_12px_rgba(0,240,255,0.6)]'
-                          : 'text-slate-400 hover:text-white'
-                      }`}
-                    >
-                      <BookOpen className="w-4 h-4 mb-0.5" />
-                      <span className="text-[10px] uppercase font-anton tracking-wider">Bitácora</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => { soundFX.playClick(); setActiveTabDemo('tienda'); }}
-                      className={`flex flex-col items-center justify-center py-2 px-1 rounded-xl transition-all cursor-pointer ${
-                        activeTabDemo === 'tienda'
-                          ? 'bg-cyan-400 text-black font-anton font-bold shadow-[0_0_12px_rgba(0,240,255,0.6)]'
-                          : 'text-slate-400 hover:text-white'
-                      }`}
-                    >
-                      <ShoppingBag className="w-4 h-4 mb-0.5" />
-                      <span className="text-[10px] uppercase font-anton tracking-wider">Tienda</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => { soundFX.playClick(); setActiveTabDemo('lab'); }}
-                      className={`flex flex-col items-center justify-center py-2 px-1 rounded-xl transition-all cursor-pointer ${
-                        activeTabDemo === 'lab'
-                          ? 'bg-cyan-400 text-black font-anton font-bold shadow-[0_0_12px_rgba(0,240,255,0.6)]'
-                          : 'text-slate-400 hover:text-white'
-                      }`}
-                    >
-                      <FlaskConical className="w-4 h-4 mb-0.5" />
-                      <span className="text-[10px] uppercase font-anton tracking-wider">Lab</span>
-                    </button>
-                  </div>
-
-                  {/* Explicación del mundo activo */}
-                  <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/10 min-h-[85px] flex items-center">
-                    {activeTabDemo === 'tareas' && (
-                      <div className="space-y-1 text-left text-xs">
-                        <strong className="text-cyan-300 flex items-center gap-1.5">
-                          <Swords className="w-4 h-4" />
-                          <span>Pestaña TAREAS (Tu Centro del Día)</span>
-                        </strong>
-                        <p className="text-slate-300 leading-relaxed">
-                          Aquí vives tu jornada: agregas nuevas misiones con el botón <strong>"+"</strong>, marcas lo que vas logrando y pulsas los orbes de hábitos diarios (+1) para cuidar tu racha de constancia.
-                        </p>
-                      </div>
-                    )}
-
-                    {activeTabDemo === 'bitacora' && (
-                      <div className="space-y-1 text-left text-xs">
-                        <strong className="text-cyan-300 flex items-center gap-1.5">
-                          <BookOpen className="w-4 h-4" />
-                          <span>Pestaña BITÁCORA (Tu Refugio Nocturno)</span>
-                        </strong>
-                        <p className="text-slate-300 leading-relaxed">
-                          Un espacio cálido y sin juicios para vaciar la mente antes de dormir. Escribe cómo te sentiste, suelta pendientes para mañana y despeja tu cabeza para descansar en paz.
-                        </p>
-                      </div>
-                    )}
-
-                    {activeTabDemo === 'tienda' && (
-                      <div className="space-y-1 text-left text-xs">
-                        <strong className="text-cyan-300 flex items-center gap-1.5">
-                          <ShoppingBag className="w-4 h-4" />
-                          <span>Pestaña TIENDA (Recompensas Reales)</span>
-                        </strong>
-                        <p className="text-slate-300 leading-relaxed">
-                          ¡Tu esfuerzo tiene premio! Canjea las monedas que ganas completando tareas por premios que tú mismo elijas: un café especial, 30 minutos de serie, un paseo o descansos.
-                        </p>
-                      </div>
-                    )}
-
-                    {activeTabDemo === 'lab' && (
-                      <div className="space-y-1 text-left text-xs">
-                        <strong className="text-cyan-300 flex items-center gap-1.5">
-                          <FlaskConical className="w-4 h-4" />
-                          <span>Pestaña LABORATORIO & PROGRESO</span>
-                        </strong>
-                        <p className="text-slate-300 leading-relaxed">
-                          Mira tu evolución con números claros: tu nivel de jugador, tus rachas de días seguidos, tus atributos (mente, disciplina, energía) y la calibración visual de KAI.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Personalización en Ajustes: Barra fija vs KAI Nexus */}
-                <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/10 space-y-2 text-left">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-semibold text-white flex items-center gap-1.5">
-                      <SlidersHorizontal className="w-3.5 h-3.5 text-amber-400" />
-                      <span>¿Prefieres barra fija tradicional? Tú decides en Ajustes:</span>
-                    </span>
-                    <span className="text-[10px] text-slate-400">
-                      (Modificable en cualquier momento)
-                    </span>
-                  </div>
-
-                  <p className="text-[11px] text-slate-300 leading-relaxed">
-                    Si te gusta más tener una barra fija visible abajo (en celular) o arriba (en computadora), puedes activarla ahora mismo o cambiarla cuando quieras desde <strong>Ajustes &gt; 'Modo de Navegación'</strong>:
-                  </p>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        soundFX.playClick();
-                        setNavigationMode('nexus');
-                      }}
-                      className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-2 ${
-                        navigationMode === 'nexus'
-                          ? 'bg-cyan-950/50 border-cyan-400 text-white shadow-[0_0_12px_rgba(0,240,255,0.3)]'
-                          : 'bg-white/[0.02] border-white/10 text-slate-400 hover:text-white'
-                      }`}
-                    >
-                      <Eye className="w-4 h-4 text-cyan-400 shrink-0" />
-                      <div>
-                        <div className="text-xs font-bold">KAI Nexus (Recomendado)</div>
-                        <div className="text-[10px] text-slate-400">Pantalla limpia, navegas tocando a KAI</div>
-                      </div>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        soundFX.playClick();
-                        setNavigationMode('classic');
-                      }}
-                      className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-2 ${
-                        navigationMode === 'classic'
-                          ? 'bg-cyan-950/50 border-cyan-400 text-white shadow-[0_0_12px_rgba(0,240,255,0.3)]'
-                          : 'bg-white/[0.02] border-white/10 text-slate-400 hover:text-white'
-                      }`}
-                    >
-                      <Layout className="w-4 h-4 text-amber-400 shrink-0" />
-                      <div>
-                        <div className="text-xs font-bold">Modo Clásico</div>
-                        <div className="text-[10px] text-slate-400">Con barra de navegación fija siempre visible</div>
-                      </div>
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-            {/* ============================================================== */}
-            {/* PASO 4: CÓMO SE USA LA INTELIGENCIA ARTIFICIAL KAI             */}
-            {/* ============================================================== */}
-            {step === 4 && (
-              <motion.div
-                key="step-4"
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -12 }}
-                transition={{ duration: 0.2 }}
-                className="space-y-4"
-              >
-                {/* Dónde está KAI */}
-                <div className="p-4 rounded-2xl bg-gradient-to-r from-cyan-950/40 via-blue-950/20 to-purple-950/40 border border-cyan-500/30 flex items-center gap-4">
-                  <div className="shrink-0 w-16 h-16 flex items-center justify-center bg-black/40 rounded-2xl border border-cyan-400/50 shadow-[0_0_20px_rgba(0,240,255,0.3)]">
-                    <KAICompanion
-                      shapeId="prism"
-                      size={54}
-                      interactive={false}
-                      auraState="focus_trance"
-                    />
-                  </div>
-                  <div className="space-y-1 text-left">
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-cyan-300">
-                      Tu Copiloto IA Permanente:
-                    </span>
-                    <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
-                      Mira la esquina <strong>inferior derecha de tu pantalla ↘️</strong>. Siempre verás mi orbe flotante acompañándote. Al tocarlo, se abre mi menú de Inteligencia Artificial.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Los 3 Superpoderes */}
-                <div className="space-y-2.5">
-                  <label className="text-xs font-semibold text-slate-300">
-                    Los 3 superpoderes con los que KAI te ayuda:
-                  </label>
-
-                  {/* 1. Oráculo IA */}
-                  <div className="p-3 rounded-xl bg-white/[0.03] border border-amber-500/25 flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center shrink-0 text-amber-300 mt-0.5">
-                      <BrainCircuit className="w-4 h-4" />
-                    </div>
-                    <div className="text-xs text-left">
-                      <strong className="text-amber-300 block font-semibold">
-                        1. Oráculo IA (Planificador inteligente en 2 segundos)
-                      </strong>
-                      <p className="text-slate-300 mt-0.5 leading-relaxed">
-                        ¿Tienes la cabeza llena de cosas? Solo dile: <em>"KAI, tengo que estudiar para un examen, ir al banco y lavar ropa"</em>. KAI armará tu horario y tareas ordenadas al instante.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* 2. Desbloqueo Anti-procrastinación */}
-                  <div className="p-3 rounded-xl bg-white/[0.03] border border-orange-500/25 flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-orange-500/15 border border-orange-500/30 flex items-center justify-center shrink-0 text-orange-300 mt-0.5">
-                      <Zap className="w-4 h-4" />
-                    </div>
-                    <div className="text-xs text-left">
-                      <strong className="text-orange-300 block font-semibold">
-                        2. Desbloqueo de 2 minutos (Anti-procrastinación)
-                      </strong>
-                      <p className="text-slate-300 mt-0.5 leading-relaxed">
-                        ¿Sientes pereza o bloqueo para empezar? Toca a KAI y pide el Desbloqueo. Te dará una micro-acción ridículamente fácil de 2 minutos para arrancar sin resistencia mental.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* 3. Foco Pomodoro */}
-                  <div className="p-3 rounded-xl bg-white/[0.03] border border-cyan-500/25 flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center shrink-0 text-cyan-300 mt-0.5">
-                      <Clock className="w-4 h-4" />
-                    </div>
-                    <div className="text-xs text-left">
-                      <strong className="text-cyan-300 block font-semibold">
-                        3. Modo Foco Pomodoro con Sonidos Relajantes
-                      </strong>
-                      <p className="text-slate-300 mt-0.5 leading-relaxed">
-                        Trabaja en bloques de 25 minutos con temporizador y frecuencias cuánticas que te protegen de distracciones y redes sociales.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-            {/* ============================================================== */}
-            {/* PASO 5: RESUMEN FINAL & REGALO DE BIENVENIDA                     */}
-            {/* ============================================================== */}
-            {step === 5 && (
-              <motion.div
-                key="step-5"
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -12 }}
-                transition={{ duration: 0.2 }}
-                className="space-y-5 text-center"
-              >
-                {/* Celebración de KAI */}
-                <div className="py-2 flex flex-col items-center justify-center space-y-2">
-                  <div className="w-20 h-20 flex items-center justify-center">
-                    <KAICompanion
-                      shapeId="prism"
-                      size={76}
-                      interactive={false}
-                      auraState="victory"
-                    />
-                  </div>
-                  <h3 className="text-lg sm:text-xl font-anton tracking-wide text-white">
-                    ¡Calibración Completa, {username.trim() || 'Compañero'}!
-                  </h3>
-                  <p className="text-xs sm:text-sm text-slate-300 max-w-md mx-auto leading-relaxed">
-                    Ya conoces cómo funciona todo. Tu camino hacia días más ligeros, enfocados y con propósito empieza hoy.
+                  <h3 className="text-sm font-bold text-cyan-300">¡Ya estás listo para empezar!</h3>
+                  <p className="text-xs text-slate-200">
+                    KAI es tu centro de mando. Toca el orbe de KAI en la esquina inferior derecha ↘️ para navegar por Tareas, Bitácora, Tienda y Laboratorio. Además, KAI te ayudará con su Inteligencia IA: Oráculo para planificar, Desbloqueo rápido y Modo Foco Pomodoro.
                   </p>
                 </div>
-
-                {/* Paquete de bienvenida acreditado */}
-                <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-950/30 via-yellow-950/20 to-amber-950/30 border border-amber-500/40 space-y-2.5 max-w-md mx-auto">
-                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-300">
-                    🎁 Tu Paquete de Bienvenida:
-                  </span>
-                  <div className="flex items-center justify-center gap-6">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-400 flex items-center justify-center text-amber-300">
-                        <Coins className="w-4 h-4" />
-                      </div>
-                      <div className="text-left">
-                        <div className="text-sm font-anton text-amber-300">+25 Monedas</div>
-                        <div className="text-[10px] text-slate-400">Para tu Tienda</div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-xl bg-cyan-500/20 border border-cyan-400 flex items-center justify-center text-cyan-300">
-                        <Star className="w-4 h-4" />
-                      </div>
-                      <div className="text-left">
-                        <div className="text-sm font-anton text-cyan-300">+50 XP</div>
-                        <div className="text-[10px] text-slate-400">Experiencia</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Tip para volver a ver el tutorial */}
-                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 max-w-md mx-auto flex items-center gap-2.5 text-left text-xs text-slate-400">
-                  <Lightbulb className="w-4 h-4 text-cyan-400 shrink-0" />
-                  <span>
-                    Si alguna vez quieres repasar este tutorial, lo encontrarás siempre en la pestaña <strong>Ajustes &gt; 'Manual de KAI'</strong>.
-                  </span>
+                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 text-center text-xs text-slate-400">
+                  <p>¡Todo listo para transformar tu día! Al comenzar, tendrás tus primeros recursos para arrancar con fuerza.</p>
                 </div>
               </motion.div>
             )}
@@ -1007,12 +669,12 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
             </button>
           )}
 
-          {step < 5 ? (
+          {step < 3 ? (
             <button
               type="button"
               onClick={() => {
                 soundFX.playClick();
-                setStep((prev) => Math.min(5, prev + 1));
+                setStep((prev) => Math.min(3, prev + 1));
               }}
               className="px-5 py-2.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-black font-anton text-xs uppercase tracking-wider transition-all cursor-pointer shadow-[0_0_15px_rgba(0,240,255,0.4)] flex items-center gap-1.5 active:scale-95 font-bold"
             >

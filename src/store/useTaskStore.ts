@@ -7,6 +7,7 @@ import { sanitizeTasksByDate, deduplicateHabits, deduplicateTasksForDay } from '
 import { generateDailyTasks } from '../data/defaults';
 import { useUIStore } from './useUIStore';
 import { usePlayerStore } from './usePlayerStore';
+import { compactHistoricalTasksByDate, persistColdArchiveToIndexedDB } from '../utils/level3Systems';
 
 interface TaskState {
   tasksByDate: Record<string, TaskItem[]>;
@@ -207,9 +208,25 @@ export const useTaskStore = create<TaskState>()(
       storage: createJSONStorage(() => localStorage),
       onRehydrateStorage: () => (state) => {
         if (state) {
-          state.currentViewDate = getTodayDateString();
+          const logicalToday = getTodayDateString();
+          state.currentViewDate = logicalToday;
           if (state.tasksByDate) {
-            state.tasksByDate = sanitizeTasksByDate(state.tasksByDate);
+            const sanitized = sanitizeTasksByDate(state.tasksByDate);
+            if (Object.keys(sanitized).length > 20) {
+              const playerStats = usePlayerStore.getState().stats;
+              const compacted = compactHistoricalTasksByDate(
+                sanitized,
+                logicalToday,
+                playerStats?.historicalArchiveSummary,
+                14
+              );
+              state.tasksByDate = compacted.hotTasksByDate;
+              if (compacted.prunedTasksCount > 0) {
+                void persistColdArchiveToIndexedDB(compacted.coldArchivedByDate);
+              }
+            } else {
+              state.tasksByDate = sanitized;
+            }
           }
         }
       },

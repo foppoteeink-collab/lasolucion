@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { Bell, CheckCircle2, ShieldAlert, Moon, Sun, Clock, X, Sparkles } from 'lucide-react';
+import { Icon } from './common/Icon';
 import { AppNotification } from '../types';
 
 export const NotificationToastOverlay: React.FC = () => {
@@ -103,7 +103,7 @@ export const NotificationToastOverlay: React.FC = () => {
               className="text-slate-500 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors shrink-0"
               title="Cerrar"
             >
-              <X className="w-4 h-4" />
+              <Icon name="x" className="w-4 h-4" />
             </button>
           </motion.div>
         ))}

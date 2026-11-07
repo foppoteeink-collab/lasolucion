@@ -1,4 +1,5 @@
 import React from 'react';
+import { useUIStore } from '../store/useUIStore';
 
 export interface FloatingTextItem {
   id: string;

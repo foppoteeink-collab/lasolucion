@@ -5,8 +5,14 @@ coverage/
 .env*
 !.env.example
 
-# Build output - never commit
+# Build & Dev output - never commit
 dist/
+dev-dist/
 .firebase/
 la_solucion_codigo_fuente/
+
+# AI Studio & Antigravity internal session caches
+.antigravity/
+.aistudio/
+*.pbtxt
 

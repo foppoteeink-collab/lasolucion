@@ -5,7 +5,7 @@ import {
   FileText, 
   Edit3, 
   Trash2, 
-  Sparkles,
+  Menu,
   X 
 } from 'lucide-react';
 import { TaskItem } from '../types';
@@ -21,6 +21,7 @@ interface TaskActionsDropdownProps {
   onOpenEdit: () => void;
   onDelete: () => void;
   isDayEnded?: boolean;
+  color: string;
 }
 
 export const TaskActionsDropdown: React.FC<TaskActionsDropdownProps> = ({
@@ -33,6 +34,7 @@ export const TaskActionsDropdown: React.FC<TaskActionsDropdownProps> = ({
   onOpenEdit,
   onDelete,
   isDayEnded = false,
+  color,
 }) => {
   const [internalOpen, setInternalOpen] = useState(false);
 
@@ -182,20 +184,21 @@ export const TaskActionsDropdown: React.FC<TaskActionsDropdownProps> = ({
       {/* Botón Disparador Central / Cerrar */}
       <motion.button
         type="button"
-        whileTap={{ scale: 0.88 }}
+        whileTap={{ scale: 1.0 }}
         onClick={handleToggle}
         className={`touch-target-44 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all cursor-pointer relative z-40 before:absolute before:-inset-2 before:content-[''] ${
           isMenuOpen
             ? 'bg-cyan-950 border border-cyan-400 text-cyan-300 shadow-[0_0_15px_rgba(0,240,255,0.4)] rotate-90'
-            : 'bg-[#080515] border border-cyan-500/30 text-cyan-400 hover:border-cyan-400 hover:text-cyan-200 hover:bg-[#0c0a20] shadow-[0_0_8px_rgba(0,240,255,0.1)]'
+            : 'bg-[#080515] border text-cyan-400 hover:border-cyan-400 hover:text-cyan-200 hover:bg-[#0c0a20] shadow-[0_0_8px_rgba(0,240,255,0.1)]'
         }`}
+        style={{ borderColor: isMenuOpen ? undefined : color }}
         title={isMenuOpen ? 'Cerrar acciones' : 'Acciones de tarea'}
         aria-label={isMenuOpen ? 'Cerrar acciones' : `Acciones para: ${task.title}`}
       >
         {isMenuOpen ? (
           <X className="w-3.5 h-3.5 text-cyan-300 stroke-[2.5]" />
         ) : (
-          <Sparkles className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+          <Menu className="w-4 h-4" style={{ color: color }} />
         )}
       </motion.button>
     </div>

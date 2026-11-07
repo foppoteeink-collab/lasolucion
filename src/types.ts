@@ -140,8 +140,26 @@ export interface PlayerStats {
   ascensionCrystals?: number;
   frozenHabits?: Record<string, { frozenUntil: string; daysRemaining: number }>;
   synapticBoosters?: number;
+  tacticalEnergyVials?: number;
+  archetypeEvolutionCores?: number;
   seenTutorialGuides?: Record<string, boolean>;
   hasClaimedTutorialReward?: boolean;
+  // ─── Nivel 3: Endgame, Escalabilidad, Anti-Exploit y Economía ───
+  ascensionTier?: number;
+  legacyTotalXp?: number;
+  lastTimezoneOffset?: number;
+  timezoneShieldExpiresAt?: number;
+  closedDaysLog?: Record<string, { timestamp: number; tasksCompleted: number; xpEarned: number }>;
+  activeOverchargeContract?: {
+    date: string;
+    stakedCoins: number;
+    settled?: boolean;
+  } | null;
+  historicalArchiveSummary?: {
+    totalCompletedCount: number;
+    byCategory: Record<string, number>;
+    lastCompactedAt?: string;
+  };
 }
 
 export type KaiShapeKey = 'prism' | 'custom';

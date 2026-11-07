@@ -1,72 +1,69 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { TaskItem, TaskCategory, HabitMasteryRecord } from '../../types';
-import { 
-  CheckCircle2, 
-  Clock, 
-  Sparkles, 
-  Zap, 
-  Dumbbell, 
-  BookOpen, 
-  Briefcase, 
-  Apple, 
-  Palette, 
-  Users, 
-  Target,
-  Coins,
-  FileText,
-  Timer
-} from 'lucide-react';
 import { soundFX } from '../../utils/audio';
 import { SlashText } from './SlashText';
 import { TaskActionsDropdown } from '../TaskActionsDropdown';
 import { useUIStore } from '../../store/useUIStore';
 import { getTodayDateString } from '../../utils/date';
 import { getCategoryStyle } from '../../data/categoryColors';
+import { Icon } from '../common/Icon';
 
 const getRarityBadge = (task: TaskItem) => {
   const isLegendary = task.isTracked2166 || task.isLegendaryBounty;
-
   if (isLegendary) {
     return {
-      badgeStyle: 'bg-amber-500/15 border-amber-500/30 text-amber-300 font-semibold',
+      badgeStyle: 'text-amber-400 font-mono font-medium',
       label: '21/66',
-      icon: <Sparkles className="w-2.5 h-2.5 text-amber-400" />
+      icon: <Icon name="sparkles" className="w-2.5 h-2.5 text-amber-400 shrink-0" />
     };
   }
-  return {
-    badgeStyle: '',
-    label: '',
-    icon: null
-  };
+  return { badgeStyle: '', label: '', icon: null };
 };
 
-const getCategoryIcon = (category?: string) => {
-  const catStyle = getCategoryStyle(category);
-  const cls = `w-3 h-3 ${catStyle.textIcon}`;
-  switch (category?.toLowerCase()) {
-    case 'entrenamiento':
-      return <Dumbbell className={cls} />;
-    case 'estudio':
-      return <BookOpen className={cls} />;
-    case 'trabajo':
-      return <Briefcase className={cls} />;
-    case 'limpieza':
-      return <Sparkles className={cls} />;
-    case 'comida':
-      return <Apple className={cls} />;
-    case 'creativo':
-      return <Palette className={cls} />;
-    case 'clientes':
-      return <Users className={cls} />;
-    case 'habito':
-      return <Zap className={cls} />;
-    case 'pomodoro':
-      return <Timer className={cls} />;
-    default:
-      return <Target className={cls} />;
-  }
+const getCategoryIcon = (category?: string, colorHex?: string) => {
+  const style: React.CSSProperties = { ...(colorHex ? { color: colorHex } : {}) };
+  const cls = 'w-4 h-4 shrink-0';
+  const name = (category?.toLowerCase() === 'entrenamiento' ? 'dumbbell' :
+                category?.toLowerCase() === 'estudio' || category?.toLowerCase() === 'intelecto' ? 'bookOpen' :
+                category?.toLowerCase() === 'trabajo' || category?.toLowerCase() === 'rutina' ? 'briefcase' :
+                category?.toLowerCase() === 'limpieza' ? 'sparkles' :
+                category?.toLowerCase() === 'comida' ? 'apple' :
+                category?.toLowerCase() === 'creativo' ? 'palette' :
+                category?.toLowerCase() === 'clientes' ? 'users' :
+                category?.toLowerCase() === 'habito' ? 'zap' :
+                category?.toLowerCase() === 'pomodoro' ? 'timer' : 'target');
+  return <Icon name={name} className={cls} style={style} />;
 };
+
+function formatSingle24To12(hhmm: string): { time: string; period: string } {
+  const match = hhmm.trim().match(/^(\d{1,2}):(\d{2})/);
+  if (!match) return { time: hhmm.trim(), period: '' };
+  let h = parseInt(match[1], 10);
+  const m = match[2];
+  const period = h >= 12 ? 'PM' : 'AM';
+  if (h === 0) h = 12;
+  else if (h > 12) h -= 12;
+  return { time: String(h).padStart(2, '0') + ":" + m, period };
+}
+
+function parseScheduleTimeColumns(timeBlock: string | undefined, timeFormat: '12h' | '24h'): { mainTime: string; subPeriod: string; rangeSubtitle: string | null; } {
+  if (!timeBlock || !timeBlock.trim()) return { mainTime: '--:--', subPeriod: 'LIBRE', rangeSubtitle: null };
+  const parts = timeBlock.split(/[-–—]/).map(s => s.trim()).filter(Boolean);
+  const startRaw = parts[0] || '';
+  const endRaw = parts[1] || '';
+  const startMatch = startRaw.match(/^(\d{1,2}):(\d{2})/);
+  if (!startMatch) return { mainTime: startRaw.slice(0, 5) || '--:--', subPeriod: endRaw ? "a " + endRaw.slice(0, 5) : 'HORA', rangeSubtitle: timeBlock };
+  const start24 = String(parseInt(startMatch[1], 10)).padStart(2, '0') + ":" + startMatch[2];
+  const endMatch = endRaw.match(/^(\d{1,2}):(\d{2})/);
+  const end24 = endMatch ? String(parseInt(endMatch[1], 10)).padStart(2, '0') + ":" + endMatch[2] : '';
+  if (timeFormat === '12h') {
+    const s12 = formatSingle24To12(start24);
+    const e12 = end24 ? formatSingle24To12(end24) : null;
+    return { mainTime: s12.time, subPeriod: s12.period, rangeSubtitle: e12 ? s12.time + " " + s12.period + " - " + e12.time + " " + e12.period : s12.time + " " + s12.period };
+  }
+  return { mainTime: start24, subPeriod: end24 ? "a " + end24 : '24H', rangeSubtitle: end24 ? start24 + " - " + end24 : start24 };
+}
 
 interface TaskCardProps {
   task: TaskItem;
@@ -87,241 +84,107 @@ interface TaskCardProps {
   habitMastery?: Record<string, HabitMasteryRecord>;
 }
 
-export const TaskCard: React.FC<TaskCardProps> = ({
-  task,
-  index = 0,
-  currentDate,
-  isMenuOpen = false,
-  onToggleMenu,
-  onToggle,
-  onIncrementHabit,
-  onEdit,
-  onOpenEditModal,
-  onDelete,
-  onDeleteTask,
-  onOpenPomodoro,
-  onOpenNoteModal,
-  isDayEnded = false
-}) => {
+const TaskCardComponent: React.FC<TaskCardProps> = (props) => {
+  const { task, index = 0, currentDate, isMenuOpen = false, onToggleMenu, onToggle, onIncrementHabit, onEdit, onOpenEditModal, onDelete, onDeleteTask, onOpenPomodoro, onOpenNoteModal, isDayEnded = false } = props;
   if (!task || !task.title) return null;
   const isTogglingRef = React.useRef(false);
+  const timeFormat = useUIStore(state => state.timeFormat);
   const isCompleted = task.completed;
   const handleEdit = onEdit || onOpenEditModal;
   const handleDelete = onDelete || onDeleteTask;
-
   const todayStr = getTodayDateString();
   const isFutureDay = Boolean(currentDate && currentDate > todayStr);
-
   const catStyle = getCategoryStyle(task.category);
   const rarity = getRarityBadge(task);
-
+  const { mainTime, subPeriod, rangeSubtitle } = parseScheduleTimeColumns(task.timeBlock, timeFormat);
   const hexToRgba = (hex: string, alpha: number): string => {
     const cleanHex = hex.replace('#', '');
     const r = parseInt(cleanHex.substring(0, 2), 16) || 0;
     const g = parseInt(cleanHex.substring(2, 4), 16) || 0;
     const b = parseInt(cleanHex.substring(4, 6), 16) || 0;
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    return "rgba(" + r + ", " + g + ", " + b + ", " + alpha + ")";
   };
-
-  const glassStyle: React.CSSProperties = isCompleted
-    ? {
-        background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(3, 7, 18, 0.85) 75%)',
-        borderColor: 'rgba(16, 185, 129, 0.28)',
-        boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06), inset 0 -1px 0 rgba(0, 0, 0, 0.3), 0 4px 16px -6px rgba(0, 0, 0, 0.5)',
-        backdropFilter: 'blur(16px) saturate(1.2)',
-        WebkitBackdropFilter: 'blur(16px) saturate(1.2)',
-      }
-    : {
-        background: `linear-gradient(135deg, ${hexToRgba(catStyle.color, 0.09)} 0%, rgba(7, 4, 23, 0.75) 75%)`,
-        borderColor: hexToRgba(catStyle.color, 0.30),
-        boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -1px 0 rgba(0, 0, 0, 0.35), 0 8px 24px -10px rgba(0, 0, 0, 0.6)',
-        backdropFilter: 'blur(18px) saturate(1.3)',
-        WebkitBackdropFilter: 'blur(18px) saturate(1.3)',
-      };
+  const activeLineColor = isCompleted ? '#10b981' : catStyle.color;
+  const lineStyle: React.CSSProperties = { background: "linear-gradient(180deg, " + activeLineColor + ", " + hexToRgba(activeLineColor, 0.55) + ")", boxShadow: "0 0 12px " + hexToRgba(activeLineColor, isCompleted ? 0.55 : 0.45) };
+  const infoBoxStyle: React.CSSProperties = isCompleted
+    ? { background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.10) 0%, rgba(22, 38, 52, 0.65) 50%, rgba(8, 17, 27, 0.90) 100%)', borderColor: 'rgba(16, 185, 129, 0.32)', boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 4px 14px -4px rgba(0, 0, 0, 0.45)' }
+    : { background: "linear-gradient(135deg, " + hexToRgba(catStyle.color, 0.11) + " 0%, rgba(34, 56, 74, 0.62) 45%, rgba(8, 17, 27, 0.92) 100%)", borderColor: hexToRgba(catStyle.color, 0.32), boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.10), 0 6px 20px -8px rgba(0, 0, 0, 0.55)' };
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 15 }}
+      initial={{ opacity: 0, y: 12 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.1 }}
-      whileTap={{ scale: 0.985 }}
+      whileTap={{ scale: 1.0 }}
       exit={{ opacity: 0, scale: 0.98 }}
-      transition={{ 
-        duration: 0.22,
-        ease: [0.16, 1, 0.3, 1],
-        delay: Math.min((index % 5) * 0.02, 0.1) 
-      }}
-      style={glassStyle}
-      className={`relative isolate p-2.5 sm:p-3 rounded-xl border transition-all duration-200 ${
-        isMenuOpen ? 'z-30 ring-1 ring-cyan-500/40 shadow-[0_0_15px_rgba(0,240,255,0.25)]' : 'z-0'
-      } ${
-        isCompleted 
-          ? 'text-slate-200 opacity-90' 
-          : 'text-white'
-      }`}
+      transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1], delay: Math.min((index % 5) * 0.02, 0.1) }}
+      className="flex items-stretch gap-2.5 sm:gap-3.5 group transition-transform duration-300 ease-out hover:translate-x-0.5 relative z-0"
     >
-      {/* Grano esmerilado táctil Moxen Vidrio */}
-      <span className="vi-grano" aria-hidden="true" />
-
-      {/* Línea 1: Protagonista (Check + Título + Menú Orbital Kai) */}
-      <div className="flex items-center justify-between gap-2 min-w-0">
-        <div className="flex items-center gap-2.5 min-w-0 flex-1">
-          {/* Checkbox / Completion Toggle */}
-          <motion.button
-            type="button"
-            {...(index === 0 ? { 'data-tour': 'task-checkbox' } : {})}
-            whileTap={{ scale: 0.88 }}
-            onClick={(e) => {
-              if (isTogglingRef.current) return;
-              isTogglingRef.current = true;
-              setTimeout(() => {
-                isTogglingRef.current = false;
-              }, 350);
-
-              soundFX.playClick();
-              if (isFutureDay) {
-                useUIStore.getState().addFloatingEffect({
-                  x: e.clientX || (typeof window !== 'undefined' ? window.innerWidth / 2 : 200),
-                  y: (e.clientY || 200) - 20,
-                  text: '⏳ Día futuro: modo planificación',
-                  type: 'streak'
-                });
-                return;
-              }
-              onToggle(task.id, e);
-            }}
-            disabled={isDayEnded}
-            className={`relative touch-target-44 before:absolute before:-inset-3 before:content-[''] w-5 h-5 rounded-md border flex items-center justify-center transition-all cursor-pointer shrink-0 ${
-              isCompleted
-                ? 'bg-emerald-500 border-emerald-400 text-black'
-                : isFutureDay
-                ? 'bg-white/[0.02] border-cyan-500/30 text-cyan-400/50'
-                : 'bg-white/[0.03] border-white/20 hover:border-white/40 hover:bg-white/[0.06]'
-            }`}
-            title={
-              isFutureDay 
-                ? 'Día futuro: modo planificación' 
-                : isCompleted 
-                ? 'Desmarcar' 
-                : 'Marcar como completada'
-            }
-            aria-label={isCompleted ? `Desmarcar tarea: ${task.title}` : `Completar tarea: ${task.title}`}
-          >
-            {isCompleted && (
-              <motion.div
-                initial={{ scale: 0.5, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ type: 'spring', stiffness: 500, damping: 25 }}
-              >
-                <CheckCircle2 className="w-3.5 h-3.5 stroke-[3]" />
-              </motion.div>
-            )}
-            {!isCompleted && isFutureDay && (
-              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400/60" />
-            )}
-          </motion.button>
-
-          {/* Título de la Tarea (Clic directo abre modal de configuración) */}
-          <h3 
-            onClick={() => handleEdit && handleEdit(task)}
-            className="text-[13px] sm:text-[15px] font-bold tracking-tight transition-colors leading-snug truncate cursor-pointer hover:text-cyan-300 min-w-0"
-            title={`${task.title} - Toca para configurar`}
-          >
-            <SlashText
-              text={task.title}
-              isCompleted={isCompleted}
-              className={isCompleted ? 'text-slate-200' : 'text-white'}
-              slashColor={catStyle.slashColor}
-            />
-          </h3>
-        </div>
-
-        {/* Extremo Derecho: Disparador Orbital Satelital Estilo Kai */}
-        <TaskActionsDropdown
-          task={task}
-          isOpen={isMenuOpen}
-          onToggleOpen={onToggleMenu}
-          onOpenNote={() => onOpenNoteModal && onOpenNoteModal(task)}
-          onOpenPomodoro={() => onOpenPomodoro && onOpenPomodoro(task.title, task.category)}
-          onOpenEdit={() => handleEdit && handleEdit(task)}
-          onDelete={() => handleDelete && handleDelete(task.id)}
-          isDayEnded={isDayEnded}
-        />
+      <div onClick={() => handleEdit && handleEdit(task)} className="les-time w-[58px] sm:w-[68px] text-right flex flex-col items-end justify-center shrink-0 select-none cursor-pointer py-0.5" title="Asignar horario">
+        <span className={isCompleted ? "font-bold text-[11px] sm:text-[12px] leading-tight tracking-tight font-mono transition-colors text-emerald-400/90" : "font-bold text-[11px] sm:text-[12px] leading-tight tracking-tight font-mono transition-colors text-[#f1f5f9] group-hover:text-cyan-300"}>
+          {mainTime} {subPeriod}
+        </span>
+        {rangeSubtitle && rangeSubtitle.includes('-') && (
+          <span className="les-range text-[#94a3b8] text-[9px] sm:text-[10px] font-semibold tracking-wider font-mono mt-0.5">
+            {rangeSubtitle.split('-')[1].trim()}
+          </span>
+        )}
       </div>
-
-      {/* Línea 2: Metadatos Unificados (Horario • Categoría • Recompensa • Notas) */}
-      <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap text-[10px] font-mono text-slate-400 pl-[30px] mt-1">
-        {/* Horario */}
-        {task.timeBlock && (
-          <span className={`px-1.5 py-0.2 rounded border flex items-center gap-1 ${catStyle.bgBadge}`}>
-            <Clock className={`w-2.5 h-2.5 ${catStyle.textIcon}`} />
-            <span>{task.timeBlock}</span>
-          </span>
-        )}
-
-        {/* Categoría */}
-        <span className={`px-1.5 py-0.2 rounded border uppercase tracking-wider flex items-center gap-1 ${catStyle.bgBadge}`}>
-          {getCategoryIcon(task.category)}
-          <span>{task.category || 'Tarea'}</span>
-        </span>
-
-        {/* Rarity Ley 21/66 */}
-        {rarity.label && (
-          <span className={`px-1.5 py-0.2 rounded border flex items-center gap-0.5 ${rarity.badgeStyle}`}>
-            {rarity.icon}
-            <span>{rarity.label}</span>
-          </span>
-        )}
-
-        {/* Recompensa XP & Oro */}
-        <span className="flex items-center gap-1 text-slate-400">
-          <Zap className="w-2.5 h-2.5 text-cyan-400" />
-          <span>+{task.xpReward || 10} XP</span>
-        </span>
-        {task.coinReward ? (
-          <span className="flex items-center gap-1 text-amber-400">
-            <Coins className="w-2.5 h-2.5 text-amber-400" />
-            <span>+{task.coinReward}</span>
-          </span>
-        ) : null}
-
-        {/* Indicador de Nota */}
-        {task.notes && (
-          <span 
-            {...(index === 0 ? { 'data-tour': 'task-note-btn' } : {})}
-            onClick={() => onOpenNoteModal && onOpenNoteModal(task)}
-            className="flex items-center gap-1 text-purple-300 hover:text-purple-200 cursor-pointer bg-purple-950/60 border border-purple-500/40 px-2 py-1 min-h-[28px] rounded transition-colors"
-            title={task.notes}
-          >
-            <FileText className="w-2.5 h-2.5 text-purple-400" />
-            <span>Nota</span>
-          </span>
-        )}
-
-        {/* Contador numérico de hábito si aplica */}
-        {task.isHabit && task.targetCount && task.targetCount > 1 && (
-          <div className="flex items-center gap-1.5 ml-auto">
-            <span className={`font-bold ${catStyle.textIcon}`}>
-              {task.currentCount || 0}/{task.targetCount} {task.unit || 'veces'}
-            </span>
-            {!isDayEnded && !isFutureDay && onIncrementHabit && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  soundFX.playClick();
-                  onIncrementHabit(task.id, e);
-                }}
-                className={`px-1.5 py-0.2 rounded text-black text-[9px] font-bold uppercase transition-all cursor-pointer active:scale-95 ${catStyle.checkboxBorder.split(' ')[0]}`}
-                title="Sumar +1"
-              >
-                +1
-              </button>
-            )}
+      <div style={lineStyle} className="les-line w-[3.5px] rounded-full shrink-0 my-0.5 transition-all duration-300" />
+      <div style={infoBoxStyle} className={"flex-1 min-w-0 px-2.5 py-2 sm:px-3.5 sm:py-2.5 flex items-center justify-between gap-2 sm:gap-3 relative isolate rounded-xl border backdrop-blur-xl group-hover:brightness-110 " + (isMenuOpen ? "ring-1 ring-cyan-500/40 shadow-[0_0_15px_rgba(0,240,255,0.25)] " : "") + (isCompleted ? "opacity-90" : "")}>
+        <span className="vi-grano" aria-hidden="true" />
+        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+          <motion.button type="button" whileTap={{ scale: 1.0 }} onClick={(e) => { if (isTogglingRef.current) return; isTogglingRef.current = true; setTimeout(() => { isTogglingRef.current = false; }, 350); soundFX.playClick(); if (isFutureDay) { useUIStore.getState().addFloatingEffect({ x: e.clientX || 200, y: (e.clientY || 200) - 20, text: '⏳ Día futuro: modo planificación', type: 'streak' }); return; } onToggle(task.id, e); }} disabled={isDayEnded} style={isCompleted ? undefined : { borderColor: hexToRgba(activeLineColor, 0.40), boxShadow: '0 0 10px ' + hexToRgba(activeLineColor, 0.18) }} className={"w-9 h-9 sm:w-10 sm:h-10 border flex items-center justify-center transition-all cursor-pointer shrink-0 relative select-none " + (isCompleted ? "bg-gradient-to-br from-emerald-400 to-emerald-500 border-emerald-300 text-slate-950 shadow-[0_0_14px_rgba(16,185,129,0.55)] rounded-xl" : isFutureDay ? "bg-black/40 text-cyan-400/60 hover:bg-white/[0.04] rounded-xl" : "bg-black/45 text-white hover:bg-black/30 hover:scale-[1.0] rounded-xl")} title={isFutureDay ? 'Día futuro: modo planificación' : isCompleted ? 'Desmarcar tarea' : 'Marcar como completada'} aria-label={isCompleted ? "Desmarcar tarea: " + task.title : "Completar tarea: " + task.title}>
+            {isCompleted ? <motion.div initial={{ scale: 0.4, rotate: -25 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring', stiffness: 520, damping: 22 }}><Icon name="check" className="w-5 h-5 stroke-[3] text-black" /></motion.div> : <div className="flex items-center justify-center">{getCategoryIcon(task.category, activeLineColor)}{isFutureDay && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-cyan-400 ring-2 ring-black" />}</div>}
+          </motion.button>
+          <div className="min-w-0 flex-1">
+            <h4 onClick={() => handleEdit && handleEdit(task)} className="text-[14px] sm:text-[15.5px] font-semibold text-[#f1f5f9] leading-snug truncate cursor-pointer hover:text-cyan-300 transition-colors m-0" title={task.title + " - Toca para configurar"}>
+              <SlashText text={task.title} isCompleted={isCompleted} className={isCompleted ? 'text-slate-300' : 'text-[#f1f5f9]'} slashColor={catStyle.slashColor} />
+            </h4>
+            <div className="text-[#94a3b8] text-[10.5px] sm:text-[11.5px] mt-0.5 flex items-center gap-1.5 flex-nowrap overflow-x-auto no-scrollbar leading-tight">
+              <span style={{ color: catStyle.textColor }} className="font-medium capitalize shrink-0">{task.category || 'Rutina'}</span>
+              <span className="text-slate-600 shrink-0">&bull;</span>
+              {isCompleted && task.completedAt && (
+                <>
+                  <span className="inline-flex items-center gap-0.5 font-mono text-emerald-400 shrink-0">{new Date(task.completedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                  <span className="text-slate-600 shrink-0">&bull;</span>
+                </>
+              )}
+              <span className="inline-flex items-center gap-0.5 font-mono text-cyan-300/90 shrink-0"><Icon name="zap" className="w-2.5 h-2.5 text-cyan-400" />+{task.xpReward || 10} XP</span>
+              {task.coinReward && (
+                <>
+                  <span className="text-slate-600 shrink-0">&bull;</span>
+                  <span className="inline-flex items-center gap-0.5 font-mono text-amber-400 shrink-0"><Icon name="coins" className="w-2.5 h-2.5 text-amber-400" />+{task.coinReward}</span>
+                </>
+              )}
+              {rarity.label && (
+                <>
+                  <span className="text-slate-600 shrink-0" aria-hidden="true">&bull;</span>
+                  <span className={"inline-flex items-center gap-0.5 shrink-0 " + rarity.badgeStyle}>{rarity.icon}<span>{rarity.label}</span></span>
+                </>
+              )}
+              {task.notes && (
+                <>
+                  <span className="text-slate-600 shrink-0" aria-hidden="true">&bull;</span>
+                  <button type="button" onClick={(e) => { e.stopPropagation(); if (onOpenNoteModal) onOpenNoteModal(task); }} className="inline-flex items-center gap-1 text-purple-300 hover:text-purple-200 cursor-pointer font-mono text-[10.5px] transition-colors shrink-0" title={task.notes}><Icon name="fileText" className="w-2.5 h-2.5 text-purple-400" /><span>Nota</span></button>
+                </>
+              )}
+              {task.isHabit && task.targetCount && task.targetCount > 1 && (
+                <span className="inline-flex items-center gap-1.5 ml-1 shrink-0">
+                  <span className={"font-mono font-bold " + catStyle.textIcon}>{task.currentCount || 0}/{task.targetCount} {task.unit || 'veces'}</span>
+                  {!isDayEnded && !isFutureDay && onIncrementHabit && (
+                    <button type="button" onClick={(e) => { e.stopPropagation(); soundFX.playClick(); onIncrementHabit(task.id, e); }} className={"px-1.5 py-0.2 rounded text-black text-[9px] font-bold uppercase transition-all cursor-pointer active:scale-95 " + catStyle.checkboxBorder.split(' ')[0]} title="Sumar +1">+1</button>
+                  )}
+                </span>
+              )}
+            </div>
           </div>
-        )}
+        </div>
+        <TaskActionsDropdown task={task} isOpen={isMenuOpen} onToggleOpen={onToggleMenu} onOpenNote={() => onOpenNoteModal && onOpenNoteModal(task)} onOpenPomodoro={() => onOpenPomodoro && onOpenPomodoro(task.title, task.category)} onOpenEdit={() => handleEdit && handleEdit(task)} onDelete={() => handleDelete && handleDelete(task.id)} isDayEnded={isDayEnded} color={activeLineColor} />
       </div>
     </motion.div>
   );
 };
 
+export const TaskCard = React.memo(TaskCardComponent);
 export default TaskCard;

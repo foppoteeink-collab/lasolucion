@@ -274,7 +274,7 @@ export const DailyBossWidget: React.FC<DailyBossWidgetProps> = ({
               <AlertTriangle className={`w-3.5 h-3.5 ${systemEntropy >= 80 ? 'text-red-500 animate-pulse' : 'text-[#d6f421]'}`} />
               <span>ENTROPÍA DIARIA</span>
             </span>
-            <span className={`font-black font-mono ${
+            <span className={`font-black font-mono tabular-nums ${
               systemEntropy === 100 
                 ? 'text-red-500 animate-bounce' 
                 : systemEntropy >= 75 
@@ -317,7 +317,7 @@ export const DailyBossWidget: React.FC<DailyBossWidgetProps> = ({
                       : 'bg-[#03000a] text-[#d6f421] border-[#9600ff]/60 hover:border-[#d6f421]'
                   }`}
                 >
-                  {bossMode === 'daily' ? 'Raid Semanal' : 'Jefe Diario'}
+                  {bossMode === 'daily' ? 'Desafío Semanal' : 'Jefe Diario'}
                 </button>
                 <span className={`text-[10px] font-anton uppercase px-1.5 py-0.2 rounded border ${
                   isDefeated
@@ -352,7 +352,7 @@ export const DailyBossWidget: React.FC<DailyBossWidgetProps> = ({
               <Skull className="w-3.5 h-3.5" />
               <span>FUERZA:</span>
             </span>
-            <span className="font-mono text-white">
+            <span className="font-mono text-white tabular-nums">
               {currentHp}% {isDefeated && '💠 (NEUTRALIZADO)'}
             </span>
           </div>
@@ -385,7 +385,7 @@ export const DailyBossWidget: React.FC<DailyBossWidgetProps> = ({
             <div className="flex items-center gap-1 text-white">
               <Trophy className="w-3 h-3 text-[#d6f421]" />
               <span>Optimización:</span>
-              <span className="text-white bg-[#03000a] px-1.5 py-0.2 rounded border border-[#9600ff]/60 font-mono">
+              <span className="text-white bg-[#03000a] px-1.5 py-0.2 rounded border border-[#9600ff]/60 font-mono tabular-nums">
                 +{boss.bonusRewardXp} XP • +{boss.bonusRewardCoins} 💠
               </span>
             </div>
@@ -397,15 +397,15 @@ export const DailyBossWidget: React.FC<DailyBossWidgetProps> = ({
                   soundFX.playLevelUp();
                   onClaimBossBounty(boss.bonusRewardXp, boss.bonusRewardCoins);
                 }}
-                className="w-full mt-2 py-2 bg-[#d6f421] text-black border border-[#d6f421] rounded-lg font-anton tracking-widest uppercase transition-all shadow-[0_0_15px_rgba(214,244,33,0.5)] cursor-pointer hover:bg-yellow-300"
+                className="w-full mt-2 min-h-[40px] py-2 bg-[#d6f421] text-black border border-[#d6f421] rounded-lg font-anton tracking-widest uppercase transition-all shadow-[0_0_15px_rgba(214,244,33,0.5)] cursor-pointer hover:bg-yellow-300 active:scale-95 flex items-center justify-center"
               >
-                Reclamar Botín
+                Reclamar Recompensa
               </button>
             )}
             
             {isDefeated && hasClaimedToday && (
-              <div className="w-full mt-2 py-1.5 bg-[#03000a] border border-[#d6f421]/40 text-[#d6f421] rounded-lg font-anton tracking-widest uppercase text-center shadow-inner">
-                ✓ Botín Asegurado
+              <div className="w-full mt-2 min-h-[36px] py-1.5 bg-[#03000a] border border-[#d6f421]/40 text-[#d6f421] rounded-lg font-anton tracking-widest uppercase text-center shadow-inner flex items-center justify-center">
+                ✓ Recompensa Asegurada
               </div>
             )}
           </div>

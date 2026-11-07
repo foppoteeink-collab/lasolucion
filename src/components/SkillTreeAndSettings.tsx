@@ -1,6 +1,7 @@
-import React from 'react';
-import { Network, ShieldAlert, BrainCircuit, Activity, Lock, Unlock, Zap, Gem } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Network, ShieldAlert, BrainCircuit, Activity, Lock, Unlock, Zap, Gem, Layers } from 'lucide-react';
 import { SkillNode, PlayerStats } from '../types';
+import { soundFX } from '../utils/audio';
 
 interface SkillTreeAndSettingsProps {
   skillTree: SkillNode[];
@@ -9,16 +10,29 @@ interface SkillTreeAndSettingsProps {
   onUpdateStats: (newStats: PlayerStats) => void;
 }
 
+type SkillFilter = 'todos' | 'desbloqueados' | 'pendientes';
+
 export const SkillTreeAndSettings: React.FC<SkillTreeAndSettingsProps> = ({
   skillTree,
   onUpdateSkillTree,
   stats,
   onUpdateStats,
 }) => {
+  const [activeFilter, setActiveFilter] = useState<SkillFilter>('todos');
+
+  const unlockedCount = useMemo(() => skillTree.filter((s) => s.isUnlocked).length, [skillTree]);
+  const pendingCount = useMemo(() => skillTree.filter((s) => !s.isUnlocked).length, [skillTree]);
+
+  const filteredSkills = useMemo(() => {
+    if (activeFilter === 'desbloqueados') return skillTree.filter((s) => s.isUnlocked);
+    if (activeFilter === 'pendientes') return skillTree.filter((s) => !s.isUnlocked);
+    return skillTree;
+  }, [skillTree, activeFilter]);
 
   const handlePurchaseSkill = (skill: SkillNode) => {
     if (skill.isUnlocked || stats.coins < skill.costCoins) return;
 
+    soundFX.playClick();
     // Deduct coins
     onUpdateStats({
       ...stats,
@@ -31,11 +45,60 @@ export const SkillTreeAndSettings: React.FC<SkillTreeAndSettingsProps> = ({
   };
 
   return (
-    <div className="space-y-6 pb-20 text-white">
-      <div className="flex items-center justify-between scifi-glass-panel p-4 rounded-2xl">
+    <div className="space-y-5 pb-20 text-white">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 scifi-glass-panel p-4 rounded-2xl">
         <h2 className="text-white font-anton text-lg sm:text-xl px-1 flex items-center gap-2 uppercase tracking-wide">
           <BrainCircuit className="w-5 h-5 text-cyan-400 drop-shadow-[0_0_8px_rgba(0,240,255,0.7)]" /> Laboratorio de Maestría & Habilidades
         </h2>
+
+        {/* Moxen Chip Menu Group for Lab Filtering */}
+        <div
+          className="mf-8-menu-chip-group mf-chip-group mf-chip-group--compact"
+          role="listbox"
+          aria-label="Filtro de habilidades del laboratorio"
+        >
+          <button
+            type="button"
+            role="option"
+            aria-selected={activeFilter === 'todos'}
+            onClick={() => { soundFX.playClick(); setActiveFilter('todos'); }}
+            className={`mf-8-menu-chip-group__chip mf-chip mf-chip--sm ${
+              activeFilter === 'todos' ? 'mf-8-menu-chip-group__chip--active mf-chip--active' : ''
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Todos</span>
+            <span className="mf-chip__badge">{skillTree.length}</span>
+          </button>
+
+          <button
+            type="button"
+            role="option"
+            aria-selected={activeFilter === 'desbloqueados'}
+            onClick={() => { soundFX.playClick(); setActiveFilter('desbloqueados'); }}
+            className={`mf-8-menu-chip-group__chip mf-chip mf-chip--sm ${
+              activeFilter === 'desbloqueados' ? 'mf-8-menu-chip-group__chip--active mf-chip--active' : ''
+            }`}
+          >
+            <Unlock className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Activos</span>
+            <span className="mf-chip__badge">{unlockedCount}</span>
+          </button>
+
+          <button
+            type="button"
+            role="option"
+            aria-selected={activeFilter === 'pendientes'}
+            onClick={() => { soundFX.playClick(); setActiveFilter('pendientes'); }}
+            className={`mf-8-menu-chip-group__chip mf-chip mf-chip--sm ${
+              activeFilter === 'pendientes' ? 'mf-8-menu-chip-group__chip--active mf-chip--active' : ''
+            }`}
+          >
+            <Lock className="w-3.5 h-3.5 text-amber-400" />
+            <span>Por Investigar</span>
+            <span className="mf-chip__badge">{pendingCount}</span>
+          </button>
+        </div>
       </div>
 
       <div className="space-y-6">
@@ -46,12 +109,12 @@ export const SkillTreeAndSettings: React.FC<SkillTreeAndSettingsProps> = ({
            </div>
            <div className="flex items-center gap-2 bg-[#04020e] px-4 py-2 rounded-xl border border-amber-400/60 shadow-[0_0_12px_rgba(245,158,11,0.25)]">
              <Gem className="w-5 h-5 text-amber-400" />
-             <span className="text-2xl font-anton text-amber-300 font-mono">{stats.coins}</span>
+             <span className="text-2xl font-anton text-amber-300 font-mono tabular-nums">{stats.coins}</span>
            </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {skillTree.map(skill => (
+          {filteredSkills.map(skill => (
             <div 
               key={skill.id} 
               className={`relative p-5 rounded-2xl border transition-all overflow-hidden group ${
@@ -114,3 +177,4 @@ export const SkillTreeAndSettings: React.FC<SkillTreeAndSettingsProps> = ({
     </div>
   );
 };
+

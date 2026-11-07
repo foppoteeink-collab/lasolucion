@@ -129,12 +129,12 @@ export const SmartRecallModal: React.FC<SmartRecallModalProps> = ({
         <div className="p-4 sm:p-5 border-b border-cyan-500/30 flex items-center justify-between bg-surface-base shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-[#001020] border border-amber-400/50 flex items-center justify-center text-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.3)]">
-              <Brain className="w-5 h-5 animate-pulse" />
+              <Brain className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-base sm:text-lg font-black text-white tracking-wide font-anton uppercase">
-                  Smart Recall: Repaso Espaciado
+                <h2 className="text-base sm:text-lg font-bold text-white tracking-wide uppercase">
+                  Repaso Inteligente: Memoria Espaciada
                 </h2>
                 <span className="text-[10px] uppercase font-mono font-bold px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
                   MEMORIA ACTIVA

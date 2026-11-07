@@ -43,30 +43,18 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState<'all' | 'habits2166' | 'agenda'>('all');
 
-  // Cerrar con Escape
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
-
   // Counts
   const habits2166Count = useMemo(() => {
-    return customHabits.filter(h => Boolean(h.isTracked2166 || h.isQuickHabit)).length;
+    return (customHabits || []).filter(h => Boolean(h.isTracked2166 || h.isQuickHabit)).length;
   }, [customHabits]);
 
   const agendaCount = useMemo(() => {
-    return customHabits.filter(h => !h.isTracked2166 && !h.isQuickHabit).length;
+    return (customHabits || []).filter(h => !h.isTracked2166 && !h.isQuickHabit).length;
   }, [customHabits]);
 
   // Filtered List
   const filteredHabits = useMemo(() => {
-    return customHabits.filter(h => {
+    return (customHabits || []).filter(h => {
       const is2166 = Boolean(h.isTracked2166 || h.isQuickHabit);
       if (activeFilter === 'habits2166' && !is2166) return false;
       if (activeFilter === 'agenda' && is2166) return false;
@@ -80,6 +68,18 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
       return true;
     });
   }, [customHabits, activeFilter, searchTerm]);
+
+  // Cerrar con Escape
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
 
   // Toggle 21/66d Habit Tracking Mode (Option 1 Core Switch)
   const handleToggle2166 = (habit: CustomHabit) => {
@@ -102,8 +102,30 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
 
   const handleDeleteHabit = (habitId: string) => {
     soundFX.playClick();
+    const habit = customHabits.find(h => h.id === habitId);
     const updated = customHabits.filter((h) => h.id !== habitId);
     onSaveHabits(updated);
+
+    if (habit) {
+      const targetTitle = (habit.title || '').toLowerCase().trim();
+      const taskStore = useTaskStore.getState();
+      const updatedTasksByDate = { ...taskStore.tasksByDate };
+      let modified = false;
+      Object.keys(updatedTasksByDate).forEach(dateKey => {
+        const list = updatedTasksByDate[dateKey] || [];
+        const pruned = list.filter(t => 
+          t.id !== habitId && 
+          (t.title || '').toLowerCase().trim() !== targetTitle
+        );
+        if (pruned.length !== list.length) {
+          updatedTasksByDate[dateKey] = pruned;
+          modified = true;
+        }
+      });
+      if (modified) {
+        taskStore.setTasksByDate(updatedTasksByDate);
+      }
+    }
   };
 
   const formatDaysText = (habit: CustomHabit): string => {

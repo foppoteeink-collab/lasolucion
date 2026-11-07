@@ -1,5 +1,7 @@
 
 
+import { logEvent } from 'firebase/analytics';
+import { analytics } from '../firebase';
 import { 
   ThemeMode, ActiveTab, PlayerStats, CustomHabit, 
   DayTemplate, RecallItem, PomodoroSession, ShopReward 
@@ -28,6 +30,17 @@ import { triggerShockwave } from '../utils/celebration';
 import { safeSetItem, safeRemoveItem } from '../utils/storage';
 import { TaskItem, TaskCategory } from '../types';
 import { parseTimeToMinutes } from '../utils/timeUtils';
+import {
+  calculateAscensionState,
+  getAscensionBonusMultiplier,
+  evaluateTimezoneDrift,
+  countHighPriorityCompletedToday,
+  calculatePriorityMultiplier,
+  calculateDailyBossImpactPoints,
+  formatIdentityEchoText,
+  compactHistoricalTasksByDate,
+  persistColdArchiveToIndexedDB,
+} from '../utils/level3Systems';
 
 const triggerBossEmojiConfetti = () => {
   try {
@@ -115,9 +128,8 @@ export const getEngineContext = () => {
 };
 
 export const handleResetAccount = async () => {
-  // @ts-ignore
   const user = auth?.currentUser;
-  (window as any).__isResettingAccount = true;
+  (window as unknown as { __isResettingAccount?: boolean }).__isResettingAccount = true;
     if (user && db) {
       try {
         await deleteDoc(doc(db, 'users', user.uid));
@@ -228,7 +240,7 @@ export const triggerRewardPopup = (xp: number, coins: number, text?: string) => 
     text
   });
 };
-export const checkLevelUp = (prevStats: any, xpAdded: number, coinsAdded: number) => {
+export const checkLevelUp = (prevStats: PlayerStats, xpAdded: number, coinsAdded: number): PlayerStats => {
   let nextXp = (prevStats.currentXp || 0) + xpAdded;
   let nextLevel = typeof prevStats.level === 'number' && prevStats.level > 0 ? prevStats.level : 1;
   let requiredXp = getRequiredXpForLevel(nextLevel);
@@ -246,9 +258,9 @@ export const checkLevelUp = (prevStats: any, xpAdded: number, coinsAdded: number
   const currentPhase = matchedRank?.phase || 1;
 
   if (leveledUp) {
-    const stateApp = useAppStore.getState();
-    stateApp.setLevelUpData({ level: nextLevel, rank: currentRankTitle });
     const stateUI = useUIStore.getState();
+    const statePlayer = usePlayerStore.getState();
+    const arch = getArchetypeByName(statePlayer.stats.characterClass);
     
     // Descongestión modal: Solo activar modal a pantalla completa en niveles de hito (Nivel 2 y múltiplos de 5)
     const isMilestoneLevel = nextLevel === 2 || nextLevel % 5 === 0;
@@ -258,7 +270,7 @@ export const checkLevelUp = (prevStats: any, xpAdded: number, coinsAdded: number
       stateUI.addFloatingEffect({
         x: typeof window !== 'undefined' ? window.innerWidth / 2 : 200,
         y: 120,
-        text: `⚡ ¡Nivel ${nextLevel} Alcanzado!`,
+        text: `⚡ ¡Nivel ${nextLevel} Alcanzado! (Arquetipo: ${arch.name})`,
         type: 'xp'
       });
       soundFX.playLevelUp();
@@ -300,6 +312,23 @@ export const handleSelectClass = (charClass: CharacterClassOption) => {
     characterClass: charClass.name
   }));
   soundFX.playClick();
+};
+
+export const handleAscendPlayer = () => {
+  const { player: statePlayer, ui: stateUI } = getEngineContext();
+  if ((statePlayer.stats.level || 1) < 50) return false;
+  statePlayer.setStats((prev) => calculateAscensionState(prev));
+  soundFX.playLevelUp();
+  triggerShockwave({ color: 'gold', intensity: 'epic' });
+  if (typeof window !== 'undefined') {
+    stateUI.addFloatingEffect({
+      x: window.innerWidth / 2,
+      y: 120,
+      text: `★ ¡ASCENSIÓN COMPLETADA! Eficiencia Permanente +5%`,
+      type: 'critical',
+    });
+  }
+  return true;
 };
 export const handleToggleTask = (taskId: string, e?: any) => {
   const stateTask = useTaskStore.getState();
@@ -371,13 +400,21 @@ export const handleToggleTask = (taskId: string, e?: any) => {
   
   const rawXp = task.xpReward || 0;
   const rawCoin = task.coinReward || 0;
+  
+  const currentDayTasks = stateTask.tasksByDate[date] || [];
+  const highPriorityClaimedToday = countHighPriorityCompletedToday(currentDayTasks, taskId);
+  const { multiplier: priorityMultiplier, isCapped: isPriorityCapped } = calculatePriorityMultiplier(
+    task.priority,
+    highPriorityClaimedToday,
+    Boolean(task.isLegendaryBounty)
+  );
+  const ascensionMult = getAscensionBonusMultiplier(statePlayer.stats?.ascensionTier);
 
-  let xpRewardToAdd = Math.floor(rawXp * taxMultiplier);
-  let coinRewardToAdd = Math.floor(rawCoin * taxMultiplier);
+  let xpRewardToAdd = Math.floor(rawXp * taxMultiplier * priorityMultiplier * ascensionMult);
+  let coinRewardToAdd = Math.floor(rawCoin * taxMultiplier * priorityMultiplier * ascensionMult);
   
   // Hito Determinista: Cofre de Maestría cada 5 tareas completadas en el día
   let wasChestFound = false;
-  const currentDayTasks = stateTask.tasksByDate[date] || [];
   const completedTodayCount = currentDayTasks.filter(t => t.id === taskId ? !wasCompleted : t.completed).length;
   const isChestMilestone = !wasCompleted && completedTodayCount > 0 && completedTodayCount % 5 === 0;
 
@@ -386,10 +423,21 @@ export const handleToggleTask = (taskId: string, e?: any) => {
     wasChestFound = true;
   }
 
-  // Phase 2: Focus Potion Multiplier
-  if (statePlayer.stats?.focusPotionExpiresAt && statePlayer.stats.focusPotionExpiresAt > Date.now()) {
+  // Phase 2: Focus Potion Multiplier & Tactical Energy Vials (x3 charges)
+  const hasActiveVial = !wasCompleted && (statePlayer.stats?.tacticalEnergyVials || 0) > 0;
+  if ((statePlayer.stats?.focusPotionExpiresAt && statePlayer.stats.focusPotionExpiresAt > Date.now()) || hasActiveVial) {
     xpRewardToAdd = Math.floor(xpRewardToAdd * 1.5);
     coinRewardToAdd = Math.floor(coinRewardToAdd * 1.5);
+  }
+
+  // Phase 3: Archetype Affinity Multiplier (1.2x base + 0.1x per Archetype Evolution Core)
+  const arch = getArchetypeByName(statePlayer.stats?.characterClass);
+  const isAffin = (task.category === arch.primaryStat || (arch.id === 'sabio' && task.category === 'estudio') || (arch.id === 'heroe' && task.category === 'entrenamiento'));
+  const evolutionCores = statePlayer.stats?.archetypeEvolutionCores || 0;
+  const affinityMultiplier = 1.2 + Math.min(evolutionCores * 0.1, 0.5);
+  if (isAffin) {
+    xpRewardToAdd = Math.floor(xpRewardToAdd * affinityMultiplier);
+    coinRewardToAdd = Math.floor(coinRewardToAdd * affinityMultiplier);
   }
   
   const xpRewardToSubtract = task.awardedXp ?? rawXp;
@@ -401,56 +449,112 @@ export const handleToggleTask = (taskId: string, e?: any) => {
 
   if (!wasCompleted) {
     soundFX.playTaskComplete();
+    try {
+      logEvent(analytics, 'task_completed', {
+        category: task.category,
+        priority: task.priority || 'media',
+        is_retroactive: isRetroactive,
+        affinity_match: isAffin
+      });
+    } catch {}
+
     stateTask.updateTask(date, taskId, {
       awardedXp: xpReward,
       awardedCoins: coinReward,
       chestAwarded: wasChestFound ? true : (task.chestAwarded || false)
     });
 
+    const hitX = e?.clientX || (typeof window !== 'undefined' ? window.innerWidth / 2 : 200);
+    const hitY = e?.clientY || (typeof window !== 'undefined' ? window.innerHeight / 2 : 200);
+
+    // Feedback visual inmediato no intrusivo con Eco de Identidad (Motivación Intrínseca)
+    if (typeof window !== 'undefined' && (xpReward > 0 || coinReward > 0)) {
+      spawnJuiceParticle({
+        x: hitX,
+        y: hitY - 15,
+        text: formatIdentityEchoText(xpReward, coinReward, isAffin, Boolean(task.timeBlock), arch.name),
+        type: 'xp'
+      });
+    }
+
+    if (isPriorityCapped) {
+      stateUI.addFloatingEffect({
+        x: hitX,
+        y: hitY - 72,
+        text: '⚡ Límite Crítico Diario (3/3): x1.15 aplicado',
+        type: 'streak'
+      });
+    }
+
+    if (isAffin && xpReward > 0) {
+      stateUI.addFloatingEffect({
+        x: hitX,
+        y: hitY - 38,
+        text: `✨ Afinidad ${arch.name} (+${Math.round((affinityMultiplier - 1) * 100)}% XP)`,
+        type: 'critical'
+      });
+    }
+
+    if (hasActiveVial) {
+      const remainingVials = Math.max(0, (statePlayer.stats?.tacticalEnergyVials || 1) - 1);
+      stateUI.addFloatingEffect({
+        x: hitX,
+        y: hitY - 58,
+        text: `🧪 Vial Táctico 1.5x (${remainingVials} restantes)`,
+        type: 'combo'
+      });
+    }
+
     // Mensaje empático y no punitivo para registro retrospectivo
     if (isRetroactive) {
       if (typeof window !== 'undefined') {
         spawnJuiceParticle({
-          x: e?.clientX || window.innerWidth / 2,
-          y: (e?.clientY || window.innerHeight / 2) - 30,
+          x: hitX,
+          y: hitY - 30,
           text: '⏳ Registro retrospectivo aplicado (80% XP)',
           type: 'custom',
           colorClass: 'text-amber-300 bg-amber-950/90 border-amber-500'
         });
       }
       stateUI.addFloatingEffect({
-        x: e?.clientX || (typeof window !== 'undefined' ? window.innerWidth / 2 : 200),
-        y: (e?.clientY || 200) - 30,
+        x: hitX,
+        y: hitY - 30,
         text: '⏳ Registro retrospectivo aplicado (80% XP)',
         type: 'xp'
       });
     }
     
-    // Encuentro Determinista con Jefe Diario (Umbral: 3 hábitos o tareas de alta prioridad completadas hoy)
+    // Encuentro Determinista con Jefe Diario (Umbral Ponderado: >= 3.0 Puntos de Impacto)
     const todayStr = getTodayDateString();
     let triggeredBoss = false;
     const isBossEligible = !hasClaimedBossToday() && statePlayer.stats.lastEncounterDate !== todayStr;
     if (isBossEligible) {
       const allDayTasks = stateTask.tasksByDate[date] || [];
-      const completedHabitsOrPriority = allDayTasks.filter(t => {
-        const isHabitOrPriority = t.isHabit || t.priority === 'alta' || t.category === 'habito' || t.isQuickHabit || Boolean(t.id && t.id.includes('habit-'));
-        const isDone = (t.id === taskId) ? true : (t.completed || (t.currentCount || 0) >= (t.targetCount || 1));
-        return isHabitOrPriority && isDone;
-      }).length;
+      const impactPoints = calculateDailyBossImpactPoints(allDayTasks, taskId);
 
-      if (completedHabitsOrPriority >= 3) {
+      if (impactPoints >= 3.0) {
         triggeredBoss = true;
-        stateUI.openSurpriseBoss({
-          archetypeName: 'Ruptura de Inercia',
-          buffName: 'Inercia Superada',
-          buffDescription: '¡Conquistaste 3 misiones o hábitos prioritarios hoy! Tu vitalidad (+50 HP) y recursos se restauran al máximo.'
-        });
+        try {
+          logEvent(analytics, 'boss_defeated', { trigger: 'weighted_impact_points', points: impactPoints });
+        } catch {}
+        triggerBossEmojiConfetti();
+        if (typeof window !== 'undefined') {
+          spawnBossEmojiExplosion(hitX, hitY);
+        }
+        setTimeout(() => {
+          handleClaimBossBounty();
+        }, 250);
       }
     }
 
-    if (xpReward > 0 || coinReward > 0) {
+    if (xpReward > 0 || coinReward > 0 || hasActiveVial) {
       statePlayer.setStats((prev) => {
-        const base = triggeredBoss ? { ...prev, lastEncounterDate: todayStr } : prev;
+        const nextVials = hasActiveVial ? Math.max(0, (prev.tacticalEnergyVials || 1) - 1) : prev.tacticalEnergyVials;
+        const base = {
+          ...prev,
+          tacticalEnergyVials: nextVials,
+          ...(triggeredBoss ? { lastEncounterDate: todayStr } : {})
+        };
         return checkLevelUp(base, xpReward, coinReward);
       });
       
@@ -461,9 +565,12 @@ export const handleToggleTask = (taskId: string, e?: any) => {
 
       if (wasChestFound) {
         soundFX.playLevelUp(); // Extra sound for chest
+        try {
+          logEvent(analytics, 'milestone_chest_unlocked', { completed_today: completedTodayCount });
+        } catch {}
         stateUI.addFloatingEffect({
-          x: e?.clientX || (typeof window !== 'undefined' ? window.innerWidth / 2 : 200),
-          y: (e?.clientY || 200) - 45,
+          x: hitX,
+          y: hitY - 45,
           text: '🎁 ¡Cofre de Hito (5 tareas)! +15 Monedas',
           type: 'critical'
         });
@@ -480,7 +587,7 @@ export const handleToggleTask = (taskId: string, e?: any) => {
         ...prev,
         currentXp: Math.max(0, prev.currentXp - xpReward),
         totalXpEarned: Math.max(0, prev.totalXpEarned - xpReward),
-        coins: Math.max(0, prev.coins - coinReward)
+        coins: Math.max(0, prev.coins - coinReward),
       }));
     }
   }
@@ -566,22 +673,78 @@ export const handleIncrementHabit = (taskId: string, e?: any) => {
   soundFX.playTaskComplete();
   try {
     hapticPresets.click();
+    logEvent(analytics, 'habit_incremented', {
+      habit_id: task.id,
+      completed: isNowCompleted
+    });
   } catch {}
   
   // Conciliación Retrospectiva Honesta (0.8x si la fecha es anterior a hoy)
   const isRetroactive = date < today;
   const taxMultiplier = isRetroactive ? 0.8 : 1.0;
-  const xpReward = Math.floor((task.xpReward || 0) * taxMultiplier);
-  const coinReward = Math.floor((task.coinReward || 0) * taxMultiplier);
+  const priorityMultiplier = task.priority === 'alta' ? 2.0 : task.priority === 'baja' ? 0.5 : 1.0;
+  
+  let xpReward = Math.floor((task.xpReward || 0) * taxMultiplier * priorityMultiplier);
+  let coinReward = Math.floor((task.coinReward || 0) * taxMultiplier * priorityMultiplier);
 
-  if (xpReward > 0 || coinReward > 0) {
-    statePlayer.setStats((prev) => checkLevelUp(prev, xpReward, coinReward));
+  // Phase 2 & 3: Tactical Energy Vial & Archetype Evolution Core Multipliers
+  const hasActiveVial = isNowCompleted && (statePlayer.stats?.tacticalEnergyVials || 0) > 0;
+  if ((statePlayer.stats?.focusPotionExpiresAt && statePlayer.stats.focusPotionExpiresAt > Date.now()) || hasActiveVial) {
+    xpReward = Math.floor(xpReward * 1.5);
+    coinReward = Math.floor(coinReward * 1.5);
+  }
+
+  const arch = getArchetypeByName(statePlayer.stats?.characterClass);
+  const isAffin = (task.category === arch.primaryStat || (arch.id === 'sabio' && task.category === 'estudio') || (arch.id === 'heroe' && task.category === 'entrenamiento'));
+  const evolutionCores = statePlayer.stats?.archetypeEvolutionCores || 0;
+  const affinityMultiplier = 1.2 + Math.min(evolutionCores * 0.1, 0.5);
+  if (isAffin) {
+    xpReward = Math.floor(xpReward * affinityMultiplier);
+    coinReward = Math.floor(coinReward * affinityMultiplier);
+  }
+
+  const hitX = e?.clientX || (typeof window !== 'undefined' ? window.innerWidth / 2 : 200);
+  const hitY = e?.clientY || (typeof window !== 'undefined' ? window.innerHeight / 2 : 200);
+
+  if (xpReward > 0 || coinReward > 0 || hasActiveVial) {
+    statePlayer.setStats((prev) => {
+      const nextVials = hasActiveVial ? Math.max(0, (prev.tacticalEnergyVials || 1) - 1) : prev.tacticalEnergyVials;
+      return checkLevelUp({ ...prev, tacticalEnergyVials: nextVials }, xpReward, coinReward);
+    });
+    if (typeof window !== 'undefined' && (xpReward > 0 || coinReward > 0)) {
+      spawnJuiceParticle({
+        x: hitX,
+        y: hitY - 15,
+        text: `+${xpReward} XP · +${coinReward}🪙`,
+        type: 'xp'
+      });
+    }
+  }
+  
+  // Phase 3: Archetype Affinity Feedback
+  if (isAffin && xpReward > 0) {
+    stateUI.addFloatingEffect({
+      x: hitX,
+      y: hitY - 50,
+      text: `✨ ¡Afinidad ${arch.name} (+${Math.round((affinityMultiplier - 1) * 100)}% XP)!`,
+      type: 'critical'
+    });
+  }
+
+  if (hasActiveVial) {
+    const remainingVials = Math.max(0, (statePlayer.stats?.tacticalEnergyVials || 1) - 1);
+    stateUI.addFloatingEffect({
+      x: hitX,
+      y: hitY - 68,
+      text: `🧪 Vial Táctico 1.5x (${remainingVials} restantes)`,
+      type: 'combo'
+    });
   }
 
   if (isRetroactive && !isNowCompleted) {
     stateUI.addFloatingEffect({
-      x: e?.clientX || (typeof window !== 'undefined' ? window.innerWidth / 2 : 200),
-      y: (e?.clientY || 200) - 25,
+      x: hitX,
+      y: hitY - 25,
       text: '⏳ Registro retrospectivo (80% XP)',
       type: 'xp'
     });
@@ -592,30 +755,31 @@ export const handleIncrementHabit = (taskId: string, e?: any) => {
 
     if (isRetroactive) {
       stateUI.addFloatingEffect({
-        x: e?.clientX || (typeof window !== 'undefined' ? window.innerWidth / 2 : 200),
-        y: (e?.clientY || 200) - 35,
+        x: hitX,
+        y: hitY - 35,
         text: '⏳ Registro retrospectivo completado (80% XP)',
         type: 'xp'
       });
     }
 
-    // Encuentro Determinista con Jefe Diario (Umbral: 3 hábitos o tareas de alta prioridad completadas hoy)
+    // Encuentro Determinista con Jefe Diario (Umbral Ponderado: >= 3.0 Puntos de Impacto)
     const isBossEligible = !hasClaimedBossToday() && statePlayer.stats.lastEncounterDate !== today;
     if (isBossEligible) {
       const allDayTasks = stateTask.tasksByDate[date] || [];
-      const completedHabitsOrPriority = allDayTasks.filter(t => {
-        const isHabitOrPriority = t.isHabit || t.priority === 'alta' || t.category === 'habito' || t.isQuickHabit || Boolean(t.id && t.id.includes('habit-'));
-        const isDone = (t.id === taskId) ? true : (t.completed || (t.currentCount || 0) >= (t.targetCount || 1));
-        return isHabitOrPriority && isDone;
-      }).length;
+      const impactPoints = calculateDailyBossImpactPoints(allDayTasks, taskId);
 
-      if (completedHabitsOrPriority >= 3) {
+      if (impactPoints >= 3.0) {
         statePlayer.setStats((prev) => ({ ...prev, lastEncounterDate: today }));
-        stateUI.openSurpriseBoss({
-          archetypeName: 'Ruptura de Inercia',
-          buffName: 'Inercia Superada',
-          buffDescription: '¡Conquistaste 3 misiones o hábitos prioritarios hoy! Tu vitalidad (+50 HP) y recursos se restauran al máximo.'
-        });
+        try {
+          logEvent(analytics, 'boss_defeated', { trigger: 'habit_weighted_impact', points: impactPoints });
+        } catch {}
+        triggerBossEmojiConfetti();
+        if (typeof window !== 'undefined') {
+          spawnBossEmojiExplosion(hitX, hitY);
+        }
+        setTimeout(() => {
+          handleClaimBossBounty();
+        }, 250);
       }
     }
   }
@@ -747,12 +911,32 @@ export const executeDeleteTask = (deleteEverywhere = false) => {
      store.deleteTask(store.currentViewDate, task.id);
      if (deleteEverywhere) {
        const baseId = getHabitBaseId(task);
+       const targetTitle = (task.title || '').toLowerCase().trim();
        const filtered = store.customHabits.filter(h => 
          h.id !== task.id && 
          h.id !== baseId && 
-         (h.title || '').toLowerCase().trim() !== (task.title || '').toLowerCase().trim()
+         (h.title || '').toLowerCase().trim() !== targetTitle
        );
        store.setCustomHabits(filtered);
+
+       // Purge all instances of this habit across all dates in tasksByDate
+       const updatedTasksByDate = { ...store.tasksByDate };
+       let modified = false;
+       Object.keys(updatedTasksByDate).forEach(dateKey => {
+         const list = updatedTasksByDate[dateKey] || [];
+         const pruned = list.filter(t => 
+           t.id !== task.id && 
+           t.id !== baseId && 
+           (t.title || '').toLowerCase().trim() !== targetTitle
+         );
+         if (pruned.length !== list.length) {
+           updatedTasksByDate[dateKey] = pruned;
+           modified = true;
+         }
+       });
+       if (modified) {
+         store.setTasksByDate(updatedTasksByDate);
+       }
      }
   }
   uiStore.setDeleteConfirmTask(null);
@@ -775,11 +959,34 @@ export const handleClaimDailyReward = (day: number, xp: number, coins: number, b
   soundFX.playTaskComplete();
 };
 export const handleConfirmFinishDay = (bonusXp: number, bonusCoins: number) => {
+  logEvent(analytics, 'daily_closure_executed');
   const { player: statePlayer, task: stateTask, ui: stateUI } = getEngineContext();
   
   const currentDate = stateTask.currentViewDate;
   const now = new Date();
   const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const dayTasks = stateTask.tasksByDate[currentDate] || [];
+  const completedCount = dayTasks.filter((t) => t.completed).length;
+  const dayXpEarned = dayTasks.filter((t) => t.completed).reduce((acc, t) => acc + (t.awardedXp || t.xpReward || 0), 0) + bonusXp;
+
+  // Compactación Hot/Cold (>14 días) para mantener complejidad O(1) y evitar límite de 1 MiB en Firestore
+  const compactionResult = compactHistoricalTasksByDate(
+    stateTask.tasksByDate,
+    getTodayDateString(),
+    statePlayer.stats.historicalArchiveSummary,
+    14
+  );
+  if (compactionResult.prunedTasksCount > 0) {
+    stateTask.setTasksByDate(compactionResult.hotTasksByDate);
+    void persistColdArchiveToIndexedDB(compactionResult.coldArchivedByDate);
+  }
+
+  // Detector de Deriva de Huso Horario (Timezone Drift Shield)
+  const tzEval = evaluateTimezoneDrift(
+    statePlayer.stats.lastTimezoneOffset,
+    now.getTimezoneOffset(),
+    now.getTime()
+  );
 
   statePlayer.setStats((prev) => {
     let nextStats = prev;
@@ -789,6 +996,17 @@ export const handleConfirmFinishDay = (bonusXp: number, bonusCoins: number) => {
 
     return {
       ...nextStats,
+      lastTimezoneOffset: tzEval.nextOffset,
+      timezoneShieldExpiresAt: tzEval.drifted ? tzEval.shieldExpiresAt : nextStats.timezoneShieldExpiresAt,
+      historicalArchiveSummary: compactionResult.updatedSummary,
+      closedDaysLog: {
+        ...(nextStats.closedDaysLog || {}),
+        [currentDate]: {
+          timestamp: now.getTime(),
+          tasksCompleted: completedCount,
+          xpEarned: dayXpEarned,
+        },
+      },
       finalizedDays: {
         ...(nextStats.finalizedDays || {}),
         [currentDate]: {
@@ -929,9 +1147,10 @@ export const handleClaimBossBounty = () => {
   
   statePlayer.heal(hpReward);
   const newStats = checkLevelUp(statePlayer.stats, xpReward, coinReward);
+  const todayStr = getTodayDateString();
   statePlayer.setStats({
     ...newStats,
-    lastBossDefeatedDate: statePlayer.stats.lastBossDefeatedDate || new Date().toISOString().split('T')[0]
+    lastBossDefeatedDate: todayStr
   });
   
   soundFX.playBossDefeated();
@@ -1023,6 +1242,7 @@ export const handleRedeemReward = (reward?: ShopReward) => {
   const { player: statePlayer, app: stateApp } = getEngineContext();
   const success = statePlayer.purchaseItem(reward.cost);
   if (success) {
+    logEvent(analytics, 'shop_reward_redeemed');
     stateApp.setShopRewards(prev =>
       prev.map(r => (r.id === reward.id ? { ...r, unlockedCount: (r.unlockedCount || 0) + 1 } : r))
     );
@@ -1059,23 +1279,24 @@ export const handleRegisterWakeUp = (dateStr?: string, customWakeTime?: string) 
     return dateStr || stateTask.currentViewDate || today;
   })();
 
-  // 2. Complete the sleep log for pendingDate
+  // 2. Complete the sleep log for pendingDate and mark today started
   statePlayer.registerWakeUp(pendingDate, customWakeTime);
+  stateTask.startDay(today);
   soundFX.playLevelUp();
 
-  // 3. Determine next day date (advance from pendingDate to next day)
-  const nextDateStr = addDaysToDateString(pendingDate, 1);
+  // 3. Determine active day date (if waking up from yesterday's log, advance to today; if already today, stay on today)
+  const targetDayStr = pendingDate < today ? addDaysToDateString(pendingDate, 1) : today;
 
-  // 4. Ensure tasks & habits are generated for nextDateStr
-  stateTask.ensureTasksForDate(nextDateStr);
+  // 4. Ensure tasks & habits are generated for targetDayStr
+  stateTask.ensureTasksForDate(targetDayStr);
 
-  // 5. Automatically switch active view date to nextDateStr ready for the new day
-  stateTask.setCurrentViewDate(nextDateStr);
+  // 5. Switch active view date to targetDayStr
+  stateTask.setCurrentViewDate(targetDayStr);
 
-  // 6. Trigger floating visual notification feedback
+  // 6. Trigger floating visual notification feedback with fresh calculated sleep hours
   if (typeof window !== 'undefined') {
-    const updatedStats = statePlayer.stats;
-    const log = updatedStats.sleepLogs?.[pendingDate];
+    const freshStats = usePlayerStore.getState().stats;
+    const log = freshStats.sleepLogs?.[pendingDate] || freshStats.sleepLogs?.[today];
     const duration = log?.sleepDurationHours || 0;
     const hours = duration ? `${duration}h` : '';
     

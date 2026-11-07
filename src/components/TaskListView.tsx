@@ -1,19 +1,14 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { motion } from 'motion/react';
-import { Moon, Sparkles, ArrowRight } from 'lucide-react';
-import { useTaskStore } from '../store/useTaskStore';
-import { usePlayerStore } from '../store/usePlayerStore';
 import { useUIStore } from '../store/useUIStore';
 import { TaskItem, TaskCategory, HabitMasteryRecord, PlayerStats, CustomHabit, HabitEnergyType } from '../types';
 import { soundFX } from '../utils/audio';
-import { getTodayDateString, getYesterdayDateString, addDaysToDateString } from '../utils/date';
-import { parseTimeToMinutes, parseEndTimeToMinutes } from '../utils/timeUtils';
+import { getTodayDateString, addDaysToDateString } from '../utils/date';
+import { parseTimeToMinutes } from '../utils/timeUtils';
 import { deduplicateTasksForDay } from '../utils/taskDeduplication';
 import { getHabitBaseId } from '../intelligence/masteryEngine';
 import { detectHabitEnergy } from '../utils/habitEnergyDetector';
 
 // Subcomponents
-import { DailyBossWidget } from './DailyBossWidget';
 import { CalendarView } from './CalendarView';
 import { ClearDayConfirmModal } from './ClearDayConfirmModal';
 import { TaskFilters } from './task-list/TaskFilters';
@@ -25,7 +20,6 @@ import { SciFiEmptyState } from './task-list/SciFiEmptyState';
 import { SleepScheduleModal } from './task-list/SleepScheduleModal';
 import { TaskFormModal } from './task-list/TaskFormModal';
 import { HabitManagerModal } from './task-list/HabitManagerModal';
-import { TaskHeaderHUD } from './task-list/TaskHeaderHUD';
 
 interface TaskListViewProps {
   currentDate: string;
@@ -67,32 +61,14 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
   onDeleteTask,
   onEditTask,
   onOpenPomodoroForTask,
-  onOpenFinishDay,
   onOpenTemplates,
   onOpenOracle,
-  onOpenJournal,
   onClearDay,
   onResetDay,
-  streakCount = 1,
   habitMastery = {},
   stats,
   onUpdateStats,
-  onReopenDay,
-  onRegisterWakeUp,
-  onClaimBossBounty,
-  hasClaimedToday,
 }) => {
-  const { stats: { activeDailyBuff } } = usePlayerStore();
-  const uncheckAllTasksForDate = useTaskStore((state) => state.uncheckAllTasksForDate);
-  const startedDays = useTaskStore((state) => state.startedDays);
-  const startDay = useTaskStore((state) => state.startDay);
-
-  const isDayStarted = startedDays?.[currentDate] === true;
-
-  const now = new Date();
-  const currentLocalTime = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-  const [customWakeTime, setCustomWakeTime] = useState(currentLocalTime);
-
   const todayDateStr = getTodayDateString();
   const reconciliationLimit = addDaysToDateString(todayDateStr, -2);
   const isPastDay = Boolean(currentDate && currentDate < todayDateStr);
@@ -100,7 +76,6 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
   // Conciliación Retrospectiva Honesta: el bloqueo estricto sólo aplica a días anteriores a 48h
   const isStrictlyLockedPast = Boolean(currentDate && currentDate < reconciliationLimit);
   const isDayEnded = (isDayFinalized || isPastDay) && isStrictlyLockedPast;
-  const finalizedInfo = stats?.finalizedDays?.[currentDate];
 
   // Sleep Modal State
   const [isSleepModalOpen, setIsSleepModalOpen] = useState(false);
@@ -508,35 +483,26 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
   const legendaryTask = useMemo(() => (tasks || []).find((t) => t.isLegendaryBounty), [tasks]);
 
   return (
-    <div className="space-y-2.5 sm:space-y-3 font-sans tracking-wide pb-24 sm:pb-28">
-      {/* Calendar Bar */}
-      <CalendarView currentDate={currentDate} onChangeDate={onChangeDate} onOpenAddModal={() => openAddModal('task')} />
-
-      {/* Quick Habits Strip */}
-      <QuickHabitsWidget
-        tasks={tasks}
-        onIncrementHabit={onIncrementHabit}
-        onOpenAddModal={() => openAddModal('habit')}
-        onOpenEditModal={openEditModal}
-        onOpenHabitManager={() => setIsHabitManagerOpen(true)}
-        onDeleteTask={onDeleteTask}
-        currentDate={currentDate}
-        isDayFinalized={isDayFinalized}
-      />
-
-      {/* Daily Boss & Legendary Bounty Drawer */}
-      {legendaryTask && (
-        <LegendaryBountyCard
-          task={legendaryTask}
-          onToggle={onToggleTask}
-          onOpenEditModal={openEditModal}
-          onOpenNoteModal={openNoteModal}
-          onDeleteTask={onDeleteTask}
-          isDayEnded={isDayEnded}
-        />
-      )}
-
-      {/* Search & Category Filter Controls */}
+    <div className="flex flex-col gap-2 font-sans tracking-wide pb-24 sm:pb-28">
+      {/* Unified Dashboard Header Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-2">
+        <div className="lg:col-span-4">
+          <CalendarView currentDate={currentDate} onChangeDate={onChangeDate} onOpenAddModal={() => openAddModal('task')} />
+        </div>
+        <div className="lg:col-span-8">
+          <QuickHabitsWidget
+            tasks={tasks}
+            onIncrementHabit={onIncrementHabit}
+            onOpenAddModal={() => openAddModal('habit')}
+            onOpenEditModal={openEditModal}
+            onOpenHabitManager={() => setIsHabitManagerOpen(true)}
+            onDeleteTask={onDeleteTask}
+            currentDate={currentDate}
+            isDayFinalized={isDayFinalized}
+          />
+        </div>
+      </div>
+      
       <TaskFilters
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
@@ -553,8 +519,20 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
         }}
       />
 
+      {/* Daily Boss & Legendary Bounty Drawer */}
+      {legendaryTask && (
+        <LegendaryBountyCard
+          task={legendaryTask}
+          onToggle={onToggleTask}
+          onOpenEditModal={openEditModal}
+          onOpenNoteModal={openNoteModal}
+          onDeleteTask={onDeleteTask}
+          isDayEnded={isDayEnded}
+        />
+      )}
+
       {/* Task List Timeline */}
-      <div className="space-y-2.5 sm:space-y-3 pt-0.5">
+      <div className="space-y-0.5 pt-0.5">
         {filteredTasks.length === 0 ? (
           <SciFiEmptyState
             totalTasksInDay={tasks.length}
@@ -570,7 +548,7 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
             }}
           />
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-0.5">
             {filteredTasks.map((task) => (
               <TaskCard
                 key={task.id}
@@ -591,117 +569,6 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
             ))}
           </div>
         )}
-
-        {/* 🌙 / ☀️ Dynamic End of Day / Start of Day Card (Bottom of Timeline) */}
-        {(() => {
-          // Logic: check if there's a pending wake time for currentDate, today, or yesterday
-          const yesterdayStr = getYesterdayDateString();
-          const sleepLogs = stats?.sleepLogs || {};
-          const pendingDate =
-            (sleepLogs[currentDate]?.bedtime && !sleepLogs[currentDate]?.wakeTime) ? currentDate
-            : (sleepLogs[todayDateStr]?.bedtime && !sleepLogs[todayDateStr]?.wakeTime) ? todayDateStr
-            : (sleepLogs[yesterdayStr]?.bedtime && !sleepLogs[yesterdayStr]?.wakeTime) ? yesterdayStr
-            : null;
-
-          // 1) PENDING WAKE-UP STATE
-          if (pendingDate) {
-            const pendingSleep = sleepLogs[pendingDate];
-            return (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-4 rounded-2xl border border-amber-500/50 bg-[#140a00]/95 px-4 py-3 flex flex-wrap items-center justify-between gap-3"
-              >
-                <div className="flex items-center gap-3">
-                  <Sparkles className="w-5 h-5 text-amber-400 animate-pulse shrink-0" />
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-white">Registrar Despertar</span>
-                      <span className="text-[11px] text-amber-400 font-mono">
-                        (Dormiste {pendingSleep.bedtime})
-                      </span>
-                    </div>
-                  </div>
-                  <input
-                    type="time"
-                    value={customWakeTime}
-                    onChange={(e) => setCustomWakeTime(e.target.value)}
-                    onClick={(e) => e.stopPropagation()}
-                    className="bg-black/60 border border-amber-700/60 rounded-lg px-2 py-1 text-white font-mono text-xs outline-none focus:border-amber-400 cursor-pointer"
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    soundFX.playClick();
-                    onRegisterWakeUp?.(pendingDate, customWakeTime);
-                  }}
-                  className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-anton text-xs uppercase tracking-wider flex items-center gap-1.5 cursor-pointer"
-                >
-                  <span>Confirmar</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              </motion.div>
-            );
-          }
-
-          // 2) START DAY STATE
-          if (!isDayStarted && !isDayEnded) {
-            return (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                onClick={() => {
-                  soundFX.playClick();
-                  startDay(currentDate);
-                }}
-                className="mt-4 rounded-2xl border border-emerald-500/40 bg-[#02140e]/95 px-4 py-3 flex items-center justify-between gap-3 cursor-pointer hover:border-emerald-400 transition-all group"
-              >
-                <div className="flex items-center gap-2.5">
-                  <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span className="text-sm font-bold text-white group-hover:text-emerald-300 transition-colors">
-                    Iniciar Jornada
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  className="btn-neon-hunter px-4 py-1.5 text-xs tracking-wider flex items-center gap-1.5 cursor-pointer shadow-md"
-                >
-                  <span>Activar</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              </motion.div>
-            );
-          }
-
-          return (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              onClick={() => {
-                soundFX.playClick();
-                onOpenFinishDay();
-              }}
-              className="mt-4 rounded-2xl border border-indigo-500/40 bg-[#040818]/95 px-4 py-3 flex items-center justify-between gap-3 cursor-pointer hover:border-cyan-400/60 transition-all group"
-            >
-              <div className="flex items-center gap-2.5">
-                <Moon className="w-4 h-4 text-indigo-400 shrink-0" />
-                <span className="text-sm font-bold text-white group-hover:text-cyan-300 transition-colors">
-                  {isDayFinalized ? 'Jornada Consolidada' : 'Cerrar Día & Registrar Sueño'}
-                </span>
-              </div>
-
-              <button
-                type="button"
-                className="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-anton text-xs uppercase tracking-wider flex items-center gap-1.5 cursor-pointer"
-              >
-                <span>{isDayFinalized ? 'Revisar' : 'Cerrar Día'}</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </motion.div>
-          );
-        })()}
       </div>
 
       {/* Modals */}
@@ -741,7 +608,7 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
         habitTarget={habitTarget}
         setHabitTarget={setHabitTarget}
         habitUnit={habitUnit}
-        setHabitUnit={setHabitUnit}
+        setNewHabitUnit={setHabitUnit}
         isLegendary={isLegendary}
         setIsLegendary={setIsLegendary}
         isTracked2166={isTracked2166}
@@ -766,14 +633,16 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
       />
 
 
-      <HabitManagerModal
-        isOpen={isHabitManagerOpen}
-        onClose={() => setIsHabitManagerOpen(false)}
-        customHabits={customHabits}
-        onSaveHabits={onSaveHabits}
-        onOpenAddModal={openAddModal}
-        onEditHabit={handleEditHabit}
-      />
+      {isHabitManagerOpen && (
+        <HabitManagerModal
+          isOpen={isHabitManagerOpen}
+          onClose={() => setIsHabitManagerOpen(false)}
+          customHabits={customHabits}
+          onSaveHabits={onSaveHabits}
+          onOpenAddModal={openAddModal}
+          onEditHabit={handleEditHabit}
+        />
+      )}
 
       {noteTargetTask && (
         <TaskNoteModal

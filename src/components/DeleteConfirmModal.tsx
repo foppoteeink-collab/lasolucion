@@ -1,6 +1,7 @@
 import React from 'react';
 import { AlertTriangle, Trash2, X, Calendar } from 'lucide-react';
 import { TaskItem } from '../types';
+import { useTaskStore } from '../store/useTaskStore';
 
 interface DeleteConfirmModalProps {
   task: TaskItem;
@@ -9,13 +10,22 @@ interface DeleteConfirmModalProps {
 }
 
 export function DeleteConfirmModal({ task, onClose, onConfirm }: DeleteConfirmModalProps) {
+  const customHabits = useTaskStore.getState().customHabits || [];
+  const taskTitleNorm = (task.title || '').toLowerCase().trim();
+  const matchesCustomHabit = customHabits.some(
+    h => h.id === task.id || (h.title || '').toLowerCase().trim() === taskTitleNorm
+  );
+
   const isHabit = Boolean(
     task.isHabit ||
     task.isQuickHabit ||
     task.isTracked2166 ||
     task.id.includes('habit-') ||
     task.id.includes('task-custom-') ||
-    task.id.includes('custom-habit-')
+    task.id.includes('custom-habit-') ||
+    task.id.includes('oracle-task-') ||
+    task.id.includes('hab-') ||
+    matchesCustomHabit
   );
 
   return (

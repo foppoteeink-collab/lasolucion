@@ -1718,7 +1718,7 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
 
           <div className="h-5 w-px bg-white/10 shrink-0" />
 
-          {/* Swatches rápidos de Cazador */}
+          {/* Swatches rápidos de paleta de color */}
           <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5">
             {HUNTER_SWATCHES.map((sw, sIdx) => {
               const isCurr = pointColors[selectedPointIndex]?.toLowerCase() === sw.hex.toLowerCase();

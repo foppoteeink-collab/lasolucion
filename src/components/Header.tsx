@@ -12,7 +12,9 @@ import {
   BookOpen,
   ShoppingBag,
   FlaskConical,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { AppNotification } from '../types';
 import { soundFX } from '../utils/audio';
@@ -113,40 +115,30 @@ export const Header: React.FC<HeaderProps> = ({
           
           {/* BLOQUE IZQUIERDO: Logo Principal Kinético */}
           <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
-            {/* Hélice cuántica: Visible en desktop/tablet */}
-            <div className="hidden sm:flex relative group items-center justify-center p-1">
-              <AnimatePresence>
-                {isKaiPulsing && (
-                  <>
-                    <motion.div
-                      initial={{ scale: 0.8, opacity: 0 }}
-                      animate={{ scale: 1.8, opacity: 0 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: pulseSpeed, repeat: Infinity, ease: "easeOut" }}
-                      className="absolute inset-0 rounded-full"
-                      style={{ border: `1.5px solid ${kaiPulseColor}` }}
-                    />
-                    <motion.div
-                      initial={{ scale: 0.8, opacity: 0 }}
-                      animate={{ scale: 1.4, opacity: 0 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: pulseSpeed, repeat: Infinity, ease: "easeOut", delay: pulseSpeed / 3 }}
-                      className="absolute inset-0 rounded-full"
-                      style={{ border: `1px solid ${kaiPulseColor}` }}
-                    />
-                  </>
-                )}
-              </AnimatePresence>
+            {/* Hélice cuántica: Visible en desktop/tablet únicamente cuando hay sesión activa o foco */}
+            {isKaiPulsing && (
+              <div className="hidden sm:flex relative group items-center justify-center p-1">
+                <AnimatePresence>
+                  <motion.div
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1.6, opacity: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: pulseSpeed, repeat: Infinity, ease: "easeOut" }}
+                    className="absolute inset-0 rounded-full"
+                    style={{ border: `1.5px solid ${kaiPulseColor}` }}
+                  />
+                </AnimatePresence>
 
-              <div 
-                className="absolute inset-0 blur-md rounded-full transition-colors duration-1000" 
-                style={{ backgroundColor: `${activeHelixColor}40`, opacity: isKaiPulsing ? 0.8 : 0.4 }}
-              />
-              <div className="relative z-10 flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8">
-                {/* @ts-ignore */}
-                <l-helix size="28" speed="2.5" color={activeHelixColor}></l-helix>
+                <div 
+                  className="absolute inset-0 blur-md rounded-full transition-colors duration-1000" 
+                  style={{ backgroundColor: `${activeHelixColor}40`, opacity: 0.7 }}
+                />
+                <div className="relative z-10 flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8">
+                  {/* @ts-ignore */}
+                  <l-helix size="28" speed="2.5" color={activeHelixColor}></l-helix>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Logotipo Principal */}
             <MainLogo
@@ -158,17 +150,17 @@ export const Header: React.FC<HeaderProps> = ({
           {/* BLOQUE CENTRAL: Calibradores EXP & HP (Desktop / Pantallas medianas) */}
           <div 
             onClick={() => { soundFX.playClick(); onOpenProfile?.(); }}
-            className="hidden lg:flex items-center gap-3.5 flex-1 max-w-sm mx-auto px-3 py-1 rounded-xl bg-black/40 border border-white/5 cursor-pointer hover:border-cyan-500/30 transition-all group"
+            className="hidden lg:flex items-center gap-3.5 flex-1 max-w-sm mx-auto px-3.5 py-1.5 rounded-xl bg-black/40 border border-white/10 cursor-pointer hover:border-cyan-500/30 transition-all group"
             title={`EXP: ${stats.currentXp}/${stats.requiredXp} | HP: ${stats.hp || 100}/${stats.maxHp || 100} - Clic para ver perfil`}
           >
             {/* Barra EXP Sincronizada con la Personalización del Usuario */}
-            <div className="flex-1 flex flex-col gap-0.5">
-              <div className="flex items-center justify-between text-[9px] font-mono font-bold leading-none">
+            <div className="flex-1 flex flex-col gap-1">
+              <div className="flex items-center justify-between text-[11px] font-mono font-bold leading-none">
                 <span className="tracking-wider transition-colors" style={{ color: 'var(--aura-color-1, #00f0ff)' }}>EXP</span>
-                <span className="font-mono transition-colors" style={{ color: 'var(--aura-color-1, #00f0ff)' }}>{stats.currentXp}/{stats.requiredXp}</span>
+                <span className="font-mono tabular-nums transition-colors" style={{ color: 'var(--aura-color-1, #00f0ff)' }}>{stats.currentXp}/{stats.requiredXp}</span>
               </div>
               <div 
-                className="h-1.5 bg-black/90 rounded-full border p-[0.5px] overflow-hidden transition-colors"
+                className="h-2 bg-black/90 rounded-full border p-[0.5px] overflow-hidden transition-colors"
                 style={{ borderColor: 'rgba(var(--aura-glow-rgb, 0, 240, 255), 0.35)' }}
               >
                 <div
@@ -183,12 +175,12 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
 
             {/* Barra HP */}
-            <div data-tour="hp-bar" className="flex-1 flex flex-col gap-0.5">
-              <div className="flex items-center justify-between text-[9px] font-mono font-bold leading-none">
+            <div data-tour="hp-bar" className="flex-1 flex flex-col gap-1">
+              <div className="flex items-center justify-between text-[11px] font-mono font-bold leading-none">
                 <span className="text-rose-400 tracking-wider">HP</span>
-                <span className="text-rose-300 font-mono">{stats.hp || 100}/{stats.maxHp || 100}</span>
+                <span className="text-rose-300 font-mono tabular-nums">{stats.hp || 100}/{stats.maxHp || 100}</span>
               </div>
-              <div className="h-1.5 bg-black/90 rounded-full border border-rose-500/30 p-[0.5px] overflow-hidden">
+              <div className="h-2 bg-black/90 rounded-full border border-rose-500/30 p-[0.5px] overflow-hidden">
                 <div
                   className="h-full bg-gradient-to-r from-rose-600 to-red-400 rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(244,63,94,0.7)]"
                   style={{ width: `${hpPercent}%` }}
@@ -198,78 +190,79 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* Racha Activa Flame */}
             <div 
-              className="flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-surface-card border border-amber-500/40 text-amber-300 text-xs font-anton tracking-wider shrink-0"
+              className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-surface-card border border-amber-500/40 text-amber-300 text-xs font-mono font-bold tracking-wider shrink-0 tabular-nums"
               title={`Racha Activa: ${stats.streakDays || 0} Días continuos`}
             >
               <Flame className="w-3.5 h-3.5 text-amber-400 fill-amber-400/50" />
-              <span><AnimatedNumber value={stats.streakDays} /></span>
+              <span><AnimatedNumber value={stats.streakDays} />d</span>
             </div>
           </div>
 
           {/* BLOQUE DERECHO: Recursos y Gadgets Tácticos (Compacto y ultra-resistente en Mobile) */}
           <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+
             {/* Monedas Micro-chip */}
             <div 
-              className="flex items-center gap-1 sm:gap-1.5 h-7 sm:h-9 px-2 sm:px-3 rounded-lg sm:rounded-xl bg-black/50 border border-yellow-500/40 text-yellow-300 text-[11px] sm:text-xs md:text-sm font-anton tracking-wider shadow-[0_0_12px_rgba(234,179,8,0.18)] shrink-0"
+              className="flex items-center gap-1 sm:gap-1.5 h-8 sm:h-9 px-2 sm:px-3 rounded-lg sm:rounded-xl bg-black/50 border border-yellow-500/40 text-yellow-300 text-xs md:text-sm font-mono font-bold tracking-wider shadow-[0_0_12px_rgba(234,179,8,0.18)] shrink-0"
               title={`${stats.coins || 0} Monedas acumuladas`}
             >
-              <Coins className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400 drop-shadow-[0_0_5px_rgba(234,179,8,0.7)]" />
-              <span><AnimatedNumber value={stats.coins} /></span>
+              <Coins className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-400 drop-shadow-[0_0_5px_rgba(234,179,8,0.7)]" />
+              <span className="tabular-nums"><AnimatedNumber value={stats.coins} /></span>
             </div>
 
             {/* Recompensa Diaria Cuántica */}
             <button
               onClick={() => { soundFX.playClick(); onOpenDailyRewards(); }}
               title="Recompensa Cuántica Diaria"
-              className={`relative flex items-center justify-center w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl border transition-all cursor-pointer active:scale-95 shrink-0 ${
+              className={`relative flex items-center justify-center min-w-[36px] min-h-[36px] sm:w-9 sm:h-9 rounded-lg sm:rounded-xl border transition-all cursor-pointer active:scale-95 shrink-0 ${
                 hasUnclaimedDailyReward
                   ? 'bg-amber-500/20 border-amber-400 text-amber-300 animate-pulse shadow-[0_0_16px_rgba(245,158,11,0.6)]'
                   : 'bg-black/40 text-cyan-200 border-white/10 hover:border-cyan-400 hover:bg-cyan-950/40'
               }`}
             >
-              <Gift className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5" />
+              <Gift className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
               {hasUnclaimedDailyReward && (
-                <span className="absolute -top-1 -right-1 w-2 sm:w-2.5 h-2 sm:h-2.5 bg-amber-400 rounded-full border border-black shadow-[0_0_8px_rgba(245,158,11,0.9)] animate-ping" />
+                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-amber-400 rounded-full border border-black shadow-[0_0_8px_rgba(245,158,11,0.9)] animate-ping" />
               )}
             </button>
 
             {/* Cápsula Unificada de Utilidades Tácticas: Sonido + Conexión */}
-            <div className="flex items-center gap-0.5 sm:gap-1 p-0.5 bg-black/50 rounded-lg sm:rounded-xl border border-white/15 shrink-0">
+            <div className="flex items-center gap-1 p-0.5 bg-black/50 rounded-lg sm:rounded-xl border border-white/15 shrink-0">
               {/* Silenciador de sonido */}
               <button
                 onClick={toggleSound}
-                className="flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-md sm:rounded-lg text-slate-200 hover:text-cyan-300 hover:bg-white/10 transition-all cursor-pointer active:scale-95"
+                className="flex items-center justify-center min-w-[36px] min-h-[36px] sm:w-9 sm:h-9 rounded-md sm:rounded-lg text-slate-200 hover:text-cyan-300 hover:bg-white/10 transition-all cursor-pointer active:scale-95"
                 title={soundEnabled ? 'Sonido Activado' : 'Sonido Silenciado'}
                 aria-label={soundEnabled ? 'Silenciar sonido' : 'Activar sonido'}
               >
                 {soundEnabled ? (
-                  <Volume2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-400" />
+                  <Volume2 className="w-4 h-4 text-cyan-400" />
                 ) : (
-                  <VolumeX className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-300" />
+                  <VolumeX className="w-4 h-4 text-rose-300" />
                 )}
               </button>
 
               {/* Separador sutil */}
-              <div className="w-px h-3 sm:h-4 bg-white/15" />
+              <div className="w-px h-4 bg-white/15" />
 
               {/* Auth Google */}
               {user ? (
                 <button
                   onClick={handleSignOut}
-                  className="flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-md sm:rounded-lg text-red-300 hover:text-red-200 hover:bg-red-950/40 transition-all cursor-pointer active:scale-95"
+                  className="flex items-center justify-center min-w-[36px] min-h-[36px] sm:w-9 sm:h-9 rounded-md sm:rounded-lg text-red-300 hover:text-red-200 hover:bg-red-950/40 transition-all cursor-pointer active:scale-95"
                   title="Desconectar Terminal de Google"
                   aria-label="Cerrar sesión de Google"
                 >
-                  <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-300" />
+                  <LogOut className="w-4 h-4 text-red-300" />
                 </button>
               ) : (
                 <button
                   onClick={() => { soundFX.playClick(); signInWithGoogle(); }}
-                  className="flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-md sm:rounded-lg text-cyan-300 hover:text-white hover:bg-cyan-950/40 transition-all cursor-pointer active:scale-95"
+                  className="flex items-center justify-center min-w-[36px] min-h-[36px] sm:w-9 sm:h-9 rounded-md sm:rounded-lg text-cyan-300 hover:text-white hover:bg-cyan-950/40 transition-all cursor-pointer active:scale-95"
                   title="Conectar con Google"
                   aria-label="Iniciar sesión con Google"
                 >
-                  <LogIn className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-300" />
+                  <LogIn className="w-4 h-4 text-cyan-300" />
                 </button>
               )}
             </div>
@@ -278,151 +271,123 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* ============================================================== */}
-        {/* FILA 2: IDENTIDAD DEL CAZADOR (SUB-BARRA RESPONSIVE DUAL HUD)  */}
+        {/* FILA 2: COMANDO PERSONAL VIP (HERO IDENTITY & HUNTER STATUS)   */}
         {/* ============================================================== */}
-        <div className="px-2.5 sm:px-5 py-1.5 sm:py-2 bg-[#030712]/80 relative z-10 flex flex-col gap-1 sm:gap-1.5 border-b border-white/[0.05]">
-          {/* Sub-fila 1: Identidad con TÍTULO COMPLETO + Racha */}
-          <div className="flex items-center justify-between gap-2">
-            {/* Botón de Perfil: Avatar + Chip Nivel + Nombre Completo del Rango */}
-            <button
-              onClick={() => { soundFX.playClick(); onOpenProfile?.(); }}
-              className="flex items-center gap-2 group flex-1 min-w-0 cursor-pointer text-left focus:outline-none"
-              title={`Perfil Táctico - Nivel ${stats.level} (${displayRankTitle})`}
-            >
-              {/* Micro-Avatar con Glifo de Arquetipo */}
-              <div 
-                className="relative w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-black/60 border flex items-center justify-center group-hover:scale-105 transition-all overflow-hidden shrink-0"
-                style={{
-                  borderColor: 'rgba(var(--aura-glow-rgb, 0, 240, 255), 0.4)',
-                  boxShadow: '0 0 10px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.2)'
-                }}
-              >
-                <ArchetypeGlyph
-                  archetypeNameOrId={stats.characterClass || 'heroe'}
-                  size={16}
-                  className="border-none bg-transparent p-0 shadow-none"
-                  glow={false}
-                />
-              </div>
+        {(() => {
+          const cleanFullName = stats.fullName?.trim() && stats.fullName.trim().toLowerCase() !== 'cazador' ? stats.fullName.trim() : '';
+          const cleanUsername = stats.username?.trim() && stats.username.trim().toLowerCase() !== 'cazador' && stats.username.trim() !== 'CazadorDelSistema' ? stats.username.trim() : '';
+          const rawName = cleanFullName || cleanUsername || user?.displayName?.trim() || 'Usuario';
+          const heroName = (rawName.split(' ')[0] || rawName).toUpperCase();
+          const archetypeTitle = getArchetypeDisplayName(stats.characterClass);
 
-              {/* Bloque de Identidad: Chip Nivel + Nombre del Nivel Completo */}
-              <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                <span 
-                  className="text-[9px] sm:text-[10px] font-mono font-black bg-black/80 border px-1.5 py-0.5 rounded-md shrink-0 leading-tight transition-colors"
-                  style={{
-                    color: 'var(--aura-color-1, #00f0ff)',
-                    borderColor: 'rgba(var(--aura-glow-rgb, 0, 240, 255), 0.6)',
-                    boxShadow: '0 0 8px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.25)'
-                  }}
+          return (
+            <div className="px-2.5 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-[#030712] via-[#050f24] to-[#030712] relative z-10 border-b border-white/[0.06]">
+              {/* Contenedor Principal: Avatar + Saludo VIP + Racha */}
+              <div className="flex items-center justify-between gap-2.5">
+                {/* Bloque Izquierdo: Avatar Arquetípico + Saludo Personalizado Prominente */}
+                <button
+                  onClick={() => { soundFX.playClick(); onOpenProfile?.(); }}
+                  className="flex items-center gap-2.5 sm:gap-3.5 group flex-1 min-w-0 cursor-pointer text-left focus:outline-none"
+                  title={`Perfil de ${rawName} - Nivel ${stats.level} (${displayRankTitle})`}
                 >
-                  NV. {stats.level}
-                </span>
-                <span className="text-xs sm:text-sm font-sans font-bold text-white tracking-tight truncate group-hover:text-cyan-300 transition-colors leading-tight">
-                  {displayRankTitle}
-                </span>
-                <span className="hidden sm:inline-block text-[10px] font-mono text-cyan-400/70 truncate shrink-0">
-                  • {getArchetypeDisplayName(stats.characterClass)}
-                </span>
-              </div>
-            </button>
-
-            {/* Racha Activa y Escudos Cuánticos */}
-            <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
-              <div 
-                className="flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 py-0.5 rounded-lg sm:rounded-xl bg-amber-950/30 border border-amber-500/40 text-amber-300 text-[10px] sm:text-[11px] font-anton tracking-wider shadow-[0_0_8px_rgba(245,158,11,0.2)] shrink-0"
-                title={`Racha Activa: ${stats.streakDays || 0} Días continuos`}
-              >
-                <Flame className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-amber-400 fill-amber-400/50" />
-                <span><AnimatedNumber value={stats.streakDays} /></span>
-              </div>
-
-              {stats.streakShields !== undefined && stats.streakShields > 0 && (
-                <div
-                  className="flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 py-0.5 rounded-lg sm:rounded-xl bg-cyan-950/40 border border-cyan-400/60 text-cyan-300 text-[9px] sm:text-[10px] font-anton tracking-wider shrink-0"
-                  title={`Escudos Cuánticos: ${stats.streakShields}`}
-                >
-                  <Shield className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-cyan-400 fill-cyan-400/30" />
-                  <span>{stats.streakShields}</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Sub-fila 2: Calibradores Cuánticos EXP & HP (Visibles y legibles en Mobile) */}
-          <div 
-            onClick={() => { soundFX.playClick(); onOpenProfile?.(); }}
-            className="flex lg:hidden items-center gap-2 sm:gap-3 w-full cursor-pointer group pt-0.5"
-            title={`EXP: ${stats.currentXp}/${stats.requiredXp} | HP: ${stats.hp || 100}/${stats.maxHp || 100}`}
-          >
-            {/* Barra EXP Móvil Sincronizada */}
-            <div className="flex-1 flex flex-col gap-0.5 min-w-0">
-              <div className="flex items-center justify-between text-[7.5px] sm:text-[8.5px] font-mono font-bold leading-none">
-                <span className="transition-colors" style={{ color: 'var(--aura-color-1, #00f0ff)' }}>EXP</span>
-                <span className="font-mono transition-colors" style={{ color: 'var(--aura-color-1, #00f0ff)' }}>{stats.currentXp}/{stats.requiredXp} ({Math.round(xpPercent)}%)</span>
-              </div>
-              <div 
-                className="h-1 sm:h-1.5 bg-black/90 rounded-full border p-[0.5px] overflow-hidden transition-colors"
-                style={{ borderColor: 'rgba(var(--aura-glow-rgb, 0, 240, 255), 0.35)' }}
-              >
-                <div
-                  className="h-full rounded-full transition-all duration-500"
-                  style={{
-                    width: `${xpPercent}%`,
-                    background: 'linear-gradient(90deg, var(--aura-color-1, #00f0ff) 0%, var(--aura-color-2, #8a2be2) 100%)',
-                    boxShadow: '0 0 6px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.6)'
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Barra HP */}
-            <div className="flex-1 flex flex-col gap-0.5 min-w-0">
-              <div className="flex items-center justify-between text-[7.5px] sm:text-[8.5px] font-mono font-bold leading-none">
-                <span className="text-rose-400">HP</span>
-                <span className="text-rose-300/90 font-mono">{stats.hp || 100}/{stats.maxHp || 100}</span>
-              </div>
-              <div className="h-1 sm:h-1.5 bg-black/90 rounded-full border border-rose-500/30 p-[0.5px] overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-rose-600 to-red-400 rounded-full transition-all duration-500 shadow-[0_0_6px_rgba(244,63,94,0.6)]"
-                  style={{ width: `${hpPercent}%` }}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ============================================================== */}
-        {/* FILA 3: NAVEGACIÓN TÁCTICA INTEGRADA (DESKTOP & TABLET)        */}
-        {/* ============================================================== */}
-        {onTabChange && (
-          <div className="hidden sm:flex items-center justify-center py-2 px-3 relative z-10 bg-gradient-to-b from-black/20 to-black/40 border-t border-white/[0.04]">
-            <div className="p-1 bg-black/50 rounded-2xl border border-white/10 flex items-center gap-1 shadow-inner backdrop-blur-md max-w-full overflow-x-auto scrollbar-none">
-              {NAV_TABS.map((tab) => {
-                const isActive = activeTab === tab.id;
-                const TabIcon = tab.icon;
-                return (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => {
-                      soundFX.playClick();
-                      onTabChange(tab.id as any);
+                  {/* Avatar con aura de prestigio */}
+                  <div 
+                    className="relative w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-b from-cyan-950/60 to-black/80 border flex items-center justify-center group-hover:scale-105 transition-all overflow-hidden shrink-0 shadow-lg"
+                    style={{
+                      borderColor: 'rgba(var(--aura-glow-rgb, 0, 240, 255), 0.5)',
+                      boxShadow: '0 0 14px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.25)'
                     }}
-                    className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-xl transition-all font-anton text-xs sm:text-sm whitespace-nowrap cursor-pointer tracking-wider uppercase active:scale-95 ${
-                      isActive
-                        ? 'bg-cyan-400 text-black shadow-[0_0_14px_rgba(0,240,255,0.55)] font-bold'
-                        : 'text-slate-400 hover:text-white hover:bg-white/[0.08]'
-                    }`}
                   >
-                    <TabIcon className="w-3.5 h-3.5 shrink-0" />
-                    <span>{tab.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
+                    <ArchetypeGlyph
+                      archetypeNameOrId={stats.characterClass || 'heroe'}
+                      size={22}
+                      className="border-none bg-transparent p-0 shadow-none"
+                      glow={false}
+                    />
+                  </div>
 
+                  {/* Estatus Táctico */}
+                  <div className="flex flex-col min-w-0 flex-1 justify-center">
+
+                    {/* Subtítulo Unificado: Nivel, Ascensión, Rango y Racha */}
+                    <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-slate-300 font-medium truncate">
+                      <span className="text-cyan-300 font-mono font-bold shrink-0">NV. {stats.level}</span>
+                      {(stats.ascensionTier || 0) > 0 && (
+                        <span
+                          className="text-amber-300 font-mono font-bold shrink-0"
+                          title={`Ascensión Rango ${stats.ascensionTier} (+${(stats.ascensionTier || 0) * 5}% Eficiencia Global)`}
+                        >
+                          {'★'.repeat(Math.min(stats.ascensionTier || 0, 5))}
+                        </span>
+                      )}
+                      <span className="text-slate-500" aria-hidden="true">•</span>
+                      <span className="text-slate-200 truncate group-hover:text-white transition-colors">{displayRankTitle}</span>
+                      <span className="hidden md:inline-flex items-center gap-1.5 text-slate-400 text-[10px]">
+                        <span className="text-slate-600">•</span>
+                        <span>{archetypeTitle}</span>
+                      </span>
+                    </div>
+                  </div>
+                </button>
+
+                {/* Bloque Derecho: Racha y Escudos Tácticos */}
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <div 
+                    className="flex items-center gap-1 px-2 py-1 rounded-xl bg-amber-950/40 border border-amber-500/50 text-amber-300 text-xs font-anton tracking-wider shadow-[0_0_10px_rgba(245,158,11,0.25)] shrink-0"
+                    title={`Racha Activa: ${stats.streakDays || 0} Días continuos`}
+                  >
+                    <Flame className="w-3.5 h-3.5 text-amber-400 fill-amber-400/60" />
+                    <span><AnimatedNumber value={stats.streakDays} /></span>
+                    <span className="text-[9px] font-mono text-amber-400/80 ml-0.5">DÍAS</span>
+                  </div>
+
+                  {stats.streakShields !== undefined && stats.streakShields > 0 && (
+                    <div
+                      className="hidden xs:flex items-center gap-1 px-1.5 py-1 rounded-xl bg-cyan-950/40 border border-cyan-400/60 text-cyan-300 text-[10px] font-anton tracking-wider shrink-0"
+                      title={`Escudos Cuánticos: ${stats.streakShields}`}
+                    >
+                      <Shield className="w-3 h-3 text-cyan-400 fill-cyan-400/30" />
+                      <span>{stats.streakShields}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Micro-calibradores de EXP y HP (Elegantes y legibles en Mobile) */}
+              <div 
+                onClick={() => { soundFX.playClick(); onOpenProfile?.(); }}
+                className="flex lg:hidden items-center gap-3 w-full cursor-pointer group mt-2 pt-1.5 border-t border-white/[0.06]"
+                title={`EXP: ${stats.currentXp}/${stats.requiredXp} (${Math.round(xpPercent)}%) | HP: ${stats.hp || 100}/${stats.maxHp || 100} - Clic para ver perfil`}
+              >
+                {/* EXP Micro-gauge */}
+                <div className="flex-1 flex items-center gap-2 min-w-0">
+                  <span className="text-[10px] font-mono font-bold text-cyan-400 shrink-0">EXP</span>
+                  <div className="flex-1 h-2 bg-black/80 rounded-full border border-cyan-500/30 p-[0.5px] overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-500 bg-gradient-to-r from-cyan-400 via-sky-400 to-indigo-500 shadow-[0_0_6px_rgba(0,240,255,0.7)]"
+                      style={{ width: `${xpPercent}%` }}
+                    />
+                  </div>
+                  <span className="text-[10.5px] font-mono tabular-nums text-cyan-300 shrink-0">{Math.round(xpPercent)}%</span>
+                </div>
+
+                {/* HP Micro-gauge */}
+                <div className="flex-1 flex items-center gap-2 min-w-0">
+                  <span className="text-[10px] font-mono font-bold text-rose-400 shrink-0">HP</span>
+                  <div className="flex-1 h-2 bg-black/80 rounded-full border border-rose-500/30 p-[0.5px] overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-500 bg-gradient-to-r from-rose-600 to-red-400 shadow-[0_0_6px_rgba(244,63,94,0.7)]"
+                      style={{ width: `${hpPercent}%` }}
+                    />
+                  </div>
+                  <span className="text-[10.5px] font-mono tabular-nums text-rose-300 shrink-0">{Math.round(hpPercent)}%</span>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Navegación principal delegada a SidebarHUD (Modo Barra) o KAI Orbital (Modo Nexus) */}
       </div>
     </header>
   );

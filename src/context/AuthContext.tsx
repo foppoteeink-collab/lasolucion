@@ -25,7 +25,7 @@ const isMobileOrPWA = (): boolean => {
   const isMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(ua);
   const isPWA =
     window.matchMedia('(display-mode: standalone)').matches ||
-    (window.navigator as any).standalone === true;
+    (window.navigator as unknown as { standalone?: boolean }).standalone === true;
   return isMobile || isPWA;
 };
 

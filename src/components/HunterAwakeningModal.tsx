@@ -158,7 +158,7 @@ export const HunterAwakeningModal: React.FC<HunterAwakeningModalProps> = ({
   // Archetype & Identity states
   const [selectedArchName, setSelectedArchName] = useState(getArchetypeDisplayName(stats.characterClass));
   const [username, setUsername] = useState(
-    stats.username && stats.username !== 'CazadorDelSistema' ? stats.username : ''
+    stats.username && stats.username !== 'CazadorDelSistema' && stats.username !== 'UsuarioDelSistema' && stats.username.toLowerCase() !== 'cazador' ? stats.username : ''
   );
   const [fullName, setFullName] = useState(stats.fullName || '');
   const [mantra, setMantra] = useState(stats.mantra || 'Levántate y vence');

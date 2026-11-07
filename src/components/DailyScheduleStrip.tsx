@@ -62,8 +62,8 @@ export const DailyScheduleStrip: React.FC<DailyScheduleStripProps> = ({
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 flex-wrap">
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#000a14] border border-cyan-400/60 text-xs font-black shadow-[0_0_10px_rgba(0,240,255,0.25)]">
-            <Clock className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
-            <span className="font-mono text-xs sm:text-sm text-cyan-300">{formattedTimeStr}</span>
+            <Clock className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="font-mono text-xs sm:text-sm text-cyan-300 tabular-nums">{formattedTimeStr}</span>
           </div>
           <span className="text-xs font-anton tracking-wide text-slate-300 flex items-center gap-1.5">
             <Calendar className="w-3.5 h-3.5 text-cyan-400" />
@@ -106,7 +106,7 @@ export const DailyScheduleStrip: React.FC<DailyScheduleStripProps> = ({
                   onOpenPomodoroForTask(activeTask.title, activeTask.category);
                 }
               }}
-              className="self-end sm:self-auto px-3 py-1 bg-cyan-400 text-black hover:bg-cyan-300 rounded-lg border border-cyan-300 font-anton tracking-wider uppercase cursor-pointer text-xs shadow-[0_0_10px_rgba(0,240,255,0.4)] shrink-0 flex items-center gap-1.5 active:scale-95"
+              className="self-end sm:self-auto min-h-[36px] px-3 py-1.5 bg-cyan-400 text-black hover:bg-cyan-300 rounded-lg border border-cyan-300 font-anton tracking-wider uppercase cursor-pointer text-xs shadow-[0_0_10px_rgba(0,240,255,0.4)] shrink-0 flex items-center gap-1.5 active:scale-95"
               title="Enfocar en Pomodoro"
             >
               <Timer className="w-3.5 h-3.5 text-black" />
@@ -138,7 +138,7 @@ export const DailyScheduleStrip: React.FC<DailyScheduleStripProps> = ({
                       : 'bg-[#000a14] border-cyan-500/30 text-slate-200'
                   }`}
                 >
-                  <span className="font-mono font-bold text-[11px] text-cyan-300">{t.timeBlock}</span>
+                  <span className="font-mono font-bold text-[11px] text-cyan-300 tabular-nums">{t.timeBlock}</span>
                   <span className="font-bold truncate max-w-[140px]">{t.title}</span>
                   {t.completed && <CheckCircle2 className="w-3 h-3 text-cyan-400" />}
                 </div>

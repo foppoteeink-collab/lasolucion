@@ -67,17 +67,6 @@ export const TaskHeaderHUD: React.FC<TaskHeaderHUDProps> = ({
         <div className="flex items-center gap-1.5 shrink-0">
           <button
             type="button"
-            onClick={() => {
-              soundFX.playClick();
-              useUIStore.getState().openTacticalGuide(3);
-            }}
-            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-white/10 bg-[#001020]/60 text-slate-400 hover:text-white flex items-center justify-center transition-all cursor-pointer active:scale-90"
-            title="¿Cómo crear tareas y planificar bloques? Ver guía"
-          >
-            <HelpCircle className="w-3.5 h-3.5" />
-          </button>
-          <button
-            type="button"
             data-tour="add-task-btn"
             onClick={() => onOpenAddModal('task')}
             className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border bg-[#001020] flex items-center justify-center transition-all cursor-pointer active:scale-90"

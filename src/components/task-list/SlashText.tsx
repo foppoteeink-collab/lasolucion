@@ -147,10 +147,10 @@ export const SlashText: React.FC<SlashTextProps> = ({
   const activeColor = slashColor || '#00f0ff';
 
   return (
-    <span ref={containerRef} className={`relative inline-block ${className}`}>
+    <span ref={containerRef} className={`relative inline-block max-w-full truncate align-bottom ${className}`}>
       {/* Texto de la tarea: se mantiene brillante y nítido para perfecta legibilidad */}
       <span
-        className="inline-block transition-all duration-300"
+        className="inline-block max-w-full truncate align-bottom transition-all duration-300"
         style={{
           opacity: isCompleted ? 0.80 : 1,
           transitionDelay: isCompleted ? '100ms' : '0ms',

@@ -25,22 +25,22 @@ export const MainLogo: React.FC<MainLogoProps> = ({
 
   // Calibración de altura proporcional para mantener la proporción exacta 864x129 (letras puras sin caja)
   const sizeClasses = {
-    sm: 'h-[20px] sm:h-[24px]',
-    md: 'h-[22px] sm:h-[32px] lg:h-[38px]',
-    lg: 'h-[36px] sm:h-[46px]',
-    xl: 'h-[50px] sm:h-[60px]',
+    sm: 'h-[22px] sm:h-[28px]',
+    md: 'h-[24px] xs:h-[26px] sm:h-[38px] lg:h-[44px]',
+    lg: 'h-[25px] xs:h-[28px] sm:h-[42px] lg:h-[50px]',
+    xl: 'h-[48px] sm:h-[60px]',
     massive: 'h-[64px] sm:h-[80px]',
   };
 
   const textSizeClasses = {
     sm: 'text-base sm:text-lg tracking-wider',
-    md: 'text-xl sm:text-2xl lg:text-[26px] tracking-wider',
-    lg: 'text-2xl sm:text-3xl tracking-widest',
-    xl: 'text-3xl sm:text-4xl tracking-widest',
+    md: 'text-2xl sm:text-3xl lg:text-4xl tracking-wider',
+    lg: 'text-3xl sm:text-4xl tracking-widest',
+    xl: 'text-4xl sm:text-5xl tracking-widest',
     massive: 'text-4xl sm:text-5xl md:text-6xl tracking-widest',
   };
 
-  const animDuration = speed === 'fast' ? '4.5s' : '7s';
+  const animDuration = speed === 'fast' ? '5s' : '6s';
 
   return (
     <div
@@ -60,7 +60,7 @@ export const MainLogo: React.FC<MainLogoProps> = ({
           scale: [0.95, 1.08, 0.95],
         }}
         transition={{
-          duration: 3.6,
+          duration: 8,
           repeat: Infinity,
           ease: 'easeInOut',
         }}

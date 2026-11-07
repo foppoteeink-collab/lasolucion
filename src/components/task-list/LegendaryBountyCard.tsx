@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, Edit3, Trash2, Lock, Crown, Clock, Coins, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { Icon } from '../common/Icon';
 import { TaskItem } from '../../types';
 import { SlashText } from './SlashText';
 import { useMoxenVidrio } from '../../hooks/useMoxenVidrio';
@@ -89,30 +89,30 @@ export const LegendaryBountyCard: React.FC<LegendaryBountyCardProps> = ({
               : 'bg-amber-950/80 border-amber-400 text-amber-300 shadow-[0_0_15px_rgba(245,158,11,0.5)]'
           }`}>
             {isLocked ? (
-              <Lock className="w-5 h-5 text-rose-400" />
+              <Icon name="lock" className="w-5 h-5 text-rose-400" />
             ) : (
-              <Crown className="w-5 h-5 fill-amber-400/20" />
+              <Icon name="crown" className="w-5 h-5" />
             )}
           </div>
 
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-[10px] font-anton uppercase tracking-wider px-2 py-0.5 rounded-md bg-amber-400 text-black shadow-[0_0_8px_rgba(245,158,11,0.6)]">
-                MISIÓN LEGENDARIA // 2x
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[10.5px] font-mono font-bold tracking-wider px-2 py-0.5 rounded-md bg-amber-400 text-black shadow-sm">
+                MISIÓN LEGENDARIA · 2X
               </span>
               {task.timeBlock && (
-                <span className="text-[10px] font-mono font-bold text-cyan-300 bg-[#011420] px-2 py-0.5 rounded-md border border-cyan-500/40 flex items-center gap-1">
-                  <Clock className="w-3 h-3 text-cyan-400" />
+                <span className="text-[10px] font-mono font-bold text-cyan-300 bg-[#011420] px-2 py-0.5 rounded-md border border-cyan-500/40 flex items-center gap-1 tabular-nums">
+                  <Icon name="timer" className="w-3 h-3 text-cyan-400" />
                   {task.timeBlock}
                 </span>
               )}
               {task.completed ? (
                 <span className="text-[10px] font-mono font-bold text-cyan-300 bg-cyan-950/70 border border-cyan-400/60 px-2 py-0.5 rounded-md flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3 text-cyan-400" /> Completada
+                  <Icon name="checkCircle" className="w-3 h-3 text-cyan-400" /> Completada
                 </span>
               ) : isLocked ? (
                 <span className="text-[10px] font-mono font-bold text-rose-300 bg-rose-950/80 border border-rose-600 px-2 py-0.5 rounded-md flex items-center gap-1">
-                  <Lock className="w-3 h-3 text-rose-400" /> Bloqueada
+                  <Icon name="lock" className="w-3 h-3 text-rose-400" /> Bloqueada
                 </span>
               ) : null}
             </div>
@@ -141,9 +141,9 @@ export const LegendaryBountyCard: React.FC<LegendaryBountyCardProps> = ({
                 className="mt-1.5 px-2.5 py-1 rounded-lg bg-black/40 hover:bg-black/60 border border-amber-500/40 text-amber-200 text-xs flex items-start gap-1.5 transition-colors cursor-pointer group/note"
                 title="Clic para ver o editar nota de repaso"
               >
-                <FileText className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+                <Icon name="fileText" className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
                 <span className="italic font-mono text-[11px] line-clamp-2">"{task.notes}"</span>
-                <Edit3 className="w-3 h-3 text-amber-400/60 opacity-0 group-hover/note:opacity-100 ml-auto shrink-0 mt-0.5" />
+                <Icon name="edit" className="w-3 h-3 text-amber-400/60 opacity-0 group-hover/note:opacity-100 ml-auto shrink-0 mt-0.5" />
               </div>
             )}
           </div>
@@ -154,7 +154,7 @@ export const LegendaryBountyCard: React.FC<LegendaryBountyCardProps> = ({
           <div className="text-right hidden sm:flex flex-col items-end text-xs font-mono font-bold text-amber-300">
             <span className="text-cyan-300">+{task.xpReward} XP</span>
             <span className="flex items-center gap-1 text-yellow-400">
-              <Coins className="w-3 h-3" /> +{task.coinReward}
+              <Icon name="coins" className="w-3 h-3" /> +{task.coinReward}
             </span>
           </div>
 
@@ -166,7 +166,7 @@ export const LegendaryBountyCard: React.FC<LegendaryBountyCardProps> = ({
                 className="px-3.5 py-2 rounded-xl bg-rose-950/60 text-rose-300 border border-rose-800/60 text-xs font-mono font-bold cursor-not-allowed min-h-[40px] flex items-center gap-1.5 opacity-85"
                 title="Misión no completada: bloqueada tras finalizar el día"
               >
-                <Lock className="w-3.5 h-3.5 text-rose-400" />
+                <Icon name="lock" className="w-3.5 h-3.5 text-rose-400" />
                 <span>Bloqueada</span>
               </button>
             ) : (
@@ -178,7 +178,7 @@ export const LegendaryBountyCard: React.FC<LegendaryBountyCardProps> = ({
                 }}
                 className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-400 text-black text-xs font-anton tracking-wider uppercase border border-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.6)] active:scale-95 cursor-pointer min-h-[40px] flex items-center gap-1.5 hover:brightness-110 transition-all"
               >
-                <CheckCircle2 className="w-4 h-4 stroke-[3]" />
+                <Icon name="checkCircle" className="w-4 h-4 stroke-[3]" />
                 <span>Completar</span>
               </button>
             )
@@ -214,7 +214,7 @@ export const LegendaryBountyCard: React.FC<LegendaryBountyCardProps> = ({
               }`}
               title={task.notes ? 'Ver / Editar nota de repaso' : 'Agregar nota de repaso'}
             >
-              <FileText className="w-4 h-4" />
+              <Icon name="fileText" className="w-4 h-4" />
             </button>
             <button
               type="button"
@@ -225,7 +225,7 @@ export const LegendaryBountyCard: React.FC<LegendaryBountyCardProps> = ({
               className="p-2 text-cyan-400 hover:text-white rounded-lg hover:bg-cyan-950/40 border border-transparent hover:border-cyan-500/30 min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer transition-colors"
               title="Editar"
             >
-              <Edit3 className="w-4 h-4" />
+              <Icon name="edit" className="w-4 h-4" />
             </button>
             <button
               type="button"
@@ -236,7 +236,7 @@ export const LegendaryBountyCard: React.FC<LegendaryBountyCardProps> = ({
               className="p-2 text-rose-400 hover:text-rose-300 rounded-lg hover:bg-rose-950/40 border border-transparent hover:border-rose-500/30 min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer transition-colors"
               title="Eliminar"
             >
-              <Trash2 className="w-4 h-4" />
+              <Icon name="trash" className="w-4 h-4" />
             </button>
           </div>
         </div>

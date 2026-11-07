@@ -161,13 +161,17 @@ export const shareDays = (
   freqB: string = 'daily',
   daysB?: number[]
 ): boolean => {
-  const isDailyA = freqA === 'daily' || !daysA || daysA.length === 0 || daysA.length === 7;
-  const isDailyB = freqB === 'daily' || !daysB || daysB.length === 0 || daysB.length === 7;
+  const hasSpecificA = Array.isArray(daysA) && daysA.length > 0 && daysA.length < 7;
+  const hasSpecificB = Array.isArray(daysB) && daysB.length > 0 && daysB.length < 7;
 
-  if (isDailyA || isDailyB) return true;
+  if (!hasSpecificA || !hasSpecificB) {
+    const isDailyA = !hasSpecificA && (freqA === 'daily' || !daysA || daysA.length === 0 || daysA.length >= 7);
+    const isDailyB = !hasSpecificB && (freqB === 'daily' || !daysB || daysB.length === 0 || daysB.length >= 7);
+    if (isDailyA || isDailyB) return true;
+  }
 
-  const setB = new Set(daysB);
-  return daysA.some(d => setB.has(d));
+  const setB = new Set((daysB || []).map(Number));
+  return (daysA || []).some(d => setB.has(Number(d)));
 };
 
 /**
@@ -286,8 +290,8 @@ export const cleanScheduleTitle = (rawTitle?: string): string => {
     .replace(/[\s,&;:-]+$/g, '')
     .trim();
 
-  if (t.length > 58) {
-    t = t.slice(0, 55).replace(/[\s,&;:-]+$/g, '').trim();
+  if (t.length > 85) {
+    t = t.slice(0, 82).replace(/[\s,&;:-]+$/g, '').trim();
   }
   return t ? t.charAt(0).toUpperCase() + t.slice(1) : '';
 };
@@ -344,14 +348,13 @@ export const autoArrangeSchedule = <T extends {
 }>(items: T[], mode: 'master_blocks' | 'detailed' = 'master_blocks', maxBlocksPerDay: number = 8): T[] => {
   if (!Array.isArray(items) || items.length === 0) return [];
 
-  // 1. Clean titles and filter out micro-habits
-  const cleanedList: T[] = [];
-  const seenKeys = new Set<string>();
+  // 1. Clean titles, filter out micro-habits, and merge identical title + timeBlock across days
+  const mergedMap = new Map<string, T>();
 
   for (const rawItem of items) {
     if (!rawItem || isQuickMicroHabit(rawItem)) continue;
     const cleanedTitle = cleanScheduleTitle(rawItem.title);
-    if (!cleanedTitle || cleanedTitle.length < 3) continue;
+    if (!cleanedTitle || cleanedTitle.length < 2) continue;
 
     const lower = cleanedTitle.toLowerCase();
     if (
@@ -359,29 +362,43 @@ export const autoArrangeSchedule = <T extends {
       lower === 'horario semanal completo' ||
       lower.startsWith('descansar para rendir') ||
       lower.startsWith('recordar') ||
-      lower.startsWith('nota:')
+      lower.startsWith('nota:') ||
+      /^(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bados?|domingos?)$/i.test(lower)
     ) {
       continue;
     }
 
     const normTB = normalizeTimeBlock(rawItem.timeBlock) || rawItem.timeBlock || '';
-    const daysKey =
-      rawItem.frequencyType === 'specific_days' && Array.isArray(rawItem.specificDays) && rawItem.specificDays.length > 0 && rawItem.specificDays.length < 7
-        ? rawItem.specificDays.slice().sort().join(',')
-        : 'daily';
+    const mergeKey = `${cleanedTitle.toLowerCase()}__${normTB}`;
 
-    // Deduplicate by clean title + timeBlock + days (preserve distinct morning and afternoon shifts!)
-    const dedupKey = `${cleanedTitle.toLowerCase()}__${normTB}__${daysKey}`;
-    if (seenKeys.has(dedupKey)) continue;
-    seenKeys.add(dedupKey);
-
-    cleanedList.push({
-      ...rawItem,
-      title: cleanedTitle,
-      timeBlock: normTB || undefined,
-    });
+    const existing = mergedMap.get(mergeKey);
+    if (existing) {
+      const existingIsDaily = existing.frequencyType === 'daily' || !existing.specificDays || existing.specificDays.length === 0 || existing.specificDays.length === 7;
+      const currentIsDaily = rawItem.frequencyType === 'daily' || !rawItem.specificDays || rawItem.specificDays.length === 0 || rawItem.specificDays.length === 7;
+      if (existingIsDaily || currentIsDaily) {
+        mergedMap.set(mergeKey, {
+          ...existing,
+          frequencyType: 'daily',
+          specificDays: [0, 1, 2, 3, 4, 5, 6]
+        });
+      } else {
+        const combinedDays = Array.from(new Set([...(existing.specificDays || []), ...(rawItem.specificDays || [])])).sort((a, b) => a - b);
+        mergedMap.set(mergeKey, {
+          ...existing,
+          frequencyType: combinedDays.length >= 7 ? 'daily' : 'specific_days',
+          specificDays: combinedDays
+        });
+      }
+    } else {
+      mergedMap.set(mergeKey, {
+        ...rawItem,
+        title: cleanedTitle,
+        timeBlock: normTB || undefined,
+      });
+    }
   }
 
+  const cleanedList = Array.from(mergedMap.values());
   if (cleanedList.length === 0) return [];
 
   // 2. Intelligent Work & Lunch Split:
@@ -427,7 +444,7 @@ export const autoArrangeSchedule = <T extends {
     }
   }
 
-  // 3. Prepare meta list with realistic duration preservation (Never collapse 8h shifts into 90 mins!)
+  // 3. Prepare meta list with exact duration preservation (supports 10m/15m quick blocks up to 10h shifts!)
   const metaList = splitList.map((item, idx) => {
     const { anchor, dur: defaultDur } = getLogicalAnchorAndDuration(item.title, item.category || 'rutina', idx);
     let startMin = parseTimeToMinutes(item.timeBlock);
@@ -437,14 +454,12 @@ export const autoArrangeSchedule = <T extends {
     if (startMin !== 9999 && endMin !== 9999) {
       if (endMin > startMin) {
         const rawDur = endMin - startMin;
-        // Accept work/study blocks up to 10 hours (600 mins).
         if (rawDur > 720) {
           dur = defaultDur;
         } else {
-          dur = Math.max(30, rawDur);
+          dur = Math.max(5, rawDur);
         }
       } else if (endMin < startMin && (endMin + 1440 - startMin) <= 600) {
-        // Cross-midnight shift (e.g. 22:00 - 06:00 or 23:00 - 07:00)
         dur = endMin + 1440 - startMin;
       }
     } else {
@@ -479,7 +494,7 @@ export const autoArrangeSchedule = <T extends {
     const isSlotFree = (s: number, e: number) =>
       !conflictingPlaced.some(p => s < p.end && p.start < e);
 
-    let chosenStart = Math.round(m.prefStart / 15) * 15;
+    let chosenStart = m.hasExplicitTime ? m.prefStart : Math.round(m.prefStart / 15) * 15;
     let found = false;
 
     // A. If the user provided an explicit time and it's free, KEEP IT EXACTLY!
@@ -489,7 +504,7 @@ export const autoArrangeSchedule = <T extends {
 
     // B. If not free, try nudging forward
     if (!found) {
-      for (let s = chosenStart; s + dur <= 23 * 60 + 45; s += 15) {
+      for (let s = chosenStart; s + dur <= 23 * 60 + 55; s += 15) {
         if (isSlotFree(s, s + dur)) {
           chosenStart = s;
           found = true;
@@ -500,7 +515,7 @@ export const autoArrangeSchedule = <T extends {
 
     // C. Try backward
     if (!found) {
-      for (let s = chosenStart - 15; s >= 6 * 60; s -= 15) {
+      for (let s = chosenStart - 15; s >= 5 * 60; s -= 15) {
         if (isSlotFree(s, s + dur)) {
           chosenStart = s;
           found = true;
@@ -512,8 +527,8 @@ export const autoArrangeSchedule = <T extends {
     // D. Compact fallback in open gap
     let finalDur = dur;
     if (!found) {
-      finalDur = Math.max(30, Math.min(60, dur));
-      for (let s = 6 * 60; s + finalDur <= 23 * 60 + 45; s += 15) {
+      finalDur = Math.max(15, Math.min(60, dur));
+      for (let s = 5 * 60; s + finalDur <= 23 * 60 + 55; s += 15) {
         if (isSlotFree(s, s + finalDur)) {
           chosenStart = s;
           found = true;
@@ -710,10 +725,9 @@ export const diagnoseSchedule = <T extends {
   }
   const avgDailyMins = activeDaysCount > 0 ? sumDailyMins / activeDaysCount : 0;
 
-  // Calculate harmony score
+  // Calculate harmony score (only real time overlaps reduce harmony)
   let score = 100;
   score -= conflicts.length * 35;
-  score -= Math.min(15, gaps.length * 3);
   score = Math.max(10, Math.min(100, score));
 
   return {

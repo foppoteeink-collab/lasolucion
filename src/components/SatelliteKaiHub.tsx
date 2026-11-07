@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { soundFX } from '../utils/audio';
 
@@ -17,327 +17,244 @@ export interface SatelliteHubItem {
 
 interface SatelliteKaiHubProps {
   items: SatelliteHubItem[];
+  isOpen?: boolean;
   initialIndex?: number;
   onClose: () => void;
   onSelect: (item: SatelliteHubItem) => void;
   minOpacity?: number;
 }
 
-function wrapIndex(idx: number, len: number) {
-  if (len <= 0) return 0;
-  return ((idx % len) + len) % len;
-}
-
-// El ícono activo siempre se ancla aquí (9 en punto = izquierda pura)
-const ANCHOR_ANGLE = Math.PI; // 180°
-
-// Radio del anillo orbital (más amplio para mayor espacio y presencia)
-const ORBIT_RADIUS = 104;
+// Lienzo centrado al 50%/50% exacto del contenedor de KAI
+const STAGE_SIZE = 380;
+const HALF_STAGE = STAGE_SIZE / 2;
+const ORBIT_RADIUS = 122;
 
 export const SatelliteKaiHub: React.FC<SatelliteKaiHubProps> = ({
   items,
+  isOpen = true,
   initialIndex = 0,
   onClose,
   onSelect,
-  minOpacity,
 }) => {
-  const n = items.length;
+  const [expanded, setExpanded] = useState(false);
+  const [gooActive, setGooActive] = useState(false);
+  const [activeIndex, setActiveIndex] = useState<number>(initialIndex);
 
-  // rotRef almacena la posición de la rueda en "pasos" (fraccionales)
-  // rotRef.current = 0  → item[0] en el ancla (izquierda)
-  const rotRef = useRef<number>(wrapIndex(initialIndex, n));
-  const [rotState, setRotState] = useState<number>(wrapIndex(initialIndex, n));
-  const velRef = useRef(0);
-  const frameRef = useRef<number | null>(null);
-  const draggingRef = useRef(false);
-  const dragStartRef = useRef<{ x: number; y: number; rot: number } | null>(null);
-  const prevDragRotRef = useRef(0);
-  const lastWheelTime = useRef(0);
-  const isTapRef = useRef(true);
-
-  const activeIdx = wrapIndex(Math.round(rotState), n);
-  const activeItem = items[activeIdx] || items[0];
-
-  // ─── Motor de inercia y snap magnético ───────────────────────────────────
-  const lastClickIdxRef = useRef(activeIdx);
-  const lastMoveRef = useRef<{ y: number; time: number }>({ y: 0, time: 0 });
-  const recentSpeedRef = useRef(0);
-
-  const commit = useCallback((r: number) => {
-    rotRef.current = r;
-    setRotState(r);
-    const currentRounded = wrapIndex(Math.round(r), n);
-    if (currentRounded !== lastClickIdxRef.current) {
-      soundFX.playClick();
-      lastClickIdxRef.current = currentRounded;
+  useEffect(() => {
+    if (isOpen) {
+      setGooActive(true);
+      const raf = requestAnimationFrame(() => {
+        setExpanded(true);
+      });
+      const timer = setTimeout(() => {
+        setGooActive(false);
+      }, 540);
+      return () => {
+        cancelAnimationFrame(raf);
+        clearTimeout(timer);
+      };
+    } else {
+      setGooActive(true);
+      setExpanded(false);
+      const timer = setTimeout(() => {
+        setGooActive(false);
+      }, 440);
+      return () => clearTimeout(timer);
     }
-  }, [n]);
+  }, [isOpen]);
 
-  const startEngine = useCallback(() => {
-    if (frameRef.current !== null) return;
-
-    const tick = () => {
-      const SNAP_TARGET = Math.round(rotRef.current);
-      const delta = SNAP_TARGET - rotRef.current;
-
-      if (!draggingRef.current) {
-        if (Math.abs(velRef.current) > 0.0015) {
-          commit(rotRef.current + velRef.current);
-          velRef.current *= 0.86;
-          frameRef.current = requestAnimationFrame(tick);
-          return;
-        }
-        if (Math.abs(delta) > 0.002) {
-          commit(rotRef.current + delta * 0.28);
-          frameRef.current = requestAnimationFrame(tick);
-          return;
-        }
-        commit(SNAP_TARGET);
-        velRef.current = 0;
-      }
-      frameRef.current = null;
-    };
-
-    frameRef.current = requestAnimationFrame(tick);
-  }, [commit]);
-
+  // Navegación opcional por teclado + Escape
   useEffect(() => {
-    return () => {
-      if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
-    };
-  }, []);
-
-  // ─── Teclado ──────────────────────────────────────────────────────────────
-  useEffect(() => {
+    if (!isOpen) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { e.preventDefault(); onClose(); return; }
-      if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
-        e.preventDefault(); velRef.current = 0; commit(rotRef.current + 1); startEngine();
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+        return;
       }
-      if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
-        e.preventDefault(); velRef.current = 0; commit(rotRef.current - 1); startEngine();
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        soundFX.playClick();
+        setActiveIndex((prev) => (prev + 1) % items.length);
       }
-      if (e.key === 'Enter') { e.preventDefault(); onSelect(activeItem); }
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        soundFX.playClick();
+        setActiveIndex((prev) => (prev - 1 + items.length) % items.length);
+      }
+      if (e.key === 'Enter' && items[activeIndex]) {
+        e.preventDefault();
+        onSelect(items[activeIndex]);
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [activeItem, commit, onClose, onSelect, startEngine]);
+  }, [isOpen, items, activeIndex, onClose, onSelect]);
 
-  // ─── Rueda de ratón con acumulación y amortiguación táctica ───────────────
-  const wheelAccRef = useRef(0);
-  const onWheel = useCallback((e: React.WheelEvent) => {
-    e.stopPropagation();
-    const now = Date.now();
-    wheelAccRef.current += e.deltaY;
-
-    // Control de tiempo para no disparar en ráfaga (mínimo 160ms entre pasos)
-    if (now - lastWheelTime.current < 160) return;
-
-    // Requiere un giro deliberado de la rueda (umbral de 35px)
-    if (Math.abs(wheelAccRef.current) < 35) return;
-
-    const dir = wheelAccRef.current > 0 ? 1 : -1;
-    wheelAccRef.current = 0;
-    lastWheelTime.current = now;
-
-    soundFX.playClick();
-    velRef.current = 0;
-    commit(rotRef.current + dir);
-    startEngine();
-  }, [commit, startEngine]);
-
-  // ─── Gestos táctiles ultra-fluidos (Arrastre orbital directo + Tap) ────────
-  const onPointerDown = useCallback((e: React.PointerEvent, itemIndex?: number) => {
-    e.stopPropagation();
-    draggingRef.current = true;
-    isTapRef.current = true;
-    const now = Date.now();
-    dragStartRef.current = { x: e.clientX, y: e.clientY, rot: rotRef.current };
-    lastMoveRef.current = { y: e.clientY, time: now };
-    recentSpeedRef.current = 0;
-    velRef.current = 0;
-    if (frameRef.current !== null) { cancelAnimationFrame(frameRef.current); frameRef.current = null; }
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-  }, []);
-
-  const onPointerMove = useCallback((e: React.PointerEvent) => {
-    if (!draggingRef.current || !dragStartRef.current) return;
-    e.stopPropagation();
-    const dy = e.clientY - dragStartRef.current.y;
-    const dx = e.clientX - dragStartRef.current.x;
-
-    // Si se desplazó más de 6px deja de ser un tap y se convierte en arrastre fluido
-    if (Math.abs(dy) > 6 || Math.abs(dx) > 6) {
-      isTapRef.current = false;
-    }
-
-    const now = Date.now();
-    const dt = now - lastMoveRef.current.time;
-    if (dt > 8) {
-      const stepDy = e.clientY - lastMoveRef.current.y;
-      recentSpeedRef.current = (stepDy * 0.024) / dt;
-      lastMoveRef.current = { y: e.clientY, time: now };
-    }
-
-    // Sensibilidad duplicada y ergonómica (~40px de recorrido por ícono en pantalla)
-    const dragSensitivity = 0.024;
-    const newRot = dragStartRef.current.rot + dy * dragSensitivity;
-    commit(newRot);
-  }, [commit]);
-
-  const onPointerUp = useCallback((e: React.PointerEvent, itemIndex?: number) => {
-    e.stopPropagation();
-    const wasDragging = draggingRef.current;
-    const wasTap = isTapRef.current;
-
-    draggingRef.current = false;
-    dragStartRef.current = null;
-
-    if (e.currentTarget && (e.currentTarget as HTMLElement).hasPointerCapture?.(e.pointerId)) {
-      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-    }
-
-    // Si fue un toque rápido sobre cualquier ítem satélite, seleccionarlo y cerrarlo de inmediato
-    if (wasTap && itemIndex !== undefined) {
-      soundFX.playClick();
-      onSelect(items[itemIndex]);
-      return;
-    }
-
-    // Si fue un arrastre, aplicar inercia (flick) y snap magnético
-    if (wasDragging) {
-      if (Math.abs(recentSpeedRef.current) > 0.003) {
-        velRef.current = Math.max(-0.25, Math.min(0.25, recentSpeedRef.current * 16));
-      }
-      startEngine();
-    }
-  }, [commit, items, n, onSelect, startEngine]);
-
-  // ─── Geometría orbital ────────────────────────────────────────────────────
-  // Para el item i, su ángulo en el anillo respecto al ancla es:
-  //   θ = ANCHOR_ANGLE + (i - rot) * (2π/n)
-  // En perspectiva 3D inclinada: el eje X se escala con cos(θ) y el Y con sin(θ)
-  // pero el anillo se ve "de frente" inclinado ~30° (perspectiva isométrica)
-  const getItemGeometry = useCallback((i: number, rot: number) => {
-    const angle = ANCHOR_ANGLE + (i - rot) * ((2 * Math.PI) / n);
-    // Perspectiva: aplastamos Y para simular inclinación (~cos(30°)=0.87)
-    const x = ORBIT_RADIUS * Math.cos(angle);
-    const y = ORBIT_RADIUS * Math.sin(angle) * 0.82;
-
-    // depth: 1 cuando está en el punto de ancla (izquierda), 0 cuando está detrás a la derecha
-    const rawDepth = Math.cos(angle - ANCHOR_ANGLE); // 1 en ancla, -1 en opuesto
-    const depth = (rawDepth + 1) / 2; // normalizado 0..1
-
-    const scale = 0.52 + 0.58 * Math.pow(depth, 1.4);
-    const baseMinOpacity = minOpacity ?? 0.28;
-    const opacity = baseMinOpacity + (1 - baseMinOpacity) * Math.pow(depth, 1.2);
-    const zIndex = Math.round(50 + 20 * depth);
-    const isActive = i === wrapIndex(Math.round(rot), n);
-
-    return { x, y, scale, opacity, zIndex, isActive, angle, depth };
-  }, [minOpacity, n]);
-
-  const activeItemDisplay = items[wrapIndex(Math.round(rotState), n)] || items[0];
+  const n = items.length;
+  const activeItem = items[activeIndex] || items[0];
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.25, rotate: -20 }}
-        animate={{ opacity: 1, scale: 1, rotate: 0 }}
-        exit={{ opacity: 0, scale: 0.25, rotate: -20 }}
-        transition={{ type: 'spring', damping: 24, stiffness: 280, mass: 0.6 }}
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-0 h-0 pointer-events-none z-[58]"
-        onWheel={onWheel}
+    <div
+      style={{
+        position: 'absolute',
+        left: '50%',
+        top: '50%',
+        width: STAGE_SIZE,
+        height: STAGE_SIZE,
+        marginLeft: -HALF_STAGE,
+        marginTop: -HALF_STAGE,
+      }}
+      className={`menu-bubble-expand z-[58] select-none ${
+        isOpen ? 'pointer-events-auto' : 'pointer-events-none'
+      }`}
+    >
+      {/* Filtro SVG Gooey (#mbe-goo) para fundir las burbujas al emerger del centro de KAI */}
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        version="1.1"
+        className="absolute w-0 h-0 pointer-events-none overflow-hidden"
+        aria-hidden="true"
       >
-        {/* ── 1. ANILLO ORBITAL SVG (PERSPECTIVA 3D INCLINADA) ───────────── */}
-        <svg
-          className="absolute overflow-visible pointer-events-none"
-          style={{ width: 0, height: 0, left: 0, top: 0 }}
-        >
-          <defs>
-            <radialGradient id="orbitRingGrad" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor={activeItemDisplay.accentColor} stopOpacity="0" />
-              <stop offset="100%" stopColor={activeItemDisplay.accentColor} stopOpacity="0.55" />
-            </radialGradient>
-            <filter id="orbitGlow" x="-40%" y="-40%" width="180%" height="180%">
-              <feGaussianBlur stdDeviation="2" result="blur" />
-              <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-            </filter>
-          </defs>
-          {/* Elipse perspectiva */}
-          <ellipse
-            cx={0} cy={0}
-            rx={ORBIT_RADIUS}
-            ry={ORBIT_RADIUS * 0.82}
-            fill="none"
-            stroke={activeItemDisplay.accentColor}
-            strokeWidth="1.2"
-            strokeDasharray="5 6"
-            opacity="0.38"
-            filter="url(#orbitGlow)"
-          />
-          {/* Rayo láser al ítem activo */}
-          <line
-            x1={0} y1={0}
-            x2={ORBIT_RADIUS * Math.cos(ANCHOR_ANGLE) * 0.7}
-            y2={ORBIT_RADIUS * Math.sin(ANCHOR_ANGLE) * 0.82 * 0.7}
-            stroke={activeItemDisplay.accentColor}
-            strokeWidth="1"
-            opacity="0.6"
-            filter="url(#orbitGlow)"
-          />
-        </svg>
+        <defs>
+          <filter id="mbe-goo" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="9" result="blur" />
+            <feColorMatrix
+              in="blur"
+              mode="matrix"
+              values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7"
+              result="goo"
+            />
+            <feBlend in="SourceGraphic" in2="goo" />
+          </filter>
+          <filter id="orbitGlow" x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur stdDeviation="2" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+      </svg>
 
-        {/* ── 2. ZONA DE CAPTURA TÁCTIL ORBITAL (excluyendo centro de KAI) ── */}
+      {/* 1. ANILLO ORBITAL HOLOGRÁFICO SUTIL (Centrado en KAI) */}
+      <svg
+        viewBox={`0 0 ${STAGE_SIZE} ${STAGE_SIZE}`}
+        className="absolute inset-0 w-full h-full pointer-events-none transition-all duration-500"
+        style={{
+          opacity: expanded ? 1 : 0,
+          transform: `scale(${expanded ? 1 : 0.35})`,
+        }}
+      >
+        <circle
+          cx={HALF_STAGE}
+          cy={HALF_STAGE}
+          r={ORBIT_RADIUS}
+          fill="none"
+          stroke={activeItem?.accentColor || '#00f0ff'}
+          strokeWidth="1"
+          strokeDasharray="4 6"
+          opacity="0.28"
+          filter="url(#orbitGlow)"
+        />
+      </svg>
+
+      {/* 2. CAPA GOOEY (#mbe-goo): Gotas de plasma que se desprenden del centro exacto de KAI al abrir/cerrar */}
+      <div
+        className="mbe-nav absolute inset-0 pointer-events-none transition-opacity duration-300"
+        style={{
+          filter: "url('#mbe-goo')",
+          opacity: gooActive ? 0.8 : 0,
+        }}
+      >
+        {/* Núcleo líquido detrás de KAI */}
         <div
-          onPointerDown={(e) => onPointerDown(e)}
-          onPointerMove={onPointerMove}
-          onPointerUp={(e) => onPointerUp(e)}
-          onPointerCancel={(e) => onPointerUp(e)}
-          className="absolute pointer-events-auto touch-none cursor-grab active:cursor-grabbing"
           style={{
-            left: -(ORBIT_RADIUS + 34),
-            top: -(ORBIT_RADIUS * 0.82 + 34),
-            width: (ORBIT_RADIUS + 34) * 2,
-            height: (ORBIT_RADIUS * 0.82 + 34) * 2,
+            position: 'absolute',
+            left: HALF_STAGE - 24,
+            top: HALF_STAGE - 24,
+            width: 48,
+            height: 48,
             borderRadius: '50%',
-            WebkitMaskImage: 'radial-gradient(circle 26px at center, transparent 26px, black 28px)',
-            maskImage: 'radial-gradient(circle 26px at center, transparent 26px, black 28px)',
-            zIndex: 40,
+            background: 'rgba(0, 240, 255, 0.6)',
+            transform: `scale(${expanded ? 0.15 : 0.85})`,
+            transition: 'transform 0.46s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
         />
 
-        {/* ── 3. LOS 9 SATÉLITES EN ÓRBITA ────────────────────────────────── */}
+        {/* Gotas que viajan desde el centro hacia cada posición orbital */}
+        <div className="mbe-bubbles">
+          {items.map((item, i) => {
+            const angle = (i / n) * Math.PI * 2 - Math.PI / 2;
+            const targetX = Math.round(Math.cos(angle) * ORBIT_RADIUS);
+            const targetY = Math.round(Math.sin(angle) * ORBIT_RADIUS);
+            const delayMs = i * 16;
+
+            return (
+              <div
+                key={`goo-${item.id}`}
+                style={{
+                  position: 'absolute',
+                  left: HALF_STAGE - 21,
+                  top: HALF_STAGE - 21,
+                  width: 42,
+                  height: 42,
+                  borderRadius: '50%',
+                  background: 'rgba(0, 220, 255, 0.5)',
+                  transform: expanded
+                    ? `translate(${targetX}px, ${targetY}px) scale(0.9)`
+                    : 'translate(0px, 0px) scale(0.35)',
+                  transition: `transform 0.52s cubic-bezier(0.8, -0.5, 0.2, 1.4) ${delayMs}ms`,
+                }}
+              />
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 3. SATÉLITES EN ÓRBITA (Círculos con anillos para Pestañas + Hexágonos sutiles para Gadgets + Etiqueta debajo) */}
+      <div className="absolute inset-0 pointer-events-none">
         {items.map((item, i) => {
-          const { x, y, scale, opacity, zIndex, isActive, depth } = getItemGeometry(i, rotState);
-          // Ícono activo más grande (52px), inactivos entre 32px y 42px
-          const iconSizePx = isActive ? 52 : Math.round(32 + 10 * depth);
+          const angle = (i / n) * Math.PI * 2 - Math.PI / 2;
+          const targetX = Math.round(Math.cos(angle) * ORBIT_RADIUS);
+          const targetY = Math.round(Math.sin(angle) * ORBIT_RADIUS);
+          const delayMs = i * 16;
+
+          const isActive = i === activeIndex;
           const isGadget = item.type === 'gadget';
+          const nodeSize = isActive ? 48 : 42;
 
           return (
-            <motion.div
+            <div
               key={item.id}
-              animate={{ x, y, scale, opacity }}
-              transition={{ type: 'spring', stiffness: 320, damping: 26, mass: 0.8 }}
               style={{
                 position: 'absolute',
-                left: 0,
-                top: 0,
-                marginLeft: -iconSizePx / 2,
-                marginTop: -iconSizePx / 2,
-                zIndex,
-                width: iconSizePx,
-                height: iconSizePx,
+                left: HALF_STAGE - nodeSize / 2,
+                top: HALF_STAGE - nodeSize / 2,
+                width: nodeSize,
+                height: nodeSize,
+                zIndex: isActive ? 65 : 55,
+                transform: expanded
+                  ? `translate(${targetX}px, ${targetY}px) scale(1)`
+                  : 'translate(0px, 0px) scale(0.25)',
+                opacity: expanded ? 1 : 0,
+                transition: `transform 0.52s cubic-bezier(0.8, -0.5, 0.2, 1.4) ${delayMs}ms, opacity 0.24s ease ${delayMs}ms, width 0.2s ease, height 0.2s ease, left 0.2s ease, top 0.2s ease`,
               }}
-              className="pointer-events-auto select-none touch-none"
+              className={expanded ? 'pointer-events-auto' : 'pointer-events-none'}
             >
               <div
-                onPointerDown={(e) => onPointerDown(e, i)}
-                onPointerMove={onPointerMove}
-                onPointerUp={(e) => onPointerUp(e, i)}
-                onPointerCancel={(e) => onPointerUp(e, i)}
+                role="button"
+                tabIndex={0}
+                onMouseEnter={() => {
+                  if (activeIndex !== i) {
+                    setActiveIndex(i);
+                  }
+                }}
+                onFocus={() => setActiveIndex(i)}
                 onClick={(e) => {
                   e.stopPropagation();
                   soundFX.playClick();
+                  setActiveIndex(i);
                   onSelect(item);
                 }}
                 className={`w-full h-full flex items-center justify-center cursor-pointer relative active:scale-90 transition-all duration-200 ${
@@ -348,19 +265,19 @@ export const SatelliteKaiHub: React.FC<SatelliteKaiHubProps> = ({
                     ? { background: 'transparent', border: 'none', boxShadow: 'none' }
                     : {
                         background: isActive
-                          ? `radial-gradient(circle at 35% 35%, rgba(255,255,255,0.2) 0%, rgba(2,16,30,0.98) 100%)`
-                          : `rgba(6, 14, 24, ${0.75 + 0.2 * depth})`,
+                          ? 'radial-gradient(circle at 35% 35%, rgba(255,255,255,0.2) 0%, rgba(2,16,30,0.98) 100%)'
+                          : 'rgba(6, 14, 24, 0.88)',
                         border: isActive
-                          ? `2.5px solid ${item.accentColor}`
-                          : `1.5px solid rgba(148, 163, 184, ${0.15 + 0.3 * depth})`,
+                          ? `2px solid ${item.accentColor}`
+                          : '1.5px solid rgba(148, 163, 184, 0.35)',
                         boxShadow: isActive
-                          ? `0 0 25px ${item.glowColor}, 0 0 10px ${item.accentColor}, inset 0 0 12px ${item.accentColor}30`
-                          : 'none',
+                          ? `0 0 22px ${item.glowColor}, 0 0 8px ${item.accentColor}, inset 0 0 10px ${item.accentColor}30`
+                          : '0 4px 12px rgba(0, 0, 0, 0.5)',
                       }
                 }
                 title={item.label}
               >
-                {/* Geometría Hexagonal Táctica para Gadgets convocados */}
+                {/* Geometría Hexagonal Sutil para los Gadgets de KAI */}
                 {isGadget && (
                   <svg
                     viewBox="0 0 100 100"
@@ -374,18 +291,18 @@ export const SatelliteKaiHub: React.FC<SatelliteKaiHubProps> = ({
                     </defs>
                     <polygon
                       points="50,4 92,26 92,74 50,96 8,74 8,26"
-                      fill={isActive ? `url(#hex-grad-${item.id})` : `rgba(10, 8, 20, ${0.82 + 0.18 * depth})`}
-                      stroke={isActive ? item.accentColor : `rgba(192, 132, 252, ${0.25 + 0.35 * depth})`}
-                      strokeWidth={isActive ? '4' : '2'}
+                      fill={isActive ? `url(#hex-grad-${item.id})` : 'rgba(10, 8, 20, 0.90)'}
+                      stroke={isActive ? item.accentColor : 'rgba(192, 132, 252, 0.45)'}
+                      strokeWidth={isActive ? '3.5' : '2'}
                       strokeLinejoin="round"
                       style={{
-                        filter: isActive ? `drop-shadow(0 0 14px ${item.glowColor})` : 'none',
+                        filter: isActive ? `drop-shadow(0 0 12px ${item.glowColor})` : 'none',
                       }}
                     />
                   </svg>
                 )}
 
-                {/* Aura pulsante del activo */}
+                {/* Anillo exterior giratorio y aura pulsante en el nodo activo */}
                 {isActive && (
                   <>
                     <div
@@ -396,7 +313,6 @@ export const SatelliteKaiHub: React.FC<SatelliteKaiHubProps> = ({
                         background: `radial-gradient(circle, ${item.accentColor}35 0%, transparent 70%)`,
                       }}
                     />
-                    {/* Anillo de selección exterior giratorio */}
                     {isGadget ? (
                       <svg
                         viewBox="0 0 120 120"
@@ -417,7 +333,7 @@ export const SatelliteKaiHub: React.FC<SatelliteKaiHubProps> = ({
                       <div
                         className="absolute -inset-2 rounded-full pointer-events-none animate-spin"
                         style={{
-                          border: `1.5px dashed ${item.accentColor}60`,
+                          border: `1.5px dashed ${item.accentColor}80`,
                           animationDuration: '8s',
                         }}
                       />
@@ -425,12 +341,13 @@ export const SatelliteKaiHub: React.FC<SatelliteKaiHubProps> = ({
                   </>
                 )}
 
+                {/* Ícono interno */}
                 <div
                   className="relative z-10 transition-all duration-200"
                   style={{
-                    color: isActive ? item.accentColor : `rgba(148, 163, 184, ${0.45 + 0.45 * depth})`,
-                    filter: isActive ? `drop-shadow(0 0 8px ${item.accentColor})` : 'grayscale(100%)',
-                    transform: isActive ? 'scale(1.2)' : `scale(${0.75 + 0.25 * depth})`,
+                    color: isActive ? item.accentColor : 'rgba(203, 213, 225, 0.88)',
+                    filter: isActive ? `drop-shadow(0 0 8px ${item.accentColor})` : 'none',
+                    transform: isActive ? 'scale(1.12)' : 'scale(0.92)',
                   }}
                 >
                   {item.icon}
@@ -439,18 +356,38 @@ export const SatelliteKaiHub: React.FC<SatelliteKaiHubProps> = ({
                 {item.hasBadge && (
                   <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-purple-400 ring-2 ring-black shadow-[0_0_8px_rgba(192,132,252,0.9)] z-20" />
                 )}
+
+                {/* Etiqueta sutil justo debajo de cada icono para identificarlo al instante */}
+                <span
+                  className="absolute left-1/2 -translate-x-1/2 pointer-events-none font-mono font-bold uppercase whitespace-nowrap transition-all duration-200"
+                  style={{
+                    top: isActive ? 'calc(100% + 7px)' : 'calc(100% + 4px)',
+                    fontSize: isActive ? '9px' : '8px',
+                    letterSpacing: '0.13em',
+                    color: isActive ? '#ffffff' : 'rgba(226, 232, 240, 0.85)',
+                    textShadow: isActive
+                      ? `0 1px 4px rgba(0,0,0,0.98), 0 0 8px ${item.accentColor}`
+                      : '0 1px 4px rgba(0,0,0,0.95), 0 0 6px rgba(0,0,0,0.9)',
+                  }}
+                >
+                  {item.label}
+                </span>
               </div>
-            </motion.div>
+            </div>
           );
         })}
+      </div>
 
-        {/* ── 4. SUBTÍTULO HOLOGRÁFICO PURO: FLOTANTE SIN CAJA (0% INVASIVO) ── */}
+      {/* 4. SUBTÍTULO HOLOGRÁFICO PURO AL PIE (Con espacio limpio debajo de la etiqueta inferior) */}
+      {activeItem && (
         <div
           style={{
             position: 'absolute',
-            top: `${Math.round(ORBIT_RADIUS * 0.82 + 24)}px`,
-            left: '0px',
+            left: HALF_STAGE,
+            top: HALF_STAGE + ORBIT_RADIUS + 46,
             transform: 'translate(-50%, 0)',
+            opacity: expanded ? 1 : 0,
+            transition: 'opacity 0.25s ease 0.1s',
             zIndex: 70,
           }}
           className="pointer-events-auto select-none"
@@ -460,30 +397,39 @@ export const SatelliteKaiHub: React.FC<SatelliteKaiHubProps> = ({
             onClick={(e) => {
               e.stopPropagation();
               soundFX.playClick();
-              onSelect(activeItemDisplay);
+              onSelect(activeItem);
             }}
             className="group flex flex-col items-center cursor-pointer active:scale-95 transition-transform"
           >
-            {/* Texto flotante con actualización inmediata sin bloqueo de colas */}
             <div className="flex items-center gap-1.5 px-2 py-0.5">
               <motion.span
-                key={activeItemDisplay.id}
+                key={activeItem.id}
                 initial={{ opacity: 0.5, scale: 0.94 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.08, ease: 'easeOut' }}
-                className="font-mono tracking-[0.28em] text-[11px] font-bold uppercase text-white/95 group-hover:text-white transition-colors flex items-center gap-1"
+                className="font-mono tracking-[0.24em] text-[10.5px] font-bold uppercase text-white/95 group-hover:text-white transition-colors flex items-center gap-1.5 whitespace-nowrap"
                 style={{
-                  textShadow: `0 0 10px ${activeItemDisplay.accentColor}80, 0 0 20px ${activeItemDisplay.glowColor}`,
+                  textShadow: `0 0 10px ${activeItem.accentColor}80, 0 0 20px ${activeItem.glowColor}`,
                 }}
               >
-                {activeItemDisplay.type === 'gadget' && (
-                  <span className="text-[10px] font-mono" style={{ color: activeItemDisplay.accentColor }}>⚡</span>
+                {activeItem.type === 'gadget' && (
+                  <span className="text-[10px] font-mono" style={{ color: activeItem.accentColor }}>
+                    ⚡
+                  </span>
                 )}
-                <span>{activeItemDisplay.label}</span>
+                <span>{activeItem.label}</span>
+                {activeItem.liveStat && (
+                  <span
+                    className="text-[9.5px] font-normal tracking-wider opacity-90"
+                    style={{ color: activeItem.accentColor }}
+                  >
+                    • {activeItem.liveStat}
+                  </span>
+                )}
               </motion.span>
               <span
                 className="text-[9px] font-mono font-bold group-hover:translate-x-1 transition-transform"
-                style={{ color: activeItemDisplay.accentColor }}
+                style={{ color: activeItem.accentColor }}
               >
                 ➔
               </span>
@@ -494,13 +440,14 @@ export const SatelliteKaiHub: React.FC<SatelliteKaiHubProps> = ({
               className="h-[1px] rounded-full transition-all duration-300"
               style={{
                 width: '60%',
-                background: `linear-gradient(to right, transparent, ${activeItemDisplay.accentColor}90, transparent)`,
-                boxShadow: `0 0 6px ${activeItemDisplay.accentColor}`,
+                background: `linear-gradient(to right, transparent, ${activeItem.accentColor}90, transparent)`,
+                boxShadow: `0 0 6px ${activeItem.accentColor}`,
               }}
             />
           </div>
         </div>
-      </motion.div>
+      )}
+    </div>
   );
 };
 

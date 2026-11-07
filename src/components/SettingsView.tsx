@@ -3,7 +3,7 @@ import {
   Settings, Sparkles, Activity, ShieldAlert, ShieldCheck, Shield, LogOut, User, LogIn, 
   Cloud, CloudOff, Download, Upload, Database, Check, RefreshCw, 
   HardDrive, FileSpreadsheet, Cpu, CheckCircle2, Key,
-  Coins, Volume2, VolumeX, Target, Sun, Moon, Laptop, ArrowUpRight, CheckCheck,
+  Coins, Volume2, VolumeX, Target, Sun, Moon, ArrowUpRight, CheckCheck,
   SlidersHorizontal, Smartphone, Share, PlusSquare, FlaskConical,
   Compass, Eye, Layout, Bell, BellOff, BellRing, Zap, Flame, Timer, Palette, ChevronLeft, Wallet, Type, Lock
 } from 'lucide-react';
@@ -68,9 +68,53 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const { user, signInWithGoogle, signOut } = useAuth();
   const pwa = usePWAInstall();
   const [showIOSInstructions, setShowIOSInstructions] = useState(false);
+  const [pwaBuildInfo, setPwaBuildInfo] = useState<{
+    localRev: string;
+    serverRev: string | null;
+    checking: boolean;
+  }>(() => ({
+    localRev: (typeof window !== 'undefined' && (window as any).__APP_BUILD_REV__) || localStorage.getItem('app_build_rev') || 'rev-local',
+    serverRev: null,
+    checking: true,
+  }));
+
+  useEffect(() => {
+    let mounted = true;
+    const verifyBuildRev = async () => {
+      try {
+        const res = await fetch('/api/build-rev?_cb=' + Date.now(), {
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' },
+        });
+        if (res.ok && mounted) {
+          const data = await res.json();
+          setPwaBuildInfo((prev) => ({
+            ...prev,
+            serverRev: data?.rev || prev.localRev,
+            checking: false,
+          }));
+          return;
+        }
+      } catch {}
+      if (mounted) {
+        setPwaBuildInfo((prev) => ({ ...prev, checking: false }));
+      }
+    };
+    verifyBuildRev();
+    return () => {
+      mounted = false;
+    };
+  }, []);
   const game = gameEngine as any;
   const cloudSync = propCloudSync || game?.cloudSync;
-  const { soundEnabled, toggleSound, themeMode, opticMode, setOpticMode, navigationMode, setNavigationMode, zenMode, toggleZenMode, systemAura, setSystemAura, triggerTransition } = useUIStore();
+  const { 
+    soundEnabled, toggleSound, opticMode, setOpticMode, 
+    navigationMode, setNavigationMode, 
+    zenMode, toggleZenMode, 
+    timeFormat, setTimeFormat, 
+    systemAura, setSystemAura, triggerTransition,
+    zenFont, setZenFont 
+  } = useUIStore();
   
   const [activeSubTab, setActiveSubTab] = useState<SettingsSubTab>('preferences');
   const [currentCurrency, setCurrentCurrency] = useState<string>(getSavedCurrencySymbol);
@@ -203,11 +247,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     notificationService.sendTestNotification();
     setNotifTestFeedback('✓ Notificación de prueba enviada (Sistema Operativo y Alerta en Pantalla)');
     setTimeout(() => setNotifTestFeedback(null), 4000);
-  };
-
-  const handleSetTheme = (mode: 'auto' | 'dark' | 'light') => {
-    soundFX.playClick();
-    useUIStore.getState().setThemeMode(mode);
   };
 
   const [isPullingCloud, setIsPullingCloud] = useState(false);
@@ -462,8 +501,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           )}
         </div>
 
-        {/* SUB-TABS NAV BAR: 5-segment responsive control */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 p-1.5 bg-black/40 rounded-xl sm:rounded-2xl border border-white/10 relative z-10">
+        {/* SUB-TABS NAV BAR: Moxen Chip Menu Group (mf-8-menu-chip-group) */}
+        <div
+          className="mf-8-menu-chip-group mf-chip-group relative z-10 justify-start sm:justify-center"
+          role="listbox"
+          aria-label="Secciones de configuración"
+        >
           {tabsConfig.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeSubTab === tab.id;
@@ -471,18 +514,18 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <button
                 key={tab.id}
                 type="button"
+                role="option"
+                aria-selected={isActive}
                 onClick={() => {
                   soundFX.playClick();
                   setActiveSubTab(tab.id);
                 }}
-                className={`chicle-btn flex items-center justify-center gap-2 py-2.5 px-2 rounded-xl text-xs font-anton tracking-wider uppercase transition-all cursor-pointer active:scale-95 ${
-                  isActive
-                    ? 'bg-cyan-400 text-black shadow-[0_0_15px_rgba(0,240,255,0.5)] font-bold'
-                    : 'text-slate-400 hover:text-white hover:bg-white/[0.05]'
+                className={`mf-8-menu-chip-group__chip mf-chip ${
+                  isActive ? 'mf-8-menu-chip-group__chip--active mf-chip--active' : ''
                 }`}
               >
                 <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-black' : tab.color}`} />
-                <span className="truncate">{tab.label}</span>
+                <span>{tab.label}</span>
               </button>
             );
           })}
@@ -746,58 +789,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 )}
               </div>
 
-              {/* TEMA VISUAL */}
-              <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <h4 className="text-sm font-anton tracking-wider uppercase text-white flex items-center gap-2 mb-1">
-                    <Sun className="w-4 h-4 text-amber-400" /> Tema de la Pantalla
-                  </h4>
-                  <p className="text-xs text-slate-400">
-                    Paleta de contraste visual y modo de color para la interfaz.
-                  </p>
-                </div>
-                <div className="flex items-center gap-1.5 bg-black/40 p-1 rounded-2xl border border-white/10 self-start sm:self-auto">
-                  <button
-                    type="button"
-                    onClick={() => handleSetTheme('dark')}
-                    className={`chicle-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all cursor-pointer ${
-                      themeMode === 'dark' ? 'bg-cyan-500 text-black font-bold shadow-[0_0_12px_rgba(0,240,255,0.4)]' : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    <Moon className="w-3.5 h-3.5" />
-                    <span>Oscuro</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleSetTheme('light')}
-                    className={`chicle-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all cursor-pointer ${
-                      themeMode === 'light' ? 'bg-cyan-500 text-black font-bold shadow-[0_0_12px_rgba(0,240,255,0.4)]' : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    <Sun className="w-3.5 h-3.5" />
-                    <span>Claro</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleSetTheme('auto')}
-                    className={`chicle-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all cursor-pointer ${
-                      themeMode === 'auto' ? 'bg-cyan-500 text-black font-bold shadow-[0_0_12px_rgba(0,240,255,0.4)]' : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    <Laptop className="w-3.5 h-3.5" />
-                    <span>Auto</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* MODO DE NAVEGACIÓN HUD (KAI NEXUS VS CLÁSICO) */}
+              {/* MODO DE NAVEGACIÓN HUD (KAI NEXUS VS BARRA LATERAL) */}
               <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <h4 className="text-sm font-anton tracking-wider uppercase text-white flex items-center gap-2 mb-1">
                     <Compass className="w-4 h-4 text-cyan-400" /> Modo de Navegación HUD
                   </h4>
                   <p className="text-xs text-slate-400">
-                    Elige si navegar con KAI en pantalla completa inmersiva o con la barra inferior clásica.
+                    Elige entre el orbe flotante de KAI con menú orbital o la Barra Lateral expandible con KAI integrado en su cabecera.
                   </p>
                 </div>
                 <div className="flex items-center gap-1.5 bg-black/40 p-1 rounded-2xl border border-white/10 self-start sm:self-auto">
@@ -812,10 +811,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         ? 'bg-cyan-400 text-black font-bold shadow-[0_0_14px_rgba(0,240,255,0.6)]'
                         : 'text-slate-400 hover:text-white'
                     }`}
-                    title="KAI Nexus: Pantalla completa sin barra inferior"
+                    title="KAI Nexus: Orbe flotante con menú orbital"
                   >
                     <Eye className="w-3.5 h-3.5" />
-                    <span>KAI Nexus (Inmersivo)</span>
+                    <span>KAI Nexus (Flotante)</span>
                   </button>
                   <button
                     type="button"
@@ -828,10 +827,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         ? 'bg-cyan-400 text-black font-bold shadow-[0_0_14px_rgba(0,240,255,0.6)]'
                         : 'text-slate-400 hover:text-white'
                     }`}
-                    title="Clásico: Barra de navegación inferior siempre visible"
+                    title="Barra Lateral: Menú izquierdo expandible con KAI en la cabecera"
                   >
                     <Layout className="w-3.5 h-3.5" />
-                    <span>Clásico (Con Barra)</span>
+                    <span>Barra Lateral (KAI Menú)</span>
                   </button>
                 </div>
               </div>
@@ -857,6 +856,48 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   ariaLabel="Alternar Modo Zen"
                   title={zenMode ? 'Modo Zen activado' : 'Modo Zen desactivado'}
                 />
+              </div>
+
+              {/* FORMATO DE HORA EN AGENDA (12H AM/PM VS 24H MILITAR) */}
+              <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h4 className="text-sm font-anton tracking-wider uppercase text-white flex items-center gap-2 mb-1">
+                    <Timer className="w-4 h-4 text-cyan-400" /> Formato de Hora en Agenda
+                  </h4>
+                  <p className="text-xs text-slate-400">
+                    Elige cómo visualizar la columna de horarios de tus tareas (12h con AM/PM o 24h).
+                  </p>
+                </div>
+                <div className="flex items-center gap-1.5 bg-black/40 p-1 rounded-2xl border border-white/10 self-start sm:self-auto">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFX.playClick();
+                      setTimeFormat('12h');
+                    }}
+                    className={`chicle-btn flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all cursor-pointer ${
+                      timeFormat === '12h'
+                        ? 'bg-cyan-400 text-black font-bold shadow-[0_0_14px_rgba(0,240,255,0.6)]'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <span>12 Horas (AM/PM)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFX.playClick();
+                      setTimeFormat('24h');
+                    }}
+                    className={`chicle-btn flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all cursor-pointer ${
+                      timeFormat === '24h'
+                        ? 'bg-cyan-400 text-black font-bold shadow-[0_0_14px_rgba(0,240,255,0.6)]'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <span>24 Horas (14:00)</span>
+                  </button>
+                </div>
               </div>
 
               {/* DENSIDAD TIPOGRÁFICA / LECTURA COMPACTA */}
@@ -885,6 +926,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         {/* ===================== TAB 2: APARIENCIA & VISIÓN (SISTEMA ÓPTICO & ATMÓSFERA) ===================== */}
         {activeSubTab === 'atmosphere' && (
           <div className="space-y-4 animate-fade-in">
+
+
             {/* HERO CARD COMPACTA: SISTEMA ÓPTICO TÁCTICO & CONTROL ECLIPSE MOXEN */}
             <div className="w-full rounded-2xl bg-[#030816]/85 backdrop-blur-xl p-4 sm:p-5 border border-white/10 shadow-[0_8px_25px_rgba(0,0,0,0.35)] relative overflow-hidden space-y-3">
               <span className="vi-grano opacity-5" aria-hidden="true" />
@@ -896,7 +939,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     <Eye className="w-3.5 h-3.5 text-cyan-400 shrink-0" /> Sistema Óptico
                   </div>
                   <h3 className="text-sm sm:text-base font-anton uppercase tracking-wide text-white truncate">
-                    Modo de Visión & Eclipse Boreal
+                    MODO DE VISIÓN
                   </h3>
                   <p className="text-[11px] text-slate-400 truncate">
                     Fase activa:{' '}
@@ -1764,8 +1807,27 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               )}
 
               <div className="pt-3 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
-                <div className="space-y-0.5">
-                  <p className="text-[11px] font-anton uppercase tracking-wider text-slate-300">Caché & Actualizaciones en Vivo</p>
+                <div className="space-y-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-[11px] font-anton uppercase tracking-wider text-slate-300">Caché & Actualizaciones en Vivo</p>
+                    {pwaBuildInfo.checking ? (
+                      <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-white/10">
+                        Verificando versión...
+                      </span>
+                    ) : !pwaBuildInfo.serverRev || pwaBuildInfo.serverRev === pwaBuildInfo.localRev ? (
+                      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 flex items-center gap-1">
+                        <CheckCircle2 className="w-2.5 h-2.5 text-emerald-400" />
+                        Última actualización activa
+                      </span>
+                    ) : (
+                      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-950/80 text-amber-300 border border-amber-500/40">
+                        Nueva versión disponible
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-slate-400 font-mono">
+                    Build activo: <span className="text-cyan-300">{pwaBuildInfo.localRev}</span>
+                  </p>
                   <p className="text-[10px] text-slate-500">Si no ves los cambios más recientes o la app muestra una versión vieja en tu equipo.</p>
                 </div>
                 <button

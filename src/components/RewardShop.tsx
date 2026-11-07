@@ -27,6 +27,8 @@ import { usePlayerStore } from '../store/usePlayerStore';
 import { notificationService } from '../utils/notifications';
 import { useUIStore } from '../store/useUIStore';
 import { triggerHaptic } from '../utils/haptics';
+import { calculateDynamicShopCost } from '../utils/level3Systems';
+import { getTodayDateString } from '../utils/date';
 
 type FilterTab = 'todos' | 'vida_real' | 'perks' | 'kai' | 'descanso' | 'personalizados' | 'mochila';
 
@@ -64,14 +66,26 @@ export const RewardShop: React.FC = () => {
   }, [isAddModalOpen]);
 
   const getDiscountedCost = (reward: ShopReward) => {
+    const scaledBase = calculateDynamicShopCost(reward.id, reward.cost, stats);
     if (reward.category === 'descanso') {
       const discount = Math.floor(energia / 10) * 0.05;
-      return Math.max(1, Math.floor(reward.cost * (1 - discount)));
+      return Math.max(1, Math.floor(scaledBase * (1 - discount)));
     }
-    return reward.cost;
+    return scaledBase;
   };
 
   const handleRedeem = (reward: ShopReward) => {
+    const todayStr = getTodayDateString();
+    if (reward.id === 'kai-overcharge-contract' && stats.activeOverchargeContract?.date === todayStr && !stats.activeOverchargeContract?.settled) {
+      soundFX.playClick();
+      notificationService.triggerNotification(
+        '⚡ Contrato de Sobrecarga ya activo hoy',
+        'Completa ≥85% de tu jornada y sella el día en el Cierre Nocturno para reclamar +250 XP y recuperar tus 100🪙.',
+        '⚡'
+      );
+      return;
+    }
+
     // Cap de Escudos de Racha: máximo 3 activos simultáneamente
     if (reward.id === 'perk-streak-shield' && (stats.streakShields || 0) >= 3) {
       soundFX.playClick();
@@ -132,6 +146,24 @@ export const RewardShop: React.FC = () => {
       if (reward.id === 'kai-particle-solar') {
         extra = { kaiParticleEffect: 'solar' };
       }
+      if (reward.id === 'perk-tactical-energy-vial') {
+        extra = { tacticalEnergyVials: (prev.tacticalEnergyVials || 0) + 3 };
+      }
+      if (reward.id === 'perk-archetype-evolution-core') {
+        extra = { archetypeEvolutionCores: (prev.archetypeEvolutionCores || 0) + 1 };
+      }
+      if (reward.id === 'kai-skin-infinite-horizon') {
+        extra = { kaiParticleEffect: 'infinite-horizon' };
+      }
+      if (reward.id === 'kai-overcharge-contract') {
+        extra = {
+          activeOverchargeContract: {
+            date: todayStr,
+            stakedCoins: finalCost,
+            settled: false,
+          },
+        };
+      }
       return extra;
     });
 
@@ -163,6 +195,22 @@ export const RewardShop: React.FC = () => {
       triggerScreenFlash('buff');
       triggerHaptic([120]);
       notificationService.triggerNotification('¡Acelerador Sináptico Adquirido! ⚡', 'Tu próximo registro de hábito avanzará al doble hacia tus 21 y 66 días.', '⚡');
+    } else if (reward.id === 'perk-tactical-energy-vial') {
+      triggerScreenFlash('buff');
+      triggerHaptic([50, 100, 50]);
+      notificationService.triggerNotification('¡Vial de Energía Táctica Activo! 🧪', '+3 Cargas tácticas añadidas: ganarás +50% XP y Monedas en tus próximas 3 acciones.', '🧪');
+    } else if (reward.id === 'perk-archetype-evolution-core') {
+      triggerScreenFlash('buff');
+      triggerHaptic([100, 200, 100]);
+      notificationService.triggerNotification('¡Núcleo de Evolución Integrado! 💠', 'Tu bono permanente de Afinidad Arquetípica ha aumentado +10% adicional.', '💠');
+    } else if (reward.id === 'kai-skin-infinite-horizon') {
+      triggerScreenFlash('buff');
+      triggerHaptic([200]);
+      notificationService.triggerNotification('¡Skin Horizonte Infinito Equipado! 🌌', 'Tu compañero KAI luce un diseño cósmico legendario.', '🌌');
+    } else if (reward.id === 'kai-overcharge-contract') {
+      triggerScreenFlash('buff');
+      triggerHaptic([120, 60, 120]);
+      notificationService.triggerNotification('¡Contrato de Sobrecarga Sellado! 🔥', '100🪙 en juego: cierra hoy con ≥85% de tus misiones para ganar +250 XP y recuperar tus monedas.', '🔥');
     } else if (reward.id.startsWith('kai-')) {
       triggerScreenFlash('buff');
       triggerHaptic([60, 60]);
@@ -253,11 +301,11 @@ export const RewardShop: React.FC = () => {
         {/* Coins Pill + Add Custom Reward Button */}
         <div className="flex items-center gap-2 relative z-10 ml-auto">
           <div 
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#08051a] text-amber-300 font-black font-mono text-xs sm:text-sm border border-amber-400/60 shadow-[0_0_15px_rgba(245,158,11,0.25)]"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#08051a] text-amber-300 font-bold font-mono text-xs sm:text-sm border border-amber-400/60 shadow-[0_0_15px_rgba(245,158,11,0.25)]"
             title="Monedas acumuladas"
           >
             <Coins className="w-4 h-4 text-amber-400 stroke-[2.5]" />
-            <span>{coins}</span>
+            <span className="tabular-nums">{coins}</span>
             <span className="text-[10px] font-sans font-bold text-amber-400/80 hidden sm:inline">Monedas</span>
           </div>
 
@@ -276,28 +324,33 @@ export const RewardShop: React.FC = () => {
         </div>
       </div>
 
-      {/* ─── 2. FAST FILTER TABS (CYBERPUNK PILLS) ─── */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none font-mono text-[11px] sm:text-xs">
+      {/* ─── 2. FAST FILTER TABS (MOXEN CHIP MENU GROUP) ─── */}
+      <div
+        className="mf-8-menu-chip-group mf-chip-group mf-chip-group--compact"
+        role="listbox"
+        aria-label="Filtro por categoría de tienda"
+      >
         <button
           type="button"
+          role="option"
+          aria-selected={activeTab === 'todos'}
           onClick={() => { soundFX.playClick(); setActiveTab('todos'); }}
-          className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl border transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
-            activeTab === 'todos'
-              ? 'bg-purple-500/25 border-purple-400 text-purple-200 shadow-[0_0_12px_rgba(168,85,247,0.35)] font-bold'
-              : 'bg-[#030614]/80 border-white/10 text-slate-400 hover:text-white'
+          className={`mf-8-menu-chip-group__chip mf-chip mf-chip--sm ${
+            activeTab === 'todos' ? 'mf-8-menu-chip-group__chip--active mf-chip--active' : ''
           }`}
         >
           <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-          <span>Todos ({rewards.length})</span>
+          <span>Todos</span>
+          <span className="mf-chip__badge">{rewards.length}</span>
         </button>
 
         <button
           type="button"
+          role="option"
+          aria-selected={activeTab === 'vida_real'}
           onClick={() => { soundFX.playClick(); setActiveTab('vida_real'); }}
-          className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl border transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
-            activeTab === 'vida_real'
-              ? 'bg-amber-500/25 border-amber-400 text-amber-200 shadow-[0_0_12px_rgba(245,158,11,0.35)] font-bold'
-              : 'bg-[#030614]/80 border-white/10 text-slate-400 hover:text-white'
+          className={`mf-8-menu-chip-group__chip mf-chip mf-chip--sm ${
+            activeTab === 'vida_real' ? 'mf-8-menu-chip-group__chip--active mf-chip--active' : ''
           }`}
         >
           <Coffee className="w-3.5 h-3.5 text-amber-400" />
@@ -306,11 +359,11 @@ export const RewardShop: React.FC = () => {
 
         <button
           type="button"
+          role="option"
+          aria-selected={activeTab === 'perks'}
           onClick={() => { soundFX.playClick(); setActiveTab('perks'); }}
-          className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl border transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
-            activeTab === 'perks'
-              ? 'bg-cyan-500/25 border-cyan-400 text-cyan-200 shadow-[0_0_12px_rgba(0,240,255,0.35)] font-bold'
-              : 'bg-[#030614]/80 border-white/10 text-slate-400 hover:text-white'
+          className={`mf-8-menu-chip-group__chip mf-chip mf-chip--sm ${
+            activeTab === 'perks' ? 'mf-8-menu-chip-group__chip--active mf-chip--active' : ''
           }`}
         >
           <Shield className="w-3.5 h-3.5 text-cyan-400" />
@@ -319,11 +372,11 @@ export const RewardShop: React.FC = () => {
 
         <button
           type="button"
+          role="option"
+          aria-selected={activeTab === 'kai'}
           onClick={() => { soundFX.playClick(); setActiveTab('kai'); }}
-          className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl border transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
-            activeTab === 'kai'
-              ? 'bg-fuchsia-500/25 border-fuchsia-400 text-fuchsia-200 shadow-[0_0_12px_rgba(217,70,239,0.35)] font-bold'
-              : 'bg-[#030614]/80 border-white/10 text-slate-400 hover:text-white'
+          className={`mf-8-menu-chip-group__chip mf-chip mf-chip--sm ${
+            activeTab === 'kai' ? 'mf-8-menu-chip-group__chip--active mf-chip--active' : ''
           }`}
         >
           <Bot className="w-3.5 h-3.5 text-fuchsia-400" />
@@ -332,11 +385,11 @@ export const RewardShop: React.FC = () => {
 
         <button
           type="button"
+          role="option"
+          aria-selected={activeTab === 'descanso'}
           onClick={() => { soundFX.playClick(); setActiveTab('descanso'); }}
-          className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl border transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
-            activeTab === 'descanso'
-              ? 'bg-emerald-500/25 border-emerald-400 text-emerald-200 shadow-[0_0_12px_rgba(52,211,153,0.35)] font-bold'
-              : 'bg-[#030614]/80 border-white/10 text-slate-400 hover:text-white'
+          className={`mf-8-menu-chip-group__chip mf-chip mf-chip--sm ${
+            activeTab === 'descanso' ? 'mf-8-menu-chip-group__chip--active mf-chip--active' : ''
           }`}
         >
           <Heart className="w-3.5 h-3.5 text-emerald-400" />
@@ -345,11 +398,11 @@ export const RewardShop: React.FC = () => {
 
         <button
           type="button"
+          role="option"
+          aria-selected={activeTab === 'personalizados'}
           onClick={() => { soundFX.playClick(); setActiveTab('personalizados'); }}
-          className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl border transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
-            activeTab === 'personalizados'
-              ? 'bg-rose-500/25 border-rose-400 text-rose-200 shadow-[0_0_12px_rgba(244,63,94,0.35)] font-bold'
-              : 'bg-[#030614]/80 border-white/10 text-slate-400 hover:text-white'
+          className={`mf-8-menu-chip-group__chip mf-chip mf-chip--sm ${
+            activeTab === 'personalizados' ? 'mf-8-menu-chip-group__chip--active mf-chip--active' : ''
           }`}
         >
           <Flame className="w-3.5 h-3.5 text-rose-400" />
@@ -358,15 +411,16 @@ export const RewardShop: React.FC = () => {
 
         <button
           type="button"
+          role="option"
+          aria-selected={activeTab === 'mochila'}
           onClick={() => { soundFX.playClick(); setActiveTab('mochila'); }}
-          className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl border transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ml-auto ${
-            activeTab === 'mochila'
-              ? 'bg-blue-500/25 border-blue-400 text-blue-200 shadow-[0_0_12px_rgba(59,130,246,0.35)] font-bold'
-              : 'bg-[#030614]/80 border-white/10 text-slate-400 hover:text-white'
+          className={`mf-8-menu-chip-group__chip mf-chip mf-chip--sm md:ml-auto ${
+            activeTab === 'mochila' ? 'mf-8-menu-chip-group__chip--active mf-chip--active' : ''
           }`}
         >
           <Package className="w-3.5 h-3.5 text-blue-400" />
-          <span>Mochila ({inventory.length + (unopenedBoxes > 0 ? 1 : 0)})</span>
+          <span>Mochila</span>
+          <span className="mf-chip__badge">{inventory.length + (unopenedBoxes > 0 ? 1 : 0)}</span>
         </button>
       </div>
 
@@ -424,14 +478,14 @@ export const RewardShop: React.FC = () => {
               {inventory.map((item) => (
                 <div 
                   key={item.id}
-                  className="p-3.5 rounded-2xl bg-[#060414]/90 border border-blue-500/30 flex flex-col items-center text-center gap-1.5 relative group hover:border-blue-400 transition-all shadow-[0_0_15px_rgba(59,130,246,0.15)]"
+                  className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.08] hover:border-cyan-500/30 flex flex-col items-center text-center gap-1.5 relative group transition-colors shadow-sm"
                 >
-                  <span className="absolute top-2 right-2 text-[10px] font-mono font-bold bg-blue-950/80 text-blue-300 px-2 py-0.2 rounded-full border border-blue-500/40">
+                  <span className="absolute top-2 right-2 text-[10px] font-mono font-bold bg-white/[0.06] text-cyan-300 px-2 py-0.5 rounded-full border border-white/[0.1] tabular-nums">
                     x{item.quantity}
                   </span>
                   <div className="text-3xl my-1">{item.icon}</div>
-                  <h4 className="text-xs font-anton text-white uppercase tracking-wide truncate w-full">{item.name}</h4>
-                  <p className="text-[10px] text-slate-400 leading-snug line-clamp-2">{item.description}</p>
+                  <h4 className="text-xs font-semibold text-slate-100 uppercase tracking-wide truncate w-full">{item.name}</h4>
+                  <p className="text-xs text-slate-400 leading-snug line-clamp-2">{item.description}</p>
                   <button
                     type="button"
                     onClick={() => {
@@ -443,7 +497,7 @@ export const RewardShop: React.FC = () => {
                         notificationService.triggerNotification(`¡Usaste ${item.name}!`, 'El efecto ha sido activado.', item.icon);
                       }
                     }}
-                    className="w-full mt-2 py-1.5 rounded-xl bg-blue-500/20 hover:bg-blue-500/30 text-blue-200 border border-blue-400/50 text-[10px] font-anton uppercase tracking-wider transition-all cursor-pointer active:scale-95"
+                    className="w-full mt-2 min-h-[36px] py-1.5 px-3 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-200 border border-cyan-400/40 text-xs font-medium uppercase tracking-wider transition-all cursor-pointer active:scale-95 flex items-center justify-center"
                   >
                     Usar Ítem
                   </button>
@@ -531,10 +585,10 @@ export const RewardShop: React.FC = () => {
 
                   {/* Title & Micro-Description */}
                   <div className="w-full px-0.5 mt-1">
-                    <h4 className="text-xs font-anton text-white uppercase tracking-wide truncate group-hover:text-cyan-300 transition-colors">
+                    <h4 className="text-xs font-semibold text-white uppercase tracking-wide truncate group-hover:text-cyan-300 transition-colors">
                       {reward.title}
                     </h4>
-                    <p className="text-[10px] text-slate-400 font-medium line-clamp-1 mt-0.5 leading-tight">
+                    <p className="text-xs text-slate-400 font-medium line-clamp-1 mt-0.5 leading-tight">
                       {reward.description}
                     </p>
                   </div>
@@ -544,26 +598,26 @@ export const RewardShop: React.FC = () => {
                     type="button"
                     onClick={() => handleRedeem(reward)}
                     disabled={!canAfford}
-                    className={`w-full mt-2.5 py-1.5 rounded-xl text-xs font-anton uppercase tracking-wider flex items-center justify-center gap-1 transition-all cursor-pointer ${
+                    className={`w-full mt-2.5 min-h-[36px] py-1.5 px-2 rounded-xl text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                       canAfford
-                        ? 'bg-amber-400 hover:bg-amber-300 text-black font-black shadow-[0_0_12px_rgba(245,158,11,0.35)] active:scale-95'
+                        ? 'bg-amber-400 hover:bg-amber-300 text-black shadow-[0_0_12px_rgba(245,158,11,0.35)] active:scale-95'
                         : 'bg-black/60 border border-white/10 text-slate-500 cursor-not-allowed'
                     }`}
                   >
                     {canAfford ? (
                       <>
                         <Coins className="w-3.5 h-3.5 fill-current text-black" />
-                        <span>{discountedCost}</span>
+                        <span className="tabular-nums font-mono font-bold">{discountedCost}</span>
                       </>
                     ) : isShieldCapped ? (
                       <>
-                        <Shield className="w-3 h-3 text-slate-600" />
-                        <span>Máx. 3 activos</span>
+                        <Shield className="w-3 h-3 text-slate-500" />
+                        <span>Máx. 3</span>
                       </>
                     ) : (
                       <>
-                        <Lock className="w-3 h-3 text-slate-600" />
-                        <span>{discountedCost}</span>
+                        <Lock className="w-3 h-3 text-slate-500" />
+                        <span className="tabular-nums font-mono">{discountedCost}</span>
                       </>
                     )}
                   </button>

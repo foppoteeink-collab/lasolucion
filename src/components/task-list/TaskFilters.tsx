@@ -1,21 +1,6 @@
 import React, { useState } from 'react';
-import { 
-  Search, 
-  X, 
-  Filter, 
-  Dumbbell, 
-  BookOpen, 
-  Briefcase, 
-  Sparkles, 
-  Apple, 
-  Palette, 
-  Users, 
-  Clock, 
-  Hourglass, 
-  CheckCircle2, 
-  Layers,
-  LucideIcon 
-} from 'lucide-react';
+import { Icon, IconName } from '../common/Icon';
+import { MoxenChipGroup, MoxenChipItem } from '../common/MoxenChipGroup';
 import { soundFX } from '../../utils/audio';
 import { CATEGORY_COLORS } from '../../data/categoryColors';
 
@@ -40,19 +25,19 @@ interface TaskFiltersProps {
 interface CategoryItem {
   id: string;
   label: string;
-  icon?: LucideIcon;
+  icon?: IconName;
   color?: string;
 }
 
 const CATEGORIES: CategoryItem[] = [
-  { id: 'todos', label: 'Todas', icon: Layers },
-  { id: 'entrenamiento', label: 'Gym', icon: Dumbbell, color: CATEGORY_COLORS.entrenamiento.color },
-  { id: 'estudio', label: 'Estudio', icon: BookOpen, color: CATEGORY_COLORS.estudio.textColor },
-  { id: 'trabajo', label: 'Trabajo', icon: Briefcase, color: CATEGORY_COLORS.trabajo.color },
-  { id: 'limpieza', label: 'Orden', icon: Sparkles, color: CATEGORY_COLORS.limpieza.color },
-  { id: 'comida', label: 'Nutrición', icon: Apple, color: CATEGORY_COLORS.comida.color },
-  { id: 'creativo', label: 'Creativo', icon: Palette, color: CATEGORY_COLORS.creativo.color },
-  { id: 'clientes', label: 'Clientes', icon: Users, color: CATEGORY_COLORS.clientes.color },
+  { id: 'todos', label: 'Todas', icon: 'layers' },
+  { id: 'entrenamiento', label: 'Gym', icon: 'dumbbell', color: CATEGORY_COLORS.entrenamiento.color },
+  { id: 'estudio', label: 'Estudio', icon: 'bookOpen', color: CATEGORY_COLORS.estudio.textColor },
+  { id: 'trabajo', label: 'Trabajo', icon: 'briefcase', color: CATEGORY_COLORS.trabajo.color },
+  { id: 'limpieza', label: 'Orden', icon: 'sparkles', color: CATEGORY_COLORS.limpieza.color },
+  { id: 'comida', label: 'Nutrición', icon: 'apple', color: CATEGORY_COLORS.comida.color },
+  { id: 'creativo', label: 'Creativo', icon: 'palette', color: CATEGORY_COLORS.creativo.color },
+  { id: 'clientes', label: 'Clientes', icon: 'users', color: CATEGORY_COLORS.clientes.color },
 ];
 
 export const TaskFilters: React.FC<TaskFiltersProps> = ({
@@ -66,61 +51,47 @@ export const TaskFilters: React.FC<TaskFiltersProps> = ({
 }) => {
   const [showCategories, setShowCategories] = useState(selectedCategory !== 'todos');
 
+  const statusItems: MoxenChipItem<TaskFilterType>[] = [
+    { id: 'todos', label: 'Todas', badge: counts.total, icon: 'layers', iconColor: 'var(--aura-color-1, #00f0ff)' },
+    { id: 'rutina', label: 'Con Hora', badge: counts.routine, icon: 'timer', iconColor: 'var(--aura-color-1, #00f0ff)' },
+    { id: 'pendientes', label: 'Pendientes', badge: counts.pending, icon: 'hourglass', iconColor: 'var(--aura-color-1, #00f0ff)' },
+    { id: 'completados', label: 'Hechas', badge: counts.completed, icon: 'checkCircle', iconColor: 'var(--aura-color-1, #00f0ff)' },
+  ];
+
+  const categoryItems: MoxenChipItem<string>[] = CATEGORIES.map((cat) => ({
+    id: cat.id,
+    label: cat.label,
+    icon: cat.icon,
+    iconColor: cat.color || 'var(--aura-color-1, #00f0ff)',
+  }));
+
   return (
-    <div className="space-y-2">
-      {/* Unified Single-Row Filter & Search Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        {/* Status Filter Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] no-scrollbar">
-          {[
-            { id: 'todos', label: 'Todas', count: counts.total, icon: Layers },
-            { id: 'rutina', label: 'Con Hora', count: counts.routine, icon: Clock },
-            { id: 'pendientes', label: 'Pendientes', count: counts.pending, icon: Hourglass },
-            { id: 'completados', label: 'Hechas', count: counts.completed, icon: CheckCircle2 },
-          ].map((tab) => {
-            const isActive = activeFilter === tab.id;
-            const TabIcon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => {
-                  soundFX.playClick();
-                  onFilterChange(tab.id as TaskFilterType);
-                }}
-                className={`px-2.5 py-1.5 rounded-xl text-xs font-anton tracking-wide whitespace-nowrap border transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 uppercase ${
-                  isActive
-                    ? 'text-black border-transparent'
-                    : 'bg-[#011420]/80 border-cyan-500/25 text-slate-300 hover:text-white hover:border-cyan-400/60'
-                }`}
-                style={isActive ? {
-                  background: 'var(--aura-gradient, linear-gradient(135deg, var(--aura-color-1, #00f0ff) 0%, var(--aura-color-2, #8a2be2) 100%))',
-                  color: '#030712',
-                  boxShadow: '0 0 12px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.45)',
-                } : undefined}
-              >
-                <TabIcon className={`w-3.5 h-3.5 ${isActive ? 'text-black' : 'text-cyan-400'}`} />
-                <span>{tab.label}</span>
-                <span className={`text-[10px] font-mono font-bold px-1.5 rounded ${
-                  isActive ? 'bg-black/20 text-black' : 'bg-black/60 text-cyan-300'
-                }`}>
-                  {tab.count}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+    <div className="scifi-glass-panel rounded-xl px-2.5 py-1.5 space-y-1 border border-cyan-500/30 shadow-[0_2px_12px_rgba(0,0,0,0.4)] relative overflow-hidden">
+      {/* Grano esmerilado táctil */}
+      <span className="vi-grano opacity-5" aria-hidden="true" />
+
+      {/* Unified Filter Chip Group & Search Bar */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-1.5">
+        <MoxenChipGroup
+          items={statusItems}
+          activeId={activeFilter}
+          onSelect={onFilterChange}
+          ariaLabel="Filtro por estado de tarea"
+          variant="compact"
+          size="sm"
+          className="flex-1"
+        />
 
         {/* Compact Search + Category Drawer Toggle */}
-        <div className="flex items-center gap-1.5 flex-1 sm:flex-initial justify-end min-w-[180px]">
-          <div className="relative flex-1 sm:w-44">
-            <Search className="w-3.5 h-3.5 text-cyan-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+        <div className="flex items-center gap-1.5 justify-end shrink-0">
+          <div className="relative flex-1 sm:w-40">
+            <Icon name="search" className="w-3 h-3 text-cyan-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder="Buscar..."
-              className="w-full bg-[#011420]/80 border border-cyan-500/25 rounded-xl pl-8 pr-7 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 transition-all"
+              className="w-full h-7 bg-[#011420]/80 border border-cyan-500/25 rounded-full pl-7 pr-6 py-0.5 text-[11px] text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 transition-all"
             />
             {searchTerm && (
               <button
@@ -129,7 +100,7 @@ export const TaskFilters: React.FC<TaskFiltersProps> = ({
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white cursor-pointer"
                 title="Limpiar"
               >
-                <X className="w-3.5 h-3.5" />
+                <Icon name="x" className="w-3 h-3" />
               </button>
             )}
           </div>
@@ -140,53 +111,32 @@ export const TaskFilters: React.FC<TaskFiltersProps> = ({
               soundFX.playClick();
               setShowCategories(!showCategories);
             }}
-            className={`px-2.5 py-1.5 rounded-xl border text-xs font-mono flex items-center gap-1 cursor-pointer transition-all shrink-0 ${
+            aria-selected={showCategories || selectedCategory !== 'todos'}
+            className={`mf-8-menu-chip-group__chip mf-chip mf-chip--sm ${
               showCategories || selectedCategory !== 'todos'
-                ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400'
-                : 'bg-surface-card text-slate-400 border-cyan-500/25 hover:text-white'
+                ? 'mf-8-menu-chip-group__chip--active mf-chip--active'
+                : ''
             }`}
             title="Filtrar por categoría"
           >
-            <Filter className="w-3.5 h-3.5 text-cyan-400" />
-            {selectedCategory !== 'todos' && (
-              <span className="text-[10px] font-bold uppercase">{selectedCategory}</span>
-            )}
+            <Icon name="filter" className="w-3 h-3 text-cyan-400" />
+            <span>{selectedCategory !== 'todos' ? selectedCategory.toUpperCase() : 'Área'}</span>
           </button>
         </div>
       </div>
 
-      {/* Collapsible Category Pills */}
+      {/* Collapsible Category Chips */}
       {(showCategories || selectedCategory !== 'todos') && (
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] no-scrollbar text-[11px]">
-          {CATEGORIES.map((cat) => {
-            const isSelected = selectedCategory === cat.id;
-            const IconComp = cat.icon;
-            return (
-              <button
-                key={cat.id}
-                type="button"
-                onClick={() => {
-                  soundFX.playClick();
-                  onSelectCategory(cat.id);
-                }}
-                className={`px-2.5 py-1 rounded-lg whitespace-nowrap border transition-all cursor-pointer flex items-center gap-1 active:scale-95 text-xs font-medium ${
-                  isSelected
-                    ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400'
-                    : 'bg-surface-card border-white/10 text-slate-400 hover:text-white'
-                }`}
-              >
-                {IconComp && (
-                  <IconComp 
-                    className="w-3 h-3 shrink-0" 
-                    style={{ color: isSelected ? '#00f0ff' : cat.color || 'currentColor' }} 
-                  />
-                )}
-                <span>{cat.label}</span>
-              </button>
-            );
-          })}
-        </div>
+        <MoxenChipGroup
+          items={categoryItems}
+          activeId={selectedCategory}
+          onSelect={onSelectCategory}
+          ariaLabel="Filtro por área o categoría"
+          variant="compact"
+          size="sm"
+        />
       )}
     </div>
   );
 };
+

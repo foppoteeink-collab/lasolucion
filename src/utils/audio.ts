@@ -816,6 +816,33 @@ class SoundFX {
     }, 280);
   }
 
+  // 10.5 LEVEL UP IMPACT - Immersive gong/energy impact
+  public playLevelUpImpact() {
+    if (!this.soundEnabled) return;
+    this.initCtx();
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+
+    // Impact Noise (fast attack/decay)
+    const noiseBuffer = this.ctx.createBuffer(1, Math.floor(this.ctx.sampleRate * 0.1), this.ctx.sampleRate);
+    const data = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+    const noise = this.ctx.createBufferSource();
+    noise.buffer = noiseBuffer;
+    const noiseGain = this.ctx.createGain();
+    noiseGain.gain.setValueAtTime(0.15, now);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+    noise.connect(noiseGain);
+    noiseGain.connect(this.getDestination()!);
+    noise.start(now);
+    this.safeDisconnectOnEnd(noise, [noiseGain], 150);
+
+    // Sub-bass impact
+    this.playTone('sine', 65, now, 0.01, 0.2, 0.05, 0.6, 0.3);
+    // Harmonic resonance
+    this.playTone('triangle', 130, now, 0.05, 0.1, 0.08, 1.0, 0.2);
+  }
+
   // 11. MULTI-LAYER AMBIENT MIXER ENGINE (Rain, Ocean Waves, Forest, Natural Heartbeat)
   private ambientLayers: Map<
     'rain' | 'fire' | 'forest' | 'heartbeat',

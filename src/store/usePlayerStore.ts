@@ -349,49 +349,79 @@ export const usePlayerStore = create<PlayerState>()(
       registerWakeUp: (currentDate, customWakeTime) => {
         set((state) => {
           const sleepLogs = state.stats.sleepLogs || {};
-
           const today = getTodayDateString();
           const yesterday = getYesterdayDateString();
+          const targetDay = currentDate || today;
+
           const pendingDate = (() => {
-            if (sleepLogs[currentDate]?.bedtime && !sleepLogs[currentDate]?.wakeTime) return currentDate;
+            if (sleepLogs[targetDay]?.bedtime && !sleepLogs[targetDay]?.wakeTime) return targetDay;
             if (sleepLogs[today]?.bedtime && !sleepLogs[today]?.wakeTime) return today;
             if (sleepLogs[yesterday]?.bedtime && !sleepLogs[yesterday]?.wakeTime) return yesterday;
             return null;
           })();
 
-          if (!pendingDate) return {};
-
           const now = new Date();
-          const wakeTime = customWakeTime || now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-          const existingSleep = sleepLogs[pendingDate];
-          const bedtime = existingSleep.bedtime;
+          const wakeTime =
+            customWakeTime ||
+            now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
 
-          const duration = calcSleepDuration(bedtime, wakeTime);
-          const quality = duration !== null ? getSleepQuality(duration) : undefined;
+          const nextSleepLogs = { ...sleepLogs };
+          const nextFinalizedDays = { ...(state.stats.finalizedDays || {}) };
+
+          if (pendingDate) {
+            const existingSleep = sleepLogs[pendingDate];
+            const bedtime = existingSleep.bedtime;
+            const duration = calcSleepDuration(bedtime, wakeTime);
+            const quality = duration !== null ? getSleepQuality(duration) : undefined;
+
+            nextFinalizedDays[pendingDate] = {
+              ...(nextFinalizedDays[pendingDate] || {
+                finalizedAt: now.toISOString(),
+                bonusXp: 0,
+                bonusCoins: 0,
+                sleepStartTime: bedtime,
+              }),
+              isSleepActive: false,
+              actualWakeTime: wakeTime,
+            };
+
+            nextSleepLogs[pendingDate] = {
+              ...existingSleep,
+              wakeTime,
+              sleepDurationHours: duration ?? undefined,
+              quality,
+              completedAt: now.toISOString(),
+              isTrackingActive: false,
+            };
+          }
+
+          // Garantizar que el día actual (today) quede registrado como iniciado con un solo toque y horas de sueño calculadas
+          if (!nextSleepLogs[today]?.wakeTime) {
+            const refBedtime =
+              nextSleepLogs[today]?.bedtime ||
+              (pendingDate ? nextSleepLogs[pendingDate]?.bedtime : undefined) ||
+              nextSleepLogs[yesterday]?.bedtime ||
+              '23:00';
+            const todayDuration = calcSleepDuration(refBedtime, wakeTime);
+            const todayQuality = todayDuration !== null ? getSleepQuality(todayDuration) : undefined;
+
+            nextSleepLogs[today] = {
+              ...(nextSleepLogs[today] || {}),
+              bedtime: refBedtime,
+              wakeTime,
+              sleepDurationHours: todayDuration ?? undefined,
+              quality: todayQuality,
+              completedAt: now.toISOString(),
+              isTrackingActive: false,
+            };
+          }
 
           return {
             stats: {
               ...state.stats,
-              finalizedDays: {
-                ...(state.stats.finalizedDays || {}),
-                [pendingDate]: {
-                  ...(state.stats.finalizedDays?.[pendingDate] || { finalizedAt: now.toISOString(), bonusXp: 0, bonusCoins: 0, sleepStartTime: bedtime }),
-                  isSleepActive: false,
-                  actualWakeTime: wakeTime
-                }
-              },
-              sleepLogs: {
-                ...sleepLogs,
-                [pendingDate]: {
-                  ...existingSleep,
-                  wakeTime,
-                  sleepDurationHours: duration ?? undefined,
-                  quality,
-                  completedAt: now.toISOString(),
-                  isTrackingActive: false
-                }
-              }
-            }
+              finalizedDays: nextFinalizedDays,
+              sleepLogs: nextSleepLogs,
+            },
           };
         });
       },
@@ -609,10 +639,16 @@ export const usePlayerStore = create<PlayerState>()(
           if (state.stats.characterClass) {
             state.stats.characterClass = getArchetypeDisplayName(state.stats.characterClass);
           }
+          if (state.stats.username && (state.stats.username.toLowerCase() === 'cazador' || state.stats.username === 'CazadorDelSistema')) {
+            state.stats.username = '';
+          }
+          if (state.stats.fullName && state.stats.fullName.toLowerCase() === 'cazador') {
+            state.stats.fullName = '';
+          }
           if (state.stats.hasCompletedAwakening === undefined) {
             const hasPriorProgress = (lvl > 1) || 
                                      ((state.stats.totalXpEarned || 0) > 0) || 
-                                     (Boolean(state.stats.username) && state.stats.username !== 'CazadorDelSistema');
+                                     (Boolean(state.stats.username) && state.stats.username !== 'CazadorDelSistema' && state.stats.username !== 'UsuarioDelSistema');
             state.stats.hasCompletedAwakening = hasPriorProgress;
           }
         }

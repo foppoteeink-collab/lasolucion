@@ -1,14 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  Calendar as CalendarIcon, 
-  Plus, 
-  ChevronDown, 
-  ChevronUp,
-  RotateCcw
-} from 'lucide-react';
+import { Icon } from './common/Icon';
+import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { soundFX } from '../utils/audio';
 import { addDaysToDateString, getTodayDateString, parseLocalDate } from '../utils/date';
 import { usePlayerStore } from '../store/usePlayerStore';
@@ -86,7 +79,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   const monthNameShort = dateObj.toLocaleDateString('es-ES', { month: 'short' }).replace('.', '');
 
   return (
-    <div className="relative isolate rounded-2xl bg-surface-card border border-white/10 backdrop-blur-xl p-2 sm:p-2.5 mb-3 text-white transition-all shadow-[0_4px_20px_rgba(0,0,0,0.4)]">
+    <div className="relative isolate rounded-2xl bg-surface-card border border-white/10 backdrop-blur-xl p-2 sm:p-2.5 text-white transition-all shadow-[0_4px_20px_rgba(0,0,0,0.4)]">
       {/* Grano esmerilado táctil */}
       <span className="vi-grano opacity-5" aria-hidden="true" />
 
@@ -131,7 +124,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 className="px-1.5 py-0.5 rounded-md bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-400/50 text-cyan-300 text-[9px] font-anton tracking-wider uppercase transition-colors cursor-pointer shrink-0 flex items-center gap-0.5"
                 title="Volver a la fecha de hoy"
               >
-                <RotateCcw className="w-2.5 h-2.5" />
+                <Icon name="rotateCcw" className="w-2.5 h-2.5" />
                 <span>Hoy</span>
               </button>
             )}
@@ -201,7 +194,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             title="Abrir Planificador Mensual Completo"
             aria-label="Abrir Planificador Mensual"
           >
-            <CalendarIcon className="w-3.5 h-3.5 text-cyan-300" />
+            <Icon name="calendar" className="w-3.5 h-3.5 text-cyan-300" />
           </button>
 
           {/* Botón Añadir Tarea */}
@@ -215,7 +208,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               className="btn-neon-hunter h-8 px-3 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1 shadow-lg cursor-pointer"
               title="Nueva Tarea, Hábito o Planificación"
             >
-              <Plus className="w-3.5 h-3.5 stroke-[3]" />
+              <Icon name="plus" className="w-3.5 h-3.5 stroke-[3]" />
               <span>Tarea</span>
             </button>
           )}
@@ -305,7 +298,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             title="Calendario Mensual"
             aria-label="Abrir calendario mensual"
           >
-            <CalendarIcon className="w-3.5 h-3.5 text-cyan-300" />
+            <Icon name="calendar" className="w-3.5 h-3.5 text-cyan-300" />
           </button>
 
           {/* Botón Añadir Tarea Móvil */}
@@ -319,7 +312,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               className="btn-neon-hunter h-7 px-2 rounded-lg text-[10px] uppercase tracking-wider flex items-center gap-1 shadow-md cursor-pointer shrink-0"
               title="Nueva Tarea o Hábito"
             >
-              <Plus className="w-3 h-3 stroke-[3]" />
+              <Icon name="plus" className="w-3 h-3" strokeWidth={3} />
               <span>Tarea</span>
             </button>
           )}

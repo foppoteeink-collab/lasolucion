@@ -1,6 +1,7 @@
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, Auth } from 'firebase/auth';
 import { getAI, GoogleAIBackend, AI } from 'firebase/ai';
+import { getAnalytics, Analytics } from 'firebase/analytics';
 import {
   getFirestore,
   initializeFirestore,
@@ -21,6 +22,17 @@ try {
 }
 
 export { app, firebaseConfig };
+
+let analyticsInstance: Analytics | null = null;
+try {
+  if (app) {
+    analyticsInstance = getAnalytics(app);
+  }
+} catch (e) {
+  console.warn('Firebase getAnalytics failed:', e);
+}
+
+export const analytics = analyticsInstance as Analytics;
 
 let aiInstance: AI | null = null;
 try {

@@ -24,14 +24,14 @@ export function getSystemPalette(
   if (opticMode === 'noir') {
     const c1 = '#ffffff';
     const c2 = '#cbd5e1';
-    const c3 = '#94a3b8';
-    const c4 = '#64748b';
+    const c3 = '#64748b';
+    const c4 = '#94a3b8';
     return {
       c1, c2, c3, c4,
       glow: 'rgba(255, 255, 255, 0.4)',
       glowSecondary: 'rgba(148, 163, 184, 0.25)',
       textColor: 'text-slate-200',
-      gradient: `linear-gradient(135deg, ${c1} 0%, ${c2} 25%, ${c3} 50%, ${c4} 75%, ${c1} 100%)`,
+      gradient: `linear-gradient(to right, ${c1} 0%, ${c2} 20%, ${c3} 40%, ${c4} 60%, ${c2} 80%, ${c1} 100%)`,
     };
   }
 
@@ -39,29 +39,29 @@ export function getSystemPalette(
   if (opticMode === 'cobalt') {
     const c1 = '#60a5fa';
     const c2 = '#38bdf8';
-    const c3 = '#1d4ed8';
-    const c4 = '#0284c7';
+    const c3 = '#00f0ff';
+    const c4 = '#2563eb';
     return {
       c1, c2, c3, c4,
       glow: 'rgba(96, 165, 250, 0.45)',
       glowSecondary: 'rgba(29, 78, 216, 0.35)',
       textColor: 'text-blue-300',
-      gradient: `linear-gradient(135deg, ${c1} 0%, ${c2} 25%, ${c3} 50%, ${c4} 75%, ${c1} 100%)`,
+      gradient: `linear-gradient(to right, ${c1} 0%, ${c2} 20%, ${c3} 40%, ${c4} 60%, ${c2} 80%, ${c1} 100%)`,
     };
   }
 
   // 3. Modo Noir Claro (Tinta E-Ink)
   if (opticMode === 'eink') {
     const c1 = '#f8fafc';
-    const c2 = '#e2e8f0';
-    const c3 = '#94a3b8';
-    const c4 = '#475569';
+    const c2 = '#cbd5e1';
+    const c3 = '#64748b';
+    const c4 = '#94a3b8';
     return {
       c1, c2, c3, c4,
       glow: 'rgba(200, 200, 200, 0.25)',
       glowSecondary: 'rgba(100, 116, 139, 0.2)',
       textColor: 'text-slate-300',
-      gradient: `linear-gradient(135deg, ${c1} 0%, ${c2} 25%, ${c3} 50%, ${c4} 75%, ${c1} 100%)`,
+      gradient: `linear-gradient(to right, ${c1} 0%, ${c2} 20%, ${c3} 40%, ${c4} 60%, ${c2} 80%, ${c1} 100%)`,
     };
   }
 
@@ -74,22 +74,22 @@ export function getSystemPalette(
       glow: `color-mix(in srgb, ${uiAccent1} 60%, transparent)`,
       glowSecondary: `color-mix(in srgb, ${uiAccent2} 50%, transparent)`,
       textColor: 'text-cyan-300',
-      gradient: `linear-gradient(135deg, ${c1} 0%, ${c2} 25%, ${c3} 50%, ${c4} 75%, ${c1} 100%)`,
+      gradient: `linear-gradient(to right, ${c1} 0%, ${c2} 20%, ${c3} 40%, ${c4} 60%, ${c2} 80%, ${c1} 100%)`,
     };
   }
 
   // 5. Paleta Oficial de Malla Aurora Boreal (Verde Ártico, Cian Neón, Púrpura Monarca y Plasma Magenta)
   const c1 = '#00ffaa'; // Verde Ártico
   const c2 = '#00d0ff'; // Cian Neón
-  const c3 = '#7000ff'; // Púrpura Monarca
-  const c4 = '#ff00aa'; // Plasma Magenta
+  const c3 = '#8a2be2'; // Púrpura Monarca
+  const c4 = '#ff0080'; // Plasma Magenta
 
   return {
     c1, c2, c3, c4,
     glow: 'rgba(0, 240, 255, 0.45)', // Resplandor Cian Neón
-    glowSecondary: 'rgba(112, 0, 255, 0.35)', // Resplandor Púrpura
+    glowSecondary: 'rgba(138, 43, 226, 0.35)', // Resplandor Púrpura
     textColor: 'text-cyan-300',
-    gradient: `linear-gradient(135deg, ${c1} 0%, ${c2} 25%, ${c3} 50%, ${c4} 75%, ${c1} 100%)`,
+    gradient: `linear-gradient(to right, ${c1} 0%, ${c2} 20%, ${c3} 40%, ${c4} 60%, ${c2} 80%, ${c1} 100%)`,
   };
 }
 

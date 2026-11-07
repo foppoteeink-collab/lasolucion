@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import {
-  Moon, Sparkles, CheckCircle2, Coins, Zap, BookOpen,
-  Clock, Flame, Star, Check, Gift, Lock, ChevronRight,
-  Sun, ArrowRight, Heart
-} from 'lucide-react';
+import { Icon } from './common/Icon';
 import { triggerShockwave } from '../utils/celebration';
 import { soundFX } from '../utils/audio';
 import { getTodayDateString, formatDateFullSpanish } from '../utils/date';
@@ -13,6 +9,8 @@ import { PlayerStats, TaskItem, PomodoroSession } from '../types';
 import { getArchetypeByName, getCompanionEvolution } from '../data/archetypes';
 import { HoloCompanion } from './HoloCompanion';
 import { usePlayerStore } from '../store/usePlayerStore';
+import { evaluateOverchargeContract } from '../utils/level3Systems';
+import { generateAndShareLegacyCard } from '../utils/shareCardGenerator';
 
 interface NightlyTunnelProps {
   isOpen: boolean;
@@ -28,9 +26,9 @@ interface NightlyTunnelProps {
 type TunnelStep = 'evaluation' | 'reward' | 'seal';
 
 const stepConfig = [
-  { id: 'evaluation', label: 'Evaluación', icon: Moon, color: 'cyan' },
-  { id: 'reward',     label: 'Recompensa', icon: Gift, color: 'amber' },
-  { id: 'seal',       label: 'Sellar',     icon: Star, color: 'indigo' },
+  { id: 'evaluation', label: 'Evaluación', icon: 'moon' as const, color: 'cyan' },
+  { id: 'reward',     label: 'Recompensa', icon: 'gift' as const, color: 'amber' },
+  { id: 'seal',       label: 'Sellar',     icon: 'star' as const, color: 'indigo' },
 ] as const;
 
 export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
@@ -115,6 +113,11 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
     gradeTitle = '¡Buen Avance Diario!';
   }
 
+  const hasValidReflection = reflectionText.trim().length >= 15;
+  const contractEval = evaluateOverchargeContract(stats.activeOverchargeContract, todayStr, completionRate);
+  const totalBonusXp = bonusXp + (hasValidReflection ? 15 : 0) + contractEval.xpBonus;
+  const totalBonusCoins = bonusCoins + (hasValidReflection ? 5 : 0) + contractEval.refundedCoins;
+
   // Daily Reward
   const isAlreadyClaimedToday = stats.lastDailyRewardClaimedDate === todayStr;
   const currentStreakDay = ((stats.streakDays - (isAlreadyClaimedToday ? 1 : 0)) % 7) + 1;
@@ -125,6 +128,15 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
 
     const playerStore = usePlayerStore.getState();
     const isRestDay = Boolean(stats.restDays?.[todayStr]);
+
+    if (contractEval.hasActiveContract) {
+      playerStore.setStats((prev) => ({
+        ...prev,
+        activeOverchargeContract: prev.activeOverchargeContract
+          ? { ...prev.activeOverchargeContract, settled: true }
+          : null,
+      }));
+    }
 
     if (isRestDay) {
       // Día de descanso planificado: sin penalización ni daño de HP
@@ -156,7 +168,7 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
       onAddJournalEntry(`🌙 Cierre de Jornada (${archetype.name}): ${reflectionText.trim()}`);
     }
 
-    onConfirmFinishDay(bonusXp, bonusCoins, customBedtime);
+    onConfirmFinishDay(totalBonusXp, totalBonusCoins, customBedtime);
     setDayConsolidated(true);
 
     // Auto advance to reward step
@@ -220,7 +232,6 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
           {/* Step Pills */}
           <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-0.5">
             {stepConfig.map((s, i) => {
-              const Icon = s.icon;
               const isActive = s.id === step;
               const isDone = i < currentStepIdx;
               return (
@@ -232,11 +243,11 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
                       ? 'bg-cyan-950/60 border-cyan-400/70 text-cyan-200 shadow-[0_0_12px_rgba(0,240,255,0.3)]'
                       : 'bg-white/[0.03] border-white/10 text-slate-400'
                   }`}>
-                    {isDone ? <Check className="w-3 h-3 text-emerald-400 stroke-[3]" /> : <Icon className="w-3.5 h-3.5" />}
+                    {isDone ? <Icon name="check" className="w-3 h-3 text-emerald-400" /> : <Icon name={s.icon} className="w-3.5 h-3.5" />}
                     <span className="hidden sm:inline">{s.label}</span>
                   </div>
                   {i < stepConfig.length - 1 && (
-                    <ChevronRight className={`w-3 h-3 shrink-0 ${isDone ? 'text-emerald-500' : 'text-slate-600'}`} />
+                    <Icon name="chevronRight" className={`w-3 h-3 shrink-0 ${isDone ? 'text-emerald-500' : 'text-slate-600'}`} />
                   )}
                 </React.Fragment>
               );
@@ -263,7 +274,7 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
                 {/* Grade Banner */}
                 <div className="text-center bg-cyan-950/40 border border-cyan-800/40 py-2.5 px-3 rounded-xl">
                   <span className="text-xs font-bold text-cyan-300 uppercase tracking-wider flex items-center justify-center gap-1.5">
-                    <Star className="w-4 h-4 text-amber-400" /> {gradeTitle}
+                    <Icon name="star" className="w-4 h-4 text-amber-400" /> {gradeTitle}
                   </span>
                 </div>
 
@@ -290,14 +301,14 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
                 {/* Stats Grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {[
-                    { label: 'Cumplimiento', value: `${completionRate}%`, sub: `${completedToday.length}/${totalTasks}`, icon: CheckCircle2, color: 'text-cyan-400' },
-                    { label: 'Total XP', value: `+${xpEarnedToday + bonusXp}`, sub: `+${bonusXp} Bonus`, icon: Zap, color: 'text-amber-400' },
-                    { label: 'Monedas', value: `+${coinsEarnedToday + bonusCoins}`, sub: `+${bonusCoins} Bonus`, icon: Coins, color: 'text-yellow-400' },
-                    { label: 'Foco', value: `${todayFocusMinutes}m`, sub: 'Modo Foco', icon: Clock, color: 'text-indigo-400' },
-                  ].map(({ label, value, sub, icon: Icon, color }) => (
+                    { label: 'Cumplimiento', value: `${completionRate}%`, sub: `${completedToday.length}/${totalTasks}`, icon: 'checkCircle2', color: 'text-cyan-400' },
+                    { label: 'Total XP', value: `+${xpEarnedToday + totalBonusXp}`, sub: `+${totalBonusXp} Bonus`, icon: 'zap', color: 'text-amber-400' },
+                    { label: 'Monedas', value: `+${coinsEarnedToday + totalBonusCoins}`, sub: `+${totalBonusCoins} Bonus`, icon: 'coins', color: 'text-yellow-400' },
+                    { label: 'Foco', value: `${todayFocusMinutes}m`, sub: 'Modo Foco', icon: 'clock', color: 'text-indigo-400' },
+                  ].map(({ label, value, sub, icon, color }) => (
                     <div key={label} className="bg-[#000a14]/70 border border-cyan-900/40 rounded-xl p-3 text-center">
                       <div className={`flex items-center justify-center gap-1 ${color} text-[11px] font-bold mb-1`}>
-                        <Icon className="w-3.5 h-3.5" /> {label}
+                        <Icon name={icon} className="w-3.5 h-3.5" /> {label}
                       </div>
                       <div className="text-base font-black text-white">{value}</div>
                       <div className="text-[10px] text-slate-400 font-mono">{sub}</div>
@@ -338,7 +349,7 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
                 {/* Cellular Regeneration Badge if Grade A or S+ and not in Rest Day */}
                 {completionRate >= 80 && !stats.restDays?.[todayStr] && (
                   <div className="bg-emerald-950/40 border border-emerald-500/50 rounded-xl p-2.5 text-center flex items-center justify-center gap-2 text-emerald-300 text-xs font-mono font-bold shadow-[0_0_15px_rgba(16,185,129,0.15)]">
-                    <Heart className="w-4 h-4 fill-emerald-400 text-emerald-400 shrink-0" />
+                    <Icon name="heart" className="w-4 h-4" />
                     <span className="truncate">¡Gran Disciplina! (+40 HP)</span>
                   </div>
                 )}
@@ -346,7 +357,7 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
                 {/* Bedtime Override */}
                 <div className="bg-[#000a14]/90 border border-cyan-500/30 rounded-2xl p-3.5 flex items-center justify-between">
                   <div className="flex items-center gap-2 text-sm text-cyan-200">
-                    <Moon className="w-4 h-4 text-cyan-400" />
+                    <Icon name="moon" className="w-4 h-4 text-cyan-400" />
                     <span className="font-bold text-xs">Hora de dormir:</span>
                   </div>
                   <input
@@ -357,15 +368,37 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
                   />
                 </div>
 
-                {/* Journal */}
+                {/* Overcharge Contract Settlement Banner */}
+                {contractEval.hasActiveContract && (
+                  <div className={`rounded-xl p-2.5 text-center border text-xs font-mono font-bold ${
+                    contractEval.succeeded
+                      ? 'bg-amber-950/50 border-amber-400/70 text-amber-300 shadow-[0_0_15px_rgba(251,191,36,0.2)]'
+                      : 'bg-rose-950/50 border-rose-500/60 text-rose-300'
+                  }`}>
+                    {contractEval.succeeded
+                      ? '🔥 ¡Contrato de Sobrecarga Superado (≥85%)! +250 XP y +100🪙 recuperadas'
+                      : `⚠️ Contrato de Sobrecarga (${completionRate}% / 85%): Si consolidas ahora se quemarán tus ${contractEval.burnedCoins}🪙`}
+                  </div>
+                )}
+
+                {/* Journal (Intrinsic Satisfaction Prompt) */}
                 <div>
-                  <label className="block text-xs font-bold text-cyan-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                    <BookOpen className="w-3.5 h-3.5 text-indigo-400" /> Bitácora del Día
-                  </label>
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <label className="text-xs font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1.5">
+                      <Icon name="bookOpen" className="w-3.5 h-3.5 text-indigo-400" /> Bitácora de Presencia & Orgullo Personal
+                    </label>
+                    <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border transition-all ${
+                      hasValidReflection
+                        ? 'bg-emerald-950/70 border-emerald-500/60 text-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.25)]'
+                        : 'bg-cyan-950/50 border-cyan-800/60 text-cyan-300/80'
+                    }`}>
+                      {hasValidReflection ? '✨ ¡Bonus Reflexión Activo! (+15 XP / +5🪙)' : 'Escribe una frase (+15 XP / +5🪙)'}
+                    </span>
+                  </div>
                   <textarea
                     value={reflectionText}
                     onChange={e => setReflectionText(e.target.value)}
-                    placeholder="¿Qué aprendiste hoy? ¿Qué mejorarás mañana?"
+                    placeholder="¿Qué bloque cumplido hoy te dio mayor paz mental u orgullo personal? (Mín. 15 caracteres para +15 XP / +5🪙)"
                     className="w-full bg-[#000a14] border border-cyan-900/70 rounded-xl p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 resize-none h-16"
                   />
                 </div>
@@ -389,7 +422,7 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
                   <div className="text-3xl mb-1">🎁</div>
                   <h3 className="text-lg font-black text-white uppercase tracking-wide">Recompensa del Día {currentStreakDay}</h3>
                   <p className="text-xs text-slate-400 mt-0.5 flex items-center justify-center gap-1">
-                    <Flame className="w-3.5 h-3.5 text-orange-400" /> Racha: {stats.streakDays} días
+                    <Icon name="flame" className="w-3.5 h-3.5 text-orange-400" /> Racha: {stats.streakDays} días
                   </p>
                 </div>
 
@@ -426,10 +459,10 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
                         {/* State overlay icon */}
                         {isClaimed && (
                           <div className="absolute top-1 right-1 bg-emerald-500 rounded-full p-0.5">
-                            <Check className="w-2 h-2 text-white stroke-[3]" />
+                            <Icon name="check" className="w-2 h-2 text-white" />
                           </div>
                         )}
-                        {isLocked && <Lock className="absolute top-1 right-1 w-2.5 h-2.5 text-slate-500" />}
+                        {isLocked && <Icon name="lock" className="absolute top-1 right-1 w-2.5 h-2.5 text-slate-500" />}
                         {isToday && !rewardClaimed && (
                           <div className="mt-1.5 w-full text-[9px] font-black text-amber-900 bg-amber-400 rounded-lg py-1 tracking-wider">
                             ¡TAP!
@@ -448,7 +481,7 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
                 {isAlreadyClaimedToday && !rewardClaimed && (
                   <div className="text-center py-2 px-3 rounded-xl bg-emerald-950/40 border border-emerald-500/30">
                     <p className="text-xs text-emerald-400 font-bold flex items-center justify-center gap-1.5">
-                      <Check className="w-4 h-4 stroke-[3]" /> Ya reclamaste tu recompensa de hoy
+                      <Icon name="check" className="w-4 h-4" /> Ya reclamaste tu recompensa de hoy
                     </p>
                   </div>
                 )}
@@ -505,10 +538,10 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
                   className="flex items-center gap-2 flex-wrap justify-center"
                 >
                   <span className="bg-cyan-950/60 border border-cyan-500/30 rounded-full px-3 py-1 text-xs font-bold text-cyan-300">
-                    <Zap className="w-3 h-3 inline mr-1" />+{xpEarnedToday + bonusXp} XP Total
+                    <Icon name="zap" className="w-3 h-3 inline mr-1" />+{xpEarnedToday + totalBonusXp} XP Total
                   </span>
                   <span className="bg-yellow-950/60 border border-yellow-500/30 rounded-full px-3 py-1 text-xs font-bold text-yellow-300">
-                    <Coins className="w-3 h-3 inline mr-1" />+{coinsEarnedToday + bonusCoins} Monedas
+                    <Icon name="coins" className="w-3 h-3 inline mr-1" />+{coinsEarnedToday + totalBonusCoins} Monedas
                   </span>
                   <span className={`rounded-full px-3 py-1 text-xs font-bold border ${gradeBadgeColor}`}>
                     Rango: {grade}
@@ -521,7 +554,7 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
                     animate={{ opacity: 1, scale: 1 }}
                     className="flex items-center gap-2 text-sm text-emerald-400 font-bold"
                   >
-                    <Check className="w-5 h-5" /> Cerrando...
+                    <Icon name="check" className="w-5 h-5" /> Cerrando...
                   </motion.div>
                 )}
               </motion.div>
@@ -542,9 +575,9 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
               }`}
             >
               {dayConsolidated ? (
-                <><Check className="w-5 h-5 animate-bounce" /> ¡Jornada Consolidada! → Cargando recompensa...</>
+                <><Icon name="check" className="w-5 h-5 animate-bounce" /> ¡Jornada Consolidada! → Cargando recompensa...</>
               ) : (
-                <><Sparkles className="w-4 h-4" /> Consolidar Jornada (+{bonusXp} XP / +{bonusCoins} Monedas)</>
+                <><Icon name="sparkles" className="w-4 h-4" /> Consolidar Jornada (+{totalBonusXp} XP / +{totalBonusCoins} Monedas)</>
               )}
             </button>
           )}
@@ -574,23 +607,41 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
                 }`}
               >
                 {isAlreadyClaimedToday
-                  ? <><ArrowRight className="w-4 h-4" /> Continuar</>
+                  ? <><Icon name="arrowRight" className="w-4 h-4" /> Continuar</>
                   : rewardClaimed
-                  ? <><Check className="w-4 h-4" /> ¡Reclamado! Continuando...</>
-                  : <><Gift className="w-4 h-4" /> ¡Reclamar Recompensa del Día {currentStreakDay}!</>
+                  ? <><Icon name="check" className="w-4 h-4" /> ¡Reclamado! Continuando...</>
+                  : <><Icon name="gift" className="w-4 h-4" /> ¡Reclamar Recompensa del Día {currentStreakDay}!</>
                 }
               </button>
             </div>
           )}
 
           {step === 'seal' && (
-            <button
-              onClick={handleSeal}
-              disabled={sealed}
-              className="w-full py-3.5 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-700 hover:from-indigo-500 hover:to-purple-600 text-white shadow-[0_0_25px_rgba(99,102,241,0.4)] active:scale-[0.98] transition-all cursor-pointer"
-            >
-              <Moon className="w-4 h-4" /> Sellar Jornada y Descansar
-            </button>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  soundFX.playClick();
+                  void generateAndShareLegacyCard({
+                    stats,
+                    archetypeName: archetype.name,
+                    completionRate,
+                    xpEarnedToday: xpEarnedToday + totalBonusXp,
+                    grade,
+                  });
+                }}
+                className="py-3 px-4 rounded-2xl font-bold uppercase tracking-wider text-xs flex items-center justify-center gap-2 bg-cyan-950/70 hover:bg-cyan-900/80 text-cyan-200 border border-cyan-500/40 transition-all cursor-pointer active:scale-[0.98]"
+              >
+                <Icon name="sparkles" className="w-4 h-4 text-cyan-400" /> Compartir Legado Táctico
+              </button>
+              <button
+                onClick={handleSeal}
+                disabled={sealed}
+                className="flex-1 py-3.5 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-700 hover:from-indigo-500 hover:to-purple-600 text-white shadow-[0_0_25px_rgba(99,102,241,0.4)] active:scale-[0.98] transition-all cursor-pointer"
+              >
+                <Icon name="moon" className="w-4 h-4" /> Sellar Jornada y Descansar
+              </button>
+            </div>
           )}
         </div>
       </div>

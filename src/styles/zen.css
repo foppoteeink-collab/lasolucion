@@ -1,0 +1,53 @@
+
+/* --- Lienzo de Papel Zen Artesanal --- */
+.zen-paper-canvas {
+  font-family: var(--zen-font, 'Indie Flower', cursive);
+  background: url(/src/assets/images/zen_notebook_paper_bg_1793888229903.jpg);
+  background-size: cover;
+  background-position: center;
+  color: #26283d; /* Dark graphite ink */
+}
+
+/* Rediseño artesanal de la tarjeta de tarea para Modo Zen */
+.zen-task-card {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border-bottom: 1px solid rgba(38, 40, 66, 0.2) !important;
+  border-radius: 0 !important;
+  padding: 8px 0 !important;
+  transition: none !important;
+}
+
+.zen-task-title {
+  font-size: 1.25rem !important;
+  color: #26283d !important;
+  position: relative;
+}
+
+/* Tacha a mano (línea orgánica) */
+.zen-cross-out {
+  position: relative;
+  text-decoration: none !important;
+}
+.zen-cross-out::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 55%;
+  width: 100%;
+  height: 3px;
+  background: #26283d;
+  transform: rotate(-1deg) skewX(-10deg);
+  border-radius: 50%;
+  opacity: 0.6;
+}
+
+/* Sello de cierre artesanal */
+.zen-close-stamp {
+  border: 3px dashed #7f1d1d !important;
+  color: #7f1d1d !important;
+  background: rgba(239, 68, 68, 0.1) !important;
+  font-family: 'Courier New', monospace !important;
+  text-transform: uppercase;
+}

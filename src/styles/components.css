@@ -1,0 +1,150 @@
+.les-item {
+  display: flex;
+  align-items: stretch;
+}
+.les-info {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+}
+
+/* --- Componente MoxenChipGroup Styles --- */
+.mf-chip-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.mf-chip-group--compact {
+  gap: 4px;
+}
+.mf-chip-group--nowrap {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+}
+
+.mf-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  background: rgba(1, 20, 32, 0.8);
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  color: #f1f5f9;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.mf-chip:hover {
+  background: rgba(0, 240, 255, 0.1);
+}
+.mf-chip--sm {
+  padding: 4px 10px;
+  font-size: 11px;
+}
+
+.mf-chip--active {
+  background: rgba(0, 240, 255, 0.2);
+  border-color: rgba(0, 240, 255, 0.6);
+}
+
+.mf-chip__badge {
+  margin-left: 4px;
+  background: rgba(0, 240, 255, 0.2);
+  color: #bae6fd;
+  padding: 0 6px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+/* ========================================================================== */
+/* BOTONES PRINCIPALES CON ANIMACIÓN DE ATENCIÓN (CALL-TO-ACTION NEON)       */
+/* ========================================================================== */
+.btn-neon-hunter {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Efecto Shimmer de barrido de luz automático */
+.btn-neon-hunter::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.45) 50%,
+    transparent 100%
+  );
+  transform: skewX(-22deg);
+  animation: hunter-shimmer 3.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  pointer-events: none;
+}
+
+@keyframes hunter-shimmer {
+  0% {
+    left: -120%;
+  }
+  30% {
+    left: 200%;
+  }
+  100% {
+    left: 200%;
+  }
+}
+
+/* Animación de latido y resplandor para llamar la atención en Iniciar Jornada */
+@keyframes hunter-callout-glow {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 14px rgba(0, 240, 255, 0.45), 0 6px 20px rgba(0, 0, 0, 0.7);
+  }
+  50% {
+    transform: scale(1.035);
+    box-shadow: 0 0 28px rgba(0, 240, 255, 0.9), 0 0 45px rgba(0, 240, 255, 0.45), 0 8px 24px rgba(0, 0, 0, 0.9);
+  }
+}
+
+/* Animación de latido y resplandor en Cerrar Jornada */
+@keyframes hunter-callout-glow-amber {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 14px rgba(245, 158, 11, 0.45), 0 6px 20px rgba(0, 0, 0, 0.7);
+  }
+  50% {
+    transform: scale(1.035);
+    box-shadow: 0 0 28px rgba(245, 158, 11, 0.9), 0 0 45px rgba(245, 158, 11, 0.45), 0 8px 24px rgba(0, 0, 0, 0.9);
+  }
+}
+
+@keyframes bounce-x {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(3px);
+  }
+}
+
+.animate-hunter-callout {
+  animation: hunter-callout-glow 2.2s ease-in-out infinite;
+}
+
+.animate-hunter-callout-amber {
+  animation: hunter-callout-glow-amber 2.2s ease-in-out infinite;
+}
+
+.animate-bounce-x {
+  animation: bounce-x 1.4s ease-in-out infinite;
+}
+

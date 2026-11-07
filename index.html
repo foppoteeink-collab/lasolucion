@@ -24,23 +24,81 @@
 
     <script>
       (function() {
-        var BUILD_REV = '2026.11.01-refined-cubes-scale-v42';
+        var BUILD_REV = '2026.11.05-v61-self-healing-pwa';
+        window.__APP_BUILD_REV__ = BUILD_REV;
         try {
-          var currentRev = localStorage.getItem('app_build_rev');
-          if (currentRev !== BUILD_REV) {
-            localStorage.setItem('app_build_rev', BUILD_REV);
-            if ('caches' in window) {
-              caches.keys().then(function(keys) {
-                keys.forEach(function(k) { caches.delete(k); });
-              });
-            }
-            if ('serviceWorker' in navigator) {
-              navigator.serviceWorker.getRegistrations().then(function(regs) {
-                regs.forEach(function(r) { r.update(); });
-              });
+          localStorage.setItem('app_build_rev', BUILD_REV);
+        } catch (e) {}
+
+        function recoverFromStaleCache(reason) {
+          try {
+            var guardKey = 'pwa_recover_' + BUILD_REV;
+            if (sessionStorage.getItem(guardKey) === '1') return;
+            sessionStorage.setItem(guardKey, '1');
+          } catch (e) {}
+
+          var p1 = ('caches' in window)
+            ? caches.keys().then(function(keys) {
+                return Promise.all(keys.map(function(k) { return caches.delete(k); }));
+              }).catch(function() {})
+            : Promise.resolve();
+
+          var p2 = ('serviceWorker' in navigator)
+            ? navigator.serviceWorker.getRegistrations().then(function(regs) {
+                return Promise.all(regs.map(function(r) { return r.unregister().catch(function() {}); }));
+              }).catch(function() {})
+            : Promise.resolve();
+
+          Promise.all([p1, p2]).then(function() {
+            window.location.replace(window.location.pathname + '?_v=' + Date.now());
+          });
+        }
+
+        // Catch failed module script or stylesheet loads (e.g. outdated chunk hashes)
+        window.addEventListener('error', function(event) {
+          var target = event && event.target;
+          if (target && (target.tagName === 'SCRIPT' || target.tagName === 'LINK')) {
+            var src = target.src || target.href || '';
+            if (src.indexOf('/assets/') !== -1) {
+              recoverFromStaleCache('asset-error');
             }
           }
-        } catch(e) {}
+        }, true);
+
+        // Boot watchdog: if React hasn't mounted within 4 seconds, auto-heal caches & SW
+        setTimeout(function() {
+          var root = document.getElementById('root');
+          if (!window.__LA_SOLUCION_MOUNTED__ && (!root || !root.firstElementChild)) {
+            recoverFromStaleCache('boot-watchdog');
+          }
+        }, 4000);
+
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'SW_ACTIVATED' && event.data.version) {
+              if (window.__APP_BUILD_REV__ && event.data.version !== window.__APP_BUILD_REV__) {
+                var reloadKey = 'sw_activated_' + event.data.version;
+                if (sessionStorage.getItem(reloadKey) !== '1') {
+                  sessionStorage.setItem(reloadKey, '1');
+                  window.location.replace(window.location.pathname + '?_v=' + event.data.version);
+                }
+              }
+            }
+          });
+
+          var registerAppSW = function() {
+            navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' })
+              .then(function(reg) {
+                reg.update().catch(function() {});
+              })
+              .catch(function() {});
+          };
+          if (document.readyState === 'complete') {
+            registerAppSW();
+          } else {
+            window.addEventListener('load', registerAppSW);
+          }
+        }
       })();
     </script>
 
@@ -97,4 +155,3 @@
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-

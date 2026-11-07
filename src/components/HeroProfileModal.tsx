@@ -408,7 +408,7 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
                 value={editForm.username} 
                 onChange={(e) => setEditForm({...editForm, username: e.target.value})}
                 className="w-full bg-surface-modal border border-cyan-500/50 rounded-xl p-2.5 text-white focus:outline-none focus:border-cyan-300 transition-colors text-xs font-mono"
-                placeholder="Ej: Hunter_Jin"
+                placeholder="Ej: alex_dev"
               />
             </div>
             <div>
@@ -420,7 +420,7 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
                 value={editForm.fullName} 
                 onChange={(e) => setEditForm({...editForm, fullName: e.target.value})}
                 className="w-full bg-surface-modal border border-cyan-500/50 rounded-xl p-2.5 text-white focus:outline-none focus:border-cyan-300 transition-colors text-xs"
-                placeholder="Ej: Sung Jin-Woo"
+                placeholder="Ej: Alex Gómez"
               />
             </div>
           </div>
