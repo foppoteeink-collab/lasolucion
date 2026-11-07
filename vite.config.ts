@@ -57,10 +57,14 @@ const CORE_ASSETS = ${JSON.stringify(allCoreAssets, null, 2)};
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(CORE_ASSETS).catch((err) => {
-        console.warn('[SW] Core precache partial fail:', err);
-      });
+    caches.open(CACHE_NAME).then(async (cache) => {
+      await Promise.allSettled(
+        CORE_ASSETS.map((asset) =>
+          cache.add(asset).catch((err) => {
+            console.warn('[SW] Core precache fail:', asset, err);
+          })
+        )
+      );
     })
   );
   self.skipWaiting();
@@ -118,12 +122,16 @@ self.addEventListener('fetch', (event) => {
           if (networkRes.ok) {
             const cache = await caches.open(CACHE_NAME);
             cache.put('/index.html', networkRes.clone());
-            cache.put(req, networkRes.clone());
           }
           return networkRes;
         })
         .catch(async () => {
-          const cached = await caches.match(req) || await caches.match('/index.html') || await caches.match('/');
+          const cache = await caches.open(CACHE_NAME);
+          const cached = await cache.match(req, { ignoreSearch: true }) ||
+                         await cache.match('/index.html') ||
+                         await cache.match('/') ||
+                         await caches.match('/index.html') ||
+                         await caches.match('/');
           if (cached) return cached;
           return new Response('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>La Solución - Offline</title></head><body><h1>Modo sin conexión</h1><p>Conéctate a internet para inicializar la aplicación.</p></body></html>', {
             headers: { 'Content-Type': 'text/html; charset=utf-8' }
@@ -246,7 +254,7 @@ export default defineConfig(() => {
               const assetsDir = path.resolve(distDir, 'assets');
               if (fs.existsSync(assetsDir)) {
                 additionalAssets = fs.readdirSync(assetsDir)
-                  .filter((f) => f.endsWith('.js') || f.endsWith('.css'))
+                  .filter((f) => f.endsWith('.css') || f.startsWith('index-') || f.startsWith('vendor-'))
                   .map((f) => `/assets/${f}`);
               }
             } catch {}
