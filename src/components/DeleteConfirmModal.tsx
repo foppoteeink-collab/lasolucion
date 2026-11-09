@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { AlertTriangle, Trash2, X, Calendar } from 'lucide-react';
 import { TaskItem } from '../types';
 import { useTaskStore } from '../store/useTaskStore';
+import { soundFX } from '../utils/audio';
+import { triggerHaptic } from '../utils/haptics';
 
 interface DeleteConfirmModalProps {
   task: TaskItem;
@@ -10,6 +12,18 @@ interface DeleteConfirmModalProps {
 }
 
 export function DeleteConfirmModal({ task, onClose, onConfirm }: DeleteConfirmModalProps) {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        soundFX.playClick();
+        triggerHaptic(15);
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   const customHabits = useTaskStore.getState().customHabits || [];
   const taskTitleNorm = (task.title || '').toLowerCase().trim();
   const matchesCustomHabit = customHabits.some(
@@ -28,19 +42,35 @@ export function DeleteConfirmModal({ task, onClose, onConfirm }: DeleteConfirmMo
     matchesCustomHabit
   );
 
+  const handleConfirmAction = (deleteEverywhere: boolean) => {
+    soundFX.playClick();
+    triggerHaptic([50, 100]);
+    onConfirm(deleteEverywhere);
+  };
+
+  const handleCloseAction = () => {
+    soundFX.playClick();
+    triggerHaptic(15);
+    onClose();
+  };
+
   return (
     <div 
       className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-sm animate-in fade-in"
-      onClick={onClose}
+      onClick={handleCloseAction}
     >
       <div 
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="delete-confirm-modal-title"
         className="w-full max-w-md max-h-[88dvh] sm:max-h-[84vh] flex flex-col bg-[#001830] border border-red-500/50 rounded-3xl shadow-[0_0_40px_rgba(239,68,68,0.2)] overflow-hidden relative"
         onClick={(e) => e.stopPropagation()}
       >
         <button
-          onClick={onClose}
+          onClick={handleCloseAction}
           className="absolute top-4 right-4 p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer z-10"
           title="Cerrar (Volver atrás)"
+          aria-label="Cerrar confirmación de eliminación"
         >
           <X className="w-5 h-5" />
         </button>
@@ -50,7 +80,7 @@ export function DeleteConfirmModal({ task, onClose, onConfirm }: DeleteConfirmMo
             <AlertTriangle className="w-8 h-8 text-red-500" />
           </div>
           
-          <h2 className="text-xl font-black text-white text-center mb-2">¿Eliminar Tarea?</h2>
+          <h2 id="delete-confirm-modal-title" className="text-xl font-black text-white text-center mb-2">¿Eliminar Tarea?</h2>
           <p className="text-center text-slate-300 text-sm mb-6">
             Estás a punto de eliminar <strong className="text-white">"{task.title}"</strong>.
           </p>
@@ -69,7 +99,8 @@ export function DeleteConfirmModal({ task, onClose, onConfirm }: DeleteConfirmMo
           <div className="space-y-3">
             {isHabit && (
               <button
-                onClick={() => onConfirm(true)}
+                onClick={() => handleConfirmAction(true)}
+                aria-label={`Eliminar hábito ${task.title} permanentemente`}
                 className="w-full py-3 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 font-black border border-red-500/30 transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Trash2 className="w-5 h-5" />
@@ -78,7 +109,8 @@ export function DeleteConfirmModal({ task, onClose, onConfirm }: DeleteConfirmMo
             )}
             
             <button
-              onClick={() => onConfirm(false)}
+              onClick={() => handleConfirmAction(false)}
+              aria-label={isHabit ? `Eliminar ${task.title} solo por hoy` : `Eliminar tarea ${task.title}`}
               className={`w-full py-3 rounded-xl ${isHabit ? 'bg-slate-800/50 hover:bg-slate-700/50 text-slate-300 border border-slate-700' : 'bg-red-500/10 hover:bg-red-500/20 text-red-400 font-black border border-red-500/30'} transition-all flex items-center justify-center gap-2 cursor-pointer`}
             >
               <Trash2 className="w-5 h-5" />
@@ -86,7 +118,8 @@ export function DeleteConfirmModal({ task, onClose, onConfirm }: DeleteConfirmMo
             </button>
 
             <button
-              onClick={onClose}
+              onClick={handleCloseAction}
+              aria-label="Cancelar eliminación y volver atrás"
               className="w-full py-3 rounded-xl bg-blue-900/20 hover:bg-blue-800/40 text-blue-300 font-black border border-blue-500/30 transition-all cursor-pointer"
             >
               Cancelar (Volver)

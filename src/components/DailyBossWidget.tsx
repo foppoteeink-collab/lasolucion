@@ -3,6 +3,7 @@ import { TaskItem, TaskCategory } from '../types';
 import { ShieldAlert, Zap, Skull, Trophy, Sparkles, ChevronDown, ChevronUp, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { usePlayerStore } from '../store/usePlayerStore';
 import { soundFX } from '../utils/audio';
+import { triggerHaptic } from '../utils/haptics';
 import { getTodayDateString } from '../utils/date';
 
 export interface BossInfo {
@@ -287,7 +288,15 @@ export const DailyBossWidget: React.FC<DailyBossWidgetProps> = ({
             </span>
           </div>
 
-          <div className="w-full h-2 bg-black rounded-full border border-[#9600ff]/30 p-0.5 overflow-hidden">
+          <div
+            role="progressbar"
+            aria-label="Nivel de Entropía Diaria"
+            aria-valuenow={systemEntropy}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuetext={`${systemEntropy}% de entropía`}
+            className="w-full h-2 bg-black rounded-full border border-[#9600ff]/30 p-0.5 overflow-hidden"
+          >
             <div
               className={`h-full rounded-full transition-all duration-500 ${
                 systemEntropy === 100
@@ -310,7 +319,14 @@ export const DailyBossWidget: React.FC<DailyBossWidgetProps> = ({
             <div>
               <div className="flex items-center gap-1.5 flex-wrap">
                 <button
-                  onClick={() => setBossMode(bossMode === 'daily' ? 'weekly' : 'daily')}
+                  type="button"
+                  onClick={() => {
+                    soundFX.playClick();
+                    triggerHaptic(15);
+                    setBossMode(bossMode === 'daily' ? 'weekly' : 'daily');
+                  }}
+                  aria-pressed={bossMode === 'weekly'}
+                  aria-label={`Modo actual: ${bossMode === 'daily' ? 'Jefe Diario' : 'Desafío Semanal'}. Toca para alternar.`}
                   className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded border transition-all cursor-pointer ${
                     bossMode === 'weekly'
                       ? 'bg-[#9600ff] text-white border-[#9600ff] shadow-[0_0_8px_rgba(150,0,255,0.5)]'
@@ -334,10 +350,14 @@ export const DailyBossWidget: React.FC<DailyBossWidgetProps> = ({
           </div>
 
           <button
+            type="button"
             onClick={() => {
               soundFX.playClick();
+              triggerHaptic(15);
               setIsCollapsed(!isCollapsed);
             }}
+            aria-expanded={!isCollapsed}
+            aria-label={isCollapsed ? 'Expandir panel de jefe' : 'Minimizar panel de jefe'}
             className="p-1 rounded-xl bg-[#03000a] border border-[#9600ff]/60 text-white hover:bg-[#9600ff]/30 transition-colors cursor-pointer"
             title={isCollapsed ? 'Expandir' : 'Minimizar'}
           >
@@ -357,7 +377,15 @@ export const DailyBossWidget: React.FC<DailyBossWidgetProps> = ({
             </span>
           </div>
 
-          <div className="w-full h-3 bg-black rounded-full border border-[#fb5607]/60 p-0.5 overflow-hidden">
+          <div
+            role="progressbar"
+            aria-label={`Salud restante del jefe ${boss.name}`}
+            aria-valuenow={currentHp}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuetext={`${currentHp}% de fuerza`}
+            className="w-full h-3 bg-black rounded-full border border-[#fb5607]/60 p-0.5 overflow-hidden"
+          >
             <div
               className={`h-full rounded-full transition-all duration-700 ${
                 isDefeated
@@ -392,11 +420,14 @@ export const DailyBossWidget: React.FC<DailyBossWidgetProps> = ({
             
             {isDefeated && !hasClaimedToday && (
               <button 
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   soundFX.playLevelUp();
+                  triggerHaptic([30, 50, 40]);
                   onClaimBossBounty(boss.bonusRewardXp, boss.bonusRewardCoins);
                 }}
+                aria-label={`Reclamar recompensa de ${boss.bonusRewardXp} XP y ${boss.bonusRewardCoins} monedas`}
                 className="w-full mt-2 min-h-[40px] py-2 bg-[#d6f421] text-black border border-[#d6f421] rounded-lg font-anton tracking-widest uppercase transition-all shadow-[0_0_15px_rgba(214,244,33,0.5)] cursor-pointer hover:bg-yellow-300 active:scale-95 flex items-center justify-center"
               >
                 Reclamar Recompensa

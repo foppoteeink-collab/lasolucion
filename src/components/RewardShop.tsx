@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { ShopReward } from '../types';
 import { 
@@ -33,7 +34,9 @@ import { getTodayDateString } from '../utils/date';
 type FilterTab = 'todos' | 'vida_real' | 'perks' | 'kai' | 'descanso' | 'personalizados' | 'mochila';
 
 export const RewardShop: React.FC = () => {
-  const { stats, openLootBox, useInventoryItem } = usePlayerStore();
+  const stats = usePlayerStore((s) => s.stats);
+  const openLootBox = usePlayerStore((s) => s.openLootBox);
+  const useInventoryItem = usePlayerStore((s) => s.useInventoryItem);
   const inventory = stats.inventory || [];
   const unopenedBoxes = stats.unopenedBoxes || 0;
   const coins = stats.coins || 0;
@@ -628,11 +631,11 @@ export const RewardShop: React.FC = () => {
         </motion.div>
       )}
 
-      {/* ─── 6. MODAL PARA FORJAR DESEO PERSONALIZADO ─── */}
+      {/* ─── 6. MODAL PARA FORJAR DESEO PERSONALIZADO (PORTAL AISLADO) ─── */}
       <AnimatePresence>
-        {isAddModalOpen && (
+        {isAddModalOpen && typeof document !== 'undefined' && createPortal(
           <div 
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md"
+            className="fixed inset-0 z-[180] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in font-sans portal-modal-root"
             onClick={() => setIsAddModalOpen(false)}
           >
             <motion.div 
@@ -670,6 +673,7 @@ export const RewardShop: React.FC = () => {
                   <input
                     type="text"
                     required
+                    maxLength={60}
                     placeholder="Ej. Tarde de videojuegos, postre..."
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
@@ -720,6 +724,7 @@ export const RewardShop: React.FC = () => {
                   </label>
                   <input
                     type="text"
+                    maxLength={140}
                     placeholder="Ej. Premio merecido por 7 días de racha."
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
@@ -737,7 +742,8 @@ export const RewardShop: React.FC = () => {
                 </div>
               </form>
             </motion.div>
-          </div>
+          </div>,
+          document.body
         )}
       </AnimatePresence>
 

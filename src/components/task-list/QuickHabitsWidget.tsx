@@ -46,6 +46,7 @@ import { useTaskStore } from '../../store/useTaskStore';
 import { usePlayerStore } from '../../store/usePlayerStore';
 import { useUIStore } from '../../store/useUIStore';
 import { soundFX } from '../../utils/audio';
+import { triggerHaptic } from '../../utils/haptics';
 import { getHabitBaseId, computeHabitStreak } from '../../intelligence/masteryEngine';
 import { getTodayDateString, addDaysToDateString } from '../../utils/date';
 import { HABIT_ENERGY_DETAILS, detectHabitEnergy } from '../../utils/habitEnergyDetector';
@@ -197,6 +198,8 @@ export const getShortHabitLabel = (title: string, icon?: string): string => {
 
   // Specific common cases
   if (lower.includes('agua') || lower.includes('hidrat')) return 'Agua';
+  if (lower.includes('foco') || lower.includes('ininterrumpido') || lower.includes('deep work')) return 'Foco';
+  if (lower.includes('cierre') || lower.includes('auditor') || lower.includes('revisión') || lower.includes('revision')) return 'Cierre';
   if (lower.includes('diente') || lower.includes('cepill')) return 'Dientes';
   if (lower.includes('gym') || lower.includes('entren') || lower.includes('físic') || lower.includes('ejercicio')) return 'Gimnasio';
   if (lower.includes('leer') || lower.includes('lectura') || lower.includes('libro')) return 'Lectura';
@@ -238,7 +241,8 @@ export const getShortHabitLabel = (title: string, icon?: string): string => {
     cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
   }
 
-  return cleaned || title;
+  const finalLabel = cleaned || title;
+  return finalLabel.length > 12 ? finalLabel.slice(0, 11).trim() + '…' : finalLabel;
 };
 
 /**
@@ -545,13 +549,12 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
       const xpReward = qh.awardedXp || qh.xpReward || 0;
       const coinReward = qh.awardedCoins || qh.coinReward || 0;
       if (xpReward > 0 || coinReward > 0) {
-        const stats = usePlayerStore.getState().stats;
-        usePlayerStore.getState().setStats({
-          ...stats,
-          currentXp: Math.max(0, stats.currentXp - xpReward),
-          totalXpEarned: Math.max(0, stats.totalXpEarned - xpReward),
-          coins: Math.max(0, stats.coins - coinReward),
-        });
+        usePlayerStore.getState().setStats((prev) => ({
+          ...prev,
+          currentXp: Math.max(0, prev.currentXp - xpReward),
+          totalXpEarned: Math.max(0, prev.totalXpEarned - xpReward),
+          coins: Math.max(0, prev.coins - coinReward),
+        }));
       }
     }
 
@@ -707,8 +710,8 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
           ];
           const step = paletteSteps[idx % paletteSteps.length];
           const startColor = step.start;
-          const endColor = isFinished ? '#10b981' : step.end;
-          const glowFilterColor = isFinished ? 'rgba(16, 185, 129, 0.7)' : step.glow;
+          const endColor = step.end;
+          const glowFilterColor = step.glow;
           const safeGradId = `moxen-grad-${(qh.id || String(idx)).replace(/[^a-zA-Z0-9_-]/g, '')}`;
 
           // Posición de la cabeza redondeada y reflejo especular de Moxen Constancia
@@ -741,8 +744,8 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                 animate={{
                   boxShadow: isFinished
                     ? [
-                        "0 0 8px rgba(16, 185, 129, 0.35), inset 0 0 4px rgba(16, 185, 129, 0.2)",
-                        "0 0 16px rgba(16, 185, 129, 0.65), inset 0 0 8px rgba(16, 185, 129, 0.35)"
+                        "0 0 8px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.40), inset 0 0 4px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.22)",
+                        "0 0 16px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.70), inset 0 0 8px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.38)"
                       ]
                     : [
                         "0 0 6px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.22), inset 0 0 4px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.12)",
@@ -789,12 +792,25 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                   const nextCount = isCounterHabit ? current + 1 : (isFinished ? 0 : 1);
                   if (!isFinished && nextCount >= target) {
                     setCompletedShockwaveId(qh.id);
+                    triggerHaptic([30, 45]);
                     setTimeout(() => setCompletedShockwaveId(null), 700);
+                  } else {
+                    triggerHaptic(20);
                   }
 
                   onIncrementHabit(qh.id, e);
                 }}
-                className={`w-12 h-12 rounded-full relative flex items-center justify-center cursor-pointer transition-transform duration-150 active:scale-95 ${
+                role="button"
+                tabIndex={0}
+                aria-pressed={isFinished}
+                aria-label={`${qh.title}: ${current} de ${target} completado. Racha de ${currentStreak} días.`}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    e.currentTarget.click();
+                  }
+                }}
+                className={`w-12 h-12 rounded-full relative flex items-center justify-center cursor-pointer transition-transform duration-150 active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${
                   isLocked ? 'cursor-not-allowed opacity-60' : ''
                 }`}
                 title={
@@ -808,11 +824,15 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                     ? `${qh.title} - Completado hoy (Toca para desmarcar)`
                     : `${qh.title} - Toca para completar`
                 }
-                aria-label={`${qh.title}: ${current} de ${target} completado`}
               >
                 {/* Shockwave de Celebración Moxen al completar */}
                 {completedShockwaveId === qh.id && (
-                  <div className="absolute inset-[-4px] rounded-full border-2 border-emerald-400 pointer-events-none animate-moxen-shockwave z-30" />
+                  <div
+                    className="absolute inset-[-4px] rounded-full border-2 pointer-events-none animate-moxen-shockwave z-30"
+                    style={{
+                      borderColor: 'var(--aura-color-1, #00f0ff)',
+                    }}
+                  />
                 )}
 
                 {/* Micro-Llama Superior de Racha posicionada en el borde exterior con hitbox accesible WCAG 44x44px */}
@@ -892,7 +912,7 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                   {/* Punto de cierre superior con brillo al completar */}
                   {isFinished && (
                     <>
-                      <circle cx="24" cy="3" r="2.2" fill="#10b981" />
+                      <circle cx="24" cy="3" r="2.2" fill={startColor || 'var(--aura-color-1, #00f0ff)'} />
                       <circle cx="23.6" cy="2.6" r="0.8" fill="rgba(255, 255, 255, 0.85)" />
                     </>
                   )}
@@ -902,9 +922,20 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                 <div
                   className={`w-[36px] h-[36px] rounded-full flex items-center justify-center transition-all duration-300 relative z-[2] select-none ${
                     isFinished
-                      ? 'bg-gradient-to-b from-[#06241a] to-[#020d09] border border-emerald-500/60 shadow-[0_0_12px_rgba(16,185,129,0.35),inset_0_1px_2px_rgba(255,255,255,0.15)]'
+                      ? 'shadow-[inset_0_1px_2px_rgba(255,255,255,0.2)]'
                       : 'bg-gradient-to-b from-[#0b1428] to-[#040712] border border-cyan-500/25 group-hover:border-cyan-400/50 shadow-[inset_0_1px_2px_rgba(255,255,255,0.1),0_2px_8px_rgba(0,0,0,0.6)]'
                   }`}
+                  style={
+                    isFinished
+                      ? {
+                          border: '1px solid var(--aura-color-1, #00f0ff)',
+                          background:
+                            'radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--aura-color-1, #00f0ff) 22%, #08040f) 0%, #030107 100%)',
+                          boxShadow:
+                            '0 0 12px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.35), inset 0 1px 2px rgba(255, 255, 255, 0.2)',
+                        }
+                      : undefined
+                  }
                 >
                   <span className="text-base select-none leading-none filter drop-shadow-sm">
                     <Icon name={qh.quickIcon} className="w-4 h-4" />
@@ -913,25 +944,46 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
 
                 {/* Borde exterior resplandeciente de energía */}
                 <div
-                  className={`absolute inset-[-3px] rounded-full border pointer-events-none transition-colors duration-300 ${
+                  className={`absolute inset-[-3px] rounded-full border pointer-events-none transition-all duration-300 ${
                     isFinished
-                      ? 'border-emerald-400/50 shadow-[0_0_10px_rgba(16,185,129,0.3)]'
+                      ? 'opacity-85'
                       : 'border-cyan-400/35 group-hover:border-cyan-300/60 shadow-[0_0_8px_rgba(var(--aura-glow-rgb,0,240,255),0.2)]'
                   }`}
+                  style={
+                    isFinished
+                      ? {
+                          borderColor: 'var(--aura-color-1, #00f0ff)',
+                          boxShadow: '0 0 12px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.45)',
+                        }
+                      : undefined
+                  }
                 />
 
                 {/* Badge Inferior Táctico de Progreso (Optimizado para legibilidad WCAG 2.1) */}
                 <div
                   className={`absolute -bottom-1 -right-1 px-2 py-[2px] rounded-full border font-mono font-bold leading-none flex items-center justify-center shadow-md z-20 ring-1 ring-[#070510] transition-all duration-200 ${
                     isFinished
-                      ? 'bg-emerald-950 border-emerald-400 text-emerald-300 shadow-[0_0_8px_rgba(16,185,129,0.5)]'
+                      ? ''
                       : isCounterHabit
                       ? 'bg-[#050914] border-cyan-400/70 text-cyan-200 shadow-[0_0_6px_rgba(0,240,255,0.25)]'
                       : 'bg-[#060a14] border-white/20 text-gray-400 p-0.5'
                   }`}
+                  style={
+                    isFinished
+                      ? {
+                          backgroundColor: 'rgba(5, 9, 20, 0.95)',
+                          borderColor: 'var(--aura-color-1, #00f0ff)',
+                          color: 'var(--aura-color-1, #00f0ff)',
+                          boxShadow: '0 0 10px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.55)',
+                        }
+                      : undefined
+                  }
                 >
                   {isFinished ? (
-                    <Check className="w-2.5 h-2.5 text-emerald-300 stroke-[3]" />
+                    <Check
+                      className="w-2.5 h-2.5 stroke-[3]"
+                      style={{ color: 'var(--aura-color-1, #00f0ff)' }}
+                    />
                   ) : isCounterHabit ? (
                     <span className="tabular-nums font-mono text-[11px] font-bold text-cyan-200 tracking-tight">
                       {current}<span className="text-cyan-400/70 mx-0.5">/</span>{target}
@@ -977,7 +1029,10 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                   const nextCount = isCounterHabit ? current + 1 : (isFinished ? 0 : 1);
                   if (!isFinished && nextCount >= target) {
                     setCompletedShockwaveId(qh.id);
+                    triggerHaptic([30, 45]);
                     setTimeout(() => setCompletedShockwaveId(null), 700);
+                  } else {
+                    triggerHaptic(20);
                   }
 
                   onIncrementHabit(qh.id, e);
@@ -1081,7 +1136,14 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                         {qh.currentCount || 0} / {qh.targetCount || 1} {qh.unit || 'veces'}
                       </span>
                       {(qh.completed || (qh.currentCount || 0) >= (qh.targetCount || 1)) && (
-                        <span className="text-[10px] text-emerald-400 font-bold bg-emerald-950/70 border border-emerald-500/40 px-1.5 py-0.2 rounded">
+                        <span
+                          className="text-[10px] font-bold px-1.5 py-0.5 rounded border"
+                          style={{
+                            color: 'var(--aura-color-1, #00f0ff)',
+                            borderColor: 'rgba(var(--aura-glow-rgb, 0, 240, 255), 0.5)',
+                            backgroundColor: 'rgba(var(--aura-glow-rgb, 0, 240, 255), 0.15)',
+                          }}
+                        >
                           ✓ Completado
                         </span>
                       )}

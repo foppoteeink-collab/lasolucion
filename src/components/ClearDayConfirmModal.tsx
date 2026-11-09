@@ -1,9 +1,11 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { AlertTriangle, Trash2, X, Calendar, Flame, ShieldAlert, Award } from 'lucide-react';
 import { TaskItem, HabitMasteryRecord } from '../types';
 import { getHabitBaseId } from '../intelligence/masteryEngine';
 import { formatDateForDisplay } from '../utils/date';
+import { soundFX } from '../utils/audio';
+import { triggerHaptic } from '../utils/haptics';
 
 interface ClearDayConfirmModalProps {
   isOpen: boolean;
@@ -22,10 +24,22 @@ export const ClearDayConfirmModal: React.FC<ClearDayConfirmModalProps> = ({
   tasks,
   habitMastery,
 }) => {
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        soundFX.playClick();
+        triggerHaptic(15);
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
-  // Filter tasks that have 21/66 tracking or active streaks
+  // Filter tasks that have 21/66 tracking or active streaks (Keep before conditional return)
   const trackedItems = useMemo(() => {
+    if (!tasks || !habitMastery) return [];
     return tasks
       .filter((t) => {
         if (t.isTracked2166) return true;
@@ -56,22 +70,40 @@ export const ClearDayConfirmModal: React.FC<ClearDayConfirmModalProps> = ({
       });
   }, [tasks, habitMastery]);
 
+  if (!isOpen) return null;
+
   const hasHighStreakWarning = trackedItems.some((item) => item.streak > 0 || item.isTracked2166);
+
+  const handleConfirmAction = () => {
+    soundFX.playClick();
+    triggerHaptic([50, 100]);
+    onConfirm();
+  };
+
+  const handleCloseAction = () => {
+    soundFX.playClick();
+    triggerHaptic(15);
+    onClose();
+  };
 
   const modalContent = (
     <div
       className="fixed inset-0 z-[180] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200 portal-modal-root"
-      onClick={onClose}
+      onClick={handleCloseAction}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="clear-day-modal-title"
         className="w-full max-w-lg max-h-[90dvh] flex flex-col bg-[#001830] border border-red-500/50 rounded-3xl shadow-[0_0_50px_rgba(239,68,68,0.25)] overflow-hidden relative"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close Button */}
         <button
-          onClick={onClose}
+          onClick={handleCloseAction}
           className="absolute top-4 right-4 p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer z-10"
           title="Cerrar (Volver atrás)"
+          aria-label="Cerrar confirmación de limpieza de día"
         >
           <X className="w-5 h-5" />
         </button>
@@ -82,7 +114,7 @@ export const ClearDayConfirmModal: React.FC<ClearDayConfirmModalProps> = ({
             <Trash2 className="w-8 h-8 text-red-400" />
           </div>
 
-          <h2 className="text-xl sm:text-2xl font-black text-white text-center mb-2 tracking-wide">
+          <h2 id="clear-day-modal-title" className="text-xl sm:text-2xl font-black text-white text-center mb-2 tracking-wide">
             ¿Limpiar Tareas del Día?
           </h2>
 
@@ -156,7 +188,8 @@ export const ClearDayConfirmModal: React.FC<ClearDayConfirmModalProps> = ({
           {/* Action Buttons */}
           <div className="space-y-3">
             <button
-              onClick={onConfirm}
+              onClick={handleConfirmAction}
+              aria-label="Confirmar y limpiar tareas de hoy"
               className="w-full py-3.5 px-4 rounded-xl bg-red-600 hover:bg-red-500 active:scale-[0.99] text-white font-black shadow-[0_0_20px_rgba(239,68,68,0.4)] transition-all flex items-center justify-center gap-2 cursor-pointer text-sm"
             >
               <Trash2 className="w-5 h-5" />
@@ -164,7 +197,8 @@ export const ClearDayConfirmModal: React.FC<ClearDayConfirmModalProps> = ({
             </button>
 
             <button
-              onClick={onClose}
+              onClick={handleCloseAction}
+              aria-label="Cancelar limpieza y conservar tareas"
               className="w-full py-3.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-[0.99] text-slate-300 hover:text-white font-bold border border-slate-700 transition-all cursor-pointer text-sm"
             >
               Cancelar (Conservar Tareas)

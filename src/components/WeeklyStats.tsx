@@ -72,6 +72,12 @@ const AnimatedCounter = ({ value, duration = 1200, prefix = "", suffix = "" }: {
   const [count, setCount] = React.useState(0);
 
   React.useEffect(() => {
+    if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setCount(value);
+      return;
+    }
+
+    let frameId: number | null = null;
     let startTimestamp: number | null = null;
     const step = (timestamp: number) => {
       if (!startTimestamp) startTimestamp = timestamp;
@@ -79,12 +85,18 @@ const AnimatedCounter = ({ value, duration = 1200, prefix = "", suffix = "" }: {
       const easeProgress = 1 - Math.pow(1 - progress, 4);
       setCount(Math.floor(easeProgress * value));
       if (progress < 1) {
-        window.requestAnimationFrame(step);
+        frameId = window.requestAnimationFrame(step);
       } else {
         setCount(value);
       }
     };
-    window.requestAnimationFrame(step);
+    frameId = window.requestAnimationFrame(step);
+
+    return () => {
+      if (frameId !== null) {
+        window.cancelAnimationFrame(frameId);
+      }
+    };
   }, [value, duration]);
 
   return <>{prefix}{count.toLocaleString('es-CR')}{suffix}</>;
@@ -238,13 +250,25 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
       .sort((a, b) => b.currentStreak - a.currentStreak);
   }, [habitMastery, tasksByDate]);
 
+  // Memoized habit baseId -> Title map to eliminate O(Days * Tasks) search in every render/map
+  const habitTitleMap = useMemo(() => {
+    const map = new Map<string, string>();
+    map.set('habito-ejercicio-diario', 'Entrenamiento Diario');
+    for (const tasks of Object.values(tasksByDate) as TaskItem[][]) {
+      for (const t of tasks) {
+        const bId = getHabitBaseId(t);
+        if (bId && !map.has(bId) && t.title) {
+          map.set(bId, t.title);
+        }
+      }
+    }
+    return map;
+  }, [tasksByDate]);
+
   const getHabitRealTitle = (baseId: string) => {
     if (!baseId) return 'Hábito Desconocido';
-    if (baseId === 'habito-ejercicio-diario') return 'Entrenamiento Diario';
-    for (const tasks of Object.values(tasksByDate) as TaskItem[][]) {
-      const found = tasks.find(t => getHabitBaseId(t) === baseId);
-      if (found) return found.title;
-    }
+    const found = habitTitleMap.get(baseId);
+    if (found) return found;
     return baseId.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
   };
 

@@ -51,6 +51,7 @@ export const SidebarHUD: React.FC<SidebarHUDProps> = ({
   const setModalState = useUIStore((s) => s.setModalState);
   const isPomodoroOpen = useUIStore((s) => s.isPomodoroOpen);
   const openTaskForm = useUIStore((s) => s.openTaskForm);
+  const handDominance = useUIStore((s) => s.handDominance);
 
   // Atomic selectors for PlayerStore
   const level = usePlayerStore((s) => s.stats.level || 1);
@@ -168,16 +169,18 @@ export const SidebarHUD: React.FC<SidebarHUDProps> = ({
 
     localStorage.setItem('lasolucion_sidebar_tab_y', String(Math.round(tabY)));
 
-    // Deslizar hacia la izquierda repliega la pestaña al borde para que no estorbe
-    if (!isTabTucked && dx < -24) {
+    const isRight = handDominance === 'right';
+
+    // Deslizar hacia el borde exterior repliega la pestaña al borde para que no estorbe
+    if (isRight ? (!isTabTucked && dx > 24) : (!isTabTucked && dx < -24)) {
       soundFX.playClick();
       setIsTabTucked(true);
       localStorage.setItem('lasolucion_sidebar_tab_tucked', 'true');
       return;
     }
 
-    // Deslizar hacia la derecha la vuelve a desplegar
-    if (isTabTucked && dx > 18) {
+    // Deslizar hacia el interior la vuelve a desplegar
+    if (isRight ? (isTabTucked && dx < -18) : (isTabTucked && dx > 18)) {
       soundFX.playClick();
       setIsTabTucked(false);
       localStorage.setItem('lasolucion_sidebar_tab_tucked', 'false');
@@ -396,12 +399,15 @@ export const SidebarHUD: React.FC<SidebarHUDProps> = ({
       {/* ================================================================== */}
       {/* ORBE / ESCUDO TÁCTICO DE KAI EN MÓVIL Y TABLET (< 1024px)          */}
       {/* Opción A: +20px, fondo sólido sin texto "MENÚ", arrastrable        */}
+      {/* Adaptativo: Se ancla a la izquierda o derecha según ergonomía HUD  */}
       {/* + Botón inteligente de Jornada acoplado justo debajo de KAI        */}
       {/* ================================================================== */}
       <div
-        className={`lg:hidden fixed left-0 z-[82] flex flex-col items-start gap-1 select-none ${
+        className={`lg:hidden fixed ${handDominance === 'right' ? 'right-0 items-end' : 'left-0 items-start'} z-[82] flex flex-col gap-1 select-none ${
           isMobileOpen
-            ? '-translate-x-full opacity-0 pointer-events-none'
+            ? handDominance === 'right'
+              ? 'translate-x-full opacity-0 pointer-events-none'
+              : '-translate-x-full opacity-0 pointer-events-none'
             : 'translate-x-0 opacity-100'
         }`}
         style={{
@@ -415,7 +421,9 @@ export const SidebarHUD: React.FC<SidebarHUDProps> = ({
         {isTabTucked ? (
           /* Modo Guardado en el Borde: Línea de luz de 6px ultra-discreta */
           <div
-            className="group flex items-center justify-center w-2.5 h-14 rounded-r-full bg-[#040814]/98 backdrop-blur-2xl border border-l-0 transition-all hover:w-3.5 cursor-pointer"
+            className={`group flex items-center justify-center w-2.5 h-14 ${
+              handDominance === 'right' ? 'rounded-l-full border-r-0' : 'rounded-r-full border-l-0'
+            } bg-[#040814]/98 backdrop-blur-2xl border transition-all hover:w-3.5 cursor-pointer`}
             style={{
               borderColor: 'rgba(var(--aura-glow-rgb, 0, 240, 255), 0.5)',
               boxShadow:
@@ -437,7 +445,11 @@ export const SidebarHUD: React.FC<SidebarHUDProps> = ({
         ) : (
           /* Opción A: Escudo Semicircular de KAI (+20px, fondo #040814 sólido, sin palabra MENÚ) */
           <div
-            className="relative flex items-center justify-center h-[56px] pl-2 pr-3.5 rounded-r-full bg-[#040814]/[0.97] backdrop-blur-2xl border border-l-0 transition-all cursor-grab active:cursor-grabbing"
+            className={`relative flex items-center justify-center h-[56px] ${
+              handDominance === 'right'
+                ? 'pl-3.5 pr-2 rounded-l-full border-r-0'
+                : 'pl-2 pr-3.5 rounded-r-full border-l-0'
+            } bg-[#040814]/[0.97] backdrop-blur-2xl border transition-all cursor-grab active:cursor-grabbing`}
             style={{
               borderColor: 'rgba(var(--aura-glow-rgb, 0, 240, 255), 0.42)',
               boxShadow:
@@ -456,24 +468,44 @@ export const SidebarHUD: React.FC<SidebarHUDProps> = ({
                 setIsMobileOpen(true);
               }
             }}
-            title="Toca a KAI para abrir menú • Arrastra arriba/abajo • Desliza a la izquierda para guardar en el borde"
+            title={
+              handDominance === 'right'
+                ? 'Toca a KAI para abrir menú • Arrastra arriba/abajo • Desliza a la derecha para guardar en el borde'
+                : 'Toca a KAI para abrir menú • Arrastra arriba/abajo • Desliza a la izquierda para guardar en el borde'
+            }
             aria-label="Abrir menú lateral de KAI"
           >
-            {/* Filamento de agarre sutil en el borde izquierdo */}
-            <div
-              className="w-[2.5px] h-5 rounded-full mr-1.5 opacity-65 pointer-events-none"
-              style={{ background: 'var(--aura-color-1, #00f0ff)' }}
-            />
-
-            {/* Holograma de KAI aumentado +20px (de 24px a 44px) sin texto que estorbe */}
-            <div className="relative w-[44px] h-[44px] flex items-center justify-center shrink-0 pointer-events-none">
-              <HoloCompanion
-                archetype={archetype}
-                auraState={auraState}
-                size={27}
-                interactive={false}
-              />
-            </div>
+            {handDominance === 'right' ? (
+              <>
+                <div className="relative w-[44px] h-[44px] flex items-center justify-center shrink-0 pointer-events-none">
+                  <HoloCompanion
+                    archetype={archetype}
+                    auraState={auraState}
+                    size={27}
+                    interactive={false}
+                  />
+                </div>
+                <div
+                  className="w-[2.5px] h-5 rounded-full ml-1.5 opacity-65 pointer-events-none"
+                  style={{ background: 'var(--aura-color-1, #00f0ff)' }}
+                />
+              </>
+            ) : (
+              <>
+                <div
+                  className="w-[2.5px] h-5 rounded-full mr-1.5 opacity-65 pointer-events-none"
+                  style={{ background: 'var(--aura-color-1, #00f0ff)' }}
+                />
+                <div className="relative w-[44px] h-[44px] flex items-center justify-center shrink-0 pointer-events-none">
+                  <HoloCompanion
+                    archetype={archetype}
+                    auraState={auraState}
+                    size={27}
+                    interactive={false}
+                  />
+                </div>
+              </>
+            )}
           </div>
         )}
 
@@ -483,7 +515,7 @@ export const SidebarHUD: React.FC<SidebarHUDProps> = ({
             <motion.button
               key={dayStatus}
               type="button"
-              initial={{ opacity: 0, x: -16, scale: 0.92 }}
+              initial={{ opacity: 0, x: handDominance === 'right' ? 16 : -16, scale: 0.92 }}
               animate={{
                 opacity: 1,
                 x: 0,
@@ -501,7 +533,7 @@ export const SidebarHUD: React.FC<SidebarHUDProps> = ({
                         '0 0 12px rgba(245,158,11,0.55), 0 0 24px rgba(253,224,71,0.35), inset 0 0 8px rgba(255,255,255,0.4)',
                       ],
               }}
-              exit={{ opacity: 0, x: -20, scale: 0.85, transition: { duration: 0.15 } }}
+              exit={{ opacity: 0, x: handDominance === 'right' ? 20 : -20, scale: 0.85, transition: { duration: 0.15 } }}
               transition={{
                 opacity: { duration: 0.2 },
                 x: { duration: 0.2 },
@@ -579,13 +611,21 @@ export const SidebarHUD: React.FC<SidebarHUDProps> = ({
           transition:
             'width 0.38s cubic-bezier(0.16, 1, 0.3, 1), transform 0.38s cubic-bezier(0.16, 1, 0.3, 1)',
         }}
-        className={`fixed left-0 top-0 bottom-0 z-[86] flex flex-col bg-[#060919]/95 backdrop-blur-2xl border-r border-white/10 shadow-[12px_0_40px_rgba(0,0,0,0.75)] select-none overflow-hidden py-3 px-3 ${
-          isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        className={`fixed ${
+          handDominance === 'right'
+            ? 'right-0 border-l shadow-[-12px_0_40px_rgba(0,0,0,0.75)]'
+            : 'left-0 border-r shadow-[12px_0_40px_rgba(0,0,0,0.75)]'
+        } top-0 bottom-0 z-[86] flex flex-col bg-[#060919]/95 backdrop-blur-2xl border-white/10 select-none overflow-hidden py-3 px-3 ${
+          isMobileOpen
+            ? 'translate-x-0'
+            : handDominance === 'right'
+              ? 'translate-x-full lg:translate-x-0'
+              : '-translate-x-full lg:translate-x-0'
         }`}
       >
-        {/* Filamento vertical derecho luminoso */}
+        {/* Filamento vertical luminoso hacia el contenido */}
         <div
-          className="absolute top-0 bottom-0 right-0 w-px pointer-events-none"
+          className={`absolute top-0 bottom-0 ${handDominance === 'right' ? 'left-0' : 'right-0'} w-px pointer-events-none`}
           style={{
             background:
               'linear-gradient(180deg, transparent, rgba(var(--aura-glow-rgb, 0, 240, 255), 0.45), transparent)',
@@ -602,7 +642,7 @@ export const SidebarHUD: React.FC<SidebarHUDProps> = ({
               setIsMobileOpen(false);
             }}
             aria-label="Cerrar menú lateral"
-            className="lg:hidden absolute top-5 right-5 z-20 w-7 h-7 rounded-lg bg-white/5 hover:bg-white/15 border border-white/10 flex items-center justify-center text-slate-300 hover:text-white cursor-pointer"
+            className={`lg:hidden absolute top-5 ${handDominance === 'right' ? 'left-5' : 'right-5'} z-20 w-7 h-7 rounded-lg bg-white/5 hover:bg-white/15 border border-white/10 flex items-center justify-center text-slate-300 hover:text-white cursor-pointer`}
           >
             <Icon name="x" className="w-3.5 h-3.5" />
           </button>

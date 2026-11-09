@@ -104,7 +104,54 @@ export const MoxenRayas: React.FC<MoxenRayasProps> = ({
   useEffect(() => {
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+    // ── P0 Power Guards ─────────────────────────────────────────────
+    // 20 FPS cap (50 ms/frame) to eliminate thermal throttling on mobile SoCs
+    const TARGET_FRAME_MS = 1000 / 20;
+    let lastFrameTime = performance.now();
+    let isVisible = !document.hidden;
+    let isIntersecting = true;
+
+    const startLoopIfEligible = () => {
+      if (isVisible && isIntersecting && !stateRef.current.rafId) {
+        lastFrameTime = performance.now();
+        stateRef.current.rafId = requestAnimationFrame(updatePhysics);
+      }
+    };
+
+    const onVisibilityChange = () => {
+      isVisible = !document.hidden;
+      if (isVisible) {
+        startLoopIfEligible();
+      } else if (stateRef.current.rafId) {
+        cancelAnimationFrame(stateRef.current.rafId);
+        stateRef.current.rafId = 0;
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    const intersectionObserver = new IntersectionObserver(
+      (entries) => {
+        isIntersecting = Boolean(entries[0]?.isIntersecting);
+        if (isIntersecting) {
+          startLoopIfEligible();
+        } else if (stateRef.current.rafId) {
+          cancelAnimationFrame(stateRef.current.rafId);
+          stateRef.current.rafId = 0;
+        }
+      },
+      { threshold: 0.05 }
+    );
+    if (containerRef.current) intersectionObserver.observe(containerRef.current);
+
     const updatePhysics = (timestamp: number) => {
+      // 20 FPS cap
+      const elapsed = timestamp - lastFrameTime;
+      if (elapsed < TARGET_FRAME_MS) {
+        stateRef.current.rafId = requestAnimationFrame(updatePhysics);
+        return;
+      }
+      lastFrameTime = timestamp - (elapsed % TARGET_FRAME_MS);
+
       const state = stateRef.current;
       const dt = state.prevTime === null ? 1 / 60 : Math.min(0.032, (timestamp - state.prevTime) / 1000);
       state.prevTime = timestamp;
@@ -193,13 +240,17 @@ export const MoxenRayas: React.FC<MoxenRayasProps> = ({
         }
       }
 
-      state.rafId = requestAnimationFrame(updatePhysics);
+      if (isVisible && isIntersecting) {
+        state.rafId = requestAnimationFrame(updatePhysics);
+      }
     };
 
-    stateRef.current.rafId = requestAnimationFrame(updatePhysics);
+    startLoopIfEligible();
 
     return () => {
       cancelAnimationFrame(stateRef.current.rafId);
+      intersectionObserver.disconnect();
+      document.removeEventListener('visibilitychange', onVisibilityChange);
     };
   }, [totalUnits, unitLabel, onComplete, mode]);
 

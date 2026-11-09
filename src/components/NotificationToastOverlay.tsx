@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Icon } from './common/Icon';
 import { AppNotification } from '../types';
+import { triggerHaptic } from '../utils/haptics';
 
 export const NotificationToastOverlay: React.FC = () => {
   const [toasts, setToasts] = useState<AppNotification[]>([]);
+  const timersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   useEffect(() => {
     const handleToastEvent = (e: Event) => {
@@ -14,19 +16,39 @@ export const NotificationToastOverlay: React.FC = () => {
       const newNotif = customEvent.detail;
       setToasts(prev => [newNotif, ...prev].slice(0, 4)); // Máximo 4 toasts simultáneos
 
+      // Pulso háptico sutil en notificaciones críticas o de combate/subida de nivel
+      if (newNotif.type === 'level_up' || newNotif.type === 'streak_warning' || newNotif.type === 'task_alarm') {
+        triggerHaptic([20, 30]);
+      }
+
+      // Limpiar timer previo si existía el mismo ID
+      const existingTimer = timersRef.current.get(newNotif.id);
+      if (existingTimer) {
+        clearTimeout(existingTimer);
+      }
+
       // Auto-dismiss tras 6 segundos
-      setTimeout(() => {
+      const timerId = setTimeout(() => {
         setToasts(prev => prev.filter(t => t.id !== newNotif.id));
+        timersRef.current.delete(newNotif.id);
       }, 6000);
+      timersRef.current.set(newNotif.id, timerId);
     };
 
     window.addEventListener('lasolucion:toast-notification', handleToastEvent);
     return () => {
       window.removeEventListener('lasolucion:toast-notification', handleToastEvent);
+      timersRef.current.forEach((timerId) => clearTimeout(timerId));
+      timersRef.current.clear();
     };
   }, []);
 
   const removeToast = (id: string) => {
+    const timerId = timersRef.current.get(id);
+    if (timerId) {
+      clearTimeout(timerId);
+      timersRef.current.delete(id);
+    }
     setToasts(prev => prev.filter(t => t.id !== id));
   };
 
@@ -66,11 +88,17 @@ export const NotificationToastOverlay: React.FC = () => {
   };
 
   return (
-    <div className="fixed top-4 right-4 z-[9999] flex flex-col gap-3 max-w-sm w-[calc(100vw-2rem)] pointer-events-none">
+    <div 
+      role="region"
+      aria-label="Notificaciones del sistema"
+      aria-live="polite"
+      className="fixed top-4 right-4 z-[9999] flex flex-col gap-3 max-w-sm w-[calc(100vw-2rem)] pointer-events-none"
+    >
       <AnimatePresence>
         {toasts.map((toast) => (
           <motion.div
             key={toast.id}
+            role={toast.type === 'streak_warning' || toast.type === 'task_alarm' ? 'alert' : 'status'}
             initial={{ opacity: 0, y: -20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9, x: 50 }}
@@ -100,7 +128,8 @@ export const NotificationToastOverlay: React.FC = () => {
 
             <button
               onClick={() => removeToast(toast.id)}
-              className="text-slate-500 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors shrink-0"
+              aria-label={`Cerrar notificación ${toast.title}`}
+              className="text-slate-500 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors shrink-0 cursor-pointer"
               title="Cerrar"
             >
               <Icon name="x" className="w-4 h-4" />

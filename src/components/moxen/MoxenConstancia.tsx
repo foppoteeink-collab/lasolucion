@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useMemo } from 'react';
 import './moxen.css';
 import { Check, Flame, Clock, Target, Award, Info } from 'lucide-react';
 import { soundFX } from '../../utils/audio';
+import { triggerHaptic } from '../../utils/haptics';
 
 export interface DayPerformance {
   dayLabel: string;
@@ -159,9 +160,12 @@ const createParticlePool = (): SparkParticle[] => {
   // Spark particles simulation with Object Pooling (Zero allocations during 60 FPS loop)
   const particlePool = useRef<SparkParticle[]>(createParticlePool());
   const destello = useRef<{ t: number; cx: number; cy: number; e: number } | null>(null);
+  const prevCelebratedDay = useRef<number | null>(null);
 
   const triggerCelebration = () => {
     soundFX.playLevelUp?.();
+    soundFX.playSubBassConfirm?.();
+    triggerHaptic([35, 50, 40]);
     const azar = mulberry32(Date.now());
     const cx = LT_LOGICAL / 2;
     const cy = LT_LOGICAL / 2;
@@ -198,9 +202,15 @@ const createParticlePool = (): SparkParticle[] => {
     });
     if (allThreeClosed) {
       glowSpring.current.meta = 1;
-      triggerCelebration();
+      if (prevCelebratedDay.current !== selectedDayIdx) {
+        prevCelebratedDay.current = selectedDayIdx;
+        triggerCelebration();
+      }
     } else {
       glowSpring.current.meta = 0;
+      if (prevCelebratedDay.current === selectedDayIdx) {
+        prevCelebratedDay.current = null;
+      }
     }
   }, [selectedDayIdx, METAS, allThreeClosed]);
 
@@ -217,6 +227,45 @@ const createParticlePool = (): SparkParticle[] => {
 
     let raf = 0;
     let lastTime = performance.now();
+
+    // ── P0 Power Guards ──────────────────────────────────────────────
+    // 20 FPS cap (50 ms/frame) to eliminate thermal throttling on mobile SoCs
+    const TARGET_FRAME_MS = 1000 / 20;
+    let lastFrameTime = performance.now();
+    let isVisible = !document.hidden;
+    let isIntersecting = true;
+
+    const startLoopIfEligible = () => {
+      if (isVisible && isIntersecting && !raf) {
+        lastFrameTime = performance.now();
+        raf = requestAnimationFrame(render);
+      }
+    };
+
+    const onVisibilityChange = () => {
+      isVisible = !document.hidden;
+      if (isVisible) {
+        startLoopIfEligible();
+      } else if (raf) {
+        cancelAnimationFrame(raf);
+        raf = 0;
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    const intersectionObserver = new IntersectionObserver(
+      (entries) => {
+        isIntersecting = Boolean(entries[0]?.isIntersecting);
+        if (isIntersecting) {
+          startLoopIfEligible();
+        } else if (raf) {
+          cancelAnimationFrame(raf);
+          raf = 0;
+        }
+      },
+      { threshold: 0.05 }
+    );
+    intersectionObserver.observe(canvas);
 
     const dpr = Math.min(2, window.devicePixelRatio || 1);
 
@@ -242,6 +291,14 @@ const createParticlePool = (): SparkParticle[] => {
     let { k } = measureAndResize();
 
     const render = (now: number) => {
+      // 20 FPS cap
+      const elapsed = now - lastFrameTime;
+      if (elapsed < TARGET_FRAME_MS) {
+        raf = requestAnimationFrame(render);
+        return;
+      }
+      lastFrameTime = now - (elapsed % TARGET_FRAME_MS);
+
       const dt = Math.min(0.04, (now - lastTime) / 1000);
       lastTime = now;
 
@@ -383,11 +440,17 @@ const createParticlePool = (): SparkParticle[] => {
       }
       cg.globalAlpha = 1;
 
-      raf = requestAnimationFrame(render);
+      if (isVisible && isIntersecting) {
+        raf = requestAnimationFrame(render);
+      }
     };
 
-    raf = requestAnimationFrame(render);
-    return () => cancelAnimationFrame(raf);
+    startLoopIfEligible();
+    return () => {
+      cancelAnimationFrame(raf);
+      intersectionObserver.disconnect();
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
   }, [METAS]);
 
   return (
@@ -515,7 +578,7 @@ const createParticlePool = (): SparkParticle[] => {
           Historial de la Semana (Toca un día para inspeccionar)
         </span>
 
-        <div className="co-semana">
+        <div className="co-semana" role="tablist" aria-label="Historial de consistencia semanal">
           {days.map((d, idx) => {
             const isSelected = selectedDayIdx === idx;
             const p1 = Math.min(1, d.focusMinutes / Math.max(1, focusGoal));
@@ -530,8 +593,10 @@ const createParticlePool = (): SparkParticle[] => {
               <button
                 key={d.fullDate || `day-${idx}`}
                 type="button"
+                role="tab"
                 className="co-dia"
                 aria-selected={isSelected}
+                aria-label={`Día ${d.name || d.dayLabel}: Foco ${d.focusMinutes}m, ${d.tasksDone} tareas, ${d.habitsDone} hábitos`}
                 onClick={() => {
                   soundFX.playClick();
                   setSelectedDayIdx(idx);

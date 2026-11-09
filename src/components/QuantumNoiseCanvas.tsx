@@ -25,16 +25,21 @@ const BRAND_COLORS = [
   '#d6f421', // Lima Energía Neón (Vibrance)
 ];
 
+// P0 Target FPS: 20 FPS (50ms interval) to eliminate GPU/CPU thermal throttling on mobile SoCs
+const TARGET_FPS = 20;
+const TARGET_FRAME_MS = 1000 / TARGET_FPS; // 50.0 ms
+
 export const QuantumNoiseCanvas: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const zenMode = useUIStore(s => s.zenMode);
+  const zenMode = useUIStore((s) => s.zenMode);
 
   useEffect(() => {
-    // Si el usuario activa el Modo Zen / Ahorro de Batería, suspendemos el canvas por completo
+    // Si el usuario activa el Modo Zen / Ahorro Máximo, suspendemos el canvas de inmediato
     if (zenMode) return;
 
-    // Detectar si el usuario prefiere movimiento reducido en el sistema
-    const prefersReducedMotion = typeof window !== 'undefined' && 
+    // Detectar si el usuario prefiere movimiento reducido en el sistema operativo
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReducedMotion) return;
 
@@ -44,14 +49,18 @@ export const QuantumNoiseCanvas: React.FC = () => {
     const ctx = canvas.getContext('2d', { alpha: true });
     if (!ctx) return;
 
-    let animationFrameId: number;
+    let animationFrameId = 0;
     let width = 0;
     let height = 0;
     let particles: Particle[] = [];
     let isVisible = !document.hidden;
+    let isIntersecting = true;
+    let isBatteryThrottled = false;
     let isScrolling = false;
-    let scrollTimeout: any = null;
+    let scrollTimeout: ReturnType<typeof setTimeout> | null = null;
     let time = 0;
+    let lastTimestamp = performance.now();
+    let lastFrameTime = performance.now();
 
     // Mouse / touch subtle perturbation
     const mouse = { x: -1000, y: -1000, active: false };
@@ -74,13 +83,13 @@ export const QuantumNoiseCanvas: React.FC = () => {
       mouse.active = false;
     };
 
-    // Pausar actualización durante scroll activo para garantizar 60 FPS fluidos en listas
+    // Pausar actualización durante scroll activo para priorizar 60 FPS en listas nativas
     const handleScroll = () => {
       isScrolling = true;
-      clearTimeout(scrollTimeout);
+      if (scrollTimeout) clearTimeout(scrollTimeout);
       scrollTimeout = setTimeout(() => {
         isScrolling = false;
-      }, 120);
+      }, 150);
     };
 
     const createParticle = (initRandom = false): Particle => {
@@ -94,7 +103,7 @@ export const QuantumNoiseCanvas: React.FC = () => {
         y,
         prevX: x,
         prevY: y,
-        speed: 0.4 + Math.random() * 0.6,
+        speed: 0.35 + Math.random() * 0.55,
         size: color === '#d6f421' ? 1.2 : 1.4 + Math.random() * 0.8,
         color,
         baseAlpha: 0.16 + Math.random() * 0.18,
@@ -106,7 +115,7 @@ export const QuantumNoiseCanvas: React.FC = () => {
 
     const resize = () => {
       if (!canvas) return;
-      const dpr = Math.min(window.devicePixelRatio || 1, 1.25); // Limitado a 1.25 para no saturar memoria GPU
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.2);
       width = window.innerWidth;
       height = window.innerHeight;
 
@@ -115,39 +124,22 @@ export const QuantumNoiseCanvas: React.FC = () => {
       canvas.style.width = `${width}px`;
       canvas.style.height = `${height}px`;
 
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.scale(dpr, dpr);
 
-      // Partículas ultra-optimizadas: 20 en mobile, 50 en desktop
-      const count = width < 768 ? 20 : 50;
+      // Conteo de partículas adaptativo: 16 en móviles, 36 en desktop
+      const count = width < 768 ? 16 : 36;
       particles = Array.from({ length: count }, () => createParticle(true));
     };
 
     resize();
-    window.addEventListener('resize', resize);
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('touchmove', handleTouchMove, { passive: true });
-    window.addEventListener('mouseleave', handleMouseLeave);
-    window.addEventListener('scroll', handleScroll, { passive: true });
 
-    const onVisibilityChange = () => {
-      isVisible = !document.hidden;
-      if (isVisible) {
-        lastTimestamp = performance.now();
-        lastFrameTime = performance.now();
-        animationFrameId = requestAnimationFrame(render);
-      } else {
-        cancelAnimationFrame(animationFrameId);
-      }
-    };
-    document.addEventListener('visibilitychange', onVisibilityChange);
-
-    let lastTimestamp = performance.now();
-    let lastFrameTime = performance.now();
-    const TARGET_FRAME_MS = 33.3; // 30 FPS target (ahorro de batería del 50% vs 60/120Hz sin pérdida visual)
-
-    // Render loop
+    // Render loop con control estricto de 20 FPS (50ms por cuadro)
     const render = (now: number) => {
-      if (!isVisible) return;
+      if (!isVisible || !isIntersecting || isBatteryThrottled) {
+        animationFrameId = 0;
+        return;
+      }
 
       const elapsed = now - lastFrameTime;
       if (elapsed < TARGET_FRAME_MS) {
@@ -156,7 +148,6 @@ export const QuantumNoiseCanvas: React.FC = () => {
       }
       lastFrameTime = now - (elapsed % TARGET_FRAME_MS);
 
-      // Si el usuario está scrolleando, saltamos el cálculo para no competir con el scroll
       if (isScrolling) {
         animationFrameId = requestAnimationFrame(render);
         return;
@@ -176,16 +167,14 @@ export const QuantumNoiseCanvas: React.FC = () => {
         p.life++;
 
         const halfLife = p.maxLife / 2;
-        const progress = p.life < halfLife 
-          ? p.life / halfLife 
-          : (p.maxLife - p.life) / halfLife;
+        const progress =
+          p.life < halfLife
+            ? p.life / halfLife
+            : (p.maxLife - p.life) / halfLife;
         p.currentAlpha = Math.max(0, p.baseAlpha * progress);
 
-        const angle = simplex3(
-          p.x * 0.0011, 
-          p.y * 0.0011, 
-          time * 0.00014
-        ) * Math.PI * 2.5;
+        const angle =
+          simplex3(p.x * 0.0011, p.y * 0.0011, time * 0.00014) * Math.PI * 2.5;
 
         let vx = Math.cos(angle) * p.speed;
         let vy = Math.sin(angle) * p.speed;
@@ -205,7 +194,13 @@ export const QuantumNoiseCanvas: React.FC = () => {
         p.x += vx;
         p.y += vy;
 
-        if (p.x < -20 || p.x > width + 20 || p.y < -20 || p.y > height + 20 || p.life >= p.maxLife) {
+        if (
+          p.x < -20 ||
+          p.x > width + 20 ||
+          p.y < -20 ||
+          p.y > height + 20 ||
+          p.life >= p.maxLife
+        ) {
           particles[i] = createParticle(false);
           continue;
         }
@@ -230,16 +225,95 @@ export const QuantumNoiseCanvas: React.FC = () => {
 
       ctx.globalAlpha = 1.0;
 
-      if (isVisible) {
+      if (isVisible && isIntersecting && !isBatteryThrottled) {
+        animationFrameId = requestAnimationFrame(render);
+      } else {
+        animationFrameId = 0;
+      }
+    };
+
+    const startLoopIfEligible = () => {
+      if (isVisible && isIntersecting && !isBatteryThrottled && !animationFrameId) {
+        lastTimestamp = performance.now();
+        lastFrameTime = performance.now();
         animationFrameId = requestAnimationFrame(render);
       }
     };
 
-    animationFrameId = requestAnimationFrame(render);
+    // 1. IntersectionObserver: Suspende rAF al estar fuera del viewport
+    const intersectionObserver = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        isIntersecting = Boolean(entry?.isIntersecting);
+        if (isIntersecting) {
+          startLoopIfEligible();
+        } else if (animationFrameId) {
+          cancelAnimationFrame(animationFrameId);
+          animationFrameId = 0;
+        }
+      },
+      { threshold: 0.05 }
+    );
+    intersectionObserver.observe(canvas);
+
+    // 2. Battery Status API: Pausa automática si la batería es baja (<= 20% y sin cargar)
+    let batteryApiCleaners: (() => void)[] = [];
+    if (typeof navigator !== 'undefined' && 'getBattery' in navigator) {
+      (navigator as any)
+        .getBattery()
+        .then((battery: any) => {
+          const evaluateBattery = () => {
+            const isLow = battery.level <= 0.2 && !battery.charging;
+            isBatteryThrottled = isLow;
+            if (isLow && animationFrameId) {
+              cancelAnimationFrame(animationFrameId);
+              animationFrameId = 0;
+            } else if (!isLow) {
+              startLoopIfEligible();
+            }
+          };
+
+          evaluateBattery();
+
+          const onLevelChange = () => evaluateBattery();
+          const onChargingChange = () => evaluateBattery();
+
+          battery.addEventListener('levelchange', onLevelChange);
+          battery.addEventListener('chargingchange', onChargingChange);
+
+          batteryApiCleaners.push(() => {
+            battery.removeEventListener('levelchange', onLevelChange);
+            battery.removeEventListener('chargingchange', onChargingChange);
+          });
+        })
+        .catch(() => {});
+    }
+
+    // 3. Document Visibility API
+    const onVisibilityChange = () => {
+      isVisible = !document.hidden;
+      if (isVisible) {
+        startLoopIfEligible();
+      } else if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = 0;
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    window.addEventListener('resize', resize);
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
+    window.addEventListener('mouseleave', handleMouseLeave);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    startLoopIfEligible();
 
     return () => {
-      cancelAnimationFrame(animationFrameId);
-      clearTimeout(scrollTimeout);
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+      if (scrollTimeout) clearTimeout(scrollTimeout);
+      intersectionObserver.disconnect();
+      batteryApiCleaners.forEach((clean) => clean());
       window.removeEventListener('resize', resize);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('touchmove', handleTouchMove);

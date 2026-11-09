@@ -19,11 +19,13 @@ import {
   Loader2,
   Landmark,
   Trash2,
-  Link
+  Link,
+  Plus
 } from 'lucide-react';
 import { usePlayerStore } from '../store/usePlayerStore';
 import { useAppStore } from '../store/useAppStore';
 import { useTaskStore } from '../store/useTaskStore';
+import { useUIStore } from '../store/useUIStore';
 import { KAI_OFFICIAL_SHAPES, KAI_AURAS_REGISTRY, KAI_MULTIVERSE_STYLES, KaiShapeDefinition } from '../data/kaiShapes';
 import { KaiVectorGraphics } from './KaiVectorGraphics';
 import { KAICompanion } from './KAICompanion';
@@ -312,6 +314,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
   const [forgeProgressText, setForgeProgressText] = useState<string>('');
   const [forgeError, setForgeError] = useState<string | null>(null);
   const [equippedFeedback, setEquippedFeedback] = useState(false);
+  const [relicToDelete, setRelicToDelete] = useState<{ id: string; name: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Progresión de Hábitos 21d / 66d
@@ -332,7 +335,17 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
   const ascensionGrade = habits66Count; // Grado I, II, III...
   const ascensionCrystals = Math.max(0, habits66Count - 1);
 
-  // Cargas de Forja (Modo libre de pruebas ilimitadas)
+  // Hábito líder para radar Kaizen de inercia
+  const topHabit = useMemo(() => {
+    if (!habitList || habitList.length === 0) return null;
+    return [...habitList].sort((a, b) => (b.streak || 0) - (a.streak || 0))[0];
+  }, [habitList]);
+
+  const topStreak = topHabit?.streak || 0;
+  const progress21 = Math.min(100, Math.round((topStreak / 21) * 100));
+  const progress66 = Math.min(100, Math.round((topStreak / 66) * 100));
+
+  // Cargas de Forja (Modo de pruebas activo: capacidad completa temporal de 9999 para experimentación libre)
   const forgeCharges: number = stats.kaiNeuralForgeCharges ?? 9999;
 
   useEffect(() => {
@@ -581,14 +594,22 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
         </div>
 
         {/* ─── BARRA DE PESTAÑAS MOXEN SQUIRCLE ─── */}
-        <div className="px-4 sm:px-6 py-2.5 bg-black/40 border-b border-white/10 flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-none relative z-10">
+        <div 
+          role="tablist" 
+          aria-label="Pestañas del Taller de KAI"
+          className="px-4 sm:px-6 py-2.5 bg-black/40 border-b border-white/10 flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-none relative z-10"
+        >
           <button
             type="button"
+            role="tab"
+            aria-selected={activeTab === 'forge'}
+            aria-controls="kai-tabpanel-forge"
+            id="kai-tab-forge"
             onClick={() => { soundFX.playClick(); setActiveTab('forge'); }}
             className={`px-3.5 py-2 text-xs font-anton tracking-wider uppercase rounded-xl flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap active:scale-95 ${
               activeTab === 'forge'
                 ? 'bg-fuchsia-500 text-black shadow-[0_0_16px_rgba(217,70,239,0.6)] font-bold'
-                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                : 'text-slate-300 hover:text-white hover:bg-white/5'
             }`}
           >
             <Camera className="w-3.5 h-3.5" />
@@ -597,11 +618,15 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
 
           <button
             type="button"
+            role="tab"
+            aria-selected={activeTab === 'vault'}
+            aria-controls="kai-tabpanel-vault"
+            id="kai-tab-vault"
             onClick={() => { soundFX.playClick(); setActiveTab('vault'); }}
             className={`px-3.5 py-2 text-xs font-anton tracking-wider uppercase rounded-xl flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap active:scale-95 ${
               activeTab === 'vault'
                 ? 'bg-emerald-400 text-black shadow-[0_0_16px_rgba(52,211,153,0.6)] font-bold'
-                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                : 'text-slate-300 hover:text-white hover:bg-white/5'
             }`}
           >
             <Landmark className="w-3.5 h-3.5" />
@@ -615,11 +640,15 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
 
           <button
             type="button"
+            role="tab"
+            aria-selected={activeTab === 'shapes'}
+            aria-controls="kai-tabpanel-shapes"
+            id="kai-tab-shapes"
             onClick={() => { soundFX.playClick(); setActiveTab('shapes'); }}
             className={`px-3.5 py-2 text-xs font-anton tracking-wider uppercase rounded-xl flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap active:scale-95 ${
               activeTab === 'shapes'
                 ? 'bg-cyan-400 text-black shadow-[0_0_16px_rgba(0,240,255,0.6)] font-bold'
-                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                : 'text-slate-300 hover:text-white hover:bg-white/5'
             }`}
           >
             <Layers className="w-3.5 h-3.5" />
@@ -628,11 +657,15 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
 
           <button
             type="button"
+            role="tab"
+            aria-selected={activeTab === 'evolution'}
+            aria-controls="kai-tabpanel-evolution"
+            id="kai-tab-evolution"
             onClick={() => { soundFX.playClick(); setActiveTab('evolution'); }}
             className={`px-3.5 py-2 text-xs font-anton tracking-wider uppercase rounded-xl flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap active:scale-95 ${
               activeTab === 'evolution'
                 ? 'bg-amber-400 text-black shadow-[0_0_16px_rgba(251,191,36,0.6)] font-bold'
-                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                : 'text-slate-300 hover:text-white hover:bg-white/5'
             }`}
           >
             <Crown className="w-3.5 h-3.5" />
@@ -641,11 +674,15 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
 
           <button
             type="button"
+            role="tab"
+            aria-selected={activeTab === 'armory'}
+            aria-controls="kai-tabpanel-armory"
+            id="kai-tab-armory"
             onClick={() => { soundFX.playClick(); setActiveTab('armory'); }}
             className={`px-3.5 py-2 text-xs font-anton tracking-wider uppercase rounded-xl flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap active:scale-95 ${
               activeTab === 'armory'
                 ? 'bg-purple-400 text-black shadow-[0_0_16px_rgba(192,132,252,0.6)] font-bold'
-                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                : 'text-slate-300 hover:text-white hover:bg-white/5'
             }`}
           >
             <Shield className="w-3.5 h-3.5" />
@@ -763,9 +800,10 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                                   <h4 className="text-sm font-anton tracking-wide text-white truncate">{relic.name}</h4>
                                   <button
                                     type="button"
-                                    onClick={() => handleDeleteRelic(relicId)}
+                                    onClick={() => setRelicToDelete({ id: relicId, name: relic.name })}
                                     title="Retirar de la Bóveda"
-                                    className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-950/30 transition-colors cursor-pointer"
+                                    aria-label={`Retirar ${relic.name} de la Bóveda`}
+                                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-950/30 transition-colors cursor-pointer"
                                   >
                                     <Trash2 className="w-3.5 h-3.5" />
                                   </button>
@@ -801,6 +839,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                                     const matched = habitList.find(h => h.id === selectedId);
                                     handleLinkHabitToRelic(relicId, selectedId, matched?.title || '');
                                   }}
+                                  aria-label={`Hábito vinculado a ${relic.name}`}
                                   className="w-full bg-[#0a121f] border border-white/10 text-white rounded-xl px-2.5 py-1.5 text-[10px] font-mono focus:border-emerald-400 focus:outline-none cursor-pointer"
                                 >
                                   <option value="">(Sin vincular a hábito)</option>
@@ -811,9 +850,22 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                                   ))}
                                 </select>
                               ) : (
-                                <span className="text-[10px] text-slate-500 font-mono block">
-                                  Crea hábitos en la app para vincular este KAI.
-                                </span>
+                                <div className="space-y-1.5 pt-0.5">
+                                  <span className="text-[10px] text-slate-400 font-mono block">
+                                    No tienes hábitos activos en tu rutina.
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      onClose();
+                                      useUIStore.getState().openTaskForm('habit');
+                                    }}
+                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 hover:bg-emerald-500 hover:text-black font-anton text-[10px] uppercase tracking-wider transition-all w-fit cursor-pointer"
+                                  >
+                                    <Plus className="w-3 h-3 stroke-[3]" />
+                                    <span>Crear Hábito Kaizen</span>
+                                  </button>
+                                </div>
                               )}
 
                               {linkedHabit && (
@@ -1048,6 +1100,55 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                     <span className="text-[10px] font-mono text-amber-400 uppercase block font-bold">66 Días</span>
                     <span className="text-xl font-black text-amber-300 font-mono">{habits66Count}</span>
                     <span className="text-[9px] text-amber-400/80 block">Maestrías</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Radar Kaizen de Neuroplasticidad & Automatismo */}
+              <div className="p-4 rounded-2xl bg-[#040916] border border-cyan-500/30 space-y-3.5">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-xs font-black uppercase tracking-wider text-cyan-300 flex items-center gap-1.5 font-anton">
+                    <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+                    Radar de Inercia Kaizen {topHabit ? `(Hábito Líder: ${topHabit.title})` : ''}
+                  </span>
+                  <span className="text-[10px] font-mono text-slate-300">
+                    Racha activa: <strong className="text-amber-300">{topStreak} días</strong>
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 font-mono text-xs">
+                  {/* Umbral 21d */}
+                  <div className="p-3 rounded-xl bg-black/60 border border-purple-500/30 space-y-1.5">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="text-purple-300 font-bold">1. Adaptación (Maltz 21d)</span>
+                      <span className="text-slate-300">{Math.min(21, topStreak)}/21d ({progress21}%)</span>
+                    </div>
+                    <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-purple-500 to-cyan-400 rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(168,85,247,0.5)]"
+                        style={{ width: `${progress21}%` }}
+                      />
+                    </div>
+                    <span className="text-[9px] text-slate-400 block">
+                      {topStreak >= 21 ? '✅ Circuito neuronal establecido. Auras desbloqueadas.' : `Faltan ${Math.max(0, 21 - topStreak)} días para consolidar la neuroplasticidad.`}
+                    </span>
+                  </div>
+
+                  {/* Umbral 66d */}
+                  <div className="p-3 rounded-xl bg-black/60 border border-amber-500/30 space-y-1.5">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="text-amber-300 font-bold">2. Automatismo (Lally 66d)</span>
+                      <span className="text-slate-300">{Math.min(66, topStreak)}/66d ({progress66}%)</span>
+                    </div>
+                    <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-amber-500 to-yellow-300 rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]"
+                        style={{ width: `${progress66}%` }}
+                      />
+                    </div>
+                    <span className="text-[9px] text-slate-400 block">
+                      {topStreak >= 66 ? '👑 Hábito maestro en piloto automático. Ascensión completa.' : `Faltan ${Math.max(0, 66 - topStreak)} días para automatismo permanente.`}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -1577,6 +1678,44 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
             Volver al Cockpit
           </button>
         </div>
+
+        {/* ─── MODAL DE CONFIRMACIÓN: RETIRAR RELIQUIA DE BÓVEDA ─── */}
+        {relicToDelete && (
+          <div className="fixed inset-0 z-[160] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
+            <div className="w-full max-w-sm p-5 rounded-2xl bg-[#030914] border border-rose-500/60 shadow-[0_0_35px_rgba(244,63,94,0.35)] text-center space-y-4">
+              <div className="w-12 h-12 mx-auto rounded-2xl bg-rose-950/80 border border-rose-500/50 flex items-center justify-center text-rose-400">
+                <Trash2 className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-base font-anton tracking-wide text-white uppercase">
+                  ¿Retirar Reliquia?
+                </h3>
+                <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                  Estás a punto de retirar a <strong>"{relicToDelete.name}"</strong> de tu Bóveda. Esta acción no se puede deshacer.
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setRelicToDelete(null)}
+                  className="py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-slate-200 text-xs font-anton tracking-wider uppercase transition cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleDeleteRelic(relicToDelete.id);
+                    setRelicToDelete(null);
+                  }}
+                  className="py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-anton tracking-wider uppercase font-bold shadow-[0_0_15px_rgba(244,63,94,0.4)] transition cursor-pointer active:scale-95"
+                >
+                  Retirar KAI
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>

@@ -134,6 +134,7 @@ export interface PlayerStats {
   inventory?: InventoryItem[];
   unopenedBoxes?: number;
   hasCompletedAwakening?: boolean;
+  dayStartHour?: number; // 0..23, user's custom daily cycle start hour (defaults to 3 AM)
   // ─── Ecosistema Infinito de KAI ─────────────────────────────
   kaiShape?: KaiShapeKey;
   kaiAuraColor?: string;
@@ -148,6 +149,10 @@ export interface PlayerStats {
   archetypeEvolutionCores?: number;
   seenTutorialGuides?: Record<string, boolean>;
   hasClaimedTutorialReward?: boolean;
+  betaConsentAccepted?: boolean;
+  betaConsentDate?: string;
+  tier?: UserTier;
+  monetizationFeatures?: Record<string, boolean>;
   // ─── Nivel 3: Endgame, Escalabilidad, Anti-Exploit y Economía ───
   ascensionTier?: number;
   legacyTotalXp?: number;
@@ -165,6 +170,18 @@ export interface PlayerStats {
     lastCompactedAt?: string;
   };
 }
+
+export type UserTier = 'tester' | 'free' | 'pro';
+
+export type MonetizationFeatureKey =
+  | 'unlimited_kai_charges'
+  | 'deep_neural_analysis'
+  | 'custom_kai_multiverse'
+  | 'drive_cloud_sync'
+  | 'advanced_analytics'
+  | 'unlimited_active_quests'
+  | 'zen_mode'
+  | 'priority_support';
 
 export type KaiShapeKey = 'prism' | 'custom';
 export type KaiMultiverseStyle =

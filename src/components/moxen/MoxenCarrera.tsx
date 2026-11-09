@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './moxen.css';
-import { Play, Pause, RotateCcw, Trophy, Flame } from 'lucide-react';
+import { Play, Pause, RotateCcw, Trophy, Flame, Plus } from 'lucide-react';
 import { soundFX } from '../../utils/audio';
+import { useUIStore } from '../../store/useUIStore';
 
 export interface HabitRaceItem {
   id: string;
@@ -46,6 +47,19 @@ export const MoxenCarrera: React.FC<MoxenCarreraProps> = ({
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [isPlaying, totalSteps]);
+
+  // MOX-01: Pausar automáticamente si la pestaña se oculta para ahorrar ciclos de CPU y batería
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.hidden && isPlaying) {
+        setIsPlaying(false);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [isPlaying]);
 
   const sortedHabits = [...habits].map((h) => {
     const val = h.streaksByPeriod[currentStep] || 0;
@@ -94,7 +108,9 @@ export const MoxenCarrera: React.FC<MoxenCarreraProps> = ({
           <button
             type="button"
             onClick={handleTogglePlay}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-mono text-xs font-bold transition-all shadow-[0_0_12px_rgba(168,85,247,0.4)] cursor-pointer active:scale-95"
+            disabled={habits.length === 0}
+            aria-label={isPlaying ? 'Pausar carrera cuántica' : 'Iniciar carrera cuántica'}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-mono text-xs font-bold transition-all shadow-[0_0_12px_rgba(168,85,247,0.4)] cursor-pointer active:scale-95"
           >
             {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 fill-white" />}
             <span>{isPlaying ? 'Pausa' : 'Iniciar Carrera'}</span>
@@ -103,7 +119,9 @@ export const MoxenCarrera: React.FC<MoxenCarreraProps> = ({
           <button
             type="button"
             onClick={handleReset}
-            className="p-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition-colors cursor-pointer"
+            disabled={habits.length === 0}
+            aria-label="Reiniciar carrera al primer periodo"
+            className="p-1.5 rounded-xl bg-white/5 hover:bg-white/10 disabled:opacity-40 text-slate-300 hover:text-white transition-colors cursor-pointer"
             title="Reiniciar carrera"
           >
             <RotateCcw className="w-4 h-4" />
@@ -119,81 +137,112 @@ export const MoxenCarrera: React.FC<MoxenCarreraProps> = ({
         </span>
       </div>
 
-      {/* Race Stage Area */}
-      <div className="cr-escena relative z-10">
-        {/* Giant period label in the background */}
-        <div className="cr-fondo-cifra">
-          {periods[currentStep]}
+      {/* MOX-02: Empty State o Pista Activa */}
+      {habits.length === 0 ? (
+        <div className="py-8 px-4 rounded-2xl bg-black/40 border border-purple-500/20 text-center space-y-3 relative z-10">
+          <div className="w-12 h-12 rounded-2xl bg-purple-950/60 border border-purple-500/40 text-purple-300 flex items-center justify-center mx-auto shadow-[0_0_15px_rgba(168,85,247,0.25)]">
+            <Trophy className="w-6 h-6 text-amber-400" />
+          </div>
+          <div>
+            <h4 className="text-white font-anton text-sm uppercase tracking-wider">
+              Sin Hábitos en la Pista Cuántica
+            </h4>
+            <p className="text-slate-400 text-xs font-mono max-w-sm mx-auto mt-1">
+              Crea hábitos diarios para verlos competir y evolucionar con sus rachas temporales semana a semana.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              soundFX.playClick();
+              useUIStore.getState().openTaskForm('habit');
+            }}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-400 hover:to-indigo-400 text-white font-mono text-xs font-bold uppercase tracking-wider shadow-[0_0_15px_rgba(168,85,247,0.35)] cursor-pointer transition-all active:scale-95"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Forjar Primer Hábito</span>
+          </button>
         </div>
+      ) : (
+        <>
+          {/* Race Stage Area */}
+          <div className="cr-escena relative z-10">
+            {/* Giant period label in the background */}
+            <div className="cr-fondo-cifra">
+              {periods[currentStep]}
+            </div>
 
-        {/* Habit Bars (Mobile-first responsive rows) */}
-        <div className="space-y-2.5 relative z-10">
-          {sortedHabits.map((habit, rankIdx) => {
-            const isFirst = rankIdx === 0 && habit.currentValue > 0;
-            const pct = Math.min(100, Math.round((habit.currentValue / maxValue) * 100));
-            const barColor = habit.color || (isFirst ? 'linear-gradient(90deg, #f59e0b, #fbbf24)' : 'linear-gradient(90deg, #a855f7, #c084fc)');
-            const medal = rankIdx === 0 ? '🥇' : rankIdx === 1 ? '🥈' : rankIdx === 2 ? '🥉' : `#${rankIdx + 1}`;
+            {/* Habit Bars (Mobile-first responsive rows) */}
+            <div className="space-y-2.5 relative z-10">
+              {sortedHabits.map((habit, rankIdx) => {
+                const isFirst = rankIdx === 0 && habit.currentValue > 0;
+                const pct = Math.min(100, Math.round((habit.currentValue / maxValue) * 100));
+                const barColor = habit.color || (isFirst ? 'linear-gradient(90deg, #f59e0b, #fbbf24)' : 'linear-gradient(90deg, #a855f7, #c084fc)');
+                const medal = rankIdx === 0 ? '🥇' : rankIdx === 1 ? '🥈' : rankIdx === 2 ? '🥉' : `#${rankIdx + 1}`;
 
-            return (
-              <div
-                key={habit.id}
-                className="p-2 sm:p-2.5 rounded-xl bg-black/40 border border-white/5 transition-all hover:border-purple-500/30"
-              >
-                {/* Header line for each habit */}
-                <div className="flex items-center justify-between text-xs mb-1.5">
-                  <div className="flex items-center gap-1.5 min-w-0 pr-2">
-                    <span className="font-mono text-xs font-black text-amber-400 shrink-0">
-                      {medal}
-                    </span>
-                    <span className="truncate text-white font-bold" title={habit.name}>
-                      {habit.name}
-                    </span>
-                  </div>
-
-                  <div className="shrink-0 font-mono text-xs font-black text-cyan-300">
-                    {habit.currentValue} <span className="text-[10px] text-slate-400 font-sans font-normal">días</span>
-                  </div>
-                </div>
-
-                {/* Full-width responsive track */}
-                <div className="w-full h-3 rounded-full bg-slate-900 overflow-hidden border border-white/10 relative">
+                return (
                   <div
-                    className={`h-full rounded-full transition-all duration-500 ${isFirst ? 'shadow-[0_0_12px_rgba(245,158,11,0.5)]' : ''}`}
-                    style={{
-                      width: `${pct}%`,
-                      background: barColor
-                    }}
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+                    key={habit.id}
+                    className="p-2 sm:p-2.5 rounded-xl bg-black/40 border border-white/5 transition-all hover:border-purple-500/30"
+                  >
+                    {/* Header line for each habit */}
+                    <div className="flex items-center justify-between text-xs mb-1.5">
+                      <div className="flex items-center gap-1.5 min-w-0 pr-2">
+                        <span className="font-mono text-xs font-black text-amber-400 shrink-0">
+                          {medal}
+                        </span>
+                        <span className="truncate text-white font-bold" title={habit.name}>
+                          {habit.name}
+                        </span>
+                      </div>
 
-      {/* Timeline Scrubber */}
-      <div className="mt-3.5 pt-2.5 border-t border-purple-500/20 relative z-10 flex items-center justify-between text-[11px] font-mono text-slate-400">
-        <span className="truncate">{periods[0]}</span>
-        <div className="flex items-center gap-1.5">
-          {periods.map((p, idx) => (
-            <button
-              key={p}
-              type="button"
-              onClick={() => {
-                soundFX.playClick();
-                setCurrentStep(idx);
-              }}
-              className={`w-3 h-3 rounded-full transition-all cursor-pointer ${
-                currentStep === idx
-                  ? 'bg-purple-400 shadow-[0_0_8px_#c084fc] scale-125'
-                  : 'bg-slate-700 hover:bg-slate-500'
-              }`}
-              title={p}
-            />
-          ))}
-        </div>
-        <span className="truncate">{periods[periods.length - 1]}</span>
-      </div>
+                      <div className="shrink-0 font-mono text-xs font-black text-cyan-300">
+                        {habit.currentValue} <span className="text-[10px] text-slate-400 font-sans font-normal">días</span>
+                      </div>
+                    </div>
+
+                    {/* Full-width responsive track */}
+                    <div className="w-full h-3 rounded-full bg-slate-900 overflow-hidden border border-white/10 relative">
+                      <div
+                        className={`h-full rounded-full transition-all duration-500 ${isFirst ? 'shadow-[0_0_12px_rgba(245,158,11,0.5)]' : ''}`}
+                        style={{
+                          width: `${pct}%`,
+                          background: barColor
+                        }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Timeline Scrubber */}
+          <div className="mt-3.5 pt-2.5 border-t border-purple-500/20 relative z-10 flex items-center justify-between text-[11px] font-mono text-slate-400">
+            <span className="truncate">{periods[0]}</span>
+            <div className="flex items-center gap-1.5" role="group" aria-label="Línea de tiempo de la carrera">
+              {periods.map((p, idx) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => {
+                    soundFX.playClick();
+                    setCurrentStep(idx);
+                  }}
+                  aria-label={`Saltar al periodo ${p}`}
+                  className={`w-3 h-3 rounded-full transition-all cursor-pointer ${
+                    currentStep === idx
+                      ? 'bg-purple-400 shadow-[0_0_8px_#c084fc] scale-125'
+                      : 'bg-slate-700 hover:bg-slate-500'
+                  }`}
+                  title={p}
+                />
+              ))}
+            </div>
+            <span className="truncate">{periods[periods.length - 1]}</span>
+          </div>
+        </>
+      )}
     </div>
   );
 };

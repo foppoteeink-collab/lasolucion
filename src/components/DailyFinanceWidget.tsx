@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   DollarSign, 
   TrendingUp, 
@@ -10,7 +10,11 @@ import {
   Coins, 
   CheckCircle2, 
   ExternalLink,
-  Wallet
+  Wallet,
+  Eye,
+  EyeOff,
+  RotateCcw,
+  Sparkles
 } from 'lucide-react';
 import { TaskItem, FinancialTransaction } from '../types';
 import { useAppStore } from '../store/useAppStore';
@@ -28,6 +32,21 @@ interface DailyFinanceWidgetProps {
   onOpenStats?: () => void;
 }
 
+const EXPENSE_PRESETS = [
+  { label: '☕ Café', desc: 'Café', category: 'Alimentación / Comida' },
+  { label: '🍔 Comida', desc: 'Comida / Almuerzo', category: 'Alimentación / Comida' },
+  { label: '🚗 Transporte', desc: 'Transporte / Uber', category: 'Operaciones / Transporte' },
+  { label: '🛒 Super', desc: 'Supermercado', category: 'Alimentación / Comida' },
+  { label: '⚡ Servicio', desc: 'Pago de Servicio', category: 'Vivienda / Servicios' },
+];
+
+const INCOME_PRESETS = [
+  { label: '💼 Cliente', desc: 'Cobro Cliente', category: 'Trabajo / Clientes' },
+  { label: '📈 Venta', desc: 'Venta de Producto/Servicio', category: 'Ventas' },
+  { label: '💰 Nómina', desc: 'Pago Nómina', category: 'Nómina / Salario' },
+  { label: '🪙 Extra', desc: 'Ingreso Extra', category: 'Otros Ingresos' },
+];
+
 export const DailyFinanceWidget: React.FC<DailyFinanceWidgetProps> = ({
   currentDate,
   tasks = [],
@@ -44,6 +63,13 @@ export const DailyFinanceWidget: React.FC<DailyFinanceWidgetProps> = ({
   });
 
   const [currencySymbol, setCurrency] = useState<string>(getSavedCurrencySymbol);
+  const [isPrivacyMode, setIsPrivacyMode] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('taskquest_finance_privacy_mode') === 'true';
+    } catch {
+      return false;
+    }
+  });
 
   // Form State
   const [entryType, setEntryType] = useState<'income' | 'expense'>('expense');
@@ -51,14 +77,50 @@ export const DailyFinanceWidget: React.FC<DailyFinanceWidgetProps> = ({
   const [description, setDescription] = useState<string>('');
   const [category, setCategory] = useState<string>(FINANCE_EXPENSE_CATEGORIES[0]);
 
-  // Listen to external currency changes
+  // Undo deletion state
+  const [recentlyDeleted, setRecentlyDeleted] = useState<FinancialTransaction | null>(null);
+  const undoTimeoutRef = useRef<number | null>(null);
+  const amountInputRef = useRef<HTMLInputElement>(null);
+
+  // Listen to external currency & privacy changes
   useEffect(() => {
     const handleCurrencyEvent = (e: any) => {
       if (e?.detail) setCurrency(e.detail);
     };
+    const handlePrivacyEvent = (e: any) => {
+      if (typeof e?.detail === 'boolean') setIsPrivacyMode(e.detail);
+    };
+
     window.addEventListener('taskquest:currency-change', handleCurrencyEvent);
-    return () => window.removeEventListener('taskquest:currency-change', handleCurrencyEvent);
+    window.addEventListener('taskquest:finance-privacy-toggle', handlePrivacyEvent);
+    return () => {
+      window.removeEventListener('taskquest:currency-change', handleCurrencyEvent);
+      window.removeEventListener('taskquest:finance-privacy-toggle', handlePrivacyEvent);
+    };
   }, []);
+
+  const togglePrivacyMode = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    soundFX.playClick();
+    const next = !isPrivacyMode;
+    setIsPrivacyMode(next);
+    try {
+      localStorage.setItem('taskquest_finance_privacy_mode', String(next));
+    } catch {}
+    window.dispatchEvent(new CustomEvent('taskquest:finance-privacy-toggle', { detail: next }));
+  };
+
+  const renderAmount = (val: number, sign = '') => {
+    if (isPrivacyMode) return `${sign}${currencySymbol} •••••`;
+    return `${sign}${formatMoney(val, currencySymbol)}`;
+  };
+
+  const applyPreset = (preset: { desc: string; category: string }) => {
+    soundFX.playClick();
+    setDescription(preset.desc);
+    setCategory(preset.category);
+    amountInputRef.current?.focus();
+  };
 
   // Update default category when switching type
   useEffect(() => {
@@ -152,7 +214,7 @@ export const DailyFinanceWidget: React.FC<DailyFinanceWidgetProps> = ({
     soundFX.playCoin();
 
     const newTx: FinancialTransaction = {
-      id: `tx-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+      id: `tx-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
       date: currentDate,
       type: entryType,
       description: description.trim(),
@@ -170,7 +232,24 @@ export const DailyFinanceWidget: React.FC<DailyFinanceWidgetProps> = ({
 
   const handleDelete = (id: string) => {
     soundFX.playClick();
+    const txToDelete = expenses.find((ex) => ex.id === id);
+    if (!txToDelete) return;
+
+    setRecentlyDeleted(txToDelete);
     setExpenses((prev) => prev.filter((ex) => ex.id !== id));
+
+    if (undoTimeoutRef.current) clearTimeout(undoTimeoutRef.current);
+    undoTimeoutRef.current = window.setTimeout(() => {
+      setRecentlyDeleted(null);
+    }, 5000);
+  };
+
+  const handleUndo = () => {
+    if (!recentlyDeleted) return;
+    soundFX.playCoin();
+    setExpenses((prev) => [recentlyDeleted, ...prev]);
+    setRecentlyDeleted(null);
+    if (undoTimeoutRef.current) clearTimeout(undoTimeoutRef.current);
   };
 
   return (
@@ -185,7 +264,16 @@ export const DailyFinanceWidget: React.FC<DailyFinanceWidgetProps> = ({
 
       {/* COMPACT 1-LINE HEADER & METRICS BAR */}
       <div
+        role="button"
+        tabIndex={0}
+        aria-expanded={!isCollapsed}
         onClick={toggleCollapse}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            toggleCollapse();
+          }
+        }}
         className={`px-3 py-1.5 sm:px-3.5 sm:py-2 flex flex-wrap items-center justify-between gap-2 cursor-pointer hover:bg-white/[0.03] transition-colors ${
           !isCollapsed ? 'border-b border-cyan-500/30' : ''
         }`}
@@ -199,28 +287,42 @@ export const DailyFinanceWidget: React.FC<DailyFinanceWidgetProps> = ({
           </span>
         </div>
 
-        <div className="flex items-center gap-3 sm:gap-4 text-xs font-mono ml-auto">
+        <div className="flex items-center gap-2.5 sm:gap-3.5 text-xs font-mono ml-auto">
           <span className="text-emerald-400 font-bold flex items-center gap-1" title="Ingresos del día">
             <TrendingUp className="w-3 h-3" />
-            +{formatMoney(totals.income, currencySymbol)}
+            {renderAmount(totals.income, '+')}
           </span>
-          <span className="text-rose-400 font-bold flex items-center gap-1" title="Gastos del día">
+          <span className="text-orange-400 font-bold flex items-center gap-1" title="Gastos del día">
             <TrendingDown className="w-3 h-3" />
-            -{formatMoney(totals.expense, currencySymbol)}
+            {renderAmount(totals.expense, '-')}
           </span>
           <span
             className={`font-black px-2 py-0.5 rounded-md border text-[11px] ${
               totals.balance > 0
                 ? 'bg-emerald-950/60 border-emerald-500/40 text-emerald-300'
                 : totals.balance < 0
-                ? 'bg-rose-950/60 border-rose-500/40 text-rose-300'
+                ? 'bg-orange-950/60 border-orange-500/40 text-orange-300'
                 : 'bg-black/40 border-white/10 text-slate-300'
             }`}
             title="Flujo Neto"
           >
-            {totals.balance >= 0 ? '+' : ''}
-            {formatMoney(totals.balance, currencySymbol)}
+            {renderAmount(totals.balance, totals.balance >= 0 ? '+' : '')}
           </span>
+
+          {/* Privacy Toggle Eye in Header */}
+          <button
+            type="button"
+            onClick={togglePrivacyMode}
+            className={`p-1 rounded-lg border transition-colors cursor-pointer ${
+              isPrivacyMode
+                ? 'bg-amber-950/70 border-amber-400 text-amber-300'
+                : 'bg-[#04020e] border-white/15 text-slate-300 hover:text-white'
+            }`}
+            title={isPrivacyMode ? 'Mostrar montos' : 'Ocultar montos (Modo Privacidad)'}
+            aria-label={isPrivacyMode ? 'Mostrar montos' : 'Ocultar montos'}
+          >
+            {isPrivacyMode ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+          </button>
 
           <button
             type="button"
@@ -228,6 +330,7 @@ export const DailyFinanceWidget: React.FC<DailyFinanceWidgetProps> = ({
               e.stopPropagation();
               toggleCollapse();
             }}
+            aria-label={isCollapsed ? 'Expandir panel de tesorería' : 'Minimizar panel de tesorería'}
             className="p-1 rounded-lg bg-[#04020e] border border-cyan-500/40 text-cyan-300 hover:text-white transition-colors cursor-pointer"
             title={isCollapsed ? 'Registrar ingreso o gasto' : 'Minimizar'}
           >
@@ -238,14 +341,31 @@ export const DailyFinanceWidget: React.FC<DailyFinanceWidgetProps> = ({
 
       {/* EXPANDED CONTENT */}
       {!isCollapsed && (
-        <div className="p-3.5 sm:p-4 space-y-4">
+        <div className="p-3.5 sm:p-4 space-y-3.5">
+          {/* UNDO DELETION BANNER */}
+          {recentlyDeleted && (
+            <div className="p-2.5 rounded-xl bg-cyan-950/90 border border-cyan-400/60 flex items-center justify-between gap-2 text-xs text-cyan-200 animate-fadeIn shadow-[0_0_12px_rgba(0,240,255,0.25)]">
+              <div className="flex items-center gap-2 truncate">
+                <RotateCcw className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                <span className="truncate">Movimiento eliminado: <strong>{recentlyDeleted.description}</strong></span>
+              </div>
+              <button
+                type="button"
+                onClick={handleUndo}
+                className="px-2.5 py-1 rounded-lg bg-cyan-400 text-black font-anton tracking-wide uppercase hover:bg-cyan-300 transition cursor-pointer text-xs shrink-0 font-bold"
+              >
+                Deshacer
+              </button>
+            </div>
+          )}
+
           {/* QUICK INPUT FORM */}
           <form
             onSubmit={handleSubmit}
             className="p-3 rounded-xl bg-[#04020e]/90 border border-cyan-500/30 space-y-2.5"
           >
             {/* Toggle Income vs Expense */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between gap-2">
               <div className="grid grid-cols-2 p-0.5 rounded-lg bg-black/80 border border-cyan-500/30 flex-1 max-w-xs">
                 <button
                   type="button"
@@ -253,6 +373,8 @@ export const DailyFinanceWidget: React.FC<DailyFinanceWidgetProps> = ({
                     soundFX.playClick();
                     setEntryType('income');
                   }}
+                  aria-pressed={entryType === 'income'}
+                  aria-label="Registrar como ingreso"
                   className={`py-1 text-xs font-black uppercase tracking-wider rounded-md transition-all flex items-center justify-center gap-1 cursor-pointer ${
                     entryType === 'income'
                       ? 'bg-emerald-600 text-white shadow-[0_0_10px_rgba(16,185,129,0.5)]'
@@ -268,10 +390,12 @@ export const DailyFinanceWidget: React.FC<DailyFinanceWidgetProps> = ({
                     soundFX.playClick();
                     setEntryType('expense');
                   }}
+                  aria-pressed={entryType === 'expense'}
+                  aria-label="Registrar como gasto"
                   className={`py-1 text-xs font-black uppercase tracking-wider rounded-md transition-all flex items-center justify-center gap-1 cursor-pointer ${
                     entryType === 'expense'
-                      ? 'bg-rose-600 text-white shadow-[0_0_10px_rgba(244,63,94,0.5)]'
-                      : 'text-slate-400 hover:text-rose-300'
+                      ? 'bg-gradient-to-r from-[#fb5607] to-orange-600 text-white shadow-[0_0_10px_rgba(251,86,7,0.5)]'
+                      : 'text-slate-400 hover:text-orange-300'
                   }`}
                 >
                   <TrendingDown className="w-3 h-3" />
@@ -284,22 +408,43 @@ export const DailyFinanceWidget: React.FC<DailyFinanceWidgetProps> = ({
               </span>
             </div>
 
+            {/* Quick Concept Presets Row */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 custom-scrollbar text-[10px] font-mono">
+              <span className="text-slate-400 shrink-0">Presets:</span>
+              {(entryType === 'expense' ? EXPENSE_PRESETS : INCOME_PRESETS).map((p) => (
+                <button
+                  key={p.label}
+                  type="button"
+                  onClick={() => applyPreset(p)}
+                  className="px-2 py-0.5 rounded-lg bg-black/60 border border-white/10 hover:border-cyan-400/50 text-slate-300 hover:text-white transition whitespace-nowrap cursor-pointer shrink-0"
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+
             {/* Inputs Row */}
             <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
               {/* Amount */}
               <div className="sm:col-span-4 relative">
-                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-mono font-bold text-cyan-300">
+                <span className={`absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-mono font-bold ${
+                  entryType === 'income' ? 'text-emerald-400' : 'text-orange-400'
+                }`}>
                   {currencySymbol}
                 </span>
                 <input
+                  ref={amountInputRef}
                   type="number"
                   step="any"
                   min="0.01"
+                  inputMode="decimal"
+                  pattern="[0-9]*"
                   required
                   placeholder="0.00"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="w-full pl-7 pr-3 py-1.5 rounded-lg bg-black/90 border border-cyan-500/40 text-white font-mono text-xs focus:outline-none focus:border-emerald-400 transition-colors placeholder:text-slate-500"
+                  aria-label="Monto de la transacción"
+                  className="w-full pl-7 pr-3 py-1.5 rounded-lg bg-black/90 border border-cyan-500/40 text-white font-mono text-xs focus:outline-none focus:border-cyan-400 transition-colors placeholder:text-slate-500"
                 />
               </div>
 
@@ -311,7 +456,8 @@ export const DailyFinanceWidget: React.FC<DailyFinanceWidgetProps> = ({
                   placeholder={entryType === 'income' ? 'Concepto (ej. Cobro Cliente A)' : 'Concepto (ej. Almuerzo, Uber)'}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-3 py-1.5 rounded-lg bg-black/90 border border-cyan-500/40 text-white text-xs focus:outline-none focus:border-emerald-400 transition-colors placeholder:text-slate-500"
+                  aria-label="Concepto de la transacción"
+                  className="w-full px-3 py-1.5 rounded-lg bg-black/90 border border-cyan-500/40 text-white text-xs focus:outline-none focus:border-cyan-400 transition-colors placeholder:text-slate-500"
                 />
               </div>
 
@@ -320,7 +466,8 @@ export const DailyFinanceWidget: React.FC<DailyFinanceWidgetProps> = ({
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="w-full px-2 py-1.5 rounded-lg bg-black/90 border border-cyan-500/40 text-cyan-200 text-xs focus:outline-none focus:border-emerald-400 transition-colors cursor-pointer"
+                  aria-label="Categoría financiera"
+                  className="w-full px-2 py-1.5 rounded-lg bg-black/90 border border-cyan-500/40 text-cyan-200 text-xs focus:outline-none focus:border-cyan-400 transition-colors cursor-pointer"
                 >
                   {(entryType === 'income' ? FINANCE_INCOME_CATEGORIES : FINANCE_EXPENSE_CATEGORIES).map((cat) => (
                     <option key={cat} value={cat} className="bg-black text-white">
@@ -334,13 +481,14 @@ export const DailyFinanceWidget: React.FC<DailyFinanceWidgetProps> = ({
             {/* Submit Button */}
             <button
               type="submit"
+              aria-label={`Registrar ${entryType === 'income' ? 'Ingreso' : 'Gasto'}`}
               className={`w-full py-1.5 rounded-lg font-black uppercase text-xs tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                 entryType === 'income'
                   ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-[0_0_12px_rgba(16,185,129,0.4)]'
-                  : 'bg-rose-600 hover:bg-rose-500 text-white shadow-[0_0_12px_rgba(244,63,94,0.4)]'
+                  : 'bg-gradient-to-r from-[#fb5607] to-orange-600 text-white shadow-[0_0_12px_rgba(251,86,7,0.4)]'
               }`}
             >
-              <Plus className="w-3.5 h-3.5" />
+              <Plus className="w-3.5 h-3.5 stroke-[3]" />
               <span>Registrar {entryType === 'income' ? 'Ingreso' : 'Gasto'}</span>
             </button>
           </form>
@@ -382,7 +530,7 @@ export const DailyFinanceWidget: React.FC<DailyFinanceWidgetProps> = ({
                           className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${
                             isInc
                               ? 'bg-emerald-950 text-emerald-400 border border-emerald-500/50'
-                              : 'bg-rose-950 text-rose-400 border border-rose-500/50'
+                              : 'bg-orange-950 text-orange-400 border border-orange-500/50'
                           }`}
                         >
                           {isInc ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
@@ -405,19 +553,19 @@ export const DailyFinanceWidget: React.FC<DailyFinanceWidgetProps> = ({
                       <div className="flex items-center gap-2 shrink-0">
                         <span
                           className={`text-xs font-mono font-black ${
-                            isInc ? 'text-emerald-400' : 'text-rose-400'
+                            isInc ? 'text-emerald-400' : 'text-orange-400'
                           }`}
                         >
-                          {isInc ? '+' : '-'}
-                          {formatMoney(tx.amount, currencySymbol)}
+                          {renderAmount(tx.amount, isInc ? '+' : '-')}
                         </span>
 
                         {!tx.isTaskIncome && (
                           <button
                             type="button"
                             onClick={() => handleDelete(tx.id)}
-                            className="p-1 rounded-md text-slate-400 hover:text-rose-400 hover:bg-rose-950/40 transition-colors cursor-pointer"
+                            className="p-1 rounded-md text-slate-400 hover:text-orange-400 hover:bg-orange-950/40 transition-colors cursor-pointer"
                             title="Eliminar movimiento"
+                            aria-label={`Eliminar movimiento: ${tx.description}`}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>

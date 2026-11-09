@@ -8,21 +8,73 @@ export interface ShareCardPayload {
   grade?: string;
 }
 
+const showIOSShareCardModal = (imageUrl: string, fileName: string) => {
+  if (typeof document === 'undefined') return;
+  const existing = document.getElementById('ios-share-card-modal');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'ios-share-card-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background-color:rgba(0,0,0,0.85);backdrop-filter:blur(8px);padding:16px;';
+  
+  modal.innerHTML = `
+    <div style="position:relative;max-width:340px;width:100%;background-color:#0f172a;border:1px solid rgba(0,240,255,0.4);border-radius:16px;padding:16px;display:flex;flex-direction:column;align-items:center;gap:12px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.8);">
+      <button id="close-share-card-modal" style="position:absolute;top:10px;right:10px;color:#94a3b8;background:transparent;border:none;font-size:18px;cursor:pointer;padding:4px 8px;">✕</button>
+      <p style="font-size:11px;font-weight:700;color:#00f0ff;text-transform:uppercase;letter-spacing:0.1em;margin:0;">Tarjeta Táctica Generada</p>
+      <img src="${imageUrl}" alt="${fileName}" style="max-height:60vh;border-radius:12px;border:1px solid rgba(0,240,255,0.2);object-fit:contain;box-shadow:0 10px 15px -3px rgba(0,0,0,0.5);" />
+      <p style="font-size:11px;color:#cbd5e1;text-align:center;margin:0;font-family:system-ui,-apple-system,sans-serif;">
+        📱 Mantén presionada la imagen para <strong>Guardar en Fotos</strong>
+      </p>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  const closeBtn = modal.querySelector('#close-share-card-modal');
+  const closeModal = () => {
+    modal.remove();
+    setTimeout(() => URL.revokeObjectURL(imageUrl), 1000);
+  };
+  closeBtn?.addEventListener('click', closeModal);
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal();
+  });
+};
+
 /**
  * 6. Growth Hacker — Generador Nativo de "Tarjeta Táctica de Legado" (Canvas Share Card 9:16)
- * Renderiza en cliente una tarjeta 1080x1920px con el estatus táctico del jugador y la comparte vía Web Share API
- * o descarga directa sin depender de servidores externos.
+ * Renderiza en cliente una tarjeta 9:16 con el estatus táctico del jugador y la comparte vía Web Share API
+ * o visor interactivo para iOS WebKit sin depender de servidores externos.
+ * Aplica escalado dinámico de memoria (720x1280 en móviles/baja RAM vs 1080x1920 en alta gama)
+ * para prevenir caídas de WebKit (OOM crashes).
  */
 export const generateAndShareLegacyCard = async (payload: ShareCardPayload): Promise<boolean> => {
   if (typeof window === 'undefined' || typeof document === 'undefined') return false;
 
+  const isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const isLowMemory = typeof navigator !== 'undefined' && (navigator as any).deviceMemory !== undefined && (navigator as any).deviceMemory <= 4;
+
+  const baseWidth = (isMobile || isLowMemory) ? 720 : 1080;
+  const baseHeight = (isMobile || isLowMemory) ? 1280 : 1920;
+  const scale = baseWidth / 1080;
+
   const canvas = document.createElement('canvas');
-  canvas.width = 1080;
-  canvas.height = 1920;
+  canvas.width = baseWidth;
+  canvas.height = baseHeight;
   const ctx = canvas.getContext('2d');
   if (!ctx) return false;
 
+  ctx.scale(scale, scale);
+
   try {
+    // Sincronización tipográfica: asegura que las fuentes tipográficas estén rasterizadas en WebKit antes de dibujar
+    if (typeof document !== 'undefined' && (document as any).fonts?.ready) {
+      try {
+        await (document as any).fonts.ready;
+      } catch {
+        // Fallback silencioso en entornos donde document.fonts falle
+      }
+    }
+
     // 1. Fondo Obsidiana Profundo con Gradiente Radial Sci-Fi
     const bgGrad = ctx.createLinearGradient(0, 0, 0, 1920);
     bgGrad.addColorStop(0, '#020612');
@@ -146,29 +198,43 @@ export const generateAndShareLegacyCard = async (payload: ShareCardPayload): Pro
     const file = new File([blob], `legado-la-solucion-nv${payload.stats.level}.png`, { type: 'image/png' });
 
     if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({
-        title: `Nivel ${payload.stats.level} en La Solución`,
-        text: `🔥 ${payload.stats.streakDays || 0} días de racha activa (${payload.stats.rankTitle}). Forjando disciplina diaria.`,
-        files: [file],
-      });
+      try {
+        await navigator.share({
+          title: `Nivel ${payload.stats.level} en La Solución`,
+          text: `🔥 ${payload.stats.streakDays || 0} días de racha activa (${payload.stats.rankTitle}). Forjando disciplina diaria.`,
+          files: [file],
+        });
+        return true;
+      } catch (shareErr: any) {
+        if (shareErr.name === 'AbortError') {
+          return true; // Graceful exit on user cancel
+        }
+        console.warn('[ShareCard] navigator.share error or canceled, falling back to download:', shareErr);
+      }
+    }
+
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const url = URL.createObjectURL(blob);
+
+    if (isIOS) {
+      showIOSShareCardModal(url, `legado-tactico-nv${payload.stats.level}.png`);
       return true;
     }
 
     // Fallback: Descarga directa de la tarjeta PNG
-    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
     link.download = `legado-tactico-nv${payload.stats.level}.png`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    setTimeout(() => URL.revokeObjectURL(url), 3000);
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
     return true;
   } catch (err) {
     console.warn('Share card generation cancelled or failed:', err);
     return false;
   } finally {
-    // FORCED CLEANUP: Clear 2D context and reset canvas dimensions to 0 to immediately release ~8.3MB GPU backing store
+    // FORCED CLEANUP: Clear 2D context and reset canvas dimensions to 0 to immediately release GPU backing store
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     canvas.width = 0;
     canvas.height = 0;

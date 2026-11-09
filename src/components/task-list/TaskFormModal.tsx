@@ -8,6 +8,7 @@ import { HABIT_ENERGY_DETAILS, detectHabitEnergy } from '../../utils/habitEnergy
 import { CATEGORY_COLORS } from '../../data/categoryColors';
 import { soundFX } from '../../utils/audio';
 import { useTaskStore } from '../../store/useTaskStore';
+import { getTodayDateString } from '../../utils/date';
 import { countHighPriorityCompletedToday, MAX_CRITICAL_PRIORITY_CHARGES_PER_DAY } from '../../utils/level3Systems';
 
 interface TaskFormModalProps {
@@ -77,6 +78,8 @@ const ENERGY_DEFAULT_ICONS: Record<HabitEnergyType, string> = {
   creativity: '🎨',
 };
 
+const EMPTY_TASKS: any[] = [];
+
 export const TaskFormModal: React.FC<TaskFormModalProps> = ({
   isOpen,
   onClose,
@@ -126,8 +129,10 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [isIconManuallyChosen, setIsIconManuallyChosen] = useState(Boolean(editingTaskId));
   const currentViewDate = useTaskStore((s) => s.currentViewDate);
-  const tasksByDate = useTaskStore((s) => s.tasksByDate);
-  const criticalUsedToday = countHighPriorityCompletedToday(tasksByDate[currentViewDate] || []);
+  const setCurrentViewDate = useTaskStore((s) => s.setCurrentViewDate);
+  const isViewingToday = currentViewDate === getTodayDateString();
+  const currentViewTasks = useTaskStore((s) => s.tasksByDate[s.currentViewDate] || EMPTY_TASKS);
+  const criticalUsedToday = countHighPriorityCompletedToday(currentViewTasks);
   const criticalRemaining = Math.max(0, MAX_CRITICAL_PRIORITY_CHARGES_PER_DAY - criticalUsedToday);
 
   const isEditingHabitMode = activeTab === 'habit' || isHabitType || isTracked2166 || isQuickHabit;
@@ -141,11 +146,21 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
       }
       setIsIconManuallyChosen(Boolean(editingTaskId));
       document.body.classList.add('modal-open-hide-floating');
+
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          soundFX.playClick();
+          onClose();
+        }
+      };
+      window.addEventListener('keydown', handleKeyDown);
+
       return () => {
         document.body.classList.remove('modal-open-hide-floating');
+        window.removeEventListener('keydown', handleKeyDown);
       };
     }
-  }, [isOpen, editingTaskId, initialTab]);
+  }, [isOpen, editingTaskId, initialTab, onClose]);
 
   const handleTabChange = (tab: 'task' | 'habit' | 'oracle') => {
     setActiveTab(tab);
@@ -286,6 +301,24 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
 
           <form onSubmit={onSubmit} className="flex-1 flex flex-col min-h-0 overflow-hidden">
             <div className="flex-1 overflow-y-auto p-3.5 sm:p-5 space-y-3 custom-scrollbar">
+              {!editingTaskId && !isViewingToday && (
+                <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-amber-950/40 border border-amber-500/40 text-amber-300 text-xs font-mono mb-2">
+                  <div className="flex items-center gap-1.5 truncate">
+                    <Icon name="calendar" className="w-3.5 h-3.5 shrink-0 text-amber-400" />
+                    <span className="truncate">Destino: <strong className="text-white">{currentViewDate}</strong></span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFX.playClick();
+                      setCurrentViewDate(getTodayDateString());
+                    }}
+                    className="shrink-0 px-2.5 py-1 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/50 text-cyan-200 text-[10px] uppercase font-bold tracking-wider hover:border-cyan-300 transition-all active:scale-95 cursor-pointer"
+                  >
+                    Cambiar a Hoy
+                  </button>
+                </div>
+              )}
               {!editingTaskId && (
                 <div className="flex items-center gap-1.5 p-1 rounded-xl bg-black/60 border border-white/10 mb-2">
                   <button

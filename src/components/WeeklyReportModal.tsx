@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   FileDown, 
   Copy, 
@@ -35,6 +36,15 @@ export const WeeklyReportModal: React.FC<WeeklyReportModalProps> = ({
 }) => {
   const [selectedRange, setSelectedRange] = useState<'current_week' | 'last_week' | 'month'>('current_week');
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   // Compute dates in range
   const dateRange = useMemo(() => {
@@ -194,9 +204,9 @@ export const WeeklyReportModal: React.FC<WeeklyReportModalProps> = ({
     window.print();
   };
 
-  return (
+  return createPortal(
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200 portal-modal-root"
+      className="fixed inset-0 z-[180] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200 portal-modal-root select-none pointer-events-auto font-sans"
       onClick={onClose}
     >
       <div 
@@ -341,6 +351,7 @@ export const WeeklyReportModal: React.FC<WeeklyReportModalProps> = ({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

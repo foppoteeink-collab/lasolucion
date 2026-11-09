@@ -128,6 +128,9 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({
       />
 
       <motion.div 
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="levelup-modal-title"
         initial={{ y: 18, opacity: 0, scale: 0.96 }}
         animate={{ y: 0, opacity: 1, scale: 1 }}
         transition={{ duration: 0.2, ease: 'easeOut' }}
@@ -165,6 +168,7 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({
           </motion.p>
 
           <motion.h2 
+            id="levelup-modal-title"
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.26, duration: 0.18 }}

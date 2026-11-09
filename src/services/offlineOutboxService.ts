@@ -12,6 +12,7 @@ export type OutboxMutationType =
   | 'HABIT_INCREMENT'
   | 'HABIT_RESET'
   | 'DAY_FINALIZE'
+  | 'DAY_REOPEN'
   | 'POMODORO_COMPLETE'
   | 'SHOP_REDEEM'
   | 'JOURNAL_SAVE'
@@ -23,9 +24,11 @@ export interface OutboxOperation {
   timestamp: number;
   userId: string;
   payload?: any;
-  status: 'pending' | 'in_flight' | 'completed';
+  status: 'pending' | 'in_flight' | 'completed' | 'dead_letter';
   attempts: number;
   errorMessage?: string;
+  failureReason?: string;
+  quarantinedAt?: number;
 }
 
 const DB_NAME = 'la-solucion-sync-outbox';
@@ -251,9 +254,14 @@ export async function removeOutboxOperations(ids: string[]): Promise<void> {
 }
 
 /**
- * Resets failed operations back to pending with error message.
+ * Resets failed operations back to pending or quarantines them into Dead Letter Queue (DLQ)
+ * if max retry attempts (>= 5) are reached or the error is unrecoverable (fatal).
  */
-export async function markOperationsFailed(ids: string[], errorMessage: string): Promise<void> {
+export async function markOperationsFailed(
+  ids: string[],
+  errorMessage: string,
+  isFatal = false
+): Promise<void> {
   if (ids.length === 0 || typeof window === 'undefined') return;
 
   try {
@@ -266,11 +274,23 @@ export async function markOperationsFailed(ids: string[], errorMessage: string):
         const getReq = store.get(id);
         getReq.onsuccess = () => {
           if (getReq.result) {
+            const currentAttempts = getReq.result.attempts || 0;
+            const shouldQuarantine = isFatal || currentAttempts >= 5;
+
             const updated: OutboxOperation = {
               ...getReq.result,
-              status: 'pending',
+              status: shouldQuarantine ? 'dead_letter' : 'pending',
               errorMessage,
+              failureReason: errorMessage,
+              quarantinedAt: shouldQuarantine ? Date.now() : getReq.result.quarantinedAt,
             };
+
+            if (shouldQuarantine) {
+              console.error(
+                `[OfflineOutbox DLQ] Operation "${id}" (${getReq.result.type}) quarantined to Dead Letter Queue (attempts: ${currentAttempts}, fatal: ${isFatal}): ${errorMessage}`
+              );
+            }
+
             store.put(updated);
           }
         };
@@ -284,6 +304,103 @@ export async function markOperationsFailed(ids: string[], errorMessage: string):
     notifySubscribers(count);
   } catch (err) {
     console.warn('[OfflineOutbox] Error marking operations failed:', err);
+  }
+}
+
+/**
+ * P1 Dead Letter Queue: Retrieves all operations quarantined due to fatal errors or excessive retries.
+ */
+export async function getDeadLetterOperations(userId?: string): Promise<OutboxOperation[]> {
+  if (typeof window === 'undefined' || !('indexedDB' in window)) return [];
+
+  try {
+    const db = await getDB();
+    return new Promise((resolve) => {
+      const tx = db.transaction(STORE_NAME, 'readonly');
+      const store = tx.objectStore(STORE_NAME);
+      const req = store.getAll();
+
+      req.onsuccess = () => {
+        const all: OutboxOperation[] = req.result || [];
+        const dlq = all
+          .filter((op) => op.status === 'dead_letter')
+          .filter((op) => !userId || op.userId === userId)
+          .sort((a, b) => (b.quarantinedAt || b.timestamp) - (a.quarantinedAt || a.timestamp));
+        resolve(dlq);
+      };
+
+      req.onerror = () => resolve([]);
+    });
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * P1 Dead Letter Queue: Restores a dead letter operation back to pending state for a manual retry.
+ */
+export async function retryDeadLetterOperation(id: string): Promise<boolean> {
+  if (!id || typeof window === 'undefined') return false;
+
+  try {
+    const db = await getDB();
+    return new Promise((resolve) => {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      const getReq = store.get(id);
+
+      getReq.onsuccess = () => {
+        if (getReq.result && getReq.result.status === 'dead_letter') {
+          const resetOp: OutboxOperation = {
+            ...getReq.result,
+            status: 'pending',
+            attempts: 0,
+            errorMessage: undefined,
+            failureReason: undefined,
+            quarantinedAt: undefined,
+          };
+          store.put(resetOp);
+          tx.oncomplete = async () => {
+            const count = await getPendingOutboxCount();
+            notifySubscribers(count);
+            resolve(true);
+          };
+        } else {
+          resolve(false);
+        }
+      };
+
+      getReq.onerror = () => resolve(false);
+    });
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * P1 Dead Letter Queue: Purges quarantined operations.
+ */
+export async function purgeDeadLetterOperations(userId?: string): Promise<number> {
+  if (typeof window === 'undefined') return 0;
+
+  try {
+    const db = await getDB();
+    const dlqOps = await getDeadLetterOperations(userId);
+    if (dlqOps.length === 0) return 0;
+
+    await new Promise<void>((resolve) => {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      for (const op of dlqOps) {
+        store.delete(op.id);
+      }
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => resolve();
+    });
+
+    return dlqOps.length;
+  } catch {
+    return 0;
   }
 }
 
@@ -332,4 +449,72 @@ export async function clearOutboxQueue(): Promise<void> {
   } catch (err) {
     console.warn('[OfflineOutbox] Error clearing outbox queue:', err);
   }
+}
+
+export interface OutboxAuditReport {
+  healthy: boolean;
+  totalCount: number;
+  duplicateIdCount: number;
+  stalledInFlightCount: number;
+  poisonPillCount: number;
+  deadLetterCount: number;
+  anomalies: string[];
+}
+
+/**
+ * P2 Zero Defects QA / SPC Audit Utility for Offline Outbox.
+ * Scans queued operations for duplicate IDs, stalled in_flight states, and poisoned retries.
+ */
+export function auditOutboxIntegrity(
+  operations: OutboxOperation[],
+  options: { maxAttempts?: number; stallTimeoutMs?: number; now?: number } = {}
+): OutboxAuditReport {
+  const maxAttempts = options.maxAttempts ?? 5;
+  const stallTimeoutMs = options.stallTimeoutMs ?? 5 * 60 * 1000; // 5 minutes
+  const now = options.now ?? Date.now();
+
+  const seenIds = new Set<string>();
+  const anomalies: string[] = [];
+  let duplicateIdCount = 0;
+  let stalledInFlightCount = 0;
+  let poisonPillCount = 0;
+  let deadLetterCount = 0;
+
+  for (const op of operations) {
+    if (!op.id || typeof op.id !== 'string') {
+      anomalies.push(`Operation missing valid string ID: ${JSON.stringify(op)}`);
+      continue;
+    }
+
+    if (seenIds.has(op.id)) {
+      duplicateIdCount++;
+      anomalies.push(`Duplicate outbox operation ID detected: "${op.id}"`);
+    } else {
+      seenIds.add(op.id);
+    }
+
+    if (op.status === 'dead_letter') {
+      deadLetterCount++;
+    } else if (op.attempts >= maxAttempts) {
+      poisonPillCount++;
+      anomalies.push(`Poison pill operation "${op.id}" (${op.type}) exceeded max attempts (${op.attempts}/${maxAttempts})`);
+    }
+
+    if (op.status === 'in_flight' && now - op.timestamp > stallTimeoutMs) {
+      stalledInFlightCount++;
+      anomalies.push(`Operation "${op.id}" stalled in_flight for ${Math.round((now - op.timestamp) / 1000)}s`);
+    }
+  }
+
+  const healthy = duplicateIdCount === 0 && stalledInFlightCount === 0 && poisonPillCount === 0 && anomalies.length === 0;
+
+  return {
+    healthy,
+    totalCount: operations.length,
+    duplicateIdCount,
+    stalledInFlightCount,
+    poisonPillCount,
+    deadLetterCount,
+    anomalies,
+  };
 }

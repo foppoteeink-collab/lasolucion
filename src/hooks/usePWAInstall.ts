@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { safeLogEvent, safeSetUserProperties } from '../firebase';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -16,6 +17,7 @@ export function usePWAInstall() {
       window.matchMedia('(display-mode: standalone)').matches ||
       (window.navigator as unknown as { standalone?: boolean }).standalone === true;
     setIsInstalled(isStandalone);
+    safeSetUserProperties({ isPwaStandalone: isStandalone });
 
     // Detect iOS devices
     const userAgent = window.navigator.userAgent.toLowerCase();
@@ -25,11 +27,14 @@ export function usePWAInstall() {
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
+      safeLogEvent('pwa_install_prompt_available');
     };
 
     const handleAppInstalled = () => {
       setIsInstalled(true);
       setDeferredPrompt(null);
+      safeLogEvent('pwa_app_installed');
+      safeSetUserProperties({ isPwaStandalone: true });
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -45,6 +50,10 @@ export function usePWAInstall() {
     if (!deferredPrompt) return false;
     await deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
+    safeLogEvent('pwa_install_prompt_responded', { 
+      outcome, 
+      platform: isIOS ? 'ios' : 'android_or_desktop' 
+    });
     if (outcome === 'accepted') {
       setIsInstalled(true);
       setDeferredPrompt(null);

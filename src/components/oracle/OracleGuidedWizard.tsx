@@ -4,6 +4,8 @@ import {
   ChevronRight, ChevronLeft, Check, Clock, Calendar, CheckCircle2, Shield
 } from 'lucide-react';
 import { soundFX } from '../../utils/audio';
+import { setGlobalDayStartHour } from '../../utils/date';
+import { usePlayerStore } from '../../store/usePlayerStore';
 
 interface OracleGuidedWizardProps {
   onComplete: (synthesizedPrompt: string) => void;
@@ -84,6 +86,16 @@ export const OracleGuidedWizard: React.FC<OracleGuidedWizardProps> = ({ onComple
 
   const handleFinish = () => {
     soundFX.playSubBassConfirm();
+
+    // Sincronizar automáticamente el inicio de jornada con la hora de despertar seleccionada
+    const wakeH = parseInt(wakeTime.split(':')[0], 10);
+    if (!isNaN(wakeH) && wakeH >= 0 && wakeH <= 23) {
+      setGlobalDayStartHour(wakeH);
+      usePlayerStore.getState().setStats((prev) => ({
+        ...prev,
+        dayStartHour: wakeH,
+      }));
+    }
 
     // Compile into precise natural language lines (one block per line for 100% deterministic & AI accuracy)
     const parts: string[] = [];

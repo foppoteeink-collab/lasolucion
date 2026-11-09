@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { FileText, X } from 'lucide-react';
 import { TaskItem } from '../../types';
+import { soundFX } from '../../utils/audio';
 
 interface TaskNoteModalProps {
   task: TaskItem;
@@ -20,6 +21,18 @@ export const TaskNoteModal: React.FC<TaskNoteModalProps> = ({
   onDelete,
   onClose,
 }) => {
+  useEffect(() => {
+    if (!task) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        soundFX.playClick();
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [task, onClose]);
+
   if (!task) return null;
 
   const modalContent = (

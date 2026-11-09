@@ -674,12 +674,43 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
       paso(dt);
       pinta();
       coloca();
-      raf = requestAnimationFrame(cuadro);
+      if (isVisible && isIntersecting) {
+        raf = requestAnimationFrame(cuadro);
+      }
     }
 
+    // ── P0 Power Guards ─────────────────────────────────────────────
+    let isVisible = !document.hidden;
+    let isIntersecting = true;
+
     function despierta() {
-      if (!raf) raf = requestAnimationFrame(cuadro);
+      if (isVisible && isIntersecting && !raf) raf = requestAnimationFrame(cuadro);
     }
+
+    const onVisibilityChangeMalla = () => {
+      isVisible = !document.hidden;
+      if (isVisible) {
+        despierta();
+      } else if (raf) {
+        cancelAnimationFrame(raf);
+        raf = 0;
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChangeMalla);
+
+    const mallaIntersectionObserver = new IntersectionObserver(
+      (entries) => {
+        isIntersecting = Boolean(entries[0]?.isIntersecting);
+        if (isIntersecting) {
+          despierta();
+        } else if (raf) {
+          cancelAnimationFrame(raf);
+          raf = 0;
+        }
+      },
+      { threshold: 0.05 }
+    );
+    if (containerRef.current) mallaIntersectionObserver.observe(containerRef.current);
 
     const pc = (v: number) => Math.round(lim(v, 0, 1) * 100);
     const hexDe = (p: PointState) => rgb2hex(p.rgb);
@@ -938,6 +969,8 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
 
     return () => {
       resizeObserver.disconnect();
+      mallaIntersectionObserver.disconnect();
+      document.removeEventListener('visibilitychange', onVisibilityChangeMalla);
       capa.removeEventListener('pointerdown', onPointerDown);
       capa.removeEventListener('pointermove', onPointerMove);
       capa.removeEventListener('pointerup', onPointerUp);

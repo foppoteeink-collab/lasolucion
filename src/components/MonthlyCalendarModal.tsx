@@ -19,7 +19,7 @@ interface MonthlyCalendarModalProps {
   isOpen: boolean;
   onClose: () => void;
   currentDate: string;
-  tasksByDate: Record<string, TaskItem[]>;
+  tasksByDate?: Record<string, TaskItem[]>;
   onChangeDate: (date: string) => void;
 }
 
@@ -27,9 +27,11 @@ export const MonthlyCalendarModal: React.FC<MonthlyCalendarModalProps> = ({
   isOpen,
   onClose,
   currentDate,
-  tasksByDate,
+  tasksByDate: propTasksByDate,
   onChangeDate,
 }) => {
+  const storeTasksByDate = useTaskStore((s) => s.tasksByDate);
+  const tasksByDate = propTasksByDate || storeTasksByDate;
   const customHabits = useTaskStore((s) => s.customHabits);
   const restDays = usePlayerStore((s) => s.stats.restDays);
   const [viewMonth, setViewMonth] = useState(() => new Date(currentDate + 'T12:00:00'));

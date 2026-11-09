@@ -121,7 +121,20 @@ const TaskCardComponent: React.FC<TaskCardProps> = (props) => {
       transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1], delay: Math.min((index % 5) * 0.02, 0.1) }}
       className="flex items-stretch gap-2.5 sm:gap-3.5 group transition-transform duration-300 ease-out hover:translate-x-0.5 relative z-0"
     >
-      <div onClick={() => handleEdit && handleEdit(task)} className="les-time w-[58px] sm:w-[68px] text-right flex flex-col items-end justify-center shrink-0 select-none cursor-pointer py-0.5" title="Asignar horario">
+      <div 
+        role="button"
+        tabIndex={0}
+        onClick={() => handleEdit && handleEdit(task)} 
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handleEdit && handleEdit(task);
+          }
+        }}
+        className="les-time w-[58px] sm:w-[68px] text-right flex flex-col items-end justify-center shrink-0 select-none cursor-pointer py-0.5 focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400 rounded-lg" 
+        title="Asignar horario"
+        aria-label={`Asignar horario a: ${task.title}`}
+      >
         <span className={isCompleted ? "font-bold text-[11px] sm:text-[12px] leading-tight tracking-tight font-mono transition-colors text-emerald-400/90" : "font-bold text-[11px] sm:text-[12px] leading-tight tracking-tight font-mono transition-colors text-[#f1f5f9] group-hover:text-cyan-300"}>
           {mainTime} {subPeriod}
         </span>
@@ -177,6 +190,8 @@ const TaskCardComponent: React.FC<TaskCardProps> = (props) => {
           </motion.button>
           <div className="min-w-0 flex-1">
             <h4 
+              role="button"
+              tabIndex={0}
               onClick={(e) => {
                 if (isCounterHabit && onIncrementHabit && !isCompleted) {
                   if (isTogglingRef.current) return;
@@ -188,7 +203,22 @@ const TaskCardComponent: React.FC<TaskCardProps> = (props) => {
                   handleEdit(task);
                 }
               }} 
-              className={"text-[14px] sm:text-[15.5px] font-semibold leading-snug truncate m-0 transition-colors " + (isCounterHabit && !isCompleted ? "cursor-pointer hover:text-cyan-300" : isCounterHabit ? "text-slate-300" : "cursor-pointer hover:text-cyan-300 text-[#f1f5f9]")} 
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  if (isCounterHabit && onIncrementHabit && !isCompleted) {
+                    if (isTogglingRef.current) return;
+                    isTogglingRef.current = true;
+                    setTimeout(() => { isTogglingRef.current = false; }, 350);
+                    soundFX.playClick();
+                    onIncrementHabit(task.id);
+                  } else if (!isCounterHabit && handleEdit) {
+                    handleEdit(task);
+                  }
+                }
+              }}
+              aria-label={isCounterHabit ? (isCompleted ? `${task.title} (completado)` : `Sumar +1 a ${task.title}`) : `Configurar tarea ${task.title}`}
+              className={"text-[14px] sm:text-[15.5px] font-semibold leading-snug truncate m-0 transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400 rounded " + (isCounterHabit && !isCompleted ? "cursor-pointer hover:text-cyan-300" : isCounterHabit ? "text-slate-300" : "cursor-pointer hover:text-cyan-300 text-[#f1f5f9]")} 
               title={isCounterHabit ? (isCompleted ? `${task.title} - Completado hoy` : `${task.title} - Toca para sumar +1 (${task.currentCount || 0}/${task.targetCount})`) : `${task.title} - Toca para configurar`}
             >
               <SlashText text={task.title} isCompleted={isCompleted} className={isCompleted ? 'text-slate-300' : 'text-[#f1f5f9]'} slashColor={catStyle.slashColor} />

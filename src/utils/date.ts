@@ -1,18 +1,140 @@
 /**
- * Local Date Utilities
+ * Local Date & Network Clock Synchronization Utilities
+ * 
  * Ensures dates are strictly evaluated in the user's local timezone
- * avoiding UTC offset shifts (which caused early day-rollovers).
+ * combined with a network-synchronized time offset (Date header inspection)
+ * to prevent clock manipulation from bypassing streaks or corrupting the 3:00 AM cutoff.
  */
 
+const SERVER_TIME_OFFSET_KEY = 'lasolucion_server_clock_offset_ms';
+export const DAY_START_HOUR_KEY = 'lasolucion_day_start_hour';
+
+// In-memory cache for daily cycle start hour (cutoff). Defaults to 3 (3:00 AM)
+let cachedDayStartHour: number = (() => {
+  if (typeof window !== 'undefined') {
+    try {
+      const stored = window.localStorage.getItem(DAY_START_HOUR_KEY);
+      if (stored !== null) {
+        const parsed = parseInt(stored, 10);
+        if (!isNaN(parsed) && parsed >= 0 && parsed <= 23) return parsed;
+      }
+    } catch {}
+  }
+  return 3;
+})();
+
 /**
- * Returns YYYY-MM-DD in user's local time, but with a 3AM offset
- * (e.g. 02:00 AM on Oct 2nd is treated as Oct 1st) to protect night owl streaks.
+ * Updates the daily cycle start hour (0..23).
+ * Example: 21 for 9:00 PM night shift, 15 for 3:00 PM afternoon shift, 3 for standard 3:00 AM cutoff.
  */
-export const getTodayDateString = (d: Date = new Date()): string => {
+export const setGlobalDayStartHour = (hour: number): void => {
+  const normalized = Math.max(0, Math.min(23, Math.floor(hour)));
+  cachedDayStartHour = normalized;
+  if (typeof window !== 'undefined') {
+    try {
+      window.localStorage.setItem(DAY_START_HOUR_KEY, String(normalized));
+    } catch {}
+  }
+};
+
+/**
+ * Retrieves the currently active daily cycle start hour (0..23).
+ */
+export const getGlobalDayStartHour = (): number => cachedDayStartHour;
+
+// In-memory cache for network time offset in milliseconds
+let cachedServerOffsetMs: number = (() => {
+  if (typeof window !== 'undefined') {
+    try {
+      const stored = window.localStorage.getItem(SERVER_TIME_OFFSET_KEY);
+      if (stored) {
+        const parsed = parseInt(stored, 10);
+        if (!isNaN(parsed)) return parsed;
+      }
+    } catch {}
+  }
+  return 0;
+})();
+
+/**
+ * Updates the trusted server time offset.
+ */
+export const setNetworkTimeOffset = (offsetMs: number): void => {
+  cachedServerOffsetMs = offsetMs;
+  if (typeof window !== 'undefined') {
+    try {
+      window.localStorage.setItem(SERVER_TIME_OFFSET_KEY, String(offsetMs));
+    } catch {}
+  }
+};
+
+/**
+ * Retrieves the current verified network clock offset in milliseconds.
+ */
+export const getNetworkTimeOffset = (): number => cachedServerOffsetMs;
+
+/**
+ * Returns a trusted Date object adjusted with the network-synchronized offset.
+ * Protects against deliberate changes to the device's local system time.
+ */
+export const getTrustedNow = (): Date => {
+  return new Date(Date.now() + cachedServerOffsetMs);
+};
+
+/**
+ * Synchronizes client time against the server's HTTP response Date header.
+ * Lightweight, non-blocking check.
+ */
+export const syncNetworkTime = async (): Promise<number> => {
+  if (typeof window === 'undefined' || !navigator.onLine) {
+    return cachedServerOffsetMs;
+  }
+
+  try {
+    const startTime = Date.now();
+    // Fast HEAD/GET request to a static file with no-cache to obtain authoritative HTTP Date
+    const response = await fetch('/api/build-rev', {
+      method: 'GET',
+      cache: 'no-store',
+    });
+
+    const dateHeader = response.headers.get('date');
+    if (dateHeader) {
+      const serverTimestamp = new Date(dateHeader).getTime();
+      const endTime = Date.now();
+      const latencyRoundTrip = Math.max(0, endTime - startTime);
+      // Adjust for half of round-trip network latency
+      const estimatedServerNow = serverTimestamp + Math.round(latencyRoundTrip / 2);
+      const calculatedOffset = estimatedServerNow - endTime;
+
+      // Only update if difference exceeds 2.5 seconds (filters out normal network jitter)
+      if (Math.abs(calculatedOffset) > 2500) {
+        setNetworkTimeOffset(calculatedOffset);
+        return calculatedOffset;
+      } else {
+        setNetworkTimeOffset(0);
+        return 0;
+      }
+    }
+  } catch (err) {
+    console.warn('[DateSync] Network time sync notice:', err);
+  }
+
+  return cachedServerOffsetMs;
+};
+
+/**
+ * Returns YYYY-MM-DD in user's local time, adjusted for the active daily cycle start hour
+ * (defaults to cachedDayStartHour, e.g. 3AM for night owl streaks, or 21 for 9 PM night shifts).
+ * Defaults to trusted network time if no date is explicitly provided.
+ */
+export const getTodayDateString = (d?: Date, overrideCutoff?: number): string => {
+  const baseDate = d || getTrustedNow();
   // Create a copy to avoid mutating the passed date
-  const offsetDate = new Date(d.getTime());
-  // Subtract 3 hours. If it's before 3 AM, it rolls back to the previous day.
-  offsetDate.setHours(offsetDate.getHours() - 3);
+  const offsetDate = new Date(baseDate.getTime());
+  const cutoff = overrideCutoff !== undefined ? overrideCutoff : cachedDayStartHour;
+  // Subtract cutoff hours so the entire 24h work cycle maps to its logical start day.
+  offsetDate.setHours(offsetDate.getHours() - cutoff);
 
   const year = offsetDate.getFullYear();
   const month = String(offsetDate.getMonth() + 1).padStart(2, '0');
@@ -34,7 +156,7 @@ export const formatDateToLocal = (d: Date): string => {
  * Parses YYYY-MM-DD into a local Date object (at midday 12:00:00 to prevent DST shifts)
  */
 export const parseLocalDate = (dateStr: string): Date => {
-  if (!dateStr || !dateStr.includes('-')) return new Date();
+  if (!dateStr || !dateStr.includes('-')) return getTrustedNow();
   const [year, month, day] = dateStr.split('-').map(Number);
   return new Date(year, month - 1, day, 12, 0, 0);
 };
@@ -80,7 +202,6 @@ export const formatDateForDisplay = (dateStr: string): string => {
   return formatDateFullSpanish(dateStr);
 };
 
-
 /** Returns YYYY-MM-DD for yesterday in user's local time (with 3AM night-owl offset) */
 export const getYesterdayDateString = (): string => addDaysToDateString(getTodayDateString(), -1);
 
@@ -98,8 +219,17 @@ export const calcSleepDuration = (bedtime: string | undefined, wakeTime: string 
   return Math.round((diff / 60) * 10) / 10;
 };
 
-/** Returns sleep quality label. Only valid when duration is a known number (not null). */
-export const getSleepQuality = (hours: number): string =>
-  hours >= 7.5 ? 'Excelente' : hours >= 6 ? 'Buena' : 'Corta';
-
-
+/**
+ * Evaluates sleep quality score and label based on duration in hours
+ */
+export const getSleepQuality = (hours: number): { label: string; color: string; score: number } => {
+  if (hours >= 7 && hours <= 9) {
+    return { label: 'Óptimo', color: 'text-emerald-400', score: 100 };
+  } else if (hours >= 6 && hours < 7) {
+    return { label: 'Bueno', color: 'text-cyan-400', score: 80 };
+  } else if (hours >= 5 && hours < 6) {
+    return { label: 'Regular', color: 'text-yellow-400', score: 60 };
+  } else {
+    return { label: 'Insuficiente', color: 'text-rose-400', score: 40 };
+  }
+};

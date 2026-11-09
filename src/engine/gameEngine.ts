@@ -39,7 +39,9 @@ import {
   formatIdentityEchoText,
   compactHistoricalTasksByDate,
   persistColdArchiveToIndexedDB,
+  revertXpAndCoins,
 } from '../utils/level3Systems';
+import { enqueueOutboxOperation } from '../services/offlineOutboxService';
 
 const triggerBossEmojiConfetti = () => {
   try {
@@ -220,6 +222,11 @@ export const handleResetAccount = async () => {
       saveDailyReflections(next);
       return next;
     });
+
+    const currentUid = auth?.currentUser?.uid;
+    if (currentUid) {
+      enqueueOutboxOperation('JOURNAL_SAVE', { date, text: sanitized }, currentUid).catch(() => {});
+    }
   };
 
   
@@ -409,7 +416,16 @@ export const handleToggleTask = (taskId: string, e?: any) => {
   );
   const ascensionMult = getAscensionBonusMultiplier(statePlayer.stats?.ascensionTier);
 
-  let xpRewardToAdd = Math.floor(rawXp * taxMultiplier * priorityMultiplier * ascensionMult);
+  // Phase 1.5: Passive Skill Tree Multiplier (e.g. Mente Acelerada +15% XP)
+  const stateApp = useAppStore.getState();
+  const hasSkillXpMultiplier = !wasCompleted && (stateApp.skillTree || []).some(s => 
+    s.isUnlocked && 
+    s.effectType === 'xp_multiplier' && 
+    (!s.targetCategory || s.targetCategory.toLowerCase() === (task.category || '').toLowerCase())
+  );
+  const skillMult = hasSkillXpMultiplier ? 1.15 : 1.0;
+
+  let xpRewardToAdd = Math.floor(rawXp * taxMultiplier * priorityMultiplier * ascensionMult * skillMult);
   let coinRewardToAdd = Math.floor(rawCoin * taxMultiplier * priorityMultiplier * ascensionMult);
   
   // Hito Determinista: Cofre de Maestría cada 5 tareas completadas en el día
@@ -490,6 +506,15 @@ export const handleToggleTask = (taskId: string, e?: any) => {
         x: hitX,
         y: hitY - 38,
         text: `✨ Afinidad ${arch.name} (+${Math.round((affinityMultiplier - 1) * 100)}% XP)`,
+        type: 'critical'
+      });
+    }
+
+    if (hasSkillXpMultiplier && xpReward > 0) {
+      stateUI.addFloatingEffect({
+        x: hitX,
+        y: hitY - 48,
+        text: `🧠 Habilidad Pasiva (+15% XP)`,
         type: 'critical'
       });
     }
@@ -582,12 +607,7 @@ export const handleToggleTask = (taskId: string, e?: any) => {
     soundFX.playClick();
     stateTask.updateTask(date, taskId, { awardedXp: 0, awardedCoins: 0 });
     if (xpReward > 0 || coinReward > 0) {
-      statePlayer.setStats((prev) => ({
-        ...prev,
-        currentXp: Math.max(0, prev.currentXp - xpReward),
-        totalXpEarned: Math.max(0, prev.totalXpEarned - xpReward),
-        coins: Math.max(0, prev.coins - coinReward),
-      }));
+      statePlayer.setStats((prev) => revertXpAndCoins(prev, xpReward, coinReward));
     }
   }
 
@@ -612,6 +632,22 @@ export const handleToggleTask = (taskId: string, e?: any) => {
     if (boxesEarned > 0) {
       statePlayer.addLootBoxes(boxesEarned);
     }
+  }
+
+  // Record atomic mutation in persistent IndexedDB Outbox
+  const currentUid = auth?.currentUser?.uid;
+  if (currentUid) {
+    enqueueOutboxOperation(
+      'TASK_TOGGLE',
+      {
+        taskId,
+        date,
+        completed: !wasCompleted,
+        awardedXp: xpReward,
+        awardedCoins: coinReward,
+      },
+      currentUid
+    ).catch(() => {});
   }
 
   // Instantly broadcast completion state to the cloud bridge
@@ -808,6 +844,23 @@ export const handleIncrementHabit = (taskId: string, e?: any) => {
     statePlayer.addLootBoxes(boxesEarned);
   }
 
+  // Record atomic mutation in persistent IndexedDB Outbox
+  const currentUid = auth?.currentUser?.uid;
+  if (currentUid) {
+    enqueueOutboxOperation(
+      'HABIT_INCREMENT',
+      {
+        taskId,
+        date,
+        currentCount: newCount,
+        completed: isNowCompleted,
+        awardedXp: totalAwardedXp,
+        awardedCoins: totalAwardedCoins,
+      },
+      currentUid
+    ).catch(() => {});
+  }
+
   // Instantly broadcast habit completion / progress to cloud bridge
   if (typeof window !== 'undefined') {
     setTimeout(() => {
@@ -860,6 +913,19 @@ export const handleResetHabit = (taskId: string, e?: any) => {
     text: 'Contador reiniciado (0)',
     type: 'streak'
   });
+
+  // Record atomic mutation in persistent IndexedDB Outbox
+  const currentUid = auth?.currentUser?.uid;
+  if (currentUid) {
+    enqueueOutboxOperation(
+      'HABIT_RESET',
+      {
+        taskId,
+        date,
+      },
+      currentUid
+    ).catch(() => {});
+  }
 
   if (typeof window !== 'undefined') {
     setTimeout(() => {
@@ -1080,26 +1146,50 @@ export const handleConfirmFinishDay = (bonusXp: number, bonusCoins: number) => {
        }, 150);
     }
   }
+
+  // Record atomic day finalization in persistent IndexedDB Outbox
+  const currentUid = auth?.currentUser?.uid;
+  if (currentUid) {
+    enqueueOutboxOperation(
+      'DAY_FINALIZE',
+      {
+        date: currentDate,
+        bonusXp,
+        bonusCoins,
+      },
+      currentUid
+    ).catch(() => {});
+  }
   
   soundFX.playTaskComplete();
 };
-export const handleReopenDay = (dateStr?: string) => {
-  const { player: statePlayer, task: stateTask } = getEngineContext();
+export const handleReopenDay = (dateStr?: string): boolean => {
+  const { player: statePlayer, task: stateTask, ui: stateUI } = getEngineContext();
   const targetDate = dateStr || stateTask.currentViewDate;
   
-  statePlayer.setStats((prev) => {
-    const newFinalized = { ...(prev.finalizedDays || {}) };
-    delete newFinalized[targetDate];
-    
-    const newSleep = { ...(prev.sleepLogs || {}) };
-    delete newSleep[targetDate];
+  const finalizedRecord = statePlayer.stats.finalizedDays?.[targetDate];
+  const bonusCoins = finalizedRecord?.bonusCoins || 0;
+  const currentCoins = statePlayer.stats.coins || 0;
 
-    return {
-      ...prev,
-      finalizedDays: newFinalized,
-      sleepLogs: newSleep
-    };
-  });
+  // P0 Financial Shield & Anti-Exploit:
+  // Prevent reopening if user spent the bonus coins and cannot cover the rollback.
+  if (currentCoins < bonusCoins) {
+    if (typeof window !== 'undefined') {
+      stateUI.addFloatingEffect({
+        x: window.innerWidth / 2,
+        y: window.innerHeight / 2,
+        text: `⚠️ Monedas insuficientes (${currentCoins}/${bonusCoins}🪙) para revertir la jornada`,
+        type: 'custom'
+      });
+    }
+    soundFX.playDamageSound();
+    return false;
+  }
+
+  const success = statePlayer.reopenDay(targetDate);
+  if (!success) {
+    return false;
+  }
 
   // Desbloquear tareas en la fecha reabierta
   const currentTasks = stateTask.tasksByDate[targetDate] || [];
@@ -1112,8 +1202,22 @@ export const handleReopenDay = (dateStr?: string) => {
     ...prev,
     [targetDate]: restoredTasks
   }));
+
+  const currentUid = auth?.currentUser?.uid;
+  if (currentUid) {
+    enqueueOutboxOperation(
+      'DAY_REOPEN',
+      {
+        date: targetDate,
+        bonusXp: finalizedRecord?.bonusXp || 0,
+        bonusCoins,
+      },
+      currentUid
+    ).catch(() => {});
+  }
   
   soundFX.playClick();
+  return true;
 };
 export const sortTasksChronologically = (tasks: TaskItem[]): TaskItem[] => {
   return [...tasks].sort((a, b) => {
@@ -1263,6 +1367,20 @@ export const handlePomodoroComplete = (session: any) => {
        }, 150);
     }
   }
+
+  // Record atomic pomodoro completion in persistent IndexedDB Outbox
+  const currentUid = auth?.currentUser?.uid;
+  if (currentUid) {
+    enqueueOutboxOperation(
+      'POMODORO_COMPLETE',
+      {
+        session,
+        xpEarned: xpReward,
+        coinsEarned: coinReward,
+      },
+      currentUid
+    ).catch(() => {});
+  }
 };
 
 export const handleRedeemReward = (reward?: ShopReward) => {
@@ -1270,11 +1388,30 @@ export const handleRedeemReward = (reward?: ShopReward) => {
   const { player: statePlayer, app: stateApp } = getEngineContext();
   const success = statePlayer.purchaseItem(reward.cost);
   if (success) {
-    safeLogEvent('shop_reward_redeemed');
+    safeLogEvent('shop_reward_redeemed', { reward_id: reward.id, cost: reward.cost });
+    safeLogEvent('economy_transaction', {
+      type: 'reward_purchase',
+      item_id: reward.id,
+      cost: reward.cost,
+      coins_after: (statePlayer.stats?.coins || 0)
+    });
     stateApp.setShopRewards(prev =>
       prev.map(r => (r.id === reward.id ? { ...r, unlockedCount: (r.unlockedCount || 0) + 1 } : r))
     );
     soundFX.playCoin();
+
+    // Record atomic reward purchase in persistent IndexedDB Outbox
+    const currentUid = auth?.currentUser?.uid;
+    if (currentUid) {
+      enqueueOutboxOperation(
+        'SHOP_REDEEM',
+        {
+          rewardId: reward.id,
+          cost: reward.cost,
+        },
+        currentUid
+      ).catch(() => {});
+    }
   }
 };
 

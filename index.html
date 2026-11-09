@@ -24,6 +24,38 @@
 
     <script>
       (function() {
+        var isLocalDev = (
+          window.location.port !== '' ||
+          window.location.hostname === 'localhost' ||
+          window.location.hostname === '127.0.0.1' ||
+          window.location.hostname === '0.0.0.0' ||
+          window.location.hostname === '[::1]' ||
+          window.location.hostname.endsWith('.local') ||
+          /^192\.168\./.test(window.location.hostname) ||
+          /^10\./.test(window.location.hostname) ||
+          window.location.hostname.indexOf('webcontainer') !== -1 ||
+          window.location.hostname.indexOf('ai.studio') !== -1
+        );
+
+        if (isLocalDev) {
+          // In local development, avoid stale PWA recovery reloads to allow clean Vite HMR
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(regs) {
+              regs.forEach(function(r) { r.unregister(); });
+            }).catch(function() {});
+          }
+          if ('caches' in window) {
+            caches.keys().then(function(keys) {
+              keys.forEach(function(k) { caches.delete(k); });
+            }).catch(function() {});
+          }
+          try {
+            sessionStorage.removeItem('chunk_reload_attempt');
+            sessionStorage.removeItem('app_reloaded_rev');
+          } catch (e) {}
+          return;
+        }
+
         var BUILD_REV = '2026.11.05-v61-self-healing-pwa';
         window.__APP_BUILD_REV__ = BUILD_REV;
         try {

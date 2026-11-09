@@ -4,6 +4,7 @@ import { X, Sparkles, Check, Zap } from 'lucide-react';
 import { JUNG_ARCHETYPES, JungArchetype, getArchetypeByName } from '../data/archetypes';
 import { soundFX } from '../utils/audio';
 import { triggerShockwave } from '../utils/celebration';
+import { triggerHaptic } from '../utils/haptics';
 import { usePlayerStore } from '../store/usePlayerStore';
 import { spawnJuiceParticle } from './FloatingJuiceOverlay';
 import { MoxenInercia } from './moxen/MoxenInercia';
@@ -135,6 +136,7 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
 
   const handleActivate = (arch: JungArchetype) => {
     soundFX.playItemEquip();
+    triggerHaptic([40, 60, 80]);
     triggerShockwave({ color: 'violet', intensity: 'medium' });
     try {
       usePlayerStore.getState().setStats((prev) => ({
@@ -170,6 +172,9 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
       onClick={onClose}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="archetypes-modal-title"
         className="w-full max-w-xl md:max-w-2xl max-h-[92dvh] sm:max-h-[88vh] flex flex-col rounded-2xl sm:rounded-3xl bg-[#030712]/95 border border-cyan-500/35 shadow-[0_0_50px_rgba(0,240,255,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] relative overflow-hidden backdrop-blur-2xl text-white text-left m-auto shrink-0"
         onClick={(e) => e.stopPropagation()}
       >
@@ -188,7 +193,7 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
               <Sparkles className="w-4 h-4 text-cyan-300" />
             </div>
             <div>
-              <h3 className="font-anton text-cyan-300 uppercase tracking-wide text-xs sm:text-sm">
+              <h3 id="archetypes-modal-title" className="font-anton text-cyan-300 uppercase tracking-wide text-xs sm:text-sm">
                 Los 12 Arquetipos Jungianos & KAI
               </h3>
               <p className="text-[10px] text-slate-400 font-mono hidden sm:block">
@@ -200,6 +205,7 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={onClose}
+              aria-label="Cerrar modal de arquetipos"
               className="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
               title="Cerrar modal"
             >
@@ -217,7 +223,12 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
             iman={true}
             loop={true}
             accentColor="#00f0ff"
-            onIndexChange={(idx) => setCurrentSlideIndex(idx)}
+            onIndexChange={(idx) => {
+              if (idx !== currentSlideIndex) {
+                triggerHaptic(15);
+                setCurrentSlideIndex(idx);
+              }
+            }}
           >
             {JUNG_ARCHETYPES.map((arch, index) => {
               const isSelected = activeArch.id === arch.id;
@@ -404,6 +415,7 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
               type="button"
               data-interactive="true"
               onClick={() => handleActivate(currentSlideArch)}
+              aria-label={`Activar arquetipo ${currentSlideArch.name}`}
               className="px-3.5 py-1.5 rounded-xl font-anton uppercase text-xs flex items-center gap-1.5 font-bold cursor-pointer transition-all active:scale-95 shadow-md"
               style={{
                 background: `linear-gradient(135deg, ${currentSlideTheme.accent}, ${currentSlideTheme.accent}cc)`,
@@ -423,6 +435,7 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
               soundFX.playClick();
               onClose();
             }}
+            aria-label="Volver y cerrar modal de arquetipos"
             className="px-3.5 py-1.5 bg-white/[0.05] hover:bg-white/10 text-slate-300 hover:text-white font-anton uppercase text-xs rounded-xl cursor-pointer transition-all border border-white/15 active:scale-95"
           >
             Volver

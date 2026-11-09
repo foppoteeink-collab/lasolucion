@@ -313,10 +313,12 @@ export const KaiInteractiveSpotlightTour: React.FC = () => {
           <button
             type="button"
             onClick={handleSkip}
-            className="text-slate-400 hover:text-white text-[11px] font-mono uppercase px-1.5 py-0.5 rounded hover:bg-white/10 transition-colors cursor-pointer shrink-0"
-            title="Omitir tour"
+            className="flex items-center gap-1 text-cyan-300 hover:text-white text-[11px] font-mono uppercase px-2 py-0.5 rounded-lg bg-cyan-950/60 border border-cyan-400/40 hover:bg-cyan-900/60 transition-all cursor-pointer shrink-0"
+            title="Saltar tour e ir directo a mis tareas"
           >
-            ✕ Omitir
+            <Zap className="w-3 h-3 text-cyan-400" />
+            <span className="hidden sm:inline">Saltar / Ir directo a mis tareas</span>
+            <span className="sm:hidden">Saltar</span>
           </button>
         </div>
 
@@ -365,6 +367,13 @@ export const KaiInteractiveSpotlightTour: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={handleSkip}
+              className="px-2 py-1.5 rounded-lg text-slate-400 hover:text-cyan-300 text-[11px] font-mono transition-colors cursor-pointer"
+            >
+              Saltar
+            </button>
             {stepIndex > 0 && (
               <button
                 type="button"

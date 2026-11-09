@@ -1,0 +1,289 @@
+/* Modo Compacto de Lectura & Densidad Visual Móvil */
+html.text-density-compact {
+  font-size: 14.5px;
+}
+html.text-density-compact p,
+html.text-density-compact span,
+html.text-density-compact button {
+  letter-spacing: -0.005em;
+}
+html.text-density-compact .explainer-text {
+  display: none !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   MATRIZ DE MODOS ÓPTICOS TÁCTICOS (4 SISTEMAS DE VISIÓN DE CAZADOR)
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* 1. MODO AURORA (Default): Plena saturación con paleta viva de la Malla */
+html.optic-aurora #app-optical-canvas {
+  filter: none !important;
+  transition: filter 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* 2. MODO NOIR OSCURO (Manga Oscuro / B&W Táctico): Cero distracciones, negros puros */
+html.optic-noir #app-optical-canvas,
+html.optic-noir body > .fixed.inset-0:not(#kai-sovereign-portal),
+html.optic-noir body > [role="dialog"],
+html.optic-noir .portal-modal-root {
+  filter: grayscale(100%) contrast(1.18) brightness(0.98) !important;
+  transition: filter 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* En Noir Oscuro: Definición nítida de bordes para evitar que cajas oscuras se fundan o sobrepongan */
+html.optic-noir #app-optical-canvas .border,
+html.optic-noir #app-optical-canvas [class*="border-white"],
+html.optic-noir #app-optical-canvas [class*="border-cyan"],
+html.optic-noir #app-optical-canvas [class*="border-slate"],
+html.optic-noir #app-optical-canvas [class*="border-emerald"],
+html.optic-noir #app-optical-canvas [class*="border-purple"],
+html.optic-noir #app-optical-canvas [class*="border-amber"] {
+  border-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+/* Divisores nítidos en Noir Oscuro */
+html.optic-noir #app-optical-canvas [class*="border-b"] {
+  border-bottom-color: rgba(255, 255, 255, 0.15) !important;
+}
+html.optic-noir #app-optical-canvas [class*="border-t"] {
+  border-top-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+/* Tarjetas y módulos activos en Noir Oscuro */
+html.optic-noir #app-optical-canvas .optic-active-card {
+  border-color: rgba(255, 255, 255, 0.55) !important;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Preservación de visibilidad nítida para iconos de cabecera en Noir Oscuro y Cobalto */
+html.optic-noir header svg,
+html.optic-cobalt header svg {
+  opacity: 1 !important;
+}
+
+/* 3. MODO NOIR CLARO (Manga B&W Táctico en Blanco / Tinta China de Alto Impacto) */
+html.optic-eink {
+  background-color: #ffffff !important;
+}
+
+html.optic-eink #main-layout-wrapper {
+  background-color: #ffffff !important;
+}
+
+html.optic-eink #app-optical-canvas,
+html.optic-eink body > .fixed.inset-0:not(#kai-sovereign-portal),
+html.optic-eink body > [role="dialog"],
+html.optic-eink .portal-modal-root {
+  /* Filtro de entintado profundo: Inversión completa con alto contraste que garantiza papel blanco puro y negros azabache */
+  filter: invert(1) hue-rotate(180deg) grayscale(100%) contrast(1.5) brightness(1.02) !important;
+  transition: filter 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* En la estructura previa a la inversión: forzar blanco puro para que al invertirse sea NEGRO AZABACHE PURO (#000000)
+   PRESERVANDO font-weight natural para evitar ensanchamiento de textos y desbordamientos */
+html.optic-eink #app-optical-canvas p,
+html.optic-eink #app-optical-canvas span,
+html.optic-eink #app-optical-canvas h1,
+html.optic-eink #app-optical-canvas h2,
+html.optic-eink #app-optical-canvas h3,
+html.optic-eink #app-optical-canvas h4,
+html.optic-eink #app-optical-canvas h5,
+html.optic-eink #app-optical-canvas h6,
+html.optic-eink #app-optical-canvas label,
+html.optic-eink #app-optical-canvas input,
+html.optic-eink #app-optical-canvas textarea,
+html.optic-eink #app-optical-canvas select,
+html.optic-eink #app-optical-canvas button,
+html.optic-eink #app-optical-canvas a,
+html.optic-eink #app-optical-canvas strong,
+html.optic-eink #app-optical-canvas b,
+html.optic-eink #app-optical-canvas [class*="text-"] {
+  color: #ffffff !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+}
+
+/* Títulos y fuentes tácticas estilo Manga con grosor y nitidez simétrica */
+html.optic-eink #app-optical-canvas h1,
+html.optic-eink #app-optical-canvas h2,
+html.optic-eink #app-optical-canvas h3,
+html.optic-eink #app-optical-canvas h4,
+html.optic-eink #app-optical-canvas .font-anton {
+  letter-spacing: 0.02em !important;
+}
+
+/* Iconos SVG tácticos: herencia de color limpia sin alterar grosores vectoriales ni baselines */
+html.optic-eink #app-optical-canvas svg:not(.ec-interruptor svg) {
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   BORDES FINOS, NÍTIDOS Y SIMÉTRICOS (PRECISIÓN MANGA)
+   Solo aplicar contornos a elementos que explícitamente portan borde.
+   Se respetan estrictamente bordes direccionales (border-b, border-t, etc.)
+   sin inflar border-width globalmente para evitar deformaciones y solapamientos.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Bordes generales en elementos que los definen: color blanco nítido (negro al invertirse) */
+html.optic-eink #app-optical-canvas .border,
+html.optic-eink #app-optical-canvas [class*="border-white"],
+html.optic-eink #app-optical-canvas [class*="border-cyan"],
+html.optic-eink #app-optical-canvas [class*="border-slate"],
+html.optic-eink #app-optical-canvas [class*="border-emerald"],
+html.optic-eink #app-optical-canvas [class*="border-purple"],
+html.optic-eink #app-optical-canvas [class*="border-amber"],
+html.optic-eink #app-optical-canvas [class*="border-rose"],
+html.optic-eink #app-optical-canvas [class*="border-blue"] {
+  border-color: #ffffff !important;
+}
+
+/* Divisores horizontales y verticales (respetar dirección única estricta sin crear cajas falsas) */
+html.optic-eink #app-optical-canvas [class*="border-b"] {
+  border-bottom-color: #ffffff !important;
+}
+
+html.optic-eink #app-optical-canvas [class*="border-t"] {
+  border-top-color: #ffffff !important;
+}
+
+html.optic-eink #app-optical-canvas [class*="border-l"] {
+  border-left-color: #ffffff !important;
+}
+
+html.optic-eink #app-optical-canvas [class*="border-r"] {
+  border-right-color: #ffffff !important;
+}
+
+/* Botones, selectores y campos de entrada con borde */
+html.optic-eink #app-optical-canvas button.border,
+html.optic-eink #app-optical-canvas input.border,
+html.optic-eink #app-optical-canvas select.border {
+  border-color: #ffffff !important;
+}
+
+/* Eliminar sombras difusas que generan halos grises sucios */
+html.optic-eink #app-optical-canvas [class*="shadow-"],
+html.optic-eink #app-optical-canvas [class*="drop-shadow-"] {
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+/* Card activa y elementos seleccionados en Noir Claro: Bloque negro con borde fino y simétrico */
+html.optic-eink #app-optical-canvas .optic-active-card {
+  background-color: #ffffff !important; /* Al invertirse: negro sólido #000000 */
+  border-color: #ffffff !important;     /* Al invertirse: borde negro sólido #000000 */
+  opacity: 1 !important;
+}
+
+/* Texto e iconos dentro de los elementos activos: negro en DOM -> blanco puro nítido al invertirse */
+html.optic-eink #app-optical-canvas .optic-active-card,
+html.optic-eink #app-optical-canvas .optic-active-card *,
+html.optic-eink #app-optical-canvas .optic-active-card p,
+html.optic-eink #app-optical-canvas .optic-active-card span,
+html.optic-eink #app-optical-canvas .optic-active-card h1,
+html.optic-eink #app-optical-canvas .optic-active-card h2,
+html.optic-eink #app-optical-canvas .optic-active-card h3,
+html.optic-eink #app-optical-canvas .optic-active-card h4,
+html.optic-eink #app-optical-canvas .optic-active-card div,
+html.optic-eink #app-optical-canvas .optic-active-card svg {
+  color: #000000 !important;             /* Al invertirse: blanco puro nítido #ffffff */
+  opacity: 1 !important;
+  font-weight: 700 !important;
+}
+
+/* Insignia interior dentro de la card activa: Cuadro blanco con letras negras al renderizar */
+html.optic-eink #app-optical-canvas .optic-active-card .optic-inner-badge,
+html.optic-eink #app-optical-canvas .optic-active-card .optic-inner-badge * {
+  background-color: #000000 !important; /* Al invertirse: fondo blanco #ffffff */
+  border-color: #000000 !important;     /* Al invertirse: borde blanco #ffffff */
+  color: #ffffff !important;             /* Al invertirse: letras negras #000000 */
+}
+
+/* Preservar avatares, fotos, gemas, logos y el interruptor cinemático Eclipse */
+html.optic-eink #app-optical-canvas img,
+html.optic-eink #app-optical-canvas video,
+html.optic-eink #app-optical-canvas .ec-interruptor,
+html.optic-eink #app-optical-canvas [data-preserve-optic] {
+  filter: invert(1) hue-rotate(180deg) grayscale(0%) contrast(0.85) !important;
+}
+
+/* En Noir Claro: eliminar la atmósfera de fondo para que el papel sea blanco puro impecable sin manchas */
+html.optic-eink #app-optical-canvas .scifi-grid-bg-root,
+html.optic-eink #app-optical-canvas .scifi-empty-radial,
+html.optic-eink .scifi-grid-bg-root,
+html.optic-eink .scifi-empty-radial {
+  display: none !important;
+}
+
+/* Erradicar halos de desenfoque que se transforman en manchones negros */
+html.optic-eink #app-optical-canvas .blur-3xl,
+html.optic-eink #app-optical-canvas .blur-2xl {
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+/* 4. MODO CYBER COBALTO (Azul Zafiro / Cian Abisal & Blanco): Monocromo Oceánico */
+html.optic-cobalt #app-optical-canvas,
+html.optic-cobalt body > .fixed.inset-0:not(#kai-sovereign-portal),
+html.optic-cobalt body > [role="dialog"],
+html.optic-cobalt .portal-modal-root {
+  filter: sepia(100%) hue-rotate(170deg) saturate(320%) contrast(1.22) !important;
+  transition: filter 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+html.optic-cobalt {
+  --aura-color-1: #60a5fa !important;
+  --aura-color-2: #38bdf8 !important;
+  --aura-color-3: #00f0ff !important;
+  --aura-color-4: #2563eb !important;
+  --aura-glow-rgb: 96, 165, 250 !important;
+  --aura-gradient: linear-gradient(135deg, #60a5fa 0%, #38bdf8 100%) !important;
+  --color-aura-activa: #60a5fa !important;
+}
+
+html.optic-noir {
+  --aura-color-1: #ffffff !important;
+  --aura-color-2: #cbd5e1 !important;
+  --aura-color-3: #64748b !important;
+  --aura-color-4: #94a3b8 !important;
+  --aura-glow-rgb: 255, 255, 255 !important;
+  --aura-gradient: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%) !important;
+  --color-aura-activa: #ffffff !important;
+}
+
+html.optic-eink {
+  --aura-color-1: #000000 !important;
+  --aura-color-2: #334155 !important;
+  --aura-color-3: #64748b !important;
+  --aura-color-4: #94a3b8 !important;
+  --aura-glow-rgb: 100, 116, 139 !important;
+  --aura-gradient: linear-gradient(135deg, #000000 0%, #334155 100%) !important;
+  --color-aura-activa: #000000 !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SOBERANÍA Y PROTECCIÓN DE COLOR DE KAI (ACENTO DIEGÉTICO PERPETUO)
+   KAI trasciende los filtros ópticos y se mantiene SIEMPRE en sus colores
+   originales vivos, con su ropa, auras neón y energía intacta.
+   ═══════════════════════════════════════════════════════════════════════ */
+#kai-sovereign-portal {
+  filter: none !important;
+  isolation: isolate !important;
+}
+
+/* Resalte natural para KAI sobre el papel blanco en Modo Noir Claro (sin auras de color sucias) */
+html.optic-eink #kai-sovereign-portal .omni-companion-hub-root {
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.22)) !important;
+}
+
+/* Compatibilidad retrospectiva para noir-mode */
+html.noir-mode #app-optical-canvas {
+  filter: grayscale(100%) contrast(1.22) brightness(0.96) !important;
+}
+
+/* Force pure dark background everywhere and eradicate light mode remnants */
+#main-layout-wrapper {
+  background-color: #030712 !important;
+  color: #ffffff !important;
+}

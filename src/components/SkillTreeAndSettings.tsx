@@ -7,7 +7,7 @@ interface SkillTreeAndSettingsProps {
   skillTree: SkillNode[];
   onUpdateSkillTree: (newTree: SkillNode[]) => void;
   stats: PlayerStats;
-  onUpdateStats: (newStats: PlayerStats) => void;
+  onUpdateStats: (newStats: PlayerStats | ((prev: PlayerStats) => PlayerStats)) => void;
 }
 
 type SkillFilter = 'todos' | 'desbloqueados' | 'pendientes';
@@ -32,12 +32,21 @@ export const SkillTreeAndSettings: React.FC<SkillTreeAndSettingsProps> = ({
   const handlePurchaseSkill = (skill: SkillNode) => {
     if (skill.isUnlocked || stats.coins < skill.costCoins) return;
 
-    soundFX.playClick();
-    // Deduct coins
-    onUpdateStats({
-      ...stats,
-      coins: stats.coins - skill.costCoins,
-    });
+    if (soundFX.playSuccess) {
+      soundFX.playSuccess();
+    } else {
+      soundFX.playClick();
+    }
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate(50);
+    }
+
+    // Deduct coins and apply passive skill effects immediately
+    onUpdateStats((prev) => ({
+      ...prev,
+      coins: Math.max(0, prev.coins - skill.costCoins),
+      streakShields: skill.effectType === 'streak_shield' ? (prev.streakShields || 0) + 1 : prev.streakShields,
+    }));
 
     // Unlock skill
     const newTree = skillTree.map(s => s.id === skill.id ? { ...s, isUnlocked: true } : s);
@@ -172,6 +181,18 @@ export const SkillTreeAndSettings: React.FC<SkillTreeAndSettingsProps> = ({
               )}
             </div>
           ))}
+
+          {filteredSkills.length === 0 && (
+            <div className="col-span-full py-12 text-center text-slate-400 border border-dashed border-cyan-500/30 rounded-2xl bg-[#04020e]/60 p-6">
+              <BrainCircuit className="w-10 h-10 text-cyan-400/60 mx-auto mb-2" />
+              <p className="text-sm font-bold text-cyan-300">No hay habilidades en esta categoría</p>
+              <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+                {activeFilter === 'desbloqueados'
+                  ? 'Aún no has investigado ninguna habilidad. ¡Usa tus monedas acumuladas para desbloquear talentos pasivos!'
+                  : '¡Has completado todas las investigaciones de esta rama!'}
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

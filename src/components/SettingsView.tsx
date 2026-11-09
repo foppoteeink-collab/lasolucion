@@ -5,7 +5,8 @@ import {
   HardDrive, FileSpreadsheet, Cpu, CheckCircle2, Key,
   Coins, Volume2, VolumeX, Target, Sun, Moon, ArrowUpRight, CheckCheck,
   SlidersHorizontal, Smartphone, Share, PlusSquare, FlaskConical,
-  Compass, Eye, Layout, Bell, BellOff, BellRing, Zap, Flame, Timer, Palette, ChevronLeft, Wallet, Type, Lock, Hand
+  Compass, Eye, Layout, Bell, BellOff, BellRing, Zap, Flame, Timer, Palette, ChevronLeft, Wallet, Type, Lock, Hand, Clock,
+  ArrowLeft, ArrowRight
 } from 'lucide-react';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 import { GameSettings } from '../types';
@@ -23,9 +24,10 @@ import {
 } from '../utils/notificationScheduler';
 import { useTaskStore } from '../store/useTaskStore';
 import { usePlayerStore } from '../store/usePlayerStore';
-import { getTodayDateString } from '../utils/date';
+import { getTodayDateString, getGlobalDayStartHour } from '../utils/date';
+import { formatHourToHuman } from '../utils/timeUtils';
 const OracleModal = lazy(() => import('./OracleModal').then(m => ({ default: m.OracleModal })));
-import { ScenarioSimulatorPanel } from './ScenarioSimulatorPanel';
+const ScenarioSimulatorPanel = lazy(() => import('./ScenarioSimulatorPanel').then(m => ({ default: m.ScenarioSimulatorPanel })));
 import { GoogleDriveSyncCard } from './GoogleDriveSyncCard';
 import { restoreAppState } from '../services/googleDriveService';
 import { KAI_OFFICIAL_SHAPES } from '../data/kaiShapes';
@@ -52,6 +54,7 @@ interface SettingsViewProps {
   onResetAccount?: () => void;
   cloudSync?: CloudSyncResult;
   onOpenKaiWorkshop?: () => void;
+  onOpenOnboarding?: () => void;
 }
 
 const EMPTY_TASK_LIST: any[] = [];
@@ -64,6 +67,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   onResetAccount,
   cloudSync: propCloudSync,
   onOpenKaiWorkshop,
+  onOpenOnboarding,
 }) => {
   const chicleContainerRef = useMoxenChicle<HTMLDivElement>();
   const { user, signInWithGoogle, signOut } = useAuth();
@@ -116,7 +120,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     systemAura, setSystemAura, triggerTransition,
     zenFont, setZenFont,
     handDominance, setHandDominance,
-    glowIntensity, setGlowIntensity
+    glowIntensity, setGlowIntensity,
+    setModalState
   } = useUIStore();
   
   const [activeSubTab, setActiveSubTab] = useState<SettingsSubTab>('preferences');
@@ -467,7 +472,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   };
 
   const tabsConfig = [
-    { id: 'preferences' as SettingsSubTab, label: 'Preferencias', icon: SlidersHorizontal, color: 'text-cyan-400' },
+    { id: 'preferences' as SettingsSubTab, label: 'Sistema & Audio', icon: Volume2, color: 'text-cyan-400' },
     { id: 'atmosphere' as SettingsSubTab, label: 'Apariencia & Visión', icon: Palette, color: 'text-cyan-400' },
     { id: 'gameplay' as SettingsSubTab, label: 'Juego & KAI', icon: Sparkles, color: 'text-purple-400' },
     { id: 'finances' as SettingsSubTab, label: 'Tesorería', icon: Coins, color: 'text-amber-400' },
@@ -792,171 +797,27 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 )}
               </div>
 
-              {/* MODO DE NAVEGACIÓN HUD (KAI NEXUS VS BARRA LATERAL) */}
+              {/* RITMO DE JORNADA Y CORTE DIARIO PERSONALIZADO */}
               <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <h4 className="text-sm font-anton tracking-wider uppercase text-white flex items-center gap-2 mb-1">
-                    <Compass className="w-4 h-4 text-cyan-400" /> Modo de Navegación HUD
+                    <Clock className="w-4 h-4 text-cyan-400" /> Ritmo de Jornada y Ciclo Diario
                   </h4>
-                  <p className="text-xs text-slate-400">
-                    Elige entre el orbe flotante de KAI con menú orbital o la Barra Lateral expandible con KAI integrado en su cabecera.
+                  <p className="text-xs text-slate-400 max-w-md">
+                    Hora de inicio de tus 24h de actividades ({formatHourToHuman(stats.dayStartHour !== undefined ? stats.dayStartHour : getGlobalDayStartHour())}). Mantiene tus tareas unidas sin dividirse en turnos nocturnos, vespertinos o diurnos.
                   </p>
                 </div>
-                <div className="flex items-center gap-1.5 bg-black/40 p-1 rounded-2xl border border-white/10 self-start sm:self-auto">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundFX.playClick();
-                      setNavigationMode('nexus');
-                    }}
-                    className={`chicle-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all cursor-pointer ${
-                      navigationMode === 'nexus'
-                        ? 'bg-cyan-400 text-black font-bold shadow-[0_0_14px_rgba(0,240,255,0.6)]'
-                        : 'text-slate-400 hover:text-white'
-                    }`}
-                    title="KAI Nexus: Orbe flotante con menú orbital"
-                  >
-                    <Eye className="w-3.5 h-3.5" />
-                    <span>KAI Nexus (Flotante)</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundFX.playClick();
-                      setNavigationMode('classic');
-                    }}
-                    className={`chicle-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all cursor-pointer ${
-                      navigationMode === 'classic'
-                        ? 'bg-cyan-400 text-black font-bold shadow-[0_0_14px_rgba(0,240,255,0.6)]'
-                        : 'text-slate-400 hover:text-white'
-                    }`}
-                    title="Barra Lateral: Menú izquierdo expandible con KAI en la cabecera"
-                  >
-                    <Layout className="w-3.5 h-3.5" />
-                    <span>Barra Lateral (KAI Menú)</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* MANO DOMINANTE (ERGONOMÍA BIOMECÁNICA DEL PULGAR) */}
-              <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <h4 className="text-sm font-anton tracking-wider uppercase text-white flex items-center gap-2 mb-1">
-                    <Hand className="w-4 h-4 text-cyan-400" /> Mano Dominante (Alcance del Pulgar)
-                  </h4>
-                  <p className="text-xs text-slate-400">
-                    Posiciona el orbe de KAI y los controles dinámicos en el arco natural de tu mano preferida.
-                  </p>
-                </div>
-                <div className="flex items-center gap-1.5 bg-black/40 p-1 rounded-2xl border border-white/10 self-start sm:self-auto">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundFX.playClick();
-                      setHandDominance('right');
-                    }}
-                    className={`chicle-btn flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all cursor-pointer ${
-                      handDominance === 'right'
-                        ? 'bg-cyan-400 text-black font-bold shadow-[0_0_14px_rgba(0,240,255,0.6)]'
-                        : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    <span>Diestra (Derecha)</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundFX.playClick();
-                      setHandDominance('left');
-                    }}
-                    className={`chicle-btn flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all cursor-pointer ${
-                      handDominance === 'left'
-                        ? 'bg-cyan-400 text-black font-bold shadow-[0_0_14px_rgba(0,240,255,0.6)]'
-                        : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    <span>Zurda (Izquierda)</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* CALIBRACIÓN DE RESPLANDOR NEÓN (CONTROL DE BLOOM) */}
-              <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <h4 className="text-sm font-anton tracking-wider uppercase text-white flex items-center gap-2 mb-1">
-                    <Sparkles className="w-4 h-4 text-amber-400" /> Resplandor Neón (Control de Bloom)
-                  </h4>
-                  <p className="text-xs text-slate-400">
-                    Regula la emisión luminosa de halos y sombras para confort visual en sesiones nocturnas.
-                  </p>
-                </div>
-                <div className="flex items-center gap-1.5 bg-black/40 p-1 rounded-2xl border border-white/10 self-start sm:self-auto">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundFX.playClick();
-                      setGlowIntensity('off');
-                    }}
-                    className={`chicle-btn px-3 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all cursor-pointer ${
-                      glowIntensity === 'off'
-                        ? 'bg-white text-black font-bold shadow-[0_0_10px_rgba(255,255,255,0.5)]'
-                        : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    <span>Apagado</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundFX.playClick();
-                      setGlowIntensity('tactical');
-                    }}
-                    className={`chicle-btn px-3 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all cursor-pointer ${
-                      glowIntensity === 'tactical'
-                        ? 'bg-cyan-400 text-black font-bold shadow-[0_0_12px_rgba(0,240,255,0.5)]'
-                        : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    <span>Táctico (50%)</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundFX.playClick();
-                      setGlowIntensity('neon');
-                    }}
-                    className={`chicle-btn px-3 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all cursor-pointer ${
-                      glowIntensity === 'neon'
-                        ? 'bg-cyan-300 text-black font-bold shadow-[0_0_18px_rgba(0,240,255,0.9)]'
-                        : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    <span>Neón Puro</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Modo Zen / Rendimiento Limpio */}
-              <div className="flex items-center justify-between gap-4 py-2 border-t border-white/10">
-                <div>
-                  <h4 className="text-sm font-anton tracking-wider uppercase text-white flex items-center gap-2 mb-1">
-                    <Shield className="w-4 h-4 text-emerald-400" /> Modo Zen (Ultra Enfoque & Batería)
-                  </h4>
-                  <p className="text-xs text-slate-400">
-                    Desactiva orbes y partículas continuas para máxima fluidez y ahorro de batería en móvil.
-                  </p>
-                </div>
-                <ChicleToggle
-                  checked={zenMode}
-                  onChange={() => {
+                <button
+                  type="button"
+                  onClick={() => {
                     soundFX.playClick();
-                    toggleZenMode();
+                    setModalState('isDayRhythmOpen', true);
                   }}
-                  color="emerald"
-                  size="md"
-                  ariaLabel="Alternar Modo Zen"
-                  title={zenMode ? 'Modo Zen activado' : 'Modo Zen desactivado'}
-                />
+                  className="px-3.5 py-2 rounded-xl bg-cyan-950/60 hover:bg-cyan-900/60 border border-cyan-500/40 text-cyan-300 hover:text-white text-xs font-bold transition-all cursor-pointer flex items-center gap-2 shrink-0 self-start sm:self-auto shadow-[0_0_12px_rgba(0,240,255,0.15)] active:scale-95"
+                >
+                  <Settings className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Calibrar Horario</span>
+                </button>
               </div>
 
               {/* FORMATO DE HORA EN AGENDA (12H AM/PM VS 24H MILITAR) */}
@@ -999,26 +860,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     <span>24 Horas (14:00)</span>
                   </button>
                 </div>
-              </div>
-
-              {/* DENSIDAD TIPOGRÁFICA / LECTURA COMPACTA */}
-              <div className="flex items-center justify-between gap-4 py-2 border-t border-white/10">
-                <div>
-                  <h4 className="text-sm font-anton tracking-wider uppercase text-white flex items-center gap-2 mb-1">
-                    <Type className="w-4 h-4 text-cyan-400" /> Densidad de Texto Compacta
-                  </h4>
-                  <p className="text-xs text-slate-400">
-                    Reduce el tamaño de las fuentes y minimiza párrafos para una lectura rápida sin saturar la pantalla.
-                  </p>
-                </div>
-                <ChicleToggle
-                  checked={textDensityCompact}
-                  onChange={handleToggleTextDensity}
-                  color="cyan"
-                  size="md"
-                  ariaLabel="Alternar Densidad de Texto Compacta"
-                  title={textDensityCompact ? 'Lectura compacta activa' : 'Lectura normal'}
-                />
               </div>
             </div>
           </div>
@@ -1193,6 +1034,213 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               )}
             </div>
 
+            {/* ILUMINACIÓN, HUD, TIPOGRAFÍA & RENDIMIENTO VISUAL */}
+            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-xl p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-5">
+              <span className="vi-grano opacity-5" aria-hidden="true" />
+              
+              <div className="flex items-center justify-between border-b border-white/10 pb-3 relative z-10">
+                <h3 className="text-xs font-anton text-cyan-400 uppercase tracking-wider flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-cyan-400" /> Iluminación, HUD & Tipografía
+                </h3>
+                <span className="text-[10px] font-mono text-cyan-300 bg-cyan-950/80 px-2 py-0.5 rounded-full border border-cyan-700/60 font-bold uppercase">
+                  Ajustes Visuales
+                </span>
+              </div>
+
+              {/* CALIBRACIÓN DE RESPLANDOR NEÓN (CONTROL DE BLOOM) */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+                <div>
+                  <h4 className="text-sm font-anton tracking-wider uppercase text-white flex items-center gap-2 mb-1">
+                    <Sparkles className="w-4 h-4 text-amber-400" /> Resplandor Neón (Control de Bloom)
+                  </h4>
+                  <p className="text-xs text-slate-400">
+                    Regula la emisión luminosa de halos y sombras para confort visual en sesiones nocturnas.
+                  </p>
+                </div>
+                <div className="flex items-center gap-1.5 bg-black/40 p-1 rounded-2xl border border-white/10 self-start sm:self-auto">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFX.playClick();
+                      setGlowIntensity('off');
+                    }}
+                    className={`chicle-btn px-3 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all cursor-pointer ${
+                      glowIntensity === 'off'
+                        ? 'bg-white text-black font-bold shadow-[0_0_10px_rgba(255,255,255,0.5)]'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <span>Apagado</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFX.playClick();
+                      setGlowIntensity('tactical');
+                    }}
+                    className={`chicle-btn px-3 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all cursor-pointer ${
+                      glowIntensity === 'tactical'
+                        ? 'bg-cyan-400 text-black font-bold shadow-[0_0_12px_rgba(0,240,255,0.5)]'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <span>Táctico (50%)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFX.playClick();
+                      setGlowIntensity('neon');
+                    }}
+                    className={`chicle-btn px-3 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all cursor-pointer ${
+                      glowIntensity === 'neon'
+                        ? 'bg-cyan-300 text-black font-bold shadow-[0_0_18px_rgba(0,240,255,0.9)]'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <span>Neón Puro</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* MODO DE NAVEGACIÓN HUD (KAI NEXUS VS BARRA LATERAL) */}
+              <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+                <div>
+                  <h4 className="text-sm font-anton tracking-wider uppercase text-white flex items-center gap-2 mb-1">
+                    <Compass className="w-4 h-4 text-cyan-400" /> Modo de Navegación HUD
+                  </h4>
+                  <p className="text-xs text-slate-400">
+                    Elige entre el orbe flotante de KAI con menú orbital o la Barra Lateral expandible con KAI integrado en su cabecera.
+                  </p>
+                </div>
+                <div className="flex items-center gap-1.5 bg-black/40 p-1 rounded-2xl border border-white/10 self-start sm:self-auto">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFX.playClick();
+                      setNavigationMode('nexus');
+                    }}
+                    className={`chicle-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all cursor-pointer ${
+                      navigationMode === 'nexus'
+                        ? 'bg-cyan-400 text-black font-bold shadow-[0_0_14px_rgba(0,240,255,0.6)]'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                    title="KAI Nexus: Orbe flotante con menú orbital"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    <span>KAI Nexus (Flotante)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFX.playClick();
+                      setNavigationMode('classic');
+                    }}
+                    className={`chicle-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all cursor-pointer ${
+                      navigationMode === 'classic'
+                        ? 'bg-cyan-400 text-black font-bold shadow-[0_0_14px_rgba(0,240,255,0.6)]'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                    title="Barra Lateral: Menú expandible con KAI en la cabecera"
+                  >
+                    <Layout className="w-3.5 h-3.5" />
+                    <span>Barra Lateral (KAI Menú)</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* POSICIÓN / LADO DE LA BARRA & NAVEGACIÓN HUD (IZQUIERDA O DERECHA) */}
+              <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+                <div>
+                  <h4 className="text-sm font-anton tracking-wider uppercase text-white flex items-center gap-2 mb-1">
+                    <Hand className="w-4 h-4 text-cyan-400" /> Posición de Navegación & Barra (Izquierda / Derecha)
+                  </h4>
+                  <p className="text-xs text-slate-400">
+                    {navigationMode === 'classic'
+                      ? 'Mueve la Barra Lateral al lado izquierdo o derecho de la pantalla según tu ergonomía y preferencia.'
+                      : 'Posiciona el orbe flotante de KAI en el arco izquierdo o derecho según tu mano preferida.'}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1.5 bg-black/40 p-1 rounded-2xl border border-white/10 self-start sm:self-auto">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFX.playClick();
+                      setHandDominance('left');
+                    }}
+                    className={`chicle-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all cursor-pointer ${
+                      handDominance === 'left'
+                        ? 'bg-cyan-400 text-black font-bold shadow-[0_0_14px_rgba(0,240,255,0.6)]'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                    title="Mover barra lateral y controles a la izquierda (Zurda)"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span>Izquierda (Zurda)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFX.playClick();
+                      setHandDominance('right');
+                    }}
+                    className={`chicle-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all cursor-pointer ${
+                      handDominance === 'right'
+                        ? 'bg-cyan-400 text-black font-bold shadow-[0_0_14px_rgba(0,240,255,0.6)]'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                    title="Mover barra lateral y controles a la derecha (Diestra)"
+                  >
+                    <span>Derecha (Diestra)</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* DENSIDAD TIPOGRÁFICA / LECTURA COMPACTA */}
+              <div className="pt-4 border-t border-white/10 flex items-center justify-between gap-4 relative z-10">
+                <div>
+                  <h4 className="text-sm font-anton tracking-wider uppercase text-white flex items-center gap-2 mb-1">
+                    <Type className="w-4 h-4 text-cyan-400" /> Densidad de Texto Compacta
+                  </h4>
+                  <p className="text-xs text-slate-400">
+                    Reduce el tamaño de las fuentes y minimiza párrafos para una lectura rápida sin saturar la pantalla.
+                  </p>
+                </div>
+                <ChicleToggle
+                  checked={textDensityCompact}
+                  onChange={handleToggleTextDensity}
+                  color="cyan"
+                  size="md"
+                  ariaLabel="Alternar Densidad de Texto Compacta"
+                  title={textDensityCompact ? 'Lectura compacta activa' : 'Lectura normal'}
+                />
+              </div>
+
+              {/* MODO ZEN / RENDIMIENTO LIMPIO */}
+              <div className="pt-4 border-t border-white/10 flex items-center justify-between gap-4 relative z-10">
+                <div>
+                  <h4 className="text-sm font-anton tracking-wider uppercase text-white flex items-center gap-2 mb-1">
+                    <Shield className="w-4 h-4 text-emerald-400" /> Modo Zen (Ultra Enfoque & Batería)
+                  </h4>
+                  <p className="text-xs text-slate-400">
+                    Desactiva orbes y partículas continuas para máxima fluidez y ahorro de batería en móvil.
+                  </p>
+                </div>
+                <ChicleToggle
+                  checked={zenMode}
+                  onChange={() => {
+                    soundFX.playClick();
+                    toggleZenMode();
+                  }}
+                  color="emerald"
+                  size="md"
+                  ariaLabel="Alternar Modo Zen"
+                  title={zenMode ? 'Modo Zen activado' : 'Modo Zen desactivado'}
+                />
+              </div>
+            </div>
+
             {/* VISTA PREVIA DEL NÚCLEO CUÁNTICO DE CARGA (SINCRONIZADO EN TIEMPO REAL) */}
             <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-xl p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
               <span className="vi-grano opacity-5" aria-hidden="true" />
@@ -1231,6 +1279,39 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         {/* ===================== TAB 2: JUEGO & KAI ===================== */}
         {activeSubTab === 'gameplay' && (
           <div className="space-y-6 animate-fade-in">
+            {/* GUÍA DE BIENVENIDA & INDUCCIÓN DE KAI */}
+            <div className="w-full rounded-2xl sm:rounded-3xl bg-gradient-to-r from-cyan-950/40 via-[#030816]/90 to-blue-950/30 backdrop-blur-xl p-5 sm:p-6 border border-cyan-500/30 shadow-[0_12px_35px_rgba(0,0,0,0.4),0_0_20px_rgba(0,240,255,0.1)] relative overflow-hidden space-y-3">
+              <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-cyan-400 text-xs font-mono font-bold uppercase tracking-widest">
+                    <Sparkles className="w-4 h-4 text-cyan-400" /> Inducción y Bienvenida
+                  </div>
+                  <h3 className="text-sm sm:text-base font-anton uppercase tracking-wide text-white">
+                    Guía de Bienvenida KAI
+                  </h3>
+                  <p className="text-xs text-slate-300 max-w-lg leading-relaxed">
+                    Recalibra tu nombre, tu ritmo de jornada (24h), tu arquetipo de energía y tu propósito principal en cualquier momento sin perder tu nivel ni progreso.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFX.playClick();
+                    if (onOpenOnboarding) {
+                      onOpenOnboarding();
+                    } else {
+                      window.dispatchEvent(new CustomEvent('lasolucion:open-onboarding'));
+                    }
+                  }}
+                  className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-400 to-sky-400 hover:from-cyan-300 hover:to-sky-300 text-black font-anton text-xs uppercase tracking-wider transition-all cursor-pointer shadow-[0_0_15px_rgba(0,240,255,0.4)] flex items-center gap-2 active:scale-95 shrink-0 self-start sm:self-auto font-bold"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Abrir Guía KAI</span>
+                </button>
+              </div>
+            </div>
+
             {/* PERSONALIDAD & VOZ DE KAI */}
             <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-xl p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
               <span className="vi-grano opacity-5" aria-hidden="true" />
@@ -2124,7 +2205,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         {/* ===================== TAB 5: SIMULADOR DE ESCENARIOS ===================== */}
         {activeSubTab === 'simulator' && (
           <div className="animate-fade-in space-y-4">
-            <ScenarioSimulatorPanel />
+            <Suspense fallback={
+              <div className="p-8 text-center text-slate-400 font-mono text-xs flex items-center justify-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
+                Cargando simulador táctico...
+              </div>
+            }>
+              <ScenarioSimulatorPanel />
+            </Suspense>
           </div>
         )}
       </div>

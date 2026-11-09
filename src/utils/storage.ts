@@ -77,6 +77,174 @@ export const safeRemoveItem = (key: string): void => {
   }
 };
 
+export const isQuotaError = (err: unknown): boolean => {
+  if (!err || typeof err !== 'object') return false;
+  const anyErr = err as any;
+  return (
+    anyErr.name === 'QuotaExceededError' ||
+    anyErr.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
+    anyErr.code === 22 ||
+    anyErr.code === 1014 ||
+    (typeof anyErr.message === 'string' && anyErr.message.toLowerCase().includes('quota'))
+  );
+};
+
+export interface ResilientStorageOptions {
+  onCorrupted?: (key: string, rawValue: string, error: unknown) => void;
+  onQuotaExceeded?: (key: string, value: string, error: unknown) => void;
+}
+
+/**
+ * P0 Resilient Storage Wrapper for Zustand & Client State.
+ * Prevents White Screen of Death (WSOD) caused by corrupted JSON in LocalStorage.
+ * If JSON parsing fails during rehydration:
+ * 1. Safely archives the corrupt string to a quarantine key for forensic recovery.
+ * 2. Purges the broken key.
+ * 3. Returns null so Zustand smoothly rehydrates to valid initial state.
+ * Also catches QuotaExceededError and sandboxed SecurityError gracefully.
+ */
+export const createResilientStorage = (options?: ResilientStorageOptions) => {
+  return {
+    getItem: (key: string): string | null => {
+      try {
+        if (typeof window === 'undefined' || !window.localStorage) return null;
+        const raw = window.localStorage.getItem(key);
+        if (!raw) return null;
+
+        // Verify JSON integrity before returning to prevent Zustand boot crash
+        try {
+          JSON.parse(raw);
+          return raw;
+        } catch (jsonErr) {
+          console.error(`[ResilientStorage] Corrupted JSON detected for key "${key}". Quarantining and resetting:`, jsonErr);
+          try {
+            const quarantineKey = `${key}_corrupted_backup_${Date.now()}`;
+            window.localStorage.setItem(quarantineKey, raw);
+            window.localStorage.removeItem(key);
+          } catch {}
+          if (options?.onCorrupted) {
+            options.onCorrupted(key, raw, jsonErr);
+          }
+          return null; // Signals Zustand to fallback cleanly to initial state
+        }
+      } catch (err) {
+        console.warn(`[ResilientStorage] Error reading key "${key}":`, err);
+        return null;
+      }
+    },
+    setItem: (key: string, value: string): void => {
+      if (typeof window === 'undefined' || !window.localStorage) return;
+      if ((window as any).__isResettingAccount) return;
+      try {
+        window.localStorage.setItem(key, value);
+      } catch (err) {
+        if (isQuotaError(err)) {
+          console.error(`[ResilientStorage] QuotaExceededError writing "${key}":`, err);
+          if (options?.onQuotaExceeded) {
+            options.onQuotaExceeded(key, value, err);
+          }
+        } else {
+          console.warn(`[ResilientStorage] Error setting item for key "${key}":`, err);
+        }
+      }
+    },
+    removeItem: (key: string): void => {
+      try {
+        if (typeof window !== 'undefined' && window.localStorage) {
+          window.localStorage.removeItem(key);
+        }
+      } catch (err) {
+        console.warn(`[ResilientStorage] Error removing item for key "${key}":`, err);
+      }
+    },
+  };
+};
+
+export interface EmergencyRecoveryResult {
+  backedUpKeys: string[];
+  clearedKeys: string[];
+  cachesCleared: boolean;
+  serviceWorkersUnregistered: number;
+}
+
+/**
+ * P2 Cascading Self-Healing Emergency Storage Recovery Protocol.
+ * Used by ErrorBoundary and recovery dialogs to break infinite WSOD crash loops.
+ * 1. Quarantines critical client stores to timestamped backup keys before deletion.
+ * 2. Purges the corrupted active keys from LocalStorage.
+ * 3. Clears browser HTTP caches.
+ * 4. Unregisters Service Workers to discard stale broken chunks.
+ */
+export const executeEmergencyStorageRecovery = async (
+  targetStorage?: Storage
+): Promise<EmergencyRecoveryResult> => {
+  const criticalKeys = [
+    'la-solucion-task-store',
+    'quantum-os-player-stats',
+    'quantum-os-app-store',
+    'quantum-os-ui-store',
+    'taskquest_tasks',
+    'taskquest_player_stats',
+  ];
+  const backedUpKeys: string[] = [];
+  const clearedKeys: string[] = [];
+  const timestamp = Date.now();
+
+  const storage = targetStorage || (typeof window !== 'undefined' && 'localStorage' in window ? window.localStorage : null);
+
+  if (storage && typeof storage.getItem === 'function') {
+    for (const key of criticalKeys) {
+      try {
+        const val = storage.getItem(key);
+        if (val !== null && val !== undefined) {
+          const backupKey = `${key}_emergency_backup_${timestamp}`;
+          try {
+            storage.setItem(backupKey, val);
+            backedUpKeys.push(backupKey);
+          } catch (writeErr) {
+            console.warn(`[EmergencyRecovery] Failed to create emergency backup for ${key}:`, writeErr);
+          }
+          storage.removeItem(key);
+          clearedKeys.push(key);
+        }
+      } catch (err) {
+        console.warn(`[EmergencyRecovery] Error handling key ${key}:`, err);
+      }
+    }
+  }
+
+  let cachesCleared = false;
+  if (typeof window !== 'undefined' && 'caches' in window) {
+    try {
+      const keys = await window.caches.keys();
+      await Promise.all(keys.map((k) => window.caches.delete(k)));
+      cachesCleared = true;
+    } catch (cacheErr) {
+      console.warn('[EmergencyRecovery] Cache clear failed:', cacheErr);
+    }
+  }
+
+  let serviceWorkersUnregistered = 0;
+  if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+    try {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      for (const reg of registrations) {
+        const success = await reg.unregister();
+        if (success) serviceWorkersUnregistered++;
+      }
+    } catch (swErr) {
+      console.warn('[EmergencyRecovery] ServiceWorker unregister failed:', swErr);
+    }
+  }
+
+  return {
+    backedUpKeys,
+    clearedKeys,
+    cachesCleared,
+    serviceWorkersUnregistered,
+  };
+};
+
 export const loadCustomHabits = (): CustomHabit[] => {
   try {
     const raw = safeGetItem(STORAGE_KEYS.CUSTOM_HABITS);
@@ -529,3 +697,9 @@ export const loadNotificationSettings = (): NotificationSettings => {
 export const saveNotificationSettings = (settings: NotificationSettings): void => {
   safeSetItem('taskquest_notification_settings', JSON.stringify(settings));
 };
+
+export {
+  fetchColdArchivedTasksForDate,
+  fetchAllColdArchivedTasks,
+  persistColdArchiveToIndexedDB,
+} from './level3Systems';

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Icon } from './common/Icon';
 import { CustomHabit, TaskItem, TaskCategory } from '../types';
@@ -16,7 +16,7 @@ import {
   nudgeTimeBlock, ScheduleConflict, ScheduleGap, isQuickMicroHabit,
   autoArrangeSchedule, cleanScheduleTitle
 } from '../utils/timeUtils';
-import { TacticalDiagnosticPanel } from './TacticalDiagnosticPanel';
+const TacticalDiagnosticPanel = lazy(() => import('./TacticalDiagnosticPanel').then(m => ({ default: m.TacticalDiagnosticPanel })));
 import { OracleGuidedWizard } from './oracle/OracleGuidedWizard';
 import { OracleTemplates } from './oracle/OracleTemplates';
 import { OracleTheatricalLoader } from './oracle/OracleTheatricalLoader';
@@ -32,6 +32,7 @@ import {
   removeGeminiApiKey 
 } from '../services/aiService';
 import { useUIStore } from '../store/useUIStore';
+import { safeLogEvent } from '../firebase';
 
 interface OracleModalProps {
   isOpen: boolean;
@@ -69,6 +70,10 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
   const [keySavedToast, setKeySavedToast] = useState<string | null>(null);
   const [showKeyText, setShowKeyText] = useState(false);
 
+  // ORA-01 & ORA-04: Snapshot rollback and transparent tactical generation source
+  const [hasUndoSnapshot, setHasUndoSnapshot] = useState(false);
+  const [generationSource, setGenerationSource] = useState<'ai' | 'local'>('ai');
+
   const stats = usePlayerStore(state => state.stats);
   const currentViewDate = useTaskStore(state => state.currentViewDate);
   const tasksByDate = useTaskStore(state => state.tasksByDate);
@@ -84,6 +89,25 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
       const active = hasActiveGeminiKey();
       setIsKeyConfigured(active);
       setInputKey(getEffectiveGeminiApiKey() || '');
+
+      // ORA-01: Verificar si existe un respaldo previo para rollback
+      try {
+        const snapRaw = localStorage.getItem('taskquest_oracle_last_snapshot');
+        if (snapRaw) {
+          const parsed = JSON.parse(snapRaw);
+          if (parsed && Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000) {
+            setHasUndoSnapshot(true);
+          } else {
+            localStorage.removeItem('taskquest_oracle_last_snapshot');
+            setHasUndoSnapshot(false);
+          }
+        } else {
+          setHasUndoSnapshot(false);
+        }
+      } catch {
+        setHasUndoSnapshot(false);
+      }
+
       // Si no tiene clave, abrir automáticamente el panel para guiarlo a conectarla
       if (!active) {
         setShowKeyInput(true);
@@ -94,6 +118,28 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
       }
     }
   }, [isOpen, initialPrompt]);
+
+  const handleUndoInjection = () => {
+    soundFX.playClick();
+    try {
+      const snapRaw = localStorage.getItem('taskquest_oracle_last_snapshot');
+      if (!snapRaw) return;
+      const parsed = JSON.parse(snapRaw);
+      if (parsed.tasksByDate && parsed.customHabits) {
+        const taskStore = useTaskStore.getState();
+        taskStore.setTasksByDate(parsed.tasksByDate);
+        taskStore.setCustomHabits(parsed.customHabits);
+        localStorage.removeItem('taskquest_oracle_last_snapshot');
+        setHasUndoSnapshot(false);
+        soundFX.playSubBassConfirm();
+        triggerHaptic([30, 50]);
+        setNotice("↺ Horario anterior restaurado con éxito desde el respaldo de seguridad.");
+      }
+    } catch (err) {
+      console.error("Error al restaurar snapshot del oráculo:", err);
+      setError("No se pudo restaurar el horario previo.");
+    }
+  };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -148,6 +194,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
             setSuggestedHabits(sortByChronologicalTime(arranged) as CustomHabit[]);
             setNotice(null);
             setAddedHabitIds(new Set());
+            setGenerationSource('ai');
             soundFX.playSubBassConfirm();
             return;
           }
@@ -156,11 +203,12 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
         }
 
         setSuggestedHabits(sortByChronologicalTime(organized));
-        setNotice(null);
+        setNotice("⚡ Agenda organizada por el Motor Táctico Local.");
         setAddedHabitIds(new Set());
+        setGenerationSource('local');
         soundFX.playSubBassConfirm();
       } else {
-        // No tasks yet: ask Gemini 3.8 Flash for a complete balanced day, with heuristic fallback
+        // No tasks yet: ask Gemini Flash for a complete balanced day, with heuristic fallback
         const userContextObj = {
           profession: stats?.profession,
           mantra: stats?.mantra,
@@ -183,6 +231,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
             setSuggestedHabits(sortByChronologicalTime(arranged) as CustomHabit[]);
             setNotice(aiData.notice || null);
             setAddedHabitIds(new Set());
+            setGenerationSource(aiData?.source === 'heuristic_engine' ? 'local' : 'ai');
             soundFX.playSubBassConfirm();
             return;
           }
@@ -191,7 +240,8 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
         }
         const fallback = generateProceduralSchedule('', { profession: stats?.profession }, scheduleMode);
         setSuggestedHabits(sortByChronologicalTime(fallback));
-        setNotice(null);
+        setNotice("⚡ Agenda balanceada por el Motor Táctico Local.");
+        setGenerationSource('local');
         setAddedHabitIds(new Set());
         soundFX.playSubBassConfirm();
       }
@@ -232,16 +282,25 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
 
       const data = await generateScheduleFrontend(textToUse, userContextObj, [], scheduleMode);
 
+      const isLocal = data?.source === 'heuristic_engine';
+      setGenerationSource(isLocal ? 'local' : 'ai');
       if (data.notice) {
         setNotice(data.notice);
       } else {
-        setNotice("✨ Agenda estratégica generada con éxito por KAI IA (Gemini).");
+        setNotice(isLocal 
+          ? "⚡ Agenda estratégica generada con éxito por el Motor Táctico Local."
+          : "✨ Agenda estratégica generada con éxito por KAI IA (Gemini).");
       }
 
       const rawHabits: CustomHabit[] = data.habits || [];
       const arranged = autoArrangeSchedule(rawHabits, scheduleMode, 25);
       const sorted = sortByChronologicalTime(arranged);
       setSuggestedHabits(sorted);
+      safeLogEvent('oracle_generation_completed', {
+        schedule_mode: scheduleMode,
+        block_count: sorted.length,
+        has_ai_notice: Boolean(data.notice)
+      });
       const hasMultiDayVariations = sorted.some(h => h.specificDays && h.specificDays.length > 0 && h.specificDays.length < 5);
       if (hasMultiDayVariations) {
         const activeDayOrder = [1, 2, 3, 4, 5, 6, 0];
@@ -275,6 +334,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
           scheduleMode
         );
         setNotice("⚠️ Modo sin conexión: Agenda estructurada por el Motor Local.");
+        setGenerationSource('local');
         const arranged = autoArrangeSchedule(fallbackHabits, scheduleMode, 25);
         const sorted = sortByChronologicalTime(arranged);
         setSuggestedHabits(sorted);
@@ -436,6 +496,20 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
     
     const taskStore = useTaskStore.getState();
     const currentDateStr = taskStore.currentViewDate || getTodayDateString();
+
+    // ORA-01: Guardar snapshot de seguridad antes de modificar la agenda para permitir rollback
+    try {
+      const snapshot = {
+        timestamp: Date.now(),
+        dateStr: currentDateStr,
+        tasksByDate: taskStore.tasksByDate,
+        customHabits: taskStore.customHabits
+      };
+      localStorage.setItem('taskquest_oracle_last_snapshot', JSON.stringify(snapshot));
+      setHasUndoSnapshot(true);
+    } catch (e) {
+      console.warn("No se pudo guardar el snapshot del oráculo:", e);
+    }
 
     // 1. Persist AI-generated routines into customHabits so generateDailyTasks will create them infinitely for all future dates
     const existingCustomHabits = taskStore.customHabits || [];
@@ -785,6 +859,34 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
 
             {!suggestedHabits ? (
               <div className="space-y-4">
+                {/* ORA-01: Banner de Deshacer / Rollback si existe respaldo previo */}
+                {hasUndoSnapshot && (
+                  <div className="bg-amber-950/40 border border-amber-500/40 rounded-2xl p-3 sm:p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-[0_0_15px_rgba(245,158,11,0.15)] animate-fade-in">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center shrink-0">
+                        <Icon name="rotateCcw" className="w-4 h-4 text-amber-400" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-mono font-bold text-amber-200">
+                          Respaldo de Horario Anterior Disponible
+                        </p>
+                        <p className="text-[11px] text-amber-300/80 font-sans mt-0.5">
+                          Puedes restaurar tus tareas y rutinas al estado previo a la última inyección.
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleUndoInjection}
+                      className="w-full sm:w-auto shrink-0 px-3.5 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 rounded-xl text-xs font-mono font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-95 shadow-md"
+                      title="Revertir y restaurar agenda previa"
+                    >
+                      <Icon name="rotateCcw" className="w-3.5 h-3.5" />
+                      <span>Deshacer Inyección</span>
+                    </button>
+                  </div>
+                )}
+
                 <div className="bg-[#020712]/90 border border-white/10 rounded-2xl p-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between shadow-[0_0_20px_rgba(0,0,0,0.5)]">
                   <div className="flex gap-3.5 items-start">
                     <div className="w-10 h-10 rounded-xl bg-black/70 border border-cyan-500/40 flex items-center justify-center shrink-0 shadow-[0_0_12px_rgba(0,240,255,0.25)]">
@@ -814,10 +916,17 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                   </button>
                 </div>
 
-                {/* Mode Tabs: Guided Assistant vs Free Prompt vs Presets vs Neural Analysis */}
-                <div className="flex flex-wrap bg-black/40 border border-white/10 p-1.5 rounded-2xl gap-1.5">
+                {/* Mode Tabs: Guided Assistant vs Free Prompt vs Presets */}
+                <div 
+                  role="tablist" 
+                  aria-label="Modos de generación del Oráculo" 
+                  className="flex flex-wrap bg-black/40 border border-white/10 p-1.5 rounded-2xl gap-1.5"
+                >
                   <button
                     type="button"
+                    role="tab"
+                    aria-selected={activeTab === 'wizard'}
+                    aria-controls="panel-wizard"
                     onClick={() => {
                       soundFX.playClick();
                       setActiveTab('wizard');
@@ -834,6 +943,9 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
 
                   <button
                     type="button"
+                    role="tab"
+                    aria-selected={activeTab === 'prompt'}
+                    aria-controls="panel-prompt"
                     onClick={() => {
                       soundFX.playClick();
                       setActiveTab('prompt');
@@ -850,6 +962,9 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
 
                   <button
                     type="button"
+                    role="tab"
+                    aria-selected={activeTab === 'templates'}
+                    aria-controls="panel-templates"
                     onClick={() => {
                       soundFX.playClick();
                       setActiveTab('templates');
@@ -997,13 +1112,19 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                         </div>
 
                         <div className="space-y-2">
-                          <label className="text-xs font-mono font-bold text-slate-300 uppercase tracking-widest pl-1 flex items-center gap-1.5">
-                            <Icon name="zap" className="w-3.5 h-3.5 text-cyan-400" />
-                            Instrucciones de tu Rutina / Horarios
-                          </label>
+                          <div className="flex items-center justify-between pl-1">
+                            <label className="text-xs font-mono font-bold text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
+                              <Icon name="zap" className="w-3.5 h-3.5 text-cyan-400" />
+                              Instrucciones de tu Rutina / Horarios
+                            </label>
+                            <span className={`text-[11px] font-mono ${prompt.length > 1300 ? 'text-amber-400 font-bold' : 'text-slate-500'}`}>
+                              {prompt.length} / 1500
+                            </span>
+                          </div>
                           <textarea
                             value={prompt}
-                            onChange={(e) => setPrompt(e.target.value)}
+                            onChange={(e) => setPrompt(e.target.value.slice(0, 1500))}
+                            maxLength={1500}
                             placeholder="Ejemplo: De lunes a viernes trabajo de 06:00 a 12:00. Almuerzo de 12:45 a 13:30. Entrenamiento de 13:30 a 14:30. Trabajo de 15:00 a 19:30. Cena a las 19:30 y bloque creativo de 20:30 a 23:00..."
                             className="w-full h-36 bg-[#03070d] border border-cyan-950 focus:border-cyan-400 rounded-xl p-4 text-sm text-slate-100 placeholder-slate-600 resize-none outline-none transition-colors font-mono"
                           />
@@ -1060,8 +1181,8 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                 )}
 
                 {/* Cabecera Limpia: Sin disclaimers ni párrafos explicativos */}
-                <div className="flex items-center justify-between py-1 border-b border-white/10">
-                  <div className="flex items-center gap-2.5">
+                <div className="flex items-center justify-between py-1 border-b border-white/10 flex-wrap gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <h4 className="text-white font-anton text-sm uppercase tracking-wider flex items-center gap-2">
                       <Icon name="checkCircle" className="w-4 h-4 text-emerald-400" />
                       Agenda Propuesta
@@ -1069,12 +1190,31 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                     <span className="px-2 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 text-[11px] font-mono font-bold">
                       {suggestedHabits.length} bloques
                     </span>
+                    {/* ORA-04: Badge de Origen Táctico Transparente */}
+                    <span className={`px-2 py-0.5 rounded-full border text-[10px] font-mono font-bold flex items-center gap-1 shadow-sm ${
+                      generationSource === 'local' 
+                        ? 'bg-emerald-950/80 border-emerald-500/40 text-emerald-300' 
+                        : 'bg-purple-950/80 border-purple-500/40 text-purple-300'
+                    }`}>
+                      {generationSource === 'local' ? (
+                        <>
+                          <Icon name="zap" className="w-3 h-3 text-emerald-400" />
+                          <span>Motor Local (0 Latencia)</span>
+                        </>
+                      ) : (
+                        <>
+                          <Icon name="brain" className="w-3 h-3 text-purple-400" />
+                          <span>KAI Neural (Gemini)</span>
+                        </>
+                      )}
+                    </span>
                   </div>
 
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
                       onClick={handleAddNewManualBlock}
+                      aria-label="Añadir un bloque de horario manualmente"
                       className="px-2.5 py-1 bg-cyan-500 hover:bg-cyan-400 text-slate-950 rounded-lg text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-1 cursor-pointer transition-all active:scale-95 shadow-[0_0_10px_rgba(6,182,212,0.3)]"
                       title="Añadir un bloque de horario manualmente"
                     >
@@ -1085,6 +1225,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                       <button
                         type="button"
                         onClick={handleSynthesizeExisting}
+                        aria-label="Consolidar tareas fragmentadas"
                         className="px-2.5 py-1 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white rounded-lg text-xs font-mono flex items-center gap-1 cursor-pointer transition-all active:scale-95"
                         title="Consolidar tareas fragmentadas"
                       >
@@ -1097,11 +1238,13 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
 
                 {/* Tactical Diagnostic Panel: Solo si hay choques reales */}
                 {diagnostic && diagnostic.conflicts.length > 0 && (
-                  <TacticalDiagnosticPanel
-                    diagnostic={diagnostic}
-                    onQuickFixConflict={handleQuickFixConflict}
-                    onFillGap={handleFillGap}
-                  />
+                  <Suspense fallback={null}>
+                    <TacticalDiagnosticPanel
+                      diagnostic={diagnostic}
+                      onQuickFixConflict={handleQuickFixConflict}
+                      onFillGap={handleFillGap}
+                    />
+                  </Suspense>
                 )}
 
                 <div className="space-y-3">
@@ -1395,6 +1538,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                                 <button
                                   type="button"
                                   onClick={() => handleQuickFixConflict(relatedConflict)}
+                                  aria-label="Resolver choque de horario automáticamente"
                                   className="px-2 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/50 text-amber-300 font-mono text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-all active:scale-95"
                                   title="Resolver choque automáticamente"
                                 >
@@ -1406,6 +1550,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                               <button
                                 type="button"
                                 onClick={() => startEditingHabit(habit)}
+                                aria-label={`Editar bloque ${habit.title}`}
                                 className="p-1.5 text-slate-400 hover:text-cyan-300 hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
                                 title="Editar bloque"
                               >
@@ -1413,7 +1558,9 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                               </button>
 
                               <button
+                                type="button"
                                 onClick={() => handleRemoveHabit(habit.id)}
+                                aria-label={`Descartar ${habit.title} de la lista`}
                                 className="text-slate-500 hover:text-red-400 p-1.5 hover:bg-red-950/30 rounded-lg transition-colors cursor-pointer"
                                 title="Descartar de la lista"
                               >

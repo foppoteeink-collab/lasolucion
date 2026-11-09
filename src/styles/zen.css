@@ -43,11 +43,30 @@
   opacity: 0.6;
 }
 
-/* Sello de cierre artesanal */
+/* --- Sello de cierre artesanal --- */
 .zen-close-stamp {
   border: 3px dashed #7f1d1d !important;
   color: #7f1d1d !important;
   background: rgba(239, 68, 68, 0.1) !important;
   font-family: 'Courier New', monospace !important;
   text-transform: uppercase;
+}
+
+/* --- Suspensión visual de efectos pesados en Modo Zen (Ahorro Batería y Máxima Concentración) --- */
+.zen-mode .ambient-glow,
+.zen-mode .animate-pulse,
+.zen-mode .animate-bounce,
+.zen-mode .animate-float,
+.zen-mode .animate-spin-slow,
+.zen-mode [data-zen-hide="true"] {
+  animation: none !important;
+  box-shadow: none !important;
+}
+
+.zen-mode * {
+  text-shadow: none !important;
+}
+
+.zen-mode canvas.ambient-canvas {
+  display: none !important;
 }

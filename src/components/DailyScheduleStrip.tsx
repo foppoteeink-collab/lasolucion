@@ -1,8 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { TaskItem, TaskCategory } from '../types';
-import { Clock, Sparkles, Calendar, Timer, CheckCircle2, X } from 'lucide-react';
+import { Clock, Sparkles, Calendar, Timer, CheckCircle2, X, Settings } from 'lucide-react';
 import { soundFX } from '../utils/audio';
-import { parseTimeToMinutes, parseEndTimeToMinutes, sortByChronologicalTime } from '../utils/timeUtils';
+import { parseTimeToMinutes, parseEndTimeToMinutes, sortByChronologicalTime, formatHourToHuman } from '../utils/timeUtils';
+import { usePlayerStore } from '../store/usePlayerStore';
+import { useUIStore } from '../store/useUIStore';
+import { getGlobalDayStartHour } from '../utils/date';
+import { useCurrentTime } from '../hooks/useCurrentTime';
 
 interface DailyScheduleStripProps {
   tasks: TaskItem[];
@@ -16,18 +20,16 @@ export const DailyScheduleStrip: React.FC<DailyScheduleStripProps> = ({
   onOpenPomodoroForTask,
   onClose,
 }) => {
-  const [currentTime, setCurrentTime] = useState(new Date());
-
-  useEffect(() => {
-    // 15s interval keeps clock accurate to the minute without 60 renders/min CPU churn
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 15000);
-    return () => clearInterval(timer);
-  }, []);
+  // Pulso sincronizado y pausado en background (Green IT)
+  const currentTime = useCurrentTime(15000);
 
   const daysOfWeek = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
   const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+  const stats = usePlayerStore((s) => s.stats);
+  const setModalState = useUIStore((s) => s.setModalState);
+  const currentStartHour = stats.dayStartHour !== undefined ? stats.dayStartHour : getGlobalDayStartHour();
+  const rhythmLabel = formatHourToHuman(currentStartHour);
 
   const currentHours = currentTime.getHours();
   const currentMinutes = currentTime.getMinutes();
@@ -58,7 +60,7 @@ export const DailyScheduleStrip: React.FC<DailyScheduleStripProps> = ({
   return (
     <div className="scifi-glass-panel rounded-2xl p-3.5 sm:p-4 font-sans transition-all text-white border border-cyan-500/40 shadow-[0_0_25px_rgba(0,240,255,0.18)]">
       
-      {/* Top Bar: Live Clock + Date + Close Button */}
+      {/* Top Bar: Live Clock + Date + Day Rhythm + Close Button */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 flex-wrap">
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#000a14] border border-cyan-400/60 text-xs font-black shadow-[0_0_10px_rgba(0,240,255,0.25)]">
@@ -69,6 +71,20 @@ export const DailyScheduleStrip: React.FC<DailyScheduleStripProps> = ({
             <Calendar className="w-3.5 h-3.5 text-cyan-400" />
             <span>{formattedDateStr}</span>
           </span>
+
+          {/* Botón Ritmo de Jornada */}
+          <button
+            type="button"
+            onClick={() => {
+              soundFX.playClick();
+              setModalState('isDayRhythmOpen', true);
+            }}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#00142b] hover:bg-cyan-950/70 border border-cyan-500/40 hover:border-cyan-400 text-[11px] font-bold text-cyan-200 hover:text-white transition-all cursor-pointer shadow-[0_0_10px_rgba(0,240,255,0.15)] active:scale-95"
+            title="Personalizar a qué hora inicia tu jornada diaria"
+          >
+            <span>Jornada: {rhythmLabel}</span>
+            <Settings className="w-3 h-3 text-cyan-400/80" />
+          </button>
         </div>
 
         {onClose && (

@@ -25,8 +25,8 @@ export const MainLogo: React.FC<MainLogoProps> = ({
 
   // Calibración de altura proporcional para mantener la proporción exacta 864x129 (letras puras sin caja)
   const sizeClasses = {
-    sm: 'h-[22px] sm:h-[28px]',
-    md: 'h-[24px] xs:h-[26px] sm:h-[38px] lg:h-[44px]',
+    sm: 'h-[20px] sm:h-[28px]',
+    md: 'h-[20px] xs:h-[22px] sm:h-[36px] lg:h-[42px]',
     lg: 'h-[25px] xs:h-[28px] sm:h-[42px] lg:h-[50px]',
     xl: 'h-[48px] sm:h-[60px]',
     massive: 'h-[64px] sm:h-[80px]',

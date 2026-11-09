@@ -3,9 +3,10 @@ import { usePlayerStore } from '../store/usePlayerStore';
 import { useTaskStore } from '../store/useTaskStore';
 import { useUIStore } from '../store/useUIStore';
 import { useAppStore } from '../store/useAppStore';
-import { getTodayDateString } from '../utils/date';
+import { getTodayDateString, getTrustedNow, syncNetworkTime, getGlobalDayStartHour, setGlobalDayStartHour } from '../utils/date';
 import { parseTimeToMinutes, parseEndTimeToMinutes, isQuickMicroHabit } from '../utils/timeUtils';
 import * as gameEngine from '../engine/gameEngine';
+import { safeLogEvent } from '../firebase';
 
 export type DayCycleStatus = 'idle' | 'active_hidden' | 'ready_to_close' | 'finished';
 
@@ -13,20 +14,50 @@ const EMPTY_TASKS_ARRAY: any[] = [];
 
 /**
  * Calculates current minutes in the logical 24h+ timeline of the day.
- * If the current time is between 00:00 and 02:59 AM, it is within the night-owl
- * grace period of the previous calendar day, so hours are projected as (h + 24).
- * Example: 01:30 AM -> (1 + 24) * 60 + 30 = 1530 min.
+ * Hours before the daily cutoff hour are projected (+24h) to remain attached
+ * chronologically to the shift of the previous calendar day.
  */
-export const getLogicalNowMinutes = (d: Date = new Date()): number => {
+export const getLogicalNowMinutes = (d: Date = getTrustedNow(), cutoffHour = getGlobalDayStartHour()): number => {
   const h = d.getHours();
   const m = d.getMinutes();
-  return (h < 3 ? h + 24 : h) * 60 + m;
+  return (h < cutoffHour ? h + 24 : h) * 60 + m;
+};
+
+/**
+ * Calculates milliseconds remaining until the exact next cutoff hour local time boundary,
+ * based on trusted network time.
+ */
+export const getMsUntilNextCutoff = (cutoffHour: number = getGlobalDayStartHour(), now: Date = getTrustedNow()): number => {
+  const nextCutoff = new Date(now.getTime());
+  if (now.getHours() >= cutoffHour) {
+    nextCutoff.setDate(nextCutoff.getDate() + 1);
+  }
+  nextCutoff.setHours(cutoffHour, 0, 0, 0);
+  return Math.max(1000, nextCutoff.getTime() - now.getTime());
+};
+
+/**
+ * Backward-compatible alias for 3:00 AM cutoff tests and historical calls.
+ */
+export const getMsUntilNext3AM = (now: Date = getTrustedNow()): number => {
+  return getMsUntilNextCutoff(3, now);
 };
 
 export const useDayCycle = () => {
-  const today = getTodayDateString();
+  const configuredDayStartHour = usePlayerStore((s) => s.stats.dayStartHour);
+  const activeCutoffHour = configuredDayStartHour !== undefined ? configuredDayStartHour : getGlobalDayStartHour();
 
-  // Atomic selectors for PlayerStore to prevent re-renders on XP/coins/HP changes
+  // Keep global date cutoff in sync with store
+  useEffect(() => {
+    if (configuredDayStartHour !== undefined && configuredDayStartHour !== getGlobalDayStartHour()) {
+      setGlobalDayStartHour(configuredDayStartHour);
+    }
+  }, [configuredDayStartHour]);
+
+  const [activeDateKey, setActiveDateKey] = useState<string>(() => getTodayDateString(undefined, activeCutoffHour));
+  const today = activeDateKey;
+
+  // Atomic selectors for PlayerStore
   const isFinished = usePlayerStore((s) => Boolean(s.stats.finalizedDays?.[today]));
   const todaySleep = usePlayerStore((s) => s.stats.sleepLogs?.[today]);
 
@@ -38,22 +69,59 @@ export const useDayCycle = () => {
   const notificationSettings = useAppStore((s) => s.notificationSettings);
   const setModalState = useUIStore((s) => s.setModalState);
 
-  // Optimistic flag so clicking 'Iniciar Jornada' hides the button in 0ms
+  // Optimistic flag
   const [justStartedDate, setJustStartedDate] = useState<string | null>(null);
 
-  const [logicalMinutes, setLogicalMinutes] = useState<number>(() => getLogicalNowMinutes());
+  const [logicalMinutes, setLogicalMinutes] = useState<number>(() => getLogicalNowMinutes(undefined, activeCutoffHour));
 
   useEffect(() => {
+    let timerCutoff: ReturnType<typeof setTimeout> | null = null;
+
+    // Sincronizar offset de hora de red inmediatamente al montar
+    void syncNetworkTime().catch(() => {});
+
     const updateClock = () => {
-      setLogicalMinutes(getLogicalNowMinutes());
+      const trustedNow = getTrustedNow();
+      setLogicalMinutes(getLogicalNowMinutes(trustedNow, activeCutoffHour));
+      const currentToday = getTodayDateString(trustedNow, activeCutoffHour);
+      setActiveDateKey((prev) => {
+        if (prev !== currentToday) {
+          // Exact Date Flip across the cutoff boundary!
+          useTaskStore.getState().ensureTodayTasks();
+          return currentToday;
+        }
+        return prev;
+      });
     };
+
+    const schedulePrecisionTimer = () => {
+      if (timerCutoff) clearTimeout(timerCutoff);
+      const msUntilCutoff = getMsUntilNextCutoff(activeCutoffHour);
+      timerCutoff = setTimeout(() => {
+        updateClock();
+        schedulePrecisionTimer();
+      }, msUntilCutoff + 50);
+    };
+
     const interval = setInterval(updateClock, 15000);
-    window.addEventListener('focus', updateClock);
+    schedulePrecisionTimer();
+
+    const handleFocusOrOnline = () => {
+      void syncNetworkTime().then(() => updateClock());
+    };
+
+    window.addEventListener('focus', handleFocusOrOnline);
+    window.addEventListener('visibilitychange', handleFocusOrOnline);
+    window.addEventListener('online', handleFocusOrOnline);
+
     return () => {
       clearInterval(interval);
-      window.removeEventListener('focus', updateClock);
+      if (timerCutoff) clearTimeout(timerCutoff);
+      window.removeEventListener('focus', handleFocusOrOnline);
+      window.removeEventListener('visibilitychange', handleFocusOrOnline);
+      window.removeEventListener('online', handleFocusOrOnline);
     };
-  }, []);
+  }, [activeCutoffHour]);
 
   const dayStatus: DayCycleStatus = useMemo(() => {
     if (isFinished) return 'finished';
@@ -88,13 +156,11 @@ export const useDayCycle = () => {
     }
 
     if (!isStarted) {
-      // Hora de inicio configurada: primer bloque horario del día o recordatorio matutino (por defecto 06:00 AM)
       const configuredMorningMin = parseTimeToMinutes(notificationSettings?.morningReminderTime || '06:00');
       const fallbackMorningMin = configuredMorningMin !== 9999 ? configuredMorningMin : 6 * 60;
       const baseWorkStartMin = earliestStartMin < 9999
         ? Math.min(earliestStartMin, fallbackMorningMin)
         : fallbackMorningMin;
-      // Aparece dinámicamente al inicio de la hora laboral (con ventana previa de 15 min)
       const startThresholdMin = Math.max(0, baseWorkStartMin - 15);
 
       if (logicalMinutes >= startThresholdMin) {
@@ -108,12 +174,9 @@ export const useDayCycle = () => {
       return 'ready_to_close';
     }
 
-    // Hora de finalización configurada: fin de la última tarea programada o reflexión nocturna configurada (por defecto 21:00)
     const configuredNightlyMin = parseTimeToMinutes(notificationSettings?.nightlyReflectionTime || '21:00');
     const fallbackEndMin = configuredNightlyMin !== 9999 ? configuredNightlyMin : 21 * 60;
     const configuredEndMin = latestEndMin > 0 ? latestEndMin : fallbackEndMin;
-
-    // Umbral: 20 minutos antes de la hora de finalización configurada (ventana de 15-20 min previos)
     const closeThresholdMin = Math.max(0, configuredEndMin - 20);
 
     if (logicalMinutes >= closeThresholdMin) {
@@ -127,10 +190,12 @@ export const useDayCycle = () => {
     setJustStartedDate(today);
     useTaskStore.getState().startDay(today);
     gameEngine.handleRegisterWakeUp(today);
+    safeLogEvent('day_cycle_transition', { to_status: 'started', date: today });
   };
 
   const finishDay = () => {
     setModalState('isFinishDayOpen', true);
+    safeLogEvent('day_cycle_transition', { to_status: 'finish_modal_opened', date: today });
   };
 
   return { dayStatus, startDay, finishDay };

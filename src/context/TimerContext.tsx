@@ -52,6 +52,8 @@ export interface TimerContextType {
   isRunning: boolean;
   targetEndTime: number | null;
   completedPomodorosToday: number;
+  currentCycle: number;
+  streakMultiplier: number;
 
   // Ambient Sounds (Multi-Layer Mixer)
   ambientType: 'off' | 'rain' | 'fire' | 'forest' | 'heartbeat';
@@ -63,7 +65,7 @@ export interface TimerContextType {
 
   // Timer Actions
   togglePlay: () => void;
-  resetTimer: () => void;
+  resetTimer: (forceSafe?: boolean) => void;
   switchMode: (newMode: PomodoroMode) => void;
   quoteIndex: number;
 
@@ -213,6 +215,12 @@ const setFocusModeActive = useUIStore(s => s.setFocusModeActive);
       // Preservar la fecha y hora exacta de terminación real (evita que un Pomodoro que venció a las 23:55
       // se atribuya erróneamente a las 08:00 AM del día siguiente al despertar el teléfono)
       const sessionEndDate = targetEndTime ? new Date(targetEndTime) : new Date();
+      const currentStreakMult = completedPomodorosToday >= 4 ? 1.3 : (completedPomodorosToday >= 2 ? 1.15 : 1.0);
+      const baseXp = 25;
+      const baseCoins = 8;
+      const xpEarned = Math.round(baseXp * currentStreakMult);
+      const coinsEarned = Math.round(baseCoins * currentStreakMult);
+
       const completedSession: PomodoroSession = {
         id: `pomo-${targetEndTime || Date.now()}`,
         date: getTodayDateString(sessionEndDate),
@@ -220,26 +228,44 @@ const setFocusModeActive = useUIStore(s => s.setFocusModeActive);
         taskTitle: taskTitle || 'Bloque de Foco',
         category: category,
         completedAt: sessionEndDate.toISOString(),
-        xpEarned: 25,
-        coinsEarned: 8,
+        xpEarned,
+        coinsEarned,
       };
 
-      setCompletedPomodorosToday((prev) => prev + 1);
+      const nextCompleted = completedPomodorosToday + 1;
+      setCompletedPomodorosToday(nextCompleted);
       handlePomodoroComplete(completedSession);
       setQuoteIndex((prev) => (prev + 1) % FOCUS_QUOTES.length);
 
+      const isFourthCycle = (nextCompleted % 4 === 0);
+
       // Respetar el toggle de Pomodoro en la configuración de notificaciones
       if (getNotificationSettings().pomodoroComplete) {
-        notificationService.triggerNotification(
-          '¡Pomodoro de 25m Completado! 🏆',
-          `Has ganado +25 XP y +8 Monedas por enfocarte en "${taskTitle}". ¡Tómate un merecido descanso!`,
-          '⏱️'
-        );
+        if (isFourthCycle) {
+          notificationService.triggerNotification(
+            '¡4 Ciclos Completados! 🌟',
+            `¡Maestría en concentración! Has completado 4 bloques de foco. Disfruta un Descanso Mayor de 15 minutos (+${xpEarned} XP, +${coinsEarned} 🪙).`,
+            '🧘'
+          );
+        } else {
+          const streakMsg = currentStreakMult > 1 ? ` (Racha x${currentStreakMult} activa)` : '';
+          notificationService.triggerNotification(
+            '¡Pomodoro de 25m Completado! 🏆',
+            `Has ganado +${xpEarned} XP y +${coinsEarned} Monedas por enfocarte en "${taskTitle}".${streakMsg} ¡Tómate un merecido descanso!`,
+            '⏱️'
+          );
+        }
       }
 
-      setMode('short_break');
-      setInitialTimeLeft(SHORT_BREAK);
-      setTimeLeft(SHORT_BREAK);
+      if (isFourthCycle) {
+        setMode('long_break');
+        setInitialTimeLeft(LONG_BREAK);
+        setTimeLeft(LONG_BREAK);
+      } else {
+        setMode('short_break');
+        setInitialTimeLeft(SHORT_BREAK);
+        setTimeLeft(SHORT_BREAK);
+      }
     } else {
       soundFX.playBreakCompleteAlarm();
       notificationService.triggerNotification(
@@ -251,9 +277,9 @@ const setFocusModeActive = useUIStore(s => s.setFocusModeActive);
       setInitialTimeLeft(WORK_TIME);
       setTimeLeft(WORK_TIME);
     }
-  }, [mode, taskTitle, category, initialTimeLeft, SHORT_BREAK, WORK_TIME, handlePomodoroComplete, targetEndTime]);
+  }, [mode, taskTitle, category, initialTimeLeft, SHORT_BREAK, LONG_BREAK, WORK_TIME, handlePomodoroComplete, targetEndTime, completedPomodorosToday]);
 
-  // Main Background Tick Interval (500ms for high precision RTC)
+  // Main Background Tick Interval (1000ms aligned to RTC)
   useEffect(() => {
     if (!originalDocumentTitleRef.current) {
       originalDocumentTitleRef.current = document.title;
@@ -267,7 +293,7 @@ const setFocusModeActive = useUIStore(s => s.setFocusModeActive);
         const remainingMs = targetEndTime - now;
         const remainingSec = Math.max(0, Math.ceil(remainingMs / 1000));
 
-        setTimeLeft(remainingSec);
+        setTimeLeft((prev) => (prev !== remainingSec ? remainingSec : prev));
 
         // Update document tab title in background tab
         const mins = Math.floor(remainingSec / 60);
@@ -279,7 +305,7 @@ const setFocusModeActive = useUIStore(s => s.setFocusModeActive);
           if (intervalId) clearInterval(intervalId);
           handleFinishTimer();
         }
-      }, 500);
+      }, 1000);
     } else {
       // Restore title when paused or stopped
       if (originalDocumentTitleRef.current) {
@@ -390,7 +416,7 @@ const setFocusModeActive = useUIStore(s => s.setFocusModeActive);
     }
   };
 
-  const resetTimer = () => {
+  const resetTimer = (forceSafe = false) => {
     soundFX.playClick();
     setFocusModeActive(false);
     
@@ -402,8 +428,12 @@ const setFocusModeActive = useUIStore(s => s.setFocusModeActive);
       }
     } catch (e) {}
 
-    // PENALIZACIÓN EN TIEMPO REAL: Si abandona un foco activo
-    if (mode === 'work' && timeLeft < initialTimeLeft) {
+    // PENALIZACIÓN CON PERÍODO DE GRACIA (90 segundos):
+    // Si abandona un foco activo habiendo superado los 90s y no es un reinicio seguro
+    const elapsedSeconds = initialTimeLeft - timeLeft;
+    const GRACE_PERIOD_SECONDS = 90;
+
+    if (mode === 'work' && isRunning && elapsedSeconds > GRACE_PERIOD_SECONDS && !forceSafe) {
       const damage = 15;
       usePlayerStore.getState().takeDamage(damage);
       soundFX.playClick();
@@ -447,6 +477,8 @@ const setFocusModeActive = useUIStore(s => s.setFocusModeActive);
   const seconds = timeLeft % 60;
   const formattedTime = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   const progressPercent = Math.min(100, Math.max(0, Math.round(((initialTimeLeft - timeLeft) / initialTimeLeft) * 100)));
+  const currentCycle = (completedPomodorosToday % 4) + 1;
+  const streakMultiplier = completedPomodorosToday >= 4 ? 1.3 : (completedPomodorosToday >= 2 ? 1.15 : 1.0);
 
   return (
     <TimerContext.Provider
@@ -475,6 +507,8 @@ const setFocusModeActive = useUIStore(s => s.setFocusModeActive);
         isRunning,
         targetEndTime,
         completedPomodorosToday,
+        currentCycle,
+        streakMultiplier,
 
         ambientType,
         activeAmbientLayers,

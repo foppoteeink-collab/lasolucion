@@ -6,14 +6,20 @@ import {
   Trophy,
   ChevronDown,
   ChevronUp,
-  Wallet
+  Wallet,
+  Clock,
+  Settings
 } from 'lucide-react';
 import { TaskItem, TaskCategory } from '../types';
 import { soundFX } from '../utils/audio';
-import { parseTimeToMinutes, parseEndTimeToMinutes, sortByChronologicalTime } from '../utils/timeUtils';
-import { getTodayDateString } from '../utils/date';
+import { triggerHaptic } from '../utils/haptics';
+import { parseTimeToMinutes, parseEndTimeToMinutes, sortByChronologicalTime, formatHourToHuman } from '../utils/timeUtils';
+import { getTodayDateString, getGlobalDayStartHour } from '../utils/date';
 import { MoxenRayas } from './moxen/MoxenRayas';
 import { getSavedCurrencySymbol } from '../utils/finance';
+import { usePlayerStore } from '../store/usePlayerStore';
+import { useUIStore } from '../store/useUIStore';
+import { useCurrentTime } from '../hooks/useCurrentTime';
 
 interface DailyProgressWidgetProps {
   tasks: TaskItem[];
@@ -45,21 +51,20 @@ export const DailyProgressWidget: React.FC<DailyProgressWidgetProps> = ({
   todayFinanceBalance = 0,
   currencySymbol,
 }) => {
-  const [currentTime, setCurrentTime] = useState(new Date());
+  // Pulso sincronizado y pausado en background (Green IT)
+  const currentTime = useCurrentTime(30000);
   const [claimedLocal, setClaimedLocal] = useState(false);
+
+  const stats = usePlayerStore((s) => s.stats);
+  const setModalState = useUIStore((s) => s.setModalState);
+  const currentStartHour = stats.dayStartHour !== undefined ? stats.dayStartHour : getGlobalDayStartHour();
+  const rhythmLabel = formatHourToHuman(currentStartHour);
+
   const activeCurrencySymbol = currencySymbol || getSavedCurrencySymbol();
 
   useEffect(() => {
     setClaimedLocal(false);
   }, [currentDate]);
-
-  useEffect(() => {
-    // 30s interval provides accurate timeblock tracking without draining battery
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 30000);
-    return () => clearInterval(timer);
-  }, []);
 
   // Filter agenda missions consistently with TaskListView (exclude quick 21/66d micro-habits)
   const agendaTasks = (tasks || []).filter(t => {
@@ -99,7 +104,11 @@ export const DailyProgressWidget: React.FC<DailyProgressWidgetProps> = ({
     : undefined;
 
   return (
-    <div className="px-3 sm:px-4 py-2 rounded-xl scifi-glass-panel relative overflow-hidden text-left text-white space-y-1.5 border border-cyan-500/30 shadow-[0_4px_20px_rgba(0,0,0,0.4)]">
+    <div
+      role="region"
+      aria-label="Resumen de Progreso Diario"
+      className="px-3 sm:px-4 py-2 rounded-xl scifi-glass-panel relative overflow-hidden text-left text-white space-y-1.5 border border-cyan-500/30 shadow-[0_4px_20px_rgba(0,0,0,0.4)]"
+    >
       {/* Grano esmerilado táctil */}
       <span className="vi-grano opacity-5" aria-hidden="true" />
 
@@ -125,21 +134,39 @@ export const DailyProgressWidget: React.FC<DailyProgressWidgetProps> = ({
 
         {/* Right Action Cluster: Tesorería (Ingresos/Gastos) + Horarios + XP */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          {/* Botón Calibración de Ritmo de Jornada */}
+          <button
+            type="button"
+            onClick={() => {
+              soundFX.playClick();
+              triggerHaptic(15);
+              setModalState('isDayRhythmOpen', true);
+            }}
+            className="h-8 sm:h-9 px-2 sm:px-2.5 rounded-xl bg-surface-card hover:bg-cyan-950/40 border border-cyan-400/30 hover:border-cyan-400 text-cyan-300 hover:text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95 shadow-[0_0_8px_rgba(0,240,255,0.1)]"
+            title="Calibrar a qué hora inicia tu jornada diaria (24h continuas)"
+            aria-label="Calibrar inicio de jornada"
+          >
+            <Clock className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+            <span className="hidden sm:inline text-[11px] font-mono">{rhythmLabel}</span>
+          </button>
+
           {/* Botón Horarios del Día */}
           {onToggleSchedule && (
             <button
               type="button"
               onClick={() => {
                 soundFX.playClick();
+                triggerHaptic(15);
                 onToggleSchedule();
               }}
+              aria-expanded={showSchedule}
+              aria-label={showSchedule ? 'Ocultar horarios del día' : 'Ver horarios del día'}
               className={`h-8 sm:h-9 min-w-[36px] px-2 sm:px-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1 transition-all cursor-pointer active:scale-95 ${
                 showSchedule
                   ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400 shadow-[0_0_8px_rgba(0,240,255,0.25)]'
                   : 'bg-surface-card hover:bg-cyan-950/40 text-slate-300 hover:text-white border-white/10'
               }`}
               title="Ver línea de tiempo de horarios del día"
-              aria-label="Ver horarios del día"
             >
               {showSchedule ? <ChevronUp className="w-5 h-5 text-cyan-300 shrink-0" /> : <ChevronDown className="w-5 h-5 text-slate-400 shrink-0" />}
             </button>
@@ -170,8 +197,10 @@ export const DailyProgressWidget: React.FC<DailyProgressWidgetProps> = ({
               type="button"
               onClick={() => {
                 soundFX.playPomodoroChime();
+                triggerHaptic([20, 30]);
                 onOpenPomodoroForTask(activeTask.title, activeTask.category);
               }}
+              aria-label={`Iniciar temporizador de foco para: ${activeTask.title}`}
               className="px-2.5 py-1 bg-cyan-400 text-black hover:bg-cyan-300 rounded-lg font-anton uppercase text-[11px] shrink-0 flex items-center gap-1 shadow-[0_0_10px_rgba(0,240,255,0.4)] cursor-pointer"
             >
               <Timer className="w-3.5 h-3.5" />
@@ -188,8 +217,10 @@ export const DailyProgressWidget: React.FC<DailyProgressWidgetProps> = ({
           onClick={() => {
             setClaimedLocal(true);
             soundFX.playLevelUp();
+            triggerHaptic([30, 45, 60]);
             onClaimDailyBonus(25, 10);
           }}
+          aria-label="Reclamar bono de día completado: 25 XP y 10 monedas"
           className="w-full py-1.5 px-3 bg-[#d6f421] hover:bg-yellow-300 text-black rounded-lg font-anton tracking-wider uppercase text-[11px] transition-all flex items-center justify-center gap-1.5 cursor-pointer relative z-10"
         >
           <Trophy className="w-3.5 h-3.5 text-black" />

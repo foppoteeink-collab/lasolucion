@@ -11,6 +11,7 @@ const isPomodoroFocusActive = (): boolean => {
 export type BinauralMode = 'gamma' | 'beta' | 'alpha' | 'theta';
 export type NoiseType = 'brown' | 'pink' | 'white';
 export type DronePreset = 'deep' | 'subtle' | 'pulsing';
+export type SoundFormula = 'hyperfocus' | 'calm_study' | 'void_mask' | 'fusion_core';
 
 export interface SoundscapeState {
   isPlaying: boolean;
@@ -25,7 +26,68 @@ export interface SoundscapeState {
   binauralMode: BinauralMode;
   dronePreset: DronePreset;
   autoSyncPomodoro: boolean;
+  activeFormula?: SoundFormula | null;
 }
+
+export const SOUND_FORMULAS: Record<
+  SoundFormula,
+  {
+    id: SoundFormula;
+    name: string;
+    subtitle: string;
+    icon: string;
+    desc: string;
+    binaural: string;
+    noise: string;
+    drone: string;
+    accent: string;
+  }
+> = {
+  hyperfocus: {
+    id: 'hyperfocus',
+    name: 'Hiperfoco',
+    subtitle: 'Beta 15Hz',
+    icon: '⚡',
+    desc: 'Atención sostenida con absorción estocástica marrón y reactor profundo.',
+    binaural: 'Beta (15Hz)',
+    noise: 'Marrón (65%)',
+    drone: 'Reactor (50%)',
+    accent: '#00f0ff',
+  },
+  calm_study: {
+    id: 'calm_study',
+    name: 'Flujo Calmo',
+    subtitle: 'Alpha 10Hz',
+    icon: '🧘',
+    desc: 'Creatividad relajada y lectura profunda con ruido rosa balanceado.',
+    binaural: 'Alpha (10Hz)',
+    noise: 'Rosa (55%)',
+    drone: 'Cabina (35%)',
+    accent: '#38ef7d',
+  },
+  void_mask: {
+    id: 'void_mask',
+    name: 'Aislamiento',
+    subtitle: 'Vacío Puro',
+    icon: '🛡️',
+    desc: 'Bloqueo estocástico acústico al 85% de ruidos y conversaciones externas.',
+    binaural: 'Silenciado',
+    noise: 'Marrón (85%)',
+    drone: 'Silenciado',
+    accent: '#fbbf24',
+  },
+  fusion_core: {
+    id: 'fusion_core',
+    name: 'Núcleo Cuántico',
+    subtitle: 'Gamma 40Hz',
+    icon: '🌌',
+    desc: 'Máxima síntesis cognitiva y agudeza analítica con pulso rítmico.',
+    binaural: 'Gamma (40Hz)',
+    noise: 'Rosa (45%)',
+    drone: 'Pulso (70%)',
+    accent: '#d6f421',
+  },
+};
 
 const STORAGE_KEY = 'quantum_soundscape_settings_v1';
 
@@ -592,6 +654,7 @@ class QuantumSoundscapeEngine {
   public setNoiseType(type: NoiseType) {
     this.state.noiseType = type;
     this.state.channel1Muted = false;
+    this.state.activeFormula = null;
     if (!this.state.isPlaying) {
       this.start(0.3);
     } else {
@@ -603,6 +666,7 @@ class QuantumSoundscapeEngine {
   public setBinauralMode(mode: BinauralMode) {
     this.state.binauralMode = mode;
     this.state.channel2Muted = false;
+    this.state.activeFormula = null;
     if (!this.state.isPlaying) {
       this.start(0.3);
     } else {
@@ -614,6 +678,7 @@ class QuantumSoundscapeEngine {
   public setDronePreset(preset: DronePreset) {
     this.state.dronePreset = preset;
     this.state.channel3Muted = false;
+    this.state.activeFormula = null;
     if (!this.state.isPlaying) {
       this.start(0.3);
     } else {
@@ -628,7 +693,8 @@ class QuantumSoundscapeEngine {
   }
 
   // Pre-configured Soundscape Formulas
-  public applyFormula(preset: 'hyperfocus' | 'calm_study' | 'void_mask' | 'fusion_core') {
+  public applyFormula(preset: SoundFormula) {
+    this.state.activeFormula = preset;
     switch (preset) {
       case 'hyperfocus':
         this.state.noiseType = 'brown';

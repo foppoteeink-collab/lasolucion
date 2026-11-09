@@ -8,6 +8,12 @@ const AnimatedCounter = ({ value, duration = 1500, prefix = "", suffix = "" }: {
   const [count, setCount] = React.useState(0);
 
   React.useEffect(() => {
+    if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setCount(value);
+      return;
+    }
+
+    let frameId: number | null = null;
     let startTimestamp: number | null = null;
     const step = (timestamp: number) => {
       if (!startTimestamp) startTimestamp = timestamp;
@@ -15,12 +21,18 @@ const AnimatedCounter = ({ value, duration = 1500, prefix = "", suffix = "" }: {
       const easeProgress = 1 - Math.pow(1 - progress, 4);
       setCount(Math.floor(easeProgress * value));
       if (progress < 1) {
-        window.requestAnimationFrame(step);
+        frameId = window.requestAnimationFrame(step);
       } else {
         setCount(value);
       }
     };
-    window.requestAnimationFrame(step);
+    frameId = window.requestAnimationFrame(step);
+
+    return () => {
+      if (frameId !== null) {
+        window.cancelAnimationFrame(frameId);
+      }
+    };
   }, [value, duration]);
 
   return <>{prefix}{count.toLocaleString('es-CR')}{suffix}</>;
@@ -55,6 +67,7 @@ export const FinanceDashboard: React.FC<FinanceDashboardProps> = ({ expenses, se
   const [financeSearchTerm, setFinanceSearchTerm] = useState('');
   const [financeTypeFilter, setFinanceTypeFilter] = useState<'all' | 'income' | 'expense'>('all');
   const [financeViewType, setFinanceViewType] = useState<'month' | 'quarter' | 'semester' | 'year' | 'all'>('month');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -93,7 +106,7 @@ export const FinanceDashboard: React.FC<FinanceDashboardProps> = ({ expenses, se
           const timestamp = new Date(y, (m || 1) - 1, d || 1).getTime();
 
           list.push({
-            id: `task-${t.id}`,
+            id: `task-${t.id}-${tDate}`,
             date: tDate,
             type: 'income',
             description: t.title,
@@ -644,13 +657,38 @@ export const FinanceDashboard: React.FC<FinanceDashboardProps> = ({ expenses, se
                             </td>
                             <td className="py-2.5 px-3 text-right">
                                 {!isTaskIncome && (
-                                  <button 
-                                    onClick={() => deleteExpense(t.id)}
-                                    className="p-1 text-slate-500 hover:text-red-400 transition-colors rounded hover:bg-red-900/30"
-                                    title="Eliminar Registro"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </button>
+                                  deletingId === t.id ? (
+                                    <div className="flex items-center justify-end gap-1">
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          deleteExpense(t.id);
+                                          setDeletingId(null);
+                                        }}
+                                        className="px-2 py-0.5 text-[10px] font-bold bg-red-600 hover:bg-red-500 text-white rounded cursor-pointer transition-colors shadow-sm"
+                                        title="Confirmar eliminación"
+                                      >
+                                        Borrar
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => setDeletingId(null)}
+                                        className="px-1.5 py-0.5 text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 rounded cursor-pointer transition-colors"
+                                        title="Cancelar"
+                                      >
+                                        ✕
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <button 
+                                      type="button"
+                                      onClick={() => setDeletingId(t.id)}
+                                      className="p-1 text-slate-500 hover:text-red-400 transition-colors rounded hover:bg-red-900/30 cursor-pointer"
+                                      title="Eliminar Registro"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  )
                                 )}
                             </td>
                           </tr>

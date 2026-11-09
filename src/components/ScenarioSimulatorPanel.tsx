@@ -137,7 +137,7 @@ export const ScenarioSimulatorPanel: React.FC<ScenarioSimulatorPanelProps> = ({ 
 
       {/* FEEDBACK NOTIFICATION */}
       {statusMessage && (
-        <div className="p-3 rounded-xl bg-emerald-950/90 border border-emerald-500 text-emerald-200 text-xs font-bold flex items-center gap-2 animate-fade-in shadow-[0_0_15px_rgba(16,185,129,0.25)]">
+        <div role="status" aria-live="polite" className="p-3 rounded-xl bg-emerald-950/90 border border-emerald-500 text-emerald-200 text-xs font-bold flex items-center gap-2 animate-fade-in shadow-[0_0_15px_rgba(16,185,129,0.25)]">
           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
           <span>{statusMessage}</span>
         </div>
@@ -231,6 +231,7 @@ export const ScenarioSimulatorPanel: React.FC<ScenarioSimulatorPanelProps> = ({ 
                 <button
                   type="button"
                   onClick={() => handleApplyPreset(preset)}
+                  aria-label={`${isCurrent ? 'Reiniciar' : 'Cargar'} escenario de ${preset.name}`}
                   className={`mt-4 w-full py-2 px-3 rounded-xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer ${
                     isCurrent 
                       ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/50'
@@ -301,6 +302,8 @@ export const ScenarioSimulatorPanel: React.FC<ScenarioSimulatorPanelProps> = ({ 
                   key={d}
                   type="button"
                   onClick={() => setCustomDays(d)}
+                  aria-pressed={customDays === d}
+                  aria-label={`Seleccionar duración de ${d} días`}
                   className={`flex-1 py-1.5 rounded-lg font-mono font-bold text-[10px] transition-all cursor-pointer ${
                     customDays === d 
                       ? 'bg-fuchsia-600 text-white shadow-[0_0_10px_rgba(217,70,239,0.5)]'

@@ -7,7 +7,7 @@ import { useTaskStore } from '../store/useTaskStore';
 import { useUIStore } from '../store/useUIStore';
 
 interface IntelligenceOverlayProps {
-  onUpdateStats?: (stats: PlayerStats) => void;
+  onUpdateStats?: (updater: PlayerStats | ((prev: PlayerStats) => PlayerStats)) => void;
   stats: PlayerStats;
   tasksByDate: Record<string, TaskItem[]>;
   pomodoroSessions: PomodoroSession[];
@@ -292,10 +292,10 @@ export const IntelligenceOverlay: React.FC<IntelligenceOverlayProps> = ({ stats,
                             onClick={() => {
                                if (onUpdateStats) {
                                   const dur = calculateSleepDuration(sleepTime, manualWakeTime);
-                                  onUpdateStats({
-                                     ...stats,
+                                  onUpdateStats((prev) => ({
+                                     ...prev,
                                      sleepLogs: {
-                                        ...(stats.sleepLogs || {}),
+                                        ...(prev.sleepLogs || {}),
                                         [manualSleepDate]: {
                                            bedtime: sleepTime,
                                            wakeTime: manualWakeTime,
@@ -304,7 +304,7 @@ export const IntelligenceOverlay: React.FC<IntelligenceOverlayProps> = ({ stats,
                                            completedAt: new Date().toISOString()
                                         }
                                      }
-                                  });
+                                  }));
                                }
                             }}
                             className="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1 rounded-lg text-xs font-bold transition-colors cursor-pointer shadow-sm"

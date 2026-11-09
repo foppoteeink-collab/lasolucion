@@ -151,8 +151,8 @@ export interface HoloCompanionProps {
 
 /**
  * COMPAÑERO HOLOGRÁFICO CUÁNTICO // KAI
- * Soporta las 6 Formas Oficiales (Día 0), Forja Neural por Foto (IA),
- * Evolución de 21d (Maltz) / 66d (Lally) y Ascensión Infinita con Cristales.
+ * Forma oficial única de base: El Prisma Sagrado ('prism'), Forja Neural por Foto (IA) ('custom'),
+ * Auras reactivas, evolución de 21d (Maltz) / 66d (Lally) y Ascensión con Cristales.
  */
 export const HoloCompanion: React.FC<HoloCompanionProps> = ({
   archetype = 'heroe',

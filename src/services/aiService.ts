@@ -1,7 +1,7 @@
 import { getGenerativeModel } from 'firebase/ai';
 import { firebaseAI, firebaseConfig } from '../firebase';
 import { autoArrangeSchedule, cleanScheduleTitle } from '../utils/timeUtils';
-import { generateProceduralSchedule, generateProceduralAnalysis } from '../utils/proceduralHeuristics';
+import { generateProceduralSchedule, generateProceduralAnalysis, getArchetypeProfile } from '../utils/proceduralHeuristics';
 import { parseDays } from '../data/defaults';
 import { KaiCustomForm, KaiMultiverseStyle, KaiTemperament } from '../types';
 
@@ -92,10 +92,72 @@ const withRetry = async <T>(
   }
 };
 
-async function fetchGeminiPrompt(promptText: string, modelName: string = 'gemini-3.1-flash-lite'): Promise<string | null> {
+export interface GeminiRequestOptions {
+  modelName?: string;
+  systemInstruction?: string;
+  jsonMode?: boolean;
+  onChunk?: (chunkText: string, fullTextSoFar: string) => void;
+}
+
+async function parseSseStream(
+  reader: ReadableStreamDefaultReader<Uint8Array>,
+  onChunk?: (chunk: string, accumulated: string) => void
+): Promise<string> {
+  const decoder = new TextDecoder();
+  let accumulated = '';
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() || '';
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith(':')) continue;
+      if (trimmed.startsWith('data:')) {
+        const jsonStr = trimmed.replace(/^data:\s*/, '');
+        if (jsonStr === '[DONE]') continue;
+        try {
+          const parsed = JSON.parse(jsonStr);
+          const chunkText = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (chunkText) {
+            accumulated += chunkText;
+            onChunk?.(chunkText, accumulated);
+          }
+        } catch {}
+      }
+    }
+  }
+
+  if (buffer.trim().startsWith('data:')) {
+    try {
+      const parsed = JSON.parse(buffer.trim().replace(/^data:\s*/, ''));
+      const chunkText = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (chunkText) {
+        accumulated += chunkText;
+        onChunk?.(chunkText, accumulated);
+      }
+    } catch {}
+  }
+
+  return accumulated;
+}
+
+export async function fetchGeminiPrompt(
+  promptText: string, 
+  modelOrOptions?: string | GeminiRequestOptions
+): Promise<string | null> {
   if (!promptText || typeof promptText !== 'string' || !promptText.trim()) {
     return null;
   }
+
+  const options: GeminiRequestOptions = 
+    typeof modelOrOptions === 'string' 
+      ? { modelName: modelOrOptions } 
+      : (modelOrOptions || {});
 
   const rateCheck = checkAndConsumeRateLimit();
   if (!rateCheck.allowed) {
@@ -106,12 +168,22 @@ async function fetchGeminiPrompt(promptText: string, modelName: string = 'gemini
   const sanitizedPrompt = promptText.trim().slice(0, 12000);
   const candidateModels = Array.from(
     new Set([
-      modelName || 'gemini-3.1-flash-lite',
+      options.modelName || 'gemini-3.1-flash-lite',
       'gemini-3.1-flash-lite',
       'gemini-3.8-flash',
       'gemini-flash-latest'
     ])
   );
+
+  const generationConfig: Record<string, any> = {
+    temperature: 0.25,
+    maxOutputTokens: 8192,
+  };
+  if (options.jsonMode) {
+    generationConfig.responseMimeType = 'application/json';
+  }
+
+  const isStreaming = typeof options.onChunk === 'function';
 
   // 1. Primary: Direct Gemini Developer API (using active key)
   const apiKeyToTry = getEffectiveGeminiApiKey();
@@ -121,31 +193,50 @@ async function fetchGeminiPrompt(promptText: string, modelName: string = 'gemini
       try {
         return await withRetry(async () => {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 14000);
-            // Header-based authentication to prevent API key exposure in query parameters and proxy logs
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelToTry}:generateContent`;
+            const timeoutId = setTimeout(() => controller.abort(), 18000);
+            
+            const endpoint = isStreaming ? ':streamGenerateContent?alt=sse' : ':generateContent';
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelToTry}${endpoint}`;
+
+            const requestBody: Record<string, any> = {
+              contents: [{ role: 'user', parts: [{ text: sanitizedPrompt }] }],
+              generationConfig,
+            };
+
+            if (options.systemInstruction) {
+              requestBody.system_instruction = {
+                parts: [{ text: options.systemInstruction }]
+              };
+            }
+
             const res = await fetch(url, {
               method: 'POST',
               headers: { 
                 'Content-Type': 'application/json',
                 'x-goog-api-key': apiKeyToTry
               },
-              body: JSON.stringify({
-                contents: [{ parts: [{ text: sanitizedPrompt }] }],
-                generationConfig: { temperature: 0.25, maxOutputTokens: 8192 },
-              }),
+              body: JSON.stringify(requestBody),
               signal: controller.signal,
             });
             clearTimeout(timeoutId);
             
             if (!res.ok) {
                 const errText = await res.text();
-                // If rate limited or unauthorized, do not hammer other candidate models
                 if (res.status === 429 || res.status === 403) {
                   shouldStopLoop = true;
                   throw new Error(`CRITICAL_API_LIMIT_${res.status}: ${errText.slice(0, 200)}`);
                 }
                 throw new Error(`${res.status} ${errText}`);
+            }
+
+            if (isStreaming && res.body) {
+              const reader = res.body.getReader();
+              const streamedText = await parseSseStream(reader, options.onChunk);
+              if (streamedText && streamedText.trim()) {
+                console.log(`[Gemini API Stream] ✓ Stream completed from ${modelToTry}`);
+                return streamedText;
+              }
+              throw new Error('Empty stream response');
             }
 
             const data = await res.json();
@@ -162,7 +253,6 @@ async function fetchGeminiPrompt(promptText: string, modelName: string = 'gemini
           console.warn('[Gemini API] Aborting candidate model loop due to quota/permission limit.');
           break;
         }
-        // try next model
       }
     }
   }
@@ -172,13 +262,30 @@ async function fetchGeminiPrompt(promptText: string, modelName: string = 'gemini
     for (const modelToTry of candidateModels) {
       try {
         return await withRetry(async () => {
-            const model = getGenerativeModel(firebaseAI, {
+            const modelConfig: Record<string, any> = {
               model: modelToTry,
-              generationConfig: {
-                temperature: 0.25,
-                maxOutputTokens: 8192,
-              },
-            });
+              generationConfig,
+            };
+            if (options.systemInstruction) {
+              modelConfig.systemInstruction = options.systemInstruction;
+            }
+
+            const model = getGenerativeModel(firebaseAI, modelConfig as any);
+
+            if (isStreaming) {
+              const streamResult = await model.generateContentStream(sanitizedPrompt);
+              let accumulated = '';
+              for await (const chunk of streamResult.stream) {
+                const chunkText = chunk.text();
+                accumulated += chunkText;
+                options.onChunk?.(chunkText, accumulated);
+              }
+              if (accumulated.trim()) {
+                console.log(`[Firebase AI Logic Stream] ✓ Streamed from ${modelToTry}`);
+                return accumulated;
+              }
+            }
+
             const result = await model.generateContent(sanitizedPrompt);
             const text = result.response.text();
             if (text && text.trim()) {
@@ -196,16 +303,89 @@ async function fetchGeminiPrompt(promptText: string, modelName: string = 'gemini
   return null;
 }
 
+export interface ScheduleDispatchOptions {
+  forceRemoteAi?: boolean;
+  isWeeklyDeepReview?: boolean;
+}
+
+/**
+ * Despachador Heurístico Inteligente de KAI (Regla 80/20):
+ * Resuelve el ~80% de las consultas cotidianas (reorganización de misiones, plantillas diarias,
+ * agendas estándar) localmente con el motor procedural sin latencia ni consumo de tokens cloud.
+ * Reserva las llamadas a la red neuronal de Gemini para análisis semanales profundos o peticiones explícitas.
+ */
+export function shouldRouteToRemoteAI(prompt: string, options?: ScheduleDispatchOptions): boolean {
+  if (options?.forceRemoteAi || options?.isWeeklyDeepReview) {
+    return true;
+  }
+
+  const normalized = (prompt || '').toLowerCase().trim();
+
+  // Peticiones explícitas de síntesis neural o análisis semanal profundo
+  const deepKeywords = [
+    'semanal profundo',
+    'resumen semanal',
+    'auditoría neural',
+    'diagnóstico semanal',
+    'análisis profundo',
+    'red neuronal',
+    'deep review',
+    'gemini',
+    'inteligencia artificial',
+    'evaluación neural'
+  ];
+
+  return deepKeywords.some((kw) => normalized.includes(kw));
+}
+
+/**
+ * Generador contextual táctico local: frases, directivas y citas de arquetipos
+ * resueltas 100% en cliente sin llamadas a red.
+ */
+export function generateContextualTacticalQuote(
+  userContext: any,
+  moment: 'morning' | 'night' | 'focus' | 'boss' = 'focus'
+): string {
+  const profile = getArchetypeProfile(userContext?.characterClass || userContext?.class);
+  if (moment === 'morning') {
+    return `${profile.avatar} **Directiva Matutina**: ${profile.wisdom}`;
+  }
+  if (moment === 'night') {
+    return `🌙 **Cierre Operativo**: Protege tu recuperación sináptica. "${profile.strategy}"`;
+  }
+  if (moment === 'boss') {
+    return `⚔️ **Alerta Táctica**: Supera la fricción. Evita la trampa de "${profile.shadowTrap}".`;
+  }
+  return `${profile.avatar} "${profile.strategy}"`;
+}
+
 export async function generateScheduleFrontend(
   prompt: string,
   userContext: any,
   _existingHabits: any[],
-  mode: 'master_blocks' | 'detailed' = 'master_blocks'
+  mode: 'master_blocks' | 'detailed' = 'master_blocks',
+  dispatchOptions?: ScheduleDispatchOptions
 ): Promise<any> {
   if (!prompt) throw new Error("Falta el prompt del usuario.");
 
   const isMasterBlocks = mode === 'master_blocks';
   const maxBlocks = isMasterBlocks ? 12 : 20;
+
+  // 1. FAST-PATH HEURÍSTICO LOCAL (Prioridad 80% Operativo):
+  // Si la solicitud es una reorganización cotidiana o no requiere síntesis neural profunda,
+  // despachamos de inmediato con el motor local con cero latencia y cero consumo de cuota.
+  if (!shouldRouteToRemoteAI(prompt, dispatchOptions)) {
+    console.log("[KAI Dispatcher] ⚡ Consulta cotidiana resuelta por Motor Heurístico Local (Cero consumo tokens / Cero latencia).");
+    const rawProcedural = generateProceduralSchedule(prompt, userContext, mode);
+    return {
+      habits: autoArrangeSchedule(rawProcedural, mode, maxBlocks),
+      source: "heuristic_engine",
+      notice: "⚡ Agenda estructurada por el Motor Táctico Local (Cero consumo de tokens en fase de prueba)."
+    };
+  }
+
+  // 2. SLOW-PATH NEURAL (Gemini 3.1 Flash-Lite):
+  // Reservado para peticiones que requieren razonamiento profundo de lenguaje natural.
 
 
   const modeDirective = isMasterBlocks
@@ -257,9 +437,11 @@ export async function generateScheduleFrontend(
   `;
 
   let generatedText = "";
-  const fullPrompt = systemInstruction + "\n\nSolicitud del usuario:\n" + prompt;
-
-  const text = await fetchGeminiPrompt(fullPrompt, 'gemini-3.1-flash-lite');
+  const text = await fetchGeminiPrompt(prompt, {
+    modelName: 'gemini-3.1-flash-lite',
+    systemInstruction,
+    jsonMode: true,
+  });
   if (text) {
     generatedText = text;
   }

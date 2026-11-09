@@ -4,6 +4,7 @@ import { Skull, Heart, Coins, ShieldAlert, Sparkles, RefreshCw } from 'lucide-re
 import { usePlayerStore } from '../store/usePlayerStore';
 import { useUIStore } from '../store/useUIStore';
 import { soundFX } from '../utils/audio';
+import { triggerHaptic } from '../utils/haptics';
 
 export const HunterCollapseModal: React.FC = () => {
   const isOpen = useUIStore((s) => s.isHunterCollapseOpen);
@@ -20,6 +21,7 @@ export const HunterCollapseModal: React.FC = () => {
 
   const handleRevive = (method: 'xp' | 'coins') => {
     soundFX.playHeal();
+    triggerHaptic([40, 60]);
     const result = revivePlayer(method);
     
     if (typeof window !== 'undefined') {
@@ -44,6 +46,9 @@ export const HunterCollapseModal: React.FC = () => {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(225,29,72,0.2)_0%,rgba(0,0,0,0.95)_85%)] pointer-events-none" />
 
         <motion.div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="hunter-collapse-title"
           initial={{ scale: 0.9, y: 25 }}
           animate={{ scale: 1, y: 0 }}
           exit={{ scale: 0.9, opacity: 0 }}
@@ -65,7 +70,7 @@ export const HunterCollapseModal: React.FC = () => {
               ⚡ ENERGÍA VITAL AGOTADA (0 HP)
             </span>
 
-            <h2 className="text-xl sm:text-2xl font-anton uppercase tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-white via-rose-200 to-rose-400 mb-2">
+            <h2 id="hunter-collapse-title" className="text-xl sm:text-2xl font-anton uppercase tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-white via-rose-200 to-rose-400 mb-2">
               Agotamiento de Energía
             </h2>
 
@@ -79,6 +84,7 @@ export const HunterCollapseModal: React.FC = () => {
               <button
                 type="button"
                 onClick={() => handleRevive('xp')}
+                aria-label={`Aceptar el desgaste pagando ${xpPenalty} XP para restaurar HP al 50%`}
                 className="w-full p-4 rounded-2xl bg-[#140510] hover:bg-[#200918] border border-rose-500/40 hover:border-rose-400 text-left transition-all cursor-pointer group shadow-inner"
               >
                 <div className="flex items-center justify-between mb-1">
@@ -99,6 +105,7 @@ export const HunterCollapseModal: React.FC = () => {
                 type="button"
                 disabled={!canAffordCoins}
                 onClick={() => handleRevive('coins')}
+                aria-label={canAffordCoins ? 'Pagar tratamiento médico con 30 monedas para restaurar HP al 50%' : 'Monedas insuficientes para tratamiento médico'}
                 className={`w-full p-4 rounded-2xl border text-left transition-all ${
                   canAffordCoins
                     ? 'bg-[#001018] hover:bg-[#001c2a] border-amber-500/50 hover:border-amber-400 cursor-pointer'

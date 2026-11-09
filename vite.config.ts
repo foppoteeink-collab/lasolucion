@@ -38,7 +38,6 @@ function generateSelfHealingServiceWorker(buildRev: string, additionalAssets: st
     '/',
     '/index.html',
     '/manifest.webmanifest',
-    '/manifest.json',
     '/icon.svg',
     '/apple-touch-icon.png',
     '/pwa-192x192.png',
@@ -321,21 +320,24 @@ export default defineConfig(() => {
             if (req.url === '/api/build-rev' || req.url?.startsWith('/api/build-rev?')) {
               res.setHeader('Content-Type', 'application/json; charset=utf-8');
               res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-              res.end(JSON.stringify({ rev: computeSourceBuildRev() }));
+              res.end(JSON.stringify({ rev: 'dev-static-rev' }));
               return;
             }
             if (req.url === '/sw.js' || req.url?.startsWith('/sw.js?')) {
               res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
               res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-              res.end(generateSelfHealingServiceWorker(computeSourceBuildRev()));
+              res.end(`
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', (event) => {
+  event.waitUntil(self.registration.unregister());
+});
+`);
               return;
             }
             if (req.url === '/registerSW.js' || req.url?.startsWith('/registerSW.js?')) {
               res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
               res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-              res.end(
-                "if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' }); }); }"
-              );
+              res.end('/* Dev mode: service workers disabled */');
               return;
             }
             next();
@@ -346,7 +348,7 @@ export default defineConfig(() => {
     build: {
       outDir: 'dist',
       emptyOutDir: true,
-      chunkSizeWarningLimit: 1500,
+      chunkSizeWarningLimit: 600,
       rollupOptions: {
         output: {
           manualChunks(id) {

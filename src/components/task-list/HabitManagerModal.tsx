@@ -22,6 +22,7 @@ import { CustomHabit } from '../../types';
 import { soundFX } from '../../utils/audio';
 import { useTaskStore } from '../../store/useTaskStore';
 import { getTodayDateString } from '../../utils/date';
+import { triggerHaptic } from '../../utils/haptics';
 
 interface HabitManagerModalProps {
   isOpen: boolean;
@@ -42,6 +43,7 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState<'all' | 'habits2166' | 'agenda'>('all');
+  const [deletingHabitId, setDeletingHabitId] = useState<string | null>(null);
 
   // Counts
   const habits2166Count = useMemo(() => {
@@ -84,6 +86,7 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
   // Toggle 21/66d Habit Tracking Mode (Option 1 Core Switch)
   const handleToggle2166 = (habit: CustomHabit) => {
     soundFX.playClick();
+    triggerHaptic([30, 45]);
     const isCurrently2166 = Boolean(habit.isTracked2166 || habit.isQuickHabit);
     const nextState = !isCurrently2166;
 
@@ -102,6 +105,8 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
 
   const handleDeleteHabit = (habitId: string) => {
     soundFX.playClick();
+    triggerHaptic([40, 60]);
+    setDeletingHabitId(null);
     const habit = customHabits.find(h => h.id === habitId);
     const updated = customHabits.filter((h) => h.id !== habitId);
     onSaveHabits(updated);
@@ -144,6 +149,9 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
         onClick={onClose}
       >
         <motion.div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="habit-manager-modal-title"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
@@ -165,7 +173,7 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                 <Zap className="w-5 h-5 drop-shadow-[0_0_8px_rgba(0,240,255,0.6)]" />
               </div>
               <div className="min-w-0">
-                <h3 className="text-sm sm:text-base font-anton uppercase tracking-wide text-white truncate flex items-center gap-2">
+                <h3 id="habit-manager-modal-title" className="text-sm sm:text-base font-anton uppercase tracking-wide text-white truncate flex items-center gap-2">
                   <span>Rutinas y Hábitos</span>
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-950/80 text-cyan-300 border border-cyan-400/50 font-bold shrink-0">
                     {customHabits.length} Activas
@@ -184,6 +192,7 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
               }}
               className="w-8 h-8 rounded-xl bg-white/[0.04] hover:bg-white/10 border border-white/10 hover:border-cyan-400/40 text-slate-400 hover:text-white flex items-center justify-center transition-all cursor-pointer shrink-0 ml-2 active:scale-95"
               title="Cerrar modal (Esc)"
+              aria-label="Cerrar modal de hábitos"
             >
               <X className="w-4 h-4" />
             </button>
@@ -194,9 +203,21 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
             {/* Top Metric Cards */}
             <div className="grid grid-cols-2 gap-2 sm:gap-3">
               <div 
+                role="button"
+                tabIndex={0}
+                aria-pressed={activeFilter === 'habits2166'}
                 onClick={() => {
                   soundFX.playClick();
+                  triggerHaptic(15);
                   setActiveFilter('habits2166');
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    soundFX.playClick();
+                    triggerHaptic(15);
+                    setActiveFilter('habits2166');
+                  }
                 }}
                 className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
                   activeFilter === 'habits2166' 
@@ -214,9 +235,21 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
               </div>
 
               <div 
+                role="button"
+                tabIndex={0}
+                aria-pressed={activeFilter === 'agenda'}
                 onClick={() => {
                   soundFX.playClick();
+                  triggerHaptic(15);
                   setActiveFilter('agenda');
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    soundFX.playClick();
+                    triggerHaptic(15);
+                    setActiveFilter('agenda');
+                  }
                 }}
                 className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
                   activeFilter === 'agenda' 
@@ -241,17 +274,21 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                 <input
                   type="text"
                   placeholder="Buscar rutina o hábito..."
+                  aria-label="Buscar rutina o hábito"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-9 pr-3 py-2 rounded-xl bg-[#020712]/90 border border-white/15 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 transition-colors shadow-inner font-mono"
                 />
               </div>
 
-              <div className="flex items-center gap-1 bg-black/60 p-1 rounded-xl border border-white/10 shrink-0 w-full sm:w-auto">
+              <div role="tablist" aria-label="Filtros de rutinas y hábitos" className="flex items-center gap-1 bg-black/60 p-1 rounded-xl border border-white/10 shrink-0 w-full sm:w-auto">
                 <button
                   type="button"
+                  role="tab"
+                  aria-selected={activeFilter === 'all'}
                   onClick={() => {
                     soundFX.playClick();
+                    triggerHaptic(15);
                     setActiveFilter('all');
                   }}
                   className={`px-2.5 py-1 rounded-lg text-xs font-anton uppercase tracking-wider transition-all cursor-pointer ${
@@ -264,8 +301,11 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                 </button>
                 <button
                   type="button"
+                  role="tab"
+                  aria-selected={activeFilter === 'habits2166'}
                   onClick={() => {
                     soundFX.playClick();
+                    triggerHaptic(15);
                     setActiveFilter('habits2166');
                   }}
                   className={`px-2.5 py-1 rounded-lg text-xs font-anton uppercase tracking-wider transition-all cursor-pointer ${
@@ -278,8 +318,11 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                 </button>
                 <button
                   type="button"
+                  role="tab"
+                  aria-selected={activeFilter === 'agenda'}
                   onClick={() => {
                     soundFX.playClick();
+                    triggerHaptic(15);
                     setActiveFilter('agenda');
                   }}
                   className={`px-2.5 py-1 rounded-lg text-xs font-anton uppercase tracking-wider transition-all cursor-pointer ${
@@ -313,12 +356,47 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                   return (
                     <div
                       key={habit.id}
-                      className={`p-3.5 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                      className={`p-3.5 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative overflow-hidden ${
                         is2166
                           ? 'bg-gradient-to-r from-[#0d0901] via-[#150e02] to-[#040e1b] border-amber-500/35 hover:border-amber-400/60 shadow-[0_0_15px_rgba(245,158,11,0.1)]'
                           : 'bg-[#020712]/80 border-white/10 hover:border-indigo-500/40'
                       }`}
                     >
+                      {/* Inline Cascade Deletion Confirmation Safeguard */}
+                      {deletingHabitId === habit.id && (
+                        <div 
+                          className="absolute inset-0 bg-red-950/95 border border-red-500/60 rounded-2xl flex items-center justify-between px-3.5 py-2 z-20 animate-in fade-in duration-150 backdrop-blur-sm"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <span className="text-[11px] font-bold text-red-200 truncate pr-2">
+                            ¿Eliminar hábito y sus tareas asociadas en agenda?
+                          </span>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                soundFX.playClick();
+                                setDeletingHabitId(null);
+                              }}
+                              className="px-2.5 py-1 rounded-lg text-[10px] font-bold text-slate-300 hover:text-white bg-white/10 cursor-pointer"
+                            >
+                              Cancelar
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteHabit(habit.id);
+                              }}
+                              className="px-2.5 py-1 rounded-lg text-[10px] font-bold text-white bg-red-600 hover:bg-red-500 shadow-md cursor-pointer"
+                            >
+                              Eliminar
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
                       {/* Left: Icon & Details */}
                       <div className="flex items-start gap-3 min-w-0 flex-1">
                         <span className="text-xl p-2 rounded-xl bg-black/70 border border-white/10 shrink-0">
@@ -399,16 +477,22 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                                 onEditHabit(habit);
                               }}
                               className="p-1.5 text-cyan-400 hover:text-white rounded-lg hover:bg-cyan-950/60 border border-cyan-500/30 transition-colors cursor-pointer"
-                              title="Editar detalles y días"
+                              title={`Editar detalles de ${habit.title}`}
+                              aria-label={`Editar detalles de ${habit.title}`}
                             >
                               <Edit3 className="w-4 h-4" />
                             </button>
                           )}
                           <button
                             type="button"
-                            onClick={() => handleDeleteHabit(habit.id)}
+                            onClick={() => {
+                              soundFX.playClick();
+                              triggerHaptic(20);
+                              setDeletingHabitId(habit.id);
+                            }}
                             className="p-1.5 text-slate-500 hover:text-red-400 rounded-lg hover:bg-red-950/40 border border-transparent hover:border-red-500/40 transition-colors cursor-pointer"
-                            title="Eliminar rutina"
+                            title={`Eliminar rutina ${habit.title}`}
+                            aria-label={`Eliminar rutina ${habit.title}`}
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -429,6 +513,7 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                 soundFX.playClick();
                 onClose();
               }}
+              aria-label="Volver y cerrar modal de hábitos"
               className="flex-1 sm:flex-none sm:px-6 py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/10 text-slate-300 hover:text-white font-anton uppercase text-xs tracking-wider transition-all border border-white/15 cursor-pointer active:scale-95 text-center"
             >
               Volver
@@ -437,9 +522,11 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
               type="button"
               onClick={() => {
                 soundFX.playClick();
+                triggerHaptic(25);
                 onClose();
                 onOpenAddModal(true);
               }}
+              aria-label="Crear nueva rutina o hábito"
               className="flex-[2] py-2.5 px-4 rounded-xl bg-gradient-to-r from-cyan-400 via-cyan-300 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950 font-anton uppercase tracking-wider text-xs sm:text-sm font-bold shadow-[0_0_20px_rgba(0,240,255,0.4)] flex items-center justify-center gap-2 cursor-pointer active:scale-95 chicle-btn text-center"
             >
               <Plus className="w-4 h-4" />

@@ -5,7 +5,6 @@ import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react'
 import { soundFX } from '../utils/audio';
 import { addDaysToDateString, getTodayDateString, parseLocalDate } from '../utils/date';
 import { usePlayerStore } from '../store/usePlayerStore';
-import { useTaskStore } from '../store/useTaskStore';
 import { MonthlyCalendarModal } from './MonthlyCalendarModal';
 
 interface CalendarViewProps {
@@ -22,7 +21,6 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   const restDays = usePlayerStore((s) => s.stats.restDays);
   const toggleRestDay = usePlayerStore((s) => s.toggleRestDay);
   const isCurrentDateRest = Boolean(currentDate && restDays?.[currentDate]);
-  const tasksByDate = useTaskStore((s) => s.tasksByDate);
 
   const [isMonthlyModalOpen, setIsMonthlyModalOpen] = useState(false);
 
@@ -383,14 +381,15 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         )}
       </AnimatePresence>
 
-      {/* Planificador & Calendario Mensual Completo en Modal Sci-Fi */}
-      <MonthlyCalendarModal
-        isOpen={isMonthlyModalOpen}
-        onClose={() => setIsMonthlyModalOpen(false)}
-        currentDate={currentDate}
-        tasksByDate={tasksByDate}
-        onChangeDate={onChangeDate}
-      />
+      {/* Planificador & Calendario Mensual Completo en Modal Sci-Fi (renderizado condicional atómico) */}
+      {isMonthlyModalOpen && (
+        <MonthlyCalendarModal
+          isOpen={isMonthlyModalOpen}
+          onClose={() => setIsMonthlyModalOpen(false)}
+          currentDate={currentDate}
+          onChangeDate={onChangeDate}
+        />
+      )}
     </div>
   );
 };

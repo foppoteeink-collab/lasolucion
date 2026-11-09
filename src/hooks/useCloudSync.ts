@@ -35,9 +35,14 @@ import {
   enqueueOutboxOperation,
   getPendingOutboxOperations,
   removeOutboxOperations,
+  markOperationsFailed,
   subscribeToOutboxCount,
   requestBackgroundSync
 } from '../services/offlineOutboxService';
+import {
+  recordSyncLeadTime,
+  recordConflictResolution,
+} from '../utils/operationalMetrics';
 
 export type SyncStatus = 'synced' | 'saving' | 'offline' | 'error' | 'local';
 
@@ -90,6 +95,7 @@ export function mergePlayerStats(local: PlayerStats, remote: PlayerStats): Playe
   let coinsLastUpdated = Math.max(local.coinsLastUpdated || 0, remote.coinsLastUpdated || 0) || undefined;
 
   if (local.coins !== undefined && remote.coins !== undefined && local.coins !== remote.coins) {
+    recordConflictResolution('coin');
     if (local.coinsLastUpdated && remote.coinsLastUpdated) {
       if (local.coinsLastUpdated >= remote.coinsLastUpdated) {
         coins = local.coins;
@@ -271,7 +277,10 @@ export function mergeTasksByDate(
     for (const task of remoteList) {
       if (task && (task.id || task.title)) {
         // P0 Anti-Resurrection Guard: Skip deleted tasks with active tombstones
-        if ((task.id && effectiveTombstones[task.id]) || task.isDeleted) continue;
+        if ((task.id && effectiveTombstones[task.id]) || task.isDeleted) {
+          recordConflictResolution('tombstone');
+          continue;
+        }
         if (anyRemoteHasCustomSchedule && isDefaultDayOnePlaceholder(task)) continue;
         const isCompleted = Boolean(
           task.completed ||
@@ -615,6 +624,7 @@ export const useCloudSync = (
 
       const rawTasksData = overrideData?.tasksByDate || liveTaskState.tasksByDate || tasksByDate;
       const habitsData = overrideData?.customHabits || liveTaskState.customHabits || customHabits;
+      const saveStartTime = performance.now();
 
       try {
         isSavingRef.current = true;
@@ -634,6 +644,8 @@ export const useCloudSync = (
           for (const [k, v] of Object.entries(map)) {
             if (k >= cutoffDate90) {
               result[k] = v;
+            } else {
+              recordConflictResolution('windowing');
             }
           }
           return result;
@@ -705,6 +717,9 @@ export const useCloudSync = (
         setSyncStatus('synced');
         isSavingRef.current = false;
 
+        const leadTimeMs = Math.round(performance.now() - saveStartTime);
+        recordSyncLeadTime(leadTimeMs, true);
+
         // Desencolar y limpiar operaciones pendientes en IndexedDB tras sync exitoso
         if (user) {
           getPendingOutboxOperations(user.uid).then((ops) => {
@@ -717,19 +732,31 @@ export const useCloudSync = (
         return true;
       } catch (err: any) {
         isSavingRef.current = false;
+        const leadTimeMs = Math.round(performance.now() - saveStartTime);
+        recordSyncLeadTime(leadTimeMs, false);
         console.warn('[CloudSync] Firestore write exception caught:', err?.message || err);
 
         // Permissions error handling
-        if (
-          user &&
-          (err?.message?.includes('permission') ||
-            err?.message?.includes('Missing or insufficient permissions'))
-        ) {
+        const isFatalError = Boolean(
+          err?.message?.includes('permission') ||
+          err?.message?.includes('Missing or insufficient permissions') ||
+          err?.code === 'permission-denied'
+        );
+
+        if (user && isFatalError) {
           try {
             handleFirestoreError(err, OperationType.WRITE, `users/${user.uid}`, auth);
           } catch (syncErr) {
             console.warn('[CloudSync] Permission handler note:', syncErr);
           }
+        }
+
+        if (user) {
+          getPendingOutboxOperations(user.uid).then((ops) => {
+            if (ops.length > 0) {
+              markOperationsFailed(ops.map((o) => o.id), err?.message || 'Sync failed', isFatalError).catch(() => {});
+            }
+          }).catch(() => {});
         }
 
         // Network error handling: fallback gracefully to offline mode

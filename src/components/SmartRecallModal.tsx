@@ -26,6 +26,7 @@ import {
 } from '../utils/recall';
 import { soundFX } from '../utils/audio';
 import { triggerShockwave } from '../utils/celebration';
+import { triggerHaptic } from '../utils/haptics';
 
 interface SmartRecallModalProps {
   isOpen: boolean;
@@ -80,6 +81,14 @@ export const SmartRecallModal: React.FC<SmartRecallModalProps> = ({
     if (!currentItem) return;
 
     soundFX.playClick();
+    if (rating === 'again') {
+      triggerHaptic([40, 60]);
+    } else if (rating === 'good') {
+      triggerHaptic([30, 45]);
+    } else if (rating === 'easy') {
+      triggerHaptic([30, 45, 60]);
+    }
+
     const result = processRecallReview(currentItem, rating, currentDate);
 
     // Update state & persistence
@@ -112,9 +121,47 @@ export const SmartRecallModal: React.FC<SmartRecallModalProps> = ({
   const handleAddAsTodayTask = () => {
     if (!currentItem || !onAddRecallAsTask) return;
     soundFX.playSuccess();
+    triggerHaptic([25, 40]);
     onAddRecallAsTask(currentItem);
     setAddedAsTaskIds((prev) => new Set(prev).add(currentItem.id));
   };
+
+  // Global keyboard shortcuts for review ergonomics
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+        return;
+      }
+
+      if (isFinished || !currentItem) return;
+
+      if (!isFlipped) {
+        if (e.key === ' ' || e.key === 'Enter') {
+          e.preventDefault();
+          soundFX.playClick();
+          triggerHaptic(20);
+          setIsFlipped(true);
+        }
+      } else {
+        if (e.key === '1') {
+          e.preventDefault();
+          handleRate('again');
+        } else if (e.key === '2') {
+          e.preventDefault();
+          handleRate('good');
+        } else if (e.key === '3') {
+          e.preventDefault();
+          handleRate('easy');
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, isFinished, currentItem, isFlipped, handleRate, onClose]);
 
   return (
     <div 
@@ -122,6 +169,9 @@ export const SmartRecallModal: React.FC<SmartRecallModalProps> = ({
       onClick={onClose}
     >
       <div 
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="smart-recall-modal-title"
         className="w-full max-w-xl bg-surface-modal border border-cyan-500/40 rounded-2xl sm:rounded-3xl shadow-[0_0_40px_rgba(0,240,255,0.2)] overflow-hidden flex flex-col max-h-[88dvh] sm:max-h-[84vh]"
         onClick={(e) => e.stopPropagation()}
       >
@@ -133,7 +183,7 @@ export const SmartRecallModal: React.FC<SmartRecallModalProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-base sm:text-lg font-bold text-white tracking-wide uppercase">
+                <h2 id="smart-recall-modal-title" className="text-base sm:text-lg font-bold text-white tracking-wide uppercase">
                   Repaso Inteligente: Memoria Espaciada
                 </h2>
                 <span className="text-[10px] uppercase font-mono font-bold px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
@@ -147,6 +197,7 @@ export const SmartRecallModal: React.FC<SmartRecallModalProps> = ({
           </div>
           <button
             onClick={onClose}
+            aria-label="Cerrar ventana de repaso inteligente"
             className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-white/10 transition cursor-pointer"
           >
             <X className="w-5 h-5" />
@@ -222,7 +273,7 @@ export const SmartRecallModal: React.FC<SmartRecallModalProps> = ({
             /* Active Card Flashcard */
             <div className="flex flex-col gap-4">
               {/* Progress counter */}
-              <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center justify-between text-xs" role="status" aria-live="polite">
                 <span className="text-slate-400 font-mono font-semibold">
                   Memoria {currentIndex + 1} de {dueItems.length}
                 </span>
@@ -288,12 +339,16 @@ export const SmartRecallModal: React.FC<SmartRecallModalProps> = ({
                   <button
                     onClick={() => {
                       soundFX.playClick();
+                      triggerHaptic(20);
                       setIsFlipped(true);
                     }}
                     className="w-full py-3 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-anton uppercase tracking-wider text-sm flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(0,240,255,0.4)] transition cursor-pointer"
                   >
                     <Eye className="w-4 h-4" />
-                    Mostrar Notas de Repaso
+                    <span>Mostrar Notas de Repaso</span>
+                    <kbd className="hidden sm:inline-block text-[10px] bg-slate-900/30 px-1.5 py-0.5 rounded border border-slate-900/20 text-slate-900 font-mono font-bold ml-1">
+                      Espacio
+                    </kbd>
                   </button>
                 ) : (
                   <div className="space-y-3 pt-2">
@@ -335,6 +390,7 @@ export const SmartRecallModal: React.FC<SmartRecallModalProps> = ({
                           <div className="flex items-center gap-1.5 text-xs font-bold text-red-300">
                             <RotateCcw className="w-3.5 h-3.5" />
                             <span>Difícil</span>
+                            <kbd className="hidden sm:inline-block text-[9px] bg-black/40 px-1 py-0.2 rounded border border-red-500/30 text-red-300 font-mono">1</kbd>
                           </div>
                           <span className="text-[10px] text-red-400/80 font-mono">Mañana (1d)</span>
                         </button>
@@ -345,6 +401,7 @@ export const SmartRecallModal: React.FC<SmartRecallModalProps> = ({
                           <div className="flex items-center gap-1.5 text-xs font-bold text-cyan-300">
                             <CheckCircle2 className="w-3.5 h-3.5" />
                             <span>Bien</span>
+                            <kbd className="hidden sm:inline-block text-[9px] bg-black/40 px-1 py-0.2 rounded border border-cyan-500/30 text-cyan-300 font-mono">2</kbd>
                           </div>
                           <span className="text-[10px] text-cyan-400/80 font-mono">
                             +{RECALL_INTERVALS_DAYS[Math.min(currentItem.level + 1, RECALL_INTERVALS_DAYS.length - 1)]}d
@@ -357,6 +414,7 @@ export const SmartRecallModal: React.FC<SmartRecallModalProps> = ({
                           <div className="flex items-center gap-1.5 text-xs font-bold text-amber-300">
                             <Sparkles className="w-3.5 h-3.5" />
                             <span>Fácil</span>
+                            <kbd className="hidden sm:inline-block text-[9px] bg-black/40 px-1 py-0.2 rounded border border-amber-500/30 text-amber-300 font-mono">3</kbd>
                           </div>
                           <span className="text-[10px] text-amber-400/80 font-mono">
                             +{RECALL_INTERVALS_DAYS[Math.min(currentItem.level + 2, RECALL_INTERVALS_DAYS.length - 1)]}d
@@ -379,6 +437,7 @@ export const SmartRecallModal: React.FC<SmartRecallModalProps> = ({
           </div>
           <button
             onClick={onClose}
+            aria-label="Cerrar ventana de repaso inteligente"
             className="text-slate-400 hover:text-white font-medium cursor-pointer"
           >
             Cerrar

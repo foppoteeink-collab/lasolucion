@@ -8,6 +8,7 @@ import { usePlayerStore } from '../store/usePlayerStore';
 import { useTaskStore } from '../store/useTaskStore';
 import { useTimer } from '../context/TimerContext';
 import { soundFX } from '../utils/audio';
+import { triggerHaptic } from '../utils/haptics';
 import { getTodayDateString } from '../utils/date';
 import { useDayCycle } from '../hooks/useDayCycle';
 import { getKaiPhrase } from '../data/kaiVoiceMatrix';
@@ -33,8 +34,11 @@ const OmniPomodoroBadge: React.FC<{
       onClick={(e) => {
         e.stopPropagation();
         soundFX.playClick();
+        triggerHaptic(15);
         onToggle();
       }}
+      aria-label={`Temporizador de Foco Pomodoro: ${formattedTime}. Toca para abrir o cerrar.`}
+      aria-pressed={isOpen}
       initial={{ opacity: 0, y: 3 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ scale: 1.05 }}
@@ -99,17 +103,40 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
     return 'normal';
   }, [hasRecentVictory, isPomodoroOpen, isTimerRunning, isStreakAtRisk]);
 
-  // Escuchar victorias para destello cuántico
+  // Escuchar victorias para destello cuántico y proyección vocal de KAI
   const prevCompletedRef = useRef(completedTodayTasks);
   useEffect(() => {
     if (completedTodayTasks > prevCompletedRef.current) {
       setHasRecentVictory(true);
       soundFX.playLevelUp();
+      triggerHaptic([30, 40, 50]);
+      const phrase = getKaiPhrase('EPIC_TASK_CLEARED', kaiVoiceTone);
+      setKaiSpeech(phrase);
+      const speechTimer = setTimeout(() => setKaiSpeech(null), 3600);
       const timer = setTimeout(() => setHasRecentVictory(false), 3000);
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+        clearTimeout(speechTimer);
+      };
     }
     prevCompletedRef.current = completedTodayTasks;
-  }, [completedTodayTasks]);
+  }, [completedTodayTasks, kaiVoiceTone]);
+
+  // Alerta sensorial y vocal de racha en riesgo
+  const hasAlertedStreakRef = useRef(false);
+  useEffect(() => {
+    if (isStreakAtRisk && !hasAlertedStreakRef.current) {
+      hasAlertedStreakRef.current = true;
+      triggerHaptic([35, 45]);
+      const phrase = getKaiPhrase('STREAK_WARNING', kaiVoiceTone);
+      setKaiSpeech(phrase);
+      const timer = setTimeout(() => setKaiSpeech(null), 4500);
+      return () => clearTimeout(timer);
+    }
+    if (!isStreakAtRisk) {
+      hasAlertedStreakRef.current = false;
+    }
+  }, [isStreakAtRisk, kaiVoiceTone]);
 
   // Dimensiones seguras de viewport
   const [viewportDims, setViewportDims] = useState(() => ({
@@ -265,6 +292,19 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
           if (onOpenFinance) onOpenFinance();
         },
       },
+      {
+        id: 'neural',
+        label: 'Diagnóstico',
+        categoryBadge: 'NEURAL',
+        type: 'gadget',
+        icon: <Icon name="brain" className="w-5 h-5" />,
+        accentColor: '#00f0ff',
+        glowColor: 'rgba(0, 240, 255, 0.55)',
+        liveStat: 'Simulador & IA',
+        action: () => {
+          if (onOpenNeuralAnalysis) onOpenNeuralAnalysis();
+        },
+      },
     ],
     [
       pendingTodayTasks,
@@ -306,11 +346,13 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
     if (now < lastToggleTimeRef.current || now - lastToggleTimeRef.current < 160) return;
     lastToggleTimeRef.current = now;
     soundFX.playClick();
+    triggerHaptic(20);
     setIsMenuOpen((prev) => !prev);
   }, []);
 
   const handleSelectItem = useCallback((item: SatelliteHubItem) => {
     soundFX.playClick();
+    triggerHaptic([20, 30]);
     setIsMenuOpen(false);
     // Bloqueo anti-rebote mínimo (150ms) sin introducir latencia perceptible
     lastToggleTimeRef.current = Date.now() + 150;
@@ -404,6 +446,8 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
           <AnimatePresence>
             {kaiSpeech && (
               <motion.div
+                role="status"
+                aria-live="polite"
                 initial={{ opacity: 0, y: 8, scale: 0.94 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -6, scale: 0.94 }}
@@ -435,12 +479,23 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
 
             {/* KAI SE HACE UN POCO MÁS GRANDE CUANDO SE ACTIVA */}
             <motion.div
+              role="button"
+              tabIndex={0}
+              aria-haspopup="menu"
+              aria-expanded={isMenuOpen}
+              aria-label={isMenuOpen ? 'Cerrar menú táctico KAI' : 'Abrir menú táctico KAI'}
               animate={{
                 scale: isMenuOpen ? 1.15 : 1,
               }}
               transition={{ type: 'spring', damping: 22, stiffness: 280 }}
-              className="relative flex items-center justify-center cursor-pointer"
+              className="relative flex items-center justify-center cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:rounded-full"
               onClick={handleCompanionClick}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleCompanionClick(e);
+                }
+              }}
               title={isMenuOpen ? 'Cerrar menú' : 'Toca a KAI para abrir el menú táctico'}
             >
               <HoloCompanion
@@ -466,6 +521,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
                 onClick={(e) => {
                   e.stopPropagation();
                   soundFX.playClick();
+                  triggerHaptic([20, 30]);
                   startDay();
                   const phrase = getKaiPhrase('DAY_START', kaiVoiceTone);
                   setKaiSpeech(phrase);
@@ -484,6 +540,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
                 }}
                 whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.96 }}
+                aria-label="Desplegar jornada oficial e iniciar el día"
                 title="Activar jornada oficial e iniciar el día"
                 className="btn-neon-hunter mt-3.5 px-3.5 py-1.5 text-xs font-black tracking-wider uppercase flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-cyan-400 via-[#d6f421] to-cyan-300 text-[#020617] border-2 border-cyan-100 ring-2 ring-cyan-400/70 shadow-[0_0_12px_rgba(0,240,255,0.35)] shrink-0 cursor-pointer whitespace-nowrap active:scale-95 transition-all"
               >
@@ -504,7 +561,11 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
                 onClick={(e) => {
                   e.stopPropagation();
                   soundFX.playClick();
+                  triggerHaptic([25, 40]);
                   finishDay();
+                  const phrase = getKaiPhrase('NIGHTLY_CLOSE_SUCCESS', kaiVoiceTone);
+                  setKaiSpeech(phrase);
+                  setTimeout(() => setKaiSpeech(null), 3600);
                 }}
                 initial={{ opacity: 0, y: -4, scale: 0.92 }}
                 animate={{
@@ -519,6 +580,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
                 }}
                 whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.96 }}
+                aria-label="Consolidar jornada diaria y registrar inicio de descanso"
                 title="Consolidar jornada y registrar inicio de descanso"
                 className="btn-neon-hunter mt-3.5 px-3.5 py-1.5 text-xs font-black tracking-wider uppercase flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-300 text-[#020617] border-2 border-amber-100 ring-2 ring-amber-400/70 shadow-[0_0_12px_rgba(245,158,11,0.35)] shrink-0 cursor-pointer whitespace-nowrap active:scale-95 transition-all"
               >

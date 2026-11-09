@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   BookOpen, 
   Search, 
@@ -146,9 +147,8 @@ export const JournalView: React.FC<JournalViewProps> = ({
     soundFX.playClick();
   };
 
-  // Process and filter dates
-  const today = new Date();
-  const todayStr = today.toISOString().split('T')[0];
+  // Process and filter dates using local date calibration (no UTC drift)
+  const todayStr = getTodayDateString();
 
   const processedDays = useMemo(() => {
     const dates = Object.keys(tasksByDate).sort().reverse();
@@ -157,9 +157,7 @@ export const JournalView: React.FC<JournalViewProps> = ({
     let cutoffStr = '';
     if (dateRange !== 'all') {
       const daysAgo = parseInt(dateRange, 10);
-      const d = new Date();
-      d.setDate(d.getDate() - daysAgo);
-      cutoffStr = d.toISOString().split('T')[0];
+      cutoffStr = addDaysToDateString(todayStr, -daysAgo);
     }
 
     const result: {
@@ -672,10 +670,10 @@ export const JournalView: React.FC<JournalViewProps> = ({
         </div>
       )}
 
-      {/* Inline Modal for Quick Note Edit */}
-      {editingTask && (
+      {/* Inline Modal for Quick Note Edit with Portalled Rendering */}
+      {editingTask && typeof document !== 'undefined' && createPortal(
         <div 
-          className="fixed inset-0 z-[160] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
+          className="fixed inset-0 z-[180] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200 portal-modal-root font-sans"
           onClick={() => setEditingTask(null)}
         >
           <div 
@@ -765,7 +763,8 @@ export const JournalView: React.FC<JournalViewProps> = ({
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Smart Recall Spaced Repetition Modal */}

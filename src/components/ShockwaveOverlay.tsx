@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ShockwaveColor, ShockwaveIntensity } from '../utils/celebration';
 
@@ -108,9 +108,15 @@ const generateShards = (count: number, maxDist: number): Shard[] => {
 
 export const ShockwaveOverlay: React.FC = () => {
   const [flares, setFlares] = useState<ActiveFlare[]>([]);
+  const timersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
 
   useEffect(() => {
     const handleTrigger = (e: any) => {
+      // Proteger usuarios con sensibilidad vestibular (WCAG 2.3.3 Reduced Motion)
+      if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+        return;
+      }
+
       const { color = 'cyan', intensity = 'medium', origin } = e.detail || {};
       const winW = typeof window !== 'undefined' ? window.innerWidth : 400;
       const winH = typeof window !== 'undefined' ? window.innerHeight : 800;
@@ -133,21 +139,27 @@ export const ShockwaveOverlay: React.FC = () => {
 
       setFlares((prev) => [...prev.slice(-1), newFlare]);
 
-      // Lifecycle removal
+      // Lifecycle removal con seguimiento de timer
       const duration = isEpic ? 900 : 750;
-      setTimeout(() => {
+      const timerId = setTimeout(() => {
         setFlares((prev) => prev.filter((f) => f.id !== newFlare.id));
+        timersRef.current.delete(timerId);
       }, duration);
+      timersRef.current.add(timerId);
     };
 
     window.addEventListener('celebration-shockwave', handleTrigger);
     return () => {
       window.removeEventListener('celebration-shockwave', handleTrigger);
+      timersRef.current.forEach((timerId) => clearTimeout(timerId));
+      timersRef.current.clear();
     };
   }, []);
 
+  if (flares.length === 0) return null;
+
   return (
-    <div className="fixed inset-0 pointer-events-none z-[130] overflow-hidden">
+    <div aria-hidden="true" className="fixed inset-0 pointer-events-none z-[130] overflow-hidden select-none">
       <AnimatePresence>
         {flares.map((flare) => {
           const palette = COLOR_PALETTES[flare.color] || COLOR_PALETTES.cyan;

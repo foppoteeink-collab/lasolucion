@@ -1,5 +1,6 @@
 import React, { ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, Trash2 } from 'lucide-react';
+import { executeEmergencyStorageRecovery } from '../utils/storage';
 
 interface Props {
   children: ReactNode;
@@ -52,18 +53,9 @@ export class ErrorBoundary extends React.Component<Props, State> {
 
   private handleResetLocalData = async () => {
     try {
-      if ('caches' in window) {
-        const keys = await caches.keys();
-        await Promise.all(keys.map((k) => caches.delete(k)));
-      }
-      if ('serviceWorker' in navigator) {
-        const registrations = await navigator.serviceWorker.getRegistrations();
-        for (const reg of registrations) {
-          await reg.unregister();
-        }
-      }
+      await executeEmergencyStorageRecovery();
     } catch (e) {
-      console.warn('Cache clear failed:', e);
+      console.warn('[ErrorBoundary] Emergency storage recovery failed:', e);
     }
     window.location.href = window.location.pathname + '?clear=' + Date.now();
   };
@@ -109,10 +101,11 @@ export class ErrorBoundary extends React.Component<Props, State> {
 
               <button
                 onClick={this.handleResetLocalData}
+                title="Crea un respaldo de seguridad, limpia el almacenamiento local y recarga limpiamente"
                 className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all border border-slate-700 active:scale-95"
               >
                 <Trash2 className="w-4 h-4 text-cyan-400" />
-                Limpiar Caché
+                Restablecer y Reparar
               </button>
             </div>
           </div>

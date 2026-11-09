@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { TaskItem, CustomHabit } from '../types';
-import { loadCustomHabits } from '../utils/storage';
+import { loadCustomHabits, createResilientStorage, fetchColdArchivedTasksForDate } from '../utils/storage';
 import { getTodayDateString, addDaysToDateString } from '../utils/date';
 import { sanitizeTasksByDate, deduplicateHabits, deduplicateTasksForDay } from '../utils/taskDeduplication';
 import { generateDailyTasks } from '../data/defaults';
@@ -30,6 +30,7 @@ interface TaskState {
   uncheckAllTasksForDate: (date: string) => void;
   lockTasksForDate: (date: string) => void;
   startDay: (date: string) => void;
+  loadColdTasksForDate: (date: string) => Promise<TaskItem[]>;
 }
 
 export const useTaskStore = create<TaskState>()(
@@ -121,7 +122,37 @@ export const useTaskStore = create<TaskState>()(
         return { customHabits: sanitized }; 
       }),
       
-      setCurrentViewDate: (date) => set({ currentViewDate: date }),
+      setCurrentViewDate: (date) => {
+        set({ currentViewDate: date });
+        // Automatically check and hydrate cold archived tasks if inspecting past days
+        if (date && date < getTodayDateString()) {
+          void get().loadColdTasksForDate(date);
+        }
+      },
+
+      loadColdTasksForDate: async (date: string) => {
+        if (!date) return [];
+        const existing = get().tasksByDate[date] || [];
+        const hasCompletedTasks = existing.some(t => t.completed);
+        if (hasCompletedTasks) return existing;
+
+        try {
+          const coldTasks = await fetchColdArchivedTasksForDate(date);
+          if (coldTasks && coldTasks.length > 0) {
+            const merged = deduplicateTasksForDay([...existing, ...coldTasks]);
+            set((state) => ({
+              tasksByDate: {
+                ...state.tasksByDate,
+                [date]: merged,
+              }
+            }));
+            return merged;
+          }
+        } catch (err) {
+          console.warn('[useTaskStore] Error loading cold tasks for date:', date, err);
+        }
+        return existing;
+      },
 
       uncheckAllTasksForDate: (date) => set((state) => {
         const list = state.tasksByDate[date] || [];
@@ -231,7 +262,7 @@ export const useTaskStore = create<TaskState>()(
     }),
     {
       name: 'la-solucion-task-store',
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => createResilientStorage()),
       onRehydrateStorage: () => (state) => {
         if (state) {
           const logicalToday = getTodayDateString();

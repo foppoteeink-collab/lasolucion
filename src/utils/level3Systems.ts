@@ -1,6 +1,50 @@
 import { PlayerStats, PriorityLevel, TaskItem } from '../types';
 import { addDaysToDateString } from './date';
-import { getRequiredXpForLevel, RANKS } from '../data/defaults';
+import { getRequiredXpForLevel, getRankForLevel, RANKS } from '../data/defaults';
+
+/**
+ * P0 Anti-Exploit: Reverts XP and Coins symmetrically and bidirectionally.
+ * If a task is uncompleted after leveling up, or a day is reopened, this decrements
+ * level and recalibrates requiredXp and currentXp down to the exact pre-level-up state,
+ * preventing infinite XP/coin farming loops and de-leveling desync.
+ */
+export const revertXpAndCoins = (
+  prevStats: PlayerStats,
+  xpToDeduct: number,
+  coinsToDeduct: number
+): PlayerStats => {
+  const safeXpDeduct = Math.max(0, xpToDeduct || 0);
+  const safeCoinsDeduct = Math.max(0, coinsToDeduct || 0);
+
+  let nextXp = (prevStats.currentXp || 0) - safeXpDeduct;
+  let nextLevel = typeof prevStats.level === 'number' && prevStats.level > 0 ? prevStats.level : 1;
+  let requiredXp = getRequiredXpForLevel(nextLevel);
+
+  while (nextXp < 0 && nextLevel > 1) {
+    nextLevel -= 1;
+    const prevLevelRequiredXp = getRequiredXpForLevel(nextLevel);
+    nextXp += prevLevelRequiredXp;
+    requiredXp = prevLevelRequiredXp;
+  }
+
+  if (nextLevel <= 1 && nextXp < 0) {
+    nextXp = 0;
+  }
+
+  const matchedRank = getRankForLevel(nextLevel);
+  const currentRankTitle = matchedRank?.title || 'Chispazo de Voluntad';
+
+  return {
+    ...prevStats,
+    currentXp: Math.max(0, nextXp),
+    level: nextLevel,
+    requiredXp: requiredXp,
+    rankTitle: currentRankTitle,
+    totalXpEarned: Math.max(0, (prevStats.totalXpEarned || 0) - safeXpDeduct),
+    coins: Math.max(0, (prevStats.coins || 0) - safeCoinsDeduct),
+    coinsLastUpdated: safeCoinsDeduct > 0 ? Date.now() : prevStats.coinsLastUpdated,
+  };
+};
 
 /**
  * 1. CPO — Protocolo de Ascensión (Prestigio Cíclico Nivel 50+)
@@ -38,23 +82,40 @@ export const calculateAscensionState = (prevStats: PlayerStats): PlayerStats => 
 /**
  * 2. PM — Escudo de Tránsito Horario (Timezone Drift) & Reconciliador Determinista Offline
  */
+export interface TimezoneDriftResult {
+  drifted: boolean;
+  nextOffset: number;
+  shieldExpiresAt?: number;
+  crossedDateLine?: boolean;
+  offsetShiftHours?: number;
+}
+
 export const evaluateTimezoneDrift = (
   lastOffset: number | undefined,
   currentOffset: number,
   nowMs: number = Date.now()
-): { drifted: boolean; nextOffset: number; shieldExpiresAt?: number } => {
+): TimezoneDriftResult => {
   if (lastOffset === undefined || lastOffset === null) {
-    return { drifted: false, nextOffset: currentOffset };
+    return { drifted: false, nextOffset: currentOffset, offsetShiftHours: 0 };
   }
   const diffMinutes = Math.abs(currentOffset - lastOffset);
+  const offsetShiftHours = Math.round((diffMinutes / 60) * 10) / 10;
+
   if (diffMinutes >= 60) {
+    // International Date Line or extreme transcontinental jump (>= 12 hours / 720 min)
+    const crossedDateLine = diffMinutes >= 720;
+    // Grants 48 hours protection for Date Line crossings, 24 hours for standard timezone shifts
+    const protectionDurationMs = crossedDateLine ? 48 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
+
     return {
       drifted: true,
       nextOffset: currentOffset,
-      shieldExpiresAt: nowMs + 24 * 60 * 60 * 1000, // 24h protection
+      shieldExpiresAt: nowMs + protectionDurationMs,
+      crossedDateLine,
+      offsetShiftHours,
     };
   }
-  return { drifted: false, nextOffset: currentOffset };
+  return { drifted: false, nextOffset: currentOffset, offsetShiftHours };
 };
 
 export const isTimezoneShieldActive = (
@@ -159,13 +220,15 @@ export const calculateDynamicShopCost = (
 export const evaluateOverchargeContract = (
   contract: PlayerStats['activeOverchargeContract'],
   logicalToday: string,
-  completionRate: number
+  completionRate: number,
+  totalTasksCount?: number
 ): {
   hasActiveContract: boolean;
   succeeded: boolean;
   xpBonus: number;
   refundedCoins: number;
   burnedCoins: number;
+  contractCancelledReason?: 'INSUFFICIENT_TASKS';
 } => {
   if (!contract || contract.settled || contract.date !== logicalToday) {
     return {
@@ -174,6 +237,18 @@ export const evaluateOverchargeContract = (
       xpBonus: 0,
       refundedCoins: 0,
       burnedCoins: 0,
+    };
+  }
+  // Salvaguarda psicológica y económica: si el usuario registró menos de 3 tareas en total,
+  // no penalizar quemando monedas; anular el contrato y reembolsar íntegramente las 100 monedas apostadas.
+  if (totalTasksCount !== undefined && totalTasksCount < 3) {
+    return {
+      hasActiveContract: true,
+      succeeded: false,
+      xpBonus: 0,
+      refundedCoins: contract.stakedCoins,
+      burnedCoins: 0,
+      contractCancelledReason: 'INSUFFICIENT_TASKS',
     };
   }
   if (completionRate >= 85) {
@@ -254,7 +329,13 @@ export const compactHistoricalTasksByDate = (
     const archivableCompleted: TaskItem[] = [];
 
     for (const task of dayTasks || []) {
-      const isRecurringHabit = Boolean(task.isHabit || task.isQuickHabit || task.isTracked2166);
+      const isRecurringHabit = Boolean(
+        task.isHabit || 
+        task.isQuickHabit || 
+        task.isTracked2166 || 
+        task.category === 'habito' || 
+        (typeof task.id === 'string' && (task.id.includes('habit-') || task.id.includes('custom-habit-')))
+      );
       if (task.completed && !isRecurringHabit) {
         archivableCompleted.push(task);
         totalCompletedCount += 1;
@@ -396,6 +477,116 @@ export const persistColdArchiveToIndexedDB = async (
     } catch (err) {
       console.warn('[ColdArchive] Unexpected error persisting to IndexedDB:', err);
       resolve(false);
+    }
+  });
+};
+
+/**
+ * P0 Archivo Frío: Recupera las tareas archivadas de una fecha específica desde IndexedDB.
+ * Permite a vistas históricas y calendario consultar tareas descompactadas (>14 días).
+ */
+export const fetchColdArchivedTasksForDate = async (
+  dateStr: string
+): Promise<TaskItem[]> => {
+  if (typeof window === 'undefined' || !('indexedDB' in window)) return [];
+  if (!dateStr) return [];
+
+  return new Promise((resolve) => {
+    try {
+      const request = window.indexedDB.open('la-solucion-cold-archive', 1);
+      request.onupgradeneeded = () => {
+        const db = request.result;
+        if (!db.objectStoreNames.contains('archived_days')) {
+          db.createObjectStore('archived_days');
+        }
+      };
+      request.onsuccess = () => {
+        try {
+          const db = request.result;
+          if (!db.objectStoreNames.contains('archived_days')) {
+            db.close();
+            return resolve([]);
+          }
+          const tx = db.transaction('archived_days', 'readonly');
+          const store = tx.objectStore('archived_days');
+          const getReq = store.get(dateStr);
+          getReq.onsuccess = () => {
+            const result = getReq.result;
+            db.close();
+            resolve(Array.isArray(result) ? result : []);
+          };
+          getReq.onerror = () => {
+            db.close();
+            resolve([]);
+          };
+        } catch {
+          resolve([]);
+        }
+      };
+      request.onerror = () => resolve([]);
+    } catch {
+      resolve([]);
+    }
+  });
+};
+
+/**
+ * P0 Archivo Frío: Recupera el mapa completo de todas las fechas archivadas en IndexedDB.
+ */
+export const fetchAllColdArchivedTasks = async (): Promise<Record<string, TaskItem[]>> => {
+  if (typeof window === 'undefined' || !('indexedDB' in window)) return {};
+
+  return new Promise((resolve) => {
+    try {
+      const request = window.indexedDB.open('la-solucion-cold-archive', 1);
+      request.onupgradeneeded = () => {
+        const db = request.result;
+        if (!db.objectStoreNames.contains('archived_days')) {
+          db.createObjectStore('archived_days');
+        }
+      };
+      request.onsuccess = () => {
+        try {
+          const db = request.result;
+          if (!db.objectStoreNames.contains('archived_days')) {
+            db.close();
+            return resolve({});
+          }
+          const tx = db.transaction('archived_days', 'readonly');
+          const store = tx.objectStore('archived_days');
+          const results: Record<string, TaskItem[]> = {};
+
+          if ('openCursor' in store) {
+            const cursorReq = store.openCursor();
+            cursorReq.onsuccess = (e) => {
+              const cursor = (e.target as IDBRequest<IDBCursorWithValue>).result;
+              if (cursor) {
+                const key = String(cursor.key);
+                const val = cursor.value;
+                if (Array.isArray(val)) {
+                  results[key] = val;
+                }
+                cursor.continue();
+              } else {
+                db.close();
+                resolve(results);
+              }
+            };
+            cursorReq.onerror = () => {
+              db.close();
+              resolve({});
+            };
+          } else {
+            db.close();
+            resolve({});
+          }
+        } catch {
+          resolve({});
+        }
+      };
+      request.onerror = () => resolve({});
+    } catch {
+      resolve({});
     }
   });
 };

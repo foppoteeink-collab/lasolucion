@@ -1,6 +1,8 @@
 import React, { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Award, Shield, CheckCircle2, Lock, Sparkles, Zap } from 'lucide-react';
 import { RANKS } from '../data/defaults';
+import { soundFX } from '../utils/audio';
 
 interface RanksModalProps {
   isOpen: boolean;
@@ -19,6 +21,15 @@ export const RanksModal: React.FC<RanksModalProps> = ({ isOpen, onClose, current
     }
   }, [isOpen]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   // Group RANKS by phase (1 to 10)
@@ -33,12 +44,15 @@ export const RanksModal: React.FC<RanksModalProps> = ({ isOpen, onClose, current
     };
   });
 
-  return (
+  return createPortal(
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
+      className="fixed inset-0 z-[180] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200 portal-modal-root select-none pointer-events-auto font-sans"
       onClick={onClose}
     >
       <div 
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="ranks-modal-title"
         className="scifi-glass-panel border-2 border-cyan-400 rounded-2xl w-full max-w-2xl shadow-[0_0_40px_rgba(0,240,255,0.35)] flex flex-col max-h-[90dvh] sm:max-h-[85vh] overflow-hidden text-white"
         onClick={(e) => e.stopPropagation()}
       >
@@ -49,7 +63,7 @@ export const RanksModal: React.FC<RanksModalProps> = ({ isOpen, onClose, current
               <Award className="w-5 h-5 text-cyan-300" />
             </div>
             <div>
-              <h3 className="font-anton text-cyan-300 uppercase tracking-wide text-sm sm:text-base flex items-center gap-2">
+              <h3 id="ranks-modal-title" className="font-anton text-cyan-300 uppercase tracking-wide text-sm sm:text-base flex items-center gap-2">
                 Los 100 Niveles y Rangos del Sistema
               </h3>
               <p className="text-[11px] text-slate-300 font-mono mt-0.5">
@@ -58,9 +72,14 @@ export const RanksModal: React.FC<RanksModalProps> = ({ isOpen, onClose, current
             </div>
           </div>
           <button 
-            onClick={onClose} 
+            type="button"
+            onClick={() => {
+              soundFX.playClick();
+              onClose();
+            }} 
             className="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
-            title="Cerrar"
+            title="Cerrar modal (Esc)"
+            aria-label="Cerrar compendio de rangos y niveles"
           >
             <X className="w-5 h-5" />
           </button>
@@ -172,6 +191,7 @@ export const RanksModal: React.FC<RanksModalProps> = ({ isOpen, onClose, current
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

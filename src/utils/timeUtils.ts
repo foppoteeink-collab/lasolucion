@@ -3,6 +3,7 @@
  * Standardizes time parsing, normalization, and chronological sorting
  * for operational routines, timeBlocks, and agenda tasks.
  */
+import { getGlobalDayStartHour } from './date';
 
 /**
  * Normalizes any freeform time string (e.g. "8am", "8", "08:00", "8:30pm", "17h", "17:00", "13h30", "12:00 md", "mediodía")
@@ -103,13 +104,30 @@ export const normalizeTimeBlock = (timeBlock?: string): string | undefined => {
 };
 
 /**
- * Parses start time of timeBlock into total minutes from midnight (0..1439).
+ * Formats a 0..23 hour integer into friendly 12h representation (e.g. 21 -> "09:00 PM", 6 -> "06:00 AM").
+ */
+export const formatHourToHuman = (hour: number): string => {
+  const normalized = ((Math.floor(hour) % 24) + 24) % 24;
+  const meridiem = normalized >= 12 ? 'PM' : 'AM';
+  const display12 = normalized % 12 === 0 ? 12 : normalized % 12;
+  const padHour = String(display12).padStart(2, '0');
+  return `${padHour}:00 ${meridiem}`;
+};
+
+/**
+ * Parses start time of timeBlock into total minutes.
+ * In a customizable flexible day cycle (from cutoffHour to cutoffHour - 1 next day),
+ * hours before the cutoff represent the late-shift portion and are projected (+24h)
+ * to ensure natural chronological ordering across the entire work shift.
+ * Pass `logical27h = false` to retrieve raw standard 24h minutes (0..1439).
  * Returns 9999 if invalid or missing, placing it at the bottom.
  */
-export const parseTimeToMinutes = (timeBlock?: string): number => {
+export const parseTimeToMinutes = (timeBlock?: string, logical27h = true, cutoffHour?: number): number => {
   if (!timeBlock) return 9999;
   const trimmed = timeBlock.trim();
   if (!trimmed) return 9999;
+
+  const cutoff = cutoffHour !== undefined ? cutoffHour : getGlobalDayStartHour();
 
   // Extract the first time portion
   const firstPart = trimmed.split(/[-–—]/)[0]?.trim() || trimmed;
@@ -117,7 +135,8 @@ export const parseTimeToMinutes = (timeBlock?: string): number => {
   // Standardize through normalizeTimeString first to ensure 24h conversion
   const normalized = normalizeTimeString(firstPart);
   if (normalized) {
-    const [h, m] = normalized.split(':').map(Number);
+    let [h, m] = normalized.split(':').map(Number);
+    if (logical27h && h < cutoff) h += 24;
     return h * 60 + m;
   }
 
@@ -133,23 +152,27 @@ export const parseTimeToMinutes = (timeBlock?: string): number => {
   if (meridiem === 'am' && hour === 12) hour = 0;
 
   if (hour < 0 || hour > 23 || min < 0 || min > 59) return 9999;
+  if (logical27h && hour < cutoff) hour += 24;
   return hour * 60 + min;
 };
 
 /**
- * Parses end time of timeBlock into total minutes from midnight.
+ * Parses end time of timeBlock into total minutes.
+ * Follows the flexible day system for hours before the cutoff.
  */
-export const parseEndTimeToMinutes = (timeBlock?: string): number => {
+export const parseEndTimeToMinutes = (timeBlock?: string, logical27h = true, cutoffHour?: number): number => {
   if (!timeBlock) return 9999;
   const parts = timeBlock.split(/[-–—]/);
-  if (parts.length < 2) return parseTimeToMinutes(timeBlock);
+  if (parts.length < 2) return parseTimeToMinutes(timeBlock, logical27h, cutoffHour);
   const secondPart = (parts[1] || '').trim();
+  const cutoff = cutoffHour !== undefined ? cutoffHour : getGlobalDayStartHour();
   const normalized = normalizeTimeString(secondPart);
   if (normalized) {
-    const [h, m] = normalized.split(':').map(Number);
+    let [h, m] = normalized.split(':').map(Number);
+    if (logical27h && h < cutoff) h += 24;
     return h * 60 + m;
   }
-  return parseTimeToMinutes(secondPart);
+  return parseTimeToMinutes(secondPart, logical27h, cutoffHour);
 };
 
 /**

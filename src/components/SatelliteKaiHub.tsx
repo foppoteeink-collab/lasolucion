@@ -63,13 +63,25 @@ export const SatelliteKaiHub: React.FC<SatelliteKaiHubProps> = ({
     }
   }, [isOpen]);
 
-  // Navegación opcional por teclado + Escape
+  // Navegación accesible por teclado según W3C ARIA APG Menu Pattern (Flechas, Inicio, Fin, Escape, Enter, Espacio)
   useEffect(() => {
     if (!isOpen) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
         onClose();
+        return;
+      }
+      if (e.key === 'Home') {
+        e.preventDefault();
+        soundFX.playClick();
+        setActiveIndex(0);
+        return;
+      }
+      if (e.key === 'End') {
+        e.preventDefault();
+        soundFX.playClick();
+        setActiveIndex(items.length - 1);
         return;
       }
       if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
@@ -82,7 +94,7 @@ export const SatelliteKaiHub: React.FC<SatelliteKaiHubProps> = ({
         soundFX.playClick();
         setActiveIndex((prev) => (prev - 1 + items.length) % items.length);
       }
-      if (e.key === 'Enter' && items[activeIndex]) {
+      if ((e.key === 'Enter' || e.key === ' ') && items[activeIndex]) {
         e.preventDefault();
         onSelect(items[activeIndex]);
       }
@@ -96,6 +108,9 @@ export const SatelliteKaiHub: React.FC<SatelliteKaiHubProps> = ({
 
   return (
     <div
+      role="menu"
+      aria-label="Menú Táctico KAI"
+      aria-hidden={!isOpen}
       style={{
         position: 'absolute',
         left: '50%',
@@ -243,8 +258,10 @@ export const SatelliteKaiHub: React.FC<SatelliteKaiHubProps> = ({
               className={expanded ? 'pointer-events-auto' : 'pointer-events-none'}
             >
               <div
-                role="button"
-                tabIndex={0}
+                role="menuitem"
+                tabIndex={isOpen ? (isActive ? 0 : -1) : -1}
+                aria-label={`${item.label} (${item.categoryBadge}) - ${item.liveStat || 'Seleccionar'}`}
+                aria-current={isActive ? 'true' : undefined}
                 onMouseEnter={() => {
                   if (activeIndex !== i) {
                     setActiveIndex(i);

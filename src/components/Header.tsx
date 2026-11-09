@@ -97,9 +97,11 @@ export const Header: React.FC<HeaderProps> = ({
     ascensionTier,
   }), [level, currentXp, requiredXp, hp, maxHp, coins, streakDays, streakShields, characterClass, avatarIcon, rawFullName, rawUsername, ascensionTier]);
 
-  // Atomic selectors for UIStore: Only re-render when sound toggle changes
+  // Atomic selectors for UIStore: Only re-render when sound or zen toggle changes
   const soundEnabled = useUIStore((s) => s.soundEnabled);
   const toggleSound = useUIStore((s) => s.toggleSound);
+  const zenMode = useUIStore((s) => s.zenMode);
+  const toggleZenMode = useUIStore((s) => s.toggleZenMode);
 
   const { isPomodoroOpen, mode: timerMode, category: timerCategory } = useTimer();
 
@@ -145,7 +147,7 @@ export const Header: React.FC<HeaderProps> = ({
         {/* ============================================================== */}
         {/* FILA 1: LOGO, MINI-HUD Y RECURSOS MAESTROS                     */}
         {/* ============================================================== */}
-        <div className="px-2.5 sm:px-5 py-1.5 sm:py-2.5 flex items-center justify-between gap-1.5 sm:gap-3 relative z-10 border-b border-white/[0.05]">
+        <div className="px-2 sm:px-5 py-1.5 sm:py-2.5 flex items-center justify-between gap-1 sm:gap-3 relative z-10 border-b border-white/[0.05]">
           
           {/* BLOQUE IZQUIERDO: Logo Principal Kinético */}
           <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
@@ -168,7 +170,6 @@ export const Header: React.FC<HeaderProps> = ({
                   style={{ backgroundColor: `${activeHelixColor}40`, opacity: 0.7 }}
                 />
                 <div className="relative z-10 flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8">
-                  {/* @ts-ignore */}
                   <l-helix size="28" speed="2.5" color={activeHelixColor}></l-helix>
                 </div>
               </div>
@@ -181,63 +182,74 @@ export const Header: React.FC<HeaderProps> = ({
             />
           </div>
 
-          {/* BLOQUE CENTRAL: Calibradores EXP & HP (Desktop / Pantallas medianas) */}
-          <div 
-            onClick={() => { soundFX.playClick(); onOpenProfile?.(); }}
-            className="hidden lg:flex items-center gap-3.5 flex-1 max-w-sm mx-auto px-3.5 py-1.5 rounded-xl bg-black/40 border border-white/10 cursor-pointer hover:border-cyan-500/30 transition-all group"
-            title={`EXP: ${stats.currentXp}/${stats.requiredXp} | HP: ${stats.hp || 100}/${stats.maxHp || 100} - Clic para ver perfil`}
-          >
-            {/* Barra EXP Sincronizada con la Personalización del Usuario */}
-            <div className="flex-1 flex flex-col gap-1">
-              <div className="flex items-center justify-between text-[11px] font-mono font-bold leading-none">
-                <span className="tracking-wider transition-colors" style={{ color: 'var(--aura-color-1, #00f0ff)' }}>EXP</span>
-                <span className="font-mono tabular-nums transition-colors" style={{ color: 'var(--aura-color-1, #00f0ff)' }}>{stats.currentXp}/{stats.requiredXp}</span>
-              </div>
-              <div 
-                className="h-2 bg-black/90 rounded-full border p-[0.5px] overflow-hidden transition-colors"
-                style={{ borderColor: 'rgba(var(--aura-glow-rgb, 0, 240, 255), 0.35)' }}
-              >
-                <div
-                  className="h-full rounded-full transition-all duration-500"
-                  style={{ 
-                    width: `${xpPercent}%`,
-                    background: 'linear-gradient(90deg, var(--aura-color-1, #00f0ff) 0%, var(--aura-color-2, #8a2be2) 100%)',
-                    boxShadow: '0 0 8px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.7)'
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Barra HP */}
-            <div data-tour="hp-bar" className="flex-1 flex flex-col gap-1">
-              <div className="flex items-center justify-between text-[11px] font-mono font-bold leading-none">
-                <span className="text-rose-400 tracking-wider">HP</span>
-                <span className="text-rose-300 font-mono tabular-nums">{stats.hp || 100}/{stats.maxHp || 100}</span>
-              </div>
-              <div className="h-2 bg-black/90 rounded-full border border-rose-500/30 p-[0.5px] overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-rose-600 to-red-400 rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(244,63,94,0.7)]"
-                  style={{ width: `${hpPercent}%` }}
-                />
-              </div>
-            </div>
-
-            {/* Racha Activa Flame */}
-            <div 
-              className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-surface-card border border-amber-500/40 text-amber-300 text-xs font-mono font-bold tracking-wider shrink-0 tabular-nums"
-              title={`Racha Activa: ${stats.streakDays || 0} Días continuos`}
+          {/* BLOQUE CENTRAL: Calibradores EXP & HP o Indicador Zen */}
+          {zenMode ? (
+            <button 
+              onClick={() => { soundFX.playClick(); toggleZenMode(); }}
+              className="hidden lg:flex items-center gap-2 px-4 py-1.5 rounded-xl bg-emerald-950/50 border border-emerald-500/50 text-emerald-300 text-xs font-mono font-bold tracking-wider cursor-pointer hover:bg-emerald-900/50 transition-all shadow-[0_0_15px_rgba(16,185,129,0.2)] animate-pulse"
+              title="Modo Zen activado (Vista Táctica Minimalista). Clic para volver a la vista completa."
             >
-              <Flame className="w-3.5 h-3.5 text-amber-400 fill-amber-400/50" />
-              <span><AnimatedNumber value={stats.streakDays} />d</span>
+              <EyeOff className="w-3.5 h-3.5 text-emerald-400" />
+              <span>MODO ZEN ACTIVO • ENFOQUE TÁCTICO</span>
+            </button>
+          ) : (
+            <div 
+              onClick={() => { soundFX.playClick(); onOpenProfile?.(); }}
+              className="hidden lg:flex items-center gap-3.5 flex-1 max-w-sm mx-auto px-3.5 py-1.5 rounded-xl bg-black/40 border border-white/10 cursor-pointer hover:border-cyan-500/30 transition-all group"
+              title={`EXP: ${stats.currentXp}/${stats.requiredXp} | HP: ${stats.hp || 100}/${stats.maxHp || 100} - Clic para ver perfil`}
+            >
+              {/* Barra EXP Sincronizada con la Personalización del Usuario */}
+              <div className="flex-1 flex flex-col gap-1">
+                <div className="flex items-center justify-between text-[11px] font-mono font-bold leading-none">
+                  <span className="tracking-wider transition-colors" style={{ color: 'var(--aura-color-1, #00f0ff)' }}>EXP</span>
+                  <span className="font-mono tabular-nums transition-colors" style={{ color: 'var(--aura-color-1, #00f0ff)' }}>{stats.currentXp}/{stats.requiredXp}</span>
+                </div>
+                <div 
+                  className="h-2 bg-black/90 rounded-full border p-[0.5px] overflow-hidden transition-colors"
+                  style={{ borderColor: 'rgba(var(--aura-glow-rgb, 0, 240, 255), 0.35)' }}
+                >
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{ 
+                      width: `${xpPercent}%`,
+                      background: 'linear-gradient(90deg, var(--aura-color-1, #00f0ff) 0%, var(--aura-color-2, #8a2be2) 100%)',
+                      boxShadow: '0 0 8px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.7)'
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Barra HP */}
+              <div data-tour="hp-bar" className="flex-1 flex flex-col gap-1">
+                <div className="flex items-center justify-between text-[11px] font-mono font-bold leading-none">
+                  <span className="text-rose-400 tracking-wider">HP</span>
+                  <span className="text-rose-300 font-mono tabular-nums">{stats.hp || 100}/{stats.maxHp || 100}</span>
+                </div>
+                <div className="h-2 bg-black/90 rounded-full border border-rose-500/30 p-[0.5px] overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-rose-600 to-red-400 rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(244,63,94,0.7)]"
+                    style={{ width: `${hpPercent}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Racha Activa Flame */}
+              <div 
+                className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-surface-card border border-amber-500/40 text-amber-300 text-xs font-mono font-bold tracking-wider shrink-0 tabular-nums"
+                title={`Racha Activa: ${stats.streakDays || 0} Días continuos`}
+              >
+                <Flame className="w-3.5 h-3.5 text-amber-400 fill-amber-400/50" />
+                <span><AnimatedNumber value={stats.streakDays} />d</span>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* BLOQUE DERECHO: Recursos y Gadgets Tácticos (Compacto y ultra-resistente en Mobile) */}
           <div className="flex items-center gap-1 sm:gap-2 shrink-0">
 
             {/* Monedas Micro-chip */}
             <div 
-              className="flex items-center gap-1 sm:gap-1.5 h-8 sm:h-9 px-2 sm:px-3 rounded-lg sm:rounded-xl bg-black/50 border border-yellow-500/40 text-yellow-300 text-xs md:text-sm font-mono font-bold tracking-wider shadow-[0_0_12px_rgba(234,179,8,0.18)] shrink-0"
+              className="flex items-center gap-1 sm:gap-1.5 h-8 sm:h-9 px-1.5 sm:px-3 rounded-lg sm:rounded-xl bg-black/50 border border-yellow-500/40 text-yellow-300 text-xs md:text-sm font-mono font-bold tracking-wider shadow-[0_0_12px_rgba(234,179,8,0.18)] shrink-0"
               title={`${stats.coins || 0} Monedas acumuladas`}
             >
               <Coins className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-400 drop-shadow-[0_0_5px_rgba(234,179,8,0.7)]" />
@@ -248,7 +260,7 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               onClick={() => { soundFX.playClick(); onOpenDailyRewards(); }}
               title="Recompensa Cuántica Diaria"
-              className={`relative flex items-center justify-center min-w-[36px] min-h-[36px] sm:w-9 sm:h-9 rounded-lg sm:rounded-xl border transition-all cursor-pointer active:scale-95 shrink-0 ${
+              className={`relative flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl border transition-all cursor-pointer active:scale-95 shrink-0 ${
                 hasUnclaimedDailyReward
                   ? 'bg-amber-500/20 border-amber-400 text-amber-300 animate-pulse shadow-[0_0_16px_rgba(245,158,11,0.6)]'
                   : 'bg-black/40 text-cyan-200 border-white/10 hover:border-cyan-400 hover:bg-cyan-950/40'
@@ -260,12 +272,36 @@ export const Header: React.FC<HeaderProps> = ({
               )}
             </button>
 
-            {/* Cápsula Unificada de Utilidades Tácticas: Sonido + Conexión */}
-            <div className="flex items-center gap-1 p-0.5 bg-black/50 rounded-lg sm:rounded-xl border border-white/15 shrink-0">
+            {/* Cápsula Unificada de Utilidades Tácticas: Modo Zen + Sonido + Conexión */}
+            <div className="flex items-center gap-0.5 sm:gap-1 p-0.5 bg-black/50 rounded-lg sm:rounded-xl border border-white/15 shrink-0">
+              {/* Conmutador Modo Zen / Vista Táctica */}
+              <button
+                onClick={() => {
+                  soundFX.playClick();
+                  toggleZenMode();
+                }}
+                className={`flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-md sm:rounded-lg transition-all cursor-pointer active:scale-95 ${
+                  zenMode
+                    ? 'bg-emerald-500/25 text-emerald-300 border border-emerald-400/60 shadow-[0_0_12px_rgba(16,185,129,0.35)]'
+                    : 'text-slate-200 hover:text-cyan-300 hover:bg-white/10'
+                }`}
+                title={zenMode ? 'Modo Zen Activo: Vista Táctica Minimalista (Clic para desactivar)' : 'Activar Modo Zen: Oculta barras de vida y distracciones para máxima concentración'}
+                aria-label={zenMode ? 'Desactivar Modo Zen' : 'Activar Modo Zen'}
+              >
+                {zenMode ? (
+                  <EyeOff className="w-4 h-4 text-emerald-400" />
+                ) : (
+                  <Eye className="w-4 h-4 text-slate-300" />
+                )}
+              </button>
+
+              {/* Separador sutil */}
+              <div className="w-px h-3.5 sm:h-4 bg-white/15" />
+
               {/* Silenciador de sonido */}
               <button
                 onClick={toggleSound}
-                className="flex items-center justify-center min-w-[36px] min-h-[36px] sm:w-9 sm:h-9 rounded-md sm:rounded-lg text-slate-200 hover:text-cyan-300 hover:bg-white/10 transition-all cursor-pointer active:scale-95"
+                className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-md sm:rounded-lg text-slate-200 hover:text-cyan-300 hover:bg-white/10 transition-all cursor-pointer active:scale-95"
                 title={soundEnabled ? 'Sonido Activado' : 'Sonido Silenciado'}
                 aria-label={soundEnabled ? 'Silenciar sonido' : 'Activar sonido'}
               >
@@ -276,14 +312,14 @@ export const Header: React.FC<HeaderProps> = ({
                 )}
               </button>
 
-              {/* Separador sutil */}
-              <div className="w-px h-4 bg-white/15" />
+              {/* Separador sutil en tablets/desktops */}
+              <div className="hidden sm:block w-px h-4 bg-white/15" />
 
-              {/* Auth Google */}
+              {/* Auth Google (visible en tablet/desktop para mantener cabecera ultra-compacta en móviles) */}
               {user ? (
                 <button
                   onClick={handleSignOut}
-                  className="flex items-center justify-center min-w-[36px] min-h-[36px] sm:w-9 sm:h-9 rounded-md sm:rounded-lg text-red-300 hover:text-red-200 hover:bg-red-950/40 transition-all cursor-pointer active:scale-95"
+                  className="hidden sm:flex items-center justify-center sm:w-9 sm:h-9 rounded-md sm:rounded-lg text-red-300 hover:text-red-200 hover:bg-red-950/40 transition-all cursor-pointer active:scale-95"
                   title="Desconectar Terminal de Google"
                   aria-label="Cerrar sesión de Google"
                 >
@@ -292,7 +328,7 @@ export const Header: React.FC<HeaderProps> = ({
               ) : (
                 <button
                   onClick={() => { soundFX.playClick(); signInWithGoogle(); }}
-                  className="flex items-center justify-center min-w-[36px] min-h-[36px] sm:w-9 sm:h-9 rounded-md sm:rounded-lg text-cyan-300 hover:text-white hover:bg-cyan-950/40 transition-all cursor-pointer active:scale-95"
+                  className="hidden sm:flex items-center justify-center sm:w-9 sm:h-9 rounded-md sm:rounded-lg text-cyan-300 hover:text-white hover:bg-cyan-950/40 transition-all cursor-pointer active:scale-95"
                   title="Conectar con Google"
                   aria-label="Iniciar sesión con Google"
                 >
@@ -305,9 +341,9 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* ============================================================== */}
-        {/* FILA 2: COMANDO PERSONAL VIP (HERO IDENTITY & HUNTER STATUS)   */}
+        {/* FILA 2: COMANDO PERSONAL VIP (Oculto en Modo Zen para enfoque) */}
         {/* ============================================================== */}
-        {(() => {
+        {!zenMode && (() => {
           const cleanFullName = stats.fullName?.trim() && stats.fullName.trim().toLowerCase() !== 'cazador' ? stats.fullName.trim() : '';
           const cleanUsername = stats.username?.trim() && stats.username.trim().toLowerCase() !== 'cazador' && stats.username.trim() !== 'CazadorDelSistema' ? stats.username.trim() : '';
           const rawName = cleanFullName || cleanUsername || user?.displayName?.trim() || 'Usuario';

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   X, 
   User, 
@@ -21,6 +22,7 @@ import { getArchetypeDisplayName } from '../data/archetypes';
 import { useAuth } from '../context/AuthContext';
 import { CloudSyncResult } from '../hooks/useCloudSync';
 import { soundFX } from '../utils/audio';
+import { triggerHaptic } from '../utils/haptics';
 import { KaiVectorGraphics } from './KaiVectorGraphics';
 import { KAI_MULTIVERSE_STYLES, KAI_OFFICIAL_SHAPES } from '../data/kaiShapes';
 
@@ -93,6 +95,7 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
     setIsSyncing(true);
     setSyncFeedback(null);
     soundFX.playClick();
+    triggerHaptic([20, 30]);
     try {
       const ok = await cloudSync.forceSyncNow();
       if (ok) {
@@ -110,6 +113,7 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
 
   const handleSave = () => {
     soundFX.playClick();
+    triggerHaptic([30, 50, 40]);
     if (onUpdateStats) {
       onUpdateStats(prev => ({
         ...prev,
@@ -126,12 +130,15 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
     onClose();
   };
 
-  return (
+  return createPortal(
     <div 
-      className="fixed inset-0 z-[150] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-fade-in font-sans"
+      className="fixed inset-0 z-[180] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-fade-in font-sans portal-modal-root select-none pointer-events-auto"
       onClick={onClose}
     >
       <div 
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="hero-profile-modal-title"
         className="w-full max-w-lg max-h-[90dvh] flex flex-col bg-[#030712]/95 border border-cyan-500/35 rounded-2xl sm:rounded-3xl shadow-[0_0_50px_rgba(0,240,255,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] relative text-left overflow-hidden backdrop-blur-2xl text-white"
         onClick={(e) => e.stopPropagation()}
       >
@@ -150,7 +157,7 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
               <Shield className="w-5 h-5 drop-shadow-[0_0_8px_rgba(0,240,255,0.6)]" />
             </div>
             <div className="min-w-0">
-              <h3 className="font-anton text-cyan-300 uppercase tracking-wide text-sm sm:text-base truncate flex items-center gap-2">
+              <h3 id="hero-profile-modal-title" className="font-anton text-cyan-300 uppercase tracking-wide text-sm sm:text-base truncate flex items-center gap-2">
                 <span>Ficha de Identidad & Cuenta</span>
               </h3>
               <p className="text-[11px] text-cyan-300/80 font-mono mt-0.5 truncate">
@@ -166,6 +173,7 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
             }} 
             className="w-8 h-8 rounded-xl bg-white/[0.04] hover:bg-white/10 border border-white/10 hover:border-cyan-400/40 text-slate-400 hover:text-white flex items-center justify-center transition-all cursor-pointer shrink-0 ml-2 active:scale-95"
             title="Cerrar modal (Esc)"
+            aria-label="Cerrar ficha de identidad"
           >
             <X className="w-4 h-4" />
           </button>
@@ -365,6 +373,7 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
               <div className="flex-1">
                 <input 
                   type="text" 
+                  aria-label="Emoji o símbolo de avatar"
                   value={editForm.avatarIcon} 
                   onChange={(e) => setEditForm({...editForm, avatarIcon: e.target.value})}
                   className="w-full bg-surface-modal border border-cyan-500/50 rounded-xl p-2.5 text-white focus:outline-none focus:border-cyan-300 text-center text-xl font-mono transition-colors"
@@ -381,8 +390,11 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
                 <button
                   key={emoji}
                   type="button"
+                  aria-label={`Seleccionar avatar ${emoji}`}
+                  aria-pressed={editForm.avatarIcon === emoji}
                   onClick={() => {
                     soundFX.playClick();
+                    triggerHaptic(15);
                     setEditForm({ ...editForm, avatarIcon: emoji });
                   }}
                   className={`w-8 h-8 rounded-lg flex items-center justify-center text-lg transition-transform hover:scale-110 active:scale-95 cursor-pointer ${
@@ -545,6 +557,7 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
               soundFX.playClick();
               onClose();
             }}
+            aria-label="Volver y cerrar ficha de identidad"
             className="flex-1 sm:flex-none sm:px-6 py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/10 border border-white/15 text-slate-300 hover:text-white font-anton uppercase text-xs tracking-wider transition-all cursor-pointer active:scale-95 text-center"
           >
             Volver
@@ -552,12 +565,14 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
           <button 
             type="button"
             onClick={handleSave}
+            aria-label="Guardar cambios de la ficha de identidad"
             className="flex-[2] py-2.5 px-4 bg-gradient-to-r from-cyan-400 via-cyan-300 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950 font-anton uppercase tracking-wider text-xs sm:text-sm rounded-xl shadow-[0_0_20px_rgba(0,240,255,0.4)] transition-all cursor-pointer active:scale-95 text-center chicle-btn font-bold"
           >
             Guardar Cambios
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

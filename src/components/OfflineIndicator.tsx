@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { WifiOff, RefreshCw, CloudCheck } from 'lucide-react';
+import { WifiOff } from 'lucide-react';
 import { CloudSyncResult } from '../hooks/useCloudSync';
 import { subscribeToOutboxCount } from '../services/offlineOutboxService';
 
@@ -38,7 +38,9 @@ export const OfflineIndicator: React.FC<OfflineIndicatorProps> = ({ cloudSync })
 
   const syncStatus = cloudSync?.syncStatus || (isOnline ? 'synced' : 'offline');
 
-  // Render floating status pill if offline
+  // Solo renderiza la píldora flotante si el usuario está offline o sin conexión.
+  // El guardado en la nube (Firestore) se ejecuta en segundo plano de manera silenciosa
+  // para no interrumpir ni obstruir la vista de tareas en dispositivos móviles.
   if (!isOnline || syncStatus === 'offline') {
     return (
       <div 
@@ -59,27 +61,6 @@ export const OfflineIndicator: React.FC<OfflineIndicatorProps> = ({ cloudSync })
             {pendingCount > 0
               ? `${pendingCount} cambio${pendingCount > 1 ? 's' : ''} en cola IndexedDB • Se sincronizarán al reconectar`
               : 'Tus rachas y datos están resguardados localmente'}
-          </span>
-        </div>
-      </div>
-    );
-  }
-
-  // Render floating status pill if saving / syncing
-  if (syncStatus === 'saving') {
-    return (
-      <div 
-        className="fixed bottom-16 sm:bottom-4 left-4 z-50 flex items-center gap-2.5 rounded-2xl bg-cyan-950/95 backdrop-blur-md px-4 py-2.5 text-xs font-bold text-cyan-200 border border-cyan-500/60 shadow-[0_0_20px_rgba(0,240,255,0.35)] animate-in slide-in-from-bottom-2"
-        role="status"
-        aria-live="polite"
-      >
-        <RefreshCw className="w-4 h-4 text-cyan-400 animate-spin shrink-0" />
-        <div className="flex flex-col">
-          <span className="font-sans font-black tracking-wide text-cyan-300">
-            {pendingCount > 0 ? `Sincronizando ${pendingCount} cambio${pendingCount > 1 ? 's' : ''}...` : 'Sincronizando...'}
-          </span>
-          <span className="text-[10px] text-cyan-400/80 font-normal">
-            Resguardando datos en la nube (Firestore)
           </span>
         </div>
       </div>

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Cpu, RefreshCw, Loader2, X, ShieldCheck, Sparkles, AlertCircle } from 'lucide-react';
+import { Cpu, RefreshCw, Loader2, X, ShieldCheck, Sparkles, AlertCircle, Copy, Check, Zap } from 'lucide-react';
 import { usePlayerStore } from '../store/usePlayerStore';
 import { useTaskStore } from '../store/useTaskStore';
 import { useAppStore } from '../store/useAppStore';
 import { soundFX } from '../utils/audio';
+import { triggerHaptic } from '../utils/haptics';
 import { generateProceduralAnalysis } from '../utils/proceduralHeuristics';
 import { generateNeuralAnalysisAI } from '../services/aiService';
 import { QuantumCubeLoader } from './QuantumCubeLoader';
@@ -82,10 +83,13 @@ export const NeuralAnalysisModal: React.FC<NeuralAnalysisModalProps> = ({ isOpen
   const [analysisSource, setAnalysisSource] = useState<'ai' | 'heuristics' | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [analysisEngine, setAnalysisEngine] = useState<'auto' | 'local'>('auto');
 
   const stats = usePlayerStore(state => state.stats);
 
-  const handleRunAnalysis = async () => {
+  const handleRunAnalysis = async (forcedEngine?: 'auto' | 'local') => {
+    const engineToUse = forcedEngine || analysisEngine;
     try {
       setIsAnalyzing(true);
       setError(null);
@@ -94,6 +98,14 @@ export const NeuralAnalysisModal: React.FC<NeuralAnalysisModalProps> = ({ isOpen
       const reflections = useAppStore.getState().reflections || {};
       const tasksByDate = useTaskStore.getState().tasksByDate || {};
       const currentTasks = tasksByDate[useTaskStore.getState().currentViewDate] || [];
+
+      if (engineToUse === 'local') {
+        const localAnalysis = generateProceduralAnalysis(stats, stats?.characterClass, habitMastery, currentTasks);
+        setAnalysisResult(localAnalysis);
+        setAnalysisSource('heuristics');
+        soundFX.playSubBassConfirm?.();
+        return;
+      }
 
       const res = await generateNeuralAnalysisAI(
         stats,
@@ -105,6 +117,7 @@ export const NeuralAnalysisModal: React.FC<NeuralAnalysisModalProps> = ({ isOpen
       );
       setAnalysisResult(res.analysis);
       setAnalysisSource(res.source);
+      soundFX.playSubBassConfirm?.();
     } catch (err: any) {
       console.warn("Neural analysis API call failed, falling back to procedural analysis:", err);
       const habitMastery = useAppStore.getState().habitMastery || {};
@@ -114,6 +127,19 @@ export const NeuralAnalysisModal: React.FC<NeuralAnalysisModalProps> = ({ isOpen
       setAnalysisSource('heuristics');
     } finally {
       setIsAnalyzing(false);
+    }
+  };
+
+  const handleCopyAnalysis = async () => {
+    if (!analysisResult) return;
+    try {
+      await navigator.clipboard.writeText(analysisResult);
+      soundFX.playClick();
+      triggerHaptic([30, 40]);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch (err) {
+      console.warn("Error al copiar análisis neural:", err);
     }
   };
 
@@ -136,7 +162,12 @@ export const NeuralAnalysisModal: React.FC<NeuralAnalysisModalProps> = ({ isOpen
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in">
+    <div 
+      className="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="neural-modal-title"
+    >
       <div className="bg-[#030712]/95 border border-cyan-500/35 rounded-2xl sm:rounded-3xl w-full max-w-2xl max-h-[90dvh] sm:max-h-[88vh] flex flex-col shadow-[0_0_50px_rgba(0,240,255,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] overflow-hidden backdrop-blur-2xl relative text-left">
         
         {/* Micrograno táctil Moxen Vidrio */}
@@ -169,13 +200,15 @@ export const NeuralAnalysisModal: React.FC<NeuralAnalysisModalProps> = ({ isOpen
                   </span>
                 )}
               </div>
-              <h3 className="text-base sm:text-lg font-anton tracking-wider text-white uppercase mt-0.5">
+              <h3 id="neural-modal-title" className="text-base sm:text-lg font-anton tracking-wider text-white uppercase mt-0.5">
                 Diagnóstico Neural Integral
               </h3>
             </div>
           </div>
           <button 
+            type="button"
             onClick={() => { soundFX.playClick(); onClose(); }} 
+            aria-label="Cerrar diagnóstico neural"
             className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 border border-transparent hover:border-white/10 transition-all cursor-pointer active:scale-95"
             title="Cerrar (Esc)"
           >
@@ -194,20 +227,85 @@ export const NeuralAnalysisModal: React.FC<NeuralAnalysisModalProps> = ({ isOpen
             </div>
           </div>
 
-          <div className="flex items-center justify-between pt-1">
-            <h4 className="text-xs font-anton font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span>Informe de Rendimiento</span>
-            </h4>
-            <button
-              type="button"
-              onClick={handleRunAnalysis}
-              disabled={isAnalyzing}
-              className="chicle-btn px-3.5 py-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-400 hover:text-black border border-cyan-400/40 text-cyan-200 disabled:opacity-50 text-xs font-anton uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shadow transition-all active:scale-95"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${isAnalyzing ? 'animate-spin' : ''}`} />
-              <span>{isAnalyzing ? 'Analizando...' : 'Actualizar'}</span>
-            </button>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 border-b border-white/10 pb-2">
+            <div className="flex items-center gap-2">
+              <h4 className="text-xs font-anton font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                <span>Informe de Rendimiento</span>
+              </h4>
+
+              {/* NEU-04: Selector táctico de motor */}
+              <div className="flex items-center gap-1 bg-black/40 p-0.5 rounded-lg border border-white/10 text-[10px] font-mono">
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFX.playClick();
+                    setAnalysisEngine('auto');
+                    handleRunAnalysis('auto');
+                  }}
+                  className={`px-2 py-0.5 rounded-md font-bold transition-all cursor-pointer ${
+                    analysisEngine === 'auto'
+                      ? 'bg-cyan-500 text-slate-950 shadow-sm'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                  title="Análisis holístico con KAI IA (Gemini)"
+                >
+                  Neural AI
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFX.playClick();
+                    setAnalysisEngine('local');
+                    handleRunAnalysis('local');
+                  }}
+                  className={`px-2 py-0.5 rounded-md font-bold transition-all cursor-pointer ${
+                    analysisEngine === 'local'
+                      ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                  title="Análisis instantáneo local (Cero consumo de tokens)"
+                >
+                  Local (0 Tokens)
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {/* NEU-01: Botón Copiar Informe */}
+              {analysisResult && (
+                <button
+                  type="button"
+                  onClick={handleCopyAnalysis}
+                  aria-label="Copiar diagnóstico al portapapeles"
+                  className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 shadow-sm"
+                  title="Copiar diagnóstico al portapapeles"
+                >
+                  {copied ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-400" />
+                      <span className="text-emerald-400">¡Copiado!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5 text-cyan-300" />
+                      <span>Copiar</span>
+                    </>
+                  )}
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={() => handleRunAnalysis()}
+                disabled={isAnalyzing}
+                aria-label="Actualizar informe de rendimiento"
+                className="chicle-btn px-3.5 py-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-400 hover:text-black border border-cyan-400/40 text-cyan-200 disabled:opacity-50 text-xs font-anton uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shadow transition-all active:scale-95"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isAnalyzing ? 'animate-spin' : ''}`} />
+                <span>{isAnalyzing ? 'Analizando...' : 'Actualizar'}</span>
+              </button>
+            </div>
           </div>
 
           {isAnalyzing ? (
@@ -218,9 +316,19 @@ export const NeuralAnalysisModal: React.FC<NeuralAnalysisModalProps> = ({ isOpen
               </p>
             </div>
           ) : error ? (
-            <div className="p-4 bg-rose-950/30 border border-rose-500/40 rounded-2xl text-xs font-mono text-rose-300 flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
-              <span>{error}</span>
+            <div className="p-4 bg-rose-950/30 border border-rose-500/40 rounded-2xl text-xs font-mono text-rose-300 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-inner">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+                <span>{error}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleRunAnalysis()}
+                className="px-3 py-1 bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/50 text-rose-200 rounded-lg text-xs font-mono font-bold flex items-center gap-1 cursor-pointer transition-all active:scale-95 shrink-0"
+              >
+                <RefreshCw className="w-3 h-3 text-rose-300" />
+                <span>Reintentar</span>
+              </button>
             </div>
           ) : analysisResult ? (
             <div className="space-y-2">

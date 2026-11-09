@@ -23,29 +23,64 @@ try {
 
 export { app, firebaseConfig };
 
+import {
+  enqueueTelemetryEvent,
+  flushTelemetryQueue,
+  setCohortUserProperties,
+} from './services/telemetryQueueService';
+
 let analyticsInstance: Analytics | null = null;
 if (typeof window !== 'undefined' && app) {
   isSupported()
     .then((supported) => {
-      if (supported && (!('onLine' in navigator) || navigator.onLine)) {
+      if (supported) {
         try {
           analyticsInstance = getAnalytics(app);
+          // Auto-flush pending events on initialization
+          if (navigator.onLine) {
+            flushTelemetryQueue(analyticsInstance).catch(() => {});
+          }
         } catch {}
       }
     })
     .catch(() => {});
+
+  window.addEventListener('online', () => {
+    if (analyticsInstance) {
+      flushTelemetryQueue(analyticsInstance).catch(() => {});
+    }
+  });
 }
 
 export const analytics = analyticsInstance as Analytics;
 
 export const safeLogEvent = (eventName: string, params?: Record<string, any>) => {
-  if (typeof window === 'undefined' || (typeof navigator !== 'undefined' && !navigator.onLine)) return;
-  try {
-    if (analyticsInstance) {
+  if (typeof window === 'undefined') return;
+
+  const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
+
+  if (isOnline && analyticsInstance) {
+    try {
       logEvent(analyticsInstance, eventName, params);
+      return;
+    } catch {
+      // Fallback to buffer on unexpected dispatch error
     }
-  } catch (e) {
-    // Suppress offline telemetry fetch failures gracefully
+  }
+
+  // Buffer in IndexedDB when offline or analytics not yet initialized
+  void enqueueTelemetryEvent(eventName, params);
+};
+
+export const safeSetUserProperties = (props: {
+  characterClass?: string;
+  level?: number;
+  streakDays?: number;
+  ascensionTier?: number;
+  isPwaStandalone?: boolean;
+}) => {
+  if (analyticsInstance) {
+    setCohortUserProperties(analyticsInstance, props);
   }
 };
 
@@ -71,11 +106,23 @@ try {
 
 export const auth = authInstance as Auth;
 export const googleProvider = new GoogleAuthProvider();
-// Request Google Drive app data access scope for user backup & sync
-googleProvider.addScope('https://www.googleapis.com/auth/drive.file');
+// Flujo estándar: No solicita scopes sensibles innecesarios para autenticación básica
 googleProvider.setCustomParameters({
   prompt: 'select_account'
 });
+
+/**
+ * Proveedor bajo demanda para autorización incremental de Google Drive.
+ * Se invoca exclusivamente cuando el usuario solicita respaldar o sincronizar su partida.
+ */
+export const createGoogleDriveProvider = (): GoogleAuthProvider => {
+  const provider = new GoogleAuthProvider();
+  provider.addScope('https://www.googleapis.com/auth/drive.file');
+  provider.setCustomParameters({
+    prompt: 'consent'
+  });
+  return provider;
+};
 
 let dbInstance: Firestore | null = null;
 try {

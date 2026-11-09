@@ -1,10 +1,12 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { PlayerStats, KaiShapeKey } from '../types';
+import { PlayerStats, KaiShapeKey, UserTier, MonetizationFeatureKey } from '../types';
 import { getRankForLevel, calculateRequiredXp } from '../data/defaults';
 import { getArchetypeDisplayName } from '../data/archetypes';
 import { useUIStore } from './useUIStore';
 import { getTodayDateString, getYesterdayDateString, calcSleepDuration, getSleepQuality } from '../utils/date';
+import { revertXpAndCoins } from '../utils/level3Systems';
+import { createResilientStorage } from '../utils/storage';
 
 interface PlayerState {
   stats: PlayerStats;
@@ -18,7 +20,7 @@ interface PlayerState {
   finalizeDay: (currentDate: string, bonusXp: number, bonusCoins: number, bedtime: string) => void;
   registerWakeUp: (currentDate: string, customWakeTime?: string) => void;
   triggerLevelUp: () => void;
-  reopenDay: (dateStr: string) => void;
+  reopenDay: (dateStr: string) => boolean;
   triggerSurpriseBoss: (data?: { archetypeName?: string; buffName?: string; buffDescription?: string }) => void;
   addLootBoxes: (count: number) => void;
   openLootBox: () => { item: any; success: boolean };
@@ -35,6 +37,9 @@ interface PlayerState {
   resetTutorialGuides: () => void;
   claimTutorialReward: () => boolean;
   setKaiVoiceTone: (tone: 'coach' | 'disciplinado' | 'ordenado') => void;
+  setUserTier: (tier: UserTier) => void;
+  setMonetizationFeature: (featureKey: MonetizationFeatureKey, enabled: boolean) => void;
+  resetMonetizationFeatures: () => void;
 }
 
 const INITIAL_PLAYER_STATS: PlayerStats = {
@@ -74,6 +79,8 @@ const INITIAL_PLAYER_STATS: PlayerStats = {
   frozenHabits: {},
   synapticBoosters: 0,
   kaiVoiceTone: 'coach',
+  tier: 'tester',
+  monetizationFeatures: {},
 };
 
 export const usePlayerStore = create<PlayerState>()(
@@ -384,7 +391,7 @@ export const usePlayerStore = create<PlayerState>()(
             const existingSleep = sleepLogs[pendingDate];
             const bedtime = existingSleep.bedtime;
             const duration = calcSleepDuration(bedtime, wakeTime);
-            const quality = duration !== null ? getSleepQuality(duration) : undefined;
+            const quality = duration !== null ? getSleepQuality(duration).label : undefined;
 
             nextFinalizedDays[pendingDate] = {
               ...(nextFinalizedDays[pendingDate] || {
@@ -415,7 +422,7 @@ export const usePlayerStore = create<PlayerState>()(
               nextSleepLogs[yesterday]?.bedtime ||
               '23:00';
             const todayDuration = calcSleepDuration(refBedtime, wakeTime);
-            const todayQuality = todayDuration !== null ? getSleepQuality(todayDuration) : undefined;
+            const todayQuality = todayDuration !== null ? getSleepQuality(todayDuration).label : undefined;
 
             nextSleepLogs[today] = {
               ...(nextSleepLogs[today] || {}),
@@ -439,16 +446,39 @@ export const usePlayerStore = create<PlayerState>()(
       },
 
       reopenDay: (dateStr) => {
+        let reopened = false;
         set((state) => {
           const stats = { ...state.stats };
+          const finalizedRecord = stats.finalizedDays?.[dateStr];
+          const bonusXp = finalizedRecord?.bonusXp || 0;
+          const bonusCoins = finalizedRecord?.bonusCoins || 0;
+
+          // P0 Financial Shield & Anti-Exploit:
+          // If the player spent coins earned from this day's finalization and does not have enough
+          // balance to refund bonusCoins, reject reopening to prevent negative balance or free item exploit.
+          if ((stats.coins || 0) < bonusCoins) {
+            reopened = false;
+            return state;
+          }
+
+          reopened = true;
           if (stats.finalizedDays) {
-            delete stats.finalizedDays[dateStr];
+            const nextFinalized = { ...stats.finalizedDays };
+            delete nextFinalized[dateStr];
+            stats.finalizedDays = nextFinalized;
           }
           if (stats.sleepLogs) {
-            delete stats.sleepLogs[dateStr];
+            const nextSleep = { ...stats.sleepLogs };
+            delete nextSleep[dateStr];
+            stats.sleepLogs = nextSleep;
+          }
+
+          if (bonusXp > 0 || bonusCoins > 0) {
+            return { stats: revertXpAndCoins(stats, bonusXp, bonusCoins) };
           }
           return { stats };
         });
+        return reopened;
       },
 
       triggerLevelUp: () => {
@@ -644,10 +674,34 @@ export const usePlayerStore = create<PlayerState>()(
           kaiVoiceTone: tone,
         }
       })),
+
+      setUserTier: (tier) => set((state) => ({
+        stats: {
+          ...state.stats,
+          tier
+        }
+      })),
+
+      setMonetizationFeature: (featureKey, enabled) => set((state) => ({
+        stats: {
+          ...state.stats,
+          monetizationFeatures: {
+            ...(state.stats.monetizationFeatures || {}),
+            [featureKey]: enabled
+          }
+        }
+      })),
+
+      resetMonetizationFeatures: () => set((state) => ({
+        stats: {
+          ...state.stats,
+          monetizationFeatures: {}
+        }
+      })),
     }),
     {
       name: 'quantum-os-player-stats',
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => createResilientStorage()),
       onRehydrateStorage: () => (state) => {
         if (state?.stats) {
           const lvl = typeof state.stats.level === 'number' && state.stats.level > 0 ? state.stats.level : 1;
@@ -670,8 +724,101 @@ export const usePlayerStore = create<PlayerState>()(
                                      (Boolean(state.stats.username) && state.stats.username !== 'CazadorDelSistema' && state.stats.username !== 'UsuarioDelSistema');
             state.stats.hasCompletedAwakening = hasPriorProgress;
           }
+          if (!state.stats.tier) {
+            state.stats.tier = 'tester';
+          }
         }
       },
     }
   )
 );
+
+// ─── SELECTORES ATÓMICOS DE MONETIZACIÓN Y PERMISOS ────────────
+
+/**
+ * Determina si el entorno activa restricciones de monetización / suscripción.
+ * En fase Beta / Pruebas se mantiene en false (desactivado por defecto).
+ * Se puede activar sin refactorizar lógica mediante VITE_ENABLE_SUBSCRIPTIONS="true".
+ */
+export const isSubscriptionEnforced = (): boolean => {
+  return import.meta.env?.VITE_ENABLE_SUBSCRIPTIONS === 'true';
+};
+
+/**
+ * Selector atómico para obtener el tier del usuario ('tester' | 'free' | 'pro').
+ * Por defecto 'tester' para todos los evaluadores de la beta activa.
+ */
+export const selectUserTier = (state: { stats: PlayerStats }): UserTier => {
+  return state.stats.tier || 'tester';
+};
+
+/**
+ * Matriz declarativa de capacidades del sistema por nivel.
+ */
+export const TIER_PERMISSIONS: Record<UserTier, Record<MonetizationFeatureKey, boolean>> = {
+  tester: {
+    unlimited_kai_charges: true,
+    deep_neural_analysis: true,
+    custom_kai_multiverse: true,
+    drive_cloud_sync: true,
+    advanced_analytics: true,
+    unlimited_active_quests: true,
+    zen_mode: true,
+    priority_support: true,
+  },
+  pro: {
+    unlimited_kai_charges: true,
+    deep_neural_analysis: true,
+    custom_kai_multiverse: true,
+    drive_cloud_sync: true,
+    advanced_analytics: true,
+    unlimited_active_quests: true,
+    zen_mode: true,
+    priority_support: true,
+  },
+  free: {
+    unlimited_kai_charges: false,
+    deep_neural_analysis: false,
+    custom_kai_multiverse: false,
+    drive_cloud_sync: false,
+    advanced_analytics: false,
+    unlimited_active_quests: false,
+    zen_mode: true,
+    priority_support: false,
+  },
+};
+
+/**
+ * Selector atómico puro para consultar si una función específica está disponible.
+ * - Desbloqueo total si VITE_ENABLE_SUBSCRIPTIONS !== 'true' (fase beta).
+ * - Desbloqueo total si el usuario tiene tier === 'tester'.
+ * - Respeta flags explícitos en stats.monetizationFeatures.
+ * - En caso contrario evalúa TIER_PERMISSIONS[tier].
+ */
+export const selectIsFeatureUnlocked = (feature: MonetizationFeatureKey) => (state: { stats: PlayerStats }): boolean => {
+  if (!isSubscriptionEnforced()) {
+    return true;
+  }
+
+  const tier = state.stats.tier || 'tester';
+  if (tier === 'tester') {
+    return true;
+  }
+
+  if (state.stats.monetizationFeatures && typeof state.stats.monetizationFeatures[feature] === 'boolean') {
+    return state.stats.monetizationFeatures[feature];
+  }
+
+  return TIER_PERMISSIONS[tier]?.[feature] ?? false;
+};
+
+// Selectores atómicos de uso frecuente
+export const selectHasUnlimitedKai = (state: { stats: PlayerStats }): boolean =>
+  selectIsFeatureUnlocked('unlimited_kai_charges')(state);
+
+export const selectCanAccessDeepNeural = (state: { stats: PlayerStats }): boolean =>
+  selectIsFeatureUnlocked('deep_neural_analysis')(state);
+
+export const selectCanUseCloudSync = (state: { stats: PlayerStats }): boolean =>
+  selectIsFeatureUnlocked('drive_cloud_sync')(state);
+

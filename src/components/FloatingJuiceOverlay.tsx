@@ -42,9 +42,12 @@ export const FloatingJuiceOverlay: React.FC = React.memo(() => {
 
   if (particles.length === 0) return null;
 
+  // Limitar a las últimas 16 partículas simultáneas para preservar 60fps estables en móviles
+  const visibleParticles = particles.length > 16 ? particles.slice(-16) : particles;
+
   return (
-    <div className="fixed inset-0 pointer-events-none z-[9999] overflow-hidden select-none will-change-transform">
-      {particles.map((p: FloatingEffect) => {
+    <div aria-hidden="true" className="fixed inset-0 pointer-events-none z-[9999] overflow-hidden select-none will-change-transform">
+      {visibleParticles.map((p: FloatingEffect) => {
         let icon = <Zap className="w-4 h-4 text-cyan-300 inline mr-1 shrink-0" />;
         let textStyle = 'text-cyan-300 shadow-[0_0_12px_rgba(0,240,255,0.8)] border-cyan-400/80 bg-[#001830]/90';
 

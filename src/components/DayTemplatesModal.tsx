@@ -18,6 +18,7 @@ import { DayTemplate, TaskItem } from '../types';
 import { DEFAULT_DAY_TEMPLATES } from '../data/defaultTemplates';
 import { soundFX } from '../utils/audio';
 import { safeGetItem, safeSetItem } from '../utils/storage';
+import { triggerHaptic } from '../utils/haptics';
 
 interface DayTemplatesModalProps {
   isOpen: boolean;
@@ -58,6 +59,7 @@ export const DayTemplatesModal: React.FC<DayTemplatesModalProps> = ({
   const [newTemplateDesc, setNewTemplateDesc] = useState('');
   const [newTemplateIcon, setNewTemplateIcon] = useState('⚡');
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [deletingTemplateId, setDeletingTemplateId] = useState<string | null>(null);
 
   useEffect(() => {
     const customOnes = templates.filter(t => t.isCustom);
@@ -80,6 +82,13 @@ export const DayTemplatesModal: React.FC<DayTemplatesModalProps> = ({
   const handleSaveCurrentAsTemplate = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTemplateName.trim()) return;
+
+    if (currentTasks.length === 0) {
+      soundFX.playClick();
+      setSuccessMessage('No hay misiones en el día actual para empaquetar.');
+      setTimeout(() => setSuccessMessage(null), 3000);
+      return;
+    }
 
     // Filter out temporary/sleep completion flags from current tasks
     const templateTasks = currentTasks.map(t => ({
@@ -114,14 +123,17 @@ export const DayTemplatesModal: React.FC<DayTemplatesModalProps> = ({
     setNewTemplateName('');
     setNewTemplateDesc('');
     soundFX.playLevelUp();
+    triggerHaptic([30, 45, 60]);
     setSuccessMessage(`¡Plantilla "${newTemplate.name}" guardada con éxito!`);
     setTimeout(() => setSuccessMessage(null), 3000);
   };
 
-  const handleDeleteTemplate = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleDeleteTemplate = (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     soundFX.playClick();
+    triggerHaptic([40, 60]);
     setTemplates(prev => prev.filter(t => t.id !== id));
+    setDeletingTemplateId(null);
     if (selectedTemplateId === id) {
       setSelectedTemplateId(DEFAULT_DAY_TEMPLATES[0].id);
     }
@@ -130,6 +142,7 @@ export const DayTemplatesModal: React.FC<DayTemplatesModalProps> = ({
   const handleApply = () => {
     if (!selectedTemplate) return;
     soundFX.playTaskComplete();
+    triggerHaptic([30, 50, 40]);
     onApplyTemplate(selectedTemplate, applyMode);
     onClose();
   };
@@ -140,6 +153,9 @@ export const DayTemplatesModal: React.FC<DayTemplatesModalProps> = ({
       onClick={onClose}
     >
       <div 
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="day-templates-modal-title"
         className="w-full max-w-4xl max-h-[90dvh] sm:max-h-[86vh] flex flex-col rounded-2xl sm:rounded-3xl bg-[#030712]/95 border border-cyan-500/35 shadow-[0_0_50px_rgba(0,240,255,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] relative overflow-hidden backdrop-blur-2xl text-left text-white"
         onClick={(e) => e.stopPropagation()}
       >
@@ -158,7 +174,7 @@ export const DayTemplatesModal: React.FC<DayTemplatesModalProps> = ({
               <Layers className="w-5 h-5 text-cyan-400" />
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-anton text-white uppercase tracking-wider flex items-center gap-2 leading-tight">
+              <h2 id="day-templates-modal-title" className="text-base sm:text-lg font-anton text-white uppercase tracking-wider flex items-center gap-2 leading-tight">
                 Plantillas de Día & Rutinas Tipo
               </h2>
               <p className="text-xs text-slate-400 font-sans">
@@ -174,6 +190,7 @@ export const DayTemplatesModal: React.FC<DayTemplatesModalProps> = ({
             }}
             className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer active:scale-95"
             title="Cerrar modal (Esc)"
+            aria-label="Cerrar modal de plantillas"
           >
             <X className="w-5 h-5" />
           </button>
@@ -200,9 +217,11 @@ export const DayTemplatesModal: React.FC<DayTemplatesModalProps> = ({
                 type="button"
                 onClick={() => {
                   soundFX.playClick();
+                  triggerHaptic(20);
                   setIsCreatingNew(!isCreatingNew);
                 }}
                 className="text-[11px] font-anton uppercase tracking-wider text-cyan-300 hover:text-white flex items-center gap-1.5 bg-cyan-950/50 hover:bg-cyan-900/60 px-3 py-1.5 rounded-xl border border-cyan-500/40 transition-all cursor-pointer active:scale-95"
+                title={currentTasks.length === 0 ? "No hay misiones hoy para guardar" : "Guardar misiones del día como nueva plantilla"}
               >
                 <BookmarkPlus className="w-3.5 h-3.5 text-cyan-400" />
                 <span>Guardar Día</span>
@@ -224,6 +243,7 @@ export const DayTemplatesModal: React.FC<DayTemplatesModalProps> = ({
                   <select
                     value={newTemplateIcon}
                     onChange={(e) => setNewTemplateIcon(e.target.value)}
+                    aria-label="Icono de la plantilla"
                     className="w-12 h-10 rounded-xl bg-[#010810] border border-white/15 text-lg flex items-center justify-center text-center cursor-pointer text-white focus:outline-none focus:border-cyan-400"
                   >
                     {ICONS.map(icon => (
@@ -236,6 +256,7 @@ export const DayTemplatesModal: React.FC<DayTemplatesModalProps> = ({
                     placeholder="Ej. Mi Lunes de Clientes & Gym"
                     value={newTemplateName}
                     onChange={(e) => setNewTemplateName(e.target.value)}
+                    aria-label="Nombre de la nueva plantilla"
                     className="flex-1 px-3 py-2 rounded-xl bg-[#010810] border border-white/15 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 transition-colors"
                   />
                 </div>
@@ -245,6 +266,7 @@ export const DayTemplatesModal: React.FC<DayTemplatesModalProps> = ({
                   placeholder="Descripción corta (opcional)..."
                   value={newTemplateDesc}
                   onChange={(e) => setNewTemplateDesc(e.target.value)}
+                  aria-label="Descripción de la nueva plantilla"
                   className="w-full px-3 py-2 rounded-xl bg-[#010810] border border-white/15 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 transition-colors"
                 />
 
@@ -273,9 +295,21 @@ export const DayTemplatesModal: React.FC<DayTemplatesModalProps> = ({
                 return (
                   <div
                     key={tmpl.id}
+                    role="button"
+                    tabIndex={0}
+                    aria-pressed={isSelected}
                     onClick={() => {
                       soundFX.playClick();
+                      triggerHaptic(15);
                       setSelectedTemplateId(tmpl.id);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        soundFX.playClick();
+                        triggerHaptic(15);
+                        setSelectedTemplateId(tmpl.id);
+                      }
                     }}
                     className={`p-3 rounded-2xl border transition-all cursor-pointer relative group flex items-start gap-3 ${
                       isSelected
@@ -304,12 +338,48 @@ export const DayTemplatesModal: React.FC<DayTemplatesModalProps> = ({
                     {tmpl.isCustom && (
                       <button
                         type="button"
-                        onClick={(e) => handleDeleteTemplate(tmpl.id, e)}
-                        className="absolute right-2.5 top-2.5 text-slate-500 hover:text-red-400 p-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                        title="Eliminar plantilla"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          soundFX.playClick();
+                          triggerHaptic(20);
+                          setDeletingTemplateId(tmpl.id);
+                        }}
+                        className="absolute right-2.5 top-2.5 text-slate-500 hover:text-red-400 p-1 rounded-lg opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity cursor-pointer"
+                        title={`Eliminar plantilla ${tmpl.name}`}
+                        aria-label={`Eliminar plantilla ${tmpl.name}`}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
+                    )}
+
+                    {/* Inline Deletion Confirmation Safeguard */}
+                    {deletingTemplateId === tmpl.id && (
+                      <div 
+                        className="absolute inset-0 bg-red-950/95 border border-red-500/60 rounded-2xl flex items-center justify-between px-3 py-2 z-20 animate-in fade-in duration-150"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <span className="text-[11px] font-bold text-red-200 truncate pr-2">¿Eliminar plantilla?</span>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              soundFX.playClick();
+                              setDeletingTemplateId(null);
+                            }}
+                            className="px-2 py-1 rounded-lg text-[10px] font-bold text-slate-300 hover:text-white bg-white/10 cursor-pointer"
+                          >
+                            Cancelar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => handleDeleteTemplate(tmpl.id, e)}
+                            className="px-2 py-1 rounded-lg text-[10px] font-bold text-white bg-red-600 hover:bg-red-500 shadow-sm cursor-pointer"
+                          >
+                            Eliminar
+                          </button>
+                        </div>
+                      </div>
                     )}
                   </div>
                 );
@@ -364,14 +434,17 @@ export const DayTemplatesModal: React.FC<DayTemplatesModalProps> = ({
                 {/* Apply Options */}
                 <div className="pt-3 border-t border-white/10 space-y-3 mt-auto">
                   <div className="flex items-center justify-between gap-2 flex-wrap text-xs">
-                    <span className="font-anton tracking-wider uppercase text-slate-300">Modo de Aplicación:</span>
-                    <div className="flex items-center gap-3">
+                    <span id="apply-mode-label" className="font-anton tracking-wider uppercase text-slate-300">Modo de Aplicación:</span>
+                    <div role="radiogroup" aria-labelledby="apply-mode-label" className="flex items-center gap-3">
                       <label className="flex items-center gap-1.5 cursor-pointer text-slate-300 hover:text-white text-xs">
                         <input
                           type="radio"
                           name="applyMode"
                           checked={applyMode === 'replace'}
-                          onChange={() => setApplyMode('replace')}
+                          onChange={() => {
+                            triggerHaptic(15);
+                            setApplyMode('replace');
+                          }}
                           className="accent-cyan-400 cursor-pointer"
                         />
                         <span>Sustituir día actual</span>
@@ -381,7 +454,10 @@ export const DayTemplatesModal: React.FC<DayTemplatesModalProps> = ({
                           type="radio"
                           name="applyMode"
                           checked={applyMode === 'merge'}
-                          onChange={() => setApplyMode('merge')}
+                          onChange={() => {
+                            triggerHaptic(15);
+                            setApplyMode('merge');
+                          }}
                           className="accent-cyan-400 cursor-pointer"
                         />
                         <span>Añadir a las existentes</span>
@@ -407,6 +483,7 @@ export const DayTemplatesModal: React.FC<DayTemplatesModalProps> = ({
               soundFX.playClick();
               onClose();
             }}
+            aria-label="Volver y cerrar modal de plantillas"
             className="w-full sm:w-auto px-5 py-2.5 bg-white/[0.05] hover:bg-white/10 text-slate-300 hover:text-white font-anton uppercase text-xs rounded-xl cursor-pointer transition-all border border-white/15 active:scale-95"
           >
             Volver
@@ -416,6 +493,7 @@ export const DayTemplatesModal: React.FC<DayTemplatesModalProps> = ({
             <button
               type="button"
               onClick={handleApply}
+              aria-label={`Aplicar plantilla ${selectedTemplate.name} al día ${currentDate}`}
               className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-black font-anton uppercase text-xs tracking-wider flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(0,240,255,0.4)] cursor-pointer transition-all chicle-btn active:scale-95"
             >
               <Zap className="w-4 h-4 fill-black" />

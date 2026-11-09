@@ -54,6 +54,8 @@ export const SurpriseBossModal: React.FC<SurpriseBossModalProps> = ({
 
   const handleClaim = () => {
     try {
+      soundFX.playClick();
+      triggerHaptic([30, 45, 60]);
       handleClaimBossBounty();
     } catch (_) {}
     onClose();
@@ -77,6 +79,9 @@ export const SurpriseBossModal: React.FC<SurpriseBossModalProps> = ({
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-cyan-500/15 rounded-full blur-[100px] pointer-events-none animate-pulse" />
 
         <motion.div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="surprise-boss-title"
           initial={{ scale: 0.9, y: 20 }}
           animate={{ scale: 1, y: 0 }}
           exit={{ scale: 0.9, opacity: 0 }}
@@ -103,7 +108,7 @@ export const SurpriseBossModal: React.FC<SurpriseBossModalProps> = ({
               <Sparkles className="w-3.5 h-3.5" /> RUPTURA DE INERCIA LOGRADA
             </div>
 
-            <h2 className="text-xl sm:text-2xl font-anton uppercase tracking-wide text-white mb-1.5 drop-shadow-[0_0_15px_rgba(0,240,255,0.35)]">
+            <h2 id="surprise-boss-title" className="text-xl sm:text-2xl font-anton uppercase tracking-wide text-white mb-1.5 drop-shadow-[0_0_15px_rgba(0,240,255,0.35)]">
               {displayTitle}
             </h2>
             

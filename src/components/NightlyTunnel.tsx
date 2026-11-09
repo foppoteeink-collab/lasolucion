@@ -109,7 +109,7 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
   }
 
   const hasValidReflection = reflectionText.trim().length >= 15;
-  const contractEval = evaluateOverchargeContract(stats.activeOverchargeContract, todayStr, completionRate);
+  const contractEval = evaluateOverchargeContract(stats.activeOverchargeContract, todayStr, completionRate, totalTasks);
   const totalBonusXp = bonusXp + (hasValidReflection ? 15 : 0) + contractEval.xpBonus;
   const totalBonusCoins = bonusCoins + (hasValidReflection ? 5 : 0) + contractEval.refundedCoins;
 
@@ -183,7 +183,12 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md">
+    <div 
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="nightly-tunnel-title"
+      className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md"
+    >
       <div className="relative w-full max-w-xl flex flex-col bg-[#030712]/95 border border-cyan-500/35 rounded-2xl sm:rounded-3xl shadow-[0_0_50px_rgba(0,240,255,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] text-white overflow-hidden max-h-[92dvh] backdrop-blur-2xl text-left">
 
         {/* Micrograno táctil */}
@@ -200,7 +205,7 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
         <div className="shrink-0 px-4 sm:px-6 pt-4 pb-3.5 border-b border-white/10 bg-[#040814]/90 relative z-10 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(0,240,255,0.8)] animate-pulse" />
-            <span className="text-[11px] font-anton uppercase tracking-widest text-cyan-300">
+            <span id="nightly-tunnel-title" className="text-[11px] font-anton uppercase tracking-widest text-cyan-300">
               Cierre Nocturno · {formattedFullDate}
             </span>
           </div>
@@ -213,6 +218,7 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
               type="button"
               onClick={onClose}
               disabled={isConsolidating}
+              aria-label="Cerrar túnel nocturno"
               className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-all cursor-pointer"
               title="Cerrar modal"
             >
@@ -346,6 +352,7 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
               <input
                 type="time"
                 value={customBedtime}
+                aria-label="Hora de dormir"
                 onChange={e => setCustomBedtime(e.target.value)}
                 className="bg-black/50 border border-cyan-800 rounded-lg px-2.5 py-1 text-white font-mono text-xs outline-none focus:border-cyan-400 transition-all cursor-pointer"
               />
@@ -357,31 +364,43 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
             <div className={`rounded-xl p-2.5 text-center border text-xs font-mono font-bold ${
               contractEval.succeeded
                 ? 'bg-amber-950/50 border-amber-400/70 text-amber-300 shadow-[0_0_15px_rgba(251,191,36,0.2)]'
-                : 'bg-rose-950/50 border-rose-500/60 text-rose-300'
+                : contractEval.contractCancelledReason === 'INSUFFICIENT_TASKS'
+                  ? 'bg-cyan-950/60 border-cyan-400/70 text-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.25)]'
+                  : 'bg-rose-950/50 border-rose-500/60 text-rose-300'
             }`}>
               {contractEval.succeeded
                 ? '🔥 ¡Protocolo Superado (≥85%)! +250 XP y +100🪙 liberadas'
-                : `⚠️ Protocolo (${completionRate}% / 85%): Eficiencia insuficiente. Fondos (${contractEval.burnedCoins}🪙) no liberados.`}
+                : contractEval.contractCancelledReason === 'INSUFFICIENT_TASKS'
+                  ? `🛡️ Protocolo Anulado: Menos de 3 tareas registradas (${totalTasks}/3). Tus ${contractEval.refundedCoins}🪙 han sido reembolsadas sin penalización.`
+                  : `⚠️ Protocolo (${completionRate}% / 85%): Eficiencia insuficiente. Fondos (${contractEval.burnedCoins}🪙) no liberados.`}
             </div>
           )}
 
           {/* Journal / Reflection Note */}
           <div>
-            <div className="flex items-center justify-between gap-2 mb-1.5">
+            <div className="flex items-center justify-between gap-2 mb-1.5 flex-wrap">
               <label className="text-[11px] font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1.5">
                 <Icon name="bookOpen" className="w-3 h-3 text-indigo-400" /> Nota de Bitácora Nocturna (Opcional)
               </label>
-              <span className={`text-[9.5px] font-mono font-bold px-2 py-0.5 rounded-full border transition-all ${
-                hasValidReflection
-                  ? 'bg-emerald-950/70 border-emerald-500/60 text-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.25)]'
-                  : 'bg-cyan-950/50 border-cyan-800/60 text-cyan-300/80'
-              }`}>
-                {hasValidReflection ? '✨ +15 XP / +5🪙' : '+15 XP / +5🪙 (mín. 15 letras)'}
-              </span>
+              <div className="flex items-center gap-1.5">
+                <span className={`text-[10px] font-mono ${
+                  hasValidReflection ? 'text-emerald-400 font-bold' : 'text-slate-400'
+                }`}>
+                  {reflectionText.trim().length} / 15
+                </span>
+                <span className={`text-[9.5px] font-mono font-bold px-2 py-0.5 rounded-full border transition-all ${
+                  hasValidReflection
+                    ? 'bg-emerald-950/70 border-emerald-500/60 text-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.25)]'
+                    : 'bg-cyan-950/50 border-cyan-800/60 text-cyan-300/80'
+                }`}>
+                  {hasValidReflection ? '✨ +15 XP / +5🪙' : '+15 XP / +5🪙'}
+                </span>
+              </div>
             </div>
             <textarea
               value={reflectionText}
               onChange={e => setReflectionText(e.target.value)}
+              aria-label="Reflexión de la jornada diaria"
               placeholder="¿Qué victoria o aprendizaje consolidó tu foco hoy?..."
               className="w-full bg-[#000a14] border border-cyan-900/70 rounded-xl p-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 resize-none h-14"
             />

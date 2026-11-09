@@ -28,6 +28,9 @@ import { triggerShockwave } from '../utils/celebration';
 import { useAuth } from '../context/AuthContext';
 import { CloudSyncResult } from '../hooks/useCloudSync';
 import { MoxenInercia } from './moxen/MoxenInercia';
+import { useTaskStore } from '../store/useTaskStore';
+import { getTodayDateString } from '../utils/date';
+import { TaskItem } from '../types';
 
 // Definición cromática de alta fidelidad estética para cada uno de los 12 arquetipos
 const ARCHETYPE_THEMES: Record<
@@ -198,6 +201,75 @@ export const HunterAwakeningModal: React.FC<HunterAwakeningModalProps> = ({
     setStep(4);
   };
 
+  // P1: Onboarding acelerado (Time-to-Value < 30s)
+  const handleQuickStart = () => {
+    try {
+      soundFX.playFanfare();
+      triggerShockwave({ color: 'cyan', intensity: 'epic' });
+    } catch {}
+
+    const cleanUser = username.trim() || (user?.displayName ? user.displayName.split(' ')[0] : 'Operador');
+    const cleanFull = fullName.trim() || user?.displayName || 'Cazador Táctico';
+    const cleanArch = selectedArchName || 'Espíritu Heroico';
+
+    // Inyectar 3 misiones guiadas inmediatas para reducir fricción de entrada
+    try {
+      const today = getTodayDateString();
+      const taskStore = useTaskStore.getState();
+      const existing = taskStore.tasksByDate[today] || [];
+      if (existing.length === 0) {
+        const starterQuests: TaskItem[] = [
+          {
+            id: 'starter_quest_1_' + Date.now(),
+            title: '🎯 Calibración: Marcar esta primera misión completada',
+            category: 'rutina',
+            xpReward: 150,
+            coinReward: 25,
+            priority: 'alta',
+            completed: false,
+            timeBlock: '09:00 - 09:30',
+          },
+          {
+            id: 'starter_quest_2_' + (Date.now() + 1),
+            title: '💧 Hidratación Cuántica: Beber un vaso de agua',
+            category: 'habito',
+            xpReward: 100,
+            coinReward: 15,
+            priority: 'media',
+            completed: false,
+            timeBlock: '09:30 - 10:00',
+          },
+          {
+            id: 'starter_quest_3_' + (Date.now() + 2),
+            title: '🛡️ Enfoque Inicial: 20 minutos de trabajo concentrado',
+            category: 'pomodoro',
+            xpReward: 200,
+            coinReward: 50,
+            priority: 'alta',
+            completed: false,
+            timeBlock: '10:00 - 10:30',
+          },
+        ];
+        taskStore.setTasksByDate({
+          ...taskStore.tasksByDate,
+          [today]: starterQuests,
+        });
+      }
+    } catch (err) {
+      console.warn('[QuickAwakening] Starter quests injection note:', err);
+    }
+
+    onCompleteAwakening({
+      username: cleanUser,
+      fullName: cleanFull,
+      characterClass: cleanArch,
+      mantra: mantra.trim() || 'Levántate y vence',
+      kaiShape: selectedKaiShape || 'prism',
+    });
+
+    onClose();
+  };
+
   const handleFinalAwakening = () => {
     try {
       soundFX.playFanfare();
@@ -282,6 +354,17 @@ export const HunterAwakeningModal: React.FC<HunterAwakeningModalProps> = ({
                 </span>
               </div>
 
+              {/* Botón de Inicio Rápido en Cabecera (Time-to-Value < 30s) */}
+              <button
+                type="button"
+                onClick={handleQuickStart}
+                className="flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 hover:from-cyan-500/40 hover:to-blue-500/40 text-cyan-300 hover:text-white border border-cyan-400/50 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm active:scale-95"
+                title="Saltar configuración e ir directo a tus tareas"
+              >
+                <Zap className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+                <span className="truncate">Saltar / Ir directo a mis tareas</span>
+              </button>
+
               {/* Explicit Close Button */}
               <button 
                 type="button"
@@ -321,6 +404,36 @@ export const HunterAwakeningModal: React.FC<HunterAwakeningModalProps> = ({
 
         {/* Modal Scrollable Body */}
         <div className="p-4 sm:p-6 space-y-5 flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-cyan-500 scrollbar-track-transparent">
+
+          {/* P1: BANNER DE ONBOARDING ACELERADO (<30s TIME-TO-VALUE) */}
+          <div className="bg-gradient-to-r from-cyan-950/80 via-blue-950/60 to-purple-950/80 p-4 rounded-2xl border border-cyan-400/50 shadow-[0_0_25px_rgba(0,240,255,0.2)] flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-fade-in">
+            <div className="flex items-start gap-3">
+              <div className="p-2.5 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-400/50 shrink-0 mt-0.5">
+                <Zap className="w-5 h-5 text-cyan-400 animate-pulse" />
+              </div>
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-xs sm:text-sm font-black text-white">
+                    Modo Rápido: Despertar Inmediato
+                  </h3>
+                  <span className="text-[10px] font-mono text-cyan-300 bg-cyan-950 px-2 py-0.5 rounded-full border border-cyan-500/50 font-bold">
+                    &lt; 30 segundos
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-snug">
+                  Aterriza directamente en tu lista con 3 misiones tácticas preconfiguradas. Podrás personalizar a KAI y elegir tu arquetipo tras completar tu primera misión.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleQuickStart}
+              className="chicle-btn px-4 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-[0_0_15px_rgba(0,240,255,0.4)] flex items-center justify-center gap-2 shrink-0 cursor-pointer active:scale-95 transition-all"
+            >
+              <span>Comenzar Ahora</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
 
           {/* ════════════════════════════ PASO 1: ELEGIR A KAI (DÍA 0) ════════════════════════════ */}
           {step === 1 && (

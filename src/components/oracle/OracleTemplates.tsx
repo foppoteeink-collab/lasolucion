@@ -47,6 +47,14 @@ export const OracleTemplates: React.FC<OracleTemplatesProps> = ({ onSelectTempla
       tag: 'Nocturno',
       desc: 'Rutina adaptada con sueño matutino, entreno diurno y bloque laboral nocturno.',
       prompt: 'Despertar a las 14:00 y almuerzo de 14:30 a 15:30. Entrenamiento y activación de 16:00 a 17:30. Cena y preparación de 18:30 a 19:30. Jornada laboral nocturna de 22:00 a 06:00. Llegada a casa y descanso/sueño de 07:00 a 14:00.'
+    },
+    {
+      id: 'atleta-hibrido',
+      title: 'Atleta Híbrido & Alto Rendimiento',
+      icon: <Dumbbell className="w-4 h-4 text-rose-400" />,
+      tag: 'Táctico',
+      desc: 'Rutina deportiva de alto impacto con doble estímulo (fuerza + resistencia), recarga nutricional y sueño profundo.',
+      prompt: 'Despertar a las 06:00 con hidratación y movilidad de 06:15 a 06:45. Sesión 1 de cardio o carrera de 07:00 a 08:00. Desayuno hiperproteico y trabajo de 08:30 a 13:30. Almuerzo saludable de 13:30 a 14:30. Sesión 2 de fuerza en gimnasio de 17:30 a 19:00. Cena y baño relajante de 20:00 a 21:00. Dormir a las 22:30.'
     }
   ];
 
@@ -64,11 +72,21 @@ export const OracleTemplates: React.FC<OracleTemplatesProps> = ({ onSelectTempla
         {templates.map(tpl => (
           <div
             key={tpl.id}
+            role="button"
+            tabIndex={0}
+            aria-label={`Cargar plantilla ${tpl.title}`}
             onClick={() => {
               soundFX.playClick();
               onSelectTemplate(tpl.prompt, tpl.title);
             }}
-            className="p-3 bg-[#07111c] hover:bg-cyan-950/40 border border-slate-800 hover:border-cyan-500/50 rounded-xl transition-all cursor-pointer group flex flex-col justify-between gap-2 shadow-sm active:scale-[0.98]"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                soundFX.playClick();
+                onSelectTemplate(tpl.prompt, tpl.title);
+              }
+            }}
+            className="p-3 bg-[#07111c] hover:bg-cyan-950/40 focus:bg-cyan-950/40 border border-slate-800 hover:border-cyan-500/50 focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400/50 rounded-xl transition-all cursor-pointer group flex flex-col justify-between gap-2 shadow-sm active:scale-[0.98]"
           >
             <div>
               <div className="flex items-center justify-between gap-2">

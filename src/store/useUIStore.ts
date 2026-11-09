@@ -9,7 +9,8 @@ export type ModalName =
   | 'isPomodoroOpen' 
   | 'isNightlyReflectionOpen'
   | 'isSurpriseBossOpen'
-  | 'isHunterCollapseOpen';
+  | 'isHunterCollapseOpen'
+  | 'isDayRhythmOpen';
 
 export interface QueuedModalItem {
   id: string;
@@ -61,6 +62,7 @@ interface UIState {
   isNightlyReflectionOpen: boolean;
   isSurpriseBossOpen: boolean;
   isHunterCollapseOpen: boolean;
+  isDayRhythmOpen: boolean;
   isTaskFormOpen: boolean;
   taskFormInitialTab: 'task' | 'habit' | 'oracle';
   isTacticalGuideOpen: boolean;
@@ -287,7 +289,13 @@ const getSavedNavMode = (): NavigationMode => {
 const getSavedZenMode = (): boolean => {
   if (typeof window !== 'undefined') {
     try {
-      return localStorage.getItem('taskquest_zen_mode') === 'true';
+      const isZen = localStorage.getItem('taskquest_zen_mode') === 'true';
+      if (isZen) {
+        document.documentElement.classList.add('zen-mode');
+      } else {
+        document.documentElement.classList.remove('zen-mode');
+      }
+      return isZen;
     } catch (e) {}
   }
   return false;
@@ -372,6 +380,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   isNightlyReflectionOpen: false,
   isSurpriseBossOpen: false,
   isHunterCollapseOpen: false,
+  isDayRhythmOpen: false,
   isTaskFormOpen: false,
   taskFormInitialTab: 'task',
   isTacticalGuideOpen: false,
@@ -461,6 +470,11 @@ export const useUIStore = create<UIState>((set, get) => ({
     if (typeof window !== 'undefined') {
       try {
         localStorage.setItem('taskquest_zen_mode', String(next));
+        if (next) {
+          document.documentElement.classList.add('zen-mode');
+        } else {
+          document.documentElement.classList.remove('zen-mode');
+        }
       } catch (e) {}
     }
     set({ zenMode: next });
@@ -592,6 +606,7 @@ export const useUIStore = create<UIState>((set, get) => ({
       isNightlyReflectionOpen: false,
       isSurpriseBossOpen: false,
       isHunterCollapseOpen: false,
+      isDayRhythmOpen: false,
     });
   },
 

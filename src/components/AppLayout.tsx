@@ -8,12 +8,12 @@ import { useAppStore } from '../store/useAppStore';
 import { useUIStore, syncRootTheme } from '../store/useUIStore';
 import { usePlayerStore } from '../store/usePlayerStore';
 import { useTaskStore } from '../store/useTaskStore';
+import { useShallow } from 'zustand/react/shallow';
 import { User, FileText, Timer as TimerIcon, Store, Image as ImageIcon , AlertTriangle, XCircle, Timer, Compass, CheckSquare, BarChart3, ShoppingBag, BookOpen, Sparkles, Flame, ChevronRight, ChevronLeft, HardDrive, Swords, Calendar, Shield, FlaskConical, ChevronDown, ChevronUp, X, Cpu, RotateCw, MessageSquare } from 'lucide-react';
 import { useCloudSync } from '../hooks/useCloudSync';
 import { getArchetypeByName } from '../data/archetypes';
 import { Header } from './Header';
 import { FloatingGainEffect } from './FloatingGainEffect';
-import { FloatingEffectsOverlay } from './FloatingEffectsOverlay';
 import { FloatingJuiceOverlay } from './FloatingJuiceOverlay';
 import { TaskListView } from './TaskListView';
 
@@ -47,6 +47,8 @@ import { QuantumCubeLoader } from './QuantumCubeLoader';
 import { DamageOverlay } from './DamageOverlay';
 import { ShockwaveOverlay } from './ShockwaveOverlay';
 import { DailyProgressWidget } from './DailyProgressWidget';
+import { BetaConsentModal } from './BetaConsentModal';
+import { DayRhythmModal } from './task-list/DayRhythmModal';
 import { DailyFinanceWidget } from './DailyFinanceWidget';
 import { calculateDayFinanceTotals } from '../utils/finance';
 import { ScrollReveal } from './common/ScrollReveal';
@@ -55,8 +57,7 @@ import { NotificationToastOverlay } from './NotificationToastOverlay';
 import { PWAInstallBanner } from './PWAInstallBanner';
 import { OmniCompanionHub } from './OmniCompanionHub';
 import { SidebarHUD } from './SidebarHUD';
-import { SimulationBanner } from './SimulationBanner';
-import { DayCycleController } from './DayCycleController';
+const SimulationBanner = lazy(() => import('./SimulationBanner').then(m => ({ default: m.SimulationBanner })));
 import { getTodayDateString } from '../utils/date';
 
 const EMPTY_TASKS_ARRAY: any[] = [];
@@ -68,6 +69,7 @@ export function AppLayout() {
   const themeMode = useUIStore((s) => s.themeMode);
   const soundEnabled = useUIStore((s) => s.soundEnabled);
   const navigationMode = useUIStore((s) => s.navigationMode);
+  const handDominance = useUIStore((s) => s.handDominance);
   const isDailyRewardsOpen = useUIStore((s) => s.isDailyRewardsOpen);
   const isLevelUpOpen = useUIStore((s) => s.isLevelUpOpen);
   const isFinishDayOpen = useUIStore((s) => s.isFinishDayOpen);
@@ -79,6 +81,7 @@ export function AppLayout() {
   const surpriseBossData = useUIStore((s) => s.surpriseBossData);
   const deleteConfirmTask = useUIStore((s) => s.deleteConfirmTask);
   const floatingRewards = useUIStore((s) => s.floatingRewards);
+  const zenMode = useUIStore((s) => s.zenMode);
   const setActiveTab = useUIStore((s) => s.setActiveTab);
   const setModalState = useUIStore((s) => s.setModalState);
   const setDeleteConfirmTask = useUIStore((s) => s.setDeleteConfirmTask);
@@ -121,7 +124,34 @@ export function AppLayout() {
     shopRewards, setShopRewards, pomodoroSessions, setPomodoroSessions,
     notifications, setNotifications, comboCount, setComboCount,
     levelUpData, setLevelUpData, pomodoroPreFill, setPomodoroPreFill, reflections, setReflections
-  } = useAppStore();
+  } = useAppStore(
+    useShallow((s) => ({
+      habitMastery: s.habitMastery,
+      setHabitMastery: s.setHabitMastery,
+      gameSettings: s.gameSettings,
+      setGameSettings: s.setGameSettings,
+      skillTree: s.skillTree,
+      setSkillTree: s.setSkillTree,
+      companion: s.companion,
+      setCompanion: s.setCompanion,
+      expenses: s.expenses,
+      setExpenses: s.setExpenses,
+      shopRewards: s.shopRewards,
+      setShopRewards: s.setShopRewards,
+      pomodoroSessions: s.pomodoroSessions,
+      setPomodoroSessions: s.setPomodoroSessions,
+      notifications: s.notifications,
+      setNotifications: s.setNotifications,
+      comboCount: s.comboCount,
+      setComboCount: s.setComboCount,
+      levelUpData: s.levelUpData,
+      setLevelUpData: s.setLevelUpData,
+      pomodoroPreFill: s.pomodoroPreFill,
+      setPomodoroPreFill: s.setPomodoroPreFill,
+      reflections: s.reflections,
+      setReflections: s.setReflections,
+    }))
+  );
 
   const cloudSync = useCloudSync(
     shopRewards, setShopRewards,
@@ -173,6 +203,13 @@ export function AppLayout() {
       setIsAwakeningOpen(true);
     }
   }, [stats?.hasCompletedAwakening, stats?.level, stats?.totalXpEarned, stats?.username]);
+
+  // Listener para abrir la inducción y bienvenida de KAI a petición del usuario
+  useEffect(() => {
+    const handleOpenOnboarding = () => setIsAwakeningOpen(true);
+    window.addEventListener('lasolucion:open-onboarding', handleOpenOnboarding);
+    return () => window.removeEventListener('lasolucion:open-onboarding', handleOpenOnboarding);
+  }, []);
 
   const handleConfirmFinishDayLocal = (bonusXp: number, bonusCoins: number, manualBedtime?: string) => {
     const targetDate = useTaskStore.getState().currentViewDate || getTodayDateString();
@@ -291,15 +328,22 @@ export function AppLayout() {
         />
 
         <FloatingGainEffect rewards={floatingRewards} />
+        <FloatingJuiceOverlay />
+        <DamageOverlay />
+        {!zenMode && <ShockwaveOverlay />}
         <NotificationToastOverlay />
 
         {/* CAPA 3: CONTENIDO DE LA APP (GLASSMORPHISM) */}
         <main
           className={`relative z-10 min-h-screen flex flex-col p-3 sm:p-6 pt-safe pb-safe sm:pb-6 pointer-events-auto transition-[padding] duration-300 ease-out ${
             navigationMode === 'classic'
-              ? isSidebarDesktopExpanded
-                ? 'lg:pl-[284px]'
-                : 'lg:pl-[94px]'
+              ? handDominance === 'right'
+                ? isSidebarDesktopExpanded
+                  ? 'lg:pr-[284px] lg:pl-0'
+                  : 'lg:pr-[94px] lg:pl-0'
+                : isSidebarDesktopExpanded
+                  ? 'lg:pl-[284px] lg:pr-0'
+                  : 'lg:pl-[94px] lg:pr-0'
               : ''
           }`}
         >
@@ -342,7 +386,9 @@ export function AppLayout() {
             )}
             
             {/* Safe Sandbox Active Simulation Banner */}
-            <SimulationBanner />
+            <Suspense fallback={null}>
+              <SimulationBanner />
+            </Suspense>
 
             {/* Dynamic Tab Views */}
             <motion.div
@@ -363,9 +409,6 @@ export function AppLayout() {
             >
               {activeTab === 'dashboard' && (
                 <>
-                  {/* CONTROLADOR DE CICLO DE JORNADA */}
-                  <DayCycleController />
-
                   {/* COLLAPSIBLE LIVE SCHEDULE TIMELINE */}
                   {showBossSchedule && (
                     <motion.div 
@@ -506,6 +549,7 @@ export function AppLayout() {
                       onResetAccount={handleResetAccount}
                       cloudSync={cloudSync}
                       onOpenKaiWorkshop={() => setIsKaiWorkshopOpen(true)}
+                      onOpenOnboarding={() => setIsAwakeningOpen(true)}
                     />
                   </Suspense>
                 </motion.div>
@@ -518,6 +562,12 @@ export function AppLayout() {
 
 
       {/* Navegación en Modo Barra delegada íntegramente a SidebarHUD */}
+
+      {/* Protocolo de Consentimiento Beta y Privacidad P0 */}
+      <BetaConsentModal />
+
+      {/* Modal de Calibración de Ritmo y Jornada Diaria */}
+      <DayRhythmModal />
 
       {/* Day Routine Templates Modal */}
       {isDayTemplatesOpen && (
@@ -642,10 +692,6 @@ export function AppLayout() {
             onClaimDailyReward={handleClaimDailyReward}
             onAddJournalEntry={(note) => {
               const today = getTodayDateString();
-              const taskList = useTaskStore.getState().tasksByDate[today] || [];
-              if (taskList.length > 0) {
-                handleUpdateTaskNote(taskList[0].id, note);
-              }
               handleSaveReflection(today, note);
             }}
           />

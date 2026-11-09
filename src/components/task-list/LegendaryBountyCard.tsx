@@ -64,7 +64,10 @@ export const LegendaryBountyCard: React.FC<LegendaryBountyCardProps> = ({
     <div
       ref={cardRef}
       style={vidrioStyle}
-      onClick={() => {
+      role="region"
+      aria-label="Misión legendaria del día"
+      onClick={(e) => {
+        if ((e.target as HTMLElement).closest('button')) return;
         onOpenEditModal(task);
       }}
       className={`vi-tarjeta p-3.5 sm:p-4 rounded-2xl cursor-pointer relative overflow-hidden transition-shadow ${
@@ -117,7 +120,22 @@ export const LegendaryBountyCard: React.FC<LegendaryBountyCardProps> = ({
               ) : null}
             </div>
 
-            <h4 className="text-sm sm:text-base font-anton tracking-wide truncate mt-1">
+            <h4 
+              role="button"
+              tabIndex={0}
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenEditModal(task);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onOpenEditModal(task);
+                }
+              }}
+              aria-label={`Editar misión legendaria: ${task.title}`}
+              className="text-sm sm:text-base font-anton tracking-wide truncate mt-1 cursor-pointer hover:text-cyan-300 transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400 rounded"
+            >
               {task.completed ? (
                 <SlashText
                   text={task.title}
@@ -152,9 +170,9 @@ export const LegendaryBountyCard: React.FC<LegendaryBountyCardProps> = ({
         {/* Action button & Rewards */}
         <div className="flex items-center gap-2 shrink-0">
           <div className="text-right hidden sm:flex flex-col items-end text-xs font-mono font-bold text-amber-300">
-            <span className="text-cyan-300">+{task.xpReward} XP</span>
+            <span className="text-cyan-300">+{task.xpReward ?? 20} XP</span>
             <span className="flex items-center gap-1 text-yellow-400">
-              <Icon name="coins" className="w-3 h-3" /> +{task.coinReward}
+              <Icon name="coins" className="w-3 h-3" /> +{task.coinReward ?? 8}
             </span>
           </div>
 

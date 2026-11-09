@@ -156,15 +156,62 @@ const IconSet: Record<IconName, React.FC<{className?: string, style?: React.CSSP
   barChart: ({className, style}) => <svg className={className} style={style} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>,
 };
 
+export const normalizeIconKey = (rawName?: string): IconName | null => {
+  if (!rawName || typeof rawName !== 'string') return null;
+  const trimmed = rawName.trim();
+  if (!trimmed) return null;
+
+  // 1. Direct match
+  if (trimmed in IconSet) return trimmed as IconName;
+
+  // 2. Uncapitalize: 'Brain' -> 'brain', 'BookOpen' -> 'bookOpen'
+  const uncap = (trimmed.charAt(0).toLowerCase() + trimmed.slice(1)) as IconName;
+  if (uncap in IconSet) return uncap;
+
+  // 3. Normalized lowercase & plural/synonym mapping
+  const lower = trimmed.toLowerCase();
+  if (lower === 'droplets' || lower === 'droplet' || lower === 'water' || lower === 'agua') return 'droplet';
+  if (lower === 'dumbbell' || lower === 'dumbbells' || lower === 'gym' || lower === 'pesa' || lower === 'pesas') return 'dumbbell';
+  if (lower === 'bookopen' || lower === 'book_open' || lower === 'books' || lower === 'lectura' || lower === 'leer') return 'bookOpen';
+  if (lower === 'checksquare' || lower === 'check_square' || lower === 'checks') return 'checkSquare';
+  if (lower === 'brain' || lower === 'cerebro' || lower === 'mente') return 'brain';
+  if (lower === 'footprints' || lower === 'footprint' || lower === 'pasos' || lower === 'caminar') return 'footprints';
+  if (lower === 'sparkles' || lower === 'sparkle' || lower === 'chispa' || lower === 'chispas') return 'sparkles';
+  if (lower === 'flame' || lower === 'flames' || lower === 'fuego' || lower === 'llama') return 'flame';
+  if (lower === 'coffee' || lower === 'cafe' || lower === 'café') return 'coffee';
+  if (lower === 'sun' || lower === 'sol') return 'sun';
+  if (lower === 'moon' || lower === 'luna') return 'moon';
+  if (lower === 'smile' || lower === 'sonrisa') return 'smile';
+  if (lower === 'heart' || lower === 'corazon' || lower === 'corazón') return 'heart';
+  if (lower === 'target' || lower === 'objetivo' || lower === 'meta') return 'target';
+  if (lower === 'timer' || lower === 'temporizador' || lower === 'reloj') return 'timer';
+  if (lower === 'apple' || lower === 'manzana' || lower === 'dieta') return 'apple';
+  if (lower === 'zap' || lower === 'rayo') return 'zap';
+
+  return null;
+};
+
+export const isEmojiString = (str?: string): boolean => {
+  if (!str || typeof str !== 'string') return false;
+  // If string contains non-ASCII characters or common emoji ranges and is short (<= 4 chars)
+  return /[^\u0000-\u007F]/.test(str) && str.length <= 4;
+};
+
 export const Icon: React.FC<IconProps> = ({ name, className = 'w-4 h-4', style, strokeWidth = 2 }) => {
   if (!name) return null;
 
-  // Si el icono existe en nuestro set, renderizamos el SVG
-  if (name in IconSet) {
-    const Component = IconSet[name as IconName];
-    return <Component className={className} style={{...style, strokeWidth: strokeWidth}} />;
+  const matchedKey = normalizeIconKey(String(name));
+  if (matchedKey && matchedKey in IconSet) {
+    const Component = IconSet[matchedKey];
+    return <Component className={className} style={{ ...style, strokeWidth }} />;
   }
 
-  // Fallback: renderizamos como texto si es un emoji
-  return <span className={className} style={style}>{name}</span>;
+  // Fallback 1: Si es un emoji genuino (<= 4 chars no-ASCII), renderizarlo directamente
+  if (isEmojiString(String(name))) {
+    return <span className={className} style={style}>{name}</span>;
+  }
+
+  // Fallback 2: Si es un texto largo o identificador desconocido, NO ensuciar la interfaz con texto; usar icono por defecto (zap)
+  const DefaultIcon = IconSet.zap;
+  return <DefaultIcon className={className} style={{ ...style, strokeWidth }} />;
 };

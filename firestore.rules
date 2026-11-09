@@ -7,12 +7,13 @@ rules_version = '2';
 // Root Collection: users
 // Document ID: {userId} (matches request.auth.uid)
 // Fields in users/{userId}:
-//   - stats: map (contains nested player progression state, size <= 80)
+//   - stats: map (contains nested player progression state, size <= 85)
 //       - level: number (current player level: 1 to 500)
 //       - currentXp: number (XP gained toward next level: >= 0)
 //       - requiredXp: number (XP threshold for level up: >= 1)
 //       - totalXpEarned: number (cumulative lifetime XP: >= 0)
 //       - coins: number (in-game gold currency: 0 to 10,000,000)
+//       - coinsLastUpdated: number (timestamp ms)
 //       - hp: number (current health points: 0 to 10,000)
 //       - maxHp: number (maximum health capacity: 10 to 10,000)
 //       - streakDays: number (current consecutive day streak: 0 to 3,650)
@@ -24,7 +25,7 @@ rules_version = '2';
 //       - reRollDice: number (0 to 100)
 //       - focusPotionExpiresAt: number (timestamp ms)
 //       - unopenedBoxes: number (0 to 1,000)
-//       - kaiNeuralForgeCharges: number (0 to 1,000)
+//       - kaiNeuralForgeCharges: number (0 to 100,000)
 //       - ascensionCrystals: number (0 to 100,000)
 //       - synapticBoosters: number (0 to 1,000)
 //       - tacticalEnergyVials: number (0 to 1,000)
@@ -33,6 +34,7 @@ rules_version = '2';
 //       - legacyTotalXp: number (>= 0)
 //       - lastTimezoneOffset: number (-840 to 840)
 //       - timezoneShieldExpiresAt: number (timestamp ms)
+//       - dayStartHour: number (0 to 23)
 //       - age: number (0 to 150)
 //       - lastActiveDate: string (YYYY-MM-DD, <= 50 chars)
 //       - lastDailyRewardClaimedDate: string (YYYY-MM-DD, <= 50 chars)
@@ -57,6 +59,10 @@ rules_version = '2';
 //       - kaiVoiceTone: string (<= 50 chars)
 //       - hasCompletedAwakening: bool
 //       - hasClaimedTutorialReward: bool
+//       - betaConsentAccepted: bool
+//       - betaConsentDate: string (ISO timestamp, <= 50 chars)
+//       - tier: string ('tester' | 'free' | 'pro')
+//       - monetizationFeatures: map (feature override flags, size <= 20)
 //       - attributes: map (RPG stats: disciplina, fuerza, etc., size <= 20)
 //       - activeDailyBuff: map (size <= 20)
 //       - kaiCustomForm: map (size <= 40) or null
@@ -70,7 +76,7 @@ rules_version = '2';
 //       - seenTutorialGuides: map (size <= 50)
 //       - closedDaysLog: map (size <= 3650)
 //       - activeOverchargeContract: map (size <= 20) or null
-//       - historicalArchiveSummary: map (size <= 20)
+//       - historicalArchiveSummary: map (size <= 10)
 //   - customHabits: list (configured routine templates, size <= 200)
 //   - habitMastery: map (mastery records per habit key, size <= 500)
 //   - reflections: map (daily journal notes keyed by date, size <= 3650)
@@ -159,44 +165,260 @@ service cloud.firestore {
         && ('totalXpEarned' in stats && stats.totalXpEarned == 0);
     }
 
-    // Enforces monotonic streak progression: +1 per day max, allow reset to 0, or restore via revive/highest record
+    // Authorizes explicit full account resets while blocking coin/streak/prestige inflation during reset
+    function isValidResetDelta(oldStats, newStats) {
+      return isExplicitReset(newStats)
+        && (!('coins' in newStats) || newStats.coins == 0 || ('coins' in oldStats && oldStats.coins is number && newStats.coins <= oldStats.coins))
+        && (!('streakDays' in newStats) || newStats.streakDays == 0 || ('streakDays' in oldStats && oldStats.streakDays is number && newStats.streakDays <= oldStats.streakDays))
+        && (!('previousStreak' in newStats) || newStats.previousStreak == 0 || ('previousStreak' in oldStats && oldStats.previousStreak is number && newStats.previousStreak <= oldStats.previousStreak) || ('streakDays' in oldStats && oldStats.streakDays is number && newStats.previousStreak <= oldStats.streakDays))
+        && (!('highestStreak' in newStats) || newStats.highestStreak == 0 || ('highestStreak' in oldStats && oldStats.highestStreak is number && newStats.highestStreak <= oldStats.highestStreak))
+        && (!('ascensionTier' in newStats) || newStats.ascensionTier == 0 || ('ascensionTier' in oldStats && oldStats.ascensionTier is number && newStats.ascensionTier <= oldStats.ascensionTier))
+        && (!('ascensionCrystals' in newStats) || newStats.ascensionCrystals == 0 || ('ascensionCrystals' in oldStats && oldStats.ascensionCrystals is number && newStats.ascensionCrystals <= oldStats.ascensionCrystals))
+        && (!('legacyTotalXp' in newStats) || newStats.legacyTotalXp == 0 || ('legacyTotalXp' in oldStats && oldStats.legacyTotalXp is number && newStats.legacyTotalXp <= oldStats.legacyTotalXp));
+    }
+
+    // Ensures prestige fields (ascensionTier, ascensionCrystals, legacyTotalXp) cannot be forged on normal updates
+    function isUnchangedAscensionFields(oldStats, newStats) {
+      return (
+        (
+          (!('ascensionTier' in oldStats) || !(oldStats.ascensionTier is number))
+          && (!('ascensionTier' in newStats) || newStats.ascensionTier == 0)
+        ) || (
+          'ascensionTier' in oldStats && oldStats.ascensionTier is number && (
+            ('ascensionTier' in newStats && newStats.ascensionTier == oldStats.ascensionTier)
+            || (!('ascensionTier' in newStats) && oldStats.ascensionTier == 0)
+          )
+        )
+      ) && (
+        (
+          (!('ascensionCrystals' in oldStats) || !(oldStats.ascensionCrystals is number))
+          && (!('ascensionCrystals' in newStats) || newStats.ascensionCrystals == 0)
+        ) || (
+          'ascensionCrystals' in oldStats && oldStats.ascensionCrystals is number && (
+            ('ascensionCrystals' in newStats && newStats.ascensionCrystals == oldStats.ascensionCrystals)
+            || (!('ascensionCrystals' in newStats) && oldStats.ascensionCrystals == 0)
+          )
+        )
+      ) && (
+        (
+          (!('legacyTotalXp' in oldStats) || !(oldStats.legacyTotalXp is number))
+          && (!('legacyTotalXp' in newStats) || newStats.legacyTotalXp == 0)
+        ) || (
+          'legacyTotalXp' in oldStats && oldStats.legacyTotalXp is number && (
+            ('legacyTotalXp' in newStats && newStats.legacyTotalXp == oldStats.legacyTotalXp)
+            || (!('legacyTotalXp' in newStats) && oldStats.legacyTotalXp == 0)
+          )
+        )
+      );
+    }
+
+    // Enforces monotonic streak progression: +1 per day max, allow reset to 0, <= 7 baseline, or restore via trusted server-side previous/highest record without forging streak records
     function isValidStreakUpdate(oldStats, newStats) {
-      return !('streakDays' in newStats)
-        || !('streakDays' in oldStats)
-        || !(oldStats.streakDays is number)
-        || !(newStats.streakDays is number)
-        || newStats.streakDays == 0
-        || newStats.streakDays <= oldStats.streakDays + 1
-        || newStats.streakDays <= 7
-        || ('previousStreak' in oldStats && oldStats.previousStreak is number && newStats.streakDays <= oldStats.previousStreak)
-        || ('previousStreak' in newStats && newStats.previousStreak is number && newStats.streakDays <= newStats.previousStreak)
-        || ('highestStreak' in oldStats && oldStats.highestStreak is number && newStats.streakDays <= oldStats.highestStreak);
+      return (
+        (!('streakDays' in newStats) && !('streakDays' in oldStats))
+        || (
+          'streakDays' in newStats
+          && newStats.streakDays is number
+          && newStats.streakDays >= 0
+          && newStats.streakDays <= 3650
+          && (
+            newStats.streakDays == 0
+            || newStats.streakDays <= 7
+            || ('streakDays' in oldStats && oldStats.streakDays is number && newStats.streakDays <= oldStats.streakDays + 1)
+            || ('previousStreak' in oldStats && oldStats.previousStreak is number && newStats.streakDays <= oldStats.previousStreak)
+            || ('highestStreak' in oldStats && oldStats.highestStreak is number && newStats.streakDays <= oldStats.highestStreak)
+          )
+        )
+      ) && (
+        !('previousStreak' in newStats)
+        || (
+          newStats.previousStreak is number
+          && newStats.previousStreak >= 0
+          && newStats.previousStreak <= 3650
+          && (
+            newStats.previousStreak <= 7
+            || ('streakDays' in oldStats && oldStats.streakDays is number && newStats.previousStreak <= oldStats.streakDays)
+            || ('previousStreak' in oldStats && oldStats.previousStreak is number && newStats.previousStreak <= oldStats.previousStreak)
+            || ('highestStreak' in oldStats && oldStats.highestStreak is number && newStats.previousStreak <= oldStats.highestStreak)
+          )
+        )
+      ) && (
+        !('highestStreak' in newStats)
+        || (
+          newStats.highestStreak is number
+          && newStats.highestStreak >= 0
+          && newStats.highestStreak <= 3650
+          && (
+            newStats.highestStreak <= 7
+            || ('streakDays' in newStats && newStats.streakDays is number && newStats.highestStreak <= newStats.streakDays)
+            || ('streakDays' in oldStats && oldStats.streakDays is number && newStats.highestStreak <= oldStats.streakDays)
+            || ('highestStreak' in oldStats && oldStats.highestStreak is number && newStats.highestStreak <= oldStats.highestStreak)
+          )
+        )
+      );
     }
 
-    // Delta validation for modern player stats: prevents XP regression, level regression, and negative coins
+    // Authorizes Level 50+ -> Level 1 Prestige Ascension with strict +1 ascensionTier increment and preserved/bounded economy
+    function isValidAscension(oldStats, newStats) {
+      return oldStats is map
+        && newStats is map
+        && ('level' in oldStats && oldStats.level is number && oldStats.level >= 50)
+        && ('level' in newStats && newStats.level is number && newStats.level == 1)
+        && ('ascensionTier' in newStats && newStats.ascensionTier is number)
+        && (
+          ('ascensionTier' in oldStats && oldStats.ascensionTier is number && newStats.ascensionTier == oldStats.ascensionTier + 1)
+          || ((!('ascensionTier' in oldStats) || !(oldStats.ascensionTier is number)) && newStats.ascensionTier == 1)
+        )
+        && (
+          !('ascensionCrystals' in newStats)
+          || (
+            newStats.ascensionCrystals is number
+            && (
+              ('ascensionCrystals' in oldStats && oldStats.ascensionCrystals is number && newStats.ascensionCrystals == oldStats.ascensionCrystals + 1)
+              || ((!('ascensionCrystals' in oldStats) || !(oldStats.ascensionCrystals is number)) && newStats.ascensionCrystals == 1)
+            )
+          )
+        )
+        && (
+          ((!('coins' in oldStats) || !(oldStats.coins is number)) && (!('coins' in newStats) || newStats.coins == 0))
+          || ('coins' in oldStats && 'coins' in newStats && oldStats.coins is number && newStats.coins is number && newStats.coins == oldStats.coins)
+        )
+        && (
+          ((!('totalXpEarned' in oldStats) || !(oldStats.totalXpEarned is number)) && (!('totalXpEarned' in newStats) || (newStats.totalXpEarned is number && newStats.totalXpEarned >= 0 && newStats.totalXpEarned <= 5000)))
+          || (
+            'totalXpEarned' in oldStats
+            && 'totalXpEarned' in newStats
+            && oldStats.totalXpEarned is number
+            && newStats.totalXpEarned is number
+            && newStats.totalXpEarned >= oldStats.totalXpEarned
+            && newStats.totalXpEarned <= oldStats.totalXpEarned + 5000
+          )
+        )
+        && (
+          !('legacyTotalXp' in newStats)
+          || (
+            newStats.legacyTotalXp is number
+            && newStats.legacyTotalXp >= 0
+            && (!('legacyTotalXp' in oldStats) || !(oldStats.legacyTotalXp is number) || newStats.legacyTotalXp >= oldStats.legacyTotalXp)
+            && (
+              !('totalXpEarned' in oldStats)
+              || !(oldStats.totalXpEarned is number)
+              || (
+                ('legacyTotalXp' in oldStats && oldStats.legacyTotalXp is number && newStats.legacyTotalXp <= oldStats.legacyTotalXp + oldStats.totalXpEarned + 5000)
+                || (!('legacyTotalXp' in oldStats) && newStats.legacyTotalXp <= oldStats.totalXpEarned + 5000)
+              )
+            )
+          )
+        )
+        && isValidStreakUpdate(oldStats, newStats);
+    }
+
+    // Delta validation for modern player stats: supports Level 50+ ascension, legitimate task/day rollbacks (>= 0 XP, >= 1 level), and caps upward burst jumps (+2 lvl, +5000 XP, +1000 coins)
     function isValidStatsDelta(oldStats, newStats) {
-      return isExplicitReset(newStats) || (
-        (!('totalXpEarned' in oldStats) || !('totalXpEarned' in newStats) || !(oldStats.totalXpEarned is number) || !(newStats.totalXpEarned is number) || newStats.totalXpEarned >= oldStats.totalXpEarned)
-        && (!('level' in oldStats) || !('level' in newStats) || !(oldStats.level is number) || !(newStats.level is number) || newStats.level >= oldStats.level)
-        && isValidStreakUpdate(oldStats, newStats)
-        && (!('coins' in newStats) || (newStats.coins is number && newStats.coins >= 0))
-      );
+      return isValidResetDelta(oldStats, newStats)
+        || isValidAscension(oldStats, newStats)
+        || (
+          isUnchangedAscensionFields(oldStats, newStats)
+          && (
+            (!('totalXpEarned' in newStats) && !('totalXpEarned' in oldStats))
+            || (
+              'totalXpEarned' in newStats
+              && newStats.totalXpEarned is number
+              && newStats.totalXpEarned >= 0
+              && (
+                ('totalXpEarned' in oldStats && oldStats.totalXpEarned is number && newStats.totalXpEarned <= oldStats.totalXpEarned + 5000)
+                || ((!('totalXpEarned' in oldStats) || !(oldStats.totalXpEarned is number)) && newStats.totalXpEarned <= 5000)
+              )
+            )
+          )
+          && (
+            (!('level' in newStats) && !('level' in oldStats))
+            || (
+              'level' in newStats
+              && newStats.level is number
+              && newStats.level >= 1
+              && (
+                ('level' in oldStats && oldStats.level is number && newStats.level <= oldStats.level + 2)
+                || ((!('level' in oldStats) || !(oldStats.level is number)) && newStats.level <= 3)
+              )
+            )
+          )
+          && isValidStreakUpdate(oldStats, newStats)
+          && (
+            (!('coins' in newStats) && !('coins' in oldStats))
+            || (
+              'coins' in newStats
+              && newStats.coins is number
+              && newStats.coins >= 0
+              && newStats.coins <= 10000000
+              && (
+                ('coins' in oldStats && oldStats.coins is number && newStats.coins <= oldStats.coins + 1000)
+                || ((!('coins' in oldStats) || !(oldStats.coins is number)) && newStats.coins <= 1000)
+              )
+            )
+          )
+        );
     }
 
-    // Delta validation for legacy root stats: prevents XP regression, level regression, and negative coins
+    // Delta validation for legacy root stats: allows modern docs without root legacy stats, supports ascension/rollbacks, and caps upward jumps (+2 lvl, +5000 XP, +1000 coins)
     function isValidLegacyDelta(oldData, newData) {
-      return (('level' in newData && newData.level == 1) && ('totalXpEarned' in newData && newData.totalXpEarned == 0)) || (
-        (!('totalXpEarned' in oldData) || !('totalXpEarned' in newData) || !(oldData.totalXpEarned is number) || !(newData.totalXpEarned is number) || newData.totalXpEarned >= oldData.totalXpEarned)
-        && (!('level' in oldData) || !('level' in newData) || !(oldData.level is number) || !(newData.level is number) || newData.level >= oldData.level)
-        && (!('streakDays' in oldData) || !('streakDays' in newData) || !(oldData.streakDays is number) || !(newData.streakDays is number) || newData.streakDays <= oldData.streakDays + 1 || newData.streakDays == 0 || newData.streakDays <= 7)
-        && (!('coins' in newData) || (newData.coins is number && newData.coins >= 0))
-      );
+      return (
+        'stats' in newData
+        && newData.stats is map
+        && !('totalXpEarned' in newData)
+        && !('level' in newData)
+        && !('coins' in newData)
+        && !('streakDays' in newData)
+      ) || isValidResetDelta(oldData, newData)
+        || isValidAscension(oldData, newData)
+        || (
+          isUnchangedAscensionFields(oldData, newData)
+          && (
+            (!('totalXpEarned' in newData) && !('totalXpEarned' in oldData))
+            || (
+              'totalXpEarned' in newData
+              && newData.totalXpEarned is number
+              && newData.totalXpEarned >= 0
+              && (
+                ('totalXpEarned' in oldData && oldData.totalXpEarned is number && newData.totalXpEarned <= oldData.totalXpEarned + 5000)
+                || ((!('totalXpEarned' in oldData) || !(oldData.totalXpEarned is number)) && newData.totalXpEarned <= 5000)
+              )
+            )
+          )
+          && (
+            (!('level' in newData) && !('level' in oldData))
+            || (
+              'level' in newData
+              && newData.level is number
+              && newData.level >= 1
+              && (
+                ('level' in oldData && oldData.level is number && newData.level <= oldData.level + 2)
+                || ((!('level' in oldData) || !(oldData.level is number)) && newData.level <= 3)
+              )
+            )
+          )
+          && isValidStreakUpdate(oldData, newData)
+          && (
+            (!('coins' in newData) && !('coins' in oldData))
+            || (
+              'coins' in newData
+              && newData.coins is number
+              && newData.coins >= 0
+              && newData.coins <= 10000000
+              && (
+                ('coins' in oldData && oldData.coins is number && newData.coins <= oldData.coins + 1000)
+                || ((!('coins' in oldData) || !(oldData.coins is number)) && newData.coins <= 1000)
+              )
+            )
+          )
+        );
     }
 
-    // Comprehensive document-level update guard: prevents UID tampering and verifies economy progression
+    // Comprehensive document-level update guard: prevents UID tampering, blocks stats deletion, and verifies economy progression
     function isValidUserDocUpdate(oldData, newData) {
       return (!('uid' in oldData) || !('uid' in newData) || newData.uid == oldData.uid)
-        && (!('stats' in oldData) || !(oldData.stats is map) || !('stats' in newData) || !(newData.stats is map) || isValidStatsDelta(oldData.stats, newData.stats))
+        && (!('stats' in oldData) || !(oldData.stats is map) || ('stats' in newData && newData.stats is map && isValidStatsDelta(oldData.stats, newData.stats)))
+        && (('stats' in oldData && oldData.stats is map) || !('stats' in newData) || !(newData.stats is map) || isValidStatsDelta(oldData, newData.stats))
         && isValidLegacyDelta(oldData, newData);
     }
 
@@ -204,15 +426,25 @@ service cloud.firestore {
     // Domain Validators
     // ===============================================================
 
+    // Validates historical archive summary map inside player stats
+    function isValidHistoricalSummary(summary) {
+      return summary is map
+        && summary.size() <= 10
+        && (!('totalCompletedCount' in summary) || (summary.totalCompletedCount is number && summary.totalCompletedCount >= 0))
+        && (!('lastCompactedAt' in summary) || (summary.lastCompactedAt is string && summary.lastCompactedAt.size() <= 50))
+        && (!('byCategory' in summary) || (summary.byCategory is map && summary.byCategory.size() <= 20));
+    }
+
     // Validates the nested PlayerStats map stored in modern user documents
     function isValidStatsMap(stats) {
       return stats is map
-        && stats.size() <= 80
+        && stats.size() <= 85
         && (!('level' in stats) || (stats.level is number && stats.level >= 1 && stats.level <= 500))
         && (!('currentXp' in stats) || (stats.currentXp is number && stats.currentXp >= 0))
         && (!('requiredXp' in stats) || (stats.requiredXp is number && stats.requiredXp >= 1))
         && (!('totalXpEarned' in stats) || (stats.totalXpEarned is number && stats.totalXpEarned >= 0))
         && (!('coins' in stats) || (stats.coins is number && stats.coins >= 0 && stats.coins <= 10000000))
+        && (!('coinsLastUpdated' in stats) || stats.coinsLastUpdated is number)
         && (!('hp' in stats) || (stats.hp is number && stats.hp >= 0 && stats.hp <= 10000))
         && (!('maxHp' in stats) || (stats.maxHp is number && stats.maxHp >= 10 && stats.maxHp <= 10000))
         && (!('streakDays' in stats) || (stats.streakDays is number && stats.streakDays >= 0 && stats.streakDays <= 3650))
@@ -224,7 +456,7 @@ service cloud.firestore {
         && (!('reRollDice' in stats) || (stats.reRollDice is number && stats.reRollDice >= 0 && stats.reRollDice <= 100))
         && (!('focusPotionExpiresAt' in stats) || stats.focusPotionExpiresAt is number)
         && (!('unopenedBoxes' in stats) || (stats.unopenedBoxes is number && stats.unopenedBoxes >= 0 && stats.unopenedBoxes <= 1000))
-        && (!('kaiNeuralForgeCharges' in stats) || (stats.kaiNeuralForgeCharges is number && stats.kaiNeuralForgeCharges >= 0 && stats.kaiNeuralForgeCharges <= 1000))
+        && (!('kaiNeuralForgeCharges' in stats) || (stats.kaiNeuralForgeCharges is number && stats.kaiNeuralForgeCharges >= 0 && stats.kaiNeuralForgeCharges <= 100000))
         && (!('ascensionCrystals' in stats) || (stats.ascensionCrystals is number && stats.ascensionCrystals >= 0 && stats.ascensionCrystals <= 100000))
         && (!('synapticBoosters' in stats) || (stats.synapticBoosters is number && stats.synapticBoosters >= 0 && stats.synapticBoosters <= 1000))
         && (!('tacticalEnergyVials' in stats) || (stats.tacticalEnergyVials is number && stats.tacticalEnergyVials >= 0 && stats.tacticalEnergyVials <= 1000))
@@ -233,6 +465,7 @@ service cloud.firestore {
         && (!('legacyTotalXp' in stats) || (stats.legacyTotalXp is number && stats.legacyTotalXp >= 0))
         && (!('lastTimezoneOffset' in stats) || (stats.lastTimezoneOffset is number && stats.lastTimezoneOffset >= -840 && stats.lastTimezoneOffset <= 840))
         && (!('timezoneShieldExpiresAt' in stats) || stats.timezoneShieldExpiresAt is number)
+        && (!('dayStartHour' in stats) || (stats.dayStartHour is number && stats.dayStartHour >= 0 && stats.dayStartHour <= 23))
         && (!('age' in stats) || (stats.age is number && stats.age >= 0 && stats.age <= 150))
         && (!('lastActiveDate' in stats) || (stats.lastActiveDate is string && stats.lastActiveDate.size() <= 50))
         && (!('lastDailyRewardClaimedDate' in stats) || (stats.lastDailyRewardClaimedDate is string && stats.lastDailyRewardClaimedDate.size() <= 50))
@@ -257,6 +490,10 @@ service cloud.firestore {
         && (!('kaiVoiceTone' in stats) || (stats.kaiVoiceTone is string && stats.kaiVoiceTone.size() <= 50))
         && (!('hasCompletedAwakening' in stats) || stats.hasCompletedAwakening is bool)
         && (!('hasClaimedTutorialReward' in stats) || stats.hasClaimedTutorialReward is bool)
+        && (!('betaConsentAccepted' in stats) || stats.betaConsentAccepted is bool)
+        && (!('betaConsentDate' in stats) || (stats.betaConsentDate is string && stats.betaConsentDate.size() <= 50))
+        && (!('tier' in stats) || (stats.tier is string && stats.tier in ['tester', 'free', 'pro']))
+        && (!('monetizationFeatures' in stats) || (stats.monetizationFeatures is map && stats.monetizationFeatures.size() <= 20))
         && (!('attributes' in stats) || (stats.attributes is map && stats.attributes.size() <= 20))
         && (!('activeDailyBuff' in stats) || (stats.activeDailyBuff is map && stats.activeDailyBuff.size() <= 20))
         && (!('kaiCustomForm' in stats) || stats.kaiCustomForm == null || (stats.kaiCustomForm is map && stats.kaiCustomForm.size() <= 40))
@@ -270,7 +507,7 @@ service cloud.firestore {
         && (!('seenTutorialGuides' in stats) || (stats.seenTutorialGuides is map && stats.seenTutorialGuides.size() <= 50))
         && (!('closedDaysLog' in stats) || (stats.closedDaysLog is map && stats.closedDaysLog.size() <= 3650))
         && (!('activeOverchargeContract' in stats) || stats.activeOverchargeContract == null || (stats.activeOverchargeContract is map && stats.activeOverchargeContract.size() <= 20))
-        && (!('historicalArchiveSummary' in stats) || (stats.historicalArchiveSummary is map && stats.historicalArchiveSummary.size() <= 20));
+        && (!('historicalArchiveSummary' in stats) || isValidHistoricalSummary(stats.historicalArchiveSummary));
     }
 
     // Validates flat legacy fields directly at the document root for backward compatibility
@@ -332,7 +569,7 @@ service cloud.firestore {
     // Validates individual tasks under /users/{userId}/tasks/{taskId}
     function isValidTaskItem(data) {
       return data.keys().hasAll(['id', 'title'])
-        && data.keys().size() <= 40
+        && data.keys().size() <= 45
         && data.id is string && data.id.size() > 0 && data.id.size() <= 100
         && data.title is string && data.title.size() <= 300
         && (!('description' in data) || (data.description is string && data.description.size() <= 1000))
@@ -369,7 +606,9 @@ service cloud.firestore {
         && (!('habitEnergyType' in data) || (data.habitEnergyType is string && data.habitEnergyType.size() <= 50))
         && (!('chestAwarded' in data) || data.chestAwarded is bool)
         && (!('targetStreak' in data) || (data.targetStreak is number && (data.targetStreak == 21 || data.targetStreak == 66)))
-        && (!('tags' in data) || (data.tags is list && data.tags.size() <= 20));
+        && (!('tags' in data) || (data.tags is list && data.tags.size() <= 20))
+        && (!('isDeleted' in data) || data.isDeleted is bool)
+        && (!('deletedAt' in data) || (data.deletedAt is string && data.deletedAt.size() <= 50));
     }
 
     // Validates Pomodoro focus records under /users/{userId}/pomodoro_history/{sessionId}

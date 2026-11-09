@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Cloud, HardDrive, CheckCircle2, RefreshCw, AlertTriangle, 
-  Download, Upload, ShieldCheck, Check, AlertCircle, Sparkles, LogIn
+  Download, Upload, Check, AlertCircle, Sparkles, LogIn, KeyRound
 } from 'lucide-react';
+import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { auth, createGoogleDriveProvider } from '../firebase';
 import { useAuth } from '../context/AuthContext';
 import { soundFX } from '../utils/audio';
 import { 
@@ -16,48 +18,105 @@ import {
 import { MoxenRayas } from './moxen/MoxenRayas';
 
 export const GoogleDriveSyncCard: React.FC = () => {
-  const { user, accessToken, signInWithGoogle } = useAuth();
+  const { user, signInWithGoogle } = useAuth();
 
   const [isLoading, setIsLoading] = useState(false);
+  const [driveAccessToken, setDriveAccessToken] = useState<string | null>(null);
   const [syncProgress, setSyncProgress] = useState(0);
   const [syncOperation, setSyncOperation] = useState<'upload' | 'download' | null>(null);
   const [driveFile, setDriveFile] = useState<DriveFileInfo | null>(null);
   const [hasChecked, setHasChecked] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
 
-  // Dialog confirmation states (mandatory per Workspace skill)
+  // Dialog confirmation states
   const [showUploadConfirm, setShowUploadConfirm] = useState(false);
   const [showDownloadConfirm, setShowDownloadConfirm] = useState(false);
   const [pendingDownloadData, setPendingDownloadData] = useState<any | null>(null);
 
-  // Check if a backup file exists in Drive when user is authenticated with token
-  const checkDriveBackup = async (token?: string) => {
-    const activeToken = token || accessToken;
-    if (!activeToken) return;
-
+  /**
+   * P0: Autorización Incremental Bajo Demanda (OAuth Scope Isolation)
+   * Solicita el scope https://www.googleapis.com/auth/drive.file exclusivamente
+   * cuando el tester decide conscientemente respaldar o restaurar desde su Google Drive.
+   */
+  const requestDriveAuthorization = useCallback(async (): Promise<string | null> => {
+    if (!auth) return null;
     try {
       setIsLoading(true);
-      const file = await findDriveBackupFile(activeToken);
-      setDriveFile(file);
-      setHasChecked(true);
+      setStatusMessage(null);
+      const driveProvider = createGoogleDriveProvider();
+      const result = await signInWithPopup(auth, driveProvider);
+      const credential = GoogleAuthProvider.credentialFromResult(result);
+      const token = credential?.accessToken || null;
+
+      if (token) {
+        setDriveAccessToken(token);
+        return token;
+      }
+      throw new Error('No se recibió token de acceso para Google Drive.');
     } catch (err: any) {
-      console.warn('Error checking Drive backup:', err);
+      if (err?.code === 'auth/popup-closed-by-user' || err?.code === 'auth/cancelled-popup-request') {
+        setStatusMessage({ type: 'info', text: 'Autorización de Google Drive cancelada.' });
+      } else {
+        console.error('[GoogleDriveSync] Incremental Auth Error:', err);
+        setStatusMessage({
+          type: 'error',
+          text: err?.message || 'Error al autorizar acceso a Google Drive.',
+        });
+      }
+      return null;
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  // Comprueba la existencia del archivo de copia en Drive si ya existe token autorizado
+  const checkDriveBackup = useCallback(async (tokenToUse?: string) => {
+    const token = tokenToUse || driveAccessToken;
+    if (!token) return;
+
+    try {
+      setIsLoading(true);
+      const file = await findDriveBackupFile(token);
+      setDriveFile(file);
+      setHasChecked(true);
+    } catch (err: any) {
+      console.warn('[GoogleDriveSync] Check backup warning:', err);
+      if (err?.message?.includes('401') || err?.message?.includes('expirada')) {
+        setDriveAccessToken(null);
+        setStatusMessage({
+          type: 'info',
+          text: 'Sesión de Drive caducada. Reautoriza para comprobar el archivo.',
+        });
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, [driveAccessToken]);
 
   useEffect(() => {
-    if (user && accessToken && !hasChecked) {
-      checkDriveBackup(accessToken);
+    if (user && driveAccessToken && !hasChecked) {
+      checkDriveBackup(driveAccessToken);
     }
-  }, [user, accessToken]);
+  }, [user, driveAccessToken, hasChecked, checkDriveBackup]);
 
-  // Handler for uploading current app state to Google Drive
+  // Manejador para iniciar el flujo de guardado garantizando token válido
+  const handleInitiateUpload = async () => {
+    soundFX.playClick();
+    let token = driveAccessToken;
+    if (!token) {
+      token = await requestDriveAuthorization();
+      if (!token) return;
+      await checkDriveBackup(token);
+    }
+    setShowUploadConfirm(true);
+  };
+
+  // Ejecuta la subida efectiva del estado de la aplicación
   const executeUpload = async () => {
-    if (!accessToken) {
-      setStatusMessage({ type: 'error', text: 'Por favor, inicia sesión con Google para acceder a tu Drive.' });
-      return;
+    let token = driveAccessToken;
+    if (!token) {
+      token = await requestDriveAuthorization();
+      if (!token) return;
     }
 
     try {
@@ -69,7 +128,7 @@ export const GoogleDriveSyncCard: React.FC = () => {
 
       const currentState = gatherCurrentAppState();
       setSyncProgress(0.65);
-      const updatedFile = await uploadBackupToDrive(accessToken, currentState, driveFile?.id);
+      const updatedFile = await uploadBackupToDrive(token, currentState, driveFile?.id);
 
       setSyncProgress(1);
       setDriveFile(updatedFile);
@@ -77,11 +136,14 @@ export const GoogleDriveSyncCard: React.FC = () => {
       soundFX.playLevelUp();
       setStatusMessage({
         type: 'success',
-        text: `¡Copia guardada con éxito en tu Google Drive! (${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`,
+        text: `¡Copia guardada con éxito en Google Drive! (${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`,
       });
     } catch (err: any) {
       console.error('Drive upload failed:', err);
       soundFX.playGlitch();
+      if (err?.message?.includes('401')) {
+        setDriveAccessToken(null);
+      }
       setStatusMessage({
         type: 'error',
         text: err?.message || 'Error al guardar en Google Drive.',
@@ -95,11 +157,13 @@ export const GoogleDriveSyncCard: React.FC = () => {
     }
   };
 
-  // Handler for preparing restore: downloads and checks data before user confirms
+  // Manejador para preparar la descarga garantizando token de Drive
   const handlePrepareDownload = async () => {
-    if (!accessToken) {
-      setStatusMessage({ type: 'error', text: 'Por favor, inicia sesión con Google para acceder a tu Drive.' });
-      return;
+    soundFX.playClick();
+    let token = driveAccessToken;
+    if (!token) {
+      token = await requestDriveAuthorization();
+      if (!token) return;
     }
 
     try {
@@ -107,11 +171,10 @@ export const GoogleDriveSyncCard: React.FC = () => {
       setSyncOperation('download');
       setSyncProgress(0.2);
       setStatusMessage(null);
-      soundFX.playClick();
 
       let targetFileId = driveFile?.id;
       if (!targetFileId) {
-        const file = await findDriveBackupFile(accessToken);
+        const file = await findDriveBackupFile(token);
         if (!file) {
           setStatusMessage({
             type: 'info',
@@ -126,13 +189,16 @@ export const GoogleDriveSyncCard: React.FC = () => {
       }
 
       setSyncProgress(0.6);
-      const backupData = await downloadBackupFromDrive(accessToken, targetFileId);
+      const backupData = await downloadBackupFromDrive(token, targetFileId);
       setSyncProgress(1);
       setPendingDownloadData(backupData);
       setShowDownloadConfirm(true);
     } catch (err: any) {
       console.error('Drive download failed:', err);
       soundFX.playGlitch();
+      if (err?.message?.includes('401')) {
+        setDriveAccessToken(null);
+      }
       setStatusMessage({
         type: 'error',
         text: err?.message || 'Error al descargar la copia desde Google Drive.',
@@ -146,7 +212,7 @@ export const GoogleDriveSyncCard: React.FC = () => {
     }
   };
 
-  // Handler for confirming restoration of app state
+  // Confirma y aplica la restauración de estado
   const executeDownload = () => {
     if (!pendingDownloadData) return;
 
@@ -185,16 +251,18 @@ export const GoogleDriveSyncCard: React.FC = () => {
               Nube de Google / Gmail (Google Drive)
             </h3>
             <p className="text-xs text-slate-400 mt-0.5">
-              Respalda y carga tu partida, misiones, hábitos y balances en el almacenamiento de tu cuenta de Google.
+              Respaldo voluntario y seguro en el almacenamiento de tu cuenta personal de Google.
             </p>
           </div>
         </div>
 
         {user && (
-          <span className="text-[11px] font-mono px-2.5 py-1 rounded-full bg-cyan-950/80 text-cyan-300 border border-cyan-500/40 flex items-center gap-1.5 shrink-0">
-            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-            Conectado a Gmail
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-mono px-2.5 py-1 rounded-full bg-cyan-950/80 text-cyan-300 border border-cyan-500/40 flex items-center gap-1.5 shrink-0">
+              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+              {driveAccessToken ? 'Drive Vinculado' : 'Google Auth OK'}
+            </span>
+          </div>
         )}
       </div>
 
@@ -206,7 +274,7 @@ export const GoogleDriveSyncCard: React.FC = () => {
               <Cloud className="w-4 h-4 text-amber-400" /> Conecta tu cuenta de Gmail / Google
             </p>
             <p className="text-xs text-slate-400 leading-relaxed max-w-xl">
-              Conecta tu cuenta de Google para respaldar y sincronizar tus datos en la nube.
+              Autenticación básica de tester. No se solicitarán permisos de Drive hasta que decidas realizar un respaldo.
             </p>
           </div>
 
@@ -214,10 +282,7 @@ export const GoogleDriveSyncCard: React.FC = () => {
             type="button"
             onClick={async () => {
               soundFX.playClick();
-              const res = await signInWithGoogle();
-              if (res?.accessToken) {
-                checkDriveBackup(res.accessToken);
-              }
+              await signInWithGoogle();
             }}
             className="chicle-btn flex items-center justify-center gap-2.5 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-[0_0_15px_rgba(37,99,235,0.4)] transition-all cursor-pointer shrink-0"
           >
@@ -253,17 +318,29 @@ export const GoogleDriveSyncCard: React.FC = () => {
                 <span className="text-slate-400 text-[11px] italic">
                   Sin copia creada aún en Drive
                 </span>
+              ) : !driveAccessToken ? (
+                <button
+                  type="button"
+                  onClick={requestDriveAuthorization}
+                  disabled={isLoading}
+                  className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-blue-900/50 hover:bg-blue-800 text-cyan-300 border border-cyan-500/30 flex items-center gap-1.5 transition-colors"
+                >
+                  <KeyRound className="w-3 h-3 text-cyan-400" />
+                  Autorizar Drive
+                </button>
               ) : null}
 
-              <button
-                type="button"
-                onClick={() => checkDriveBackup()}
-                disabled={isLoading}
-                title="Comprobar archivo en Drive"
-                className="chicle-btn p-2 rounded-lg bg-blue-950/60 hover:bg-blue-900/60 text-cyan-300 border border-blue-800 transition-colors cursor-pointer disabled:opacity-50"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
-              </button>
+              {driveAccessToken && (
+                <button
+                  type="button"
+                  onClick={() => checkDriveBackup()}
+                  disabled={isLoading}
+                  title="Comprobar archivo en Drive"
+                  className="chicle-btn p-2 rounded-lg bg-blue-950/60 hover:bg-blue-900/60 text-cyan-300 border border-blue-800 transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+                </button>
+              )}
             </div>
           </div>
 
@@ -271,7 +348,7 @@ export const GoogleDriveSyncCard: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
             <button
               type="button"
-              onClick={() => setShowUploadConfirm(true)}
+              onClick={handleInitiateUpload}
               disabled={isLoading}
               className="chicle-btn min-h-[46px] px-4 py-3 bg-[#002850] hover:bg-[#003870] text-cyan-300 hover:text-white font-black text-xs uppercase tracking-wider rounded-xl border border-cyan-600/50 hover:border-cyan-400 flex items-center justify-center gap-2.5 transition-all cursor-pointer shadow-sm disabled:opacity-50"
             >
@@ -344,7 +421,7 @@ export const GoogleDriveSyncCard: React.FC = () => {
             </div>
 
             <p className="text-xs text-slate-300 leading-relaxed">
-              Se guardará una copia cifrada en tu Google Drive personal con tu progreso, tareas y hábitos.
+              Se creará o actualizará el archivo de respaldo seguro en tu Google Drive personal con tu progreso, misiones y hábitos.
               {driveFile && (
                 <span className="block mt-1 text-amber-300 font-semibold text-[11px]">
                   ⚠️ Sobrescribirá la copia del {new Date(driveFile.modifiedTime).toLocaleDateString()}.
