@@ -637,7 +637,20 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                       <input
                         type="checkbox"
                         checked={isHabitType}
-                        onChange={(e) => setIsHabitType(e.target.checked)}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setIsHabitType(checked);
+                          if (checked && habitTarget <= 1) {
+                            const match = newTitle.match(/(\d+)\s*(vasos?|litros?|mins?|minutos?|veces|p[aá]ginas?|km|pasos?|horas?|comidas?|sesiones?)?/i);
+                            const parsedTarget = match ? parseInt(match[1], 10) : NaN;
+                            const nextTarget = Number.isFinite(parsedTarget) && parsedTarget > 1 ? parsedTarget : 3;
+                            setHabitTarget(nextTarget);
+                            const parsedUnit = match?.[2]?.trim();
+                            if (parsedUnit && (!habitUnit || habitUnit === 'veces' || habitUnit === 'vez')) {
+                              setNewHabitUnit(parsedUnit.toLowerCase());
+                            }
+                          }
+                        }}
                         className="w-4 h-4 rounded border-gray-700 text-purple-500 focus:ring-purple-500 cursor-pointer"
                       />
                     </label>

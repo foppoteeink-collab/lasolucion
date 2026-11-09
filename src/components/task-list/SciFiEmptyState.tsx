@@ -1,6 +1,7 @@
 import React from 'react';
 import { Plus, ShieldCheck, FilterX, RefreshCw, Radar } from 'lucide-react';
 import { soundFX } from '../../utils/audio';
+import { useNarrativeCopy } from '../../hooks/useNarrativeCopy';
 
 interface SciFiEmptyStateProps {
   totalTasksInDay: number;
@@ -22,6 +23,7 @@ export const SciFiEmptyState: React.FC<SciFiEmptyStateProps> = ({
   onClearFilters,
 }) => {
   const isFiltered = selectedCategory !== 'todos' || activeFilter !== 'todos' || Boolean(searchTerm);
+  const copy = useNarrativeCopy();
 
   return (
     <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-[#001428]/90 border border-blue-500/40 p-6 sm:p-10 text-center shadow-[0_0_30px_rgba(0,140,255,0.15)] backdrop-blur-md transition-all my-4">
@@ -55,10 +57,10 @@ export const SciFiEmptyState: React.FC<SciFiEmptyStateProps> = ({
           {searchTerm
             ? 'Sin resultados'
             : selectedCategory !== 'todos'
-            ? `Sector vacío: ${selectedCategory}`
+            ? `Categoría vacía: ${selectedCategory}`
             : activeFilter !== 'todos'
-            ? `Filtro sin misiones`
-            : 'SECTOR DESPEJADO'}
+            ? `Sin registros en este filtro`
+            : copy.emptyClearHeadline}
         </h3>
 
         {/* Descriptive Body Copy */}
@@ -66,9 +68,9 @@ export const SciFiEmptyState: React.FC<SciFiEmptyStateProps> = ({
           {searchTerm ? (
             <>Sin coincidencias para <span className="text-cyan-300 font-bold">"{searchTerm}"</span>.</>
           ) : isFiltered ? (
-            'Sin registros en esta vista. Ajusta filtros o asigna una misión.'
+            copy.emptyFilterDescription
           ) : (
-            'Sin misiones pendientes. Inicia una pauta o descansa.'
+            copy.emptyClearDescription
           )}
         </p>
 
@@ -84,7 +86,7 @@ export const SciFiEmptyState: React.FC<SciFiEmptyStateProps> = ({
             className="btn-neon-hunter min-h-[44px] px-5 py-2 rounded-xl text-xs sm:text-sm active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg uppercase font-black tracking-wider"
           >
             <Plus className="w-4 h-4 stroke-[3]" />
-            <span>NUEVA MISIÓN</span>
+            <span>{copy.emptyPrimaryCta}</span>
           </button>
 
           {/* Reset Routine Button */}
@@ -98,7 +100,7 @@ export const SciFiEmptyState: React.FC<SciFiEmptyStateProps> = ({
               className="min-h-[42px] px-4 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/50 hover:border-amber-400 font-bold text-xs sm:text-sm shadow-[0_0_12px_rgba(245,158,11,0.25)] active:scale-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer uppercase tracking-wider"
             >
               <RefreshCw className="w-4 h-4 text-amber-400" />
-              <span>REINICIAR PAUTA</span>
+              <span>{copy.emptyResetDayCta}</span>
             </button>
           )}
 

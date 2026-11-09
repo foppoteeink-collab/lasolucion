@@ -12,6 +12,7 @@ import { usePlayerStore } from '../store/usePlayerStore';
 import { evaluateOverchargeContract } from '../utils/level3Systems';
 import { generateAndShareLegacyCard } from '../utils/shareCardGenerator';
 import { getKaiPhrase } from '../data/kaiVoiceMatrix';
+import { useNarrativeCopy } from '../hooks/useNarrativeCopy';
 
 interface NightlyTunnelProps {
   isOpen: boolean;
@@ -36,6 +37,7 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
 }) => {
   const [reflectionText, setReflectionText] = useState('');
   const [isConsolidating, setIsConsolidating] = useState(false);
+  const copy = useNarrativeCopy();
 
   const now = new Date();
   const currentLocalTime = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
@@ -206,13 +208,13 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(0,240,255,0.8)] animate-pulse" />
             <span id="nightly-tunnel-title" className="text-[11px] font-anton uppercase tracking-widest text-cyan-300">
-              Cierre Nocturno · {formattedFullDate}
+              {copy.nightlyHeaderBadge} · {formattedFullDate}
             </span>
           </div>
 
           <div className="flex items-center gap-2">
             <div className={`px-2.5 py-0.5 rounded-lg border text-xs font-anton font-black ${gradeBadgeColor}`}>
-              RANGO {grade}
+              {copy.nightlyRankLabel} {grade}
             </div>
             <button
               type="button"
@@ -447,7 +449,7 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
             ) : (
               <>
                 <Icon name="moon" className="w-4 h-4 text-cyan-200" />
-                <span>Consolidar y Descansar (+{totalBonusXp} XP / +{totalBonusCoins}🪙)</span>
+                <span>{copy.nightlyConsolidatePrefix} (+{totalBonusXp} XP / +{totalBonusCoins}🪙)</span>
               </>
             )}
           </button>

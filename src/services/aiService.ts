@@ -96,6 +96,7 @@ export interface GeminiRequestOptions {
   modelName?: string;
   systemInstruction?: string;
   jsonMode?: boolean;
+  timeoutMs?: number;
   onChunk?: (chunkText: string, fullTextSoFar: string) => void;
 }
 
@@ -193,7 +194,8 @@ export async function fetchGeminiPrompt(
       try {
         return await withRetry(async () => {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 18000);
+            const timeoutMs = options.timeoutMs ?? 18000;
+            const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
             
             const endpoint = isStreaming ? ':streamGenerateContent?alt=sse' : ':generateContent';
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelToTry}${endpoint}`;
@@ -305,16 +307,19 @@ export async function fetchGeminiPrompt(
 
 export interface ScheduleDispatchOptions {
   forceRemoteAi?: boolean;
+  forceLocalOnly?: boolean;
   isWeeklyDeepReview?: boolean;
 }
 
 /**
- * Despachador Heurístico Inteligente de KAI (Regla 80/20):
- * Resuelve el ~80% de las consultas cotidianas (reorganización de misiones, plantillas diarias,
- * agendas estándar) localmente con el motor procedural sin latencia ni consumo de tokens cloud.
- * Reserva las llamadas a la red neuronal de Gemini para análisis semanales profundos o peticiones explícitas.
+ * Despachador Heurístico Inteligente de KAI:
+ * Permite forzar ejecución remota con Gemini IA (`forceRemoteAi`), ejecución 100% local (`forceLocalOnly`),
+ * o despachar consultas cotidianas sin latencia de red.
  */
 export function shouldRouteToRemoteAI(prompt: string, options?: ScheduleDispatchOptions): boolean {
+  if (options?.forceLocalOnly) {
+    return false;
+  }
   if (options?.forceRemoteAi || options?.isWeeklyDeepReview) {
     return true;
   }
@@ -371,16 +376,17 @@ export async function generateScheduleFrontend(
   const isMasterBlocks = mode === 'master_blocks';
   const maxBlocks = isMasterBlocks ? 12 : 20;
 
-  // 1. FAST-PATH HEURÍSTICO LOCAL (Prioridad 80% Operativo):
-  // Si la solicitud es una reorganización cotidiana o no requiere síntesis neural profunda,
-  // despachamos de inmediato con el motor local con cero latencia y cero consumo de cuota.
+  // 1. FAST-PATH HEURÍSTICO LOCAL:
+  // Si el usuario eligió Motor Local o la consulta no requiere IA remota, resolvemos sin consumo de cuota.
   if (!shouldRouteToRemoteAI(prompt, dispatchOptions)) {
-    console.log("[KAI Dispatcher] ⚡ Consulta cotidiana resuelta por Motor Heurístico Local (Cero consumo tokens / Cero latencia).");
+    console.log("[KAI Dispatcher] ⚡ Consulta resuelta por Motor Heurístico Local.");
     const rawProcedural = generateProceduralSchedule(prompt, userContext, mode);
     return {
       habits: autoArrangeSchedule(rawProcedural, mode, maxBlocks),
       source: "heuristic_engine",
-      notice: "⚡ Agenda estructurada por el Motor Táctico Local (Cero consumo de tokens en fase de prueba)."
+      notice: dispatchOptions?.forceLocalOnly
+        ? null
+        : "⚡ Agenda estructurada por el Motor Local."
     };
   }
 
@@ -441,6 +447,7 @@ export async function generateScheduleFrontend(
     modelName: 'gemini-3.1-flash-lite',
     systemInstruction,
     jsonMode: true,
+    timeoutMs: 30000,
   });
   if (text) {
     generatedText = text;
@@ -452,7 +459,9 @@ export async function generateScheduleFrontend(
     return {
       habits: autoArrangeSchedule(rawProcedural, mode, maxBlocks),
       source: "heuristic_engine",
-      notice: "⚠️ Generada por el Motor Local Offline (Conecta tu clave de Gemini para IA en vivo)."
+      notice: hasActiveGeminiKey()
+        ? "⚠️ Gemini IA no respondió a tiempo o hubo un límite temporal. Creamos tu agenda con el Motor Local."
+        : "⚠️ No hay clave de Gemini activa; usamos el Motor Local para crear tu agenda."
     };
   }
 

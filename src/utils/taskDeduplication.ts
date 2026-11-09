@@ -119,6 +119,124 @@ export const isDuplicateActivity = (
   return false;
 };
 
+const extractHabitBaseIdSafe = (id?: string): string | null => {
+  if (!id || typeof id !== 'string') return null;
+  // Strip cloud carry-over suffix if present (e.g. task-habit-water-2026-11-07-sync-2026-11-08-0)
+  const cleanId = id.replace(/-sync-\d{4}-\d{2}-\d{2}-\d+$/, '');
+  const dailyMatch = cleanId.match(/^task-(.+)-\d{4}-\d{2}-\d{2}$/);
+  if (dailyMatch) return dailyMatch[1];
+  const customMatch = cleanId.match(/^(custom-habit-\d+)/);
+  if (customMatch) return customMatch[1];
+  return cleanId;
+};
+
+export const pickMergedTargetCount = (
+  existingTarget?: number,
+  incomingTarget?: number
+): number | undefined => {
+  if (incomingTarget !== undefined && incomingTarget > 1) return incomingTarget;
+  if (existingTarget !== undefined && existingTarget > 1) return existingTarget;
+  return incomingTarget ?? existingTarget;
+};
+
+export const pickMergedUnit = (
+  existingUnit?: string,
+  incomingUnit?: string
+): string | undefined => {
+  const inc = incomingUnit?.trim();
+  if (inc) return inc;
+  const ext = existingUnit?.trim();
+  if (ext) return ext;
+  return undefined;
+};
+
+export const resolveMatchingCustomHabit = (
+  task: Pick<TaskItem, 'id' | 'title' | 'category' | 'timeBlock'>,
+  customHabits: CustomHabit[]
+): CustomHabit | undefined => {
+  if (!task || !Array.isArray(customHabits) || customHabits.length === 0) return undefined;
+
+  const taskBaseId = extractHabitBaseIdSafe(task.id);
+  const byId = customHabits.find(
+    (h) => h && (h.id === task.id || (taskBaseId && h.id === taskBaseId))
+  );
+  if (byId) return byId;
+
+  const normTitle = (task.title || '').trim().toLowerCase();
+  if (normTitle) {
+    const byExactTitle = customHabits.find(
+      (h) => h && (h.title || '').trim().toLowerCase() === normTitle
+    );
+    if (byExactTitle) return byExactTitle;
+  }
+
+  return customHabits.find((h) => h && isDuplicateActivity(task, h));
+};
+
+/**
+ * Repairs counter metadata (targetCount, unit) on a task using its matching CustomHabit definition,
+ * and unsticks habits that were prematurely marked completed at 1/1 after losing targetCount.
+ * Returns the original object reference if no reconciliation is needed.
+ */
+export const reconcileHabitCounterTask = (
+  task: TaskItem,
+  customHabits: CustomHabit[]
+): TaskItem => {
+  if (!task) return task;
+  const matched = resolveMatchingCustomHabit(task, customHabits);
+  if (!matched) return task;
+
+  const matchedHasCounter = Boolean(matched.targetCount !== undefined && matched.targetCount > 1);
+  const taskMissingCounter = task.targetCount === undefined || task.targetCount <= 1;
+
+  const healedTargetCount =
+    taskMissingCounter && matchedHasCounter ? matched.targetCount : task.targetCount;
+  const healedUnit =
+    (!task.unit || !task.unit.trim()) && matched.unit?.trim()
+      ? matched.unit.trim()
+      : task.unit;
+  const healedIsHabit = Boolean(
+    task.isHabit ||
+    (healedTargetCount !== undefined && healedTargetCount > 1) ||
+    matched.isQuickHabit ||
+    matched.isTracked2166
+  );
+
+  let healedCompleted = task.completed;
+  let healedCompletedAt = task.completedAt;
+  const current = task.currentCount || 0;
+
+  if (taskMissingCounter && matchedHasCounter && healedTargetCount !== undefined && healedTargetCount > 1) {
+    if (current >= healedTargetCount) {
+      healedCompleted = true;
+      healedCompletedAt = task.completedAt || new Date().toISOString();
+    } else if (current > 0 && task.completed) {
+      // Unstick premature completion caused by missing targetCount (e.g. 1/1 instead of 1/8)
+      healedCompleted = false;
+      healedCompletedAt = undefined;
+    }
+  }
+
+  if (
+    healedTargetCount === task.targetCount &&
+    healedUnit === task.unit &&
+    healedIsHabit === task.isHabit &&
+    healedCompleted === task.completed &&
+    healedCompletedAt === task.completedAt
+  ) {
+    return task;
+  }
+
+  return {
+    ...task,
+    isHabit: healedIsHabit,
+    targetCount: healedTargetCount,
+    unit: healedUnit,
+    completed: healedCompleted,
+    completedAt: healedCompletedAt,
+  };
+};
+
 /**
  * Deduplicates custom habits array to ensure no duplicate habits exist in state.
  */
@@ -143,6 +261,9 @@ export const deduplicateHabits = (habits: CustomHabit[]): CustomHabit[] => {
         ? Array.from(new Set([...existing.specificDays, ...habit.specificDays])).sort((x, y) => x - y)
         : (habit.specificDays ?? existing.specificDays);
 
+      const mergedTargetCount = pickMergedTargetCount(existing.targetCount, habit.targetCount);
+      const mergedUnit = pickMergedUnit(existing.unit, habit.unit);
+
       const merged: CustomHabit = {
         ...existing,
         ...habit,
@@ -150,6 +271,11 @@ export const deduplicateHabits = (habits: CustomHabit[]): CustomHabit[] => {
         title: betterTitle,
         specificDays: mergedDays,
         timeBlock: habit.timeBlock || existing.timeBlock,
+        targetCount: mergedTargetCount,
+        unit: mergedUnit,
+        isQuickHabit: Boolean(existing.isQuickHabit || habit.isQuickHabit),
+        isTracked2166: Boolean(existing.isTracked2166 || habit.isTracked2166),
+        quickIcon: habit.quickIcon || existing.quickIcon,
         xpReward: Math.max(existing.xpReward || 0, habit.xpReward || 0),
         coinReward: Math.max(existing.coinReward || 0, habit.coinReward || 0),
       };
@@ -219,8 +345,24 @@ export const deduplicateTasksForDay = (tasks: TaskItem[], targetDateKey?: string
         ? Math.max(existing.currentCount || 0, task.currentCount || 0)
         : undefined;
 
-      const targetCount = task.targetCount || existing.targetCount;
-      const finalCompleted = isCompleted || (targetCount !== undefined && mergedCurrentCount !== undefined && mergedCurrentCount >= targetCount);
+      const mergedTargetCount = pickMergedTargetCount(existing.targetCount, task.targetCount);
+      const mergedUnit = pickMergedUnit(existing.unit, task.unit);
+
+      const existingExplicitMultiCompleted = Boolean(existing.targetCount && existing.targetCount > 1 && existing.completed);
+      const taskExplicitMultiCompleted = Boolean(task.targetCount && task.targetCount > 1 && task.completed);
+      const reachedMergedTarget = Boolean(
+        mergedTargetCount !== undefined && mergedCurrentCount !== undefined && mergedCurrentCount >= mergedTargetCount
+      );
+      const isPrematureSingleTargetCompletion = Boolean(
+        mergedTargetCount !== undefined &&
+        mergedTargetCount > 1 &&
+        mergedCurrentCount !== undefined &&
+        mergedCurrentCount > 0 &&
+        mergedCurrentCount < mergedTargetCount &&
+        !existingExplicitMultiCompleted &&
+        !taskExplicitMultiCompleted
+      );
+      const finalCompleted = reachedMergedTarget || (!isPrematureSingleTargetCompletion && isCompleted);
 
       const merged: TaskItem = {
         ...existing,
@@ -231,6 +373,14 @@ export const deduplicateTasksForDay = (tasks: TaskItem[], targetDateKey?: string
         completedAt: finalCompleted ? (completedAt || new Date().toISOString()) : undefined,
         rewardClaimed: finalCompleted ? Boolean(existing.rewardClaimed || task.rewardClaimed) : false,
         currentCount: mergedCurrentCount,
+        targetCount: mergedTargetCount,
+        unit: mergedUnit,
+        isHabit: Boolean(existing.isHabit || task.isHabit || (mergedTargetCount !== undefined && mergedTargetCount > 1)),
+        isQuickHabit: Boolean(existing.isQuickHabit || task.isQuickHabit),
+        isTracked2166: Boolean(existing.isTracked2166 || task.isTracked2166),
+        quickIcon: task.quickIcon || existing.quickIcon,
+        habitEnergyType: task.habitEnergyType || existing.habitEnergyType,
+        targetStreak: task.targetStreak || existing.targetStreak,
         notes: task.notes || existing.notes,
         timeBlock: task.timeBlock || existing.timeBlock,
         category: task.category || existing.category,

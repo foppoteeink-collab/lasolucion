@@ -5,12 +5,14 @@ import { usePlayerStore } from '../store/usePlayerStore';
 import { useUIStore } from '../store/useUIStore';
 import { soundFX } from '../utils/audio';
 import { triggerHaptic } from '../utils/haptics';
+import { useNarrativeCopy } from '../hooks/useNarrativeCopy';
 
 export const HunterCollapseModal: React.FC = () => {
   const isOpen = useUIStore((s) => s.isHunterCollapseOpen);
   const stats = usePlayerStore((s) => s.stats);
   const revivePlayer = usePlayerStore((s) => s.revivePlayer);
   const addFloatingEffect = useUIStore((s) => s.addFloatingEffect);
+  const copy = useNarrativeCopy();
 
   if (!isOpen) return null;
 
@@ -67,11 +69,11 @@ export const HunterCollapseModal: React.FC = () => {
             </div>
 
             <span className="px-3 py-1 rounded-full bg-rose-950/80 border border-rose-600/60 text-rose-300 text-[10px] font-mono font-black uppercase tracking-widest mb-2">
-              ⚡ ENERGÍA VITAL AGOTADA (0 HP)
+              {copy.collapseBadge}
             </span>
 
             <h2 id="hunter-collapse-title" className="text-xl sm:text-2xl font-anton uppercase tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-white via-rose-200 to-rose-400 mb-2">
-              Agotamiento de Energía
+              {copy.collapseTitle}
             </h2>
 
             <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-mono mb-5">
@@ -84,12 +86,12 @@ export const HunterCollapseModal: React.FC = () => {
               <button
                 type="button"
                 onClick={() => handleRevive('xp')}
-                aria-label={`Aceptar el desgaste pagando ${xpPenalty} XP para restaurar HP al 50%`}
+                aria-label={`${copy.collapsePenaltyLabel} pagando ${xpPenalty} XP para restaurar HP al 50%`}
                 className="w-full p-4 rounded-2xl bg-[#140510] hover:bg-[#200918] border border-rose-500/40 hover:border-rose-400 text-left transition-all cursor-pointer group shadow-inner"
               >
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs font-anton tracking-wider text-rose-300 uppercase flex items-center gap-1.5">
-                    <Sparkles className="w-4 h-4 text-amber-400" /> Aceptar el Desgaste (XP)
+                    <Sparkles className="w-4 h-4 text-amber-400" /> {copy.collapsePenaltyLabel}
                   </span>
                   <span className="text-xs font-mono font-bold text-rose-400">
                     -{xpPenalty} XP
@@ -105,7 +107,7 @@ export const HunterCollapseModal: React.FC = () => {
                 type="button"
                 disabled={!canAffordCoins}
                 onClick={() => handleRevive('coins')}
-                aria-label={canAffordCoins ? 'Pagar tratamiento médico con 30 monedas para restaurar HP al 50%' : 'Monedas insuficientes para tratamiento médico'}
+                aria-label={canAffordCoins ? `${copy.collapseRecoveryLabel} con 30 monedas para restaurar HP al 50%` : 'Monedas insuficientes para recuperación'}
                 className={`w-full p-4 rounded-2xl border text-left transition-all ${
                   canAffordCoins
                     ? 'bg-[#001018] hover:bg-[#001c2a] border-amber-500/50 hover:border-amber-400 cursor-pointer'
@@ -114,7 +116,7 @@ export const HunterCollapseModal: React.FC = () => {
               >
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs font-anton tracking-wider text-amber-300 uppercase flex items-center gap-1.5">
-                    <Coins className="w-4 h-4 text-yellow-400" /> Tratamiento Médico
+                    <Coins className="w-4 h-4 text-yellow-400" /> {copy.collapseRecoveryLabel}
                   </span>
                   <span className="text-xs font-mono font-bold text-yellow-400">
                     -30 Monedas

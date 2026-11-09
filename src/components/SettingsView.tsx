@@ -47,6 +47,8 @@ import { ChicleToggle } from './ChicleToggle';
 import { MoxenMalla } from './moxen/MoxenMalla';
 import { MoxenEclipseToggle } from './moxen/MoxenEclipseToggle';
 import { QuantumCubeLoader } from './QuantumCubeLoader';
+import { useNarrativeCopy } from '../hooks/useNarrativeCopy';
+import { AUTH_SECURITY_MICROCOPY, NARRATIVE_MODE_OPTIONS } from '../data/narrativeCopy';
 
 interface SettingsViewProps {
   settings: GameSettings;
@@ -121,8 +123,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     zenFont, setZenFont,
     handDominance, setHandDominance,
     glowIntensity, setGlowIntensity,
+    narrativeMode, setNarrativeMode,
     setModalState
   } = useUIStore();
+  const copy = useNarrativeCopy();
   
   const [activeSubTab, setActiveSubTab] = useState<SettingsSubTab>('preferences');
   const [currentCurrency, setCurrentCurrency] = useState<string>(getSavedCurrencySymbol);
@@ -474,8 +478,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const tabsConfig = [
     { id: 'preferences' as SettingsSubTab, label: 'Sistema & Audio', icon: Volume2, color: 'text-cyan-400' },
     { id: 'atmosphere' as SettingsSubTab, label: 'Apariencia & Visión', icon: Palette, color: 'text-cyan-400' },
-    { id: 'gameplay' as SettingsSubTab, label: 'Juego & KAI', icon: Sparkles, color: 'text-purple-400' },
-    { id: 'finances' as SettingsSubTab, label: 'Tesorería', icon: Coins, color: 'text-amber-400' },
+    { id: 'gameplay' as SettingsSubTab, label: copy.settingsTabGameplay, icon: Sparkles, color: 'text-purple-400' },
+    { id: 'finances' as SettingsSubTab, label: copy.settingsTabFinances, icon: Coins, color: 'text-amber-400' },
     { id: 'data' as SettingsSubTab, label: 'Nube & Datos', icon: Database, color: 'text-emerald-400' }
   ];
 
@@ -492,7 +496,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         <div className="flex items-center justify-between px-1 relative z-10">
           <h2 className="text-white font-anton text-base sm:text-lg flex items-center gap-2 uppercase tracking-wider">
             <Settings className="w-5 h-5 text-cyan-400" />
-            <span>Configuración del Sistema</span>
+            <span>{copy.settingsHeaderTitle}</span>
           </h2>
           {activeSubTab === 'simulator' && (
             <button
@@ -573,7 +577,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     Efectos Sonoros Sintéticos
                   </h4>
                   <p className="text-xs text-slate-400">
-                    Efectos sonoros tácticos y feedback auditivo al completar misiones.
+                    {copy.settingsSoundDescription}
                   </p>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
@@ -1197,6 +1201,42 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 </div>
               </div>
 
+              {/* DENSIDAD NARRATIVA (ACCESO RÁPIDO DESDE APARIENCIA) */}
+              <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+                <div>
+                  <h4 className="text-sm font-anton tracking-wider uppercase text-white flex items-center gap-2 mb-1">
+                    <Sparkles className="w-4 h-4 text-purple-400" /> Densidad Narrativa
+                  </h4>
+                  <p className="text-xs text-slate-400">
+                    Alterna entre vocabulario épico de misión o textos claros orientados a productividad pura.
+                  </p>
+                </div>
+                <div className="flex items-center gap-1.5 bg-black/40 p-1 rounded-2xl border border-white/10 self-start sm:self-auto">
+                  {(['tactical', 'minimal'] as const).map((modeKey) => {
+                    const option = NARRATIVE_MODE_OPTIONS[modeKey];
+                    const isSelected = narrativeMode === modeKey;
+                    return (
+                      <button
+                        key={modeKey}
+                        type="button"
+                        onClick={() => {
+                          soundFX.playClick();
+                          setNarrativeMode(modeKey);
+                        }}
+                        className={`chicle-btn px-3 py-1.5 rounded-xl text-[11px] font-anton tracking-wider uppercase transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-cyan-400 text-black font-bold shadow-[0_0_12px_rgba(0,240,255,0.5)]'
+                            : 'text-slate-400 hover:text-white'
+                        }`}
+                        title={option.description}
+                      >
+                        <span>{option.shortLabel}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* DENSIDAD TIPOGRÁFICA / LECTURA COMPACTA */}
               <div className="pt-4 border-t border-white/10 flex items-center justify-between gap-4 relative z-10">
                 <div>
@@ -1279,6 +1319,88 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         {/* ===================== TAB 2: JUEGO & KAI ===================== */}
         {activeSubTab === 'gameplay' && (
           <div className="space-y-6 animate-fade-in">
+            {/* SELECTOR DE DENSIDAD NARRATIVA (ROLE 5 CRO/COPY) */}
+            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-xl p-5 sm:p-6 border border-cyan-500/35 shadow-[0_12px_35px_rgba(0,0,0,0.4),0_0_20px_rgba(0,240,255,0.12)] relative overflow-hidden space-y-4">
+              <span className="vi-grano opacity-5" aria-hidden="true" />
+
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 relative z-10">
+                <div>
+                  <div className="flex items-center gap-2 text-cyan-400 text-xs font-mono font-bold uppercase tracking-widest mb-1">
+                    <Type className="w-4 h-4 text-cyan-400" /> Lenguaje y Claridad de Interfaz
+                  </div>
+                  <h3 className="text-sm sm:text-base font-anton uppercase tracking-wide text-white">
+                    Selector de Densidad Narrativa
+                  </h3>
+                </div>
+                <span className="text-[10px] font-mono font-bold text-cyan-300 bg-cyan-950/70 border border-cyan-500/40 px-2.5 py-0.5 rounded-full self-start sm:self-auto">
+                  Activo: {NARRATIVE_MODE_OPTIONS[narrativeMode].shortLabel}
+                </span>
+              </div>
+
+              <p className="text-xs text-slate-300 leading-relaxed relative z-10">
+                Elige si prefieres una narrativa inmersiva tipo juego o un lenguaje directo enfocado al 100% en hábitos, estudio y enfoque sin jerga de ficción.
+              </p>
+
+              <div
+                role="radiogroup"
+                aria-label="Selector de Densidad Narrativa"
+                className="grid grid-cols-1 sm:grid-cols-2 gap-3 relative z-10"
+              >
+                {(['tactical', 'minimal'] as const).map((modeKey) => {
+                  const opt = NARRATIVE_MODE_OPTIONS[modeKey];
+                  const isSelected = narrativeMode === modeKey;
+                  return (
+                    <button
+                      key={modeKey}
+                      type="button"
+                      role="radio"
+                      aria-checked={isSelected}
+                      onClick={() => {
+                        soundFX.playClick();
+                        setNarrativeMode(modeKey);
+                      }}
+                      className={`p-4 rounded-2xl border text-left transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between gap-3 ${
+                        isSelected
+                          ? 'bg-cyan-950/60 border-cyan-400/80 shadow-[0_0_20px_rgba(0,240,255,0.25)] ring-1 ring-cyan-400/50'
+                          : 'bg-white/[0.02] border-white/10 hover:border-white/25 hover:bg-white/[0.05]'
+                      }`}
+                    >
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs sm:text-sm font-anton tracking-wider uppercase text-white font-bold">
+                            {opt.label}
+                          </span>
+                          <span
+                            className={`text-[9.5px] font-mono px-2 py-0.5 rounded-full border shrink-0 font-bold ${
+                              isSelected
+                                ? 'bg-cyan-400 text-black border-cyan-300'
+                                : 'bg-white/5 text-slate-400 border-white/10'
+                            }`}
+                          >
+                            {isSelected ? 'Activo' : opt.badge}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-300 leading-snug">
+                          {opt.description}
+                        </p>
+                      </div>
+
+                      <div className="pt-2.5 border-t border-white/[0.08] flex flex-wrap gap-1.5">
+                        {opt.examples.map((ex) => (
+                          <span
+                            key={ex}
+                            className="text-[10px] font-mono px-2 py-0.5 rounded-lg bg-black/50 border border-white/10 text-cyan-300"
+                          >
+                            {ex}
+                          </span>
+                        ))}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* GUÍA DE BIENVENIDA & INDUCCIÓN DE KAI */}
             <div className="w-full rounded-2xl sm:rounded-3xl bg-gradient-to-r from-cyan-950/40 via-[#030816]/90 to-blue-950/30 backdrop-blur-xl p-5 sm:p-6 border border-cyan-500/30 shadow-[0_12px_35px_rgba(0,0,0,0.4),0_0_20px_rgba(0,240,255,0.1)] relative overflow-hidden space-y-3">
               <span className="vi-grano opacity-5" aria-hidden="true" />
@@ -1442,7 +1564,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   </h3>
                 </div>
                 <span className="text-[10px] font-mono font-bold text-cyan-300 bg-cyan-950/70 border border-cyan-500/40 px-2 py-0.5 rounded-full">
-                  {stats.kaiShape === 'custom' ? 'Forja IA Activa' : '6 Formas Día 0'}
+                  {stats.kaiShape === 'custom' ? copy.settingsAiEquippedTag : '6 Formas Día 0'}
                 </span>
               </div>
 
@@ -1458,10 +1580,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   <div>
                     <span className="text-[10px] font-mono text-slate-400 uppercase block">Figura Equipada:</span>
                     <strong className="text-sm font-anton text-white tracking-wider uppercase">
-                      {stats.kaiShape === 'custom' ? (stats.kaiCustomForm?.name || 'Forja Neural IA') : (KAI_OFFICIAL_SHAPES.find(s => s.id === stats.kaiShape)?.name || 'El Prisma')}
+                      {stats.kaiShape === 'custom' ? (stats.kaiCustomForm?.name || copy.workshopCustomFallback) : (KAI_OFFICIAL_SHAPES.find(s => s.id === stats.kaiShape)?.name || 'El Prisma')}
                     </strong>
                     <span className="text-[10px] text-slate-400 block mt-0.5">
-                      {stats.kaiShape === 'custom' ? 'Compañero vectorizado con IA multimodal' : 'Geometría oficial desbloqueada'}
+                      {stats.kaiShape === 'custom' ? copy.settingsAiCustomDesc : 'Diseño geométrico disponible desde el día 0'}
                     </span>
                   </div>
                 </div>
@@ -1476,7 +1598,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     className="chicle-btn px-4 py-2.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-black font-anton text-xs uppercase tracking-wider transition-all cursor-pointer shadow-[0_0_12px_rgba(0,240,255,0.4)] flex items-center gap-1.5 shrink-0 active:scale-95"
                   >
                     <Palette className="w-3.5 h-3.5" />
-                    <span>Taller de KAI</span>
+                    <span>{copy.settingsWorkshopBtn}</span>
                   </button>
                 )}
               </div>
@@ -1833,7 +1955,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     <p className="text-xs text-slate-400 mt-0.5">
                       {user 
                         ? `Conectado a la nube: ${user.email}` 
-                        : 'Tu partida se almacena temporalmente en la memoria del navegador.'}
+                        : '100% gratis · Sin tarjeta de crédito. Tu información se guarda localmente en tu dispositivo.'}
                     </p>
                   </div>
                 </div>
@@ -1859,17 +1981,22 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 </div>
               </div>
 
-              {/* RESUMEN CONCISO DE PROTECCIÓN */}
-              <div className="p-3.5 rounded-2xl bg-black/40 border border-white/10 text-xs text-slate-300 flex items-center justify-between gap-3 relative z-10">
-                <div className="flex items-center gap-2.5">
-                  <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>Protección en tiempo real: Nivel, XP, Tareas, Hábitos, Bitácora y Tesorería.</span>
+              {/* RESUMEN CONCISO DE PROTECCIÓN + PIE DE PRIVACIDAD BLINDADA */}
+              <div className="p-3.5 rounded-2xl bg-black/40 border border-white/10 text-xs text-slate-300 space-y-2 relative z-10">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>Protección en tiempo real: Nivel, XP, Tareas, Hábitos, Bitácora y Finanzas.</span>
+                  </div>
+                  {user && cloudSync?.lastSyncTime && (
+                    <span className="text-[11px] font-mono text-slate-400 whitespace-nowrap">
+                      Última sinc: {cloudSync.lastSyncTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  )}
                 </div>
-                {user && cloudSync?.lastSyncTime && (
-                  <span className="text-[11px] font-mono text-slate-400 whitespace-nowrap">
-                    Última sinc: {cloudSync.lastSyncTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                )}
+                <p className="text-[10.5px] font-mono text-emerald-300/90 border-t border-white/10 pt-2 leading-snug">
+                  {AUTH_SECURITY_MICROCOPY}
+                </p>
               </div>
             </div>
 

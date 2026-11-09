@@ -219,10 +219,20 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
     }
     setNewXp(task.xpReward);
     setNewCoins(task.coinReward);
-    const hasNumericCounter = Boolean(task.targetCount && task.targetCount > 1);
+    const effectiveTargetCount =
+      (task.targetCount && task.targetCount > 1)
+        ? task.targetCount
+        : (customHabit?.targetCount && customHabit.targetCount > 1)
+          ? customHabit.targetCount
+          : (task.targetCount ?? customHabit?.targetCount ?? 1);
+    const effectiveUnit =
+      (task.unit && task.unit.trim()) ||
+      (customHabit?.unit && customHabit.unit.trim()) ||
+      'veces';
+    const hasNumericCounter = effectiveTargetCount > 1;
     setIsHabitType(hasNumericCounter);
-    setHabitTarget(task.targetCount || 1);
-    setHabitUnit(task.unit || 'veces');
+    setHabitTarget(effectiveTargetCount);
+    setHabitUnit(effectiveUnit);
     setIsLegendary(task.isLegendaryBounty || false);
     setIsTracked2166(is2166);
     setIsQuickHabit(task.isQuickHabit || (customHabit && customHabit.isQuickHabit) || is2166);

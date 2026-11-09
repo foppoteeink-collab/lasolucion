@@ -10,6 +10,7 @@ import { canPlayerAscend } from '../utils/level3Systems';
 import { handleAscendPlayer } from '../engine/gameEngine';
 import { generateAndShareLegacyCard } from '../utils/shareCardGenerator';
 import { getArchetypeByName } from '../data/archetypes';
+import { useNarrativeCopy } from '../hooks/useNarrativeCopy';
 
 interface LevelUpModalProps {
   isOpen: boolean;
@@ -26,6 +27,7 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({
   newRankTitle,
   stats,
 }) => {
+  const copy = useNarrativeCopy();
   useEffect(() => {
     if (isOpen) {
       // Game Feel 1: Audio SFX sincronizado al inicio exacto de la escala
@@ -164,7 +166,7 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({
             transition={{ delay: 0.2, duration: 0.18 }}
             className="text-[10px] font-mono font-bold text-cyan-300 uppercase tracking-[0.25em] drop-shadow-[0_0_8px_rgba(0,240,255,0.8)]"
           >
-            ⚡ Evolución de Conciencia Activada
+            {copy.levelUpBadge}
           </motion.p>
 
           <motion.h2 
@@ -185,7 +187,7 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({
             className="my-4 p-4 rounded-2xl bg-[#040d1a]/90 border border-cyan-500/40 shadow-[0_0_30px_rgba(0,240,255,0.2)] relative overflow-hidden"
           >
             <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none" />
-            <p className="text-[10px] font-mono uppercase tracking-widest text-cyan-300/90 mb-1">Rango Evolutivo Asignado</p>
+            <p className="text-[10px] font-mono uppercase tracking-widest text-cyan-300/90 mb-1">{copy.levelUpRankAssigned}</p>
             <p className="text-xl sm:text-2xl font-anton text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-100 to-cyan-300 uppercase tracking-wider leading-tight drop-shadow-[0_0_14px_rgba(0,240,255,0.9)]">
               {newRankTitle}
             </p>
@@ -233,7 +235,7 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({
             </div>
 
             <div className="mt-3 pt-2.5 border-t border-dashed border-white/10 flex items-center justify-between text-xs font-bold">
-              <span className="text-slate-300 uppercase tracking-wider text-[10px] font-mono">Inyección de Monedas:</span>
+              <span className="text-slate-300 uppercase tracking-wider text-[10px] font-mono">{copy.levelUpCoinsGranted}</span>
               <span className="text-amber-300 drop-shadow-[0_0_10px_rgba(251,191,36,0.8)] text-sm font-mono flex items-center gap-1 font-bold">
                 +{20 + newLevel * 5} <span className="text-xs">🪙</span>
               </span>
@@ -241,7 +243,7 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({
           </motion.div>
         </div>
         
-        {/* BOTONES DE ACCIÓN: ASCENSIÓN (NV 50+), COMPARTIR LEGADO Y ASIMILAR PODER */}
+        {/* BOTONES DE ACCIÓN */}
         <div className="p-4 sm:p-5 pt-2 relative z-10 shrink-0 bg-[#030712]/98 border-t border-white/10 space-y-2">
           {(newLevel >= 50 || canPlayerAscend(stats)) && (
             <button
@@ -254,7 +256,7 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({
               className="w-full py-2.5 px-3 rounded-xl text-xs uppercase tracking-wider font-bold bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-black shadow-[0_0_20px_rgba(251,191,36,0.5)] active:scale-95 cursor-pointer transition-all flex items-center justify-center gap-1.5"
             >
               <Crown className="w-4 h-4 fill-current" />
-              <span>★ Protocolo de Ascensión (+5% Eficiencia Global)</span>
+              <span>{copy.levelUpAscensionTag} (+5% Eficiencia Global)</span>
             </button>
           )}
           <div className="flex items-center gap-2">
@@ -269,7 +271,7 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({
                 });
               }}
               className="py-3.5 px-3.5 rounded-xl text-xs uppercase tracking-wider font-bold bg-white/[0.06] hover:bg-white/[0.12] border border-cyan-500/35 text-cyan-200 active:scale-95 cursor-pointer transition-all flex items-center justify-center gap-1.5 shrink-0"
-              title="Compartir Tarjeta Táctica 9:16"
+              title="Compartir Tarjeta de Progreso 9:16"
             >
               <Sparkles className="w-4 h-4 text-cyan-400" />
               <span>Compartir</span>
@@ -282,7 +284,7 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({
               }}
               className="btn-neon-hunter flex-1 py-3.5 rounded-xl text-sm uppercase tracking-wider shadow-lg active:scale-95 cursor-pointer transition-all flex items-center justify-center gap-2 font-bold bg-cyan-950/40 border border-cyan-500/50 hover:bg-cyan-900/60"
             >
-              <span>Asimilar Poder</span>
+              <span>{copy.levelUpCta}</span>
               <ChevronRight className="w-5 h-5 stroke-[3]" />
             </button>
           </div>

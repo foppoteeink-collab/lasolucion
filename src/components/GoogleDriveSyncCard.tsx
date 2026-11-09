@@ -16,6 +16,7 @@ import {
   DriveFileInfo 
 } from '../services/googleDriveService';
 import { MoxenRayas } from './moxen/MoxenRayas';
+import { AUTH_SECURITY_MICROCOPY } from '../data/narrativeCopy';
 
 export const GoogleDriveSyncCard: React.FC = () => {
   const { user, signInWithGoogle } = useAuth();
@@ -268,27 +269,29 @@ export const GoogleDriveSyncCard: React.FC = () => {
 
       {/* Account status info */}
       {!user ? (
-        <div className="bg-[#001c38]/60 p-5 rounded-xl border border-blue-950 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <p className="text-sm font-bold text-white flex items-center gap-2">
-              <Cloud className="w-4 h-4 text-amber-400" /> Conecta tu cuenta de Gmail / Google
-            </p>
-            <p className="text-xs text-slate-400 leading-relaxed max-w-xl">
-              Autenticación básica de tester. No se solicitarán permisos de Drive hasta que decidas realizar un respaldo.
-            </p>
-          </div>
+        <div className="bg-[#001c38]/60 p-5 rounded-xl border border-blue-950 space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <p className="text-sm font-bold text-white flex items-center gap-2">
+                <Cloud className="w-4 h-4 text-amber-400" /> Conecta tu cuenta de Gmail / Google
+              </p>
+              <p className="text-xs text-slate-400 leading-relaxed max-w-xl">
+                Sin tarjeta de crédito ni permisos invasivos: autentícate gratis para respaldar tu avance cuando lo necesites.
+              </p>
+            </div>
 
-          <button
-            type="button"
-            onClick={async () => {
-              soundFX.playClick();
-              await signInWithGoogle();
-            }}
-            className="chicle-btn flex items-center justify-center gap-2.5 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-[0_0_15px_rgba(37,99,235,0.4)] transition-all cursor-pointer shrink-0"
-          >
-            <LogIn className="w-4 h-4" />
-            <span>Acceder con Google</span>
-          </button>
+            <button
+              type="button"
+              onClick={async () => {
+                soundFX.playClick();
+                await signInWithGoogle();
+              }}
+              className="chicle-btn flex items-center justify-center gap-2.5 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-[0_0_15px_rgba(37,99,235,0.4)] transition-all cursor-pointer shrink-0"
+            >
+              <LogIn className="w-4 h-4" />
+              <span>Acceder con Google</span>
+            </button>
+          </div>
         </div>
       ) : (
         <div className="space-y-4">
@@ -450,6 +453,11 @@ export const GoogleDriveSyncCard: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Security Reassurance Footer */}
+      <div className="pt-2 border-t border-white/10 text-[10.5px] font-mono text-emerald-300/90 text-center sm:text-left leading-snug">
+        {AUTH_SECURITY_MICROCOPY}
+      </div>
 
       {/* CONFIRMATION DIALOG: DOWNLOAD/RESTORE FROM DRIVE */}
       {showDownloadConfirm && pendingDownloadData && (

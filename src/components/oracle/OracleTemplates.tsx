@@ -61,11 +61,11 @@ export const OracleTemplates: React.FC<OracleTemplatesProps> = ({ onSelectTempla
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-mono font-bold text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
+        <span className="text-xs font-mono font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
           <Zap className="w-3.5 h-3.5 text-cyan-400" />
-          Plantillas Rápidas por Arquetipo
+          Horarios listos para usar
         </span>
-        <span className="text-[11px] text-slate-500 font-mono">1 Clic para Cargar</span>
+        <span className="text-[11px] text-slate-400 font-sans">Elige una base y luego la editas</span>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -103,8 +103,8 @@ export const OracleTemplates: React.FC<OracleTemplatesProps> = ({ onSelectTempla
               </p>
             </div>
             
-            <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[10px] font-mono text-cyan-400">
-              <span>Cargar en el Oráculo →</span>
+            <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[11px] font-mono text-cyan-400">
+              <span>Usar esta plantilla →</span>
             </div>
           </div>
         ))}

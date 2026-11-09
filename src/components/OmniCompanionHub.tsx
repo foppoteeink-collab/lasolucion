@@ -12,6 +12,7 @@ import { triggerHaptic } from '../utils/haptics';
 import { getTodayDateString } from '../utils/date';
 import { useDayCycle } from '../hooks/useDayCycle';
 import { getKaiPhrase } from '../data/kaiVoiceMatrix';
+import { useNarrativeCopy } from '../hooks/useNarrativeCopy';
 
 interface OmniCompanionHubProps {
   onOpenOracleWithPrompt?: (promptText?: string) => void;
@@ -84,6 +85,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
   // Only timer isRunning needed here; formattedTime is isolated in OmniPomodoroBadge
   const { isRunning: isTimerRunning } = useTimer();
   const { dayStatus, startDay, finishDay } = useDayCycle();
+  const copy = useNarrativeCopy();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [hasRecentVictory, setHasRecentVictory] = useState(false);
@@ -540,15 +542,15 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
                 }}
                 whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.96 }}
-                aria-label="Desplegar jornada oficial e iniciar el día"
-                title="Activar jornada oficial e iniciar el día"
+                aria-label={copy.startDayTooltip}
+                title={copy.startDayTooltip}
                 className="btn-neon-hunter mt-3.5 px-3.5 py-1.5 text-xs font-black tracking-wider uppercase flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-cyan-400 via-[#d6f421] to-cyan-300 text-[#020617] border-2 border-cyan-100 ring-2 ring-cyan-400/70 shadow-[0_0_12px_rgba(0,240,255,0.35)] shrink-0 cursor-pointer whitespace-nowrap active:scale-95 transition-all"
               >
                 <span className="relative flex h-2 w-2 shrink-0">
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-950" />
                 </span>
                 <Icon name="sun" className="w-3.5 h-3.5 text-[#020617] shrink-0" />
-                <span>DESPLEGAR</span>
+                <span>{copy.startDayCompact}</span>
                 <Icon name="arrowRight" className="w-3.5 h-3.5 text-[#020617] shrink-0" />
               </motion.button>
             )}
@@ -580,15 +582,15 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
                 }}
                 whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.96 }}
-                aria-label="Consolidar jornada diaria y registrar inicio de descanso"
-                title="Consolidar jornada y registrar inicio de descanso"
+                aria-label={copy.closeDayTooltip}
+                title={copy.closeDayTooltip}
                 className="btn-neon-hunter mt-3.5 px-3.5 py-1.5 text-xs font-black tracking-wider uppercase flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-300 text-[#020617] border-2 border-amber-100 ring-2 ring-amber-400/70 shadow-[0_0_12px_rgba(245,158,11,0.35)] shrink-0 cursor-pointer whitespace-nowrap active:scale-95 transition-all"
               >
                 <span className="relative flex h-2 w-2 shrink-0">
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-950" />
                 </span>
                 <Icon name="moon" className="w-3.5 h-3.5 text-[#020617] shrink-0" />
-                <span>CONSOLIDAR</span>
+                <span>{copy.closeDayCompact}</span>
                 <Icon name="arrowRight" className="w-3.5 h-3.5 text-[#020617] shrink-0" />
               </motion.button>
             )}

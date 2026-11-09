@@ -172,7 +172,7 @@ export const OracleGuidedWizard: React.FC<OracleGuidedWizardProps> = ({ onComple
         <div className="flex items-center gap-2">
           <span className="text-xs font-mono font-bold text-cyan-300 uppercase tracking-wider flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-            Asistente Guiado // Paso {step} de 4
+            Paso a paso · Pregunta {step} de 4
           </span>
         </div>
         <div className="flex items-center gap-1.5">
@@ -199,8 +199,8 @@ export const OracleGuidedWizard: React.FC<OracleGuidedWizardProps> = ({ onComple
               <Sun className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-slate-100 uppercase tracking-wide font-mono">1. Ciclo Biológico & Energía</h4>
-              <p className="text-xs text-slate-400">Define tus franjas de inicio y conclusión de actividad.</p>
+              <h4 className="text-sm font-bold text-slate-100 font-sans">1. ¿A qué hora te levantas y te acuestas?</h4>
+              <p className="text-xs text-slate-400">Marca cuándo empieza y termina normalmente tu día.</p>
             </div>
           </div>
 
@@ -274,8 +274,8 @@ export const OracleGuidedWizard: React.FC<OracleGuidedWizardProps> = ({ onComple
               <Briefcase className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-slate-100 uppercase tracking-wide font-mono">2. Actividad Principal (Trabajo / Estudio)</h4>
-              <p className="text-xs text-slate-400">¿Cómo se estructura tu jornada productiva principal?</p>
+              <h4 className="text-sm font-bold text-slate-100 font-sans">2. Tu actividad principal (Trabajo o Estudio)</h4>
+              <p className="text-xs text-slate-400">¿Qué horario ocupa la mayor parte de tu jornada?</p>
             </div>
           </div>
 
@@ -412,8 +412,8 @@ export const OracleGuidedWizard: React.FC<OracleGuidedWizardProps> = ({ onComple
                 <Dumbbell className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="text-sm font-bold text-slate-100 uppercase tracking-wide font-mono">3. Entrenamiento Físico</h4>
-                <p className="text-xs text-slate-400">¿Tienes bloque de deporte, gimnasio o actividad física?</p>
+                <h4 className="text-sm font-bold text-slate-100 font-sans">3. Ejercicio o entrenamiento</h4>
+                <p className="text-xs text-slate-400">¿Tienes algún bloque para gimnasio, deporte o moverte?</p>
               </div>
             </div>
 
@@ -511,8 +511,8 @@ export const OracleGuidedWizard: React.FC<OracleGuidedWizardProps> = ({ onComple
               <Utensils className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-slate-100 uppercase tracking-wide font-mono">4. Tareas de Soporte & Desconexión</h4>
-              <p className="text-xs text-slate-400">Pausas biológicas, comida y proyectos personales.</p>
+              <h4 className="text-sm font-bold text-slate-100 font-sans">4. Comidas, orden y tiempo libre</h4>
+              <p className="text-xs text-slate-400">Activa lo que quieras incluir automáticamente en tu horario.</p>
             </div>
           </div>
 
@@ -643,7 +643,7 @@ export const OracleGuidedWizard: React.FC<OracleGuidedWizardProps> = ({ onComple
             className="px-6 py-2.5 bg-gradient-to-r from-cyan-400 to-emerald-400 hover:from-cyan-300 hover:to-emerald-300 text-slate-950 rounded-xl text-xs font-mono font-black uppercase tracking-widest flex items-center gap-2 cursor-pointer shadow-[0_0_25px_rgba(6,182,212,0.5)] transition-all active:scale-95"
           >
             <Sparkles className="w-4 h-4 text-slate-950" />
-            <span>Sintetizar con el Oráculo</span>
+            <span>Crear borrador de agenda</span>
           </button>
         )}
       </div>

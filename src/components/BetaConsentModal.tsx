@@ -2,12 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { ShieldAlert, CheckCircle2, Lock, Cpu, Sparkles, ChevronRight, Moon } from 'lucide-react';
 import { usePlayerStore } from '../store/usePlayerStore';
 import { soundFX } from '../utils/audio';
+import { useNarrativeCopy } from '../hooks/useNarrativeCopy';
+import { AUTH_SECURITY_MICROCOPY, WELCOME_UVP } from '../data/narrativeCopy';
 
 const BETA_CONSENT_KEY = 'la_solucion_beta_consent_v1';
 
 export const BetaConsentModal: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [hasAgreedCheck, setHasAgreedCheck] = useState(true);
+  const copy = useNarrativeCopy();
 
   const stats = usePlayerStore((s) => s.stats);
   const setStats = usePlayerStore((s) => s.setStats);
@@ -63,10 +66,10 @@ export const BetaConsentModal: React.FC = () => {
             </div>
             <div>
               <span className="text-[10px] font-mono tracking-widest uppercase text-cyan-400/90 font-bold block">
-                Protocolo de Blindaje • Entorno Beta v1.0
+                {copy.consentHeaderBadge}
               </span>
               <h2 className="text-base sm:text-lg font-black text-white tracking-tight">
-                Términos de Prueba y Privacidad Local
+                Bienvenido a La Solución · Privacidad y Enfoque Local
               </h2>
             </div>
           </div>
@@ -74,21 +77,43 @@ export const BetaConsentModal: React.FC = () => {
 
         {/* Modal Scrollable Body */}
         <div className="p-5 sm:p-6 space-y-4 overflow-y-auto text-xs text-slate-300 leading-relaxed relative z-10 custom-scrollbar">
+          {/* UVP Explícita + Mitigación de Objeciones (Friction-Reducing Microcopy) */}
+          <div className="p-4 rounded-2xl bg-gradient-to-br from-cyan-950/60 via-[#04152b] to-indigo-950/40 border border-cyan-400/40 space-y-2.5 shadow-[0_0_24px_rgba(0,240,255,0.12)]">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-cyan-300 block">
+              {WELCOME_UVP.badge}
+            </span>
+            <h3 className="text-sm sm:text-base font-black text-white leading-snug">
+              {WELCOME_UVP.headline}
+            </h3>
+            <p className="text-[11px] text-slate-200 leading-relaxed">
+              {WELCOME_UVP.description}
+            </p>
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              {WELCOME_UVP.frictionPills.map((pill) => (
+                <span
+                  key={pill}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-400/40 text-emerald-300 text-[10px] font-bold"
+                >
+                  <CheckCircle2 className="w-3 h-3 shrink-0" />
+                  <span>{pill}</span>
+                </span>
+              ))}
+            </div>
+          </div>
+
           <div className="p-3.5 rounded-xl bg-cyan-950/30 border border-cyan-800/40 text-cyan-200 text-[11px] flex items-start gap-2.5">
             <Sparkles className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
-            <p>
-              Estás ingresando al periodo de validación operativa de <strong className="text-white">La Solución PWA</strong>. Para garantizar tu privacidad y la continuidad del sistema, requerimos tu consentimiento explícito antes de inicializar la base de datos local.
-            </p>
+            <p>{copy.consentIntroLead}</p>
           </div>
 
           {/* Section 1: Almacenamiento Local y Resiliencia */}
           <div className="space-y-1.5 bg-[#00152b]/60 p-3.5 rounded-xl border border-blue-950">
             <h4 className="font-bold text-white flex items-center gap-2 text-xs">
               <Lock className="w-3.5 h-3.5 text-cyan-400" />
-              1. Persistencia Local & Cero Venta de Datos
+              1. {copy.consentBulletStorageTitle}
             </h4>
             <p className="text-[11px] text-slate-400">
-              Tus tareas, hábitos, balance financiero personal y reflexiones residen de forma prioritaria en el almacenamiento local de tu navegador (IndexedDB y LocalStorage). No comercializamos ni transferimos tus datos a terceros con fines publicitarios.
+              {copy.consentBulletStorageDesc}
             </p>
           </div>
 
@@ -96,10 +121,10 @@ export const BetaConsentModal: React.FC = () => {
           <div className="space-y-1.5 bg-[#00152b]/60 p-3.5 rounded-xl border border-blue-950">
             <h4 className="font-bold text-white flex items-center gap-2 text-xs">
               <Moon className="w-3.5 h-3.5 text-indigo-400" />
-              2. Métricas de Bienestar y Ciclo Nocturno
+              2. {copy.consentBulletRecoveryTitle}
             </h4>
             <p className="text-[11px] text-slate-400">
-              El sistema registra horas estimadas de descanso y hora de despertar con el único fin de calcular bonificaciones de regeneración RPG en el ciclo diario de las 3:00 AM. Estos registros permanecen bajo tu custodia y pueden ser exportados o purgados desde la vista de Configuración.
+              {copy.consentBulletRecoveryDesc}
             </p>
           </div>
 
@@ -107,10 +132,10 @@ export const BetaConsentModal: React.FC = () => {
           <div className="space-y-1.5 bg-[#00152b]/60 p-3.5 rounded-xl border border-blue-950">
             <h4 className="font-bold text-white flex items-center gap-2 text-xs">
               <Cpu className="w-3.5 h-3.5 text-emerald-400" />
-              3. Telemetría Operativa y Consultas a KAI IA
+              3. Asistente KAI e Integridad de Tus Datos
             </h4>
             <p className="text-[11px] text-slate-400">
-              Recopilamos eventos anónimos de estabilidad y tiempos de respuesta para corregir errores de sincronización offline. Las consultas de asistente táctico con KAI se transmiten de forma cifrada mediante las APIs de Google Gemini bajo demanda y nunca son utilizadas para entrenar modelos públicos.
+              Las consultas opcionales al asistente inteligente KAI se transmiten de forma cifrada bajo demanda y nunca se utilizan para entrenar modelos publicitarios ni vender información personal.
             </p>
           </div>
 
@@ -123,29 +148,28 @@ export const BetaConsentModal: React.FC = () => {
               className="mt-0.5 rounded border-cyan-500 text-cyan-500 focus:ring-cyan-400 focus:ring-offset-0 bg-[#00152b] w-4 h-4 cursor-pointer"
             />
             <span className="text-[11px] text-slate-200 select-none">
-              Acepto los términos del periodo beta, autorizo el almacenamiento de mis registros en este dispositivo y confirmo el tratamiento de métricas operacionales.
+              Acepto comenzar gratis con almacenamiento local privado en mi dispositivo (sin tarjeta de crédito y con exportación disponible en todo momento).
             </span>
           </label>
         </div>
 
         {/* Modal Footer */}
-        <div className="p-4 sm:p-5 border-t border-cyan-950/80 bg-[#001229] flex items-center justify-between gap-3 relative z-10">
-          <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-mono">
-            <CheckCircle2 className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Encriptación PWA Activa</span>
+        <div className="p-4 sm:p-5 border-t border-cyan-950/80 bg-[#001229] flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
+          <div className="flex items-start sm:items-center gap-1.5 text-[10px] text-emerald-300/90 font-mono leading-snug">
+            <span>{AUTH_SECURITY_MICROCOPY}</span>
           </div>
 
           <button
             type="button"
             onClick={handleAccept}
             disabled={!hasAgreedCheck}
-            className={`chicle-btn px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider flex items-center gap-2 shadow-lg transition-all ${
+            className={`chicle-btn px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg transition-all shrink-0 ${
               hasAgreedCheck
                 ? 'bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-[0_0_20px_rgba(0,240,255,0.4)] cursor-pointer'
                 : 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-60'
             }`}
           >
-            <span>Aceptar y Comenzar Prueba</span>
+            <span>{copy.consentAcceptCta}</span>
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>

@@ -609,13 +609,16 @@ export const generateDailyTasks = (
     }
 
     if (isActive) {
-      // Only designated quick/discipline habits are treated as 21/66 day habits
+      // Only designated quick/discipline habits are treated as 21/66 day habits,
+      // while any habit with a numeric counter (> 1) retains its daily targetCount/unit
       const isHabit2166 = Boolean(
         habit.isTracked2166 ||
         habit.isQuickHabit ||
         habit.id.includes('habit-water') ||
         habit.id.includes('habit-teeth')
       );
+      const hasNumericCounter = Boolean(habit.targetCount && habit.targetCount > 1);
+      const keepCounterMeta = isHabit2166 || hasNumericCounter;
 
       add(
         habit.id, 
@@ -626,11 +629,11 @@ export const generateDailyTasks = (
         habit.coinReward, 
         habit.timeBlock, 
         {
-          isHabit: isHabit2166,
+          isHabit: keepCounterMeta,
           isTracked2166: isHabit2166,
-          targetCount: isHabit2166 ? habit.targetCount : undefined,
-          currentCount: isHabit2166 ? 0 : undefined,
-          unit: isHabit2166 ? habit.unit : undefined,
+          targetCount: keepCounterMeta ? habit.targetCount : undefined,
+          currentCount: keepCounterMeta ? 0 : undefined,
+          unit: keepCounterMeta ? habit.unit : undefined,
           isQuickHabit: Boolean(habit.isQuickHabit),
           quickIcon: habit.quickIcon,
           isLegendaryBounty: habit.isLegendaryBounty,

@@ -45,11 +45,14 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
   const [prompt, setPrompt] = useState('');
   const [scheduleMode, setScheduleMode] = useState<'master_blocks' | 'detailed'>('master_blocks');
   const [injectMode, setInjectMode] = useState<'replace_pending' | 'merge'>('replace_pending');
+  const [enginePreference, setEnginePreference] = useState<'ai' | 'local'>(() =>
+    hasActiveGeminiKey() ? 'ai' : 'local'
+  );
+  const [showPromptHelp, setShowPromptHelp] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [suggestedHabits, setSuggestedHabits] = useState<CustomHabit[] | null>(null);
-  const [addedHabitIds, setAddedHabitIds] = useState<Set<string>>(new Set());
   const [previewDay, setPreviewDay] = useState<number | 'all'>('all');
   
   // Inline editing state for individual suggested habits
@@ -89,6 +92,9 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
       const active = hasActiveGeminiKey();
       setIsKeyConfigured(active);
       setInputKey(getEffectiveGeminiApiKey() || '');
+      if (!active) {
+        setEnginePreference('local');
+      }
 
       // ORA-01: Verificar si existe un respaldo previo para rollback
       try {
@@ -108,12 +114,8 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
         setHasUndoSnapshot(false);
       }
 
-      // Si no tiene clave, abrir automáticamente el panel para guiarlo a conectarla
-      if (!active) {
-        setShowKeyInput(true);
-      }
       if (initialPrompt) {
-        setPrompt(initialPrompt);
+        setPrompt(initialPrompt.slice(0, 10000));
         setActiveTab('prompt');
       }
     }
@@ -182,19 +184,23 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
           rank: stats?.rankTitle,
           name: stats?.fullName
         };
+        const dispatchOpts = {
+          forceRemoteAi: enginePreference === 'ai',
+          forceLocalOnly: enginePreference === 'local',
+        };
         try {
           const aiData = await generateScheduleFrontend(
             `Reorganiza y acomoda de forma óptima y sin choques de horario mis siguientes misiones del día en entre 5 y ${scheduleMode === 'master_blocks' ? 7 : 9} bloques:\n${tasksPrompt}`,
             userContextObj,
             [],
-            scheduleMode
+            scheduleMode,
+            dispatchOpts
           );
-          if (aiData?.source === 'ai' && Array.isArray(aiData.habits) && aiData.habits.length > 0) {
+          if (Array.isArray(aiData?.habits) && aiData.habits.length > 0) {
             const arranged = autoArrangeSchedule(aiData.habits, scheduleMode, scheduleMode === 'master_blocks' ? 7 : 10);
             setSuggestedHabits(sortByChronologicalTime(arranged) as CustomHabit[]);
-            setNotice(null);
-            setAddedHabitIds(new Set());
-            setGenerationSource('ai');
+            setNotice(aiData.notice || null);
+            setGenerationSource(aiData?.source === 'heuristic_engine' ? 'local' : 'ai');
             soundFX.playSubBassConfirm();
             return;
           }
@@ -203,12 +209,11 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
         }
 
         setSuggestedHabits(sortByChronologicalTime(organized));
-        setNotice("⚡ Agenda organizada por el Motor Táctico Local.");
-        setAddedHabitIds(new Set());
+        setNotice(null);
         setGenerationSource('local');
         soundFX.playSubBassConfirm();
       } else {
-        // No tasks yet: ask Gemini Flash for a complete balanced day, with heuristic fallback
+        // No tasks yet: design a balanced day using selected engine
         const userContextObj = {
           profession: stats?.profession,
           mantra: stats?.mantra,
@@ -219,18 +224,22 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
           rank: stats?.rankTitle,
           name: stats?.fullName
         };
+        const dispatchOpts = {
+          forceRemoteAi: enginePreference === 'ai',
+          forceLocalOnly: enginePreference === 'local',
+        };
         try {
           const aiData = await generateScheduleFrontend(
             'Diseña una agenda diaria equilibrada de alto rendimiento con 6 bloques horarios claros (mañana, mediodía, tarde y noche) sin choques para hoy.',
             userContextObj,
             [],
-            scheduleMode
+            scheduleMode,
+            dispatchOpts
           );
           if (Array.isArray(aiData?.habits) && aiData.habits.length > 0) {
             const arranged = autoArrangeSchedule(aiData.habits, scheduleMode, scheduleMode === 'master_blocks' ? 7 : 10);
             setSuggestedHabits(sortByChronologicalTime(arranged) as CustomHabit[]);
             setNotice(aiData.notice || null);
-            setAddedHabitIds(new Set());
             setGenerationSource(aiData?.source === 'heuristic_engine' ? 'local' : 'ai');
             soundFX.playSubBassConfirm();
             return;
@@ -240,9 +249,8 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
         }
         const fallback = generateProceduralSchedule('', { profession: stats?.profession }, scheduleMode);
         setSuggestedHabits(sortByChronologicalTime(fallback));
-        setNotice("⚡ Agenda balanceada por el Motor Táctico Local.");
+        setNotice(null);
         setGenerationSource('local');
-        setAddedHabitIds(new Set());
         soundFX.playSubBassConfirm();
       }
     } finally {
@@ -252,13 +260,14 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
 
   const handleGenerate = async (overridePrompt?: unknown) => {
     const rawPrompt = typeof overridePrompt === 'string' ? overridePrompt : prompt;
-    const textToUse = String(rawPrompt || '').trim();
+    const textToUse = String(rawPrompt || '').trim().slice(0, 10000);
     if (!textToUse) {
-      await handleAutoOrganizeCurrentDay();
+      soundFX.playClick();
+      setError('Escribe o pega tus actividades en el cuadro de texto (o toca "Cargar ejemplo").');
       return;
     }
     if (typeof overridePrompt === 'string' && overridePrompt.trim()) {
-      setPrompt(overridePrompt);
+      setPrompt(overridePrompt.slice(0, 10000));
     }
 
     try {
@@ -280,17 +289,14 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
         name: stats?.fullName 
       };
 
-      const data = await generateScheduleFrontend(textToUse, userContextObj, [], scheduleMode);
+      const data = await generateScheduleFrontend(textToUse, userContextObj, [], scheduleMode, {
+        forceRemoteAi: enginePreference === 'ai',
+        forceLocalOnly: enginePreference === 'local',
+      });
 
       const isLocal = data?.source === 'heuristic_engine';
       setGenerationSource(isLocal ? 'local' : 'ai');
-      if (data.notice) {
-        setNotice(data.notice);
-      } else {
-        setNotice(isLocal 
-          ? "⚡ Agenda estratégica generada con éxito por el Motor Táctico Local."
-          : "✨ Agenda estratégica generada con éxito por KAI IA (Gemini).");
-      }
+      setNotice(data.notice || null);
 
       const rawHabits: CustomHabit[] = data.habits || [];
       const arranged = autoArrangeSchedule(rawHabits, scheduleMode, 25);
@@ -298,6 +304,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
       setSuggestedHabits(sorted);
       safeLogEvent('oracle_generation_completed', {
         schedule_mode: scheduleMode,
+        engine_preference: enginePreference,
         block_count: sorted.length,
         has_ai_notice: Boolean(data.notice)
       });
@@ -314,7 +321,6 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
       } else {
         setPreviewDay('all');
       }
-      setAddedHabitIds(new Set());
       soundFX.playSubBassConfirm();
     } catch (err: any) {
       console.warn("API request failed, falling back to local procedural heuristics:", err);
@@ -333,18 +339,17 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
           }, 
           scheduleMode
         );
-        setNotice("⚠️ Modo sin conexión: Agenda estructurada por el Motor Local.");
+        setNotice("⚠️ No se pudo conectar con Gemini IA; estructuramos tu agenda con el Motor Local.");
         setGenerationSource('local');
         const arranged = autoArrangeSchedule(fallbackHabits, scheduleMode, 25);
         const sorted = sortByChronologicalTime(arranged);
         setSuggestedHabits(sorted);
         const hasMultiDayVariations = sorted.some(h => h.specificDays && h.specificDays.length > 0 && h.specificDays.length < 5);
         setPreviewDay(hasMultiDayVariations ? 1 : 'all');
-        setAddedHabitIds(new Set());
         soundFX.playSubBassConfirm();
         setError(null);
       } catch (fallbackErr) {
-        let errMsg = err.message || 'Error de sincronización con tu compañero KAI.';
+        const errMsg = err.message || 'No se pudo procesar la agenda. Intenta de nuevo.';
         setError(errMsg);
         soundFX.playGlitch();
       }
@@ -454,39 +459,6 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
 
   const mapDayToString = (day: number) => {
     return ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'][day];
-  };
-
-  const handleAddSingleRoutine = (habit: CustomHabit) => {
-    soundFX.playClick();
-    const taskStore = useTaskStore.getState();
-    const currentDateStr = taskStore.currentViewDate || getTodayDateString();
-
-    const oracleTask: TaskItem = {
-      id: `oracle-task-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-      title: habit.title,
-      category: habit.category === 'habito' ? 'rutina' : habit.category,
-      description: habit.description || `Misión táctica del Oráculo para ${habit.timeBlock || 'el día'}`,
-      xpReward: habit.xpReward || 20,
-      coinReward: habit.coinReward || 10,
-      completed: false,
-      timeBlock: normalizeTimeBlock(habit.timeBlock) || habit.timeBlock,
-      isHabit: false,
-      quickIcon: habit.quickIcon
-    };
-
-    const currentTasksForDay = (taskStore.tasksByDate[currentDateStr] || []).filter(
-      t => !isDuplicateActivity(t, { title: habit.title, timeBlock: habit.timeBlock })
-    );
-    const updatedList = gameEngine.sortTasksChronologically(
-      deduplicateTasksForDay([...currentTasksForDay, oracleTask])
-    );
-
-    taskStore.setTasksByDate({
-      ...taskStore.tasksByDate,
-      [currentDateStr]: updatedList
-    });
-
-    setAddedHabitIds(prev => new Set([...prev, habit.id]));
   };
 
   const handleAcceptSchedule = async () => {
@@ -636,7 +608,6 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
 
     setSuggestedHabits(null);
     setPrompt('');
-    setAddedHabitIds(new Set());
     onClose();
   };
 
@@ -711,6 +682,9 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
         exit={{ opacity: 0 }}
       >
         <motion.div 
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="oracle-modal-title"
           className="bg-[#030712]/95 border border-cyan-500/35 w-full max-w-2xl rounded-2xl sm:rounded-3xl shadow-[0_0_50px_rgba(0,240,255,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] overflow-hidden flex flex-col max-h-[90dvh] sm:max-h-[88vh] backdrop-blur-2xl relative text-left"
           initial={{ scale: 0.95, y: 15 }}
           animate={{ scale: 1, y: 0 }}
@@ -722,42 +696,48 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
           {/* Filamento especular superior */}
           <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent pointer-events-none" />
 
-          {/* Header */}
+          {/* Header limpio y directo */}
           <div className="bg-[#040814]/90 p-4 sm:p-5 border-b border-white/10 flex justify-between items-center gap-3 relative z-10">
-            <div className="flex items-center gap-3 flex-wrap">
-              <div className="p-2 rounded-xl bg-cyan-500/15 border border-cyan-400/40 text-cyan-300 shadow-[0_0_14px_rgba(0,240,255,0.3)]">
+            <div className="flex items-center gap-3 flex-wrap min-w-0">
+              <div className="p-2 rounded-xl bg-cyan-500/15 border border-cyan-400/40 text-cyan-300 shadow-[0_0_14px_rgba(0,240,255,0.3)] shrink-0">
                 <Icon name="brain" className="w-5 h-5 text-cyan-300" />
               </div>
-              <div>
-                <h3 className="text-base sm:text-lg font-anton uppercase tracking-wider text-white flex items-center gap-2">
-                  Oráculo Neural KAI
-                </h3>
-                {isKeyConfigured ? (
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 id="oracle-modal-title" className="text-base sm:text-lg font-anton uppercase tracking-wider text-white">
+                    Oráculo Neural KAI
+                  </h3>
                   <button
                     type="button"
-                    onClick={() => setShowKeyInput(!showKeyInput)}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 text-[10px] font-mono font-bold shadow-[0_0_8px_rgba(16,185,129,0.2)] mt-0.5 cursor-pointer hover:bg-emerald-900/60 transition-all active:scale-95"
-                    title="KAI IA conectada con Gemini en vivo. Toca para cambiar la clave"
+                    onClick={() => {
+                      soundFX.playClick();
+                      setShowKeyInput(!showKeyInput);
+                    }}
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-[10px] font-mono font-bold cursor-pointer transition-all active:scale-95 ${
+                      isKeyConfigured
+                        ? 'bg-emerald-950/80 border-emerald-500/50 text-emerald-300 hover:bg-emerald-900/60'
+                        : 'bg-slate-900 border-white/15 text-slate-300 hover:border-cyan-400/50 hover:text-cyan-300'
+                    }`}
+                    title={isKeyConfigured ? 'Cambiar o quitar tu clave de Gemini' : 'Conecta tu clave gratuita de Gemini para usar IA'}
                   >
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                    <span>KAI IA Conectada (Gemini)</span>
+                    <span className={`w-1.5 h-1.5 rounded-full ${isKeyConfigured ? 'bg-emerald-400' : 'bg-slate-400'}`} />
+                    <span>{isKeyConfigured ? 'Gemini Conectado' : 'Conectar Gemini (Opcional)'}</span>
                   </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setShowKeyInput(true)}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-950/80 border border-amber-500/60 text-amber-300 text-[10px] font-mono font-bold shadow-[0_0_8px_rgba(245,158,11,0.25)] mt-0.5 cursor-pointer hover:bg-amber-900/60 transition-all active:scale-95"
-                    title="Toca para ingresar tu clave gratuita de Gemini"
-                  >
-                    <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-                    <span>KAI IA: Requiere Clave [Conectar]</span>
-                  </button>
-                )}
+                </div>
+                <p className="text-xs text-slate-400 font-sans mt-0.5">
+                  Arma tu horario semanal o acomoda tus tareas de hoy sin choques.
+                </p>
               </div>
             </div>
-            <button 
-              onClick={onClose} 
-              className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 border border-transparent hover:border-white/10 transition-all cursor-pointer active:scale-95"
+            <button
+              type="button"
+              onClick={() => {
+                soundFX.playClick();
+                triggerHaptic(15);
+                onClose();
+              }}
+              aria-label="Cerrar Oráculo Neural KAI"
+              className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 border border-transparent hover:border-white/10 transition-all cursor-pointer active:scale-95 shrink-0"
               title="Cerrar (Esc)"
             >
               <Icon name="x" className="w-5 h-5" />
@@ -765,33 +745,32 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
           </div>
 
           {/* Content */}
-          <div className="p-4 sm:p-6 overflow-y-auto custom-scrollbar relative z-10 flex-1">
-            {/* Banner de Conexión de Clave Gemini */}
-            {(!isKeyConfigured || showKeyInput) && (
-              <div className="bg-[#030e1d] border border-cyan-500/50 rounded-2xl p-4 mb-4 shadow-[0_0_25px_rgba(0,240,255,0.2)] relative">
+          <div className="p-4 sm:p-5 overflow-y-auto custom-scrollbar relative z-10 flex-1 space-y-4">
+            {/* Panel desplegable de Clave Gemini (solo visible si el usuario lo abre) */}
+            {showKeyInput && (
+              <div className="bg-[#030e1d] border border-cyan-500/50 rounded-2xl p-4 shadow-[0_0_25px_rgba(0,240,255,0.18)] relative">
                 <div className="flex items-start justify-between gap-3 mb-2">
                   <div className="flex items-center gap-2">
                     <div className="p-1.5 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-400/40">
                       <Icon name="sparkles" className="w-4 h-4 text-cyan-300" />
                     </div>
                     <div>
-                      <h4 className="text-xs sm:text-sm font-anton tracking-wider uppercase text-white">
-                        Conectar KAI IA con Google Gemini
+                      <h4 className="text-xs sm:text-sm font-bold text-white">
+                        Conectar IA Gemini (Opcional)
                       </h4>
-                      <p className="text-[10px] sm:text-[11px] text-slate-400 font-mono">
-                        Para analizar y generar agendas con inteligencia artificial en tiempo real.
+                      <p className="text-[11px] text-slate-400 font-sans">
+                        Útil para textos largos o escritos en lenguaje natural. Sin clave, el Motor Local sigue funcionando gratis.
                       </p>
                     </div>
                   </div>
-                  {isKeyConfigured && (
-                    <button
-                      type="button"
-                      onClick={() => setShowKeyInput(false)}
-                      className="text-slate-400 hover:text-white text-xs p-1"
-                    >
-                      ✕
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    aria-label="Cerrar panel de clave Gemini"
+                    onClick={() => setShowKeyInput(false)}
+                    className="text-slate-400 hover:text-white text-xs p-1 cursor-pointer"
+                  >
+                    ✕
+                  </button>
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-2 mt-3">
@@ -800,13 +779,13 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                       type={showKeyText ? 'text' : 'password'}
                       value={inputKey}
                       onChange={(e) => setInputKey(e.target.value)}
-                      placeholder="AIzaSy... (Pega tu API Key de Gemini aquí)"
-                      className="w-full bg-black/80 border border-white/20 focus:border-cyan-400 rounded-xl px-3 py-2.5 text-xs text-white font-mono placeholder:text-slate-500 outline-none pr-14"
+                      placeholder="AIzaSy... (Pega tu clave de Google Gemini aquí)"
+                      className="w-full bg-black/80 border border-white/20 focus:border-cyan-400 rounded-xl px-3 py-2 text-xs text-white font-mono placeholder:text-slate-500 outline-none pr-14"
                     />
                     <button
                       type="button"
                       onClick={() => setShowKeyText(!showKeyText)}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-cyan-400 font-mono hover:text-cyan-300"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-cyan-400 font-mono hover:text-cyan-300 cursor-pointer"
                     >
                       {showKeyText ? 'Ocultar' : 'Ver'}
                     </button>
@@ -818,109 +797,151 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                       if (inputKey.trim()) {
                         saveGeminiApiKey(inputKey.trim());
                         setIsKeyConfigured(true);
-                        setKeySavedToast('✓ ¡Clave guardada! KAI IA ahora está conectada en tiempo real.');
+                        setEnginePreference('ai');
+                        setKeySavedToast('✓ Clave guardada. Modo IA Gemini activado.');
                         setTimeout(() => {
                           setKeySavedToast(null);
                           setShowKeyInput(false);
-                        }, 2500);
+                        }, 2000);
                       } else {
                         removeGeminiApiKey();
                         setIsKeyConfigured(false);
-                        setKeySavedToast('Clave eliminada. Modo offline.');
-                        setTimeout(() => setKeySavedToast(null), 2500);
+                        setEnginePreference('local');
+                        setKeySavedToast('Clave eliminada. Cambiado a Motor Local.');
+                        setTimeout(() => setKeySavedToast(null), 2000);
                       }
                     }}
-                    className="px-4 py-2.5 bg-gradient-to-r from-cyan-400 to-emerald-400 text-slate-950 font-anton text-xs uppercase tracking-wider rounded-xl hover:opacity-95 cursor-pointer shadow-[0_0_12px_rgba(0,240,255,0.4)] active:scale-95 shrink-0"
+                    className="px-4 py-2 bg-gradient-to-r from-cyan-400 to-emerald-400 text-slate-950 font-anton text-xs uppercase tracking-wider rounded-xl hover:opacity-95 cursor-pointer shadow-[0_0_12px_rgba(0,240,255,0.35)] active:scale-95 shrink-0"
                   >
-                    Guardar y Activar
+                    Guardar
                   </button>
                 </div>
 
                 {keySavedToast && (
-                  <div className="mt-2.5 text-emerald-400 text-xs font-mono font-bold flex items-center gap-1.5 animate-fade-in">
+                  <div className="mt-2.5 text-emerald-400 text-xs font-mono font-bold flex items-center gap-1.5">
                     <Icon name="check" className="w-3.5 h-3.5" />
                     <span>{keySavedToast}</span>
                   </div>
                 )}
 
-                <div className="mt-3 pt-2.5 border-t border-white/10 flex flex-wrap items-center justify-between gap-2 text-[10px] font-mono">
+                <div className="mt-3 pt-2.5 border-t border-white/10 flex flex-wrap items-center justify-between gap-2 text-[11px] font-sans">
                   <a
                     href="https://aistudio.google.com/app/apikey"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-cyan-400 hover:text-cyan-300 hover:underline inline-flex items-center gap-1 font-bold"
+                    className="text-cyan-400 hover:text-cyan-300 hover:underline inline-flex items-center gap-1 font-medium"
                   >
-                    ↗ Obtén tu clave 100% gratuita en Google AI Studio (30 segundos)
+                    ↗ Consigue una clave gratuita en Google AI Studio
                   </a>
-                  <span className="text-slate-500">Se guarda exclusivamente en tu navegador</span>
+                  <span className="text-slate-500">Se guarda solo en tu dispositivo</span>
                 </div>
               </div>
             )}
 
             {!suggestedHabits ? (
-              <div className="space-y-4">
-                {/* ORA-01: Banner de Deshacer / Rollback si existe respaldo previo */}
+              <div className="space-y-3.5">
+                {/* Banner para restaurar agenda anterior si existe respaldo */}
                 {hasUndoSnapshot && (
-                  <div className="bg-amber-950/40 border border-amber-500/40 rounded-2xl p-3 sm:p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-[0_0_15px_rgba(245,158,11,0.15)] animate-fade-in">
+                  <div className="bg-amber-950/35 border border-amber-500/40 rounded-2xl p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center shrink-0">
-                        <Icon name="rotateCcw" className="w-4 h-4 text-amber-400" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-mono font-bold text-amber-200">
-                          Respaldo de Horario Anterior Disponible
-                        </p>
-                        <p className="text-[11px] text-amber-300/80 font-sans mt-0.5">
-                          Puedes restaurar tus tareas y rutinas al estado previo a la última inyección.
-                        </p>
-                      </div>
+                      <Icon name="rotateCcw" className="w-4 h-4 text-amber-400 shrink-0" />
+                      <p className="text-xs text-amber-200 font-sans">
+                        <strong>¿Prefieres la agenda anterior?</strong> Puedes restaurar las tareas que tenías antes.
+                      </p>
                     </div>
                     <button
                       type="button"
                       onClick={handleUndoInjection}
-                      className="w-full sm:w-auto shrink-0 px-3.5 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 rounded-xl text-xs font-mono font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-95 shadow-md"
-                      title="Revertir y restaurar agenda previa"
+                      className="w-full sm:w-auto shrink-0 px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl text-xs font-mono font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-95"
                     >
                       <Icon name="rotateCcw" className="w-3.5 h-3.5" />
-                      <span>Deshacer Inyección</span>
+                      <span>Restaurar anterior</span>
                     </button>
                   </div>
                 )}
 
-                <div className="bg-[#020712]/90 border border-white/10 rounded-2xl p-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between shadow-[0_0_20px_rgba(0,0,0,0.5)]">
-                  <div className="flex gap-3.5 items-start">
-                    <div className="w-10 h-10 rounded-xl bg-black/70 border border-cyan-500/40 flex items-center justify-center shrink-0 shadow-[0_0_12px_rgba(0,240,255,0.25)]">
-                      <Icon name="terminal" className="w-5 h-5 text-cyan-300" />
+                {/* Acción rápida en 1 línea + Switch visible IA Gemini / Motor Local */}
+                <div className="bg-[#020712]/90 border border-white/10 rounded-2xl p-3 space-y-2.5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-white/10">
+                    <div className="text-xs text-slate-300 font-sans">
+                      {currentDayAgendaTasks.length > 0 ? (
+                        <span>Tienes <strong className="text-cyan-300">{currentDayAgendaTasks.length} tareas hoy</strong>: acomódalas sin cruces en 1 clic.</span>
+                      ) : (
+                        <span>¿Sin ganas de escribir? Genera un día equilibrado al instante.</span>
+                      )}
                     </div>
-                    <div>
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <span className="text-[10px] font-anton uppercase tracking-wider text-cyan-300 bg-cyan-950/70 px-2.5 py-0.5 rounded-lg border border-cyan-500/40">
-                          Protocolo de Agenda
-                        </span>
-                        <span className="text-[10px] text-emerald-400 font-mono font-bold">
-                          ● KAI IA Online (Gemini)
-                        </span>
-                      </div>
-                      <p className="text-slate-300 text-xs leading-relaxed font-sans">
-                        Organiza tus misiones de hoy con horarios inteligentes sin choques, o diseña tu semana completa paso a paso.
-                      </p>
+                    <button
+                      type="button"
+                      onClick={handleAutoOrganizeCurrentDay}
+                      className="shrink-0 px-3.5 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-emerald-400 hover:opacity-95 text-slate-950 font-anton text-xs uppercase tracking-wider shadow-[0_0_16px_rgba(0,240,255,0.28)] flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-95"
+                    >
+                      <Icon name="sparkles" className="w-3.5 h-3.5 text-slate-950" />
+                      <span>Acomodar tareas de hoy</span>
+                    </button>
+                  </div>
+
+                  {/* Switch visible IA Gemini / Motor Local */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <span className="text-xs text-slate-400 font-sans">
+                      Motor para crear la agenda:
+                    </span>
+                    <div
+                      role="group"
+                      aria-label="Elegir motor de inteligencia para crear la agenda"
+                      className="flex items-center gap-1 bg-black/60 p-1 rounded-xl border border-white/10"
+                    >
+                      <button
+                        type="button"
+                        aria-pressed={enginePreference === 'ai'}
+                        onClick={() => {
+                          soundFX.playClick();
+                          triggerHaptic(15);
+                          setEnginePreference('ai');
+                          if (!isKeyConfigured) {
+                            setShowKeyInput(true);
+                          }
+                        }}
+                        className={`flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                          enginePreference === 'ai'
+                            ? 'bg-purple-500 text-white shadow-[0_0_12px_rgba(168,85,247,0.45)]'
+                            : 'text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        <Icon name="brain" className="w-3.5 h-3.5" />
+                        <span>IA Gemini</span>
+                        {!isKeyConfigured && (
+                          <span className="text-[9px] px-1 rounded bg-amber-500/25 text-amber-200 border border-amber-400/40">
+                            Clave
+                          </span>
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        aria-pressed={enginePreference === 'local'}
+                        onClick={() => {
+                          soundFX.playClick();
+                          triggerHaptic(15);
+                          setEnginePreference('local');
+                        }}
+                        className={`flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                          enginePreference === 'local'
+                            ? 'bg-emerald-500 text-slate-950 shadow-[0_0_12px_rgba(16,185,129,0.4)]'
+                            : 'text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        <Icon name="zap" className="w-3.5 h-3.5" />
+                        <span>Motor Local</span>
+                      </button>
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={handleAutoOrganizeCurrentDay}
-                    className="chicle-btn w-full sm:w-auto shrink-0 px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-emerald-400 hover:opacity-95 text-slate-950 font-anton text-xs uppercase tracking-wider shadow-[0_0_20px_rgba(0,240,255,0.35)] flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95"
-                  >
-                    <Icon name="sparkles" className="w-4 h-4 text-slate-950" />
-                    <span>Auto-Acomodar Hoy</span>
-                  </button>
                 </div>
 
-                {/* Mode Tabs: Guided Assistant vs Free Prompt vs Presets */}
+                {/* Pestañas simples */}
                 <div 
                   role="tablist" 
-                  aria-label="Modos de generación del Oráculo" 
-                  className="flex flex-wrap bg-black/40 border border-white/10 p-1.5 rounded-2xl gap-1.5"
+                  aria-label="Formas de crear tu agenda" 
+                  className="flex flex-wrap bg-black/40 border border-white/10 p-1 rounded-2xl gap-1"
                 >
                   <button
                     type="button"
@@ -929,16 +950,17 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                     aria-controls="panel-wizard"
                     onClick={() => {
                       soundFX.playClick();
+                      setError(null);
                       setActiveTab('wizard');
                     }}
                     className={`flex-1 min-w-[100px] py-2 px-3 rounded-xl text-xs font-anton uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 ${
                       activeTab === 'wizard'
-                        ? 'bg-gradient-to-r from-cyan-400 to-emerald-400 text-slate-950 font-bold shadow-[0_0_15px_rgba(0,240,255,0.4)]'
+                        ? 'bg-gradient-to-r from-cyan-400 to-emerald-400 text-slate-950 font-bold shadow-[0_0_15px_rgba(0,240,255,0.35)]'
                         : 'text-slate-400 hover:text-white hover:bg-white/5'
                     }`}
                   >
                     <Icon name="sparkles" className="w-3.5 h-3.5" />
-                    <span>Asistente Guiado</span>
+                    <span>Paso a paso</span>
                   </button>
 
                   <button
@@ -948,11 +970,12 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                     aria-controls="panel-prompt"
                     onClick={() => {
                       soundFX.playClick();
+                      setError(null);
                       setActiveTab('prompt');
                     }}
-                    className={`flex-1 min-w-[80px] py-2 px-3 rounded-xl text-xs font-anton uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 ${
+                    className={`flex-1 min-w-[100px] py-2 px-3 rounded-xl text-xs font-anton uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 ${
                       activeTab === 'prompt'
-                        ? 'bg-cyan-400 text-slate-950 font-bold shadow-[0_0_15px_rgba(0,240,255,0.4)]'
+                        ? 'bg-cyan-400 text-slate-950 font-bold shadow-[0_0_15px_rgba(0,240,255,0.35)]'
                         : 'text-slate-400 hover:text-white hover:bg-white/5'
                     }`}
                   >
@@ -967,11 +990,12 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                     aria-controls="panel-templates"
                     onClick={() => {
                       soundFX.playClick();
+                      setError(null);
                       setActiveTab('templates');
                     }}
-                    className={`flex-1 min-w-[80px] py-2 px-3 rounded-xl text-xs font-anton uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 ${
+                    className={`flex-1 min-w-[100px] py-2 px-3 rounded-xl text-xs font-anton uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 ${
                       activeTab === 'templates'
-                        ? 'bg-cyan-400 text-slate-950 font-bold shadow-[0_0_15px_rgba(0,240,255,0.4)]'
+                        ? 'bg-cyan-400 text-slate-950 font-bold shadow-[0_0_15px_rgba(0,240,255,0.35)]'
                         : 'text-slate-400 hover:text-white hover:bg-white/5'
                     }`}
                   >
@@ -980,9 +1004,10 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                   </button>
                 </div>
 
-                {/* Loading State Overlay if synthesizing from any tab */}
+                {/* Carga o Contenido de la Pestaña */}
                 {isLoading ? (
                   <OracleTheatricalLoader 
+                    engineMode={enginePreference}
                     userContext={{
                       class: stats?.characterClass,
                       rank: stats?.rankTitle,
@@ -991,152 +1016,162 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                   />
                 ) : (
                   <>
-                    {/* TAB 1: GUIDED ASSISTANT */}
+                    {/* PESTAÑA 1: PASO A PASO */}
                     {activeTab === 'wizard' && (
-                      <OracleGuidedWizard 
-                        onComplete={(wizardPrompt) => {
-                          setPrompt(wizardPrompt);
-                          handleGenerate(wizardPrompt);
-                        }}
-                        onCancel={() => onClose()}
-                      />
+                      <div id="panel-wizard" role="tabpanel">
+                        <OracleGuidedWizard 
+                          onComplete={(wizardPrompt) => {
+                            setPrompt(wizardPrompt.slice(0, 10000));
+                            handleGenerate(wizardPrompt);
+                          }}
+                          onCancel={() => onClose()}
+                        />
+                      </div>
                     )}
 
-                    {/* TAB 2: TEMPLATES ARCHETYPES */}
+                    {/* PESTAÑA 3: PLANTILLAS */}
                     {activeTab === 'templates' && (
-                      <OracleTemplates 
-                        onSelectTemplate={(tplPrompt) => {
-                          setPrompt(tplPrompt);
-                          handleGenerate(tplPrompt);
-                        }}
-                      />
+                      <div id="panel-templates" role="tabpanel">
+                        <OracleTemplates 
+                          onSelectTemplate={(tplPrompt) => {
+                            setPrompt(tplPrompt.slice(0, 10000));
+                            handleGenerate(tplPrompt);
+                          }}
+                        />
+                      </div>
                     )}
 
-                    {/* TAB 3: FREE PROMPT */}
+                    {/* PESTAÑA 2: MODO LIBRE (10,000 CARACTERES) */}
                     {activeTab === 'prompt' && (
-                      <div className="space-y-4">
-                        {/* Mode Selector */}
-                        <div className="bg-[#03070d] border border-cyan-900/50 rounded-xl p-3">
-                          <span className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-bold block mb-2">
-                            Distribución del Día:
+                      <div id="panel-prompt" role="tabpanel" className="space-y-3">
+                        {/* Encabezado directo del cuadro de texto + acciones + contador */}
+                        <div className="space-y-2">
+                          <div className="flex flex-wrap items-center justify-between gap-2 pl-0.5">
+                            <label htmlFor="oracle-free-prompt" className="text-xs font-sans font-bold text-slate-200">
+                              Escribe o pega cómo es tu semana o día
+                            </label>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  soundFX.playClick();
+                                  setShowPromptHelp(!showPromptHelp);
+                                }}
+                                aria-expanded={showPromptHelp}
+                                className="px-2 py-0.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 text-[11px] font-sans transition-colors cursor-pointer"
+                              >
+                                {showPromptHelp ? 'Ocultar ayuda' : '? Cómo escribirlo'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  soundFX.playClick();
+                                  setError(null);
+                                  setPrompt(
+                                    `LUNES A VIERNES:\n07:00 a 08:00: Desayuno y preparación\n08:30 a 13:00: Trabajo principal\n13:00 a 14:00: Almuerzo y descanso\n14:00 a 17:30: Proyectos y pendientes\n18:30 a 19:30: Entrenamiento\n20:30 a 22:00: Lectura y tiempo libre\n\nSÁBADOS:\n09:30 a 11:30: Deporte al aire libre\n12:00 a 14:00: Limpieza y compras`
+                                  );
+                                }}
+                                className="px-2.5 py-0.5 rounded-lg bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-500/40 text-cyan-300 text-[11px] font-mono font-bold transition-all cursor-pointer active:scale-95"
+                              >
+                                Cargar ejemplo
+                              </button>
+                              <span
+                                className={`text-[11px] font-mono ${
+                                  prompt.length >= 10000
+                                    ? 'text-rose-400 font-bold'
+                                    : prompt.length >= 8500
+                                    ? 'text-amber-400 font-bold'
+                                    : 'text-slate-400'
+                                }`}
+                              >
+                                {prompt.length.toLocaleString()} / 10,000
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Ayuda breve colapsable (cerrada por defecto para no saturar) */}
+                          {showPromptHelp && (
+                            <div className="bg-[#050d1a] border border-cyan-500/30 rounded-xl p-3 text-xs text-slate-300 space-y-1.5 font-sans leading-relaxed">
+                              <p>
+                                • <strong className="text-cyan-300">Con horas:</strong> escribe por ejemplo <code className="text-cyan-300">Lunes a viernes 09:00 a 17:00 trabajo</code>.
+                              </p>
+                              <p>
+                                • <strong className="text-cyan-300">Si cambias de días:</strong> separa por títulos como <code className="text-cyan-300">LUNES</code>, <code className="text-cyan-300">SÁBADOS</code> o <code className="text-cyan-300">DOMINGOS</code>.
+                              </p>
+                              <p>
+                                • <strong className="text-purple-300">IA Gemini vs Local:</strong> usa <strong>IA Gemini</strong> si pegas notas largas o párrafos en texto corrido; usa <strong>Motor Local</strong> si ya está en lista por hora y lo quieres al instante.
+                              </p>
+                            </div>
+                          )}
+
+                          <textarea
+                            id="oracle-free-prompt"
+                            value={prompt}
+                            onChange={(e) => {
+                              if (error) setError(null);
+                              setPrompt(e.target.value.slice(0, 10000));
+                            }}
+                            maxLength={10000}
+                            placeholder="Ejemplo: De lunes a viernes me levanto a las 07:00, trabajo de 09:00 a 17:00 con almuerzo a la 13:00. Entreno de 18:30 a 19:30. Los sábados limpio de 10:00 a 12:00 y descanso en la tarde..."
+                            className="w-full h-48 min-h-[11rem] max-h-[24rem] bg-[#03070d] border border-cyan-950 focus:border-cyan-400 rounded-xl p-3.5 text-sm text-slate-100 placeholder-slate-500 resize-y outline-none transition-colors font-sans leading-relaxed"
+                          />
+                        </div>
+
+                        {/* Nivel de detalle en 1 línea compacta */}
+                        <div className="flex flex-wrap items-center justify-between gap-2 bg-[#03070d] border border-white/10 rounded-xl px-3 py-2">
+                          <span className="text-xs text-slate-400 font-sans">
+                            ¿Cómo prefieres organizarlo?
                           </span>
-                          <div className="grid grid-cols-2 gap-2">
+                          <div className="flex items-center gap-1.5">
                             <button
                               type="button"
+                              aria-pressed={scheduleMode === 'master_blocks'}
                               onClick={() => {
                                 soundFX.playClick();
                                 setScheduleMode('master_blocks');
                               }}
-                              className={`p-2.5 rounded-lg border text-left transition-all cursor-pointer ${
+                              className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
                                 scheduleMode === 'master_blocks'
-                                  ? 'bg-cyan-950/70 border-cyan-400 text-cyan-200 shadow-[0_0_15px_rgba(6,182,212,0.25)]'
-                                  : 'bg-black/40 border-slate-800 text-slate-400 hover:border-slate-700'
+                                  ? 'bg-cyan-500 text-slate-950'
+                                  : 'bg-white/5 text-slate-400 hover:text-white'
                               }`}
                             >
-                              <div className="flex items-center gap-1.5 font-bold font-sans text-xs text-cyan-300">
-                                <Icon name="layers" className="w-4 h-4" />
-                                <span>Bloques Maestros (Recomendado)</span>
-                              </div>
-                              <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">
-                                Agrupa el día en 4 a 6 bloques para evitar sobrecarga.
-                              </p>
+                              Resumido (4–6 bloques)
                             </button>
-
                             <button
                               type="button"
+                              aria-pressed={scheduleMode === 'detailed'}
                               onClick={() => {
                                 soundFX.playClick();
                                 setScheduleMode('detailed');
                               }}
-                              className={`p-2.5 rounded-lg border text-left transition-all cursor-pointer ${
+                              className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
                                 scheduleMode === 'detailed'
-                                  ? 'bg-cyan-950/70 border-cyan-400 text-cyan-200 shadow-[0_0_15px_rgba(6,182,212,0.25)]'
-                                  : 'bg-black/40 border-slate-800 text-slate-400 hover:border-slate-700'
+                                  ? 'bg-cyan-500 text-slate-950'
+                                  : 'bg-white/5 text-slate-400 hover:text-white'
                               }`}
                             >
-                              <div className="flex items-center gap-1.5 font-bold font-sans text-xs text-slate-200">
-                                <Icon name="checkSquare" className="w-4 h-4" />
-                                <span>Modo Detallado</span>
-                              </div>
-                              <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">
-                                Registra cada actividad individualmente paso a paso.
-                              </p>
+                              Detallado (cada tarea)
                             </button>
                           </div>
-                        </div>
-
-                        {/* Guía Táctica KAI (Tutorial Interactivo) */}
-                        <div className="bg-[#040c1a] border border-cyan-500/30 rounded-xl p-3.5 space-y-2.5">
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-2">
-                              <Icon name="sparkles" className="w-4 h-4 text-cyan-400" />
-                              <span className="text-xs font-anton uppercase tracking-wider text-cyan-300">
-                                💡 Guía de Sintonización KAI (Cómo pedir tu agenda)
-                              </span>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                soundFX.playClick();
-                                setPrompt(
-                                  `LUNES A VIERNES:\n06:00 a 07:00: Preparación y rutina matutina.\n07:00 a 13:00: Bloque principal de trabajo y atención.\n13:00 a 14:00: Almuerzo y recarga.\n14:00 a 18:00: Segundo bloque de trabajo / proyectos.\n18:30 a 19:30: Entrenamiento físico y estiramiento.\n20:00 a 21:00: Cena y lavo platos.\n21:00 a 23:00: Bloque creativo / desarrollo personal.\n\nSÁBADOS:\n09:00 a 11:00: Entrenamiento especial o actividad exterior.\n11:00 a 14:00: Limpieza y mantenimiento del hogar.`
-                                );
-                              }}
-                              className="px-2.5 py-1 rounded-lg bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-500/40 text-cyan-300 text-[11px] font-mono font-bold flex items-center gap-1 transition-all cursor-pointer active:scale-95"
-                            >
-                              <Icon name="plus" className="w-3 h-3" />
-                              <span>Cargar Ejemplo</span>
-                            </button>
-                          </div>
-                          <p className="text-[11px] text-slate-300 leading-relaxed font-sans">
-                            Escribe tus actividades con tus horas reales. KAI respetará exactamente tus bloques sin imponer pausas forzadas ni cambiar tus rutinas:
-                          </p>
-                          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] font-mono text-slate-300">
-                            <li className="bg-black/50 border border-white/5 rounded-lg p-2 flex items-start gap-1.5">
-                              <span className="text-cyan-400 font-bold">•</span>
-                              <span><strong>Horarios Exactos:</strong> Indica las horas de inicio y fin (ej. <code className="text-cyan-300">06:00 a 12:00: Trabajo</code>).</span>
-                            </li>
-                            <li className="bg-black/50 border border-white/5 rounded-lg p-2 flex items-start gap-1.5">
-                              <span className="text-cyan-400 font-bold">•</span>
-                              <span><strong>Días Específicos:</strong> Varía por días (ej. <code className="text-cyan-300">Lunes a Viernes...</code> o <code className="text-cyan-300">Sábado...</code>).</span>
-                            </li>
-                            <li className="bg-black/50 border border-white/5 rounded-lg p-2 flex items-start gap-1.5">
-                              <span className="text-cyan-400 font-bold">•</span>
-                              <span><strong>Sin Límite de Bloques:</strong> Pasa desde 4 bloques clave hasta tu día completo detallado.</span>
-                            </li>
-                            <li className="bg-black/50 border border-white/5 rounded-lg p-2 flex items-start gap-1.5">
-                              <span className="text-cyan-400 font-bold">•</span>
-                              <span><strong>Cero Solapamientos:</strong> KAI ajusta si 2 tareas coinciden a la misma hora.</span>
-                            </li>
-                          </ul>
-                        </div>
-
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between pl-1">
-                            <label className="text-xs font-mono font-bold text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
-                              <Icon name="zap" className="w-3.5 h-3.5 text-cyan-400" />
-                              Instrucciones de tu Rutina / Horarios
-                            </label>
-                            <span className={`text-[11px] font-mono ${prompt.length > 1300 ? 'text-amber-400 font-bold' : 'text-slate-500'}`}>
-                              {prompt.length} / 1500
-                            </span>
-                          </div>
-                          <textarea
-                            value={prompt}
-                            onChange={(e) => setPrompt(e.target.value.slice(0, 1500))}
-                            maxLength={1500}
-                            placeholder="Ejemplo: De lunes a viernes trabajo de 06:00 a 12:00. Almuerzo de 12:45 a 13:30. Entrenamiento de 13:30 a 14:30. Trabajo de 15:00 a 19:30. Cena a las 19:30 y bloque creativo de 20:30 a 23:00..."
-                            className="w-full h-36 bg-[#03070d] border border-cyan-950 focus:border-cyan-400 rounded-xl p-4 text-sm text-slate-100 placeholder-slate-600 resize-none outline-none transition-colors font-mono"
-                          />
                         </div>
 
                         <button
+                          type="button"
                           onClick={() => handleGenerate()}
                           disabled={isLoading}
-                          className="w-full py-4 bg-cyan-600 hover:bg-cyan-500 disabled:bg-slate-800 disabled:text-slate-500 text-slate-950 font-black uppercase tracking-widest rounded-xl transition-all shadow-[0_0_25px_rgba(6,182,212,0.35)] active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
+                          className={`w-full py-3.5 text-slate-950 font-anton uppercase tracking-widest rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer disabled:bg-slate-800 disabled:text-slate-500 ${
+                            enginePreference === 'ai'
+                              ? 'bg-gradient-to-r from-purple-400 via-cyan-400 to-emerald-400 hover:opacity-95 shadow-[0_0_24px_rgba(168,85,247,0.3)]'
+                              : 'bg-gradient-to-r from-cyan-400 to-emerald-400 hover:opacity-95 shadow-[0_0_24px_rgba(6,182,212,0.3)]'
+                          }`}
                         >
-                          <Icon name="brain" className="w-5 h-5" />
-                          <span>Organizar Agenda y Rutina Diaria</span>
+                          <Icon name={enginePreference === 'ai' ? 'brain' : 'zap'} className="w-5 h-5" />
+                          <span>
+                            {enginePreference === 'ai'
+                              ? 'Crear agenda con IA Gemini'
+                              : 'Crear agenda con Motor Local'}
+                          </span>
                         </button>
                       </div>
                     )}
@@ -1145,29 +1180,31 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
 
                 {error && (
                   <div className="bg-red-950/50 border border-red-500/50 rounded-xl p-3 space-y-2">
-                    <div className="flex items-start gap-3">
-                      <Icon name="alertTriangle" className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
-                      <p className="text-xs text-red-200 font-mono leading-relaxed">{error}</p>
+                    <div className="flex items-start gap-2.5">
+                      <Icon name="alertTriangle" className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                      <p className="text-xs text-red-200 font-sans leading-relaxed">{error}</p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => handleGenerate()}
-                      className="w-full py-2 bg-red-900/60 hover:bg-red-800/80 border border-red-500/40 text-red-200 text-xs font-mono font-bold rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer"
-                    >
-                      <Icon name="rotateCcw" className="w-3.5 h-3.5" />
-                      <span>Reintentar Ahora</span>
-                    </button>
+                    {prompt.trim().length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => handleGenerate()}
+                        className="w-full py-2 bg-red-900/60 hover:bg-red-800/80 border border-red-500/40 text-red-200 text-xs font-mono font-bold rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        <Icon name="rotateCcw" className="w-3.5 h-3.5" />
+                        <span>Reintentar ahora</span>
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
             ) : (
               <div className="space-y-3.5">
-                {/* Notice solo si es una advertencia real */}
-                {notice && !notice.includes('optimizada y libre de choques') && (
-                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl px-3 py-2 flex items-center justify-between gap-2 text-xs font-mono text-amber-200">
-                    <div className="flex items-center gap-2 truncate">
+                {/* Aviso solo cuando hay fallback o advertencia */}
+                {notice && (
+                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl px-3 py-2 flex items-center justify-between gap-2 text-xs font-sans text-amber-200">
+                    <div className="flex items-center gap-2 min-w-0">
                       <Icon name="alertTriangle" className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                      <span className="truncate">{notice}</span>
+                      <span>{notice}</span>
                     </div>
                     <button
                       type="button"
@@ -1180,34 +1217,38 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                   </div>
                 )}
 
-                {/* Cabecera Limpia: Sin disclaimers ni párrafos explicativos */}
-                <div className="flex items-center justify-between py-1 border-b border-white/10 flex-wrap gap-2">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h4 className="text-white font-anton text-sm uppercase tracking-wider flex items-center gap-2">
-                      <Icon name="checkCircle" className="w-4 h-4 text-emerald-400" />
-                      Agenda Propuesta
-                    </h4>
-                    <span className="px-2 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 text-[11px] font-mono font-bold">
-                      {suggestedHabits.length} bloques
-                    </span>
-                    {/* ORA-04: Badge de Origen Táctico Transparente */}
-                    <span className={`px-2 py-0.5 rounded-full border text-[10px] font-mono font-bold flex items-center gap-1 shadow-sm ${
-                      generationSource === 'local' 
-                        ? 'bg-emerald-950/80 border-emerald-500/40 text-emerald-300' 
-                        : 'bg-purple-950/80 border-purple-500/40 text-purple-300'
-                    }`}>
-                      {generationSource === 'local' ? (
-                        <>
-                          <Icon name="zap" className="w-3 h-3 text-emerald-400" />
-                          <span>Motor Local (0 Latencia)</span>
-                        </>
-                      ) : (
-                        <>
-                          <Icon name="brain" className="w-3 h-3 text-purple-400" />
-                          <span>KAI Neural (Gemini)</span>
-                        </>
-                      )}
-                    </span>
+                {/* Cabecera de vista previa clara */}
+                <div className="flex items-start justify-between py-1 border-b border-white/10 flex-wrap gap-2">
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h4 className="text-white font-anton text-sm uppercase tracking-wider flex items-center gap-1.5">
+                        <Icon name="checkCircle" className="w-4 h-4 text-emerald-400" />
+                        Tu borrador de agenda
+                      </h4>
+                      <span className="px-2 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 text-[11px] font-mono font-bold">
+                        {suggestedHabits.length} bloques
+                      </span>
+                      <span className={`px-2 py-0.5 rounded-full border text-[10px] font-mono font-bold flex items-center gap-1 ${
+                        generationSource === 'local' 
+                          ? 'bg-emerald-950/80 border-emerald-500/40 text-emerald-300' 
+                          : 'bg-purple-950/80 border-purple-500/40 text-purple-300'
+                      }`}>
+                        {generationSource === 'local' ? (
+                          <>
+                            <Icon name="zap" className="w-3 h-3 text-emerald-400" />
+                            <span>Motor Local</span>
+                          </>
+                        ) : (
+                          <>
+                            <Icon name="brain" className="w-3 h-3 text-purple-400" />
+                            <span>IA Gemini</span>
+                          </>
+                        )}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-400 font-sans mt-0.5">
+                      Toca cualquier actividad si quieres cambiarle la hora, el nombre o los días.
+                    </p>
                   </div>
 
                   <div className="flex items-center gap-2">
@@ -1215,8 +1256,8 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                       type="button"
                       onClick={handleAddNewManualBlock}
                       aria-label="Añadir un bloque de horario manualmente"
-                      className="px-2.5 py-1 bg-cyan-500 hover:bg-cyan-400 text-slate-950 rounded-lg text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-1 cursor-pointer transition-all active:scale-95 shadow-[0_0_10px_rgba(6,182,212,0.3)]"
-                      title="Añadir un bloque de horario manualmente"
+                      className="px-2.5 py-1 bg-cyan-500 hover:bg-cyan-400 text-slate-950 rounded-lg text-xs font-mono font-bold flex items-center gap-1 cursor-pointer transition-all active:scale-95"
+                      title="Añadir una tarea manual"
                     >
                       <Icon name="plus" className="w-3.5 h-3.5" />
                       <span>Añadir</span>
@@ -1225,12 +1266,12 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                       <button
                         type="button"
                         onClick={handleSynthesizeExisting}
-                        aria-label="Consolidar tareas fragmentadas"
+                        aria-label="Agrupar tareas repetidas o cortas en menos bloques"
                         className="px-2.5 py-1 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white rounded-lg text-xs font-mono flex items-center gap-1 cursor-pointer transition-all active:scale-95"
-                        title="Consolidar tareas fragmentadas"
+                        title="Agrupar tareas en menos bloques"
                       >
                         <Icon name="layers" className="w-3.5 h-3.5 text-cyan-400" />
-                        <span>Sintetizar</span>
+                        <span>Agrupar bloques</span>
                       </button>
                     )}
                   </div>
@@ -1577,18 +1618,18 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                   </div>
                 </div>
 
-                {/* Pie de Acción Minimalista */}
+                {/* Pie de Guardado */}
                 <div className="pt-3 border-t border-white/10 space-y-2.5">
-                  <div className="flex items-center justify-between gap-2 px-1 text-[11px] font-mono text-slate-400">
-                    <span>Modo de inyección:</span>
-                    <div className="flex items-center gap-1 bg-black/50 p-0.5 rounded-lg border border-white/10">
+                  <div className="flex flex-wrap items-center justify-between gap-2 px-1 text-xs font-sans text-slate-300">
+                    <span>Al guardar en tu calendario:</span>
+                    <div className="flex items-center gap-1 bg-black/50 p-0.5 rounded-lg border border-white/10 font-mono">
                       <button
                         type="button"
                         onClick={() => {
                           soundFX.playClick();
                           setInjectMode('replace_pending');
                         }}
-                        className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition-all cursor-pointer ${
+                        className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer ${
                           injectMode === 'replace_pending'
                             ? 'bg-cyan-500 text-slate-950 shadow-sm'
                             : 'text-slate-400 hover:text-white'
@@ -1602,13 +1643,13 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                           soundFX.playClick();
                           setInjectMode('merge');
                         }}
-                        className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition-all cursor-pointer ${
+                        className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer ${
                           injectMode === 'merge'
                             ? 'bg-cyan-500 text-slate-950 shadow-sm'
                             : 'text-slate-400 hover:text-white'
                         }`}
                       >
-                        Combinar
+                        Sumar a lo actual
                       </button>
                     </div>
                   </div>
@@ -1619,7 +1660,6 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                       onClick={() => {
                         soundFX.playClick();
                         setSuggestedHabits(null);
-                        setAddedHabitIds(new Set());
                         setEditingId(null);
                       }}
                       className="px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 font-anton uppercase tracking-wider text-xs rounded-xl transition-all cursor-pointer active:scale-95"
@@ -1632,7 +1672,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                       disabled={suggestedHabits.length === 0}
                       className="flex-1 py-3 bg-gradient-to-r from-cyan-400 via-teal-400 to-emerald-400 hover:opacity-95 disabled:opacity-40 text-slate-950 font-anton uppercase tracking-wider text-xs rounded-xl transition-all shadow-[0_0_25px_rgba(0,240,255,0.35)] flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
                     >
-                      <span>Aplicar Agenda a mi Día ({suggestedHabits.length} misiones)</span>
+                      <span>Guardar agenda en mi calendario ({suggestedHabits.length})</span>
                       <Icon name="chevronRight" className="w-4 h-4 text-slate-950" />
                     </button>
                   </div>

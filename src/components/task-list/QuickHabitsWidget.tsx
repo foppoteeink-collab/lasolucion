@@ -51,6 +51,7 @@ import { getHabitBaseId, computeHabitStreak } from '../../intelligence/masteryEn
 import { getTodayDateString, addDaysToDateString } from '../../utils/date';
 import { HABIT_ENERGY_DETAILS, detectHabitEnergy } from '../../utils/habitEnergyDetector';
 import { useSystemPalette } from '../../utils/systemPalette';
+import { deduplicateTasksForDay, reconcileHabitCounterTask } from '../../utils/taskDeduplication';
 import { Icon } from '../common/Icon';
 
 interface AuraTheme {
@@ -476,29 +477,66 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
   const [activatedNotice, setActivatedNotice] = useState<string | null>(null);
   const [completedShockwaveId, setCompletedShockwaveId] = useState<string | null>(null);
   const systemPalette = useSystemPalette();
+  const opticMode = useUIStore((s) => s.opticMode);
+  const isEink = opticMode === 'eink';
   const togglingOrbsRef = React.useRef<Set<string>>(new Set());
 
-  // Strictly select dedicated quick/discipline habits for 21/66 day tracking, deduplicated by title and ID
+  // Strictly select dedicated quick/discipline habits for 21/66 day tracking,
+  // reconcile any stripped counter metadata from customHabits, and merge duplicates cleanly
   const quickHabits = React.useMemo(() => {
     const rawList = tasks.filter((t) => {
       if (!t || !t.title) return false;
-      if (t.isQuickHabit || t.isTracked2166 || t.category === 'habito' || String(t.id || '').includes('habit-')) {
+      if (
+        t.isQuickHabit ||
+        t.isTracked2166 ||
+        t.category === 'habito' ||
+        String(t.id || '').includes('habit-') ||
+        (t.isHabit && (t.targetCount || 0) > 1)
+      ) {
         return true;
       }
       if (t.timeBlock) return false;
       const lower = (t.title || '').toLowerCase();
       return lower.includes('agua') || lower.includes('dientes');
     });
-    const seenTitles = new Set<string>();
-    const seenIds = new Set<string>();
-    return rawList.filter((t) => {
-      const normTitle = (t.title || "").toLowerCase().trim();
-      if (seenTitles.has(normTitle) || (t.id && seenIds.has(t.id))) return false;
-      seenTitles.add(normTitle);
-      if (t.id) seenIds.add(t.id);
-      return true;
-    });
-  }, [tasks]);
+
+    const reconciled = rawList.map((t) => reconcileHabitCounterTask(t, customHabits));
+    return deduplicateTasksForDay(reconciled, currentDate);
+  }, [tasks, customHabits, currentDate]);
+
+  // Auto-heal habit tasks whose counter metadata (targetCount/unit) or premature 1/1 completion drifted from customHabits
+  React.useEffect(() => {
+    const targetDate = currentDate || useTaskStore.getState().currentViewDate || getTodayDateString();
+    const todayStr = getTodayDateString();
+    const reconciliationLimit = addDaysToDateString(todayStr, -2);
+    if (!targetDate || targetDate < reconciliationLimit || isDayFinalized) return;
+    if (!tasks || tasks.length === 0 || !customHabits || customHabits.length === 0) return;
+
+    const store = useTaskStore.getState();
+    for (const t of tasks) {
+      if (!t || !t.id || !t.title) continue;
+      const isHabitCandidate = Boolean(
+        t.isQuickHabit ||
+        t.isTracked2166 ||
+        t.category === 'habito' ||
+        String(t.id).includes('habit-') ||
+        (t.isHabit && (t.targetCount || 0) > 1) ||
+        (!t.timeBlock && ((t.title || '').toLowerCase().includes('agua') || (t.title || '').toLowerCase().includes('dientes')))
+      );
+      if (!isHabitCandidate) continue;
+
+      const reconciled = reconcileHabitCounterTask(t, customHabits);
+      if (reconciled !== t) {
+        store.updateTask(targetDate, t.id, {
+          isHabit: reconciled.isHabit,
+          targetCount: reconciled.targetCount,
+          unit: reconciled.unit,
+          completed: reconciled.completed,
+          completedAt: reconciled.completedAt,
+        });
+      }
+    }
+  }, [tasks, customHabits, currentDate, isDayFinalized]);
 
   // Hydrate custom habits into active day if quickHabits list for today is empty
   React.useEffect(() => {
@@ -543,6 +581,9 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
       currentCount: newCount,
       completed: isNowCompleted,
       completedAt: isNowCompleted ? qh.completedAt : undefined,
+      ...(qh.targetCount !== undefined ? { targetCount: qh.targetCount } : {}),
+      ...(qh.unit ? { unit: qh.unit } : {}),
+      ...(qh.isHabit !== undefined ? { isHabit: qh.isHabit } : {}),
     });
 
     if (wasCompleted && !isNowCompleted) {
@@ -682,13 +723,17 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
           )}
 
           {/* Fila Horizontal de Orbes Circulares (Estilo Historias de Instagram - Fine-Line 48px con Moxen Constancia) */}
-          <div className="flex items-center gap-3.5 overflow-x-auto no-scrollbar py-1 px-0.5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          <div className="flex items-start gap-3 overflow-x-auto no-scrollbar pt-3.5 pb-1.5 px-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {quickHabits.map((qh, idx) => {
           const current = qh.currentCount || 0;
           const target = qh.targetCount || 1;
           const isCounterHabit = target > 1;
           const isFinished = qh.completed || current >= target;
-          const progressPct = Math.min(100, Math.round((current / target) * 100));
+          const displayCurrent = isFinished && current === 0 ? target : current;
+          const rawRatio = target > 0 ? displayCurrent / target : 0;
+          const progressRatio = isFinished ? 1 : Math.min(1, Math.max(0, rawRatio));
+          const progressPct = Math.round(progressRatio * 100);
+          const hasProgress = progressRatio > 0;
 
           // Dynamic consecutive days streak computed from history
           const baseId = getHabitBaseId(qh);
@@ -714,11 +759,14 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
           const glowFilterColor = step.glow;
           const safeGradId = `moxen-grad-${(qh.id || String(idx)).replace(/[^a-zA-Z0-9_-]/g, '')}`;
 
-          // Posición de la cabeza redondeada y reflejo especular de Moxen Constancia
-          const angle = -Math.PI / 2 + (progressPct / 100) * 2 * Math.PI;
-          const hx = 24 + 21 * Math.cos(angle);
-          const hy = 24 + 21 * Math.sin(angle);
+          // SVG Ring calculation: exact circumference for r=21
+          const ringRadius = 21;
+          const ringCircumference = 2 * Math.PI * ringRadius;
+          const angle = -Math.PI / 2 + progressRatio * 2 * Math.PI;
+          const hx = 24 + ringRadius * Math.cos(angle);
+          const hy = 24 + ringRadius * Math.sin(angle);
           const hasHead = progressPct > 3 && progressPct < 100;
+          const strokeDashoffset = ringCircumference * (1 - progressRatio);
 
           const todayStr = getTodayDateString();
           const reconciliationLimit = addDaysToDateString(todayStr, -2);
@@ -729,36 +777,36 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
 
           const shortLabel = getShortHabitLabel(qh.title, qh.quickIcon);
 
-          // SVG Ring calculation: circumference = 2 * PI * 21 ≈ 132
-          const strokeDashoffset = isFinished ? 0 : 132 - (progressPct / 100) * 132;
-
           return (
             <div
               key={qh.id ? `qh-orb-${qh.id}-${idx}` : `qh-orb-${idx}`}
-              className="flex flex-col items-center w-14 shrink-0 select-none group"
+              className="flex flex-col items-center w-[62px] shrink-0 select-none group"
             >
               {/* Círculo Principal de 48x48 con Anillo SVG Moxen Constancia y Núcleo Vidrio Obsidian */}
               <motion.div
                 {...(idx === 0 ? { 'data-tour': 'habit-orb' } : {})}
                 whileHover={{ scale: 1.05 }}
                 animate={{
-                  boxShadow: isFinished
-                    ? [
-                        "0 0 8px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.40), inset 0 0 4px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.22)",
-                        "0 0 16px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.70), inset 0 0 8px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.38)"
-                      ]
-                    : [
-                        "0 0 6px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.22), inset 0 0 4px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.12)",
-                        "0 0 14px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.48), inset 0 0 8px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.24)"
-                      ],
+                  boxShadow: isEink
+                    ? 'none'
+                    : isFinished
+                      ? [
+                          `0 0 8px ${glowFilterColor}, inset 0 0 4px ${glowFilterColor}`,
+                          `0 0 16px ${glowFilterColor}, inset 0 0 8px ${glowFilterColor}`,
+                        ]
+                      : hasProgress
+                        ? `0 0 10px ${glowFilterColor}`
+                        : '0 0 0px rgba(0, 0, 0, 0)',
                 }}
                 transition={{
-                  boxShadow: {
-                    repeat: Infinity,
-                    repeatType: "reverse",
-                    duration: 1.8,
-                    ease: "easeInOut",
-                  },
+                  boxShadow: isFinished && !isEink
+                    ? {
+                        repeat: Infinity,
+                        repeatType: "reverse",
+                        duration: 1.8,
+                        ease: "easeInOut",
+                      }
+                    : { duration: 0.25 },
                 }}
                 onClick={(e) => {
                   if (isLocked) return;
@@ -803,7 +851,7 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                 role="button"
                 tabIndex={0}
                 aria-pressed={isFinished}
-                aria-label={`${qh.title}: ${current} de ${target} completado. Racha de ${currentStreak} días.`}
+                aria-label={`${qh.title}: ${displayCurrent} de ${target} completado. Racha de ${currentStreak} días.`}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
@@ -818,8 +866,8 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                     ? 'Bloqueado por fin de jornada'
                     : isCounterHabit
                     ? isFinished
-                      ? `${qh.title} (${current}/${target}) - ¡Meta cumplida hoy!`
-                      : `${qh.title} (${current}/${target}) - Toca para sumar +1`
+                      ? `${qh.title} (${displayCurrent}/${target}) - ¡Meta cumplida hoy!`
+                      : `${qh.title} (${displayCurrent}/${target}) - Toca para sumar +1`
                     : isFinished
                     ? `${qh.title} - Completado hoy (Toca para desmarcar)`
                     : `${qh.title} - Toca para completar`
@@ -830,12 +878,12 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                   <div
                     className="absolute inset-[-4px] rounded-full border-2 pointer-events-none animate-moxen-shockwave z-30"
                     style={{
-                      borderColor: 'var(--aura-color-1, #00f0ff)',
+                      borderColor: isEink ? '#ffffff' : startColor,
                     }}
                   />
                 )}
 
-                {/* Micro-Llama Superior de Racha posicionada en el borde exterior con hitbox accesible WCAG 44x44px */}
+                {/* Micro-Llama Superior de Racha posicionada en el borde exterior */}
                 {currentStreak > 0 && (
                   <div
                     role="button"
@@ -862,7 +910,7 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                   </div>
                 )}
 
-                {/* Anillo Circular SVG Moxen Constancia (48x48, r=21, strokeWidth=2.8 con degradado cónico dinámico) */}
+                {/* Anillo Circular SVG Moxen Constancia (48x48, r=21, degradado cónico dinámico sin override) */}
                 <svg className="w-12 h-12 absolute inset-0 -rotate-90 pointer-events-none overflow-visible" viewBox="0 0 48 48">
                   <defs>
                     <linearGradient id={safeGradId} x1="0%" y1="0%" x2="100%" y2="100%">
@@ -871,129 +919,195 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                     </linearGradient>
                   </defs>
 
-                  {/* Track de fondo con contraste accesible WCAG 1.4.11 (≥3.0:1) */}
+                  {/* Track de fondo sutil independiente de .text-cyan-* */}
                   <circle
                     cx="24"
                     cy="24"
-                    r="21"
-                    stroke="currentColor"
-                    className="text-cyan-400/40"
-                    strokeWidth="2.8"
+                    r={ringRadius}
+                    stroke={isEink ? 'rgba(255, 255, 255, 0.25)' : 'rgba(148, 163, 184, 0.22)'}
+                    strokeWidth="2.5"
                     fill="none"
                   />
 
-                  {/* Trazo activo de progreso - Degradado reactivo a la paleta del Personalizador */}
-                  <circle
-                    cx="24"
-                    cy="24"
-                    r="21"
-                    stroke={`url(#${safeGradId})`}
-                    strokeWidth="2.8"
-                    strokeLinecap="round"
-                    fill="none"
-                    style={{
-                      strokeDasharray: 132,
-                      strokeDashoffset: strokeDashoffset,
-                      filter: progressPct > 0
-                        ? `drop-shadow(0 0 4px ${glowFilterColor})`
-                        : 'none',
-                      transition: 'stroke-dashoffset 180ms cubic-bezier(0.16, 1, 0.3, 1), stroke 180ms ease',
-                    }}
-                  />
+                  {/* Trazo activo de progreso: solo visible cuando progressRatio > 0 */}
+                  {progressRatio > 0 && (
+                    <circle
+                      cx="24"
+                      cy="24"
+                      r={ringRadius}
+                      stroke={isEink ? '#ffffff' : `url(#${safeGradId})`}
+                      strokeWidth="3.2"
+                      strokeLinecap="round"
+                      fill="none"
+                      style={{
+                        strokeDasharray: ringCircumference,
+                        strokeDashoffset,
+                        filter: isEink ? 'none' : `drop-shadow(0 0 4px ${glowFilterColor})`,
+                        transition: 'stroke-dashoffset 260ms cubic-bezier(0.22, 1, 0.36, 1), stroke 180ms ease',
+                      }}
+                    />
+                  )}
 
                   {/* Cabeza redondeada con brillo especular de Moxen Constancia */}
                   {hasHead && (
                     <>
-                      <circle cx={hx} cy={hy} r="2.2" fill={endColor} />
-                      <circle cx={hx - 0.4} cy={hy - 0.4} r="0.8" fill="rgba(255, 255, 255, 0.75)" />
+                      <circle cx={hx} cy={hy} r="2.2" fill={isEink ? '#ffffff' : endColor} />
+                      {!isEink && (
+                        <circle cx={hx - 0.4} cy={hy - 0.4} r="0.8" fill="rgba(255, 255, 255, 0.75)" />
+                      )}
                     </>
                   )}
 
                   {/* Punto de cierre superior con brillo al completar */}
                   {isFinished && (
                     <>
-                      <circle cx="24" cy="3" r="2.2" fill={startColor || 'var(--aura-color-1, #00f0ff)'} />
-                      <circle cx="23.6" cy="2.6" r="0.8" fill="rgba(255, 255, 255, 0.85)" />
+                      <circle cx="24" cy="3" r="2.2" fill={isEink ? '#ffffff' : startColor} />
+                      {!isEink && (
+                        <circle cx="23.6" cy="2.6" r="0.8" fill="rgba(255, 255, 255, 0.85)" />
+                      )}
                     </>
                   )}
                 </svg>
 
-                {/* Núcleo Central del Círculo (Vidrio Obsidian 3D con luz cenital) */}
+                {/* Núcleo Central del Círculo (Vidrio Obsidian 3D con nivel de llenado interior visible) */}
                 <div
-                  className={`w-[36px] h-[36px] rounded-full flex items-center justify-center transition-all duration-300 relative z-[2] select-none ${
-                    isFinished
-                      ? 'shadow-[inset_0_1px_2px_rgba(255,255,255,0.2)]'
-                      : 'bg-gradient-to-b from-[#0b1428] to-[#040712] border border-cyan-500/25 group-hover:border-cyan-400/50 shadow-[inset_0_1px_2px_rgba(255,255,255,0.1),0_2px_8px_rgba(0,0,0,0.6)]'
-                  }`}
+                  className="w-[36px] h-[36px] rounded-full flex items-center justify-center transition-all duration-300 relative z-[2] select-none overflow-hidden"
                   style={
-                    isFinished
+                    isEink
                       ? {
-                          border: '1px solid var(--aura-color-1, #00f0ff)',
-                          background:
-                            'radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--aura-color-1, #00f0ff) 22%, #08040f) 0%, #030107 100%)',
-                          boxShadow:
-                            '0 0 12px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.35), inset 0 1px 2px rgba(255, 255, 255, 0.2)',
+                          border: `1.5px solid ${hasProgress ? '#ffffff' : 'rgba(255, 255, 255, 0.45)'}`,
+                          background: '#050914',
                         }
-                      : undefined
+                      : isFinished
+                        ? {
+                            border: `1.5px solid ${startColor}`,
+                            background: `radial-gradient(circle at 50% 30%, color-mix(in srgb, ${startColor} 22%, #08040f) 0%, #030107 100%)`,
+                            boxShadow: `0 0 12px ${glowFilterColor}, inset 0 1px 2px rgba(255, 255, 255, 0.2)`,
+                          }
+                        : {
+                            border: hasProgress
+                              ? `1px solid ${startColor}`
+                              : '1px solid rgba(148, 163, 184, 0.22)',
+                            background: 'linear-gradient(to bottom, #0b1428, #040712)',
+                            boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.1), 0 2px 8px rgba(0, 0, 0, 0.6)',
+                          }
                   }
                 >
-                  <span className="text-base select-none leading-none filter drop-shadow-sm">
-                    <Icon name={qh.quickIcon} className="w-4 h-4" />
+                  {/* Relleno líquido ascendente visible directamente dentro del icono */}
+                  {progressRatio > 0 && (
+                    <div
+                      aria-hidden="true"
+                      className="absolute inset-x-0 bottom-0 pointer-events-none z-[1]"
+                      style={{
+                        height: `${progressPct}%`,
+                        transition: 'height 300ms cubic-bezier(0.22, 1, 0.36, 1)',
+                        background: isEink
+                          ? 'rgba(255, 255, 255, 0.26)'
+                          : `linear-gradient(180deg, ${endColor} 0%, ${startColor} 100%)`,
+                        opacity: isEink ? 1 : isFinished ? 0.5 : 0.42,
+                      }}
+                    >
+                      {!isFinished && (
+                        <div
+                          className="w-full h-[1.5px]"
+                          style={{
+                            backgroundColor: isEink ? '#ffffff' : startColor,
+                            boxShadow: isEink ? 'none' : `0 0 6px ${startColor}`,
+                          }}
+                        />
+                      )}
+                    </div>
+                  )}
+
+                  <span className="relative z-[2] w-5 h-5 flex items-center justify-center text-base text-white select-none leading-none filter drop-shadow-sm">
+                    {qh.quickIcon ? (
+                      <Icon name={qh.quickIcon} className="w-4 h-4 flex items-center justify-center leading-none" />
+                    ) : (
+                      renderHabitIcon(undefined, qh.title, 'w-4 h-4 text-white')
+                    )}
                   </span>
                 </div>
 
-                {/* Borde exterior resplandeciente de energía */}
+                {/* Borde exterior reactivo al progreso */}
                 <div
-                  className={`absolute inset-[-3px] rounded-full border pointer-events-none transition-all duration-300 ${
-                    isFinished
-                      ? 'opacity-85'
-                      : 'border-cyan-400/35 group-hover:border-cyan-300/60 shadow-[0_0_8px_rgba(var(--aura-glow-rgb,0,240,255),0.2)]'
-                  }`}
-                  style={
-                    isFinished
-                      ? {
-                          borderColor: 'var(--aura-color-1, #00f0ff)',
-                          boxShadow: '0 0 12px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.45)',
-                        }
-                      : undefined
-                  }
+                  className="absolute inset-[-3px] rounded-full border pointer-events-none transition-all duration-300"
+                  style={{
+                    borderColor: isEink
+                      ? hasProgress
+                        ? '#ffffff'
+                        : 'rgba(255, 255, 255, 0.25)'
+                      : isFinished
+                        ? startColor
+                        : hasProgress
+                          ? `color-mix(in srgb, ${startColor} 45%, transparent)`
+                          : 'rgba(255, 255, 255, 0.08)',
+                    boxShadow:
+                      !isEink && isFinished
+                        ? `0 0 12px ${glowFilterColor}`
+                        : !isEink && hasProgress
+                          ? `0 0 6px ${glowFilterColor}`
+                          : 'none',
+                  }}
                 />
 
-                {/* Badge Inferior Táctico de Progreso (Optimizado para legibilidad WCAG 2.1) */}
+                {/* Badge Inferior Táctico de Progreso (siempre visible en hábitos con contador) */}
                 <div
-                  className={`absolute -bottom-1 -right-1 px-2 py-[2px] rounded-full border font-mono font-bold leading-none flex items-center justify-center shadow-md z-20 ring-1 ring-[#070510] transition-all duration-200 ${
-                    isFinished
-                      ? ''
-                      : isCounterHabit
-                      ? 'bg-[#050914] border-cyan-400/70 text-cyan-200 shadow-[0_0_6px_rgba(0,240,255,0.25)]'
-                      : 'bg-[#060a14] border-white/20 text-gray-400 p-0.5'
+                  className={`absolute -bottom-1.5 -right-1.5 rounded-full font-mono font-bold leading-none flex items-center justify-center gap-0.5 shadow-md z-20 ring-1 ring-[#070510] transition-all duration-200 ${
+                    isEink && isFinished ? 'border-2' : 'border'
+                  } ${
+                    isCounterHabit
+                      ? 'px-1.5 py-[2px]'
+                      : isFinished
+                        ? 'px-1.5 py-[2px]'
+                        : 'p-1'
                   }`}
                   style={
-                    isFinished
+                    isEink
                       ? {
-                          backgroundColor: 'rgba(5, 9, 20, 0.95)',
-                          borderColor: 'var(--aura-color-1, #00f0ff)',
-                          color: 'var(--aura-color-1, #00f0ff)',
-                          boxShadow: '0 0 10px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.55)',
+                          backgroundColor: '#050914',
+                          borderColor: '#ffffff',
+                          color: '#ffffff',
                         }
-                      : undefined
+                      : isFinished
+                        ? {
+                            backgroundColor: 'rgba(5, 9, 20, 0.96)',
+                            borderColor: startColor,
+                            color: startColor,
+                            boxShadow: `0 0 10px ${glowFilterColor}`,
+                          }
+                        : isCounterHabit
+                          ? {
+                              backgroundColor: 'rgba(5, 9, 20, 0.96)',
+                              borderColor: hasProgress ? startColor : 'rgba(148, 163, 184, 0.5)',
+                              color: hasProgress ? startColor : '#e2e8f0',
+                              boxShadow: hasProgress ? `0 0 8px ${glowFilterColor}` : 'none',
+                            }
+                          : {
+                              backgroundColor: 'rgba(6, 10, 20, 0.95)',
+                              borderColor: 'rgba(255, 255, 255, 0.2)',
+                              color: '#94a3b8',
+                            }
                   }
                 >
-                  {isFinished ? (
-                    <Check
-                      className="w-2.5 h-2.5 stroke-[3]"
-                      style={{ color: 'var(--aura-color-1, #00f0ff)' }}
-                    />
-                  ) : isCounterHabit ? (
-                    <span className="tabular-nums font-mono text-[11px] font-bold text-cyan-200 tracking-tight">
-                      {current}<span className="text-cyan-400/70 mx-0.5">/</span>{target}
-                    </span>
+                  {isCounterHabit ? (
+                    <>
+                      <span className="tabular-nums font-mono text-[10.5px] font-bold tracking-tight leading-none">
+                        {displayCurrent}
+                        <span className="opacity-70 mx-[1px]">/</span>
+                        {target}
+                      </span>
+                      {isFinished && (
+                        <Check className="w-2.5 h-2.5 stroke-[3] shrink-0" />
+                      )}
+                    </>
+                  ) : isFinished ? (
+                    <Check className="w-2.5 h-2.5 stroke-[3]" />
                   ) : (
                     <span
                       className="w-1.5 h-1.5 rounded-full"
                       style={{
-                        backgroundColor: endColor,
-                        boxShadow: `0 0 2px ${endColor}`,
+                        backgroundColor: isEink ? '#ffffff' : endColor,
+                        boxShadow: isEink ? 'none' : `0 0 2px ${endColor}`,
                       }}
                     />
                   )}
@@ -1037,10 +1151,10 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
 
                   onIncrementHabit(qh.id, e);
                 }}
-                className="text-[11px] text-slate-200 hover:text-cyan-300 active:scale-95 font-medium max-w-[62px] truncate text-center mt-1 transition-all block cursor-pointer select-none leading-tight"
+                className="text-[11px] text-slate-200 hover:text-cyan-300 active:scale-95 font-medium max-w-[60px] truncate text-center mt-2 transition-all block cursor-pointer select-none leading-tight"
                 title={
                   isCounterHabit
-                    ? `${qh.title} (${current}/${target}) - Toca para sumar +1`
+                    ? `${qh.title} (${displayCurrent}/${target}) - Toca para sumar +1`
                     : `${qh.title} - Toca para completar`
                 }
               >
@@ -1051,7 +1165,7 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
         })}
 
         {/* Círculo Final: (+) Nuevo Hábito Integrado en la Misma Fila (48x48) */}
-        <div className="flex flex-col items-center w-14 shrink-0 select-none group">
+        <div className="flex flex-col items-center w-[62px] shrink-0 select-none group">
           <button
             type="button"
             onClick={() => {
@@ -1063,7 +1177,7 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
           >
             <Icon name="plus" className="w-4 h-4 text-cyan-400 group-hover:scale-110 transition-transform" />
           </button>
-          <span className="text-[10px] text-slate-400 group-hover:text-cyan-200 font-medium text-center mt-1 select-none leading-tight">
+          <span className="text-[10px] text-slate-400 group-hover:text-cyan-200 font-medium text-center mt-2 select-none leading-tight">
             Nuevo
           </span>
         </div>
@@ -1138,11 +1252,19 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                       {(qh.completed || (qh.currentCount || 0) >= (qh.targetCount || 1)) && (
                         <span
                           className="text-[10px] font-bold px-1.5 py-0.5 rounded border"
-                          style={{
-                            color: 'var(--aura-color-1, #00f0ff)',
-                            borderColor: 'rgba(var(--aura-glow-rgb, 0, 240, 255), 0.5)',
-                            backgroundColor: 'rgba(var(--aura-glow-rgb, 0, 240, 255), 0.15)',
-                          }}
+                          style={
+                            isEink
+                              ? {
+                                  color: '#ffffff',
+                                  borderColor: '#ffffff',
+                                  backgroundColor: '#050914',
+                                }
+                              : {
+                                  color: systemPalette.c1,
+                                  borderColor: systemPalette.glow,
+                                  backgroundColor: 'rgba(var(--aura-glow-rgb, 0, 240, 255), 0.15)',
+                                }
+                          }
                         >
                           ✓ Completado
                         </span>

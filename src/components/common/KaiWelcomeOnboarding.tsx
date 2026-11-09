@@ -24,6 +24,8 @@ import { useTaskStore } from '../../store/useTaskStore';
 import { getTodayDateString, getGlobalDayStartHour, setGlobalDayStartHour } from '../../utils/date';
 import { formatHourToHuman } from '../../utils/timeUtils';
 import { PlayerStats, TaskItem, TaskCategory } from '../../types';
+import { useNarrativeCopy } from '../../hooks/useNarrativeCopy';
+import { AUTH_SECURITY_MICROCOPY, WELCOME_UVP, NARRATIVE_MODE_OPTIONS } from '../../data/narrativeCopy';
 
 interface KaiWelcomeOnboardingProps {
   isOpen: boolean;
@@ -217,6 +219,7 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
   const { setActiveTab } = useUIStore();
   const { completeAwakening, claimTutorialReward, markTutorialGuideSeen } = usePlayerStore();
   const { addTask } = useTaskStore();
+  const copy = useNarrativeCopy();
 
   const [step, setStep] = useState<number>(initialStep);
 
@@ -437,7 +440,7 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
           <AnimatePresence mode="wait">
 
             {/* ============================================================== */}
-            {/* PASO 1: NOMBRE / IDENTIDAD                                     */}
+            {/* PASO 1: NOMBRE / IDENTIDAD + PROPUESTA ÚNICA DE VALOR (UVP)    */}
             {/* ============================================================== */}
             {step === 1 && (
               <motion.div
@@ -446,24 +449,78 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.2 }}
-                className="space-y-4"
+                className="space-y-3.5"
               >
-                {/* Diálogo breve con KAI */}
-                <div className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-cyan-950/30 border border-cyan-500/25 backdrop-blur-sm">
-                  <div className="shrink-0 w-12 h-12 flex items-center justify-center">
-                    <KAICompanion shapeId="prism" size={48} interactive={false} auraState="normal" />
+                {/* Propuesta Única de Valor (UVP) explícita + Mitigación de objeciones */}
+                <div className="p-3.5 rounded-2xl bg-gradient-to-br from-cyan-950/60 via-[#04152b] to-indigo-950/40 border border-cyan-400/40 space-y-2 shadow-[0_0_24px_rgba(0,240,255,0.12)]">
+                  <span className="text-[9.5px] font-mono font-bold uppercase tracking-widest text-cyan-300 block">
+                    {WELCOME_UVP.badge}
+                  </span>
+                  <h3 className="text-sm sm:text-base font-black text-white leading-snug">
+                    {WELCOME_UVP.headline}
+                  </h3>
+                  <p className="text-[11px] text-slate-200 leading-relaxed">
+                    {WELCOME_UVP.description}
+                  </p>
+                  <div className="flex flex-wrap gap-1.5 pt-0.5">
+                    {WELCOME_UVP.frictionPills.map((pill) => (
+                      <span
+                        key={pill}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-400/40 text-emerald-300 text-[9.5px] font-bold"
+                      >
+                        <CheckCircle2 className="w-2.5 h-2.5 shrink-0" />
+                        <span>{pill}</span>
+                      </span>
+                    ))}
                   </div>
-                  <div className="space-y-1">
+                </div>
+
+                {/* Diálogo breve con KAI */}
+                <div className="flex items-center gap-3 p-3 rounded-2xl bg-cyan-950/25 border border-cyan-500/20 backdrop-blur-sm">
+                  <div className="shrink-0 w-10 h-10 flex items-center justify-center">
+                    <KAICompanion shapeId="prism" size={40} interactive={false} auraState="normal" />
+                  </div>
+                  <div className="space-y-0.5">
                     <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-cyan-300 block">
-                      KAI te da la bienvenida:
+                      KAI · Asistente de Enfoque
                     </span>
-                    <p className="text-xs text-slate-200 leading-relaxed">
-                      ¡Hola! Soy <strong>KAI</strong>, tu compañero de enfoque. Estoy aquí para acompañarte paso a paso, vencer la inercia y celebrar cada victoria.
+                    <p className="text-[11px] text-slate-200 leading-snug">
+                      Configura tu ritmo en 30 segundos y elige el estilo de lenguaje que prefieras.
                     </p>
                   </div>
                 </div>
 
-                <div className="space-y-2">
+                {/* Selector rápido de Densidad Narrativa desde el primer ingreso */}
+                <div className="grid grid-cols-2 gap-2">
+                  {(['minimal', 'tactical'] as const).map((modeKey) => {
+                    const opt = NARRATIVE_MODE_OPTIONS[modeKey];
+                    const active = copy.narrativeMode === modeKey;
+                    return (
+                      <button
+                        key={modeKey}
+                        type="button"
+                        onClick={() => {
+                          soundFX.playClick();
+                          copy.setNarrativeMode(modeKey);
+                        }}
+                        className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                          active
+                            ? 'bg-cyan-500/20 border-cyan-400 text-white shadow-[0_0_12px_rgba(0,240,255,0.25)]'
+                            : 'bg-white/[0.03] border-white/10 text-slate-300 hover:border-white/25'
+                        }`}
+                      >
+                        <span className="text-[10.5px] font-bold block leading-tight">
+                          {opt.label}
+                        </span>
+                        <span className="text-[9.5px] text-slate-400 block mt-0.5 leading-snug">
+                          {modeKey === 'minimal' ? 'Claro y directo, cero jerga' : 'Misiones, rangos y lore RPG'}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="space-y-1.5">
                   <label className="text-xs font-bold text-white flex items-center gap-1.5">
                     <User className="w-3.5 h-3.5 text-cyan-400" />
                     <span>¿Cómo te gustaría que te llame?</span>
@@ -483,10 +540,10 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
                     autoFocus
                     enterKeyHint="next"
                     autoComplete="nickname"
-                    className="w-full px-4 py-3 rounded-2xl bg-white/[0.05] border border-white/15 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all shadow-inner"
+                    className="w-full px-4 py-2.5 rounded-2xl bg-white/[0.05] border border-white/15 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all shadow-inner"
                   />
                   <p className="text-[10px] text-slate-400">
-                    Puedes cambiar tu nombre en cualquier momento desde Ajustes.
+                    Puedes cambiar tu nombre o estilo de lenguaje en cualquier momento desde Ajustes.
                   </p>
                 </div>
               </motion.div>
@@ -903,53 +960,59 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
         </div>
 
         {/* ── BOTONES DE NAVEGACIÓN INFERIORES ── */}
-        <div className="p-3.5 sm:p-4 pb-safe border-t border-white/10 bg-[#010810]/90 shrink-0 relative z-10 flex items-center justify-between gap-2">
-          <div>
-            {step > 1 ? (
-              <button
-                type="button"
-                onClick={() => {
-                  soundFX.playClick();
-                  setStep((prev) => Math.max(1, prev - 1));
-                }}
-                className="px-3.5 py-2 rounded-xl bg-white/[0.05] hover:bg-white/10 border border-white/15 text-slate-300 hover:text-white font-anton text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1 active:scale-95"
-              >
-                <ArrowLeft className="w-3.5 h-3.5" />
-                <span>Anterior</span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={handleFinishOnboarding}
-                className="px-3 py-1.5 rounded-xl text-slate-400 hover:text-cyan-300 text-xs font-mono transition-colors cursor-pointer flex items-center gap-1"
-              >
-                <Zap className="w-3 h-3 text-cyan-400" />
-                <span>Saltar todo</span>
-              </button>
-            )}
+        <div className="p-3.5 sm:p-4 pb-safe border-t border-white/10 bg-[#010810]/90 shrink-0 relative z-10 space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              {step > 1 ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFX.playClick();
+                    setStep((prev) => Math.max(1, prev - 1));
+                  }}
+                  className="px-3.5 py-2 rounded-xl bg-white/[0.05] hover:bg-white/10 border border-white/15 text-slate-300 hover:text-white font-anton text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1 active:scale-95"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Anterior</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleFinishOnboarding}
+                  className="px-3 py-1.5 rounded-xl text-slate-400 hover:text-cyan-300 text-xs font-mono transition-colors cursor-pointer flex items-center gap-1"
+                >
+                  <Zap className="w-3 h-3 text-cyan-400" />
+                  <span>Saltar e ir directo</span>
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              {step < TOTAL_STEPS ? (
+                <button
+                  type="button"
+                  onClick={handleNextStep}
+                  className="px-5 py-2 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-black font-anton text-xs uppercase tracking-wider transition-all cursor-pointer shadow-[0_0_15px_rgba(0,240,255,0.4)] flex items-center gap-1.5 active:scale-95 font-bold"
+                >
+                  <span>Siguiente</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleFinishOnboarding}
+                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 hover:from-cyan-300 hover:to-emerald-300 text-black font-anton text-xs uppercase tracking-wider transition-all cursor-pointer shadow-[0_0_20px_rgba(0,240,255,0.5)] flex items-center gap-2 active:scale-95 font-bold"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  <span>{copy.onboardingWelcomeCta}</span>
+                </button>
+              )}
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            {step < TOTAL_STEPS ? (
-              <button
-                type="button"
-                onClick={handleNextStep}
-                className="px-5 py-2 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-black font-anton text-xs uppercase tracking-wider transition-all cursor-pointer shadow-[0_0_15px_rgba(0,240,255,0.4)] flex items-center gap-1.5 active:scale-95 font-bold"
-              >
-                <span>Siguiente</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={handleFinishOnboarding}
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 hover:from-cyan-300 hover:to-emerald-300 text-black font-anton text-xs uppercase tracking-wider transition-all cursor-pointer shadow-[0_0_20px_rgba(0,240,255,0.5)] flex items-center gap-2 active:scale-95 font-bold"
-              >
-                <Sparkles className="w-4 h-4" />
-                <span>¡Comenzar mi día con KAI!</span>
-              </button>
-            )}
-          </div>
+          <p className="text-[10px] font-mono text-emerald-300/85 text-center leading-snug">
+            {AUTH_SECURITY_MICROCOPY}
+          </p>
         </div>
       </div>
     </div>

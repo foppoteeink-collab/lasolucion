@@ -12,6 +12,7 @@ import { getArchetypeDisplayName } from '../data/archetypes';
 import { getTodayDateString } from '../utils/date';
 import { soundFX } from '../utils/audio';
 import { useDayCycle } from '../hooks/useDayCycle';
+import { useNarrativeCopy } from '../hooks/useNarrativeCopy';
 
 interface SidebarHUDProps {
   onOpenOracleWithPrompt?: (promptText?: string) => void;
@@ -87,6 +88,7 @@ export const SidebarHUD: React.FC<SidebarHUDProps> = ({
   // Timer isRunning only: DO NOT consume formattedTime here to prevent 1 Hz re-renders of this 900-line HUD!
   const { isRunning: isTimerRunning } = useTimer();
   const { dayStatus, startDay, finishDay } = useDayCycle();
+  const copy = useNarrativeCopy();
 
   const [isDesktopHovered, setIsDesktopHovered] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -580,7 +582,7 @@ export const SidebarHUD: React.FC<SidebarHUDProps> = ({
                 className="w-3.5 h-3.5 shrink-0 text-[#020617]"
               />
               <span className="font-extrabold uppercase tracking-wider">
-                {dayStatus === 'idle' ? 'Iniciar Jornada' : 'Cerrar Jornada'}
+                {dayStatus === 'idle' ? copy.startDayFull : copy.closeDayFull}
               </span>
               <Icon name="arrowRight" className="w-3 h-3 text-[#020617] shrink-0 animate-bounce-x" />
             </motion.button>
@@ -779,7 +781,7 @@ export const SidebarHUD: React.FC<SidebarHUDProps> = ({
                 startDay();
                 setIsMobileOpen(false);
               }}
-              title="Activar jornada oficial e iniciar el día"
+              title={copy.startDayTooltip}
               className={`btn-neon-hunter mt-1.5 w-full flex items-center justify-center gap-1.5 cursor-pointer shrink-0 rounded-full border-2 border-cyan-200 ring-2 ring-cyan-400/70 transition-transform active:scale-95 bg-gradient-to-r from-[#d6f421] via-cyan-300 to-[#d6f421] text-[#020617] ${
                 isExpanded ? 'px-4 py-2 text-[11px] font-black tracking-wider uppercase' : 'p-2'
               }`}
@@ -787,7 +789,7 @@ export const SidebarHUD: React.FC<SidebarHUDProps> = ({
               <Icon name="sun" className="w-3.5 h-3.5 text-[#020617] shrink-0" />
               {isExpanded && (
                 <>
-                  <span className="whitespace-nowrap font-black">INICIAR JORNADA</span>
+                  <span className="whitespace-nowrap font-black">{copy.startDayFull}</span>
                   <Icon name="arrowRight" className="w-3 h-3 text-[#020617] shrink-0 animate-bounce-x" />
                 </>
               )}
@@ -822,7 +824,7 @@ export const SidebarHUD: React.FC<SidebarHUDProps> = ({
                 finishDay();
                 setIsMobileOpen(false);
               }}
-              title="Cerrar jornada y registrar inicio de descanso"
+              title={copy.closeDayTooltip}
               className={`btn-neon-hunter mt-1.5 w-full flex items-center justify-center gap-1.5 cursor-pointer shrink-0 rounded-full border-2 border-amber-100 ring-2 ring-amber-400/70 transition-transform active:scale-95 bg-gradient-to-r from-[#fde047] via-amber-300 to-[#fde047] text-[#020617] ${
                 isExpanded ? 'px-4 py-2 text-[11px] font-black tracking-wider uppercase' : 'p-2'
               }`}
@@ -830,7 +832,7 @@ export const SidebarHUD: React.FC<SidebarHUDProps> = ({
               <Icon name="moon" className="w-3.5 h-3.5 text-[#020617] shrink-0" />
               {isExpanded && (
                 <>
-                  <span className="whitespace-nowrap font-black">CERRAR JORNADA</span>
+                  <span className="whitespace-nowrap font-black">{copy.closeDayFull}</span>
                   <Icon name="arrowRight" className="w-3 h-3 text-[#020617] shrink-0 animate-bounce-x" />
                 </>
               )}

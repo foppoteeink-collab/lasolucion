@@ -26,9 +26,9 @@ export const TacticalDiagnosticPanel: React.FC<TacticalDiagnosticPanelProps> = (
   };
 
   const getScoreLabel = () => {
-    if (harmonyScore >= 90) return 'Sincronía Óptima (Sin Conflictos)';
-    if (harmonyScore >= 65) return 'Sincronía Regular (Ajustes Recomendados)';
-    return 'Alerta Crítica (Colisión de Tareas)';
+    if (harmonyScore >= 90) return 'Horario ordenado (sin choques)';
+    if (harmonyScore >= 65) return 'Casi listo (requiere pequeños ajustes)';
+    return 'Hay tareas que chocan a la misma hora';
   };
 
   return (
@@ -38,24 +38,24 @@ export const TacticalDiagnosticPanel: React.FC<TacticalDiagnosticPanelProps> = (
         <div className="flex items-center gap-2">
           <div className={`px-2.5 py-1 rounded-lg border text-xs font-mono font-bold flex items-center gap-1.5 ${getScoreColor()}`}>
             <ShieldCheck className="w-4 h-4" />
-            <span>Sincronía: {harmonyScore}%</span>
+            <span>Orden: {harmonyScore}%</span>
           </div>
-          <span className="text-xs text-slate-300 font-mono hidden sm:inline">
+          <span className="text-xs text-slate-300 font-sans hidden sm:inline">
             {getScoreLabel()}
           </span>
         </div>
 
         <div className="text-[11px] font-mono text-slate-400 flex items-center gap-1.5 bg-black/40 px-2 py-1 rounded border border-slate-800">
           <Clock className="w-3.5 h-3.5 text-cyan-400" />
-          <span>Total planificado: <strong className="text-cyan-300 font-bold">{totalScheduledHours}h</strong></span>
+          <span>Horas planificadas: <strong className="text-cyan-300 font-bold">{totalScheduledHours}h</strong></span>
         </div>
       </div>
 
       {/* No issues state */}
       {conflicts.length === 0 && gaps.length === 0 && (
-        <div className="flex items-center gap-2 text-xs font-mono text-emerald-300/90 py-1">
+        <div className="flex items-center gap-2 text-xs font-sans text-emerald-300/90 py-1">
           <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-          <span>Línea temporal despejada. Todos los bloques se suceden sin solapamientos ni huecos excesivos.</span>
+          <span>Todo en orden: ninguna tarea choca con otra en tus horarios.</span>
         </div>
       )}
 
@@ -64,7 +64,7 @@ export const TacticalDiagnosticPanel: React.FC<TacticalDiagnosticPanelProps> = (
         <div className="space-y-2">
           <div className="text-[11px] font-mono uppercase tracking-wider text-rose-300 font-bold flex items-center gap-1.5">
             <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />
-            <span>Colisiones Detectadas ({conflicts.length}) — Solución en 1 Clic</span>
+            <span>Horarios que chocan ({conflicts.length}) — Resolver en 1 clic</span>
           </div>
 
           <div className="space-y-2">
@@ -107,7 +107,7 @@ export const TacticalDiagnosticPanel: React.FC<TacticalDiagnosticPanelProps> = (
         <div className="space-y-2 pt-1">
           <div className="text-[11px] font-mono uppercase tracking-wider text-cyan-300 font-bold flex items-center gap-1.5">
             <Clock className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Ventanas de Tiempo Libre ({gaps.length})</span>
+            <span>Espacios libres disponibles ({gaps.length})</span>
           </div>
 
           <div className="space-y-2">

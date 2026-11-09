@@ -51,6 +51,7 @@ import { BetaConsentModal } from './BetaConsentModal';
 import { DayRhythmModal } from './task-list/DayRhythmModal';
 import { DailyFinanceWidget } from './DailyFinanceWidget';
 import { calculateDayFinanceTotals } from '../utils/finance';
+import { useNarrativeCopy } from '../hooks/useNarrativeCopy';
 import { ScrollReveal } from './common/ScrollReveal';
 import { OfflineIndicator } from './OfflineIndicator';
 import { NotificationToastOverlay } from './NotificationToastOverlay';
@@ -793,17 +794,19 @@ export function AppLayout() {
 }
 
 function TabLoadingSkeleton() {
+  const copy = useNarrativeCopy();
   return (
     <div className="w-full min-h-[320px] flex flex-col items-center justify-center p-8 space-y-4">
-      <QuantumCubeLoader size="md" speed="slow" showLabel={true} label="CANALIZANDO MÓDULO DEL SISTEMA..." />
+      <QuantumCubeLoader size="md" speed="slow" showLabel={true} label={copy.loadingModuleText} />
     </div>
   );
 }
 
 function WeeklyStatsSkeleton() {
+  const copy = useNarrativeCopy();
   return (
     <div className="w-full min-h-[350px] flex flex-col items-center justify-center p-8 space-y-4">
-      <QuantumCubeLoader size="md" speed="slow" showLabel={true} label="SINCRONIZANDO ESTADÍSTICAS DEL SISTEMA..." />
+      <QuantumCubeLoader size="md" speed="slow" showLabel={true} label={copy.loadingModuleText} />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { ActiveTab, ThemeMode, NavigationMode, FloatingReward, TaskItem } from '../types';
+import { ActiveTab, ThemeMode, NavigationMode, NarrativeMode, FloatingReward, TaskItem } from '../types';
 
 export type ModalName = 
   | 'isDailyRewardsOpen' 
@@ -52,6 +52,7 @@ interface UIState {
   systemAura: SystemAuraData | null;
   handDominance: 'right' | 'left';
   glowIntensity: 'off' | 'tactical' | 'neon';
+  narrativeMode: NarrativeMode;
   
   // Modales
   isDailyRewardsOpen: boolean;
@@ -109,6 +110,7 @@ interface UIState {
   setHandDominance: (dominance: 'right' | 'left') => void;
   toggleHandDominance: () => void;
   setGlowIntensity: (level: 'off' | 'tactical' | 'neon') => void;
+  setNarrativeMode: (mode: NarrativeMode) => void;
 }
 
 // Convierte un color HEX a RGB numérico para sombras/glows
@@ -344,6 +346,25 @@ const getSavedHandDominance = (): 'right' | 'left' => {
   return 'right';
 };
 
+export const applyNarrativeMode = (mode: NarrativeMode) => {
+  if (typeof document === 'undefined') return;
+  document.documentElement.setAttribute('data-narrative', mode);
+};
+
+export const getSavedNarrativeMode = (): NarrativeMode => {
+  if (typeof window !== 'undefined') {
+    try {
+      const saved = localStorage.getItem('taskquest_narrative_mode') as NarrativeMode;
+      if (saved === 'tactical' || saved === 'minimal') {
+        applyNarrativeMode(saved);
+        return saved;
+      }
+    } catch (e) {}
+  }
+  applyNarrativeMode('tactical');
+  return 'tactical';
+};
+
 const getSavedTimeFormat = (): '12h' | '24h' => {
   if (typeof window !== 'undefined') {
     try {
@@ -371,6 +392,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   systemAura: getSavedSystemAura(),
   handDominance: getSavedHandDominance(),
   glowIntensity: getSavedGlowIntensity(),
+  narrativeMode: getSavedNarrativeMode(),
   
   isDailyRewardsOpen: false,
   isLevelUpOpen: false,
@@ -686,5 +708,15 @@ export const useUIStore = create<UIState>((set, get) => ({
       } catch (e) {}
     }
     set({ glowIntensity: level });
+  },
+
+  setNarrativeMode: (mode) => {
+    applyNarrativeMode(mode);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('taskquest_narrative_mode', mode);
+      } catch (e) {}
+    }
+    set({ narrativeMode: mode });
   }
 }));

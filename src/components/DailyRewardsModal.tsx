@@ -6,6 +6,7 @@ import { triggerShockwave } from '../utils/celebration';
 import { soundFX } from '../utils/audio';
 import { triggerHaptic } from '../utils/haptics';
 import { getTodayDateString } from '../utils/date';
+import { useNarrativeCopy } from '../hooks/useNarrativeCopy';
 
 interface DailyRewardsModalProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ export const DailyRewardsModal: React.FC<DailyRewardsModalProps> = ({
   stats,
   onClaimReward,
 }) => {
+  const copy = useNarrativeCopy();
   const todayStr = getTodayDateString();
   const isAlreadyClaimedToday = stats.lastDailyRewardClaimedDate === todayStr;
   
@@ -83,7 +85,7 @@ export const DailyRewardsModal: React.FC<DailyRewardsModalProps> = ({
                 </span>
               </h3>
               <p className="text-[11px] text-slate-400 font-mono truncate">
-                Suministros de disciplina • Bono por lealtad continua
+                {copy.dailyRewardsSubtitle}
               </p>
             </div>
           </div>
@@ -254,7 +256,7 @@ export const DailyRewardsModal: React.FC<DailyRewardsModalProps> = ({
             }}
             className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/10 border border-white/15 text-slate-300 hover:text-white font-anton uppercase text-xs tracking-wider transition-all cursor-pointer active:scale-95 flex items-center justify-center gap-1.5 ml-auto"
           >
-            <span>Volver al Cockpit</span>
+            <span>{copy.backToDashboardCta}</span>
           </button>
         </div>
 

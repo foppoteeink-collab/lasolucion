@@ -34,6 +34,7 @@ import { soundFX } from '../utils/audio';
 import { triggerShockwave } from '../utils/celebration';
 import { forgeKaiFromImage } from '../services/aiService';
 import { QuantumCubeLoader } from './QuantumCubeLoader';
+import { useNarrativeCopy } from '../hooks/useNarrativeCopy';
 
 export const KAI_TEMPERAMENTS = [
   {
@@ -269,7 +270,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
   onClose,
   onOpenShop,
 }) => {
-
+  const copy = useNarrativeCopy();
   const { stats, setStats } = usePlayerStore();
   const habitMastery = useAppStore((state) => state.habitMastery);
   const customHabits = useTaskStore((state) => state.customHabits);
@@ -613,7 +614,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
             }`}
           >
             <Camera className="w-3.5 h-3.5" />
-            <span>Forja Neural (IA)</span>
+            <span>{copy.workshopTabForge}</span>
           </button>
 
           <button
@@ -728,7 +729,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                     </div>
                     <div>
                       <h3 className="text-xs sm:text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                        <span>Museo & Bóveda de KAI</span>
+                        <span>{copy.workshopVaultTitle}</span>
                         <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
                           {vaultItems.length} {vaultItems.length === 1 ? 'Reliquia' : 'Reliquias'}
                         </span>
@@ -755,16 +756,16 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                     <div className="w-12 h-12 mx-auto rounded-2xl bg-emerald-950/40 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
                       <Landmark className="w-6 h-6" />
                     </div>
-                    <h4 className="text-sm font-bold text-white">Tu Bóveda está vacía</h4>
+                    <h4 className="text-sm font-bold text-white">Tu galería está vacía</h4>
                     <p className="text-xs text-slate-400 leading-relaxed">
-                      Crea tu primer compañero con la Forja Neural para asignarlo a tus hábitos.
+                      Crea tu primer asistente personalizado para vincularlo a tus hábitos diarios.
                     </p>
                     <button
                       type="button"
                       onClick={() => { soundFX.playClick(); setActiveTab('forge'); }}
                       className="px-4 py-2 rounded-xl bg-gradient-to-r from-fuchsia-600 to-cyan-500 text-white font-bold text-xs uppercase tracking-wider transition-all cursor-pointer"
                     >
-                      Ir a la Forja Neural
+                      {copy.workshopVaultEmptyCta}
                     </button>
                   </div>
                 ) : (
@@ -1661,7 +1662,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
           <div className="flex items-center gap-2 text-xs font-mono text-slate-400 min-w-0">
             <span className="shrink-0">KAI Activo:</span>
             <span className="px-2.5 py-1 rounded-lg bg-cyan-950/60 border border-cyan-500/40 text-cyan-300 font-anton tracking-wider uppercase text-xs truncate">
-              {stats.kaiShape === 'custom' ? (stats.kaiCustomForm?.name || 'Forja Neural') : (KAI_OFFICIAL_SHAPES.find(s => s.id === stats.kaiShape)?.name || 'El Prisma')}
+              {stats.kaiShape === 'custom' ? (stats.kaiCustomForm?.name || copy.workshopCustomFallback) : (KAI_OFFICIAL_SHAPES.find(s => s.id === stats.kaiShape)?.name || 'El Prisma')}
             </span>
             {has66Days && (
               <span className="hidden sm:inline-flex items-center gap-1 text-amber-300 font-anton text-xs uppercase tracking-wider">
@@ -1675,7 +1676,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
             onClick={onClose}
             className="chicle-btn px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-white font-anton text-xs uppercase tracking-wider transition-all cursor-pointer active:scale-95 shrink-0"
           >
-            Volver al Cockpit
+            {copy.backToDashboardCta}
           </button>
         </div>
 

@@ -5,6 +5,7 @@ import { usePlayerStore } from '../store/usePlayerStore';
 import { soundFX } from '../utils/audio';
 import { triggerHaptic } from '../utils/haptics';
 import { getTodayDateString } from '../utils/date';
+import { useNarrativeCopy } from '../hooks/useNarrativeCopy';
 
 export interface BossInfo {
   name: string;
@@ -192,6 +193,7 @@ export const DailyBossWidget: React.FC<DailyBossWidgetProps> = ({
   onClaimBossBounty,
   currentDate,
 }) => {
+  const copy = useNarrativeCopy();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [bossMode, setBossMode] = useState<'daily' | 'weekly'>('daily');
   const activeDate = currentDate || getTodayDateString();
@@ -273,7 +275,7 @@ export const DailyBossWidget: React.FC<DailyBossWidgetProps> = ({
           <div className="flex items-center justify-between text-[11px] font-mono tracking-wider mb-1.5">
             <span className="flex items-center gap-1.5 font-bold text-slate-300">
               <AlertTriangle className={`w-3.5 h-3.5 ${systemEntropy >= 80 ? 'text-red-500 animate-pulse' : 'text-[#d6f421]'}`} />
-              <span>ENTROPÍA DIARIA</span>
+              <span>{copy.bossEntropyLabel}</span>
             </span>
             <span className={`font-black font-mono tabular-nums ${
               systemEntropy === 100 
@@ -340,7 +342,7 @@ export const DailyBossWidget: React.FC<DailyBossWidgetProps> = ({
                     ? 'bg-[#d6f421] text-black border-[#d6f421]'
                     : 'bg-[#fb5607] text-white border-[#fb5607]'
                 }`}>
-                  {isDefeated ? 'NEUTRALIZADO' : 'ACTIVO'}
+                  {isDefeated ? copy.bossDefeatedBadge : 'ACTIVO'}
                 </span>
                 <span className="text-xs sm:text-sm font-anton tracking-wide text-white">
                   {boss.name}
@@ -373,7 +375,7 @@ export const DailyBossWidget: React.FC<DailyBossWidgetProps> = ({
               <span>FUERZA:</span>
             </span>
             <span className="font-mono text-white tabular-nums">
-              {currentHp}% {isDefeated && '💠 (NEUTRALIZADO)'}
+              {currentHp}% {isDefeated && `💠 (${copy.bossDefeatedBadge})`}
             </span>
           </div>
 
@@ -404,7 +406,7 @@ export const DailyBossWidget: React.FC<DailyBossWidgetProps> = ({
           <div className="mt-2 pt-2 border-t border-dashed border-[#9600ff]/40 flex flex-wrap items-center justify-between gap-2 text-[11px] font-bold">
             <div className="flex items-center gap-1 text-white">
               <Zap className="w-3 h-3 text-[#d6f421] fill-[#d6f421]" />
-              <span>Contramedida:</span>
+              <span>{copy.bossCountermeasureLabel}</span>
               <span className="text-[#d6f421] bg-[#03000a] px-1.5 py-0.2 rounded border border-[#9600ff]/60">
                 {boss.weaknessLabel}
               </span>
@@ -412,7 +414,7 @@ export const DailyBossWidget: React.FC<DailyBossWidgetProps> = ({
 
             <div className="flex items-center gap-1 text-white">
               <Trophy className="w-3 h-3 text-[#d6f421]" />
-              <span>Optimización:</span>
+              <span>{copy.bossBonusLabel}</span>
               <span className="text-white bg-[#03000a] px-1.5 py-0.2 rounded border border-[#9600ff]/60 font-mono tabular-nums">
                 +{boss.bonusRewardXp} XP • +{boss.bonusRewardCoins} 💠
               </span>
@@ -427,10 +429,10 @@ export const DailyBossWidget: React.FC<DailyBossWidgetProps> = ({
                   triggerHaptic([30, 50, 40]);
                   onClaimBossBounty(boss.bonusRewardXp, boss.bonusRewardCoins);
                 }}
-                aria-label={`Reclamar recompensa de ${boss.bonusRewardXp} XP y ${boss.bonusRewardCoins} monedas`}
+                aria-label={`${copy.bossClaimCta} de ${boss.bonusRewardXp} XP y ${boss.bonusRewardCoins} monedas`}
                 className="w-full mt-2 min-h-[40px] py-2 bg-[#d6f421] text-black border border-[#d6f421] rounded-lg font-anton tracking-widest uppercase transition-all shadow-[0_0_15px_rgba(214,244,33,0.5)] cursor-pointer hover:bg-yellow-300 active:scale-95 flex items-center justify-center"
               >
-                Reclamar Recompensa
+                {copy.bossClaimCta}
               </button>
             )}
             

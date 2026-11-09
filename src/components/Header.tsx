@@ -329,8 +329,8 @@ export const Header: React.FC<HeaderProps> = ({
                 <button
                   onClick={() => { soundFX.playClick(); signInWithGoogle(); }}
                   className="hidden sm:flex items-center justify-center sm:w-9 sm:h-9 rounded-md sm:rounded-lg text-cyan-300 hover:text-white hover:bg-cyan-950/40 transition-all cursor-pointer active:scale-95"
-                  title="Conectar con Google"
-                  aria-label="Iniciar sesión con Google"
+                  title="Conectar con Google — Privacidad blindada. Datos sincronizados con cifrado de extremo a extremo y soporte 100% offline"
+                  aria-label="Iniciar sesión con Google con cifrado de extremo a extremo y soporte offline"
                 >
                   <LogIn className="w-4 h-4 text-cyan-300" />
                 </button>

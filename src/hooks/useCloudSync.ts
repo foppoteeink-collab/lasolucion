@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { deduplicateTasksForDay, deduplicateHabits, isDuplicateActivity } from '../utils/taskDeduplication';
+import { deduplicateTasksForDay, deduplicateHabits, isDuplicateActivity, pickMergedTargetCount, pickMergedUnit } from '../utils/taskDeduplication';
 import { doc, onSnapshot, setDoc, getDoc, getDocs, getDocFromServer, getDocsFromServer, collection, writeBatch } from 'firebase/firestore';
 import { db, auth } from '../firebase';
 import { handleFirestoreError, OperationType } from '../lib/firestoreErrors';
@@ -368,12 +368,23 @@ export function propagateTodayCompletions(
       task.currentCount !== undefined || match.currentCount !== undefined
         ? Math.max(task.currentCount || 0, match.currentCount || 0)
         : undefined;
-    const targetCount = task.targetCount || match.targetCount;
-    const isCompleted = Boolean(
-      task.completed ||
-        match.completed ||
-        (targetCount !== undefined && mergedCount !== undefined && mergedCount >= targetCount)
+    const targetCount = pickMergedTargetCount(task.targetCount, match.targetCount);
+    const mergedUnit = pickMergedUnit(task.unit, match.unit);
+    const taskExplicitMultiCompleted = Boolean(task.targetCount && task.targetCount > 1 && task.completed);
+    const matchExplicitMultiCompleted = Boolean(match.targetCount && match.targetCount > 1 && match.completed);
+    const reachedTarget = Boolean(
+      targetCount !== undefined && mergedCount !== undefined && mergedCount >= targetCount
     );
+    const isPrematureCompletion = Boolean(
+      targetCount !== undefined &&
+      targetCount > 1 &&
+      mergedCount !== undefined &&
+      mergedCount > 0 &&
+      mergedCount < targetCount &&
+      !taskExplicitMultiCompleted &&
+      !matchExplicitMultiCompleted
+    );
+    const isCompleted = reachedTarget || (!isPrematureCompletion && Boolean(task.completed || match.completed));
 
     return {
       ...task,
@@ -381,6 +392,14 @@ export function propagateTodayCompletions(
       completedAt: isCompleted ? (task.completedAt || match.completedAt || new Date().toISOString()) : undefined,
       rewardClaimed: isCompleted ? Boolean(task.rewardClaimed || match.rewardClaimed) : false,
       currentCount: mergedCount,
+      targetCount,
+      unit: mergedUnit,
+      isHabit: Boolean(task.isHabit || match.isHabit || (targetCount !== undefined && targetCount > 1)),
+      isQuickHabit: Boolean(task.isQuickHabit || match.isQuickHabit),
+      isTracked2166: Boolean(task.isTracked2166 || match.isTracked2166),
+      quickIcon: task.quickIcon || match.quickIcon,
+      habitEnergyType: task.habitEnergyType || match.habitEnergyType,
+      targetStreak: task.targetStreak || match.targetStreak,
       awardedXp: Math.max(task.awardedXp || 0, match.awardedXp || 0),
       awardedCoins: Math.max(task.awardedCoins || 0, match.awardedCoins || 0),
       chestAwarded: Boolean(task.chestAwarded || match.chestAwarded),

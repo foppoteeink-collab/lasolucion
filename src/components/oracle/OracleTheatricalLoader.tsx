@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { Cpu, Terminal, Loader2, ShieldCheck, Database, Radio, Sparkles } from 'lucide-react';
-import { soundFX } from '../../utils/audio';
+import { Sparkles, Brain, Zap } from 'lucide-react';
 import { MoxenRayas } from '../moxen/MoxenRayas';
 import { QuantumCubeLoader } from '../QuantumCubeLoader';
 
@@ -11,214 +9,98 @@ interface OracleTheatricalLoaderProps {
     rank?: string;
     name?: string;
   };
+  engineMode?: 'ai' | 'local';
 }
 
-const DECRYPTION_STAGES = [
+const SIMPLE_STAGES = [
   {
-    title: 'ESTABLECIENDO PUENTE CUÁNTICO',
-    desc: 'Inicializando enlace con tu compañero KAI a través de un canal seguro...',
-    logs: [
-      '⚡ [INIT] Petición entrante desde terminal de calibración.',
-      '🌐 [ROUTE] Encaminando enlace táctico optimizado.',
-      '🔑 [SEGURIDAD] Conexión segura establecida con éxito.'
-    ]
+    title: 'Leyendo tus horarios y actividades...',
+    desc: 'Identificando cada tarea, día de la semana y franja horaria.'
   },
   {
-    title: 'SINCRO-ANÁLISIS DE DATOS PERFIL',
-    desc: 'Analizando energía vital y hábitos para ajustar coeficientes de esfuerzo...',
-    logs: [
-      '📈 [STATS] Leyendo nivel de disciplina, fuerza y energía.',
-      '🧠 [MENTE] Sincronizando mapa de arquetipos.',
-      '⚙️ [ALGO] Modificadores de recompensa alineados con la clase.'
-    ]
+    title: 'Ordenando tu día sin choques...',
+    desc: 'Acomodando cada bloque para que ninguna actividad se traslape.'
   },
   {
-    title: 'CALIBRANDO HORARIOS DE AGENDA',
-    desc: 'Deduplicando bloques horarios, detectando colisiones y blindando descansos...',
-    logs: [
-      '🔍 [SCAN] Detectando solapamientos temporales en agenda previa.',
-      '🛠️ [DEDUP] Aplicando filtros de congruencia para misiones repetidas.',
-      '📊 [MODEL] Generando bloques estructurados en agenda.'
-    ]
-  },
-  {
-    title: 'FORJANDO DIRECTIVAS DE ACCIÓN',
-    desc: 'Inyectando recompensas calibradas, misiones tácticas y directivas vitales...',
-    logs: [
-      '🛡️ [SHIELD] Configurando resiliencia de racha diaria.',
-      '💎 [BALANCE] Calibrando recompensas de XP y Monedas.',
-      '🧬 [FINALIZE] Preparando interfaz de edición visual.'
-    ]
+    title: 'Preparando tu vista previa...',
+    desc: 'En un segundo podrás revisar y editar cualquier bloque antes de guardar.'
   }
 ];
 
-export const OracleTheatricalLoader: React.FC<OracleTheatricalLoaderProps> = ({ userContext }) => {
+export const OracleTheatricalLoader: React.FC<OracleTheatricalLoaderProps> = ({
+  engineMode = 'ai'
+}) => {
   const [currentStageIndex, setCurrentStageIndex] = useState(0);
-  const [displayedLogs, setDisplayedLogs] = useState<string[]>([]);
-  const [decryptedText, setDecryptedText] = useState('');
-  const [progress, setProgress] = useState(0);
+  const [progress, setProgress] = useState(12);
 
-  // Decryption text glitch effect
   useEffect(() => {
-    const targetText = DECRYPTION_STAGES[currentStageIndex]?.title || '';
-    let iteration = 0;
-    const chars = 'ABCDEFGHJKLMNOPQRSTUVWXYZ0123456789@#$%/&*+=';
-    
-    const interval = setInterval(() => {
-      setDecryptedText(() => {
-        return targetText
-          .split('')
-          .map((char, index) => {
-            if (char === ' ') return ' ';
-            if (index < iteration) {
-              return targetText[index];
-            }
-            return chars[Math.floor(Math.random() * chars.length)];
-          })
-          .join('');
-      });
-
-      if (iteration >= targetText.length) {
-        clearInterval(interval);
-      }
-      iteration += 1 / 2;
-    }, 30);
-
-    return () => clearInterval(interval);
-  }, [currentStageIndex]);
-
-  // Stage rotation and log streaming
-  useEffect(() => {
-    const currentStage = DECRYPTION_STAGES[currentStageIndex];
-    if (!currentStage) return;
-
-    // Stream logs for the current stage
-    let logIndex = 0;
-    setDisplayedLogs([]);
-    
-    const logInterval = setInterval(() => {
-      if (logIndex < currentStage.logs.length) {
-        setDisplayedLogs(prev => [...prev, currentStage.logs[logIndex]]);
-        try {
-          soundFX.playClick();
-        } catch (e) {}
-        logIndex++;
-      } else {
-        clearInterval(logInterval);
-      }
-    }, 600);
-
-    // Dynamic progress bar updates
     const progressInterval = setInterval(() => {
       setProgress(prev => {
-        const step = 100 / DECRYPTION_STAGES.length;
-        const currentTarget = (currentStageIndex + 1) * step;
-        if (prev < currentTarget) {
-          return Math.min(100, prev + 1);
-        }
-        return prev;
+        const cap = currentStageIndex === 0 ? 45 : currentStageIndex === 1 ? 82 : 96;
+        return prev < cap ? prev + 1 : prev;
       });
-    }, 50);
+    }, 60);
 
-    // Switch to next stage after some time
     const stageTimeout = setTimeout(() => {
-      if (currentStageIndex < DECRYPTION_STAGES.length - 1) {
+      if (currentStageIndex < SIMPLE_STAGES.length - 1) {
         setCurrentStageIndex(prev => prev + 1);
-        try {
-          soundFX.playGlitch();
-        } catch (e) {}
       }
-    }, 3200);
+    }, 2400);
 
     return () => {
-      clearInterval(logInterval);
       clearInterval(progressInterval);
       clearTimeout(stageTimeout);
     };
   }, [currentStageIndex]);
 
-  const activeStage = DECRYPTION_STAGES[currentStageIndex];
+  const activeStage = SIMPLE_STAGES[currentStageIndex];
 
   return (
-    <div className="p-5 sm:p-8 bg-[#020006] border border-[#9600ff]/50 rounded-2xl flex flex-col space-y-6 shadow-[0_0_40px_rgba(150,0,255,0.25)] relative overflow-hidden font-mono text-xs text-slate-300">
-      {/* Decorative scanning line */}
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(18,10,36,0)_0%,rgba(150,0,255,0.15)_50%,rgba(18,10,36,0)_100%)] h-1/2 w-full animate-pulse pointer-events-none z-0" />
-      
-      {/* Grid Overlay */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0)_60%,rgba(3,0,10,0.95)_100%)] pointer-events-none z-0" />
-
-      <div className="relative z-10 flex items-center justify-between border-b border-[#9600ff]/30 pb-3">
+    <div
+      role="status"
+      aria-live="polite"
+      className="p-5 sm:p-7 bg-[#040914] border border-cyan-500/35 rounded-2xl flex flex-col space-y-5 shadow-[0_0_30px_rgba(6,182,212,0.18)] relative overflow-hidden"
+    >
+      <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-3">
         <div className="flex items-center gap-2">
-          <Cpu className="w-5 h-5 text-[#d6f421] animate-spin" style={{ animationDuration: '4s' }} />
-          <div>
-            <h4 className="text-white font-black uppercase tracking-widest text-sm">
-              Sintonizador Neural Oráculo
-            </h4>
-            <p className="text-[10px] text-slate-400 uppercase">
-              Identidad: {userContext?.name || 'Iniciado'} // Rango: {userContext?.rank || 'Fase Inicial'}
-            </p>
-          </div>
+          {engineMode === 'ai' ? (
+            <Brain className="w-4 h-4 text-purple-400" />
+          ) : (
+            <Zap className="w-4 h-4 text-emerald-400" />
+          )}
+          <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-200">
+            {engineMode === 'ai' ? 'Organizando con IA Gemini' : 'Organizando con Motor Local'}
+          </span>
         </div>
-        <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-[#9600ff]/20 border border-[#9600ff]/50 text-[#d6f421] text-[10px] uppercase font-black tracking-widest animate-pulse">
-          <Radio className="w-3.5 h-3.5" /> ONLINE
-        </div>
+        <span className="text-[11px] font-mono text-slate-400">
+          Paso {currentStageIndex + 1} de {SIMPLE_STAGES.length}
+        </span>
       </div>
 
-      {/* Main decryption visualization */}
-      <div className="relative z-10 bg-[#000000]/80 border border-[#9600ff]/30 rounded-xl p-4 min-h-[160px] flex flex-col justify-between shadow-inner">
-        <div>
-          <div className="flex items-center justify-between text-[#d6f421] font-black uppercase mb-1 tracking-wider text-xs sm:text-sm">
-            <span>{decryptedText || 'INICIALIZANDO...'}</span>
-            <span className="text-slate-500 text-[10px] font-normal">Fase {currentStageIndex + 1}/{DECRYPTION_STAGES.length}</span>
-          </div>
-          <p className="text-slate-400 text-[11px] leading-relaxed mb-2">
-            {activeStage?.desc}
+      <div className="py-3 flex flex-col items-center text-center space-y-3">
+        <QuantumCubeLoader size="sm" speed="slow" showLabel={false} />
+        <div className="space-y-1 max-w-md">
+          <h4 className="text-sm sm:text-base font-bold text-white">
+            {activeStage.title}
+          </h4>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            {activeStage.desc}
           </p>
         </div>
-
-        {/* Núcleo Cuántico de Espera Dinámico con los 5 Cubos */}
-        <div className="py-2 flex items-center justify-center my-1 pointer-events-none">
-          <QuantumCubeLoader size="sm" speed="slow" showLabel={false} />
-        </div>
-
-        {/* Live log stream */}
-        <div className="space-y-1 bg-[#03000a] p-3 rounded-lg border border-[#9600ff]/20 max-h-[85px] overflow-y-auto custom-scrollbar">
-          {displayedLogs.length === 0 ? (
-            <div className="text-slate-600 italic text-[10px] animate-pulse">Sincronizando enlace neural con KAI...</div>
-          ) : (
-            displayedLogs.map((log, idx) => (
-              <motion.div 
-                key={idx}
-                initial={{ opacity: 0, x: -5 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="text-[10px] leading-snug tracking-wider text-slate-300 font-mono flex items-start gap-1"
-              >
-                <span className="text-[#9600ff]/80 font-black">&gt;&gt;</span>
-                <span>{log}</span>
-              </motion.div>
-            ))
-          )}
-        </div>
       </div>
 
-      {/* Quantum Calibration Progress Bar with Moxen Rayas */}
-      <div className="relative z-10 space-y-1.5">
-        <MoxenRayas
-          progress={progress}
-          variant="compact"
-          theme="purple"
-          mode="active"
-          title="Calibrando Estabilidad Temporal"
-          subtitle="Sincronización cuántica de agenda con KAI Companion"
-        />
-      </div>
+      <MoxenRayas
+        progress={progress}
+        variant="compact"
+        theme={engineMode === 'ai' ? 'purple' : 'cyan'}
+        mode="active"
+        title="Preparando tu borrador"
+        subtitle={engineMode === 'ai' ? 'Consultando a Gemini IA...' : 'Procesando localmente en segundos'}
+      />
 
-      {/* Footer warning */}
-      <div className="relative z-10 flex items-center gap-2 p-2 bg-[#0e001f] border border-[#9600ff]/30 rounded-lg">
-        <Sparkles className="w-4 h-4 text-[#d6f421] shrink-0" />
-        <p className="text-[10px] text-slate-300 leading-snug">
-          Optimizando tu agenda con IA. Mantén esta ventana abierta un momento.
-        </p>
+      <div className="flex items-center gap-2 p-2.5 bg-white/5 border border-white/10 rounded-xl text-xs text-slate-300">
+        <Sparkles className="w-4 h-4 text-cyan-400 shrink-0" />
+        <span>No te preocupes: nada se guardará en tu calendario hasta que tú lo confirmes.</span>
       </div>
     </div>
   );

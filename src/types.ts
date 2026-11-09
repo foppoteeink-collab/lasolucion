@@ -321,6 +321,8 @@ export type ThemeMode = 'auto' | 'dark' | 'light';
 
 export type NavigationMode = 'nexus' | 'classic';
 
+export type NarrativeMode = 'tactical' | 'minimal';
+
 export type ActiveTab = 'cover' | 'dashboard' | 'journal' | 'pomodoro' | 'shop' | 'stats' | 'skills' | 'settings' | 'planner';
 
 export interface DayTemplate {

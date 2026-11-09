@@ -31,6 +31,8 @@ import { MoxenInercia } from './moxen/MoxenInercia';
 import { useTaskStore } from '../store/useTaskStore';
 import { getTodayDateString } from '../utils/date';
 import { TaskItem } from '../types';
+import { useNarrativeCopy } from '../hooks/useNarrativeCopy';
+import { AUTH_SECURITY_MICROCOPY, WELCOME_UVP } from '../data/narrativeCopy';
 
 // Definición cromática de alta fidelidad estética para cada uno de los 12 arquetipos
 const ARCHETYPE_THEMES: Record<
@@ -151,6 +153,7 @@ export const HunterAwakeningModal: React.FC<HunterAwakeningModalProps> = ({
   cloudSync
 }) => {
   const { user, signInWithGoogle } = useAuth();
+  const copy = useNarrativeCopy();
   
   // Step 1: KAI (Elegido primero) -> Step 2: Arquetipo -> Step 3: Identidad -> Step 4: Despertar
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
@@ -321,10 +324,10 @@ export const HunterAwakeningModal: React.FC<HunterAwakeningModalProps> = ({
               </div>
               <div>
                 <span className="text-[10px] font-mono uppercase text-cyan-300 tracking-widest block">
-                  Protocolo del Sistema
+                  La Solución · Enfoque & Hábitos
                 </span>
                 <h2 className="font-anton text-sm sm:text-lg uppercase text-white tracking-wider">
-                  Ceremonia del Despertar Inicial
+                  {copy.awakeningModalTitle}
                 </h2>
               </div>
             </div>
@@ -405,6 +408,27 @@ export const HunterAwakeningModal: React.FC<HunterAwakeningModalProps> = ({
         {/* Modal Scrollable Body */}
         <div className="p-4 sm:p-6 space-y-5 flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-cyan-500 scrollbar-track-transparent">
 
+          {/* UVP Explícita + Mitigación de Objeciones (Friction-Reducing Microcopy) */}
+          <div className="p-3.5 rounded-2xl bg-gradient-to-br from-cyan-950/60 via-[#04152b] to-indigo-950/40 border border-cyan-400/35 space-y-1.5">
+            <span className="text-[9.5px] font-mono font-bold uppercase tracking-widest text-cyan-300 block">
+              {WELCOME_UVP.badge}
+            </span>
+            <p className="text-xs sm:text-sm font-bold text-white leading-snug">
+              {WELCOME_UVP.headline}
+            </p>
+            <div className="flex flex-wrap gap-1.5 pt-0.5">
+              {WELCOME_UVP.frictionPills.map((pill) => (
+                <span
+                  key={pill}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-400/40 text-emerald-300 text-[9.5px] font-bold"
+                >
+                  <CheckCircle2 className="w-2.5 h-2.5 shrink-0" />
+                  <span>{pill}</span>
+                </span>
+              ))}
+            </div>
+          </div>
+
           {/* P1: BANNER DE ONBOARDING ACELERADO (<30s TIME-TO-VALUE) */}
           <div className="bg-gradient-to-r from-cyan-950/80 via-blue-950/60 to-purple-950/80 p-4 rounded-2xl border border-cyan-400/50 shadow-[0_0_25px_rgba(0,240,255,0.2)] flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-fade-in">
             <div className="flex items-start gap-3">
@@ -414,14 +438,14 @@ export const HunterAwakeningModal: React.FC<HunterAwakeningModalProps> = ({
               <div className="space-y-0.5">
                 <div className="flex items-center gap-2">
                   <h3 className="text-xs sm:text-sm font-black text-white">
-                    Modo Rápido: Despertar Inmediato
+                    {copy.awakeningQuickModeBtn}
                   </h3>
                   <span className="text-[10px] font-mono text-cyan-300 bg-cyan-950 px-2 py-0.5 rounded-full border border-cyan-500/50 font-bold">
                     &lt; 30 segundos
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-300 leading-snug">
-                  Aterriza directamente en tu lista con 3 misiones tácticas preconfiguradas. Podrás personalizar a KAI y elegir tu arquetipo tras completar tu primera misión.
+                  Empieza al instante con 3 objetivos prácticos preconfigurados. Sin tarjeta ni registros obligatorios.
                 </p>
               </div>
             </div>
@@ -430,7 +454,7 @@ export const HunterAwakeningModal: React.FC<HunterAwakeningModalProps> = ({
               onClick={handleQuickStart}
               className="chicle-btn px-4 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-[0_0_15px_rgba(0,240,255,0.4)] flex items-center justify-center gap-2 shrink-0 cursor-pointer active:scale-95 transition-all"
             >
-              <span>Comenzar Ahora</span>
+              <span>{copy.onboardingWelcomeCta}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -444,10 +468,10 @@ export const HunterAwakeningModal: React.FC<HunterAwakeningModalProps> = ({
                 </div>
                 <div>
                   <h3 className="text-xs sm:text-sm font-anton uppercase text-cyan-300 tracking-wider">
-                    Sintonización de tu Compañero Cuántico KAI
+                    {copy.awakeningCompanionTitle}
                   </h3>
                   <p className="text-[11px] sm:text-xs text-slate-300 font-sans leading-relaxed mt-0.5">
-                    Conoce a <strong>KAI: tu compañero táctico</strong> para optimizar enfoque, hábitos y energía diaria:
+                    Conoce a <strong>KAI: tu asistente visual</strong> para optimizar enfoque, hábitos y energía diaria:
                   </p>
                 </div>
               </div>
@@ -540,10 +564,10 @@ export const HunterAwakeningModal: React.FC<HunterAwakeningModalProps> = ({
                   </div>
                   <div>
                     <h3 className="text-xs sm:text-sm font-anton uppercase text-cyan-300 tracking-wider">
-                      Canalización del Arquetipo Psicológico
+                      {copy.awakeningArchetypeTitle}
                     </h3>
                     <p className="text-[11px] sm:text-xs text-slate-200 leading-relaxed font-sans mt-0.5">
-                      Desliza con inercia para elegir tu <strong className="text-cyan-300">Arquetipo</strong> y activar tu bonificación táctica:
+                      Desliza para elegir tu <strong className="text-cyan-300">perfil de productividad</strong> y activar su enfoque recomendado:
                     </p>
                   </div>
                 </div>
@@ -561,7 +585,7 @@ export const HunterAwakeningModal: React.FC<HunterAwakeningModalProps> = ({
                         ? 'bg-cyan-500 text-black shadow-[0_0_10px_rgba(0,240,255,0.4)]'
                         : 'text-slate-400 hover:text-white'
                     }`}
-                    title="Modo Carrusel Cinético (Moxen Inercia)"
+                    title={copy.awakeningCarouselModeLabel}
                   >
                     <Layers className="w-3.5 h-3.5" />
                     <span className="hidden sm:inline">Deslizar</span>
@@ -703,7 +727,7 @@ export const HunterAwakeningModal: React.FC<HunterAwakeningModalProps> = ({
                                 }}
                               >
                                 <Zap className="w-3.5 h-3.5 text-cyan-300" />
-                                <span>Sintonizar Arquetipo</span>
+                                <span>{copy.awakeningSelectArchetypeCta}</span>
                               </button>
                             )}
                           </div>
@@ -860,21 +884,26 @@ export const HunterAwakeningModal: React.FC<HunterAwakeningModalProps> = ({
                     <span className="truncate">Conectado a Google: <strong>{user.email}</strong></span>
                   </div>
                 ) : (
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#020710] p-3 rounded-xl border border-cyan-500/20">
-                    <p className="text-[11px] text-slate-300 font-mono">
-                      Vincula tu cuenta de Google ahora para sincronizar en tiempo real y no perder datos.
+                  <div className="space-y-2.5 bg-[#020710] p-3 rounded-xl border border-cyan-500/20">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <p className="text-[11px] text-slate-300 font-mono">
+                        Sin tarjeta de crédito. Vincula tu cuenta de Google opcionalmente para sincronizar tus datos entre dispositivos:
+                      </p>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          soundFX.playClick();
+                          if (signInWithGoogle) await signInWithGoogle();
+                        }}
+                        className="px-3.5 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-anton uppercase text-[11px] rounded-xl transition-all shadow-[0_0_12px_rgba(0,240,255,0.3)] shrink-0 flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+                      >
+                        <LogIn className="w-3.5 h-3.5 fill-black" />
+                        <span>Conectar Google</span>
+                      </button>
+                    </div>
+                    <p className="text-[10px] font-mono text-emerald-300/90 leading-snug">
+                      {AUTH_SECURITY_MICROCOPY}
                     </p>
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        soundFX.playClick();
-                        if (signInWithGoogle) await signInWithGoogle();
-                      }}
-                      className="px-3.5 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-anton uppercase text-[11px] rounded-xl transition-all shadow-[0_0_12px_rgba(0,240,255,0.3)] shrink-0 flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
-                    >
-                      <LogIn className="w-3.5 h-3.5 fill-black" />
-                      <span>Conectar Google</span>
-                    </button>
                   </div>
                 )}
               </div>
@@ -905,7 +934,7 @@ export const HunterAwakeningModal: React.FC<HunterAwakeningModalProps> = ({
                   [SISTEMA DE CALIBRACIÓN: 100% SINCRONIZADO]
                 </span>
                 <h3 className="text-xl sm:text-2xl font-anton uppercase text-white tracking-wide">
-                  ¡DESPERTAR CONFIRMADO!
+                  {copy.awakeningSuccessBanner}
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-300 font-mono mt-1">
                   Te damos la bienvenida al Sistema, <strong className="text-cyan-300">@{username || 'Operador'}</strong>
@@ -964,103 +993,108 @@ export const HunterAwakeningModal: React.FC<HunterAwakeningModalProps> = ({
         </div>
 
         {/* Footer Navigation Buttons */}
-        <div className="p-4 border-t border-cyan-500/40 bg-[#04020e] flex items-center justify-between gap-3 shrink-0">
-          {step === 1 && (
-            <>
-              <div className="text-[11px] font-mono text-slate-400">
-                Paso 1 de 4: Elegir KAI
+        <div className="p-4 border-t border-cyan-500/40 bg-[#04020e] space-y-2 shrink-0">
+          <div className="flex items-center justify-between gap-3">
+            {step === 1 && (
+              <>
+                <div className="text-[11px] font-mono text-slate-400">
+                  Paso 1 de 4: Personalizar KAI
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFX.playClick();
+                    setStep(2);
+                  }}
+                  className="py-3 px-6 bg-cyan-500 hover:bg-cyan-400 text-black font-anton uppercase text-xs sm:text-sm rounded-xl shadow-[0_0_20px_rgba(0,240,255,0.4)] transition-all flex items-center gap-2 cursor-pointer active:scale-95"
+                >
+                  <span>Siguiente: Elegir Estilo</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </>
+            )}
+
+            {step === 2 && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFX.playClick();
+                    setStep(1);
+                  }}
+                  className="py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-white font-mono text-xs rounded-xl transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Volver a KAI</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFX.playClick();
+                    setStep(3);
+                  }}
+                  className="py-3 px-6 bg-cyan-500 hover:bg-cyan-400 text-black font-anton uppercase text-xs sm:text-sm rounded-xl shadow-[0_0_20px_rgba(0,240,255,0.4)] transition-all flex items-center gap-2 cursor-pointer active:scale-95"
+                >
+                  <span>Siguiente: Identidad</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </>
+            )}
+
+            {step === 3 && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFX.playClick();
+                    setStep(2);
+                  }}
+                  className="py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-white font-mono text-xs rounded-xl transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Volver a Estilo</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleNextStepFromIdentity}
+                  className="py-3 px-6 bg-cyan-500 hover:bg-cyan-400 text-black font-anton uppercase text-xs sm:text-sm rounded-xl shadow-[0_0_20px_rgba(0,240,255,0.4)] transition-all flex items-center gap-2 cursor-pointer active:scale-95"
+                >
+                  <span>Confirmar Configuración</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </>
+            )}
+
+            {step === 4 && (
+              <div className="w-full flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFX.playClick();
+                    setStep(3);
+                  }}
+                  className="py-3 px-4 bg-slate-800 hover:bg-slate-700 text-white font-mono text-xs rounded-xl transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Modificar</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleFinalAwakening}
+                  className="flex-1 py-3.5 bg-gradient-to-r from-cyan-400 via-cyan-500 to-indigo-500 hover:from-cyan-300 hover:to-indigo-400 text-black font-anton uppercase text-sm sm:text-base tracking-wider rounded-xl shadow-[0_0_30px_rgba(0,240,255,0.6)] transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                >
+                  <Zap className="w-5 h-5 fill-black" />
+                  <span>{copy.awakeningSubmitCta}</span>
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  soundFX.playClick();
-                  setStep(2);
-                }}
-                className="py-3 px-6 bg-cyan-500 hover:bg-cyan-400 text-black font-anton uppercase text-xs sm:text-sm rounded-xl shadow-[0_0_20px_rgba(0,240,255,0.4)] transition-all flex items-center gap-2 cursor-pointer active:scale-95"
-              >
-                <span>Siguiente: Elegir Arquetipo</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </>
-          )}
-
-          {step === 2 && (
-            <>
-              <button
-                type="button"
-                onClick={() => {
-                  soundFX.playClick();
-                  setStep(1);
-                }}
-                className="py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-white font-mono text-xs rounded-xl transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span>Volver a KAI</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  soundFX.playClick();
-                  setStep(3);
-                }}
-                className="py-3 px-6 bg-cyan-500 hover:bg-cyan-400 text-black font-anton uppercase text-xs sm:text-sm rounded-xl shadow-[0_0_20px_rgba(0,240,255,0.4)] transition-all flex items-center gap-2 cursor-pointer active:scale-95"
-              >
-                <span>Siguiente: Identidad</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </>
-          )}
-
-          {step === 3 && (
-            <>
-              <button
-                type="button"
-                onClick={() => {
-                  soundFX.playClick();
-                  setStep(2);
-                }}
-                className="py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-white font-mono text-xs rounded-xl transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span>Volver a Arquetipo</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleNextStepFromIdentity}
-                className="py-3 px-6 bg-cyan-500 hover:bg-cyan-400 text-black font-anton uppercase text-xs sm:text-sm rounded-xl shadow-[0_0_20px_rgba(0,240,255,0.4)] transition-all flex items-center gap-2 cursor-pointer active:scale-95"
-              >
-                <span>Confirmar y Calibrar</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </>
-          )}
-
-          {step === 4 && (
-            <div className="w-full flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  soundFX.playClick();
-                  setStep(3);
-                }}
-                className="py-3 px-4 bg-slate-800 hover:bg-slate-700 text-white font-mono text-xs rounded-xl transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span>Modificar</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleFinalAwakening}
-                className="flex-1 py-3.5 bg-gradient-to-r from-cyan-400 via-cyan-500 to-indigo-500 hover:from-cyan-300 hover:to-indigo-400 text-black font-anton uppercase text-sm sm:text-base tracking-wider rounded-xl shadow-[0_0_30px_rgba(0,240,255,0.6)] transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
-              >
-                <Zap className="w-5 h-5 fill-black" />
-                <span>INGRESAR AL SISTEMA</span>
-              </button>
-            </div>
-          )}
+            )}
+          </div>
+          <p className="text-[10px] font-mono text-emerald-300/85 text-center leading-snug">
+            {AUTH_SECURITY_MICROCOPY}
+          </p>
         </div>
       </div>
     </div>

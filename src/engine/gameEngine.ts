@@ -14,6 +14,7 @@ import { useAppStore } from '../store/useAppStore';
 import { usePlayerStore } from '../store/usePlayerStore';
 import { useTaskStore } from '../store/useTaskStore';
 import { useUIStore } from '../store/useUIStore';
+import { deduplicateHabits, deduplicateTasksForDay, sanitizeTasksByDate, reconcileHabitCounterTask, resolveMatchingCustomHabit } from '../utils/taskDeduplication';
 import { auth, db } from '../firebase';
 import { doc, deleteDoc, collection, getDocs, writeBatch } from 'firebase/firestore';
 import { generateDailyTasks } from '../data/defaults';
@@ -662,9 +663,10 @@ export const handleIncrementHabit = (taskId: string, e?: any) => {
   const { player: statePlayer, task: stateTask, ui: stateUI, app: stateApp } = getEngineContext();
   const date = stateTask.currentViewDate;
   const tasks = stateTask.tasksByDate[date] || [];
-  const task = tasks.find(t => t.id === taskId);
+  const rawTask = tasks.find(t => t.id === taskId);
   
-  if (!task) return;
+  if (!rawTask) return;
+  const task = reconcileHabitCounterTask(rawTask, stateTask.customHabits || []);
   const isHabitLike = task.isHabit || task.isQuickHabit || task.category === 'habito' || task.isTracked2166 || Boolean(task.id && task.id.includes('habit-')) || task.targetCount !== undefined;
   if (!isHabitLike) return;
 
@@ -740,7 +742,10 @@ export const handleIncrementHabit = (taskId: string, e?: any) => {
     completed: isNowCompleted,
     completedAt: isNowCompleted ? (task.completedAt || new Date().toISOString()) : undefined,
     awardedCoins: totalAwardedCoins,
-    awardedXp: totalAwardedXp
+    awardedXp: totalAwardedXp,
+    ...(task.targetCount !== undefined ? { targetCount: task.targetCount } : {}),
+    ...(task.unit ? { unit: task.unit } : {}),
+    ...(task.isHabit !== undefined ? { isHabit: task.isHabit } : {}),
   });
 
   const hitX = e?.clientX || (typeof window !== 'undefined' ? window.innerWidth / 2 : 200);
@@ -1230,10 +1235,12 @@ export const sortTasksChronologically = (tasks: TaskItem[]): TaskItem[] => {
   });
 };
 
-import { deduplicateHabits, deduplicateTasksForDay, sanitizeTasksByDate } from '../utils/taskDeduplication';
-
-export const injectHabitsToExistingDays = (newHabits?: CustomHabit[]) => {
+export const injectHabitsToExistingDays = (
+  newHabits?: CustomHabit[],
+  options?: { syncExistingMeta?: boolean }
+) => {
   const store = useTaskStore.getState();
+  const playerStats = usePlayerStore.getState().stats;
   const tasksByDate = store.tasksByDate;
   const customHabits = store.customHabits;
   const newTasksByDate = { ...tasksByDate };
@@ -1244,12 +1251,49 @@ export const injectHabitsToExistingDays = (newHabits?: CustomHabit[]) => {
   // Hidratar todas las fechas existentes en el almacén, más una ventana amplia (-7 a +30 días)
   const datesToHydrate = new Set<string>(Object.keys(newTasksByDate));
   const baseDate = store.currentViewDate || getTodayDateString();
+  const todayStr = getTodayDateString();
   for (let i = -7; i <= 30; i++) {
     datesToHydrate.add(addDaysToDateString(baseDate, i));
   }
 
   datesToHydrate.forEach(date => {
-     const rawTasksForDay = newTasksByDate[date] || [];
+     let rawTasksForDay = newTasksByDate[date] || [];
+     const isDayFinalized = Boolean(playerStats?.finalizedDays?.[date]);
+
+     if (options?.syncExistingMeta && date >= todayStr && !isDayFinalized && rawTasksForDay.length > 0) {
+       rawTasksForDay = rawTasksForDay.map((t) => {
+         const matchedHabit = resolveMatchingCustomHabit(t, habitsToInject);
+         if (!matchedHabit) return t;
+         const nextTarget = matchedHabit.targetCount;
+         const nextCurrent = t.currentCount || 0;
+         let nextCompleted = t.completed;
+         let nextCompletedAt = t.completedAt;
+         if (nextTarget !== undefined && nextTarget > 1) {
+           if (nextCurrent >= nextTarget) {
+             nextCompleted = true;
+             nextCompletedAt = t.completedAt || new Date().toISOString();
+           } else if (nextCurrent > 0) {
+             nextCompleted = false;
+             nextCompletedAt = undefined;
+           }
+         }
+         return {
+           ...t,
+           title: matchedHabit.title || t.title,
+           targetCount: nextTarget,
+           unit: matchedHabit.unit || t.unit,
+           isHabit: Boolean(t.isHabit || matchedHabit.isQuickHabit || matchedHabit.isTracked2166 || (nextTarget && nextTarget > 1)),
+           isQuickHabit: matchedHabit.isQuickHabit ?? t.isQuickHabit,
+           isTracked2166: matchedHabit.isTracked2166 ?? t.isTracked2166,
+           quickIcon: matchedHabit.quickIcon || t.quickIcon,
+           habitEnergyType: matchedHabit.habitEnergyType || t.habitEnergyType,
+           targetStreak: matchedHabit.targetStreak || t.targetStreak,
+           completed: nextCompleted,
+           completedAt: nextCompletedAt,
+         };
+       });
+     }
+
      const generated = generateDailyTasks(date, habitsToInject);
      
      // Merge raw tasks and newly generated tasks, then deduplicate semantically
@@ -1266,7 +1310,7 @@ export const handleSaveHabits = (habits: CustomHabit[]) => {
   const store = useTaskStore.getState();
   const cleanHabits = deduplicateHabits(habits);
   store.setCustomHabits(cleanHabits);
-  injectHabitsToExistingDays(cleanHabits);
+  injectHabitsToExistingDays(cleanHabits, { syncExistingMeta: true });
   soundFX.playClick();
 };
 export const handleClaimBossBounty = () => {

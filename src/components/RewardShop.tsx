@@ -30,10 +30,12 @@ import { useUIStore } from '../store/useUIStore';
 import { triggerHaptic } from '../utils/haptics';
 import { calculateDynamicShopCost } from '../utils/level3Systems';
 import { getTodayDateString } from '../utils/date';
+import { useNarrativeCopy } from '../hooks/useNarrativeCopy';
 
 type FilterTab = 'todos' | 'vida_real' | 'perks' | 'kai' | 'descanso' | 'personalizados' | 'mochila';
 
 export const RewardShop: React.FC = () => {
+  const copy = useNarrativeCopy();
   const stats = usePlayerStore((s) => s.stats);
   const openLootBox = usePlayerStore((s) => s.openLootBox);
   const useInventoryItem = usePlayerStore((s) => s.useInventoryItem);
@@ -290,13 +292,13 @@ export const RewardShop: React.FC = () => {
           </div>
           <div>
             <h2 className="text-base sm:text-lg font-black font-anton text-white tracking-wide uppercase flex items-center gap-2">
-              Bóveda de Recompensas
+              {copy.shopTitle}
               <span className="text-[10px] px-2 py-0.2 rounded bg-purple-950/80 text-purple-300 border border-purple-500/50 uppercase font-mono hidden sm:inline">
                 Canje Directo
               </span>
             </h2>
             <p className="text-[11px] text-slate-400 font-medium leading-none mt-1">
-              Convierte tu disciplina en placeres tangibles de la vida real.
+              {copy.shopSubtitle}
             </p>
           </div>
         </div>
@@ -322,7 +324,7 @@ export const RewardShop: React.FC = () => {
             title="Crear recompensa personalizada"
           >
             <Plus className="w-3.5 h-3.5 stroke-[3]" />
-            <span>Crear Deseo</span>
+            <span>{copy.shopCreateCta}</span>
           </button>
         </div>
       </div>
@@ -653,7 +655,7 @@ export const RewardShop: React.FC = () => {
 
               <div className="flex items-center justify-between p-4 border-b border-white/10 bg-[#040814]/90 relative z-10">
                 <h3 className="text-sm font-anton uppercase tracking-wider text-white flex items-center gap-2">
-                  <Flame className="w-4 h-4 text-amber-400" /> Forjar Nuevo Deseo
+                  <Flame className="w-4 h-4 text-amber-400" /> {copy.shopModalCreateTitle}
                 </h3>
                 <button
                   type="button"

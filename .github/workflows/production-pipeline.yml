@@ -1,0 +1,46 @@
+name: Production CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality-gate:
+    name: Typecheck, Unit Tests & Production Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Static Typecheck (TypeScript)
+        run: npm run lint
+
+      - name: Execute Resilient Unit Tests
+        run: npx tsx src/utils/level3Systems.test.ts
+
+      - name: Build Production Bundle (Vite)
+        run: npm run build
+
+      - name: Validate Production Artifacts & Budget
+        run: |
+          test -f dist/index.html || { echo "dist/index.html is missing"; exit 1; }
+          test -f dist/sw.js || { echo "dist/sw.js is missing"; exit 1; }
+          test -f dist/manifest.webmanifest || { echo "dist/manifest.webmanifest is missing"; exit 1; }
+          echo "Production build artifacts successfully verified."

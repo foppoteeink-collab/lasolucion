@@ -5,6 +5,7 @@ import { soundFX } from '../utils/audio';
 import { isHapticsSupported, triggerHaptic } from '../utils/haptics';
 import { useUIStore } from '../store/useUIStore';
 import { handleClaimBossBounty } from '../engine/gameEngine';
+import { useNarrativeCopy } from '../hooks/useNarrativeCopy';
 
 interface SurpriseBossModalProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ export const SurpriseBossModal: React.FC<SurpriseBossModalProps> = ({
   buffName,
   buffDescription,
 }) => {
+  const copy = useNarrativeCopy();
   useEffect(() => {
     if (isOpen) {
       // Triumphant Adventure Fanfare
@@ -105,7 +107,7 @@ export const SurpriseBossModal: React.FC<SurpriseBossModalProps> = ({
             </div>
 
             <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/15 border border-cyan-400/40 text-cyan-300 text-[10px] font-anton uppercase tracking-wider mb-2 shadow-[0_0_12px_rgba(0,240,255,0.2)]">
-              <Sparkles className="w-3.5 h-3.5" /> RUPTURA DE INERCIA LOGRADA
+              <Sparkles className="w-3.5 h-3.5" /> {copy.surpriseBossBadge}
             </div>
 
             <h2 id="surprise-boss-title" className="text-xl sm:text-2xl font-anton uppercase tracking-wide text-white mb-1.5 drop-shadow-[0_0_15px_rgba(0,240,255,0.35)]">
@@ -113,14 +115,14 @@ export const SurpriseBossModal: React.FC<SurpriseBossModalProps> = ({
             </h2>
             
             <p className="text-slate-300 text-xs sm:text-sm mb-4 leading-relaxed font-mono">
-              <strong className="text-cyan-300">FOCO CONQUISTADO:</strong> Has completado 3 misiones o hábitos prioritarios. Quebraste la resistencia del letargo y tu vitalidad se restaura al máximo.
+              <strong className="text-cyan-300">FOCO CONQUISTADO:</strong> Has completado 3 tareas o hábitos prioritarios y recuperado tu impulso diario.
             </p>
 
             {/* Tarjeta de Recompensas */}
             <div className="w-full bg-black/50 rounded-2xl p-4 border border-white/10 mb-5 relative overflow-hidden shadow-inner">
                <div className="flex items-center justify-center gap-2 mb-2.5">
                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                 <span className="text-[11px] font-anton uppercase tracking-wider text-emerald-300">Inyección de Vitalidad & Recursos</span>
+                 <span className="text-[11px] font-anton uppercase tracking-wider text-emerald-300">{copy.surpriseBossRewardLabel}</span>
                </div>
                
                <div className="grid grid-cols-3 gap-2 py-2.5 border-t border-b border-white/10 text-center font-mono">
@@ -147,7 +149,7 @@ export const SurpriseBossModal: React.FC<SurpriseBossModalProps> = ({
               className="btn-neon-hunter w-full py-3.5 rounded-xl text-xs sm:text-sm uppercase tracking-wider shadow-lg active:scale-95 cursor-pointer transition-all flex items-center justify-center gap-2 font-bold"
             >
               <Zap className="w-4 h-4 text-cyan-300" />
-              <span>Asimilar Recompensa (+HP)</span>
+              <span>{copy.surpriseBossCta}</span>
             </button>
           </div>
         </motion.div>

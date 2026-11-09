@@ -25,6 +25,8 @@ import { soundFX } from '../utils/audio';
 import { triggerHaptic } from '../utils/haptics';
 import { KaiVectorGraphics } from './KaiVectorGraphics';
 import { KAI_MULTIVERSE_STYLES, KAI_OFFICIAL_SHAPES } from '../data/kaiShapes';
+import { useNarrativeCopy } from '../hooks/useNarrativeCopy';
+import { AUTH_SECURITY_MICROCOPY } from '../data/narrativeCopy';
 
 interface HeroProfileModalProps {
   isOpen: boolean;
@@ -50,6 +52,7 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
   onOpenKaiWorkshop,
 }) => {
   const { user, signInWithGoogle, signOut: authSignOut } = useAuth();
+  const copy = useNarrativeCopy();
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncFeedback, setSyncFeedback] = useState<string | null>(null);
 
@@ -261,7 +264,7 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
             ) : (
               <div className="space-y-2.5">
                 <p className="text-xs text-slate-300 font-mono leading-relaxed">
-                  Progreso guardado en este dispositivo. Conecta tu cuenta para respaldar en la nube:
+                  Tu progreso está guardado en este dispositivo (100% gratis, sin tarjeta de crédito). Conecta tu cuenta de Google cuando quieras para respaldar en la nube:
                 </p>
                 <button
                   type="button"
@@ -276,6 +279,9 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
                   <LogIn className="w-4 h-4 fill-black" />
                   <span>Vincular Cuenta de Google</span>
                 </button>
+                <p className="text-[10.5px] font-mono text-emerald-300/90 text-center bg-emerald-950/30 border border-emerald-500/25 rounded-lg px-2.5 py-1.5 leading-snug">
+                  {AUTH_SECURITY_MICROCOPY}
+                </p>
               </div>
             )}
           </div>
@@ -289,7 +295,7 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
               </span>
               {stats.kaiShape === 'custom' && stats.kaiCustomForm ? (
                 <span className="text-[10px] font-mono text-fuchsia-300 bg-fuchsia-950/60 border border-fuchsia-500/50 px-2 py-0.5 rounded-lg flex items-center gap-1">
-                  ✨ Forja Neural IA
+                  {copy.profileAiStudioLabel}
                 </span>
               ) : (
                 <span className="text-[10px] font-mono text-cyan-300 bg-cyan-950/60 border border-cyan-500/50 px-2 py-0.5 rounded-lg flex items-center gap-1">
@@ -506,7 +512,7 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
           <div className="p-3 rounded-xl bg-[#020710] border border-cyan-500/20 flex items-center justify-between gap-3">
             <div className="min-w-0">
               <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
-                Arquetipo Psicológico Activo:
+                {copy.profileArchetypeSectionTitle}:
               </span>
               <p className="text-xs font-anton text-cyan-300 uppercase truncate mt-0.5">
                 {getArchetypeDisplayName(stats.characterClass)}
@@ -522,7 +528,7 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
                 }}
                 className="px-2.5 py-1.5 bg-indigo-950/80 hover:bg-indigo-900 border border-indigo-500/50 text-[10px] font-mono text-indigo-300 hover:text-white rounded-lg transition-all shrink-0 cursor-pointer active:scale-95"
               >
-                Cambiar en 12 Arquetipos →
+                {copy.profileSwitchArchetypeBtn}
               </button>
             )}
           </div>
@@ -540,7 +546,7 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
                 className="text-[11px] font-mono text-cyan-400 hover:text-cyan-200 underline decoration-cyan-500/40 hover:decoration-cyan-300 transition-colors cursor-pointer inline-flex items-center gap-1.5"
               >
                 <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                <span>Repetir Ceremonia del Despertar</span>
+                <span>{copy.profileRepeatSetupCta}</span>
               </button>
             </div>
           )}
@@ -550,26 +556,31 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
         {/* ============================================================== */}
         {/* PINNED STICKY FOOTER (ERGONOMÍA DEL PULGAR)                    */}
         {/* ============================================================== */}
-        <div className="p-3 sm:p-4 border-t border-white/10 bg-[#010810]/90 shrink-0 flex items-center gap-2.5 relative z-10">
-          <button 
-            type="button"
-            onClick={() => {
-              soundFX.playClick();
-              onClose();
-            }}
-            aria-label="Volver y cerrar ficha de identidad"
-            className="flex-1 sm:flex-none sm:px-6 py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/10 border border-white/15 text-slate-300 hover:text-white font-anton uppercase text-xs tracking-wider transition-all cursor-pointer active:scale-95 text-center"
-          >
-            Volver
-          </button>
-          <button 
-            type="button"
-            onClick={handleSave}
-            aria-label="Guardar cambios de la ficha de identidad"
-            className="flex-[2] py-2.5 px-4 bg-gradient-to-r from-cyan-400 via-cyan-300 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950 font-anton uppercase tracking-wider text-xs sm:text-sm rounded-xl shadow-[0_0_20px_rgba(0,240,255,0.4)] transition-all cursor-pointer active:scale-95 text-center chicle-btn font-bold"
-          >
-            Guardar Cambios
-          </button>
+        <div className="p-3 sm:p-4 border-t border-white/10 bg-[#010810]/90 shrink-0 space-y-2 relative z-10">
+          <div className="flex items-center gap-2.5">
+            <button 
+              type="button"
+              onClick={() => {
+                soundFX.playClick();
+                onClose();
+              }}
+              aria-label="Volver y cerrar ficha de identidad"
+              className="flex-1 sm:flex-none sm:px-6 py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/10 border border-white/15 text-slate-300 hover:text-white font-anton uppercase text-xs tracking-wider transition-all cursor-pointer active:scale-95 text-center"
+            >
+              Volver
+            </button>
+            <button 
+              type="button"
+              onClick={handleSave}
+              aria-label="Guardar cambios de la ficha de identidad"
+              className="flex-[2] py-2.5 px-4 bg-gradient-to-r from-cyan-400 via-cyan-300 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950 font-anton uppercase tracking-wider text-xs sm:text-sm rounded-xl shadow-[0_0_20px_rgba(0,240,255,0.4)] transition-all cursor-pointer active:scale-95 text-center chicle-btn font-bold"
+            >
+              Guardar Cambios
+            </button>
+          </div>
+          <p className="text-[10px] font-mono text-emerald-300/85 text-center leading-snug">
+            {AUTH_SECURITY_MICROCOPY}
+          </p>
         </div>
       </div>
     </div>,
