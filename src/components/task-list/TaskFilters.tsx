@@ -128,7 +128,7 @@ export const TaskFilters: React.FC<TaskFiltersProps> = ({
                   soundFX.playClick();
                   onFilterChange(tab.id);
                 }}
-                className={`relative h-7 px-2 sm:px-2.5 rounded-md flex items-center gap-1.5 text-xs font-mono font-bold transition-all cursor-pointer select-none active:scale-95 ${
+                className={`relative h-7 px-2 sm:px-2.5 rounded-md flex items-center gap-1.5 text-xs font-mono font-bold transition-all cursor-pointer select-none active:scale-95 whitespace-nowrap shrink-0 ${
                   isActive
                     ? tab.activeStyle + ' border'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] border border-transparent'

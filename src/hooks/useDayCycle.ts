@@ -82,7 +82,8 @@ export const useDayCycle = () => {
 
     const updateClock = () => {
       const trustedNow = getTrustedNow();
-      setLogicalMinutes(getLogicalNowMinutes(trustedNow, activeCutoffHour));
+      const nextLogicalMinutes = getLogicalNowMinutes(trustedNow, activeCutoffHour);
+      setLogicalMinutes((prev) => (prev === nextLogicalMinutes ? prev : nextLogicalMinutes));
       const currentToday = getTodayDateString(trustedNow, activeCutoffHour);
       setActiveDateKey((prev) => {
         if (prev !== currentToday) {
@@ -107,18 +108,20 @@ export const useDayCycle = () => {
     schedulePrecisionTimer();
 
     const handleFocusOrOnline = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+      updateClock();
       void syncNetworkTime().then(() => updateClock());
     };
 
     window.addEventListener('focus', handleFocusOrOnline);
-    window.addEventListener('visibilitychange', handleFocusOrOnline);
+    document.addEventListener('visibilitychange', handleFocusOrOnline);
     window.addEventListener('online', handleFocusOrOnline);
 
     return () => {
       clearInterval(interval);
       if (timerCutoff) clearTimeout(timerCutoff);
       window.removeEventListener('focus', handleFocusOrOnline);
-      window.removeEventListener('visibilitychange', handleFocusOrOnline);
+      document.removeEventListener('visibilitychange', handleFocusOrOnline);
       window.removeEventListener('online', handleFocusOrOnline);
     };
   }, [activeCutoffHour]);

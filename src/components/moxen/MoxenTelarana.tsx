@@ -300,7 +300,6 @@ export const MoxenTelarana: React.FC<MoxenTelaranaProps> = ({
                       className="tl-blanco"
                       r={24}
                       onPointerEnter={() => {
-                        soundFX.playClick();
                         setActiveIdx(i);
                       }}
                       onPointerLeave={() => setActiveIdx(-1)}
@@ -372,7 +371,6 @@ export const MoxenTelarana: React.FC<MoxenTelaranaProps> = ({
                       setActiveIdx(activeIdx === idx ? -1 : idx);
                     }}
                     onPointerEnter={() => {
-                      soundFX.playClick();
                       setActiveIdx(idx);
                     }}
                     onPointerLeave={() => setActiveIdx(-1)}

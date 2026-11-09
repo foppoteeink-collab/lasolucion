@@ -248,8 +248,8 @@ export function AppLayout() {
     const [showBossSchedule, setShowBossSchedule] = React.useState(false);
 
     const itemVariant = {
-      hidden: { opacity: 0, y: 35, scale: 0.95 },
-      show: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.85, ease: [0.16, 1, 0.3, 1] as const } }
+      hidden: { opacity: 0, y: 6 },
+      show: { opacity: 1, y: 0, transition: { duration: 0.14, ease: [0.22, 1, 0.36, 1] as const } }
     };
   React.useEffect(() => {
     syncRootTheme(themeMode);
@@ -259,6 +259,58 @@ export function AppLayout() {
   React.useEffect(() => {
     soundFX.setEnabled(soundEnabled);
   }, [soundEnabled]);
+
+  // Prefetch lazy secondary tab chunks during idle time so first tab switch is instant
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const navConn = (navigator as unknown as { connection?: { saveData?: boolean } }).connection;
+    if (navConn?.saveData) return;
+
+    const prefetchChunks = () => {
+      void import('./WeeklyStats').catch(() => {});
+      void import('./JournalView').catch(() => {});
+      void import('./RewardShop').catch(() => {});
+      void import('./SkillTreeAndSettings').catch(() => {});
+      void import('./SettingsView').catch(() => {});
+    };
+
+    const prefetchModalChunks = () => {
+      void import('./OracleModal').catch(() => {});
+      void import('./NeuralAnalysisModal').catch(() => {});
+      void import('./DailyFinanceModal').catch(() => {});
+      void import('./KaiWorkshopModal').catch(() => {});
+      void import('./ScenarioSimulatorPanel').catch(() => {});
+    };
+
+    const w = window as unknown as {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+
+    let idleId: number | null = null;
+    let fallbackTimer: ReturnType<typeof setTimeout> | null = null;
+    let modalTimer: ReturnType<typeof setTimeout> | null = null;
+
+    if (typeof w.requestIdleCallback === 'function') {
+      idleId = w.requestIdleCallback(() => {
+        prefetchChunks();
+        modalTimer = setTimeout(prefetchModalChunks, 800);
+      }, { timeout: 1500 });
+    } else {
+      fallbackTimer = setTimeout(() => {
+        prefetchChunks();
+        modalTimer = setTimeout(prefetchModalChunks, 800);
+      }, 900);
+    }
+
+    return () => {
+      if (idleId !== null && typeof w.cancelIdleCallback === 'function') {
+        w.cancelIdleCallback(idleId);
+      }
+      if (fallbackTimer !== null) clearTimeout(fallbackTimer);
+      if (modalTimer !== null) clearTimeout(modalTimer);
+    };
+  }, []);
 
   React.useEffect(() => {
     if (floatingRewards.length > 0) {
@@ -271,8 +323,12 @@ export function AppLayout() {
   // Midnight / 3AM Date Sync Listener (Stale Date Fix)
   React.useEffect(() => {
     let lastKnownDate = getTodayDateString();
+    let lastCheckAt = 0;
 
     const checkDateChange = () => {
+      const now = Date.now();
+      if (now - lastCheckAt < 1000) return;
+      lastCheckAt = now;
       const currentDate = getTodayDateString();
       if (currentDate !== lastKnownDate) {
         lastKnownDate = currentDate;
@@ -290,19 +346,24 @@ export function AppLayout() {
         checkDateChange();
       }
     };
+    const handleFocus = () => {
+      if (document.visibilityState === 'visible') {
+        checkDateChange();
+      }
+    };
 
     const handleNotificationClick = () => {
       setActiveTab('dashboard');
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', checkDateChange);
+    window.addEventListener('focus', handleFocus);
     window.addEventListener('lasolucion:notification-click', handleNotificationClick);
 
     return () => {
       clearInterval(intervalId);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', checkDateChange);
+      window.removeEventListener('focus', handleFocus);
       window.removeEventListener('lasolucion:notification-click', handleNotificationClick);
     };
   }, []);
@@ -399,8 +460,8 @@ export function AppLayout() {
                 show: {
                   opacity: 1,
                   transition: {
-                    staggerChildren: 0.28,
-                    delayChildren: 0.15
+                    staggerChildren: 0.02,
+                    delayChildren: 0
                   }
                 }
               }}

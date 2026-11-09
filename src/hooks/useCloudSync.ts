@@ -553,6 +553,7 @@ export const useCloudSync = (
   const initialLoadDoneRef = useRef(false);
   const isSavingRef = useRef(false);
   const saveDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasDirtyChangesRef = useRef(false);
 
   // Monitor network status, Service Worker Background Sync triggers and visibility change
   useEffect(() => {
@@ -572,7 +573,13 @@ export const useCloudSync = (
     };
 
     const handleVisibility = () => {
-      if (typeof document !== 'undefined' && document.visibilityState === 'visible' && navigator.onLine && user) {
+      if (
+        typeof document !== 'undefined' &&
+        document.visibilityState === 'visible' &&
+        navigator.onLine &&
+        user &&
+        hasDirtyChangesRef.current
+      ) {
         performSave();
       }
     };
@@ -647,6 +654,7 @@ export const useCloudSync = (
 
       try {
         isSavingRef.current = true;
+        hasDirtyChangesRef.current = false;
         setSyncStatus('saving');
 
         const todayKey = getTodayDateString();
@@ -809,6 +817,7 @@ export const useCloudSync = (
   );
 
   const scheduleSave = useCallback((delay = 3000) => {
+    hasDirtyChangesRef.current = true;
     if (saveDebounceTimerRef.current) {
       clearTimeout(saveDebounceTimerRef.current);
     }
@@ -838,10 +847,10 @@ export const useCloudSync = (
       flushSave();
     };
 
-    window.addEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => {
-      window.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, [flushSave]);

@@ -28,6 +28,7 @@ interface SatelliteKaiHubProps {
 const STAGE_SIZE = 380;
 const HALF_STAGE = STAGE_SIZE / 2;
 const ORBIT_RADIUS = 122;
+const NODE_SIZE = 46;
 
 export const SatelliteKaiHub: React.FC<SatelliteKaiHubProps> = ({
   items,
@@ -37,28 +38,23 @@ export const SatelliteKaiHub: React.FC<SatelliteKaiHubProps> = ({
   onSelect,
 }) => {
   const [expanded, setExpanded] = useState(false);
-  const [gooActive, setGooActive] = useState(false);
+  const [isVisible, setIsVisible] = useState(isOpen);
   const [activeIndex, setActiveIndex] = useState<number>(initialIndex);
 
   useEffect(() => {
     if (isOpen) {
-      setGooActive(true);
+      setIsVisible(true);
       const raf = requestAnimationFrame(() => {
         setExpanded(true);
       });
-      const timer = setTimeout(() => {
-        setGooActive(false);
-      }, 540);
       return () => {
         cancelAnimationFrame(raf);
-        clearTimeout(timer);
       };
     } else {
-      setGooActive(true);
       setExpanded(false);
       const timer = setTimeout(() => {
-        setGooActive(false);
-      }, 440);
+        setIsVisible(false);
+      }, 200);
       return () => clearTimeout(timer);
     }
   }, [isOpen]);
@@ -119,46 +115,17 @@ export const SatelliteKaiHub: React.FC<SatelliteKaiHubProps> = ({
         height: STAGE_SIZE,
         marginLeft: -HALF_STAGE,
         marginTop: -HALF_STAGE,
+        visibility: isVisible ? 'visible' : 'hidden',
       }}
-      className={`menu-bubble-expand z-[58] select-none ${
-        isOpen ? 'pointer-events-auto' : 'pointer-events-none'
-      }`}
+      className="menu-bubble-expand z-[58] select-none pointer-events-none"
     >
-      {/* Filtro SVG Gooey (#mbe-goo) para fundir las burbujas al emerger del centro de KAI */}
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        version="1.1"
-        className="absolute w-0 h-0 pointer-events-none overflow-hidden"
-        aria-hidden="true"
-      >
-        <defs>
-          <filter id="mbe-goo" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="9" result="blur" />
-            <feColorMatrix
-              in="blur"
-              mode="matrix"
-              values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7"
-              result="goo"
-            />
-            <feBlend in="SourceGraphic" in2="goo" />
-          </filter>
-          <filter id="orbitGlow" x="-40%" y="-40%" width="180%" height="180%">
-            <feGaussianBlur stdDeviation="2" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
-      </svg>
-
-      {/* 1. ANILLO ORBITAL HOLOGRÁFICO SUTIL (Centrado en KAI) */}
+      {/* 1. ANILLO ORBITAL HOLOGRÁFICO LIGERO (Sin filtros Gaussianos por software) */}
       <svg
         viewBox={`0 0 ${STAGE_SIZE} ${STAGE_SIZE}`}
-        className="absolute inset-0 w-full h-full pointer-events-none transition-all duration-500"
+        className="absolute inset-0 w-full h-full pointer-events-none transition-all duration-200 ease-out"
         style={{
           opacity: expanded ? 1 : 0,
-          transform: `scale(${expanded ? 1 : 0.35})`,
+          transform: `scale(${expanded ? 1 : 0.72})`,
         }}
       >
         <circle
@@ -167,95 +134,49 @@ export const SatelliteKaiHub: React.FC<SatelliteKaiHubProps> = ({
           r={ORBIT_RADIUS}
           fill="none"
           stroke={activeItem?.accentColor || '#00f0ff'}
-          strokeWidth="1"
+          strokeWidth="1.2"
           strokeDasharray="4 6"
-          opacity="0.28"
-          filter="url(#orbitGlow)"
+          opacity="0.34"
         />
       </svg>
 
-      {/* 2. CAPA GOOEY (#mbe-goo): Gotas de plasma que se desprenden del centro exacto de KAI al abrir/cerrar */}
+      {/* Halo radial ligero del núcleo sin blur SVG */}
       <div
-        className="mbe-nav absolute inset-0 pointer-events-none transition-opacity duration-300"
+        className="absolute inset-0 pointer-events-none transition-opacity duration-200"
         style={{
-          filter: "url('#mbe-goo')",
-          opacity: gooActive ? 0.8 : 0,
+          background: 'radial-gradient(circle at 50% 50%, rgba(0, 240, 255, 0.2) 0%, rgba(0, 240, 255, 0.05) 35%, transparent 62%)',
+          opacity: expanded ? 0.85 : 0,
         }}
-      >
-        {/* Núcleo líquido detrás de KAI */}
-        <div
-          style={{
-            position: 'absolute',
-            left: HALF_STAGE - 24,
-            top: HALF_STAGE - 24,
-            width: 48,
-            height: 48,
-            borderRadius: '50%',
-            background: 'rgba(0, 240, 255, 0.6)',
-            transform: `scale(${expanded ? 0.15 : 0.85})`,
-            transition: 'transform 0.46s cubic-bezier(0.4, 0, 0.2, 1)',
-          }}
-        />
+      />
 
-        {/* Gotas que viajan desde el centro hacia cada posición orbital */}
-        <div className="mbe-bubbles">
-          {items.map((item, i) => {
-            const angle = (i / n) * Math.PI * 2 - Math.PI / 2;
-            const targetX = Math.round(Math.cos(angle) * ORBIT_RADIUS);
-            const targetY = Math.round(Math.sin(angle) * ORBIT_RADIUS);
-            const delayMs = i * 16;
-
-            return (
-              <div
-                key={`goo-${item.id}`}
-                style={{
-                  position: 'absolute',
-                  left: HALF_STAGE - 21,
-                  top: HALF_STAGE - 21,
-                  width: 42,
-                  height: 42,
-                  borderRadius: '50%',
-                  background: 'rgba(0, 220, 255, 0.5)',
-                  transform: expanded
-                    ? `translate(${targetX}px, ${targetY}px) scale(0.9)`
-                    : 'translate(0px, 0px) scale(0.35)',
-                  transition: `transform 0.52s cubic-bezier(0.8, -0.5, 0.2, 1.4) ${delayMs}ms`,
-                }}
-              />
-            );
-          })}
-        </div>
-      </div>
-
-      {/* 3. SATÉLITES EN ÓRBITA (Círculos con anillos para Pestañas + Hexágonos sutiles para Gadgets + Etiqueta debajo) */}
+      {/* 2. SATÉLITES EN ÓRBITA (Hitboxes fijas de 46x46 sin reflows, escala por GPU) */}
       <div className="absolute inset-0 pointer-events-none">
         {items.map((item, i) => {
           const angle = (i / n) * Math.PI * 2 - Math.PI / 2;
           const targetX = Math.round(Math.cos(angle) * ORBIT_RADIUS);
           const targetY = Math.round(Math.sin(angle) * ORBIT_RADIUS);
-          const delayMs = i * 16;
+          const delayMs = isOpen ? Math.min(i * 5, 25) : 0;
 
           const isActive = i === activeIndex;
           const isGadget = item.type === 'gadget';
-          const nodeSize = isActive ? 48 : 42;
 
           return (
             <div
               key={item.id}
               style={{
                 position: 'absolute',
-                left: HALF_STAGE - nodeSize / 2,
-                top: HALF_STAGE - nodeSize / 2,
-                width: nodeSize,
-                height: nodeSize,
+                left: HALF_STAGE - NODE_SIZE / 2,
+                top: HALF_STAGE - NODE_SIZE / 2,
+                width: NODE_SIZE,
+                height: NODE_SIZE,
                 zIndex: isActive ? 65 : 55,
                 transform: expanded
                   ? `translate(${targetX}px, ${targetY}px) scale(1)`
-                  : 'translate(0px, 0px) scale(0.25)',
+                  : 'translate(0px, 0px) scale(0.65)',
                 opacity: expanded ? 1 : 0,
-                transition: `transform 0.52s cubic-bezier(0.8, -0.5, 0.2, 1.4) ${delayMs}ms, opacity 0.24s ease ${delayMs}ms, width 0.2s ease, height 0.2s ease, left 0.2s ease, top 0.2s ease`,
+                transition: `transform 0.18s cubic-bezier(0.22, 1, 0.36, 1) ${delayMs}ms, opacity 0.14s ease ${delayMs}ms`,
               }}
-              className={expanded ? 'pointer-events-auto' : 'pointer-events-none'}
+              className={isOpen ? 'pointer-events-auto' : 'pointer-events-none'}
             >
               <div
                 role="menuitem"
@@ -270,17 +191,22 @@ export const SatelliteKaiHub: React.FC<SatelliteKaiHubProps> = ({
                 onFocus={() => setActiveIndex(i)}
                 onClick={(e) => {
                   e.stopPropagation();
-                  soundFX.playClick();
                   setActiveIndex(i);
                   onSelect(item);
                 }}
-                className={`w-full h-full flex items-center justify-center cursor-pointer relative active:scale-90 transition-all duration-200 ${
+                className={`w-full h-full flex items-center justify-center cursor-pointer relative active:scale-90 transition-transform duration-150 ${
                   isGadget ? '' : 'rounded-full'
                 }`}
                 style={
                   isGadget
-                    ? { background: 'transparent', border: 'none', boxShadow: 'none' }
+                    ? {
+                        background: 'transparent',
+                        border: 'none',
+                        boxShadow: 'none',
+                        transform: isActive ? 'scale(1.12)' : 'scale(1)',
+                      }
                     : {
+                        transform: isActive ? 'scale(1.12)' : 'scale(1)',
                         background: isActive
                           ? 'radial-gradient(circle at 35% 35%, rgba(255,255,255,0.2) 0%, rgba(2,16,30,0.98) 100%)'
                           : 'rgba(6, 14, 24, 0.88)',
@@ -404,16 +330,15 @@ export const SatelliteKaiHub: React.FC<SatelliteKaiHubProps> = ({
             top: HALF_STAGE + ORBIT_RADIUS + 46,
             transform: 'translate(-50%, 0)',
             opacity: expanded ? 1 : 0,
-            transition: 'opacity 0.25s ease 0.1s',
+            transition: 'opacity 0.15s ease 0.04s',
             zIndex: 70,
           }}
-          className="pointer-events-auto select-none"
+          className={`${isOpen ? 'pointer-events-auto' : 'pointer-events-none'} select-none`}
           onPointerDown={(e) => e.stopPropagation()}
         >
           <div
             onClick={(e) => {
               e.stopPropagation();
-              soundFX.playClick();
               onSelect(activeItem);
             }}
             className="group flex flex-col items-center cursor-pointer active:scale-95 transition-transform"

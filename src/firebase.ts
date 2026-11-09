@@ -30,7 +30,13 @@ import {
 } from './services/telemetryQueueService';
 
 let analyticsInstance: Analytics | null = null;
-if (typeof window !== 'undefined' && app) {
+const configuredMeasurementId = (firebaseConfig as { measurementId?: string })?.measurementId;
+const hasValidMeasurementId =
+  typeof configuredMeasurementId === 'string' &&
+  configuredMeasurementId.trim().length > 0 &&
+  configuredMeasurementId !== 'undefined';
+
+if (typeof window !== 'undefined' && app && hasValidMeasurementId) {
   isSupported()
     .then((supported) => {
       if (supported) {

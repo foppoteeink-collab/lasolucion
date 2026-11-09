@@ -93,55 +93,66 @@ if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       }
     });
 
+    let lastSWCheckAt = 0;
+    let isCheckingSW = false;
     const checkSWUpdate = async () => {
       if (typeof navigator !== 'undefined' && !navigator.onLine) return;
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+      const now = Date.now();
+      if (isCheckingSW || (lastSWCheckAt > 0 && now - lastSWCheckAt < 15000)) return;
+      isCheckingSW = true;
+      lastSWCheckAt = now;
       try {
-        const reg = await navigator.serviceWorker.getRegistration();
-        if (reg) {
-          if (reg.waiting) {
-            reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        try {
+          const reg = await navigator.serviceWorker.getRegistration();
+          if (reg) {
+            if (reg.waiting) {
+              reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+            }
+            await reg.update().catch(() => {});
           }
-          await reg.update().catch(() => {});
-        }
-      } catch {}
+        } catch {}
 
-      const localRev = (window as any).__APP_BUILD_REV__ || localStorage.getItem('app_build_rev');
+        const localRev = (window as any).__APP_BUILD_REV__ || localStorage.getItem('app_build_rev');
 
-      // 1. Fast check via /api/build-rev endpoint
-      try {
-        const apiRes = await fetch('/api/build-rev?_cb=' + Date.now(), {
-          cache: 'no-store',
-          headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' },
-        });
-        if (apiRes.ok) {
-          const data = await apiRes.json();
-          const serverRev = data?.rev;
-          if (serverRev && localRev && serverRev !== localRev) {
-            if (sessionStorage.getItem('app_reloaded_rev') !== serverRev) {
-              await (window as any).purgeAppCacheAndReload(serverRev);
-              return;
+        // 1. Fast check via /api/build-rev endpoint
+        try {
+          const apiRes = await fetch('/api/build-rev?_cb=' + Date.now(), {
+            cache: 'no-store',
+            headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' },
+          });
+          if (apiRes.ok) {
+            const data = await apiRes.json();
+            const serverRev = data?.rev;
+            if (serverRev && localRev && serverRev !== localRev) {
+              if (sessionStorage.getItem('app_reloaded_rev') !== serverRev) {
+                await (window as any).purgeAppCacheAndReload(serverRev);
+                return;
+              }
             }
           }
-        }
-      } catch {}
+        } catch {}
 
-      // 2. Fallback check via /index.html
-      try {
-        const res = await fetch('/index.html?_cb=' + Date.now(), {
-          cache: 'no-store',
-          headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' },
-        });
-        if (res.ok) {
-          const html = await res.text();
-          const match = html.match(/var\s+BUILD_REV\s*=\s*'([^']+)'/);
-          const serverRev = match?.[1];
-          if (serverRev && localRev && serverRev !== localRev) {
-            if (sessionStorage.getItem('app_reloaded_rev') !== serverRev) {
-              await (window as any).purgeAppCacheAndReload(serverRev);
+        // 2. Fallback check via /index.html
+        try {
+          const res = await fetch('/index.html?_cb=' + Date.now(), {
+            cache: 'no-store',
+            headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' },
+          });
+          if (res.ok) {
+            const html = await res.text();
+            const match = html.match(/var\s+BUILD_REV\s*=\s*'([^']+)'/);
+            const serverRev = match?.[1];
+            if (serverRev && localRev && serverRev !== localRev) {
+              if (sessionStorage.getItem('app_reloaded_rev') !== serverRev) {
+                await (window as any).purgeAppCacheAndReload(serverRev);
+              }
             }
           }
-        }
-      } catch {}
+        } catch {}
+      } finally {
+        isCheckingSW = false;
+      }
     };
 
     window.addEventListener('load', checkSWUpdate);

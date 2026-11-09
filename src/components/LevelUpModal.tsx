@@ -41,11 +41,7 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({
       } catch (e) {}
 
       // Game Feel 3: Mobile Victory Vibration Pattern
-      if (isHapticsSupported()) {
-        triggerHaptic([100, 50, 100, 50, 300]);
-      } else if (typeof window !== 'undefined' && 'navigator' in window && navigator.vibrate) {
-        navigator.vibrate([100, 50, 100, 50, 300]);
-      }
+      triggerHaptic([100, 50, 100, 50, 300]);
 
       // Game Feel 4: Gold & Violet Shockwave Pulses
       triggerShockwave({ color: 'gold', intensity: 'epic' });

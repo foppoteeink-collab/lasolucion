@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Network, ShieldAlert, BrainCircuit, Activity, Lock, Unlock, Zap, Gem, Layers } from 'lucide-react';
 import { SkillNode, PlayerStats } from '../types';
 import { soundFX } from '../utils/audio';
+import { triggerHaptic } from '../utils/haptics';
 
 interface SkillTreeAndSettingsProps {
   skillTree: SkillNode[];
@@ -37,9 +38,7 @@ export const SkillTreeAndSettings: React.FC<SkillTreeAndSettingsProps> = ({
     } else {
       soundFX.playClick();
     }
-    if (typeof navigator !== 'undefined' && navigator.vibrate) {
-      navigator.vibrate(50);
-    }
+    triggerHaptic(50);
 
     // Deduct coins and apply passive skill effects immediately
     onUpdateStats((prev) => ({

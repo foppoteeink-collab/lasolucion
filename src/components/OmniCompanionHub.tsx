@@ -276,8 +276,6 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
         action: () => {
           if (onOpenOracleWithPrompt) {
             onOpenOracleWithPrompt();
-          } else {
-            openTaskForm('oracle');
           }
         },
       },
@@ -397,8 +395,8 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[55] bg-black/65 backdrop-blur-[2px] pointer-events-auto cursor-pointer"
+            transition={{ duration: 0.14 }}
+            className="fixed inset-0 z-[55] bg-black/70 pointer-events-auto cursor-pointer"
             onClick={(e) => {
               e.stopPropagation();
               setIsMenuOpen(false);
@@ -441,7 +439,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
           x: isMenuOpen ? openOffset.x : 0,
           y: isMenuOpen ? openOffset.y : 0,
         }}
-        transition={{ type: 'spring', damping: 25, stiffness: 300, mass: 0.7 }}
+        transition={{ type: 'spring', damping: 26, stiffness: 540, mass: 0.45 }}
       >
         <div className="relative flex flex-col items-center touch-none">
           {/* Micro-Transmisión de KAI (8-12 palabras contextuales) */}
@@ -489,7 +487,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
               animate={{
                 scale: isMenuOpen ? 1.15 : 1,
               }}
-              transition={{ type: 'spring', damping: 22, stiffness: 280 }}
+              transition={{ type: 'spring', damping: 24, stiffness: 480, mass: 0.45 }}
               className="relative flex items-center justify-center cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:rounded-full"
               onClick={handleCompanionClick}
               onKeyDown={(e) => {
@@ -504,7 +502,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
                 archetype={archetype}
                 size={isMenuOpen ? 80 : 58}
                 interactive={true}
-                onClick={handleCompanionClick}
+                suppressClickSound={true}
                 auraState={auraState}
                 triggerVictoryWave={hasRecentVictory}
                 isProjecting={isMenuOpen}

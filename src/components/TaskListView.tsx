@@ -2,7 +2,7 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { useUIStore } from '../store/useUIStore';
 import { TaskItem, TaskCategory, HabitMasteryRecord, PlayerStats, CustomHabit, HabitEnergyType } from '../types';
 import { soundFX } from '../utils/audio';
-import { getTodayDateString, addDaysToDateString } from '../utils/date';
+import { getTodayDateString, addDaysToDateString, parseLocalDate } from '../utils/date';
 import { parseTimeToMinutes } from '../utils/timeUtils';
 import { deduplicateTasksForDay } from '../utils/taskDeduplication';
 import { getHabitBaseId } from '../intelligence/masteryEngine';
@@ -283,29 +283,30 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
     setNewNotes('');
   };
 
-  const openAddModal = (mode: 'task' | 'habit' | 'oracle' | boolean = 'task') => {
+  const openAddModal = (mode: 'task' | 'habit' | 'weekly_reminder' | 'oracle' | boolean = 'task') => {
+    const isWeekly = mode === 'weekly_reminder';
     const targetTab: 'task' | 'habit' | 'oracle' = 
-      mode === true || mode === 'habit' ? 'habit' : mode === 'oracle' ? 'oracle' : 'task';
+      mode === true || mode === 'habit' || isWeekly ? 'habit' : mode === 'oracle' ? 'oracle' : 'task';
     const isHabit = targetTab === 'habit';
     setInitialModalTab(targetTab);
     setEditingTaskId(null);
     setNewTitle('');
-    setNewCategory(isHabit ? 'entrenamiento' : 'rutina');
+    setNewCategory(isWeekly ? 'rutina' : isHabit ? 'entrenamiento' : 'rutina');
     setNewStartTime('');
     setNewEndTime('');
-    setNewXp(isHabit ? 5 : 10);
-    setNewCoins(isHabit ? 2 : 4);
+    setNewXp(isHabit ? 10 : 10);
+    setNewCoins(isHabit ? 4 : 4);
     setIsHabitType(false); // Contador numérico colapsado por defecto
-    setHabitTarget(isHabit ? 1 : 5);
+    setHabitTarget(1);
     setHabitUnit('veces');
     setIsLegendary(false);
-    setIsTracked2166(isHabit);
-    setIsQuickHabit(isHabit);
-    setQuickIcon(isHabit ? '⚡' : '');
+    setIsTracked2166(!isWeekly && isHabit);
+    setIsQuickHabit(!isWeekly && isHabit);
+    setQuickIcon(!isWeekly && isHabit ? '⚡' : '📅');
     setHabitEnergyType('strength');
     setTargetStreak(21);
-    setFormFrequency(isHabit ? 'daily' : 'once');
-    setFormSpecificDays([]);
+    setFormFrequency(isWeekly ? 'specific_days' : isHabit ? 'daily' : 'once');
+    setFormSpecificDays(isWeekly ? [new Date().getDay()] : []);
     setNewNotes('');
     setIsLocalAddModalOpen(true);
     openTaskFormStore(targetTab);
@@ -324,9 +325,10 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
     setHabitTarget(habit.targetCount || 1);
     setHabitUnit(habit.unit || 'veces');
     setIsLegendary(habit.isLegendaryBounty || false);
-    setIsTracked2166(habit.isTracked2166 ?? true);
-    setIsQuickHabit(habit.isQuickHabit ?? true);
-    setQuickIcon(habit.quickIcon || '⚡');
+    const is2166 = habit.isTracked2166 ?? (habit.isQuickHabit ?? true);
+    setIsTracked2166(Boolean(is2166));
+    setIsQuickHabit(Boolean(is2166));
+    setQuickIcon(habit.quickIcon || (is2166 ? '⚡' : '📅'));
     setHabitEnergyType(habit.habitEnergyType || detectHabitEnergy(habit.title, habit.category));
     setTargetStreak(habit.targetStreak || 21);
     setFormFrequency(habit.frequencyType === 'specific_days' || habit.frequencyType === 'weekly' ? 'specific_days' : 'daily');
@@ -341,13 +343,13 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
     if (!newTitle.trim()) return;
 
     soundFX.playClick();
-    const finalIsTracked2166 = Boolean(isTracked2166 || isQuickHabit);
-    const finalIsQuickHabit = Boolean(isQuickHabit || isTracked2166);
-    const finalIcon = quickIcon.trim() || (finalIsTracked2166 || finalIsQuickHabit ? '⚡' : '');
-    const isHabitMode = Boolean(isHabitType || finalIsTracked2166 || finalIsQuickHabit || newCategory === 'habito');
+    const finalIsTracked2166 = Boolean(isTracked2166);
+    const finalIsQuickHabit = Boolean(isQuickHabit);
+    const finalIcon = quickIcon.trim() || (finalIsTracked2166 ? '⚡' : '📅');
+    const isHabitMode = Boolean(isHabitType || finalIsTracked2166 || finalIsQuickHabit);
     const isRecurring = Boolean(isHabitMode || formFrequency === 'daily' || formFrequency === 'specific_days');
 
-    // 1. Si es un hábito recurrente, persistir en customHabits y propagar automáticamente a todos los días
+    // 1. Si es un hábito recurrente o recordatorio semanal, persistir en customHabits
     if (isRecurring && onSaveHabits) {
       const normTitle = newTitle.trim().toLowerCase();
       const existingIndex = (customHabits || []).findIndex(
@@ -373,8 +375,8 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
         isQuickHabit: finalIsQuickHabit,
         isTracked2166: finalIsTracked2166,
         quickIcon: finalIcon,
-        habitEnergyType: isHabitMode ? habitEnergyType : undefined,
-        targetStreak: targetStreak,
+        habitEnergyType: finalIsTracked2166 ? habitEnergyType : undefined,
+        targetStreak: finalIsTracked2166 ? targetStreak : undefined,
         isLegendaryBounty: isLegendary,
         timeBlock: newStartTime ? (newEndTime ? `${newStartTime} - ${newEndTime}` : newStartTime) : undefined,
         reminderTime: newStartTime ? newStartTime.trim() : undefined,
@@ -388,6 +390,36 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
       }
 
       onSaveHabits(nextCustomHabits);
+
+      // Si aplica al día actual que el usuario está visualizando, inyectarlo inmediatamente para que se vea reflejado
+      const currentDayOfWeek = parseLocalDate(currentDate).getDay();
+      const appliesToCurrentDate = 
+        formFrequency === 'daily' || 
+        (formFrequency === 'specific_days' && formSpecificDays.includes(currentDayOfWeek));
+
+      if (appliesToCurrentDate && onAddTask) {
+        onAddTask({
+          title: newTitle.trim(),
+          category: newCategory,
+          xpReward: (Number(newXp) || 10) * (isLegendary ? 2 : 1),
+          coinReward: (Number(newCoins) || 4) * (isLegendary ? 2 : 1),
+          timeBlock: newStartTime ? (newEndTime ? `${newStartTime} - ${newEndTime}` : newStartTime) : undefined,
+          reminderTime: newStartTime ? newStartTime.trim() : undefined,
+          isHabit: Boolean(isHabitType || finalIsTracked2166),
+          targetCount: isHabitType ? (Number(habitTarget) || 1) : finalIsTracked2166 ? 1 : undefined,
+          currentCount: (isHabitType || finalIsTracked2166) ? 0 : undefined,
+          unit: isHabitType ? (habitUnit.trim() || 'veces') : finalIsTracked2166 ? 'vez' : undefined,
+          isCustom: true,
+          isLegendaryBounty: isLegendary,
+          isQuickHabit: finalIsQuickHabit,
+          quickIcon: finalIcon,
+          isTracked2166: finalIsTracked2166,
+          habitEnergyType: finalIsTracked2166 ? habitEnergyType : undefined,
+          targetStreak: finalIsTracked2166 ? targetStreak : undefined,
+          incomeAmount: newCategory === 'trabajo' ? Number(newIncomeAmount) || 0 : undefined,
+          notes: newNotes.trim() || undefined,
+        });
+      }
     }
 
     if (editingTaskId && onEditTask) {
@@ -405,10 +437,10 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
         isQuickHabit: finalIsQuickHabit,
         quickIcon: finalIcon,
         isTracked2166: finalIsTracked2166,
-        habitEnergyType: isHabitMode ? habitEnergyType : undefined,
+        habitEnergyType: finalIsTracked2166 ? habitEnergyType : undefined,
         incomeAmount: newCategory === 'trabajo' ? Number(newIncomeAmount) || 0 : undefined,
         notes: newNotes.trim() || undefined,
-        targetStreak: targetStreak,
+        targetStreak: finalIsTracked2166 ? targetStreak : undefined,
       });
       closeAndResetModal();
       return;
@@ -432,10 +464,10 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
         isQuickHabit: finalIsQuickHabit,
         quickIcon: finalIcon,
         isTracked2166: finalIsTracked2166,
-        habitEnergyType: isHabitMode ? habitEnergyType : undefined,
+        habitEnergyType: finalIsTracked2166 ? habitEnergyType : undefined,
         incomeAmount: newCategory === 'trabajo' ? Number(newIncomeAmount) || 0 : undefined,
         notes: newNotes.trim() || undefined,
-        targetStreak: targetStreak,
+        targetStreak: finalIsTracked2166 ? targetStreak : undefined,
       });
     }
 
@@ -448,10 +480,14 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
 
   const isQuickHabitTask = useCallback((t: TaskItem) => {
     if (!t || !t.title) return false;
-    if (t.isQuickHabit || t.isTracked2166 || t.category === 'habito' || (typeof t.id === 'string' && t.id.includes('habit-'))) {
+    // Recordatorios semanales sin seguimiento 21/66 van directamente al timeline de la agenda
+    if (t.isTracked2166 === false && t.isQuickHabit === false) {
+      return false;
+    }
+    if (t.isQuickHabit || t.isTracked2166) {
       return true;
     }
-    // If it has a scheduled timeBlock (and is not marked as a quick/2166 habit), it belongs in the Agenda Timeline!
+    // Si tiene timeBlock y no está explícitamente marcado como hábito 21/66, pertenece a la agenda
     if (t.timeBlock) return false;
     const lower = t.title.toLowerCase();
     return (

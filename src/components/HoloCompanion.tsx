@@ -143,6 +143,7 @@ export interface HoloCompanionProps {
   showHUD?: boolean;
   showQuote?: boolean;
   interactive?: boolean;
+  suppressClickSound?: boolean;
   onClick?: () => void;
   auraState?: CompanionAuraState;
   triggerVictoryWave?: boolean;
@@ -164,6 +165,7 @@ export const HoloCompanion: React.FC<HoloCompanionProps> = ({
   className = '',
   showHUD = false,
   interactive = true,
+  suppressClickSound = false,
   onClick,
   auraState = 'normal',
   triggerVictoryWave = false,
@@ -203,6 +205,9 @@ export const HoloCompanion: React.FC<HoloCompanionProps> = ({
   const [eyeOffset, setEyeOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isTrackingMouse, setIsTrackingMouse] = useState(false);
   const mouseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastEyeOffsetRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const isTrackingRef = useRef(false);
+  const cachedRectRef = useRef<{ rect: DOMRect; timestamp: number } | null>(null);
 
   const baseConfig = useMemo(() => resolveArchetypeConfig(archetype), [archetype]);
 
@@ -259,73 +264,124 @@ export const HoloCompanion: React.FC<HoloCompanionProps> = ({
   useEffect(() => {
     if (!interactive || typeof window === 'undefined') return;
 
-    const updatePointerPosition = (clientX: number, clientY: number) => {
-      if (!containerRef.current) return;
-      const rect = containerRef.current.getBoundingClientRect();
+    let rafId: number | null = null;
+    let pendingX = 0;
+    let pendingY = 0;
+
+    const getCachedRect = () => {
+      if (!containerRef.current) return null;
+      const now = performance.now();
+      if (!cachedRectRef.current || now - cachedRectRef.current.timestamp > 250) {
+        cachedRectRef.current = {
+          rect: containerRef.current.getBoundingClientRect(),
+          timestamp: now,
+        };
+      }
+      return cachedRectRef.current.rect;
+    };
+
+    const invalidateRect = () => {
+      cachedRectRef.current = null;
+    };
+
+    const flushPointerPosition = () => {
+      rafId = null;
+      if (typeof document !== 'undefined' && document.hidden) return;
+      const rect = getCachedRect();
+      if (!rect || (rect.width === 0 && rect.height === 0)) return;
+
       const eyeCenterX = rect.left + rect.width / 2;
       const eyeCenterY = rect.top + rect.height * 0.52;
 
-      const deltaX = clientX - eyeCenterX;
-      const deltaY = clientY - eyeCenterY;
+      const deltaX = pendingX - eyeCenterX;
+      const deltaY = pendingY - eyeCenterY;
       const distance = Math.hypot(deltaX, deltaY);
 
       if (distance < 1200) {
-        setIsTrackingMouse(true);
+        if (!isTrackingRef.current) {
+          isTrackingRef.current = true;
+          setIsTrackingMouse(true);
+        }
         const maxRadiusX = 8.5;
         const maxRadiusY = 5.0;
 
         const angle = Math.atan2(deltaY, deltaX);
         const intensity = Math.min(Math.max(distance / 200, 0.35), 1);
 
-        setEyeOffset({
-          x: Math.cos(angle) * maxRadiusX * intensity,
-          y: Math.sin(angle) * maxRadiusY * intensity,
-        });
+        const nextX = Math.cos(angle) * maxRadiusX * intensity;
+        const nextY = Math.sin(angle) * maxRadiusY * intensity;
+
+        if (
+          Math.abs(nextX - lastEyeOffsetRef.current.x) >= 0.4 ||
+          Math.abs(nextY - lastEyeOffsetRef.current.y) >= 0.4
+        ) {
+          lastEyeOffsetRef.current = { x: nextX, y: nextY };
+          setEyeOffset({ x: nextX, y: nextY });
+        }
 
         if (mouseTimeoutRef.current) clearTimeout(mouseTimeoutRef.current);
         mouseTimeoutRef.current = setTimeout(() => {
+          isTrackingRef.current = false;
+          lastEyeOffsetRef.current = { x: 0, y: 0 };
           setIsTrackingMouse(false);
           setEyeOffset({ x: 0, y: 0 });
         }, 2600);
       }
     };
 
+    const schedulePointerPosition = (clientX: number, clientY: number) => {
+      if (typeof document !== 'undefined' && document.hidden) return;
+      pendingX = clientX;
+      pendingY = clientY;
+      if (rafId === null) {
+        rafId = requestAnimationFrame(flushPointerPosition);
+      }
+    };
+
     const handleMouseMove = (e: MouseEvent) => {
-      updatePointerPosition(e.clientX, e.clientY);
+      schedulePointerPosition(e.clientX, e.clientY);
     };
 
     const handleTouchStart = (e: TouchEvent) => {
       if (e.touches && e.touches[0]) {
-        updatePointerPosition(e.touches[0].clientX, e.touches[0].clientY);
+        schedulePointerPosition(e.touches[0].clientX, e.touches[0].clientY);
       }
     };
 
     const handleTouchMove = (e: TouchEvent) => {
       if (e.touches && e.touches[0]) {
-        updatePointerPosition(e.touches[0].clientX, e.touches[0].clientY);
+        schedulePointerPosition(e.touches[0].clientX, e.touches[0].clientY);
       }
     };
 
     const handlePointerDown = (e: PointerEvent) => {
-      updatePointerPosition(e.clientX, e.clientY);
+      schedulePointerPosition(e.clientX, e.clientY);
     };
 
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
     window.addEventListener('touchstart', handleTouchStart, { passive: true });
     window.addEventListener('touchmove', handleTouchMove, { passive: true });
     window.addEventListener('pointerdown', handlePointerDown, { passive: true });
+    window.addEventListener('scroll', invalidateRect, { passive: true, capture: true });
+    window.addEventListener('resize', invalidateRect, { passive: true });
 
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('touchstart', handleTouchStart);
       window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('pointerdown', handlePointerDown);
+      window.removeEventListener('scroll', invalidateRect, true);
+      window.removeEventListener('resize', invalidateRect);
+      if (rafId !== null) cancelAnimationFrame(rafId);
       if (mouseTimeoutRef.current) clearTimeout(mouseTimeoutRef.current);
+      cachedRectRef.current = null;
     };
   }, [interactive]);
 
   const handleClick = () => {
-    soundFX.playClick();
+    if (!suppressClickSound) {
+      soundFX.playClick();
+    }
     setJustClicked(true);
     setTimeout(() => setJustClicked(false), 950);
     if (onClick) onClick();

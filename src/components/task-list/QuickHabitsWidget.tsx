@@ -486,12 +486,14 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
   const quickHabits = React.useMemo(() => {
     const rawList = tasks.filter((t) => {
       if (!t || !t.title) return false;
+      // Excluir explícitamente recordatorios semanales / rutinas de agenda sin seguimiento 21/66d
+      if (t.isTracked2166 === false && t.isQuickHabit === false) return false;
       if (
         t.isQuickHabit ||
         t.isTracked2166 ||
-        t.category === 'habito' ||
-        String(t.id || '').includes('habit-') ||
-        (t.isHabit && (t.targetCount || 0) > 1)
+        (t.category === 'habito' && t.isTracked2166 !== false) ||
+        (String(t.id || '').includes('habit-') && t.isTracked2166 !== false && t.isQuickHabit !== false) ||
+        (t.isHabit && (t.targetCount || 0) > 1 && t.isTracked2166 !== false)
       ) {
         return true;
       }

@@ -524,13 +524,13 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                 soundFX.playClick();
                 triggerHaptic(25);
                 onClose();
-                onOpenAddModal(true);
+                onOpenAddModal(activeFilter === 'agenda' ? ('weekly_reminder' as any) : true);
               }}
               aria-label="Crear nueva rutina o hábito"
               className="flex-[2] py-2.5 px-4 rounded-xl bg-gradient-to-r from-cyan-400 via-cyan-300 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950 font-anton uppercase tracking-wider text-xs sm:text-sm font-bold shadow-[0_0_20px_rgba(0,240,255,0.4)] flex items-center justify-center gap-2 cursor-pointer active:scale-95 chicle-btn text-center"
             >
               <Plus className="w-4 h-4" />
-              <span>+ Nueva Rutina / Hábito</span>
+              <span>{activeFilter === 'agenda' ? '+ Nuevo Recordatorio Semanal' : '+ Nueva Rutina / Hábito'}</span>
             </button>
           </div>
         </motion.div>

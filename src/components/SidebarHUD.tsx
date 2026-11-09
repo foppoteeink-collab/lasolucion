@@ -355,8 +355,6 @@ export const SidebarHUD: React.FC<SidebarHUDProps> = ({
           soundFX.playClick();
           if (onOpenOracleWithPrompt) {
             onOpenOracleWithPrompt();
-          } else {
-            openTaskForm('oracle');
           }
           setIsMobileOpen(false);
         },

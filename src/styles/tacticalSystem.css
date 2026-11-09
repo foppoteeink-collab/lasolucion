@@ -60,34 +60,22 @@
   box-shadow: 0 0 12px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.20) !important;
 }
 
-/* Conexión universal omnidireccional de acentos al color de la Aurora (Sin remanentes cian) */
-html.optic-aurora [class*="text-cyan-"],
-.text-cyan-400,
-.text-cyan-300,
-.text-cyan-200,
-.text-cyan-500 {
-  color: var(--aura-color-1, #00f0ff) !important;
+/* Conexión elegante y difuminada de acentos al color de la Aurora (Preservando opacidad y legibilidad) */
+.border-cyan-500\/20 {
+  border-color: rgba(var(--aura-glow-rgb, 0, 240, 255), 0.20) !important;
 }
-
-html.optic-aurora [class*="fill-cyan-"] {
-  fill: var(--aura-color-1, #00f0ff) !important;
+.border-cyan-500\/25 {
+  border-color: rgba(var(--aura-glow-rgb, 0, 240, 255), 0.25) !important;
 }
-
-html.optic-aurora [class*="border-cyan-"],
+.border-cyan-500\/30 {
+  border-color: rgba(var(--aura-glow-rgb, 0, 240, 255), 0.30) !important;
+}
+.border-cyan-500\/40 {
+  border-color: rgba(var(--aura-glow-rgb, 0, 240, 255), 0.40) !important;
+}
 .border-cyan-400,
 .border-cyan-500 {
-  border-color: rgba(var(--aura-glow-rgb, 0, 240, 255), 0.45) !important;
-}
-
-html.optic-aurora [class*="bg-cyan-400"],
-html.optic-aurora [class*="bg-cyan-500"],
-.bg-cyan-500,
-.bg-cyan-400 {
-  background-color: var(--aura-color-1, #00f0ff) !important;
-}
-
-html.optic-aurora [class*="bg-cyan-950"] {
-  background-color: rgba(0, 0, 0, 0.75) !important;
+  border-color: var(--aura-color-1, #00f0ff) !important;
 }
 
 /* Sincronización automática de todas las barras de progreso cuánticas y filamentos */
@@ -98,8 +86,6 @@ html.optic-aurora [class*="bg-cyan-950"] {
   background-image: linear-gradient(90deg, var(--aura-color-1, #00f0ff) 0%, var(--aura-color-2, #8a2be2) 100%) !important;
 }
 
-html.optic-aurora [class*="shadow-"][class*="0,240,255"],
-html.optic-aurora [class*="shadow-"][class*="0_240_255"],
 .shadow-\[0_4px_30px_rgba\(0\,240\,255\,0\.12\)\] {
   box-shadow: 0 4px 30px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.25) !important;
 }

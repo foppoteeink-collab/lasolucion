@@ -425,10 +425,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   setActiveTab: (tab) => {
     const currentTab = get().activeTab;
     if (currentTab === tab) return;
-    set({ activeTab: tab, isTransitioning: true });
-    setTimeout(() => {
-      set({ isTransitioning: false });
-    }, 450);
+    set({ activeTab: tab });
   },
 
   triggerTransition: (durationMs = 1200) => {

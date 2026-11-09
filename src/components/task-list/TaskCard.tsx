@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from 'motion/react';
 import { TaskItem, TaskCategory, HabitMasteryRecord } from '../../types';
 import { soundFX } from '../../utils/audio';
 import { SlashText } from './SlashText';
@@ -112,14 +111,8 @@ const TaskCardComponent: React.FC<TaskCardProps> = (props) => {
     : { background: "linear-gradient(135deg, " + hexToRgba(catStyle.color, 0.11) + " 0%, rgba(34, 56, 74, 0.62) 45%, rgba(8, 17, 27, 0.92) 100%)", borderColor: hexToRgba(catStyle.color, 0.32), boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.10), 0 6px 20px -8px rgba(0, 0, 0, 0.55)' };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.1 }}
-      whileTap={{ scale: 1.0 }}
-      exit={{ opacity: 0, scale: 0.98 }}
-      transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1], delay: Math.min((index % 5) * 0.02, 0.1) }}
-      className="flex items-stretch gap-2.5 sm:gap-3.5 group transition-transform duration-300 ease-out hover:translate-x-0.5 relative z-0"
+    <div
+      className="flex items-stretch gap-2.5 sm:gap-3.5 group transition-transform duration-200 ease-out hover:translate-x-0.5 relative z-0"
     >
       <div 
         role="button"
@@ -148,34 +141,33 @@ const TaskCardComponent: React.FC<TaskCardProps> = (props) => {
       <div style={infoBoxStyle} className={"flex-1 min-w-0 px-2.5 py-2 sm:px-3.5 sm:py-2.5 flex items-center justify-between gap-2 sm:gap-3 relative isolate rounded-xl border backdrop-blur-xl group-hover:brightness-110 " + (isMenuOpen ? "ring-1 ring-cyan-500/40 shadow-[0_0_15px_rgba(0,240,255,0.25)] " : "") + (isCompleted ? "opacity-90" : "")}>
         <span className="vi-grano" aria-hidden="true" />
         <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
-          <motion.button 
-            type="button" 
-            whileTap={{ scale: 1.0 }} 
-            onClick={(e) => { 
-              if (isTogglingRef.current) return; 
-              isTogglingRef.current = true; 
-              setTimeout(() => { isTogglingRef.current = false; }, 350); 
-              soundFX.playClick(); 
-              if (isFutureDay) { 
-                useUIStore.getState().addFloatingEffect({ x: e.clientX || 200, y: (e.clientY || 200) - 20, text: '⏳ Día futuro: modo planificación', type: 'streak' }); 
-                return; 
-              } 
+          <button
+            type="button"
+            onClick={(e) => {
+              if (isTogglingRef.current) return;
+              isTogglingRef.current = true;
+              setTimeout(() => { isTogglingRef.current = false; }, 350);
+              soundFX.playClick();
+              if (isFutureDay) {
+                useUIStore.getState().addFloatingEffect({ x: e.clientX || 200, y: (e.clientY || 200) - 20, text: '⏳ Día futuro: modo planificación', type: 'streak' });
+                return;
+              }
               if (isCounterHabit && onIncrementHabit) {
                 onIncrementHabit(task.id, e);
               } else {
                 onToggle(task.id, e);
               }
-            }} 
-            disabled={isDayEnded} 
-            style={isCompleted ? undefined : { borderColor: hexToRgba(activeLineColor, 0.40), boxShadow: '0 0 10px ' + hexToRgba(activeLineColor, 0.18) }} 
-            className={"w-9 h-9 sm:w-10 sm:h-10 border flex items-center justify-center transition-all cursor-pointer shrink-0 relative select-none " + (isCompleted ? "bg-gradient-to-br from-emerald-400 to-emerald-500 border-emerald-300 text-slate-950 shadow-[0_0_14px_rgba(16,185,129,0.55)] rounded-xl" : isFutureDay ? "bg-black/40 text-cyan-400/60 hover:bg-white/[0.04] rounded-xl" : "bg-black/45 text-white hover:bg-black/30 hover:scale-[1.0] rounded-xl")} 
-            title={isFutureDay ? 'Día futuro: modo planificación' : isCounterHabit ? (isCompleted ? `${task.title} - Completado hoy` : `${task.title} - Toca para sumar +1 (${task.currentCount || 0}/${task.targetCount})`) : isCompleted ? 'Desmarcar tarea' : 'Marcar como completada'} 
+            }}
+            disabled={isDayEnded}
+            style={isCompleted ? undefined : { borderColor: hexToRgba(activeLineColor, 0.40), boxShadow: '0 0 10px ' + hexToRgba(activeLineColor, 0.18) }}
+            className={"w-9 h-9 sm:w-10 sm:h-10 border flex items-center justify-center transition-all cursor-pointer shrink-0 relative select-none " + (isCompleted ? "bg-gradient-to-br from-emerald-400 to-emerald-500 border-emerald-300 text-slate-950 shadow-[0_0_14px_rgba(16,185,129,0.55)] rounded-xl" : isFutureDay ? "bg-black/40 text-cyan-400/60 hover:bg-white/[0.04] rounded-xl" : "bg-black/45 text-white hover:bg-black/30 rounded-xl")}
+            title={isFutureDay ? 'Día futuro: modo planificación' : isCounterHabit ? (isCompleted ? `${task.title} - Completado hoy` : `${task.title} - Toca para sumar +1 (${task.currentCount || 0}/${task.targetCount})`) : isCompleted ? 'Desmarcar tarea' : 'Marcar como completada'}
             aria-label={isCompleted ? "Desmarcar tarea: " + task.title : isCounterHabit ? "Sumar +1 a " + task.title : "Completar tarea: " + task.title}
           >
             {isCompleted ? (
-              <motion.div initial={{ scale: 0.4, rotate: -25 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring', stiffness: 520, damping: 22 }}>
+              <div className="transition-transform duration-150 scale-100">
                 <Icon name="check" className="w-5 h-5 stroke-[3] text-black" />
-              </motion.div>
+              </div>
             ) : isCounterHabit ? (
               <div className="flex flex-col items-center justify-center leading-none">
                 <span className="text-[11px] font-mono font-black text-cyan-300">{task.currentCount || 0}</span>
@@ -187,7 +179,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = (props) => {
                 {isFutureDay && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-cyan-400 ring-2 ring-black" />}
               </div>
             )}
-          </motion.button>
+          </button>
           <div className="min-w-0 flex-1">
             <h4 
               role="button"
@@ -276,7 +268,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = (props) => {
         </div>
         <TaskActionsDropdown task={task} isOpen={isMenuOpen} onToggleOpen={onToggleMenu} onOpenNote={() => onOpenNoteModal && onOpenNoteModal(task)} onOpenPomodoro={() => onOpenPomodoro && onOpenPomodoro(task.title, task.category)} onOpenEdit={() => handleEdit && handleEdit(task)} onDelete={() => handleDelete && handleDelete(task.id)} isDayEnded={isDayEnded} color={activeLineColor} />
       </div>
-    </motion.div>
+    </div>
   );
 };
 

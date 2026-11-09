@@ -2,8 +2,14 @@
  * Safe Web Haptic Feedback API Wrapper for Mobile & Touch devices
  */
 
+const hasUserActivation = (): boolean => {
+  if (typeof navigator === 'undefined') return false;
+  if (!('userActivation' in navigator)) return true;
+  return Boolean((navigator as unknown as { userActivation?: { hasBeenActive?: boolean } }).userActivation?.hasBeenActive);
+};
+
 export const isHapticsSupported = (): boolean => {
-  return typeof window !== 'undefined' && typeof navigator !== 'undefined' && 'vibrate' in navigator;
+  return typeof window !== 'undefined' && typeof navigator !== 'undefined' && 'vibrate' in navigator && hasUserActivation();
 };
 
 export const triggerHaptic = (pattern: number | number[] = 20): boolean => {

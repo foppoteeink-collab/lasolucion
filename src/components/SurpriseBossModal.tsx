@@ -34,11 +34,7 @@ export const SurpriseBossModal: React.FC<SurpriseBossModalProps> = ({
       } catch (e) {}
 
       // Triumphant Haptic Pattern
-      if (isHapticsSupported()) {
-        triggerHaptic([100, 50, 150, 50, 300]);
-      } else if (typeof window !== 'undefined' && 'navigator' in window && navigator.vibrate) {
-        navigator.vibrate([100, 50, 150, 50, 300]);
-      }
+      triggerHaptic([100, 50, 150, 50, 300]);
     }
   }, [isOpen]);
 

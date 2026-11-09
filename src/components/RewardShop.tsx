@@ -513,11 +513,9 @@ export const RewardShop: React.FC = () => {
         </div>
       ) : (
         /* ─── 5. ORBITAL REWARDS GRID (CÁPSULAS ORBITALES ESTILO KAI) ─── */
-        <motion.div 
-          layout
+        <div
           className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"
         >
-          <AnimatePresence mode="popLayout">
             {filteredRewards.map((reward) => {
               const discountedCost = getDiscountedCost(reward);
               const isShieldCapped = reward.id === 'perk-streak-shield' && streakShields >= 3;
@@ -543,13 +541,8 @@ export const RewardShop: React.FC = () => {
               }
 
               return (
-                <motion.div
+                <div
                   key={reward.id}
-                  layout
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ duration: 0.2 }}
                   className={`relative p-3 rounded-2xl bg-[#060414]/90 border flex flex-col items-center justify-between text-center overflow-hidden transition-all group ${
                     canAfford ? auraBorder : 'border-white/10 opacity-75'
                   }`}
@@ -575,10 +568,8 @@ export const RewardShop: React.FC = () => {
                   </div>
 
                   {/* Glowing Central Orb (Estilo Orbe de Kai) */}
-                  <motion.div 
-                    whileHover={{ scale: 1.08 }}
-                    whileTap={{ scale: 0.92 }}
-                    className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 flex items-center justify-center text-2xl sm:text-3xl my-1 relative cursor-pointer ${orbGlow}`}
+                  <div
+                    className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 flex items-center justify-center text-2xl sm:text-3xl my-1 relative cursor-pointer transition-transform duration-150 hover:scale-105 active:scale-95 ${orbGlow}`}
                     onClick={() => {
                       if (canAfford) handleRedeem(reward);
                       else soundFX.playClick();
@@ -586,7 +577,7 @@ export const RewardShop: React.FC = () => {
                     title={canAfford ? 'Toca para canjear de inmediato' : `Requiere ${discountedCost} Monedas`}
                   >
                     <span>{reward.icon}</span>
-                  </motion.div>
+                  </div>
 
                   {/* Title & Micro-Description */}
                   <div className="w-full px-0.5 mt-1">
@@ -626,11 +617,10 @@ export const RewardShop: React.FC = () => {
                       </>
                     )}
                   </button>
-                </motion.div>
+                </div>
               );
             })}
-          </AnimatePresence>
-        </motion.div>
+        </div>
       )}
 
       {/* ─── 6. MODAL PARA FORJAR DESEO PERSONALIZADO (PORTAL AISLADO) ─── */}

@@ -75,7 +75,7 @@ export const MoxenRayas: React.FC<MoxenRayasProps> = ({
   const [isCompleted, setIsCompleted] = useState<boolean>(false);
   const [isQuiet, setIsQuiet] = useState<boolean>(false);
 
-  // Referencias para la física del resorte continuo
+  // Referencias para la física del resorte continuo y caché de estado UI
   const stateRef = useRef({
     target: target,
     current: 0,
@@ -83,22 +83,46 @@ export const MoxenRayas: React.FC<MoxenRayasProps> = ({
     rate: 0,
     prevTime: null as number | null,
     rafId: 0,
+    quietTimerId: null as ReturnType<typeof setTimeout> | null,
     hasCompletedFired: false,
     activeUntilTime: Date.now() + 2500,
   });
 
-  // Actualizar meta cuando cambie la prop
+  const uiCacheRef = useRef({
+    percent: 0,
+    timeText: 'Calculando…',
+    unitsText: '',
+    isCompleted: false,
+    isQuiet: false,
+  });
+
+  const startLoopRef = useRef<(() => void) | null>(null);
+
+  // Actualizar meta cuando cambie la prop y despertar el resorte si estaba en reposo
   useEffect(() => {
-    stateRef.current.target = target;
+    const state = stateRef.current;
+    state.target = target;
+    state.prevTime = null;
+    if (state.quietTimerId !== null) {
+      clearTimeout(state.quietTimerId);
+      state.quietTimerId = null;
+    }
     if (mode === 'reactive') {
       // Despertar animación de rayas por al menos 1.6s
-      stateRef.current.activeUntilTime = Date.now() + 1600;
-      setIsQuiet(false);
+      state.activeUntilTime = Date.now() + 1600;
+      if (uiCacheRef.current.isQuiet) {
+        uiCacheRef.current.isQuiet = false;
+        setIsQuiet(false);
+      }
     }
     if (target < 1) {
-      stateRef.current.hasCompletedFired = false;
-      setIsCompleted(false);
+      state.hasCompletedFired = false;
+      if (uiCacheRef.current.isCompleted) {
+        uiCacheRef.current.isCompleted = false;
+        setIsCompleted(false);
+      }
     }
+    startLoopRef.current?.();
   }, [target, mode]);
 
   useEffect(() => {
@@ -111,20 +135,52 @@ export const MoxenRayas: React.FC<MoxenRayasProps> = ({
     let isVisible = !document.hidden;
     let isIntersecting = true;
 
-    const startLoopIfEligible = () => {
-      if (isVisible && isIntersecting && !stateRef.current.rafId) {
-        lastFrameTime = performance.now();
-        stateRef.current.rafId = requestAnimationFrame(updatePhysics);
+    const clearQuietTimer = () => {
+      if (stateRef.current.quietTimerId !== null) {
+        clearTimeout(stateRef.current.quietTimerId);
+        stateRef.current.quietTimerId = null;
       }
     };
+
+    const startLoopIfEligible = () => {
+      const state = stateRef.current;
+      const needsPhysics =
+        Math.abs(state.current - state.target) >= 0.001 ||
+        Math.abs(state.velocity) >= 0.002;
+
+      if (!needsPhysics) {
+        if (mode === 'reactive' && isVisible && isIntersecting && Date.now() < state.activeUntilTime && !state.quietTimerId) {
+          const remaining = Math.max(0, state.activeUntilTime - Date.now());
+          state.quietTimerId = setTimeout(() => {
+            state.quietTimerId = null;
+            if (!uiCacheRef.current.isQuiet) {
+              uiCacheRef.current.isQuiet = true;
+              setIsQuiet(true);
+            }
+          }, remaining);
+        }
+        return;
+      }
+
+      if (isVisible && isIntersecting && !state.rafId) {
+        lastFrameTime = performance.now();
+        state.prevTime = null;
+        state.rafId = requestAnimationFrame(updatePhysics);
+      }
+    };
+
+    startLoopRef.current = startLoopIfEligible;
 
     const onVisibilityChange = () => {
       isVisible = !document.hidden;
       if (isVisible) {
         startLoopIfEligible();
-      } else if (stateRef.current.rafId) {
-        cancelAnimationFrame(stateRef.current.rafId);
-        stateRef.current.rafId = 0;
+      } else {
+        if (stateRef.current.rafId) {
+          cancelAnimationFrame(stateRef.current.rafId);
+          stateRef.current.rafId = 0;
+        }
+        clearQuietTimer();
       }
     };
     document.addEventListener('visibilitychange', onVisibilityChange);
@@ -134,46 +190,19 @@ export const MoxenRayas: React.FC<MoxenRayasProps> = ({
         isIntersecting = Boolean(entries[0]?.isIntersecting);
         if (isIntersecting) {
           startLoopIfEligible();
-        } else if (stateRef.current.rafId) {
-          cancelAnimationFrame(stateRef.current.rafId);
-          stateRef.current.rafId = 0;
+        } else {
+          if (stateRef.current.rafId) {
+            cancelAnimationFrame(stateRef.current.rafId);
+            stateRef.current.rafId = 0;
+          }
+          clearQuietTimer();
         }
       },
       { threshold: 0.05 }
     );
     if (containerRef.current) intersectionObserver.observe(containerRef.current);
 
-    const updatePhysics = (timestamp: number) => {
-      // 20 FPS cap
-      const elapsed = timestamp - lastFrameTime;
-      if (elapsed < TARGET_FRAME_MS) {
-        stateRef.current.rafId = requestAnimationFrame(updatePhysics);
-        return;
-      }
-      lastFrameTime = timestamp - (elapsed % TARGET_FRAME_MS);
-
-      const state = stateRef.current;
-      const dt = state.prevTime === null ? 1 / 60 : Math.min(0.032, (timestamp - state.prevTime) / 1000);
-      state.prevTime = timestamp;
-
-      if (prefersReducedMotion) {
-        state.current = state.target;
-        state.velocity = 0;
-      } else {
-        // Resorte crítico amortiguado (k = 34, c = 2*sqrt(34))
-        const k = 34;
-        const c = 2 * Math.sqrt(k);
-        for (let i = 0; i < 4; i++) {
-          const h = dt / 4;
-          state.velocity += (-k * (state.current - state.target) - c * state.velocity) * h;
-          state.current = clamp(state.current + state.velocity * h, 0, 1);
-        }
-      }
-
-      state.rate += (Math.max(0, state.velocity) - state.rate) * Math.min(1, dt * 1.5);
-
-      // ── Render de posición física en DOM ──
-      const cur = state.current;
+    const applyVisualState = (cur: number) => {
       if (rellenoRef.current) {
         rellenoRef.current.style.transform = `translateX(${((cur - 1) * 100).toFixed(3)}%)`;
       }
@@ -203,52 +232,133 @@ export const MoxenRayas: React.FC<MoxenRayasProps> = ({
         colUnitsRef.current.style.transform = `translateY(-${pos[2] * 1.15}em)`;
       }
 
+      const cache = uiCacheRef.current;
       const pRounded = Math.round(cur * 100);
-      setPercentDisplay(pRounded);
+      if (cache.percent !== pRounded) {
+        cache.percent = pRounded;
+        setPercentDisplay(pRounded);
+      }
 
       if (totalUnits) {
         const currentUnitsVal = (cur * totalUnits).toLocaleString('es-CR', { maximumFractionDigits: 1 });
         const totalUnitsVal = totalUnits.toLocaleString('es-CR', { maximumFractionDigits: 1 });
-        setUnitsText(`${currentUnitsVal} de ${totalUnitsVal} ${unitLabel || ''}`);
+        const nextUnitsText = `${currentUnitsVal} de ${totalUnitsVal} ${unitLabel || ''}`;
+        if (cache.unitsText !== nextUnitsText) {
+          cache.unitsText = nextUnitsText;
+          setUnitsText(nextUnitsText);
+        }
       }
 
+      let nextTimeText = 'Calculando…';
       if (pRounded === 100) {
-        setTimeRemainingText('Completado');
-      } else if (state.rate > 0.01) {
-        const secondsLeft = Math.max(1, Math.ceil((1 - cur) / state.rate));
-        setTimeRemainingText(`Quedan ${secondsLeft} s`);
-      } else {
-        setTimeRemainingText('Calculando…');
+        nextTimeText = 'Completado';
+      } else if (stateRef.current.rate > 0.01) {
+        const secondsLeft = Math.max(1, Math.ceil((1 - cur) / stateRef.current.rate));
+        nextTimeText = `Quedan ${secondsLeft} s`;
       }
+      if (cache.timeText !== nextTimeText) {
+        cache.timeText = nextTimeText;
+        setTimeRemainingText(nextTimeText);
+      }
+    };
+
+    const updatePhysics = (timestamp: number) => {
+      // 20 FPS cap
+      const elapsed = timestamp - lastFrameTime;
+      if (elapsed < TARGET_FRAME_MS) {
+        stateRef.current.rafId = requestAnimationFrame(updatePhysics);
+        return;
+      }
+      lastFrameTime = timestamp - (elapsed % TARGET_FRAME_MS);
+
+      const state = stateRef.current;
+      const dt = state.prevTime === null ? 1 / 60 : Math.min(0.032, (timestamp - state.prevTime) / 1000);
+      state.prevTime = timestamp;
+
+      if (prefersReducedMotion) {
+        state.current = state.target;
+        state.velocity = 0;
+        state.rate = 0;
+      } else {
+        // Resorte crítico amortiguado (k = 34, c = 2*sqrt(34))
+        const k = 34;
+        const c = 2 * Math.sqrt(k);
+        for (let i = 0; i < 4; i++) {
+          const h = dt / 4;
+          state.velocity += (-k * (state.current - state.target) - c * state.velocity) * h;
+          state.current = clamp(state.current + state.velocity * h, 0, 1);
+        }
+        state.rate += (Math.max(0, state.velocity) - state.rate) * Math.min(1, dt * 1.5);
+      }
+
+      const isSettled =
+        prefersReducedMotion ||
+        (Math.abs(state.current - state.target) < 0.001 && Math.abs(state.velocity) < 0.002);
+
+      if (isSettled) {
+        state.current = state.target;
+        state.velocity = 0;
+        state.rate = 0;
+      }
+
+      applyVisualState(state.current);
+
+      const cache = uiCacheRef.current;
 
       // Comprobar estado de quietud reactivo
       if (mode === 'reactive') {
-        const isStillGracePeriod = Date.now() < state.activeUntilTime;
+        const remainingMs = state.activeUntilTime - Date.now();
+        const isStillGracePeriod = remainingMs > 0;
         const isMoving = Math.abs(state.velocity) > 0.003;
-        setIsQuiet(!isStillGracePeriod && !isMoving);
-      } else {
+        const nextQuiet = !isStillGracePeriod && !isMoving;
+        if (cache.isQuiet !== nextQuiet) {
+          cache.isQuiet = nextQuiet;
+          setIsQuiet(nextQuiet);
+        }
+        if (isSettled && isStillGracePeriod && !state.quietTimerId) {
+          state.quietTimerId = setTimeout(() => {
+            state.quietTimerId = null;
+            if (!uiCacheRef.current.isQuiet) {
+              uiCacheRef.current.isQuiet = true;
+              setIsQuiet(true);
+            }
+          }, remainingMs);
+        }
+      } else if (cache.isQuiet) {
+        cache.isQuiet = false;
         setIsQuiet(false);
       }
 
       // Comprobar si llegó a la meta final
-      const isSettled = Math.abs(cur - state.target) < 0.001 && Math.abs(state.velocity) < 0.002;
       if (isSettled && state.target >= 1) {
-        setIsCompleted(true);
+        if (!cache.isCompleted) {
+          cache.isCompleted = true;
+          setIsCompleted(true);
+        }
         if (!state.hasCompletedFired) {
           state.hasCompletedFired = true;
           onComplete?.();
         }
       }
 
-      if (isVisible && isIntersecting) {
+      if (!isSettled && isVisible && isIntersecting) {
         state.rafId = requestAnimationFrame(updatePhysics);
+      } else {
+        state.rafId = 0;
       }
     };
 
+    // Sincronización visual inicial inmediata si ya está en 0 o target=0
+    applyVisualState(stateRef.current.current);
     startLoopIfEligible();
 
     return () => {
-      cancelAnimationFrame(stateRef.current.rafId);
+      startLoopRef.current = null;
+      if (stateRef.current.rafId) {
+        cancelAnimationFrame(stateRef.current.rafId);
+        stateRef.current.rafId = 0;
+      }
+      clearQuietTimer();
       intersectionObserver.disconnect();
       document.removeEventListener('visibilitychange', onVisibilityChange);
     };

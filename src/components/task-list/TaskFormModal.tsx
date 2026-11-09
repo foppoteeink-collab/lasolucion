@@ -61,6 +61,15 @@ interface TaskFormModalProps {
 
 const daysOfWeek = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
 const quickEmojis = ['⚡', '💧', '🏋️', '📖', '🧘', '🥗', '🧠', '🎨', '💼', '🏃', '💊', '☕'];
+const DAYS_OF_WEEK_LABELS = [
+  { idx: 1, short: 'Lun', name: 'Lunes' },
+  { idx: 2, short: 'Mar', name: 'Martes' },
+  { idx: 3, short: 'Mié', name: 'Miércoles' },
+  { idx: 4, short: 'Jue', name: 'Jueves' },
+  { idx: 5, short: 'Vie', name: 'Viernes' },
+  { idx: 6, short: 'Sáb', name: 'Sábado' },
+  { idx: 0, short: 'Dom', name: 'Domingo' },
+];
 
 const habitPresets = [
   { label: '💧 Agua 2L', title: 'Tomar 2 Litros de Agua', icon: '💧', category: 'habito' as TaskCategory, target: 8, unit: 'vasos', energy: 'purification' as HabitEnergyType, hasCounter: true, targetStreak: 21 as const },
@@ -68,6 +77,13 @@ const habitPresets = [
   { label: '📖 Lectura', title: 'Lectura de Desarrollo', icon: '📖', category: 'estudio' as TaskCategory, target: 20, unit: 'min', energy: 'mind' as HabitEnergyType, hasCounter: true, targetStreak: 21 as const },
   { label: '🧘 Meditación', title: 'Meditación & Enfoque', icon: '🧘', category: 'habito' as TaskCategory, target: 10, unit: 'min', energy: 'discipline' as HabitEnergyType, hasCounter: true, targetStreak: 21 as const },
   { label: '🥗 Saludable', title: 'Alimentación Limpia', icon: '🥗', category: 'comida' as TaskCategory, target: 3, unit: 'comidas', energy: 'purification' as HabitEnergyType, hasCounter: true, targetStreak: 21 as const },
+];
+
+const reminderPresets = [
+  { label: '📋 Revisión Semanal', title: 'Revisión y Planificación Semanal', icon: '📋', category: 'rutina' as TaskCategory, days: [0] },
+  { label: '🧹 Limpieza Profunda', title: 'Limpieza y Orden General', icon: '🧹', category: 'limpieza' as TaskCategory, days: [6] },
+  { label: '💳 Finanzas & Facturas', title: 'Revisión Financiera y Cierre', icon: '💳', category: 'trabajo' as TaskCategory, days: [5] },
+  { label: '🌿 Mantenimiento', title: 'Mantenimiento del Hogar / Rutina', icon: '🌿', category: 'rutina' as TaskCategory, days: [2] },
 ];
 
 const ENERGY_DEFAULT_ICONS: Record<HabitEnergyType, string> = {
@@ -136,13 +152,18 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
   const criticalRemaining = Math.max(0, MAX_CRITICAL_PRIORITY_CHARGES_PER_DAY - criticalUsedToday);
 
   const isEditingHabitMode = activeTab === 'habit' || isHabitType || isTracked2166 || isQuickHabit;
+  const is2166HabitMode = isEditingHabitMode && Boolean(isTracked2166 || isQuickHabit);
+
+  // Referencia estable para onClose (evita que el useEffect se re-dispare al recrear la función)
+  const onCloseRef = React.useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
     if (isOpen) {
-      if (editingTaskId) {
-        setActiveTab((isHabitType || isTracked2166 || isQuickHabit) ? 'habit' : 'task');
-      } else if (initialTab) {
+      if (initialTab) {
         setActiveTab(initialTab);
+      } else if (editingTaskId) {
+        setActiveTab((isHabitType || isTracked2166 || isQuickHabit) ? 'habit' : 'task');
       }
       setIsIconManuallyChosen(Boolean(editingTaskId));
       document.body.classList.add('modal-open-hide-floating');
@@ -150,7 +171,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
       const handleKeyDown = (e: KeyboardEvent) => {
         if (e.key === 'Escape') {
           soundFX.playClick();
-          onClose();
+          onCloseRef.current();
         }
       };
       window.addEventListener('keydown', handleKeyDown);
@@ -160,9 +181,16 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
         window.removeEventListener('keydown', handleKeyDown);
       };
     }
-  }, [isOpen, editingTaskId, initialTab, onClose]);
+  }, [isOpen, editingTaskId, initialTab]);
 
   const handleTabChange = (tab: 'task' | 'habit' | 'oracle') => {
+    if (tab === 'oracle') {
+      // Abrir directamente el Oráculo real en vez de mostrar pestaña intermediaria
+      soundFX.playClick();
+      onClose();
+      if (onOpenOracle) onOpenOracle();
+      return;
+    }
     setActiveTab(tab);
     if (tab === 'task') {
       setIsHabitType(false);
@@ -227,6 +255,25 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
     }
   };
 
+  const applyReminderPreset = (preset: typeof reminderPresets[0]) => {
+    soundFX.playClick();
+    setNewTitle(preset.title);
+    setQuickIcon(preset.icon);
+    setNewCategory(preset.category);
+    setIsHabitType(false);
+    setIsTracked2166(false);
+    setIsQuickHabit(false);
+    setIsIconManuallyChosen(true);
+    setFormFrequency('specific_days');
+    if (preset.days && preset.days.length > 0) {
+      preset.days.forEach((d) => {
+        if (!formSpecificDays.includes(d)) {
+          toggleSpecificDay(d);
+        }
+      });
+    }
+  };
+
   const modalContent = (
     <AnimatePresence>
       <div className="fixed inset-0 z-[170] flex items-center justify-center p-2.5 sm:p-4 bg-black/85 backdrop-blur-md overflow-hidden font-sans portal-modal-root">
@@ -253,13 +300,13 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                 activeTab === 'oracle'
                   ? 'bg-amber-950/60 border-amber-500/50 text-amber-300'
                   : isEditingHabitMode 
-                    ? 'bg-purple-950/60 border-purple-500/50 text-purple-300' 
+                    ? (is2166HabitMode ? 'bg-purple-950/60 border-purple-500/50 text-purple-300' : 'bg-indigo-950/60 border-indigo-500/50 text-indigo-300')
                     : 'bg-cyan-950/60 border-cyan-500/50 text-cyan-300'
               }`}>
                 {activeTab === 'oracle' ? (
                   <Icon name="sparkles" className="w-5 h-5 animate-pulse" />
                 ) : isEditingHabitMode ? (
-                  <Icon name="flame" className="w-5 h-5" />
+                  is2166HabitMode ? <Icon name="flame" className="w-5 h-5" /> : <Icon name="calendar" className="w-5 h-5" />
                 ) : (
                   <Icon name="zap" className="w-5 h-5" />
                 )}
@@ -267,12 +314,12 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
               <div>
                 <h3 className="text-sm sm:text-base font-anton uppercase tracking-wide text-white">
                   {editingTaskId 
-                    ? (isEditingHabitMode ? 'Editar Hábito' : 'Editar Tarea')
+                    ? (isEditingHabitMode ? (is2166HabitMode ? 'Editar Hábito 21/66' : 'Editar Recordatorio Semanal') : 'Editar Tarea')
                     : (activeTab === 'oracle'
                         ? 'Oráculo & Plantillas'
                         : activeTab === 'habit'
-                          ? 'Nuevo Hábito (21/66 Días)'
-                          : 'Nueva Tarea'
+                          ? (is2166HabitMode ? 'Nuevo Hábito (21/66 Días)' : 'Nuevo Recordatorio Semanal')
+                          : 'Nueva Tarea de Hoy'
                       )
                   }
                 </h3>
@@ -280,8 +327,11 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                   {activeTab === 'oracle'
                     ? 'Planificador inteligente con tu compañero KAI y plantillas de rutina'
                     : isEditingHabitMode 
-                      ? 'Define tu rutina diaria para fortalecer hábitos en 21/66 días'
-                      : 'Organiza tu día agregando una nueva tarea o actividad'
+                      ? (is2166HabitMode 
+                          ? 'Define tu rutina diaria para fortalecer hábitos en 21/66 días'
+                          : 'Programa una actividad semanal que se activará en tu agenda (ej. todos los martes)'
+                        )
+                      : 'Organiza tu jornada agregando una tarea puntual para hoy'
                   }
                 </p>
               </div>
@@ -343,7 +393,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                     }`}
                   >
                     <Icon name="flame" className="w-3.5 h-3.5" />
-                    <span>Hábito 21/66</span>
+                    <span>Hábitos & Rutinas</span>
                   </button>
                   <button
                     type="button"
@@ -418,34 +468,114 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
               {activeTab !== 'oracle' && (
                 <>
                   {isEditingHabitMode && (
-                    <div className="p-2 sm:p-2.5 rounded-xl bg-purple-950/30 border border-purple-500/20">
-                      <span className="block text-[10px] sm:text-[10.5px] font-mono font-bold text-purple-300 uppercase tracking-wider mb-1">
-                        ⚡ Sugerencias Rápidas de 1-Clic (Opcional):
-                      </span>
-                      <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar py-0.5">
-                        {habitPresets.map((preset, idx) => (
-                          <button
-                            key={idx}
-                            type="button"
-                            onClick={() => applyPreset(preset)}
-                            className="px-2 sm:px-2.5 py-1 rounded-lg bg-purple-900/40 hover:bg-purple-800/60 border border-purple-500/30 text-[11px] sm:text-xs font-semibold text-purple-200 transition-all hover:scale-105 shrink-0 whitespace-nowrap cursor-pointer"
-                          >
-                            {preset.label}
-                          </button>
-                        ))}
+                    <div className="space-y-2 mb-2">
+                      {/* Sub-selector de modo de hábito/rutina */}
+                      <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-black/70 border border-white/10">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            soundFX.playClick();
+                            setIsTracked2166(true);
+                            setIsQuickHabit(true);
+                            if (!quickIcon || quickIcon === '📅') setQuickIcon('⚡');
+                            setFormFrequency('daily');
+                          }}
+                          className={`py-1.5 px-2 rounded-lg text-xs font-anton tracking-wide transition-all flex items-center justify-center gap-1.5 cursor-pointer uppercase ${
+                            is2166HabitMode
+                              ? 'bg-amber-400 text-black font-bold shadow-[0_0_12px_rgba(245,158,11,0.4)]'
+                              : 'text-slate-400 hover:text-white hover:bg-white/5'
+                          }`}
+                        >
+                          <Icon name="flame" className="w-3.5 h-3.5" />
+                          <span>⚡ Hábito 21/66 Días</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            soundFX.playClick();
+                            setIsTracked2166(false);
+                            setIsQuickHabit(false);
+                            setFormFrequency('specific_days');
+                            if (!quickIcon || quickIcon === '⚡') setQuickIcon('📅');
+                            if (formSpecificDays.length === 0) {
+                              toggleSpecificDay(new Date().getDay());
+                            }
+                          }}
+                          className={`py-1.5 px-2 rounded-lg text-xs font-anton tracking-wide transition-all flex items-center justify-center gap-1.5 cursor-pointer uppercase ${
+                            !is2166HabitMode
+                              ? 'bg-indigo-500 text-white font-bold shadow-[0_0_12px_rgba(99,102,241,0.4)]'
+                              : 'text-slate-400 hover:text-white hover:bg-white/5'
+                          }`}
+                        >
+                          <Icon name="calendar" className="w-3.5 h-3.5" />
+                          <span>📅 Recordatorio Semanal</span>
+                        </button>
                       </div>
+
+                      {/* Notificación informativa del modo activo */}
+                      {!is2166HabitMode ? (
+                        <div className="p-3 rounded-2xl bg-indigo-950/40 border border-indigo-500/40 text-xs text-indigo-200 flex items-start gap-2.5">
+                          <Icon name="calendar" className="w-4 h-4 text-indigo-400 mt-0.5 shrink-0" />
+                          <div>
+                            <span className="font-bold text-white block">Recordatorio Semanal en Agenda (Sin 21/66d)</span>
+                            <span className="text-[11px] text-slate-300">
+                              Se integrará automáticamente a tu agenda los días específicos que elijas (ej. todos los martes). No exige rachas consecutivas ni auras de 21 o 66 días.
+                            </span>
+                          </div>
+                        </div>
+                      ) : null}
+
+                      {/* Presets según el modo */}
+                      {is2166HabitMode ? (
+                        <div className="p-2 sm:p-2.5 rounded-xl bg-purple-950/30 border border-purple-500/20">
+                          <span className="block text-[10px] sm:text-[10.5px] font-mono font-bold text-purple-300 uppercase tracking-wider mb-1">
+                            ⚡ Sugerencias Rápidas 21/66d (Opcional):
+                          </span>
+                          <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+                            {habitPresets.map((preset, idx) => (
+                              <button
+                                key={idx}
+                                type="button"
+                                onClick={() => applyPreset(preset)}
+                                className="px-2 sm:px-2.5 py-1 rounded-lg bg-purple-900/40 hover:bg-purple-800/60 border border-purple-500/30 text-[11px] sm:text-xs font-semibold text-purple-200 transition-all hover:scale-105 shrink-0 whitespace-nowrap cursor-pointer"
+                              >
+                                {preset.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="p-2 sm:p-2.5 rounded-xl bg-indigo-950/30 border border-indigo-500/20">
+                          <span className="block text-[10px] sm:text-[10.5px] font-mono font-bold text-indigo-300 uppercase tracking-wider mb-1">
+                            📅 Plantillas Semanales Rápidas (Opcional):
+                          </span>
+                          <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+                            {reminderPresets.map((preset, idx) => (
+                              <button
+                                key={idx}
+                                type="button"
+                                onClick={() => applyReminderPreset(preset)}
+                                className="px-2 sm:px-2.5 py-1 rounded-lg bg-indigo-900/40 hover:bg-indigo-800/60 border border-indigo-500/30 text-[11px] sm:text-xs font-semibold text-indigo-200 transition-all hover:scale-105 shrink-0 whitespace-nowrap cursor-pointer"
+                              >
+                                {preset.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
+
                   <div className="space-y-2">
                     {isEditingHabitMode && (
                       <div>
                         <label className="block text-xs font-semibold text-gray-300 mb-1 flex items-center gap-1.5">
                           <Icon name="smile" className="w-3.5 h-3.5 text-purple-400" />
-                          Icono del Hábito
+                          Icono Identificador
                         </label>
                         <div className="grid grid-cols-6 sm:grid-cols-12 gap-1.5">
                           {quickEmojis.map((emoji) => {
-                            const isSelected = (quickIcon || '⚡') === emoji;
+                            const isSelected = (quickIcon || (is2166HabitMode ? '⚡' : '📅')) === emoji;
                             return (
                               <button
                                 key={emoji}
@@ -469,14 +599,21 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                     )}
                     <div>
                       <label className="block text-xs font-semibold text-slate-300 mb-1">
-                        {isEditingHabitMode ? 'Nombre de tu Hábito (100% Personalizable)' : 'Título de la tarea'}
+                        {isEditingHabitMode 
+                          ? (is2166HabitMode ? 'Nombre de tu Hábito (100% Personalizable)' : 'Nombre del Recordatorio Semanal') 
+                          : 'Título de la tarea'
+                        }
                       </label>
                       <input
                         type="text"
                         required
                         value={newTitle}
                         onChange={(e) => setNewTitle(e.target.value)}
-                        placeholder={isEditingHabitMode ? 'Ej. Dejar de fumar, Tomar agua, Gimnasio, Estudiar...' : 'Ej. Sesión de código profundo...'}
+                        placeholder={
+                          isEditingHabitMode 
+                            ? (is2166HabitMode ? 'Ej. Dejar de fumar, Tomar agua, Gimnasio, Estudiar...' : 'Ej. Tarea de todos los martes, Revisión semanal, Pagar servicios...') 
+                            : 'Ej. Sesión de código profundo...'
+                        }
                         className="w-full bg-[#020712]/90 border border-white/15 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/50 rounded-xl px-3.5 py-2 sm:py-2.5 text-white text-xs sm:text-sm placeholder-slate-500 focus:outline-none transition-all shadow-inner"
                       />
                     </div>
@@ -489,7 +626,9 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                       </div>
                     )}
                   </div>
-                  {isEditingHabitMode && (
+
+                  {/* Aura para Kai: Solo en Hábitos de 21/66 días */}
+                  {is2166HabitMode && (
                     <div className="p-2.5 sm:p-3 rounded-2xl bg-[#08051a]/90 border border-purple-500/30 space-y-1.5 shadow-[0_0_15px_rgba(168,85,247,0.12)]">
                       <label className="block text-xs font-bold text-purple-200 flex items-center justify-between">
                         <span className="flex items-center gap-1.5">
@@ -528,7 +667,9 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                       </div>
                     </div>
                   )}
-                  {isEditingHabitMode ? (
+
+                  {/* Frecuencia y Configuración según Modo */}
+                  {is2166HabitMode ? (
                     <div className="grid grid-cols-2 gap-2.5">
                       <div>
                         <label className="block text-[11px] font-semibold text-gray-300 mb-1">Frecuencia</label>
@@ -573,6 +714,37 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                         </div>
                       </div>
                     </div>
+                  ) : isEditingHabitMode ? (
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-300 mb-1.5">Categoría</label>
+                        <select
+                          value={newCategory}
+                          onChange={(e) => setNewCategory(e.target.value as TaskCategory)}
+                          className="w-full bg-[#020712]/90 border border-white/15 focus:border-cyan-400 rounded-xl px-3 py-2 text-white focus:outline-none text-xs transition-colors"
+                        >
+                          <option value="rutina">Rutina</option>
+                          <option value="estudio">Estudio & Mente</option>
+                          <option value="entrenamiento">Entrenamiento</option>
+                          <option value="comida">Alimentación & Salud</option>
+                          <option value="creativo">Creatividad & Flujo</option>
+                          <option value="trabajo">Trabajo / Negocios</option>
+                          <option value="limpieza">Limpieza / Orden</option>
+                          <option value="clientes">Clientes / Mensajes</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-300 mb-1.5">Repetición</label>
+                        <select
+                          value={formFrequency}
+                          onChange={(e) => setFormFrequency(e.target.value as any)}
+                          className="w-full bg-[#020712]/90 border border-white/15 focus:border-cyan-400 rounded-xl px-3 py-2 text-white focus:outline-none text-xs transition-colors"
+                        >
+                          <option value="specific_days">Días específicos de la semana</option>
+                          <option value="daily">Todos los días</option>
+                        </select>
+                      </div>
+                    </div>
                   ) : (
                     <div className="grid grid-cols-2 gap-3">
                       <div>
@@ -583,7 +755,6 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                           className="w-full bg-[#020712]/90 border border-white/15 focus:border-cyan-400 rounded-xl px-3 py-2 text-white focus:outline-none text-xs transition-colors"
                         >
                           <option value="rutina">Rutina</option>
-                          <option value="habito">Hábito / Disciplina</option>
                           <option value="estudio">Estudio & Mente</option>
                           <option value="entrenamiento">Entrenamiento</option>
                           <option value="comida">Alimentación & Salud</option>
@@ -595,36 +766,50 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                       </div>
                       <div>
                         <label className="block text-xs font-semibold text-slate-300 mb-1.5">Frecuencia</label>
-                        <select
-                          value={formFrequency}
-                          onChange={(e) => setFormFrequency(e.target.value as any)}
-                          className="w-full bg-[#020712]/90 border border-white/15 focus:border-cyan-400 rounded-xl px-3 py-2 text-white focus:outline-none text-xs transition-colors"
-                        >
-                          <option value="once">Una sola vez (Hoy)</option>
-                          <option value="daily">Todos los días</option>
-                          <option value="specific_days">Días específicos</option>
-                        </select>
+                        <div className="w-full bg-[#020712]/90 border border-white/15 rounded-xl px-3 py-2 text-cyan-300 text-xs flex items-center justify-between">
+                          <span>Una sola vez (Hoy)</span>
+                          <button
+                            type="button"
+                            onClick={() => handleTabChange('habit')}
+                            className="text-[10px] text-purple-400 hover:text-purple-300 underline cursor-pointer"
+                          >
+                            ¿Recurrente?
+                          </button>
+                        </div>
                       </div>
                     </div>
                   )}
-                  {formFrequency === 'specific_days' && (
-                    <div className="p-3 rounded-2xl bg-[#020712]/80 border border-white/10">
-                      <label className="block text-xs text-slate-400 mb-2">Seleccionar días de la semana:</label>
-                      <div className="flex gap-1.5 justify-between">
-                        {daysOfWeek.map((day, idx) => {
-                          const isSelected = formSpecificDays.includes(idx);
+
+                  {/* Selector de días específicos: visible si frequency === 'specific_days' O si es recordatorio semanal */}
+                  {(formFrequency === 'specific_days' || (!is2166HabitMode && isEditingHabitMode)) && (
+                    <div className="p-3 rounded-2xl bg-[#020712]/90 border border-indigo-500/30 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="block text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                          <Icon name="calendar" className="w-3.5 h-3.5 text-indigo-400" />
+                          ¿Qué días de la semana debe realizarse?
+                        </label>
+                        {formSpecificDays.length > 0 && (
+                          <span className="text-[10px] font-mono text-indigo-300 font-bold">
+                            {formSpecificDays.map(d => DAYS_OF_WEEK_LABELS.find(l => l.idx === d)?.short).filter(Boolean).join(', ')}
+                          </span>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-7 gap-1">
+                        {DAYS_OF_WEEK_LABELS.map((day) => {
+                          const isSelected = formSpecificDays.includes(day.idx);
                           return (
                             <button
-                              key={idx}
+                              key={day.idx}
                               type="button"
-                              onClick={() => toggleSpecificDay(idx)}
-                              className={`w-9 h-9 rounded-lg font-mono text-xs font-bold transition-all ${
+                              onClick={() => toggleSpecificDay(day.idx)}
+                              className={`py-2 px-1 rounded-xl font-mono text-xs font-bold transition-all text-center flex flex-col items-center justify-center cursor-pointer active:scale-95 ${
                                 isSelected
-                                  ? 'bg-purple-500 text-black shadow-lg shadow-purple-500/20'
+                                  ? 'bg-indigo-500 text-white shadow-[0_0_10px_rgba(99,102,241,0.5)] border border-indigo-300'
                                   : 'bg-white/[0.04] text-slate-400 hover:bg-white/10 hover:text-white border border-white/10'
                               }`}
+                              title={day.name}
                             >
-                              {day}
+                              <span className="text-[11px] leading-tight">{day.short}</span>
                             </button>
                           );
                         })}

@@ -12,6 +12,12 @@ const isPomodoroFocusActive = (): boolean => {
   }
 };
 
+const hasUserActivation = (): boolean => {
+  if (typeof navigator === 'undefined') return false;
+  if (!('userActivation' in navigator)) return true;
+  return Boolean((navigator as unknown as { userActivation?: { hasBeenActive?: boolean } }).userActivation?.hasBeenActive);
+};
+
 class SoundFX {
   private ctx: AudioContext | null = null;
   private soundEnabled: boolean = true;
@@ -20,9 +26,12 @@ class SoundFX {
   private masterCompressor: DynamicsCompressorNode | null = null;
   private suspendedForBackground = false;
   private recentClickTimestamps: number[] = [];
+  private ctxInitScheduled = false;
+  private ctxDisabled = false;
+  private pendingReadyCallbacks: (() => void)[] = [];
 
   constructor() {
-    // AudioContext will be initialized on first user interaction to comply with browser autoplay policies
+    // AudioContext will be initialized post-paint on user interaction to comply with browser autoplay policies without blocking clicks
     if (typeof document !== 'undefined') {
       document.addEventListener('visibilitychange', () => {
         if (!this.ctx) return;
@@ -34,7 +43,7 @@ class SoundFX {
           }
         } else {
           // Returning to foreground
-          if (this.suspendedForBackground && this.ctx.state === 'suspended') {
+          if (this.suspendedForBackground && this.ctx.state === 'suspended' && hasUserActivation()) {
             this.suspendedForBackground = false;
             this.ctx.resume().catch(() => {});
           }
@@ -43,39 +52,88 @@ class SoundFX {
     }
   }
 
-  private initCtx() {
-    if (!this.ctx && typeof window !== 'undefined') {
-      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      if (AudioCtx) {
-        this.ctx = new AudioCtx();
-        // Dynamic night detection: gentle rolloff after 22:00 (10 PM) or before 06:00
-        const currentHour = new Date().getHours();
-        const isNight = currentHour >= 22 || currentHour < 6;
-
-        // Master Bus: Calibrated for ergonomic pleasantness and high dynamic headroom
-        this.masterGain = this.ctx.createGain();
-        this.masterGain.gain.value = isNight ? 0.42 : 0.55;
-        
-        // Gentle master lowpass filter: 9500Hz normal, 4800Hz in late night for acoustic relaxation
-        this.masterFilter = this.ctx.createBiquadFilter();
-        this.masterFilter.type = 'lowpass';
-        this.masterFilter.frequency.value = isNight ? 4800 : 9500;
-
-        // Master Dynamics Compressor/Limiter to prevent clipping on mobile speakers & high-resonance peaks
-        this.masterCompressor = this.ctx.createDynamicsCompressor();
-        this.masterCompressor.threshold.setValueAtTime(-14, this.ctx.currentTime);
-        this.masterCompressor.knee.setValueAtTime(10, this.ctx.currentTime);
-        this.masterCompressor.ratio.setValueAtTime(8, this.ctx.currentTime);
-        this.masterCompressor.attack.setValueAtTime(0.003, this.ctx.currentTime);
-        this.masterCompressor.release.setValueAtTime(0.12, this.ctx.currentTime);
-        
-        this.masterGain.connect(this.masterFilter);
-        this.masterFilter.connect(this.masterCompressor);
-        this.masterCompressor.connect(this.ctx.destination);
-      }
+  private createCtxNow() {
+    if (this.ctx || this.ctxDisabled || typeof window === 'undefined' || !hasUserActivation()) return;
+    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtx) {
+      this.ctxDisabled = true;
+      return;
     }
-    if (this.ctx && this.ctx.state === 'suspended') {
-      this.ctx.resume();
+
+    try {
+      this.ctx = new AudioCtx();
+      // Dynamic night detection: gentle rolloff after 22:00 (10 PM) or before 06:00
+      const currentHour = new Date().getHours();
+      const isNight = currentHour >= 22 || currentHour < 6;
+
+      // Master Bus: Calibrated for ergonomic pleasantness and high dynamic headroom
+      this.masterGain = this.ctx.createGain();
+      this.masterGain.gain.value = isNight ? 0.42 : 0.55;
+
+      // Gentle master lowpass filter: 9500Hz normal, 4800Hz in late night for acoustic relaxation
+      this.masterFilter = this.ctx.createBiquadFilter();
+      this.masterFilter.type = 'lowpass';
+      this.masterFilter.frequency.value = isNight ? 4800 : 9500;
+
+      // Master Dynamics Compressor/Limiter to prevent clipping on mobile speakers & high-resonance peaks
+      this.masterCompressor = this.ctx.createDynamicsCompressor();
+      this.masterCompressor.threshold.setValueAtTime(-14, this.ctx.currentTime);
+      this.masterCompressor.knee.setValueAtTime(10, this.ctx.currentTime);
+      this.masterCompressor.ratio.setValueAtTime(8, this.ctx.currentTime);
+      this.masterCompressor.attack.setValueAtTime(0.003, this.ctx.currentTime);
+      this.masterCompressor.release.setValueAtTime(0.12, this.ctx.currentTime);
+
+      this.masterGain.connect(this.masterFilter);
+      this.masterFilter.connect(this.masterCompressor);
+      this.masterCompressor.connect(this.ctx.destination);
+    } catch {
+      this.ctx = null;
+      this.ctxDisabled = true;
+    }
+  }
+
+  private initCtx(onColdReady?: () => void) {
+    if (typeof window === 'undefined' || this.ctxDisabled || !hasUserActivation()) return;
+    if (this.ctx) {
+      if (this.ctx.state === 'suspended') {
+        this.ctx.resume().catch(() => {});
+      }
+      return;
+    }
+
+    if (onColdReady && this.pendingReadyCallbacks.length < 4) {
+      this.pendingReadyCallbacks.push(onColdReady);
+    }
+
+    // Defer first AudioContext construction until after the current UI click renders/paints
+    // so tab switches and menus never stall waiting on hardware audio IPC.
+    if (!this.ctxInitScheduled) {
+      this.ctxInitScheduled = true;
+      const runInit = () => {
+        setTimeout(() => {
+          this.ctxInitScheduled = false;
+          this.createCtxNow();
+          if (this.ctx) {
+            if (this.ctx.state === 'suspended' && hasUserActivation()) {
+              this.ctx.resume().catch(() => {});
+            }
+            const callbacks = this.pendingReadyCallbacks.splice(0);
+            callbacks.forEach((cb) => {
+              try {
+                cb();
+              } catch {}
+            });
+          } else {
+            this.pendingReadyCallbacks.length = 0;
+          }
+        }, 16);
+      };
+
+      if (typeof requestAnimationFrame === 'function') {
+        requestAnimationFrame(runInit);
+      } else {
+        runInit();
+      }
     }
   }
 
@@ -953,6 +1011,8 @@ class SoundFX {
   private ambientGainNode: GainNode | null = null;
   private ambientVolumeLevel: number = 0.6;
   private currentAmbientType: 'rain' | 'fire' | 'forest' | 'heartbeat' | 'off' = 'off';
+  private pendingAmbientTokens: Map<'rain' | 'fire' | 'forest' | 'heartbeat', number> = new Map();
+  private ambientOpSeq = 0;
 
   private ensureAmbientMasterBus() {
     this.initCtx();
@@ -1023,6 +1083,19 @@ class SoundFX {
       this.setAmbientVolume(this.ambientVolumeLevel);
       return;
     }
+
+    if (!this.ctx) {
+      const token = ++this.ambientOpSeq;
+      this.pendingAmbientTokens.set(type, token);
+      this.initCtx(() => {
+        if (this.pendingAmbientTokens.get(type) === token) {
+          this.pendingAmbientTokens.delete(type);
+          this.startAmbientLayer(type, volume);
+        }
+      });
+      return;
+    }
+    this.pendingAmbientTokens.delete(type);
 
     this.ensureAmbientMasterBus();
     if (!this.ctx || !this.ambientGainNode) return;
@@ -1375,8 +1448,8 @@ class SoundFX {
 
       const playHeartbeatCycle = () => {
         if (!this.ctx || !this.ambientLayers.has('heartbeat')) return;
-        if (this.ctx.state === 'suspended') {
-          this.ctx.resume();
+        if (this.ctx.state === 'suspended' && hasUserActivation()) {
+          this.ctx.resume().catch(() => {});
         }
         const beatTime = this.ctx.currentTime + 0.015;
         // S1 ("Lub"): deep, warm mitral/tricuspid closure
@@ -1397,6 +1470,7 @@ class SoundFX {
   }
 
   public stopAmbientLayer(type: 'rain' | 'fire' | 'forest' | 'heartbeat') {
+    this.pendingAmbientTokens.delete(type);
     const track = this.ambientLayers.get(type);
     if (!track) return;
 
@@ -1430,6 +1504,7 @@ class SoundFX {
   }
 
   public stopAmbientSound() {
+    this.pendingAmbientTokens.clear();
     const activeKeys = Array.from(this.ambientLayers.keys());
     activeKeys.forEach((k) => this.stopAmbientLayer(k));
     this.currentAmbientType = 'off';

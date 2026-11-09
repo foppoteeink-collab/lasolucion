@@ -161,11 +161,14 @@ const createParticlePool = (): SparkParticle[] => {
   const particlePool = useRef<SparkParticle[]>(createParticlePool());
   const destello = useRef<{ t: number; cx: number; cy: number; e: number } | null>(null);
   const prevCelebratedDay = useRef<number | null>(null);
+  const isInitialMountRef = useRef(true);
 
-  const triggerCelebration = () => {
-    soundFX.playLevelUp?.();
-    soundFX.playSubBassConfirm?.();
-    triggerHaptic([35, 50, 40]);
+  const triggerCelebration = (withFeedback: boolean = true) => {
+    if (withFeedback) {
+      soundFX.playLevelUp?.();
+      soundFX.playSubBassConfirm?.();
+      triggerHaptic([35, 50, 40]);
+    }
     const azar = mulberry32(Date.now());
     const cx = LT_LOGICAL / 2;
     const cy = LT_LOGICAL / 2;
@@ -197,6 +200,9 @@ const createParticlePool = (): SparkParticle[] => {
   };
 
   useEffect(() => {
+    const isInitialMount = isInitialMountRef.current;
+    isInitialMountRef.current = false;
+
     METAS.forEach((m, i) => {
       springVals.current[i].meta = Math.min(1.12, m.val / Math.max(1, m.meta));
     });
@@ -204,7 +210,7 @@ const createParticlePool = (): SparkParticle[] => {
       glowSpring.current.meta = 1;
       if (prevCelebratedDay.current !== selectedDayIdx) {
         prevCelebratedDay.current = selectedDayIdx;
-        triggerCelebration();
+        triggerCelebration(!isInitialMount);
       }
     } else {
       glowSpring.current.meta = 0;

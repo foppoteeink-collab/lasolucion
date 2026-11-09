@@ -8,6 +8,12 @@ const isPomodoroFocusActive = (): boolean => {
   }
 };
 
+const hasUserActivation = (): boolean => {
+  if (typeof navigator === 'undefined') return false;
+  if (!('userActivation' in navigator)) return true;
+  return Boolean((navigator as unknown as { userActivation?: { hasBeenActive?: boolean } }).userActivation?.hasBeenActive);
+};
+
 export type BinauralMode = 'gamma' | 'beta' | 'alpha' | 'theta';
 export type NoiseType = 'brown' | 'pink' | 'white';
 export type DronePreset = 'deep' | 'subtle' | 'pulsing';
@@ -194,7 +200,7 @@ class QuantumSoundscapeEngine {
             this.ctx.suspend().catch(() => {});
           }
         } else {
-          if (this.suspendedForBackground && this.ctx.state === 'suspended') {
+          if (this.suspendedForBackground && this.ctx.state === 'suspended' && hasUserActivation()) {
             this.suspendedForBackground = false;
             this.ctx.resume().catch(() => {});
           }
@@ -241,24 +247,30 @@ class QuantumSoundscapeEngine {
   }
 
   private initCtx() {
+    if (!hasUserActivation()) return;
     if (!this.ctx && typeof window !== 'undefined') {
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (AudioCtx) {
-        this.ctx = new AudioCtx();
-        this.masterGain = this.ctx.createGain();
-        this.masterGain.gain.setValueAtTime(0, this.ctx.currentTime);
+        try {
+          this.ctx = new AudioCtx();
+          this.masterGain = this.ctx.createGain();
+          this.masterGain.gain.setValueAtTime(0, this.ctx.currentTime);
 
-        // Master gentle low-pass to avoid digital clipping & fatigue
-        const masterFilter = this.ctx.createBiquadFilter();
-        masterFilter.type = 'lowpass';
-        masterFilter.frequency.value = 14000;
+          // Master gentle low-pass to avoid digital clipping & fatigue
+          const masterFilter = this.ctx.createBiquadFilter();
+          masterFilter.type = 'lowpass';
+          masterFilter.frequency.value = 14000;
 
-        this.masterGain.connect(masterFilter);
-        masterFilter.connect(this.ctx.destination);
+          this.masterGain.connect(masterFilter);
+          masterFilter.connect(this.ctx.destination);
+        } catch {
+          this.ctx = null;
+          return;
+        }
       }
     }
-    if (this.ctx && this.ctx.state === 'suspended') {
-      this.ctx.resume();
+    if (this.ctx && this.ctx.state === 'suspended' && hasUserActivation()) {
+      this.ctx.resume().catch(() => {});
     }
   }
 

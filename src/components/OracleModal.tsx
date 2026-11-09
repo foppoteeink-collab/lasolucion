@@ -45,9 +45,14 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
   const [prompt, setPrompt] = useState('');
   const [scheduleMode, setScheduleMode] = useState<'master_blocks' | 'detailed'>('master_blocks');
   const [injectMode, setInjectMode] = useState<'replace_pending' | 'merge'>('replace_pending');
-  const [enginePreference, setEnginePreference] = useState<'ai' | 'local'>(() =>
-    hasActiveGeminiKey() ? 'ai' : 'local'
-  );
+  const [enginePreference, setEnginePreference] = useState<'ai' | 'local'>(() => {
+    // Leer preferencia guardada del usuario
+    try {
+      const saved = localStorage.getItem('kai_oracle_engine_preference');
+      if (saved === 'ai' || saved === 'local') return saved;
+    } catch {}
+    return hasActiveGeminiKey() ? 'ai' : 'local';
+  });
   const [showPromptHelp, setShowPromptHelp] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -92,7 +97,8 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
       const active = hasActiveGeminiKey();
       setIsKeyConfigured(active);
       setInputKey(getEffectiveGeminiApiKey() || '');
-      if (!active) {
+      // Solo forzar 'local' si no hay clave Gemini Y no hay preferencia guardada
+      if (!active && !localStorage.getItem('kai_oracle_engine_preference')) {
         setEnginePreference('local');
       }
 
@@ -897,6 +903,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                           soundFX.playClick();
                           triggerHaptic(15);
                           setEnginePreference('ai');
+                          try { localStorage.setItem('kai_oracle_engine_preference', 'ai'); } catch {}
                           if (!isKeyConfigured) {
                             setShowKeyInput(true);
                           }
@@ -923,6 +930,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                           soundFX.playClick();
                           triggerHaptic(15);
                           setEnginePreference('local');
+                          try { localStorage.setItem('kai_oracle_engine_preference', 'local'); } catch {}
                         }}
                         className={`flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                           enginePreference === 'local'

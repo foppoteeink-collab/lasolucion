@@ -81,46 +81,66 @@ export const getTrustedNow = (): Date => {
   return new Date(Date.now() + cachedServerOffsetMs);
 };
 
+let activeNetworkSyncPromise: Promise<number> | null = null;
+let lastNetworkSyncAt = 0;
+const NETWORK_SYNC_COOLDOWN_MS = 30000;
+
 /**
  * Synchronizes client time against the server's HTTP response Date header.
- * Lightweight, non-blocking check.
+ * Lightweight, deduplicated, non-blocking check.
  */
 export const syncNetworkTime = async (): Promise<number> => {
   if (typeof window === 'undefined' || !navigator.onLine) {
     return cachedServerOffsetMs;
   }
 
-  try {
-    const startTime = Date.now();
-    // Fast HEAD/GET request to a static file with no-cache to obtain authoritative HTTP Date
-    const response = await fetch('/api/build-rev', {
-      method: 'GET',
-      cache: 'no-store',
-    });
-
-    const dateHeader = response.headers.get('date');
-    if (dateHeader) {
-      const serverTimestamp = new Date(dateHeader).getTime();
-      const endTime = Date.now();
-      const latencyRoundTrip = Math.max(0, endTime - startTime);
-      // Adjust for half of round-trip network latency
-      const estimatedServerNow = serverTimestamp + Math.round(latencyRoundTrip / 2);
-      const calculatedOffset = estimatedServerNow - endTime;
-
-      // Only update if difference exceeds 2.5 seconds (filters out normal network jitter)
-      if (Math.abs(calculatedOffset) > 2500) {
-        setNetworkTimeOffset(calculatedOffset);
-        return calculatedOffset;
-      } else {
-        setNetworkTimeOffset(0);
-        return 0;
-      }
-    }
-  } catch (err) {
-    console.warn('[DateSync] Network time sync notice:', err);
+  const now = Date.now();
+  if (activeNetworkSyncPromise) {
+    return activeNetworkSyncPromise;
+  }
+  if (lastNetworkSyncAt > 0 && now - lastNetworkSyncAt < NETWORK_SYNC_COOLDOWN_MS) {
+    return cachedServerOffsetMs;
   }
 
-  return cachedServerOffsetMs;
+  activeNetworkSyncPromise = (async () => {
+    try {
+      const startTime = Date.now();
+      // Fast GET request with no-cache to obtain authoritative HTTP Date
+      const response = await fetch('/api/build-rev', {
+        method: 'GET',
+        cache: 'no-store',
+      });
+
+      lastNetworkSyncAt = Date.now();
+      const dateHeader = response.headers.get('date');
+      if (dateHeader) {
+        const serverTimestamp = new Date(dateHeader).getTime();
+        const endTime = Date.now();
+        const latencyRoundTrip = Math.max(0, endTime - startTime);
+        // Adjust for half of round-trip network latency
+        const estimatedServerNow = serverTimestamp + Math.round(latencyRoundTrip / 2);
+        const calculatedOffset = estimatedServerNow - endTime;
+
+        // Only update if difference exceeds 2.5 seconds (filters out normal network jitter)
+        if (Math.abs(calculatedOffset) > 2500) {
+          setNetworkTimeOffset(calculatedOffset);
+          return calculatedOffset;
+        } else {
+          setNetworkTimeOffset(0);
+          return 0;
+        }
+      }
+    } catch (err) {
+      lastNetworkSyncAt = Date.now();
+      console.warn('[DateSync] Network time sync notice:', err);
+    } finally {
+      activeNetworkSyncPromise = null;
+    }
+
+    return cachedServerOffsetMs;
+  })();
+
+  return activeNetworkSyncPromise;
 };
 
 /**
