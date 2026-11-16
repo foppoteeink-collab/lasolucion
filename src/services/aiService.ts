@@ -1437,4 +1437,97 @@ SECONDARY_COLOR: #hex
   };
 }
 
+const OFFICIAL_MULTIVERSE_STYLES: KaiMultiverseStyle[] = [
+  'pixar',
+  'cartoon',
+  'anime',
+  'pop',
+  'doodle',
+  'clay3d',
+];
+
+/**
+ * Forja simultánea de los 6 estilos del multiverso a partir de una sola foto.
+ * Permite al usuario tomar una foto a cualquier objeto y recibir las 6 variantes
+ * para comparar y elegir su favorita de inmediato.
+ */
+export async function forgeAllKaiVariantsFromImage(params: {
+  imageBase64: string;
+  mimeType?: string;
+  promptDescription?: string;
+  mood?: KaiTemperament;
+  onProgress?: (info: {
+    completed: number;
+    total: number;
+    currentStyle?: string;
+    detectedObject?: string;
+    variants: KaiCustomForm[];
+  }) => void;
+}): Promise<KaiCustomForm[]> {
+  const { imageBase64, mimeType = 'image/jpeg', promptDescription = '', mood = 'stoic', onProgress } = params;
+
+  if (!imageBase64 || typeof imageBase64 !== 'string') {
+    throw new Error('Falta la imagen a procesar en la Forja Neural.');
+  }
+
+  const total = OFFICIAL_MULTIVERSE_STYLES.length;
+  let completed = 0;
+  const variantsMap = new Map<KaiMultiverseStyle, KaiCustomForm>();
+  let sharedDetectedObject: string | undefined = undefined;
+
+  // Ejecutamos la forja de los 6 estilos en paralelo con Promise.allSettled
+  const tasks = OFFICIAL_MULTIVERSE_STYLES.map(async (style) => {
+    try {
+      const res = await forgeKaiFromImage({
+        imageBase64,
+        mimeType,
+        promptDescription,
+        artStyle: style,
+        mood,
+        onProgress: (_, data) => {
+          if (data?.detectedObject && !sharedDetectedObject) {
+            sharedDetectedObject = data.detectedObject;
+          }
+        },
+      });
+
+      if (res && res.svgContent) {
+        variantsMap.set(style, res);
+      }
+      return res;
+    } catch (err) {
+      console.warn(`[MultiForge] Fallo estilo ${style}:`, err);
+      return null;
+    } finally {
+      completed++;
+      if (onProgress) {
+        const currentList = Array.from(variantsMap.values());
+        onProgress({
+          completed,
+          total,
+          currentStyle: style,
+          detectedObject: sharedDetectedObject,
+          variants: currentList,
+        });
+      }
+    }
+  });
+
+  await Promise.allSettled(tasks);
+
+  // Ordenar según el orden canónico
+  const result: KaiCustomForm[] = [];
+  for (const style of OFFICIAL_MULTIVERSE_STYLES) {
+    const v = variantsMap.get(style);
+    if (v) result.push(v);
+  }
+
+  if (result.length === 0) {
+    throw new Error('No se pudo generar ninguna variante de KAI. Por favor verifica tu foto o intenta de nuevo.');
+  }
+
+  return result;
+}
+
+
 
