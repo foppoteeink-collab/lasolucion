@@ -15,6 +15,7 @@ import { QuickHabitsWidget } from './task-list/QuickHabitsWidget';
 import { LegendaryBountyCard } from './task-list/LegendaryBountyCard';
 import { TaskCard } from './task-list/TaskCard';
 import { SciFiEmptyState } from './task-list/SciFiEmptyState';
+import { DailyBossWidget } from './DailyBossWidget';
 
 // Lazy Loaded Modals for Zero First-Paint Overhead
 const ClearDayConfirmModal = React.lazy(() => import('./ClearDayConfirmModal').then(m => ({ default: m.ClearDayConfirmModal })));
@@ -70,6 +71,8 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
   habitMastery = {},
   stats,
   onUpdateStats,
+  onClaimBossBounty,
+  hasClaimedToday,
 }) => {
   const todayDateStr = getTodayDateString();
   const reconciliationLimit = addDaysToDateString(todayDateStr, -2);
@@ -566,6 +569,16 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
           completed: completedTimelineCount,
         }}
       />
+
+      {/* KAI vs Daily Boss Battle Arena */}
+      {onClaimBossBounty && (
+        <DailyBossWidget
+          tasks={tasks}
+          hasClaimedToday={Boolean(hasClaimedToday)}
+          onClaimBossBounty={onClaimBossBounty}
+          currentDate={currentDate}
+        />
+      )}
 
       {/* Daily Boss & Legendary Bounty Drawer */}
       {legendaryTask && (
