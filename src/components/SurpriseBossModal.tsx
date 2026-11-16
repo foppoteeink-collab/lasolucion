@@ -69,7 +69,7 @@ export const SurpriseBossModal: React.FC<SurpriseBossModalProps> = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[120] flex items-center justify-center p-4 sm:p-6 bg-black/85 backdrop-blur-xl font-sans"
+        className="fixed inset-0 z-[120] flex items-center justify-center p-4 sm:p-6 bg-black/92 font-sans"
         onClick={onClose}
       >
         {/* Resplandor ambiental de plasma en cian y dorado */}
@@ -83,7 +83,7 @@ export const SurpriseBossModal: React.FC<SurpriseBossModalProps> = ({
           initial={{ scale: 0.9, y: 20 }}
           animate={{ scale: 1, y: 0 }}
           exit={{ scale: 0.9, opacity: 0 }}
-          className="w-full max-w-sm sm:max-w-md bg-[#030712]/95 rounded-3xl border border-cyan-500/35 shadow-[0_0_50px_rgba(0,240,255,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] overflow-hidden relative text-white backdrop-blur-2xl"
+          className="w-full max-w-sm sm:max-w-md bg-[#030712]/[0.98] rounded-3xl border border-cyan-500/35 shadow-[0_0_50px_rgba(0,240,255,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] overflow-hidden relative text-white"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Micrograno táctil Moxen Vidrio */}
@@ -110,8 +110,8 @@ export const SurpriseBossModal: React.FC<SurpriseBossModalProps> = ({
               {displayTitle}
             </h2>
             
-            <p className="text-slate-300 text-xs sm:text-sm mb-4 leading-relaxed font-mono">
-              <strong className="text-cyan-300">FOCO CONQUISTADO:</strong> Has completado 3 tareas o hábitos prioritarios y recuperado tu impulso diario.
+            <p className="text-slate-300 text-xs sm:text-sm mb-4 leading-relaxed font-sans">
+              <strong className="text-cyan-300">¡Gran avance!</strong> Has completado tus tareas prioritarias y asegurado tu avance del día.
             </p>
 
             {/* Tarjeta de Recompensas */}

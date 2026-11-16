@@ -33,18 +33,16 @@ export const KaiCosmeticEffects: React.FC<KaiCosmeticEffectsProps> = ({
           className="absolute w-[180%] h-[180%] -translate-y-2 overflow-visible"
           fill="none"
         >
-          <defs>
-            <filter id="wing-glow" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="3.5" result="blur" />
-              <feMerge>
-                <feMergeNode in="blur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-          </defs>
-
           {/* Ala Izquierda */}
-          <g filter="url(#wing-glow)" className="animate-pulse">
+          <g className="animate-pulse">
+            <polygon
+              points="65,75 10,40 32,85 48,92"
+              fill="none"
+              stroke={activeColor}
+              strokeWidth="6"
+              strokeOpacity="0.22"
+              strokeLinejoin="round"
+            />
             <polygon
               points="65,75 10,40 32,85 48,92"
               fill={`${activeColor}25`}
@@ -70,7 +68,15 @@ export const KaiCosmeticEffects: React.FC<KaiCosmeticEffectsProps> = ({
           </g>
 
           {/* Ala Derecha */}
-          <g filter="url(#wing-glow)" className="animate-pulse">
+          <g className="animate-pulse">
+            <polygon
+              points="175,75 230,40 208,85 192,92"
+              fill="none"
+              stroke={activeColor}
+              strokeWidth="6"
+              strokeOpacity="0.22"
+              strokeLinejoin="round"
+            />
             <polygon
               points="175,75 230,40 208,85 192,92"
               fill={`${activeColor}25`}
@@ -104,18 +110,8 @@ export const KaiCosmeticEffects: React.FC<KaiCosmeticEffectsProps> = ({
           className="absolute w-[160%] h-[160%] overflow-visible"
           fill="none"
         >
-          <defs>
-            <filter id="plasma-blur">
-              <feGaussianBlur stdDeviation="3" result="glow" />
-              <feMerge>
-                <feMergeNode in="glow" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-          </defs>
-
-          {/* Rayos danzantes con animación de pulsos */}
-          <g filter="url(#plasma-blur)">
+          {/* Rayos danzantes con animación de pulsos (sin feGaussianBlur para 60 FPS GPU) */}
+          <g>
             {/* Rayo superior izquierdo */}
             <motion.path
               d="M 35,45 L 50,60 L 44,70 L 62,85"

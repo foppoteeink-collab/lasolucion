@@ -1,4 +1,9 @@
 import { useUIStore } from '../store/useUIStore';
+import {
+  createGuardedAudioContext,
+  isAudioIpcDisabled,
+  probeAudioServiceAvailability,
+} from './audioProbe';
 
 const isPomodoroFocusActive = (): boolean => {
   try {
@@ -186,6 +191,9 @@ class QuantumSoundscapeEngine {
 
   private listeners: Set<(state: SoundscapeState) => void> = new Set();
   private suspendedForBackground = false;
+  private ctxInitScheduled = false;
+  private ctxDisabled = false;
+  private pendingReadyCallbacks: (() => void)[] = [];
 
   constructor() {
     this.loadState();
@@ -246,31 +254,76 @@ class QuantumSoundscapeEngine {
     return { ...this.state };
   }
 
-  private initCtx() {
-    if (!hasUserActivation()) return;
-    if (!this.ctx && typeof window !== 'undefined') {
-      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      if (AudioCtx) {
-        try {
-          this.ctx = new AudioCtx();
-          this.masterGain = this.ctx.createGain();
-          this.masterGain.gain.setValueAtTime(0, this.ctx.currentTime);
+  private createCtxNow() {
+    if (this.ctx || this.ctxDisabled || isAudioIpcDisabled() || typeof window === 'undefined' || !hasUserActivation()) {
+      return;
+    }
+    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtx) {
+      this.ctxDisabled = true;
+      return;
+    }
+    try {
+      const guardedCtx = createGuardedAudioContext(AudioCtx);
+      if (!guardedCtx) {
+        this.ctx = null;
+        this.ctxDisabled = true;
+        return;
+      }
+      this.ctx = guardedCtx;
+      this.masterGain = this.ctx.createGain();
+      this.masterGain.gain.setValueAtTime(0, this.ctx.currentTime);
 
-          // Master gentle low-pass to avoid digital clipping & fatigue
-          const masterFilter = this.ctx.createBiquadFilter();
-          masterFilter.type = 'lowpass';
-          masterFilter.frequency.value = 14000;
+      // Master gentle low-pass to avoid digital clipping & fatigue
+      const masterFilter = this.ctx.createBiquadFilter();
+      masterFilter.type = 'lowpass';
+      masterFilter.frequency.value = 14000;
 
-          this.masterGain.connect(masterFilter);
-          masterFilter.connect(this.ctx.destination);
-        } catch {
-          this.ctx = null;
+      this.masterGain.connect(masterFilter);
+      masterFilter.connect(this.ctx.destination);
+    } catch {
+      this.ctx = null;
+      this.ctxDisabled = true;
+    }
+  }
+
+  private initCtx(onColdReady?: () => void) {
+    if (typeof window === 'undefined' || this.ctxDisabled || isAudioIpcDisabled() || !hasUserActivation()) return;
+    if (this.ctx) {
+      if (this.ctx.state === 'suspended') {
+        this.ctx.resume().catch(() => {});
+      }
+      return;
+    }
+
+    if (onColdReady && this.pendingReadyCallbacks.length < 4) {
+      this.pendingReadyCallbacks.push(onColdReady);
+    }
+
+    if (!this.ctxInitScheduled) {
+      this.ctxInitScheduled = true;
+      void probeAudioServiceAvailability().then((available) => {
+        this.ctxInitScheduled = false;
+        if (!available || isAudioIpcDisabled()) {
+          this.ctxDisabled = true;
+          this.pendingReadyCallbacks.length = 0;
           return;
         }
-      }
-    }
-    if (this.ctx && this.ctx.state === 'suspended' && hasUserActivation()) {
-      this.ctx.resume().catch(() => {});
+        this.createCtxNow();
+        if (this.ctx) {
+          if (this.ctx.state === 'suspended' && hasUserActivation()) {
+            this.ctx.resume().catch(() => {});
+          }
+          const callbacks = this.pendingReadyCallbacks.splice(0);
+          callbacks.forEach((cb) => {
+            try {
+              cb();
+            } catch {}
+          });
+        } else {
+          this.pendingReadyCallbacks.length = 0;
+        }
+      });
     }
   }
 
@@ -535,6 +588,15 @@ class QuantumSoundscapeEngine {
       this.stopTimeoutId = null;
     }
 
+    if (!this.ctx || !this.masterGain) {
+      this.initCtx(() => {
+        if (!this.state.isPlaying && !this.ctxDisabled && !isAudioIpcDisabled()) {
+          this.start(fadeDuration);
+        }
+      });
+      return;
+    }
+
     this.initCtx();
     if (!this.ctx || !this.masterGain) return;
 
@@ -552,6 +614,7 @@ class QuantumSoundscapeEngine {
   }
 
   public stop(fadeDuration = 0.4) {
+    this.pendingReadyCallbacks.length = 0;
     if (this.stopTimeoutId !== null) {
       window.clearTimeout(this.stopTimeoutId);
       this.stopTimeoutId = null;
@@ -756,6 +819,10 @@ class QuantumSoundscapeEngine {
 
   // Quantum Bell / Tibetan Chime harmonic completion chime
   public playQuantumChime() {
+    if (!this.ctx) {
+      this.initCtx(() => this.playQuantumChime());
+      return;
+    }
     this.initCtx();
     if (!this.ctx) return;
     const now = this.ctx.currentTime;

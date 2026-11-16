@@ -682,7 +682,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
   return (
     <AnimatePresence>
       <motion.div 
-        className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md"
+        className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/88"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -691,7 +691,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
           role="dialog"
           aria-modal="true"
           aria-labelledby="oracle-modal-title"
-          className="bg-[#030712]/95 border border-cyan-500/35 w-full max-w-2xl rounded-2xl sm:rounded-3xl shadow-[0_0_50px_rgba(0,240,255,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] overflow-hidden flex flex-col max-h-[90dvh] sm:max-h-[88vh] backdrop-blur-2xl relative text-left"
+          className="bg-[#030712]/[0.98] border border-cyan-500/35 w-full max-w-2xl rounded-2xl sm:rounded-3xl shadow-[0_0_50px_rgba(0,240,255,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] overflow-hidden flex flex-col max-h-[90dvh] sm:max-h-[88vh] relative text-left"
           initial={{ scale: 0.95, y: 15 }}
           animate={{ scale: 1, y: 0 }}
           exit={{ scale: 0.95, y: 15 }}

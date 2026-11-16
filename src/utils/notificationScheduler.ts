@@ -29,6 +29,10 @@ export interface NotificationSettings {
   streakAlert: boolean;        // Alerta si racha en peligro (4h sin completar tareas)
   pomodoroComplete: boolean;   // Notificación al completar un pomodoro
   nightlyHour: number;         // Hora para reflexión nocturna (default: 21)
+  startDayReminder?: boolean;  // Recordatorio para iniciar jornada laboral
+  dayStartHour?: number;       // Hora habitual de inicio (default: 8)
+  closeDayReminder?: boolean;  // Recordatorio para cerrar jornada y llenar bitácora
+  dayCloseHour?: number;       // Hora habitual de cierre (default: 18)
 }
 
 const DEFAULT_SETTINGS: NotificationSettings = {
@@ -39,6 +43,10 @@ const DEFAULT_SETTINGS: NotificationSettings = {
   streakAlert: true,
   pomodoroComplete: true,
   nightlyHour: 21,
+  startDayReminder: true,
+  dayStartHour: 8,
+  closeDayReminder: true,
+  dayCloseHour: 18,
 };
 
 export function getNotificationSettings(): NotificationSettings {
@@ -280,11 +288,106 @@ function scheduleStreakAlert(streakDays: number, tasks: TaskItem[]): void {
   }
 }
 
+/** Programa alerta para iniciar la jornada laboral si aún no se ha iniciado */
+function scheduleStartDayReminder(dayStartHour: number, isDayStarted: boolean): void {
+  if (isDayStarted) return;
+
+  const ms = msUntilHour(dayStartHour, 0);
+  if (ms !== null) {
+    const id = setTimeout(async () => {
+      await notificationService.pushToOS(
+        '🌅 ¡Tu jornada laboral comienza!',
+        'No olvides iniciar tu turno en La Solución para activar tus tareas y objetivos del día.',
+        { tag: 'start-day-reminder', renotify: true }
+      );
+    }, ms);
+    registerTimeout(id);
+  } else {
+    // Si la hora ya pasó hoy y son antes de las 15:00
+    const nowHour = new Date().getHours();
+    if (nowHour >= dayStartHour && nowHour < 15) {
+      const id = setTimeout(async () => {
+        await notificationService.pushToOS(
+          '⏰ Recordatorio de Jornada',
+          'Aún no has iniciado tu jornada de hoy. Toca para abrir tu turno y registrar tu progreso.',
+          { tag: 'start-day-reminder-missed', renotify: true }
+        );
+      }, 25000);
+      registerTimeout(id);
+    }
+  }
+}
+
+/** Programa alerta para cerrar la jornada y llenar la bitácora */
+function scheduleCloseDayAndJournalReminder(
+  dayCloseHour: number,
+  nightlyHour: number,
+  isDayFinished: boolean,
+  hasJournalEntry: boolean
+): void {
+  if (isDayFinished && hasJournalEntry) return;
+
+  // Alerta de fin de turno habitual
+  const msClose = msUntilHour(dayCloseHour, 0);
+  if (msClose !== null) {
+    const id = setTimeout(async () => {
+      await notificationService.pushToOS(
+        '🏁 Cierre de Jornada Laboral',
+        'Tu turno ha terminado. Tómate 1 minuto para dar check a tus tareas y llenar tu bitácora.',
+        { tag: 'close-day-reminder', renotify: true }
+      );
+    }, msClose);
+    registerTimeout(id);
+  }
+
+  // Alerta nocturna para llenar bitácora
+  const msNight = msUntilHour(nightlyHour, 0);
+  if (msNight !== null) {
+    const id = setTimeout(async () => {
+      await notificationService.pushToOS(
+        '📓 Bitácora y Cierre Diario',
+        '¡No dejes tu día sin registrar! Llena tu reflexión diaria, reclama tus recompensas y protege tu racha.',
+        { tag: 'nightly-journal-reminder', renotify: true }
+      );
+    }, msNight);
+    registerTimeout(id);
+  }
+}
+
+/** Recordatorios periódicos para tareas pendientes (incluso sin timeBlock asignado) */
+function scheduleGeneralPendingTaskCheckins(tasks: TaskItem[]): void {
+  const pendingTasks = tasks.filter((t) => !t.completed);
+  if (pendingTasks.length === 0) return;
+
+  const checkHours = [12, 16];
+  for (const hour of checkHours) {
+    const ms = msUntilHour(hour, 30);
+    if (ms === null) continue;
+
+    const id = setTimeout(async () => {
+      const stillPending = tasks.filter((t) => !t.completed);
+      if (stillPending.length === 0) return;
+
+      await notificationService.pushToOS(
+        `⚡ Tienes ${stillPending.length} misiones pendientes`,
+        `Ej: "${stillPending[0].title}". Toca para darles check o avanzar en tu jornada.`,
+        { tag: `pending-checkin-${hour}`, renotify: false }
+      );
+    }, ms);
+    registerTimeout(id);
+  }
+}
+
 // ─── Función principal: programar todo ───────────────────────────────────────
 
 export interface SchedulerState {
   tasks: TaskItem[];
   streakDays: number;
+  isDayStarted?: boolean;
+  isDayFinished?: boolean;
+  hasJournalEntry?: boolean;
+  dayStartHour?: number;
+  dayCloseHour?: number;
 }
 
 /**
@@ -293,16 +396,34 @@ export interface SchedulerState {
  */
 export async function scheduleAll(state: SchedulerState): Promise<void> {
   // Solo funciona si los permisos están otorgados
-  if (notificationService.getPermission() !== 'granted') return;
+  const permission = await notificationService.syncPermissionAsync();
+  if (permission !== 'granted') return;
 
   // Cancelar programación anterior
   cancelAllScheduled();
 
   const settings = getNotificationSettings();
-  const { tasks, streakDays } = state;
+  const { 
+    tasks, 
+    streakDays, 
+    isDayStarted = false, 
+    isDayFinished = false, 
+    hasJournalEntry = false,
+    dayStartHour = settings.dayStartHour ?? 8,
+    dayCloseHour = settings.dayCloseHour ?? 18
+  } = state;
+
+  if (settings.startDayReminder ?? true) {
+    scheduleStartDayReminder(dayStartHour, isDayStarted);
+  }
+
+  if (settings.closeDayReminder ?? true) {
+    scheduleCloseDayAndJournalReminder(dayCloseHour, settings.nightlyHour, isDayFinished, hasJournalEntry);
+  }
 
   if (settings.habitReminders) {
     scheduleHabitReminders(tasks);
+    scheduleGeneralPendingTaskCheckins(tasks);
   }
 
   if (settings.morningBriefing) {

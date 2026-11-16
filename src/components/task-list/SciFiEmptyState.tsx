@@ -26,7 +26,7 @@ export const SciFiEmptyState: React.FC<SciFiEmptyStateProps> = ({
   const copy = useNarrativeCopy();
 
   return (
-    <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-[#001428]/90 border border-blue-500/40 p-6 sm:p-10 text-center shadow-[0_0_30px_rgba(0,140,255,0.15)] backdrop-blur-md transition-all my-4">
+    <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-[#001428]/[0.95] border border-blue-500/40 p-6 sm:p-10 text-center shadow-[0_0_30px_rgba(0,140,255,0.15)] transition-all my-4">
       {/* Sci-Fi Decorative Corner Accents */}
       <div className="absolute top-2 left-2 w-3 h-3 border-t-2 border-l-2 border-cyan-400/80 rounded-tl-sm pointer-events-none" />
       <div className="absolute top-2 right-2 w-3 h-3 border-t-2 border-r-2 border-cyan-400/80 rounded-tr-sm pointer-events-none" />

@@ -143,7 +143,7 @@ export const DamageOverlay: React.FC = () => {
 
       {/* Death Modal */}
       {showDeath && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/92 p-4">
           <div
             role="alertdialog"
             aria-modal="true"

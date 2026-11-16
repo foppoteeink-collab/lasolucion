@@ -8,10 +8,8 @@ import {
   Clock, 
   Check, 
   Layers, 
-  ArrowRight,
   Flame,
   Calendar,
-  Zap,
   BookmarkPlus
 } from 'lucide-react';
 import { DayTemplate, TaskItem } from '../types';
@@ -53,7 +51,6 @@ export const DayTemplatesModal: React.FC<DayTemplatesModalProps> = ({
   });
 
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>(DEFAULT_DAY_TEMPLATES[0].id);
-  const [applyMode, setApplyMode] = useState<'replace' | 'merge'>('replace');
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [newTemplateName, setNewTemplateName] = useState('');
   const [newTemplateDesc, setNewTemplateDesc] = useState('');
@@ -139,24 +136,16 @@ export const DayTemplatesModal: React.FC<DayTemplatesModalProps> = ({
     }
   };
 
-  const handleApply = () => {
-    if (!selectedTemplate) return;
-    soundFX.playTaskComplete();
-    triggerHaptic([30, 50, 40]);
-    onApplyTemplate(selectedTemplate, applyMode);
-    onClose();
-  };
-
   return (
     <div 
-      className="fixed inset-0 z-[120] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-fade-in font-sans"
+      className="fixed inset-0 z-[120] flex items-center justify-center p-3 sm:p-4 bg-black/88 animate-fade-in font-sans"
       onClick={onClose}
     >
       <div 
         role="dialog"
         aria-modal="true"
         aria-labelledby="day-templates-modal-title"
-        className="w-full max-w-4xl max-h-[90dvh] sm:max-h-[86vh] flex flex-col rounded-2xl sm:rounded-3xl bg-[#030712]/95 border border-cyan-500/35 shadow-[0_0_50px_rgba(0,240,255,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] relative overflow-hidden backdrop-blur-2xl text-left text-white"
+        className="w-full max-w-4xl max-h-[90dvh] sm:max-h-[86vh] flex flex-col rounded-2xl sm:rounded-3xl bg-[#030712]/[0.98] border border-cyan-500/35 shadow-[0_0_50px_rgba(0,240,255,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] relative overflow-hidden text-left text-white"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Micrograno táctil Moxen Vidrio */}
@@ -431,40 +420,7 @@ export const DayTemplatesModal: React.FC<DayTemplatesModalProps> = ({
                   ))}
                 </div>
 
-                {/* Apply Options */}
-                <div className="pt-3 border-t border-white/10 space-y-3 mt-auto">
-                  <div className="flex items-center justify-between gap-2 flex-wrap text-xs">
-                    <span id="apply-mode-label" className="font-anton tracking-wider uppercase text-slate-300">Modo de Aplicación:</span>
-                    <div role="radiogroup" aria-labelledby="apply-mode-label" className="flex items-center gap-3">
-                      <label className="flex items-center gap-1.5 cursor-pointer text-slate-300 hover:text-white text-xs">
-                        <input
-                          type="radio"
-                          name="applyMode"
-                          checked={applyMode === 'replace'}
-                          onChange={() => {
-                            triggerHaptic(15);
-                            setApplyMode('replace');
-                          }}
-                          className="accent-cyan-400 cursor-pointer"
-                        />
-                        <span>Sustituir día actual</span>
-                      </label>
-                      <label className="flex items-center gap-1.5 cursor-pointer text-slate-300 hover:text-white text-xs">
-                        <input
-                          type="radio"
-                          name="applyMode"
-                          checked={applyMode === 'merge'}
-                          onChange={() => {
-                            triggerHaptic(15);
-                            setApplyMode('merge');
-                          }}
-                          className="accent-cyan-400 cursor-pointer"
-                        />
-                        <span>Añadir a las existentes</span>
-                      </label>
-                    </div>
-                  </div>
-                </div>
+
               </div>
             ) : (
               <div className="flex items-center justify-center h-full text-slate-500 text-xs font-mono">
@@ -475,31 +431,46 @@ export const DayTemplatesModal: React.FC<DayTemplatesModalProps> = ({
 
         </div>
 
-        {/* Pinned Bottom Sticky Footer (Dual Ergonomics del Pulgar) */}
-        <div className="p-3 sm:p-4 border-t border-white/10 bg-[#010810]/90 flex items-center justify-between gap-3 shrink-0 relative z-10">
+        {/* Footer con dos acciones claras */}
+        <div className="p-3 sm:p-4 border-t border-white/10 bg-[#010810]/90 flex flex-col gap-2 shrink-0 relative z-10">
+          {selectedTemplate && (
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  soundFX.playTaskComplete();
+                  triggerHaptic([30, 50, 40]);
+                  onApplyTemplate(selectedTemplate, 'merge');
+                  onClose();
+                }}
+                className="py-2.5 px-3 rounded-xl bg-white/[0.07] hover:bg-white/10 text-white font-anton uppercase text-xs tracking-wider flex items-center justify-center gap-1.5 border border-white/15 cursor-pointer transition-all active:scale-95"
+              >
+                <span>➕ Sumar a mi día</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  soundFX.playTaskComplete();
+                  triggerHaptic([30, 50, 40]);
+                  onApplyTemplate(selectedTemplate, 'replace');
+                  onClose();
+                }}
+                className="py-2.5 px-3 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-black font-anton uppercase text-xs tracking-wider flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(0,240,255,0.4)] cursor-pointer transition-all active:scale-95"
+              >
+                <span>⚡ Empezar limpio</span>
+              </button>
+            </div>
+          )}
           <button
             type="button"
             onClick={() => {
               soundFX.playClick();
               onClose();
             }}
-            aria-label="Volver y cerrar modal de plantillas"
-            className="w-full sm:w-auto px-5 py-2.5 bg-white/[0.05] hover:bg-white/10 text-slate-300 hover:text-white font-anton uppercase text-xs rounded-xl cursor-pointer transition-all border border-white/15 active:scale-95"
+            className="py-1.5 text-slate-500 hover:text-slate-300 font-mono text-xs text-center transition-colors cursor-pointer"
           >
-            Volver
+            Cancelar
           </button>
-
-          {selectedTemplate && (
-            <button
-              type="button"
-              onClick={handleApply}
-              aria-label={`Aplicar plantilla ${selectedTemplate.name} al día ${currentDate}`}
-              className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-black font-anton uppercase text-xs tracking-wider flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(0,240,255,0.4)] cursor-pointer transition-all chicle-btn active:scale-95"
-            >
-              <Zap className="w-4 h-4 fill-black" />
-              <span>Aplicar al Día ({currentDate})</span>
-            </button>
-          )}
         </div>
       </div>
     </div>

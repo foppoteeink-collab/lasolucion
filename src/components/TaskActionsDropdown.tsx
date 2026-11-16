@@ -144,7 +144,7 @@ export const TaskActionsDropdown: React.FC<TaskActionsDropdownProps> = ({
             animate={{ opacity: 1, x: 0, scale: 1 }}
             exit={{ opacity: 0, x: 20, scale: 0.9 }}
             transition={{ type: 'spring', damping: 25, stiffness: 380 }}
-            className="absolute right-9 top-1/2 -translate-y-1/2 z-40 flex items-center gap-1.5 px-2 py-1 rounded-full bg-[#070514]/95 border border-cyan-500/40 backdrop-blur-xl shadow-[0_0_22px_rgba(0,0,0,0.9),0_0_14px_rgba(0,240,255,0.25)]"
+            className="absolute right-9 top-1/2 -translate-y-1/2 z-40 flex items-center gap-1.5 px-2 py-1 rounded-full bg-[#070514]/[0.98] border border-cyan-500/40 shadow-[0_0_22px_rgba(0,0,0,0.9),0_0_14px_rgba(0,240,255,0.25)]"
             onClick={(e) => e.stopPropagation()}
           >
             {actions.map((act, idx) => (

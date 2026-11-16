@@ -276,12 +276,12 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
 
   const modalContent = (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[170] flex items-center justify-center p-2.5 sm:p-4 bg-black/85 backdrop-blur-md overflow-hidden font-sans portal-modal-root">
+      <div className="fixed inset-0 z-[170] flex items-center justify-center p-2.5 sm:p-4 bg-black/88 overflow-hidden font-sans portal-modal-root">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
-          className={`relative w-full max-w-lg max-h-[92vh] sm:max-h-[90vh] flex flex-col rounded-2xl sm:rounded-3xl bg-[#030712]/95 border shadow-[0_0_50px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.15)] overflow-hidden transition-all backdrop-blur-2xl text-white ${
+          className={`relative w-full max-w-lg max-h-[92vh] sm:max-h-[90vh] flex flex-col rounded-2xl sm:rounded-3xl bg-[#030712]/[0.98] border shadow-[0_0_50px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.15)] overflow-hidden transition-all text-white ${
             activeTab === 'oracle'
               ? 'border-amber-500/40 shadow-amber-950/50'
               : isEditingHabitMode
@@ -597,6 +597,19 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                         </div>
                       </div>
                     )}
+                    {!isEditingHabitMode && !editingTaskId && (
+                      <div className="p-3 rounded-2xl bg-cyan-950/40 border border-cyan-500/30 text-xs text-slate-200 flex items-start gap-2.5 mb-2">
+                        <div className="w-6 h-6 rounded-lg bg-cyan-950 border border-cyan-400/50 flex items-center justify-center text-cyan-300 font-bold shrink-0 mt-0.5 text-xs">
+                          💡
+                        </div>
+                        <div className="space-y-0.5">
+                          <span className="font-bold text-white block">Añade tu tarea para hoy</span>
+                          <span className="text-[11px] text-slate-300 block">
+                            Escribe lo que vas a realizar y pulsa "Crear Tarea". Al terminarla, tocas su casilla para marcarla (darle check/X) y acumular tus puntos y monedas.
+                          </span>
+                        </div>
+                      </div>
+                    )}
                     <div>
                       <label className="block text-xs font-semibold text-slate-300 mb-1">
                         {isEditingHabitMode 
@@ -611,12 +624,52 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                         onChange={(e) => setNewTitle(e.target.value)}
                         placeholder={
                           isEditingHabitMode 
-                            ? (is2166HabitMode ? 'Ej. Dejar de fumar, Tomar agua, Gimnasio, Estudiar...' : 'Ej. Tarea de todos los martes, Revisión semanal, Pagar servicios...') 
-                            : 'Ej. Sesión de código profundo...'
+                            ? (is2166HabitMode ? 'Ej. Tomar 2L de agua, Caminar 30 mins, Leer 10 páginas...' : 'Ej. Revisión semanal, Pagar servicios, Reporte de lunes...') 
+                            : 'Ej. Enviar reporte a cliente, Limpiar espacio de trabajo, Comprar insumos...'
                         }
                         className="w-full bg-[#020712]/90 border border-white/15 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/50 rounded-xl px-3.5 py-2 sm:py-2.5 text-white text-xs sm:text-sm placeholder-slate-500 focus:outline-none transition-all shadow-inner"
                       />
                     </div>
+                    {/* Hora rápida: solo en modo tarea simple */}
+                    {!isEditingHabitMode && (
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center gap-1">
+                          <Icon name="clock" className="w-3.5 h-3.5 text-cyan-400" />
+                          ¿A qué hora? <span className="text-slate-500 font-normal ml-1">(opcional)</span>
+                        </label>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {[
+                            { label: '🌅 Mañana', value: '09:00' },
+                            { label: '☀️ Mediodía', value: '12:00' },
+                            { label: '🌆 Tarde', value: '15:00' },
+                            { label: '🌙 Noche', value: '19:00' },
+                          ].map(({ label, value }) => (
+                            <button
+                              key={value}
+                              type="button"
+                              onClick={() => {
+                                soundFX.playClick();
+                                setNewStartTime(newStartTime === value ? '' : value);
+                              }}
+                              className={`px-2.5 py-1.5 rounded-xl text-[11px] font-mono font-bold border transition-all cursor-pointer active:scale-95 ${
+                                newStartTime === value
+                                  ? 'bg-cyan-500/20 border-cyan-400 text-cyan-200 shadow-[0_0_8px_rgba(0,240,255,0.3)]'
+                                  : 'bg-black/40 border-white/15 text-slate-400 hover:border-white/30 hover:text-white'
+                              }`}
+                            >
+                              {label}
+                            </button>
+                          ))}
+                          <input
+                            type="time"
+                            value={newStartTime}
+                            onChange={(e) => setNewStartTime(e.target.value)}
+                            className="h-8 px-2 rounded-xl bg-black/40 border border-white/15 focus:border-cyan-400 text-white font-mono text-xs focus:outline-none w-[90px]"
+                            title="Hora personalizada"
+                          />
+                        </div>
+                      </div>
+                    )}
                     {!isEditingHabitMode && (
                       <div className="px-3 py-1.5 rounded-xl bg-cyan-950/30 border border-cyan-500/20 flex items-center justify-between text-xs">
                         <span className="text-slate-400 font-mono text-[11px]">Recompensa estimada:</span>
@@ -816,54 +869,56 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                       </div>
                     </div>
                   )}
-                  <div className="p-3.5 rounded-2xl bg-[#020712]/80 border border-white/10 space-y-2.5">
-                    <label className="flex items-center justify-between cursor-pointer select-none">
-                      <span className="text-xs font-semibold text-slate-300">¿Es un hábito con contador de meta?</span>
-                      <input
-                        type="checkbox"
-                        checked={isHabitType}
-                        onChange={(e) => {
-                          const checked = e.target.checked;
-                          setIsHabitType(checked);
-                          if (checked && habitTarget <= 1) {
-                            const match = newTitle.match(/(\d+)\s*(vasos?|litros?|mins?|minutos?|veces|p[aá]ginas?|km|pasos?|horas?|comidas?|sesiones?)?/i);
-                            const parsedTarget = match ? parseInt(match[1], 10) : NaN;
-                            const nextTarget = Number.isFinite(parsedTarget) && parsedTarget > 1 ? parsedTarget : 3;
-                            setHabitTarget(nextTarget);
-                            const parsedUnit = match?.[2]?.trim();
-                            if (parsedUnit && (!habitUnit || habitUnit === 'veces' || habitUnit === 'vez')) {
-                              setNewHabitUnit(parsedUnit.toLowerCase());
+                  {isEditingHabitMode && (
+                    <div className="p-3.5 rounded-2xl bg-[#020712]/80 border border-white/10 space-y-2.5">
+                      <label className="flex items-center justify-between cursor-pointer select-none">
+                        <span className="text-xs font-semibold text-slate-300">¿Es un hábito con contador de meta?</span>
+                        <input
+                          type="checkbox"
+                          checked={isHabitType}
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            setIsHabitType(checked);
+                            if (checked && habitTarget <= 1) {
+                              const match = newTitle.match(/(\d+)\s*(vasos?|litros?|mins?|minutos?|veces|p[aá]ginas?|km|pasos?|horas?|comidas?|sesiones?)?/i);
+                              const parsedTarget = match ? parseInt(match[1], 10) : NaN;
+                              const nextTarget = Number.isFinite(parsedTarget) && parsedTarget > 1 ? parsedTarget : 3;
+                              setHabitTarget(nextTarget);
+                              const parsedUnit = match?.[2]?.trim();
+                              if (parsedUnit && (!habitUnit || habitUnit === 'veces' || habitUnit === 'vez')) {
+                                setNewHabitUnit(parsedUnit.toLowerCase());
+                              }
                             }
-                          }
-                        }}
-                        className="w-4 h-4 rounded border-gray-700 text-purple-500 focus:ring-purple-500 cursor-pointer"
-                      />
-                    </label>
-                    {isHabitType && (
-                      <div className="grid grid-cols-2 gap-3 pt-1">
-                        <div>
-                          <label className="block text-[11px] text-slate-400 mb-1 font-mono uppercase tracking-wider">Meta numérica</label>
-                          <input
-                            type="number"
-                            min={1}
-                            value={habitTarget}
-                            onChange={(e) => setHabitTarget(parseInt(e.target.value, 10) || 1)}
-                            className="w-full bg-[#020712]/90 border border-white/15 focus:border-purple-400 rounded-xl px-3 py-1.5 text-white font-mono text-sm"
-                          />
+                          }}
+                          className="w-4 h-4 rounded border-gray-700 text-purple-500 focus:ring-purple-500 cursor-pointer"
+                        />
+                      </label>
+                      {isHabitType && (
+                        <div className="grid grid-cols-2 gap-3 pt-1">
+                          <div>
+                            <label className="block text-[11px] text-slate-400 mb-1 font-mono uppercase tracking-wider">Meta numérica</label>
+                            <input
+                              type="number"
+                              min={1}
+                              value={habitTarget}
+                              onChange={(e) => setHabitTarget(parseInt(e.target.value, 10) || 1)}
+                              className="w-full bg-[#020712]/90 border border-white/15 focus:border-purple-400 rounded-xl px-3 py-1.5 text-white font-mono text-sm"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] text-slate-400 mb-1 font-mono uppercase tracking-wider">Unidad</label>
+                            <input
+                              type="text"
+                              value={habitUnit}
+                              onChange={(e) => setNewHabitUnit(e.target.value)}
+                              placeholder="veces, mins, L..."
+                              className="w-full bg-[#020712]/90 border border-white/15 focus:border-purple-400 rounded-xl px-3 py-1.5 text-white text-sm"
+                            />
+                          </div>
                         </div>
-                        <div>
-                          <label className="block text-[11px] text-slate-400 mb-1 font-mono uppercase tracking-wider">Unidad</label>
-                          <input
-                            type="text"
-                            value={habitUnit}
-                            onChange={(e) => setNewHabitUnit(e.target.value)}
-                            placeholder="veces, mins, L..."
-                            className="w-full bg-[#020712]/90 border border-white/15 focus:border-purple-400 rounded-xl px-3 py-1.5 text-white text-sm"
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                      )}
+                    </div>
+                  )}
                   <div className="pt-1">
                     <button
                       type="button"
@@ -872,7 +927,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                     >
                       <span className="flex items-center gap-1.5">
                         <Icon name="clock" className="w-3.5 h-3.5 text-cyan-400" />
-                        {showAdvanced ? 'Ocultar Horarios y Notas' : '⚙️ Opciones Avanzadas (Horario y Notas Opcionales)'}
+                        {showAdvanced ? 'Ocultar Opciones Avanzadas' : '⚙️ Opciones Avanzadas (Horario, notas, contador opcional)'}
                       </span>
                       {showAdvanced ? <Icon name="chevronUp" className="w-4 h-4" /> : <Icon name="chevronDown" className="w-4 h-4" />}
                     </button>
@@ -910,23 +965,58 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                           </div>
                         </div>
                         {!isEditingHabitMode && (
-                          <div className="grid grid-cols-2 gap-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <label className={`p-3 rounded-xl border flex items-center gap-2 cursor-pointer transition-all ${
                               isLegendary ? 'bg-amber-500/15 border-amber-500/50 text-amber-300' : 'bg-[#020712]/90 border-white/10 text-slate-400'
                             }`}>
+                              <input
+                                type="checkbox"
+                                checked={isLegendary}
+                                onChange={(e) => setIsLegendary(e.target.checked)}
+                                className="hidden"
+                              />
+                              <Icon name="crown" className="w-4 h-4 text-amber-400" />
+                              <span className="text-xs font-semibold">
+                                Enfoque Crítico ({criticalRemaining}/{MAX_CRITICAL_PRIORITY_CHARGES_PER_DAY} cargas x2.0 hoy)
+                              </span>
+                            </label>
+
+                            <div className="p-3 rounded-xl bg-[#020712]/90 border border-white/10">
+                              <label className="flex items-center justify-between cursor-pointer select-none">
+                                <span className="text-xs text-slate-300">Contador de meta</span>
                                 <input
                                   type="checkbox"
-                                  checked={isLegendary}
-                                  onChange={(e) => setIsLegendary(e.target.checked)}
-                                  className="hidden"
+                                  checked={isHabitType}
+                                  onChange={(e) => {
+                                    const checked = e.target.checked;
+                                    setIsHabitType(checked);
+                                    if (checked && habitTarget <= 1) setHabitTarget(3);
+                                  }}
+                                  className="w-4 h-4 rounded border-gray-700 text-purple-500 focus:ring-purple-500 cursor-pointer"
                                 />
-                                <Icon name="crown" className="w-4 h-4 text-amber-400" />
-                                <span className="text-xs font-semibold">
-                                  Enfoque Crítico ({criticalRemaining}/{MAX_CRITICAL_PRIORITY_CHARGES_PER_DAY} cargas x2.0 hoy)
-                                </span>
                               </label>
+                              {isHabitType && (
+                                <div className="grid grid-cols-2 gap-2 pt-2">
+                                  <input
+                                    type="number"
+                                    min={1}
+                                    value={habitTarget}
+                                    onChange={(e) => setHabitTarget(parseInt(e.target.value, 10) || 1)}
+                                    placeholder="Meta (3)"
+                                    className="w-full bg-black/60 border border-white/15 rounded-lg px-2 py-1 text-white font-mono text-xs"
+                                  />
+                                  <input
+                                    type="text"
+                                    value={habitUnit}
+                                    onChange={(e) => setNewHabitUnit(e.target.value)}
+                                    placeholder="veces..."
+                                    className="w-full bg-black/60 border border-white/15 rounded-lg px-2 py-1 text-white text-xs"
+                                  />
+                                </div>
+                              )}
                             </div>
-                          )}
+                          </div>
+                        )}
                         <div>
                           <label className="block text-xs font-semibold text-slate-300 mb-1 flex items-center gap-1.5">
                             <Icon name="fileText" className="w-3.5 h-3.5 text-slate-400" />
@@ -946,7 +1036,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                 </>
               )}
             </div>
-            <div className="shrink-0 p-3 sm:p-4 bg-[#010810]/95 backdrop-blur-md border-t border-white/10 flex items-center gap-2.5 relative z-10">
+            <div className="shrink-0 p-3 sm:p-4 bg-[#010810]/[0.98] border-t border-white/10 flex items-center gap-2.5 relative z-10">
               {activeTab === 'oracle' ? (
                 <button
                   type="button"

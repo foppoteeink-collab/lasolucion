@@ -255,7 +255,7 @@ export const DailyFinanceWidget: React.FC<DailyFinanceWidgetProps> = ({
   return (
     <div className={`rounded-xl relative overflow-hidden transition-all duration-300 text-white ${
       isCollapsed 
-        ? 'bg-[#020b14]/85 border border-emerald-500/30 backdrop-blur-md shadow-[0_0_15px_rgba(16,185,129,0.06)]' 
+        ? 'bg-[#020b14]/[0.94] border border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.06)]' 
         : 'scifi-glass-panel rounded-2xl'
     }`}>
       {/* Background Neon Accent Glow */}

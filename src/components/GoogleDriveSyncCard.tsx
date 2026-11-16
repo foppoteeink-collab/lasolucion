@@ -414,7 +414,7 @@ export const GoogleDriveSyncCard: React.FC = () => {
 
       {/* CONFIRMATION DIALOG: UPLOAD TO DRIVE */}
       {showUploadConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/88 animate-fade-in">
           <div className="bg-[#001830] border border-cyan-500/60 p-6 rounded-2xl max-w-md w-full space-y-4 shadow-2xl">
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-xl bg-cyan-950 border border-cyan-500/50 text-cyan-300">
@@ -461,7 +461,7 @@ export const GoogleDriveSyncCard: React.FC = () => {
 
       {/* CONFIRMATION DIALOG: DOWNLOAD/RESTORE FROM DRIVE */}
       {showDownloadConfirm && pendingDownloadData && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/88 animate-fade-in">
           <div className="bg-[#001830] border border-amber-500/60 p-6 rounded-2xl max-w-md w-full space-y-4 shadow-2xl">
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-xl bg-amber-950 border border-amber-500/50 text-amber-300">

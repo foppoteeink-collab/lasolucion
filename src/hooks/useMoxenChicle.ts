@@ -12,18 +12,30 @@ export function useMoxenChicle<T extends HTMLElement = HTMLDivElement>() {
     const container = containerRef.current;
     if (!container) return;
 
-    // Limpiar cualquier propiedad de deformación o skew heredada en los botones
-    const sanitizeButtons = () => {
-      const buttons = container.querySelectorAll<HTMLElement>('.chicle-btn');
-      buttons.forEach((el) => {
-        el.style.removeProperty('transform');
-        el.style.removeProperty('transition');
-      });
+    const stripInlineOverrides = (el: HTMLElement) => {
+      if (el.style.transform) el.style.removeProperty('transform');
+      if (el.style.transition) el.style.removeProperty('transition');
     };
 
-    sanitizeButtons();
+    const sanitizeRoot = (root: ParentNode) => {
+      if (root instanceof HTMLElement && root.classList.contains('chicle-btn')) {
+        stripInlineOverrides(root);
+      }
+      root.querySelectorAll<HTMLElement>('.chicle-btn').forEach(stripInlineOverrides);
+    };
 
-    const observer = new MutationObserver(sanitizeButtons);
+    sanitizeRoot(container);
+
+    const observer = new MutationObserver((mutations) => {
+      for (const m of mutations) {
+        for (let i = 0; i < m.addedNodes.length; i++) {
+          const node = m.addedNodes[i];
+          if (node.nodeType === 1) {
+            sanitizeRoot(node as Element);
+          }
+        }
+      }
+    });
     observer.observe(container, { childList: true, subtree: true });
 
     return () => {

@@ -110,7 +110,7 @@ export const TaskFilters: React.FC<TaskFiltersProps> = ({
   ];
 
   return (
-    <div className="scifi-glass-panel rounded-xl px-2 py-1.5 space-y-1.5 border border-cyan-500/25 shadow-[0_2px_15px_rgba(0,0,0,0.45)] relative overflow-hidden bg-[#020712]/90 backdrop-blur-xl">
+    <div className="scifi-glass-panel rounded-xl px-2 py-1.5 space-y-1.5 border border-cyan-500/25 shadow-[0_2px_15px_rgba(0,0,0,0.45)] relative overflow-hidden bg-[#020712]/[0.95]">
       <span className="vi-grano opacity-5" aria-hidden="true" />
 
       {/* Main Single-Row Tactical HUD (Ultra-Compact) */}

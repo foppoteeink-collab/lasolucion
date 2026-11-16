@@ -12,7 +12,11 @@ import {
   User,
   Clock,
   Plus,
-  Minus
+  Minus,
+  Bell,
+  BookOpen,
+  Calendar,
+  ShieldCheck
 } from 'lucide-react';
 import { safeLogEvent } from '../../firebase';
 import { KAICompanion } from '../KAICompanion';
@@ -26,6 +30,7 @@ import { formatHourToHuman } from '../../utils/timeUtils';
 import { PlayerStats, TaskItem, TaskCategory } from '../../types';
 import { useNarrativeCopy } from '../../hooks/useNarrativeCopy';
 import { AUTH_SECURITY_MICROCOPY, WELCOME_UVP, NARRATIVE_MODE_OPTIONS } from '../../data/narrativeCopy';
+import { notificationService } from '../../utils/notifications';
 
 interface KaiWelcomeOnboardingProps {
   isOpen: boolean;
@@ -37,7 +42,7 @@ interface KaiWelcomeOnboardingProps {
   };
 }
 
-const TOTAL_STEPS = 6;
+const TOTAL_STEPS = 4;
 
 // Los 12 Arquetipos Jungianos oficiales del sistema
 const WELCOME_ARCHETYPES = [
@@ -237,10 +242,27 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
     return stats.dayStartHour !== undefined ? stats.dayStartHour : getGlobalDayStartHour();
   });
 
-  // Estado para la micro-misión interactiva (Paso 5)
+  // Estado para la micro-misión interactiva (Paso 3)
   const [createdTaskId, setCreatedTaskId] = useState<string | null>(null);
   const [customTaskTitle, setCustomTaskTitle] = useState('');
   const [isTaskCompletedInModal, setIsTaskCompletedInModal] = useState(false);
+
+  // Estado y solicitud de Notificaciones (Paso 2)
+  const [notifsStatus, setNotifsStatus] = useState<NotificationPermission>(() => {
+    return notificationService.getPermission();
+  });
+
+  const handleEnableNotifs = async () => {
+    soundFX.playClick();
+    const granted = await notificationService.requestPermission();
+    setNotifsStatus(notificationService.getPermission());
+    if (granted) {
+      soundFX.playLevelUp();
+      try {
+        triggerShockwave({ color: 'cyan', intensity: 'subtle' });
+      } catch (_) {}
+    }
+  };
 
   const todayStr = useMemo(() => getTodayDateString(), []);
 
@@ -369,9 +391,9 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[150] flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-md animate-fade-in font-sans">
+    <div className="fixed inset-0 z-[150] flex items-center justify-center p-3 sm:p-5 bg-black/88 animate-fade-in font-sans">
       <div
-        className="w-full max-w-xl max-h-[92dvh] flex flex-col rounded-3xl bg-[#030712]/95 border border-cyan-500/35 shadow-[0_0_60px_rgba(0,240,255,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] relative overflow-hidden backdrop-blur-2xl text-white text-left"
+        className="w-full max-w-xl max-h-[92dvh] flex flex-col rounded-3xl bg-[#030712]/[0.98] border border-cyan-500/35 shadow-[0_0_60px_rgba(0,240,255,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] relative overflow-hidden text-white text-left"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Luz de ambiente suave */}
@@ -390,12 +412,10 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
                 Paso {step} de {TOTAL_STEPS}
               </div>
               <h2 className="text-xs sm:text-sm font-anton tracking-wide text-white truncate">
-                {step === 1 && '¿Cómo te llamas?'}
-                {step === 2 && 'Tu Ritmo Diario (24h)'}
-                {step === 3 && 'Tu Enfoque Principal'}
-                {step === 4 && 'Tu Arquetipo de Energía'}
-                {step === 5 && 'Tu Primera Victoria en Vivo'}
-                {step === 6 && '¡Todo Listo para Empezar!'}
+                {step === 1 && '¿Cómo te llamas y a qué hora arrancas?'}
+                {step === 2 && 'Recordatorios y Notificaciones'}
+                {step === 3 && 'Tu Primera Tarea en Vivo'}
+                {step === 4 && 'Tu Rutina de la Primera Semana'}
               </h2>
             </div>
           </div>
@@ -476,7 +496,7 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
                 </div>
 
                 {/* Diálogo breve con KAI */}
-                <div className="flex items-center gap-3 p-3 rounded-2xl bg-cyan-950/25 border border-cyan-500/20 backdrop-blur-sm">
+                <div className="flex items-center gap-3 p-3 rounded-2xl bg-cyan-950/60 border border-cyan-500/25">
                   <div className="shrink-0 w-10 h-10 flex items-center justify-center">
                     <KAICompanion shapeId="prism" size={40} interactive={false} auraState="normal" />
                   </div>
@@ -542,15 +562,45 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
                     autoComplete="nickname"
                     className="w-full px-4 py-2.5 rounded-2xl bg-white/[0.05] border border-white/15 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all shadow-inner"
                   />
-                  <p className="text-[10px] text-slate-400">
-                    Puedes cambiar tu nombre o estilo de lenguaje en cualquier momento desde Ajustes.
+                </div>
+
+                {/* Selector rápido de inicio de jornada habitual */}
+                <div className="p-3.5 rounded-2xl bg-cyan-950/40 border border-cyan-500/30 space-y-2.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-white flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5 text-cyan-400" />
+                      ¿A qué hora arrancas tu jornada habitualmente?
+                    </span>
+                    <span className="font-mono text-cyan-300 font-bold bg-cyan-950 px-2 py-0.5 rounded-lg border border-cyan-500/40 text-[11px]">
+                      {formatHourToHuman(dayStartHour)}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-300 leading-snug">
+                    Tus misiones y ciclo de turno se sincronizarán a esta hora para adaptarse a tu ritmo de trabajo o estudio.
                   </p>
+                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 pt-0.5">
+                    {QUICK_HOUR_PRESETS.map((preset) => (
+                      <button
+                        key={preset.hour}
+                        type="button"
+                        onClick={() => handleHourChange(preset.hour)}
+                        className={`py-2 px-1 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center gap-0.5 ${
+                          dayStartHour === preset.hour
+                            ? 'bg-cyan-950/90 border-cyan-400 text-cyan-300 ring-1 ring-cyan-400 shadow-[0_0_10px_rgba(0,240,255,0.3)]'
+                            : 'bg-white/[0.04] border-white/10 hover:border-white/25 text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        <span className="text-xs">{preset.icon}</span>
+                        <span className="text-[10px] font-mono font-bold leading-tight truncate w-full">{preset.label}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </motion.div>
             )}
 
             {/* ============================================================== */}
-            {/* PASO 2: RITMO CIRCADIANO (EL USUARIO DECIDE PRIMERO)           */}
+            {/* PASO 2: RECORDATORIOS Y NOTIFICACIONES INTELIGENTES             */}
             {/* ============================================================== */}
             {step === 2 && (
               <motion.div
@@ -563,109 +613,80 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
               >
                 <div className="space-y-1">
                   <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
-                    <Clock className="w-4 h-4 text-cyan-400" />
-                    <span>¿A qué hora inicia tu jornada diaria?</span>
+                    <Bell className="w-4 h-4 text-amber-400 animate-bounce" />
+                    <span>Avisos Clave: Que nunca se te olvide nada</span>
                   </h3>
-                  <p className="text-[11px] text-slate-300 leading-snug">
-                    Tus hábitos y tareas se reiniciarán a esta hora para adaptarse a tu ritmo biológico y no cortarse a medianoche.
+                  <p className="text-[11.5px] text-slate-300 leading-snug">
+                    Para acompañarte durante la semana, La Solución te envía recordatorios discretos en los 3 momentos esenciales:
                   </p>
                 </div>
 
-                {/* 1. EL USUARIO DECIDE PRIMERO: Control interactivo principal */}
-                <div className="p-4 rounded-2xl bg-gradient-to-b from-cyan-950/40 via-slate-900/50 to-black/60 border border-cyan-500/35 shadow-[0_0_20px_rgba(0,240,255,0.12)] space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-mono uppercase tracking-wider text-cyan-300 font-semibold">
-                      Tu hora de inicio
-                    </span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 font-mono font-bold flex items-center gap-1">
-                      <span>{circadian.icon}</span>
-                      <span>{circadian.label}</span>
-                    </span>
-                  </div>
-
-                  {/* Visualizador de hora con botones - / + */}
-                  <div className="flex items-center justify-center gap-4 py-0.5">
-                    <button
-                      type="button"
-                      onClick={() => handleHourChange(dayStartHour - 1)}
-                      className="w-10 h-10 rounded-xl bg-white/[0.06] hover:bg-cyan-500/20 border border-white/10 hover:border-cyan-400/50 text-white flex items-center justify-center transition-all cursor-pointer active:scale-90"
-                      title="Restar 1 hora"
-                    >
-                      <Minus className="w-4 h-4 text-cyan-300" />
-                    </button>
-
-                    <div className="text-center min-w-[130px]">
-                      <div className="text-3xl sm:text-4xl font-mono font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-200 via-white to-sky-300 tracking-tight drop-shadow-[0_0_15px_rgba(0,240,255,0.4)]">
-                        {formatHourToHuman(dayStartHour)}
-                      </div>
-                      <div className="text-[10px] text-slate-400 mt-0.5">
-                        {circadian.tip}
-                      </div>
+                <div className="space-y-2">
+                  <div className="p-3 rounded-xl bg-[#00152b]/90 border border-cyan-500/30 flex items-start gap-3">
+                    <div className="w-7 h-7 rounded-lg bg-cyan-950 border border-cyan-500/50 flex items-center justify-center text-cyan-300 shrink-0 mt-0.5 text-sm">
+                      🌅
                     </div>
-
-                    <button
-                      type="button"
-                      onClick={() => handleHourChange(dayStartHour + 1)}
-                      className="w-10 h-10 rounded-xl bg-white/[0.06] hover:bg-cyan-500/20 border border-white/10 hover:border-cyan-400/50 text-white flex items-center justify-center transition-all cursor-pointer active:scale-90"
-                      title="Sumar 1 hora"
-                    >
-                      <Plus className="w-4 h-4 text-cyan-300" />
-                    </button>
+                    <div>
+                      <strong className="text-white text-xs block">1. Inicio de Jornada</strong>
+                      <p className="text-[11px] text-slate-300 mt-0.5">
+                        Aviso a tu hora de arranque ({formatHourToHuman(dayStartHour)}) para pulsar "Iniciar Jornada" y activar tus tareas del día.
+                      </p>
+                    </div>
                   </div>
 
-                  {/* Slider continuo 0..23 */}
-                  <div className="space-y-1 px-1">
-                    <input
-                      type="range"
-                      min="0"
-                      max="23"
-                      step="1"
-                      value={dayStartHour}
-                      onChange={(e) => handleHourChange(parseInt(e.target.value, 10))}
-                      className="w-full accent-cyan-400 cursor-pointer h-2 bg-slate-800 rounded-lg"
-                      title="Desliza para elegir tu hora exacta"
-                    />
-                    <div className="flex justify-between text-[9px] font-mono text-slate-500">
-                      <span>00:00</span>
-                      <span>06:00</span>
-                      <span>12:00</span>
-                      <span>18:00</span>
-                      <span>23:00</span>
+                  <div className="p-3 rounded-xl bg-[#00152b]/90 border border-cyan-500/30 flex items-start gap-3">
+                    <div className="w-7 h-7 rounded-lg bg-cyan-950 border border-cyan-500/50 flex items-center justify-center text-cyan-300 shrink-0 mt-0.5 text-sm">
+                      ⚡
+                    </div>
+                    <div>
+                      <strong className="text-white text-xs block">2. Recordatorios de Tareas</strong>
+                      <p className="text-[11px] text-slate-300 mt-0.5">
+                        Avisos si tienes tareas pendientes para que no se te pase darles check / X y registrar tus avances.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-[#00152b]/90 border border-cyan-500/30 flex items-start gap-3">
+                    <div className="w-7 h-7 rounded-lg bg-cyan-950 border border-cyan-500/50 flex items-center justify-center text-cyan-300 shrink-0 mt-0.5 text-sm">
+                      📓
+                    </div>
+                    <div>
+                      <strong className="text-white text-xs block">3. Cierre de Jornada y Bitácora</strong>
+                      <p className="text-[11px] text-slate-300 mt-0.5">
+                        Al terminar tu turno, una alerta para cerrar el día, llenar tu bitácora de reflexión y proteger tu racha.
+                      </p>
                     </div>
                   </div>
                 </div>
 
-                {/* 2. ATAJOS RÁPIDOS EN UN CUADRITO PEQUEÑO ABAJO */}
-                <div className="p-2.5 rounded-2xl bg-white/[0.02] border border-white/10 space-y-1.5">
-                  <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400 flex items-center justify-between">
-                    <span>O toca un atajo rápido:</span>
-                  </div>
-                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
-                    {QUICK_HOUR_PRESETS.map((preset) => {
-                      const isSelected = dayStartHour === preset.hour;
-                      return (
-                        <button
-                          key={preset.hour}
-                          type="button"
-                          onClick={() => handleHourChange(preset.hour)}
-                          className={`py-1.5 px-1.5 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center gap-0.5 ${
-                            isSelected
-                              ? 'bg-cyan-950/80 border-cyan-400 text-cyan-300 ring-1 ring-cyan-400 shadow-[0_0_10px_rgba(0,240,255,0.3)]'
-                              : 'bg-white/[0.03] border-white/10 hover:border-white/25 text-slate-400 hover:text-slate-200'
-                          }`}
-                        >
-                          <span className="text-xs">{preset.icon}</span>
-                          <span className="text-[10px] font-mono font-bold leading-tight truncate w-full">{preset.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
+                {/* Botón de solicitud de permisos con estado visual */}
+                <div className="p-3.5 rounded-2xl bg-gradient-to-br from-indigo-950/60 to-cyan-950/40 border border-cyan-500/40 text-center space-y-2">
+                  {notifsStatus === 'granted' ? (
+                    <div className="flex items-center justify-center gap-2 text-emerald-300 text-xs font-bold py-1">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>¡Recordatorios activados correctamente en este equipo!</span>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-[11px] text-slate-200">
+                        Pulsa el botón para autorizar los avisos en tu navegador:
+                      </p>
+                      <button
+                        type="button"
+                        onClick={handleEnableNotifs}
+                        className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:from-amber-300 hover:to-yellow-300 text-slate-950 font-anton uppercase text-xs tracking-wider flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(245,158,11,0.4)] transition-all cursor-pointer font-bold active:scale-95"
+                      >
+                        <Bell className="w-4 h-4 text-slate-950" />
+                        <span>Activar Recordatorios en mi Dispositivo</span>
+                      </button>
+                    </>
+                  )}
                 </div>
               </motion.div>
             )}
 
             {/* ============================================================== */}
-            {/* PASO 3: PROPÓSITO PRINCIPAL                                    */}
+            {/* PASO 3: PRIMERA VICTORIA EN VIVO                               */}
             {/* ============================================================== */}
             {step === 3 && (
               <motion.div
@@ -678,126 +699,11 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
               >
                 <div className="space-y-1">
                   <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
-                    <Target className="w-4 h-4 text-amber-400" />
-                    <span>¿Qué es lo más importante para ti hoy?</span>
-                  </h3>
-                  <p className="text-[11px] text-slate-300 leading-snug">
-                    KAI adaptará sus consejos y recordatorios según tu objetivo principal.
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  {CORE_DESIRES.map((desire) => {
-                    const isSelected = selectedDesire === desire.id;
-                    return (
-                      <button
-                        key={desire.id}
-                        type="button"
-                        onClick={() => {
-                          soundFX.playClick();
-                          setSelectedDesire(desire.id);
-                        }}
-                        className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex items-center gap-3 ${
-                          isSelected
-                            ? 'bg-cyan-950/50 border-cyan-400 shadow-[0_0_15px_rgba(0,240,255,0.25)] ring-1 ring-cyan-400'
-                            : 'bg-white/[0.03] border-white/10 hover:border-white/20'
-                        }`}
-                      >
-                        <span className="text-2xl shrink-0">{desire.icon}</span>
-                        <div className="min-w-0 flex-1">
-                          <div className={`text-xs font-bold ${isSelected ? 'text-cyan-300' : 'text-slate-200'}`}>
-                            {desire.title}
-                          </div>
-                          <div className="text-[10px] text-slate-400 leading-tight mt-0.5">
-                            {desire.subtitle}
-                          </div>
-                        </div>
-                        {isSelected && <Check className="w-4 h-4 text-cyan-400 shrink-0" />}
-                      </button>
-                    );
-                  })}
-                </div>
-              </motion.div>
-            )}
-
-            {/* ============================================================== */}
-            {/* PASO 4: ARQUETIPO DE ENERGÍA                                   */}
-            {/* ============================================================== */}
-            {step === 4 && (
-              <motion.div
-                key="step-4"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.2 }}
-                className="space-y-3"
-              >
-                <div className="space-y-1">
-                  <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
-                    <Sparkles className="w-4 h-4 text-purple-400" />
-                    <span>¿Qué energía resuena más contigo?</span>
-                  </h3>
-                  <p className="text-[11px] text-slate-300 leading-snug">
-                    Elige el estilo que guiará tu personaje y tu mantra diario:
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                  {WELCOME_ARCHETYPES.map((arch) => {
-                    const isSelected = selectedArchId === arch.id;
-                    return (
-                      <button
-                        key={arch.id}
-                        type="button"
-                        onClick={() => {
-                          soundFX.playItemEquip();
-                          setSelectedArchId(arch.id);
-                        }}
-                        className={`p-2 rounded-xl border text-left transition-all cursor-pointer flex flex-col gap-0.5 ${
-                          isSelected
-                            ? 'bg-white/10 shadow-[0_0_12px_rgba(255,255,255,0.2)] ring-1 ring-white/50'
-                            : 'bg-white/[0.03] border-white/10 hover:border-white/20'
-                        }`}
-                        style={{
-                          borderColor: isSelected ? arch.accent : undefined
-                        }}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-base">{arch.icon}</span>
-                          {isSelected && <Check className="w-3.5 h-3.5 text-cyan-400" />}
-                        </div>
-                        <span className="text-xs font-bold text-white leading-tight truncate">
-                          {arch.name}
-                        </span>
-                        <span className="text-[10px] text-slate-400 leading-tight line-clamp-1">
-                          {arch.description}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </motion.div>
-            )}
-
-            {/* ============================================================== */}
-            {/* PASO 5: PRIMERA VICTORIA EN VIVO                               */}
-            {/* ============================================================== */}
-            {step === 5 && (
-              <motion.div
-                key="step-5"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.2 }}
-                className="space-y-3.5"
-              >
-                <div className="space-y-1">
-                  <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                    <span>Tu primera victoria en 1 toque</span>
+                    <span>Tu primera tarea en 1 toque</span>
                   </h3>
-                  <p className="text-[11px] text-slate-300 leading-snug">
-                    Toca una acción para experimentar cómo ganas XP y monedas al instante:
+                  <p className="text-[11.5px] text-slate-300 leading-snug">
+                    En La Solución, cada objetivo es una tarea. Al completarla, tocas el botón de la casilla para marcarla (darle check/X), ganando puntos al instante:
                   </p>
                 </div>
 
@@ -837,7 +743,7 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
                           if (customTaskTitle.trim()) {
                             handleCreateSampleTask({
                               title: customTaskTitle.trim(),
-                              category: 'general' as TaskCategory,
+                              category: 'trabajo' as TaskCategory,
                               xpReward: 25,
                               coinReward: 15
                             });
@@ -861,20 +767,20 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         <div
-                          className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all shrink-0 ${
+                          className={`w-7 h-7 rounded-lg border-2 flex items-center justify-center transition-all shrink-0 ${
                             isTaskCompletedInModal
                               ? 'bg-emerald-500 border-emerald-400 text-black shadow-[0_0_10px_rgba(16,185,129,0.8)]'
                               : 'border-cyan-400 hover:border-cyan-300 bg-cyan-950/40'
                           }`}
                         >
-                          {isTaskCompletedInModal && <Check className="w-4 h-4 stroke-[3]" />}
+                          {isTaskCompletedInModal ? <Check className="w-4 h-4 stroke-[3]" /> : <span className="text-cyan-300 text-xs font-bold">✓</span>}
                         </div>
                         <div className="min-w-0">
                           <p className={`text-xs font-semibold truncate ${isTaskCompletedInModal ? 'line-through text-slate-400' : 'text-white'}`}>
                             {customTaskTitle.trim() || 'Tomar 1 vaso de agua y respirar profundo 💧'}
                           </p>
                           <span className="text-[10px] text-slate-400">
-                            {isTaskCompletedInModal ? '✅ ¡Completada con éxito!' : '👆 Toca aquí para completar'}
+                            {isTaskCompletedInModal ? '✅ ¡Completada con éxito!' : '👆 Toca aquí para marcar la casilla (darle check/X)'}
                           </span>
                         </div>
                       </div>
@@ -897,8 +803,8 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
                       >
                         <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-400" />
                         <div>
-                          <strong className="block text-emerald-200">¡Así de fácil funciona!</strong>
-                          Cada tarea completada te otorga XP para subir de nivel y monedas para darte recompensas en la Tienda.
+                          <strong className="block text-emerald-200">¡Así de simple funciona!</strong>
+                          Cada tarea completada te otorga XP para avanzar y monedas para tu registro de progreso.
                         </div>
                       </motion.div>
                     )}
@@ -908,51 +814,49 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
             )}
 
             {/* ============================================================== */}
-            {/* PASO 6: ¡TODO LISTO PARA ARRANCAR!                              */}
+            {/* PASO 4: ¡TODO LISTO PARA TU PRIMERA SEMANA!                    */}
             {/* ============================================================== */}
-            {step === 6 && (
+            {step === 4 && (
               <motion.div
-                key="step-6"
+                key="step-4"
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.2 }}
-                className="space-y-4 text-center py-1"
+                className="space-y-3.5 text-center py-1"
               >
-                <div className="w-16 h-16 mx-auto flex items-center justify-center">
-                  <KAICompanion shapeId="prism" size={64} interactive={false} auraState="victory" />
+                <div className="w-14 h-14 mx-auto flex items-center justify-center">
+                  <KAICompanion shapeId="prism" size={56} interactive={false} auraState="victory" />
                 </div>
 
                 <div className="space-y-1">
                   <h3 className="text-base sm:text-lg font-anton tracking-wide text-white">
-                    ¡Todo listo para empezar, {username.trim() || 'Compañero'}!
+                    ¡Todo listo para tu Primera Semana, {username.trim() || 'Compañero'}!
                   </h3>
                   <p className="text-xs text-slate-300 leading-relaxed max-w-sm mx-auto">
-                    Tu sistema está calibrado según tu propio ritmo. KAI estará siempre disponible en el orbe flotante en la esquina inferior ↘️.
+                    Tu rutina diaria se resume en solo 3 sencillos pasos:
                   </p>
                 </div>
 
-                {/* Resumen compacto de configuración */}
-                <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/10 grid grid-cols-3 gap-2 text-left">
-                  <div className="space-y-0.5">
-                    <span className="text-[9px] font-mono uppercase text-slate-400 block">Jornada 24h</span>
-                    <span className="text-xs font-mono font-bold text-cyan-300 truncate block">
-                      {formatHourToHuman(dayStartHour)}
-                    </span>
+                {/* Los 3 pasos diarios de la primera semana */}
+                <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/10 space-y-2 text-left">
+                  <div className="flex items-center gap-2.5 text-xs text-slate-200">
+                    <span className="w-6 h-6 rounded-lg bg-amber-500/20 border border-amber-400/40 text-amber-300 flex items-center justify-center font-bold font-mono text-[11px] shrink-0">1</span>
+                    <span><strong>En la mañana:</strong> Toca el botón <em>"Iniciar Jornada"</em> en KAI.</span>
                   </div>
-                  <div className="space-y-0.5">
-                    <span className="text-[9px] font-mono uppercase text-slate-400 block">Arquetipo</span>
-                    <span className="text-xs font-bold text-white truncate block">
-                      {currentArchetype.icon} {currentArchetype.name}
-                    </span>
+                  <div className="flex items-center gap-2.5 text-xs text-slate-200">
+                    <span className="w-6 h-6 rounded-lg bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 flex items-center justify-center font-bold font-mono text-[11px] shrink-0">2</span>
+                    <span><strong>Durante el día:</strong> Revisa tus tareas y dales check al terminarlas.</span>
                   </div>
-                  <div className="space-y-0.5">
-                    <span className="text-[9px] font-mono uppercase text-slate-400 block">Enfoque</span>
-                    <span className="text-xs font-bold text-amber-300 truncate block">
-                      {currentDesire.icon} {currentDesire.title}
-                    </span>
+                  <div className="flex items-center gap-2.5 text-xs text-slate-200">
+                    <span className="w-6 h-6 rounded-lg bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 flex items-center justify-center font-bold font-mono text-[11px] shrink-0">3</span>
+                    <span><strong>En la noche:</strong> Toca <em>"Cerrar Jornada"</em> y llena tu bitácora diaria.</span>
                   </div>
                 </div>
+
+                <p className="text-[11px] text-slate-400">
+                  KAI estará siempre flotando en tu pantalla como tu asistente oráculo. ¡Tócalo cuando quieras!
+                </p>
               </motion.div>
             )}
 

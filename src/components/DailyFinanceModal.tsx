@@ -234,11 +234,11 @@ export const DailyFinanceModal: React.FC<DailyFinanceModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-[150] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-fade-in"
+      className="fixed inset-0 z-[150] flex items-center justify-center p-3 sm:p-4 bg-black/88 animate-fade-in"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg max-h-[90dvh] flex flex-col bg-[#030712]/95 border border-emerald-500/40 rounded-2xl sm:rounded-3xl shadow-[0_0_40px_rgba(16,185,129,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] relative text-left overflow-hidden backdrop-blur-2xl"
+        className="w-full max-w-lg max-h-[90dvh] flex flex-col bg-[#030712]/[0.98] border border-emerald-500/40 rounded-2xl sm:rounded-3xl shadow-[0_0_40px_rgba(16,185,129,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] relative text-left overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Grano esmerilado táctil Moxen Vidrio */}

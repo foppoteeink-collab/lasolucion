@@ -133,7 +133,7 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="w-full max-w-6xl mx-auto pointer-events-auto">
       {/* COCKPIT CYBERPUNK FLOTANTE UNIFICADO */}
-      <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-2xl border border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.12)] relative overflow-hidden transition-all duration-300">
+      <div className="w-full rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.94] border border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.12)] relative overflow-hidden transition-all duration-300">
         
         {/* Micrograno táctil Moxen Vidrio */}
         <span className="vi-grano opacity-5" aria-hidden="true" />

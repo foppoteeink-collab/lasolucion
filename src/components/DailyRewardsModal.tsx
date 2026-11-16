@@ -51,14 +51,14 @@ export const DailyRewardsModal: React.FC<DailyRewardsModalProps> = ({
 
   return (
     <div 
-      className="fixed inset-0 z-[150] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-fade-in font-sans"
+      className="fixed inset-0 z-[150] flex items-center justify-center p-3 sm:p-4 bg-black/88 animate-fade-in font-sans"
       onClick={onClose}
     >
       <div 
         role="dialog"
         aria-modal="true"
         aria-labelledby="daily-rewards-modal-title"
-        className="w-full max-w-lg max-h-[90dvh] flex flex-col bg-[#030712]/95 border border-amber-500/40 rounded-2xl sm:rounded-3xl shadow-[0_0_50px_rgba(245,158,11,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] relative text-left overflow-hidden backdrop-blur-2xl"
+        className="w-full max-w-lg max-h-[90dvh] flex flex-col bg-[#030712]/[0.98] border border-amber-500/40 rounded-2xl sm:rounded-3xl shadow-[0_0_50px_rgba(245,158,11,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] relative text-left overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Micrograno táctil Moxen Vidrio */}
@@ -149,7 +149,7 @@ export const DailyRewardsModal: React.FC<DailyRewardsModalProps> = ({
                       ? 'bg-[#021008]/80 border border-emerald-500/30 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.1)]'
                       : isGrandPrize
                       ? 'bg-[#0a0518]/80 border border-purple-500/30 text-slate-300 opacity-80'
-                      : 'bg-[#02050f]/60 border border-white/5 text-slate-400 opacity-60 backdrop-blur-sm'
+                      : 'bg-[#02050f]/80 border border-white/5 text-slate-400 opacity-60'
                   }`}
                 >
                   {/* Top Day Header */}

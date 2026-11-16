@@ -145,7 +145,7 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
   const modalContent = (
     <AnimatePresence>
       <div 
-        className="fixed inset-0 z-[180] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-fade-in font-sans portal-modal-root"
+        className="fixed inset-0 z-[180] flex items-center justify-center p-3 sm:p-4 bg-black/88 animate-fade-in font-sans portal-modal-root"
         onClick={onClose}
       >
         <motion.div
@@ -155,7 +155,7 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
-          className="relative w-full max-w-2xl flex flex-col rounded-2xl sm:rounded-3xl bg-[#030712]/95 border border-cyan-500/35 shadow-[0_0_50px_rgba(0,240,255,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] max-h-[90vh] overflow-hidden backdrop-blur-2xl text-white text-left"
+          className="relative w-full max-w-2xl flex flex-col rounded-2xl sm:rounded-3xl bg-[#030712]/[0.98] border border-cyan-500/35 shadow-[0_0_50px_rgba(0,240,255,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] max-h-[90vh] overflow-hidden text-white text-left"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Micrograno táctil Moxen Vidrio */}
@@ -365,7 +365,7 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                       {/* Inline Cascade Deletion Confirmation Safeguard */}
                       {deletingHabitId === habit.id && (
                         <div 
-                          className="absolute inset-0 bg-red-950/95 border border-red-500/60 rounded-2xl flex items-center justify-between px-3.5 py-2 z-20 animate-in fade-in duration-150 backdrop-blur-sm"
+                          className="absolute inset-0 bg-red-950/[0.98] border border-red-500/60 rounded-2xl flex items-center justify-between px-3.5 py-2 z-20 animate-in fade-in duration-150"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <span className="text-[11px] font-bold text-red-200 truncate pr-2">

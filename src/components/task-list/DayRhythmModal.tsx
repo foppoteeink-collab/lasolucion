@@ -99,7 +99,7 @@ export const DayRhythmModal: React.FC = () => {
         role="dialog"
         aria-modal="true"
         aria-labelledby="day-rhythm-modal-title"
-        className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-md animate-fade-in select-none"
+        className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-5 bg-black/88 animate-fade-in select-none"
       >
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 10 }}

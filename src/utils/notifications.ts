@@ -15,13 +15,14 @@ export class NotificationService {
   private static instance: NotificationService;
   private isPushSupported: boolean = false;
   private permission: NotificationPermission = 'default';
+  private permissionSynced: boolean = false;
+  private permissionSyncPromise: Promise<NotificationPermission> | null = null;
   private schedulerIntervalId: any = null;
   private firedKeys: Set<string> = new Set();
 
   private constructor() {
     if (typeof window !== 'undefined' && 'Notification' in window) {
       this.isPushSupported = true;
-      this.permission = Notification.permission;
 
       // Escuchar mensajes del Service Worker para notificaciones programadas
       if ('serviceWorker' in navigator) {
@@ -47,11 +48,74 @@ export class NotificationService {
     return this.isPushSupported;
   }
 
-  public getPermission(): NotificationPermission {
-    if (typeof window !== 'undefined' && 'Notification' in window) {
-      return Notification.permission;
+  public async syncPermissionAsync(): Promise<NotificationPermission> {
+    if (typeof window === 'undefined' || !('Notification' in window)) {
+      this.permission = 'denied';
+      this.permissionSynced = true;
+      return this.permission;
     }
-    return 'denied';
+
+    if (this.permissionSyncPromise) {
+      return this.permissionSyncPromise;
+    }
+
+    const navPermissions =
+      typeof navigator !== 'undefined' ? (navigator as Navigator & { permissions?: Permissions }).permissions : undefined;
+
+    if (navPermissions && typeof navPermissions.query === 'function') {
+      this.permissionSyncPromise = navPermissions
+        .query({ name: 'notifications' as PermissionName })
+        .then((status) => {
+          const mapState = (state: PermissionState): NotificationPermission =>
+            state === 'prompt' ? 'default' : state;
+
+          this.permission = mapState(status.state);
+          this.permissionSynced = true;
+
+          if (!status.onchange) {
+            status.onchange = () => {
+              this.permission = mapState(status.state);
+              this.permissionSynced = true;
+            };
+          }
+
+          return this.permission;
+        })
+        .catch(() => {
+          this.permission = Notification.permission;
+          this.permissionSynced = true;
+          return this.permission;
+        })
+        .finally(() => {
+          this.permissionSyncPromise = null;
+        });
+
+      return this.permissionSyncPromise;
+    }
+
+    this.permissionSyncPromise = new Promise<NotificationPermission>((resolve) => {
+      setTimeout(() => {
+        try {
+          this.permission = Notification.permission;
+        } catch {
+          this.permission = 'default';
+        }
+        this.permissionSynced = true;
+        resolve(this.permission);
+      }, 0);
+    }).finally(() => {
+      this.permissionSyncPromise = null;
+    });
+
+    return this.permissionSyncPromise;
+  }
+
+  public getPermission(): NotificationPermission {
+    if (!this.isPushSupported) return 'denied';
+    if (!this.permissionSynced) {
+      void this.syncPermissionAsync();
+    }
+    return this.permission;
   }
 
   public async requestPermission(): Promise<boolean> {
@@ -59,6 +123,7 @@ export class NotificationService {
     try {
       const result = await Notification.requestPermission();
       this.permission = result;
+      this.permissionSynced = true;
       return result === 'granted';
     } catch {
       return false;
@@ -69,7 +134,9 @@ export class NotificationService {
    * Envía una notificación nativa al OS via Service Worker o API directa.
    */
   public async pushToOS(title: string, body: string, options: PushOptions = {}): Promise<boolean> {
-    if (!this.isPushSupported || Notification.permission !== 'granted') return false;
+    if (!this.isPushSupported) return false;
+    const permission = await this.syncPermissionAsync();
+    if (permission !== 'granted') return false;
 
     const origin = typeof window !== 'undefined' && window.location ? window.location.origin : '';
     const iconUrl = origin ? `${origin}/pwa-192x192.png` : '/pwa-192x192.png';

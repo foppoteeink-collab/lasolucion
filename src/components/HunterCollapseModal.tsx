@@ -42,7 +42,7 @@ export const HunterCollapseModal: React.FC = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[160] flex items-center justify-center p-4 sm:p-6 bg-black/90 backdrop-blur-xl font-sans"
+        className="fixed inset-0 z-[160] flex items-center justify-center p-4 sm:p-6 bg-black/92 font-sans"
       >
         {/* Ambient Red Glow */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(225,29,72,0.2)_0%,rgba(0,0,0,0.95)_85%)] pointer-events-none" />

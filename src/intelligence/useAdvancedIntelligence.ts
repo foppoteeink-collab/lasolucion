@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { PlayerStats, TaskItem, PomodoroSession } from '../types';
-import { getTodayDateString, addDaysToDateString } from '../utils/date';
+import { getTodayDateString, parseLocalDate, formatDateToLocal } from '../utils/date';
 
 export interface HeatmapNode {
     date: string;
@@ -68,99 +68,141 @@ const getAreaForCategory = (cat: string) => {
 export const useAdvancedIntelligence = (stats: PlayerStats, tasksByDate: Record<string, TaskItem[]>, pomodoroSessions: PomodoroSession[], heatmapArea: string = 'todas') => {
   return useMemo(() => {
     const todayStr = getTodayDateString();
-    
-    // 1. CALCULATE HEATMAP (Last 365 days)
-    const heatmap: HeatmapNode[] = [];
-    const dateArray = Array.from({ length: 365 }).map((_, i) => {
-        return addDaysToDateString(todayStr, -(364 - i));
-    });
+    const startCursor = parseLocalDate(todayStr);
+    startCursor.setDate(startCursor.getDate() - 364);
 
+    // Pre-indexar sesiones Pomodoro por fecha para evitar O(365 * P)
+    const pomosByDate = new Map<string, PomodoroSession[]>();
+    for (let i = 0; i < pomodoroSessions.length; i++) {
+      const p = pomodoroSessions[i];
+      let bucket = pomosByDate.get(p.date);
+      if (!bucket) {
+        bucket = [];
+        pomosByDate.set(p.date, bucket);
+      }
+      bucket.push(p);
+    }
+
+    // 1. CALCULATE HEATMAP (Last 365 days in single linear cursor walk)
     let maxXp = 1;
-    
-    const dailyData = dateArray.map(dateStr => {
-      const dayTasks = tasksByDate[dateStr] || [];
-      const dayPomodoros = pomodoroSessions.filter(p => p.date === dateStr);
+    const dailyData = new Array<{
+      dateStr: string;
+      dayOfWeek: number;
+      totalXp: number;
+      focusMinutes: number;
+      dominant: string | null;
+      completedCount: number;
+      activeTasks: TaskItem[];
+    }>(365);
+
+    const checkMindAttr = heatmapArea !== 'todas' && heatmapArea !== 'sueño';
+    const includePomos = !checkMindAttr || heatmapArea === 'mente';
+
+    for (let i = 0; i < 365; i++) {
+      const dateStr = formatDateToLocal(startCursor);
+      const dayOfWeek = startCursor.getDay();
+      startCursor.setDate(startCursor.getDate() + 1);
+
+      const dayTasks = tasksByDate[dateStr];
+      const dayPomodoros = includePomos ? (pomosByDate.get(dateStr) || []) : [];
       const finalized = stats.finalizedDays?.[dateStr];
-      
-      let filteredTasks = dayTasks.filter(t => t.completed || (t.isHabit && (t.currentCount || 0) > 0));
-      let filteredPomos = dayPomodoros;
-      
-      if (heatmapArea !== 'todas' && heatmapArea !== 'sueño') {
-         filteredTasks = filteredTasks.filter(t => getAreaForCategory(t.category) === heatmapArea);
-         if (heatmapArea !== 'mente') filteredPomos = [];
+
+      const activeTasks: TaskItem[] = [];
+      let xpFromTasks = 0;
+      let cFuerza = 0;
+      let cMente = 0;
+      let cEnergia = 0;
+      let cDisciplina = 0;
+
+      if (dayTasks && dayTasks.length > 0) {
+        for (let tIdx = 0; tIdx < dayTasks.length; tIdx++) {
+          const t = dayTasks[tIdx];
+          if (!(t.completed || (t.isHabit && (t.currentCount || 0) > 0))) continue;
+          if (checkMindAttr && getAreaForCategory(t.category) !== heatmapArea) continue;
+          activeTasks.push(t);
+          xpFromTasks += t.awardedXp || t.xpReward || 0;
+          const attr = getAttributeForCategory(t.category);
+          if (attr === 'Fuerza') cFuerza++;
+          else if (attr === 'Mente') cMente++;
+          else if (attr === 'Energía') cEnergia++;
+          else cDisciplina++;
+        }
       }
 
-      const xpFromTasks = filteredTasks.reduce((sum, t) => sum + (t.awardedXp || t.xpReward || 0), 0);
-      const xpFromPomodoros = filteredPomos.reduce((sum, p) => sum + (p.xpEarned || 0), 0);
+      let xpFromPomodoros = 0;
+      let focusMinutes = 0;
+      for (let pIdx = 0; pIdx < dayPomodoros.length; pIdx++) {
+        const p = dayPomodoros[pIdx];
+        xpFromPomodoros += p.xpEarned || 0;
+        focusMinutes += p.durationMinutes || 0;
+      }
+
       const xpFromFinalized = finalized?.bonusXp || 0;
       const totalXp = xpFromTasks + xpFromPomodoros + xpFromFinalized;
-      const focusMinutes = filteredPomos.reduce((sum, p) => sum + (p.durationMinutes || 0), 0);
-      
+
       if (heatmapArea !== 'sueño' && totalXp > maxXp) {
         maxXp = totalXp;
       }
-      
-      const attrCounts: Record<string, number> = { Fuerza: 0, Mente: 0, Energía: 0, Disciplina: 0, Estudio: 0 };
-      filteredTasks.forEach(t => {
-          const attr = getAttributeForCategory(t.category);
-          attrCounts[attr] = (attrCounts[attr] || 0) + 1;
-      });
-      let dominant: any = null;
+
+      let dominant: string | null = null;
       let maxCount = 0;
-      Object.entries(attrCounts).forEach(([attr, count]) => {
-          if (count > maxCount) { maxCount = count; dominant = attr; }
-      });
-      return {
+      if (cFuerza > maxCount) { maxCount = cFuerza; dominant = 'Fuerza'; }
+      if (cMente > maxCount) { maxCount = cMente; dominant = 'Mente'; }
+      if (cEnergia > maxCount) { maxCount = cEnergia; dominant = 'Energía'; }
+      if (cDisciplina > maxCount) { maxCount = cDisciplina; dominant = 'Disciplina'; }
+
+      dailyData[i] = {
         dateStr,
+        dayOfWeek,
         totalXp,
         focusMinutes,
         dominant,
-        completedCount: filteredTasks.length,
-        activeTasks: filteredTasks
+        completedCount: activeTasks.length,
+        activeTasks,
       };
-    });
+    }
 
     // Calculate intensity 0-4
-    heatmap.push(...dailyData.map(d => {
-        let intensity: 0|1|2|3|4 = 0;
-        let label = `${d.dateStr} - ${d.totalXp} XP (${d.completedCount} actividades)`;
-        
-        if (heatmapArea === 'sueño') {
-           const sleep = stats.sleepLogs?.[d.dateStr];
-           if (sleep) {
-              const hour = parseInt(sleep.bedtime.split(':')[0], 10);
-              const duration = sleep.sleepDurationHours ?? 6;
-              // Intensity 4 for >=7h or early bedtime (<=22), 3 for >=6h or 23h, 2 for >=5h, 1 for <5h
-              if (duration >= 7 || (hour >= 19 && hour <= 22)) intensity = 4;
-              else if (duration >= 6 || hour === 23) intensity = 3;
-              else if (duration >= 5 || hour === 0) intensity = 2;
-              else intensity = 1;
-              const wakeStr = sleep.wakeTime ? ` → ${sleep.wakeTime}` : '';
-              label = `${d.dateStr} - Dormir: ${sleep.bedtime}${wakeStr} (${duration}h descanso)`;
-           } else {
-              label = `${d.dateStr} - Sin registro de descanso`;
-           }
+    const heatmap: HeatmapNode[] = new Array(365);
+    const isSleepMode = heatmapArea === 'sueño';
+    for (let i = 0; i < 365; i++) {
+      const d = dailyData[i];
+      let intensity: 0|1|2|3|4 = 0;
+      let label = `${d.dateStr} - ${d.totalXp} XP (${d.completedCount} actividades)`;
+
+      if (isSleepMode) {
+        const sleep = stats.sleepLogs?.[d.dateStr];
+        if (sleep) {
+          const hour = parseInt(sleep.bedtime.split(':')[0], 10);
+          const duration = sleep.sleepDurationHours ?? 6;
+          if (duration >= 7 || (hour >= 19 && hour <= 22)) intensity = 4;
+          else if (duration >= 6 || hour === 23) intensity = 3;
+          else if (duration >= 5 || hour === 0) intensity = 2;
+          else intensity = 1;
+          const wakeStr = sleep.wakeTime ? ` → ${sleep.wakeTime}` : '';
+          label = `${d.dateStr} - Dormir: ${sleep.bedtime}${wakeStr} (${duration}h descanso)`;
         } else {
-           if (d.totalXp > 0 || d.completedCount > 0) {
-               const ratio = maxXp > 0 ? d.totalXp / maxXp : 0;
-               if (ratio >= 0.75) intensity = 4;
-               else if (ratio >= 0.5) intensity = 3;
-               else if (ratio >= 0.25) intensity = 2;
-               else intensity = 1;
-           }
+          label = `${d.dateStr} - Sin registro de descanso`;
         }
-        
-        return {
-            date: d.dateStr,
-            totalXp: d.totalXp,
-            focusMinutes: d.focusMinutes,
-            intensity,
-            dominantAttribute: d.dominant,
-            label,
-            completedCount: d.completedCount,
-            activeTasks: d.activeTasks
-        };
-    }));
+      } else if (d.totalXp > 0 || d.completedCount > 0) {
+        const ratio = maxXp > 0 ? d.totalXp / maxXp : 0;
+        if (ratio >= 0.75) intensity = 4;
+        else if (ratio >= 0.5) intensity = 3;
+        else if (ratio >= 0.25) intensity = 2;
+        else intensity = 1;
+      }
+
+      heatmap[i] = {
+        date: d.dateStr,
+        totalXp: d.totalXp,
+        focusMinutes: d.focusMinutes,
+        intensity,
+        dominantAttribute: d.dominant || '',
+        label,
+        completedCount: d.completedCount,
+        activeTasks: d.activeTasks,
+      };
+    }
 
     // 2. CORRELATION ENGINE (Insights)
     const insights: BehavioralInsight[] = [];
@@ -266,8 +308,7 @@ export const useAdvancedIntelligence = (stats: PlayerStats, tasksByDate: Record<
     let weekendXp = 0; let weekendCount = 0;
     let weekdayXp = 0; let weekdayCount = 0;
     dailyData.forEach(d => {
-        const dateObj = new Date(d.dateStr);
-        const dayOfWeek = dateObj.getDay();
+        const dayOfWeek = d.dayOfWeek;
         if (dayOfWeek === 0 || dayOfWeek === 6) {
             weekendXp += d.totalXp; weekendCount++;
         } else {

@@ -519,51 +519,18 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
 
     let ptos = buildPoints(currCount, preset.colors);
 
-    let gl: WebGLRenderingContext | null =
-      lienzo.getContext('webgl', { antialias: false, alpha: false, preserveDrawingBuffer: false }) ||
-      (lienzo.getContext('experimental-webgl') as WebGLRenderingContext | null);
-
+    let gl: WebGLRenderingContext | null = null;
+    let ctx2d: CanvasRenderingContext2D | null = null;
     let prog: WebGLProgram | null = null;
     let vsShader: WebGLShader | null = null;
     let fsShader: WebGLShader | null = null;
     let quadBuf: WebGLBuffer | null = null;
+    let glInitialized = false;
+    let ctx2dInitialized = false;
+    let isDisposed = false;
+    let initRafId = 0;
+    let initTimerId: ReturnType<typeof setTimeout> | null = null;
     const U: Record<string, WebGLUniformLocation | null> = {};
-
-    if (gl) {
-      const sh = (tipo: number, src: string) => {
-        const s = gl!.createShader(tipo);
-        if (!s) return null;
-        gl!.shaderSource(s, src);
-        gl!.compileShader(s);
-        if (!gl!.getShaderParameter(s, gl!.COMPILE_STATUS)) {
-          console.error('[MoxenMalla] Shader compile error:', gl!.getShaderInfoLog(s));
-          return null;
-        }
-        return s;
-      };
-      vsShader = sh(gl.VERTEX_SHADER, VERT);
-      fsShader = sh(gl.FRAGMENT_SHADER, FRAG);
-      if (vsShader && fsShader) {
-        prog = gl.createProgram();
-        if (prog) {
-          gl.attachShader(prog, vsShader);
-          gl.attachShader(prog, fsShader);
-          gl.linkProgram(prog);
-          if (gl.getProgramParameter(prog, gl.LINK_STATUS)) {
-            gl.useProgram(prog);
-            quadBuf = gl.createBuffer();
-            gl.bindBuffer(gl.ARRAY_BUFFER, quadBuf);
-            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
-            const loc = gl.getAttribLocation(prog, 'a');
-            gl.enableVertexAttribArray(loc);
-            gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-            ['u_res', 'u_t', 'u_n', 'u_p', 'u_c', 'u_s', 'u_m', 'u_soft', 'u_fluid', 'u_grano', 'u_estira', 'u_croma'].forEach(n => {
-              U[n] = gl!.getUniformLocation(prog!, n);
-            });
-          }
-        }
-      }
-    }
 
     let W = 1;
     let H = 1;
@@ -573,12 +540,29 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
       const r = capa!.getBoundingClientRect();
       W = Math.max(1, r.width);
       H = Math.max(1, r.height);
-      if (gl) {
-        const isMobile = window.innerWidth <= 860;
-        const dpr = isMobile ? 1.0 : Math.min(window.devicePixelRatio || 1, 1.25);
-        lienzo!.width = Math.round(W * dpr);
-        lienzo!.height = Math.round(H * dpr);
-        gl.viewport(0, 0, lienzo!.width, lienzo!.height);
+      if (gl && glInitialized) {
+        const isFs = isFullscreenRef.current;
+        const maxW = isFs ? 560 : 400;
+        const maxH = isFs ? 340 : 240;
+        const scale = Math.min(isFs ? 0.5 : 0.45, maxW / W, maxH / H);
+        const targetW = Math.max(120, Math.round(W * scale));
+        const targetH = Math.max(80, Math.round(H * scale));
+        if (lienzo!.width !== targetW || lienzo!.height !== targetH) {
+          lienzo!.width = targetW;
+          lienzo!.height = targetH;
+          gl.viewport(0, 0, targetW, targetH);
+        }
+      } else if (ctx2d && ctx2dInitialized) {
+        const isFs = isFullscreenRef.current;
+        const maxW = isFs ? 400 : 280;
+        const maxH = isFs ? 240 : 170;
+        const scale = Math.min(isFs ? 0.4 : 0.35, maxW / W, maxH / H);
+        const targetW = Math.max(120, Math.round(W * scale));
+        const targetH = Math.max(80, Math.round(H * scale));
+        if (lienzo!.width !== targetW || lienzo!.height !== targetH) {
+          lienzo!.width = targetW;
+          lienzo!.height = targetH;
+        }
       }
     }
 
@@ -588,37 +572,65 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
     const bufM = new Float32Array(4);
 
     function pinta() {
-      if (!gl || !prog) return;
-      const asp = W / H;
-      const count = ptos.length;
-      ptos.forEach((p, i) => {
-        bufP[i * 2] = p.px.x;
-        bufP[i * 2 + 1] = 1 - p.py.x;
-        const ok = toOKLab(p.cs[0].x, p.cs[1].x, p.cs[2].x);
-        bufC[i * 3] = ok[0];
-        bufC[i * 3 + 1] = ok[1];
-        bufC[i * 3 + 2] = ok[2];
-        bufS[i * 2] = (p.tx - p.px.x) * asp;
-        bufS[i * 2 + 1] = -(p.ty - p.py.x);
-        bufM[i] = p.m.x;
-      });
-      gl.uniform2f(U.u_res!, lienzo!.width, lienzo!.height);
-      gl.uniform1f(U.u_t!, tiempo);
-      gl.uniform1i(U.u_n!, count);
-      gl.uniform2fv(U.u_p!, bufP);
-      gl.uniform3fv(U.u_c!, bufC);
-      gl.uniform2fv(U.u_s!, bufS);
-      gl.uniform1fv(U.u_m!, bufM);
-      gl.uniform1f(U.u_soft!, AJUSTES.suavidad);
-      gl.uniform1f(U.u_fluid!, AJUSTES.fluido);
-      gl.uniform1f(U.u_grano!, AJUSTES.grano);
-      gl.uniform1f(U.u_estira!, AJUSTES.estira);
-      gl.uniform1f(U.u_croma!, AJUSTES.croma);
-      gl.drawArrays(gl.TRIANGLES, 0, 3);
+      if (gl && prog && glInitialized) {
+        const asp = W / H;
+        const count = ptos.length;
+        ptos.forEach((p, i) => {
+          bufP[i * 2] = p.px.x;
+          bufP[i * 2 + 1] = 1 - p.py.x;
+          const ok = toOKLab(p.cs[0].x, p.cs[1].x, p.cs[2].x);
+          bufC[i * 3] = ok[0];
+          bufC[i * 3 + 1] = ok[1];
+          bufC[i * 3 + 2] = ok[2];
+          bufS[i * 2] = (p.tx - p.px.x) * asp;
+          bufS[i * 2 + 1] = -(p.ty - p.py.x);
+          bufM[i] = p.m.x;
+        });
+        gl.uniform2f(U.u_res!, lienzo!.width, lienzo!.height);
+        gl.uniform1f(U.u_t!, tiempo);
+        gl.uniform1i(U.u_n!, count);
+        gl.uniform2fv(U.u_p!, bufP);
+        gl.uniform3fv(U.u_c!, bufC);
+        gl.uniform2fv(U.u_s!, bufS);
+        gl.uniform1fv(U.u_m!, bufM);
+        gl.uniform1f(U.u_soft!, AJUSTES.suavidad);
+        gl.uniform1f(U.u_fluid!, AJUSTES.fluido);
+        gl.uniform1f(U.u_grano!, AJUSTES.grano);
+        gl.uniform1f(U.u_estira!, AJUSTES.estira);
+        gl.uniform1f(U.u_croma!, AJUSTES.croma);
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+        return;
+      }
+
+      if (ctx2d && ctx2dInitialized) {
+        const cw = lienzo!.width;
+        const ch = lienzo!.height;
+        ctx2d.fillStyle = baseColorRef.current;
+        ctx2d.fillRect(0, 0, cw, ch);
+        ctx2d.globalCompositeOperation = 'screen';
+        const baseRadius = Math.max(cw, ch) * 0.65;
+        ptos.forEach(p => {
+          const cx = p.px.x * cw;
+          const cy = p.py.x * ch;
+          const r = baseRadius * p.m.x;
+          const grad = ctx2d!.createRadialGradient(cx, cy, 0, cx, cy, r);
+          const hex = rgb2hex([p.cs[0].x, p.cs[1].x, p.cs[2].x]);
+          grad.addColorStop(0, hex);
+          grad.addColorStop(0.4, hex + 'aa');
+          grad.addColorStop(0.75, hex + '33');
+          grad.addColorStop(1, 'transparent');
+          ctx2d!.fillStyle = grad;
+          ctx2d!.beginPath();
+          ctx2d!.arc(cx, cy, r, 0, Math.PI * 2);
+          ctx2d!.fill();
+        });
+        ctx2d.globalCompositeOperation = 'source-over';
+      }
     }
 
     let raf = 0;
     let ultimoTs = 0;
+    let ultimoPaintTs = 0;
     const deriva = (p: PointState, t: number) => [Math.sin(t * p.fx + p.f0), Math.cos(t * p.fy + p.f1)];
 
     function paso(dt: number) {
@@ -668,13 +680,23 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
 
     function cuadro(ts: number) {
       raf = 0;
+      if (isDisposed) return;
+      const isInteracting = Boolean(arr || girando);
+      const minIntervalMs = isInteracting ? 16 : 42; // ~24fps en reposo, 60fps al arrastrar
+      if (ultimoPaintTs && ts - ultimoPaintTs < minIntervalMs) {
+        if (isVisible && isIntersecting && (glInitialized || ctx2dInitialized)) {
+          raf = requestAnimationFrame(cuadro);
+        }
+        return;
+      }
+      ultimoPaintTs = ts;
       if (W <= 1 || H <= 1) mide();
-      const dt = ultimoTs ? lim((ts - ultimoTs) / 1000, 0, 0.05) : 1 / 60;
+      const dt = ultimoTs ? lim((ts - ultimoTs) / 1000, 0, 0.05) : 1 / 24;
       ultimoTs = ts;
       paso(dt);
       pinta();
       coloca();
-      if (isVisible && isIntersecting) {
+      if (isVisible && isIntersecting && (glInitialized || ctx2dInitialized)) {
         raf = requestAnimationFrame(cuadro);
       }
     }
@@ -684,7 +706,9 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
     let isIntersecting = true;
 
     function despierta() {
-      if (isVisible && isIntersecting && !raf) raf = requestAnimationFrame(cuadro);
+      if (!isDisposed && (glInitialized || ctx2dInitialized) && isVisible && isIntersecting && !raf) {
+        raf = requestAnimationFrame(cuadro);
+      }
     }
 
     const onVisibilityChangeMalla = () => {
@@ -951,23 +975,91 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
     };
 
     const resizeObserver = new ResizeObserver(() => {
+      const r = capa!.getBoundingClientRect();
+      if (Math.abs(r.width - W) < 1 && Math.abs(r.height - H) < 1) return;
       mide();
-      pinta();
       coloca();
+      if (glInitialized || ctx2dInitialized) pinta();
     });
     resizeObserver.observe(capa);
-    if (containerRef.current) resizeObserver.observe(containerRef.current);
 
-    mide();
+    // Colocar puntos UI inmediatamente sin bloquear el cambio de pestaña
+    const r0 = capa!.getBoundingClientRect();
+    W = Math.max(1, r0.width);
+    H = Math.max(1, r0.height);
     ptos.forEach(p => {
       p.tx = p.obj[0];
       p.ty = p.obj[1];
     });
     coloca();
-    pinta();
-    despierta();
+
+    // Inicializar WebGL de forma diferida tras pintar el UI del tab para 0ms de bloqueo en transición
+    initRafId = requestAnimationFrame(() => {
+      if (isDisposed) return;
+      initTimerId = setTimeout(() => {
+        initTimerId = null;
+        if (isDisposed || !canvasRef.current) return;
+        gl = lienzo.getContext('webgl', {
+          antialias: false,
+          alpha: false,
+          preserveDrawingBuffer: false,
+          powerPreference: 'low-power',
+          failIfMajorPerformanceCaveat: true,
+        });
+
+        if (gl) {
+          const sh = (tipo: number, src: string) => {
+            const s = gl!.createShader(tipo);
+            if (!s) return null;
+            gl!.shaderSource(s, src);
+            gl!.compileShader(s);
+            if (!gl!.getShaderParameter(s, gl!.COMPILE_STATUS)) {
+              console.error('[MoxenMalla] Shader compile error:', gl!.getShaderInfoLog(s));
+              return null;
+            }
+            return s;
+          };
+          vsShader = sh(gl.VERTEX_SHADER, VERT);
+          fsShader = sh(gl.FRAGMENT_SHADER, FRAG);
+          if (vsShader && fsShader) {
+            prog = gl.createProgram();
+            if (prog) {
+              gl.attachShader(prog, vsShader);
+              gl.attachShader(prog, fsShader);
+              gl.linkProgram(prog);
+              if (gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+                gl.useProgram(prog);
+                quadBuf = gl.createBuffer();
+                gl.bindBuffer(gl.ARRAY_BUFFER, quadBuf);
+                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+                const loc = gl.getAttribLocation(prog, 'a');
+                gl.enableVertexAttribArray(loc);
+                gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+                ['u_res', 'u_t', 'u_n', 'u_p', 'u_c', 'u_s', 'u_m', 'u_soft', 'u_fluid', 'u_grano', 'u_estira', 'u_croma'].forEach(n => {
+                  U[n] = gl!.getUniformLocation(prog!, n);
+                });
+                glInitialized = true;
+              }
+            }
+          }
+        }
+
+        if (!glInitialized) {
+          ctx2d = lienzo.getContext('2d', { alpha: false });
+          if (ctx2d) {
+            ctx2dInitialized = true;
+          }
+        }
+        mide();
+        pinta();
+        despierta();
+      }, 24);
+    });
 
     return () => {
+      isDisposed = true;
+      if (initRafId) cancelAnimationFrame(initRafId);
+      if (initTimerId !== null) clearTimeout(initTimerId);
       resizeObserver.disconnect();
       mallaIntersectionObserver.disconnect();
       document.removeEventListener('visibilitychange', onVisibilityChangeMalla);
@@ -977,7 +1069,11 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
       capa.removeEventListener('pointercancel', onPointerUp);
       if (raf) cancelAnimationFrame(raf);
       capa.querySelectorAll('.ml-punto').forEach(el => el.remove());
-      if (gl) {
+      if (ctx2d) {
+        ctx2d = null;
+        ctx2dInitialized = false;
+      }
+      if (gl && glInitialized) {
         if (quadBuf) gl.deleteBuffer(quadBuf);
         if (prog) {
           if (vsShader) { gl.detachShader(prog, vsShader); gl.deleteShader(vsShader); }
@@ -1179,6 +1275,17 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
             ? 'is-fullscreen' 
             : 'h-[260px] sm:h-[320px] md:h-[360px]'
         }`}
+        style={{
+          backgroundColor: currPreset.base,
+          backgroundImage: pointColors
+            .slice(0, pointCount)
+            .map((c, idx) => {
+              const anchors = DISPOSICIONES[pointCount]?.ancha || DISPOSICIONES[3].ancha;
+              const [px, py] = anchors[idx] || [0.5, 0.5];
+              return `radial-gradient(at ${Math.round(px * 100)}% ${Math.round(py * 100)}%, ${c}, transparent 58%)`;
+            })
+            .join(', '),
+        }}
       >
         {/* Canvas WebGL */}
         <canvas ref={canvasRef} className="ml-lienzo" aria-hidden="true" />
@@ -1212,10 +1319,10 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
                 soundFX.playClick();
                 setShowSimulatedUI(!showSimulatedUI);
               }}
-              className={`chicle-btn absolute top-3 left-3 z-40 px-2.5 py-1.5 rounded-lg border transition-all cursor-pointer backdrop-blur-md flex items-center gap-1.5 text-[11px] font-mono shadow-sm ${
+              className={`chicle-btn absolute top-3 left-3 z-40 px-2.5 py-1.5 rounded-lg border transition-all cursor-pointer flex items-center gap-1.5 text-[11px] font-mono shadow-sm ${
                 showSimulatedUI
                   ? 'bg-cyan-500/25 border-cyan-400 text-cyan-200 shadow-[0_0_12px_rgba(0,240,255,0.3)] font-bold'
-                  : 'border-white/15 bg-black/40 hover:bg-black/60 text-white/80 hover:text-white'
+                  : 'border-white/15 bg-black/75 hover:bg-black/90 text-white/80 hover:text-white'
               }`}
               title="Comprobar cómo se leen los textos y números sobre este fondo"
             >
@@ -1236,7 +1343,7 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
               type="button"
               data-action="toggle-fullscreen"
               onClick={toggleFullscreen}
-              className="chicle-btn absolute top-3 right-3 z-40 px-2.5 py-1.5 rounded-lg border border-white/15 bg-black/40 hover:bg-black/60 text-white/80 hover:text-white transition-all cursor-pointer backdrop-blur-md flex items-center gap-1.5 text-[11px] font-mono shadow-sm"
+              className="chicle-btn absolute top-3 right-3 z-40 px-2.5 py-1.5 rounded-lg border border-white/15 bg-black/75 hover:bg-black/90 text-white/80 hover:text-white transition-all cursor-pointer flex items-center gap-1.5 text-[11px] font-mono shadow-sm"
               title="Expandir a pantalla completa"
             >
               <Maximize2 className="w-3.5 h-3.5 text-cyan-400" />
@@ -1248,7 +1355,7 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
         {/* SIMULACIÓN DE INTERFAZ & EVALUACIÓN DE CONTRASTE (UBICADA A UN LADITO, SIN TAPAR EL CENTRO) */}
         {showSimulatedUI && (
           <div className="absolute top-11 right-2 sm:right-3 z-30 pointer-events-auto animate-fade-in max-w-[calc(100%-1rem)]">
-            <div className="w-[180px] sm:w-[220px] rounded-xl bg-[#030a18]/90 backdrop-blur-md p-2.5 sm:p-3 border border-white/20 shadow-[0_12px_30px_rgba(0,0,0,0.7)] space-y-2 transition-all">
+            <div className="w-[180px] sm:w-[220px] rounded-xl bg-[#030a18]/[0.95] p-2.5 sm:p-3 border border-white/20 shadow-[0_12px_30px_rgba(0,0,0,0.7)] space-y-2 transition-all">
               {/* Cabecera del HUD de prueba con botón cerrar rápido */}
               <div className="flex items-center justify-between pb-1 border-b border-white/10">
                 <div className="flex items-center gap-1.5 text-cyan-400 text-[10px] font-mono font-bold uppercase tracking-wider">
@@ -1327,7 +1434,7 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
             style={{ paddingTop: 'max(14px, env(safe-area-inset-top, 14px))' }}
           >
             {/* Badge de Estado Aurora Boreal */}
-            <div className="flex items-center gap-2 bg-[#000d1c]/90 backdrop-blur-md px-3 sm:px-4 py-2 rounded-full border border-cyan-500/40 shadow-[0_0_20px_rgba(0,240,255,0.25)]">
+            <div className="flex items-center gap-2 bg-[#000d1c]/[0.96] px-3 sm:px-4 py-2 rounded-full border border-cyan-500/40 shadow-[0_0_20px_rgba(0,240,255,0.25)]">
               <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_10px_#00f0ff]" />
               <span className="text-[11px] sm:text-xs font-mono font-black text-white tracking-wider uppercase">
                 {currPreset?.name || 'Malla Aurora'}
@@ -1347,7 +1454,7 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
                   soundFX.playClick();
                   setShowSimulatedUI(!showSimulatedUI);
                 }}
-                className={`chicle-btn px-3 py-2 rounded-xl flex items-center gap-1.5 text-xs font-mono font-bold shadow-lg cursor-pointer backdrop-blur-md border ${
+                className={`chicle-btn px-3 py-2 rounded-xl flex items-center gap-1.5 text-xs font-mono font-bold shadow-lg cursor-pointer border ${
                   showSimulatedUI
                     ? 'bg-cyan-500/30 border-cyan-400 text-cyan-200 shadow-[0_0_12px_rgba(0,240,255,0.3)]'
                     : 'bg-black/80 hover:bg-black/95 border-cyan-500/50 text-cyan-300 hover:text-white'
@@ -1366,7 +1473,7 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
                   soundFX.playClick();
                   setShowFsControls(!showFsControls);
                 }}
-                className="chicle-btn px-3 py-2 rounded-xl bg-black/80 hover:bg-black/95 border border-cyan-500/50 text-cyan-300 hover:text-white flex items-center gap-1.5 text-xs font-mono font-bold shadow-lg cursor-pointer backdrop-blur-md"
+                className="chicle-btn px-3 py-2 rounded-xl bg-black/90 hover:bg-black border border-cyan-500/50 text-cyan-300 hover:text-white flex items-center gap-1.5 text-xs font-mono font-bold shadow-lg cursor-pointer"
                 title={showFsControls ? 'Ocultar panel para vista limpia' : 'Mostrar panel de controles'}
               >
                 {showFsControls ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
@@ -1396,7 +1503,7 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
             style={{ paddingBottom: 'max(14px, env(safe-area-inset-bottom, 14px))' }}
           >
             <div
-              className="pointer-events-auto w-full max-w-3xl bg-[#00152b]/95 backdrop-blur-xl border border-cyan-500/50 rounded-2xl p-3 sm:p-4 shadow-[0_20px_50px_rgba(0,0,0,0.9),0_0_30px_rgba(0,240,255,0.25)] space-y-3 max-h-[60vh] overflow-y-auto scrollbar-thin scrollbar-thumb-cyan-500/40"
+              className="pointer-events-auto w-full max-w-3xl bg-[#00152b]/[0.97] border border-cyan-500/50 rounded-2xl p-3 sm:p-4 shadow-[0_20px_50px_rgba(0,0,0,0.9),0_0_30px_rgba(0,240,255,0.25)] space-y-3 max-h-[60vh] overflow-y-auto scrollbar-thin scrollbar-thumb-cyan-500/40"
             >
               {/* FILA 1: PRESETS RÁPIDOS + SELECTOR DE NODOS (2, 3 o 4) + VELOCIDAD */}
               <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-800/80">
@@ -1621,7 +1728,7 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
       </div>
 
       {/* ── DOCK DE CONTROL MINIMALISTA (ULTRA-SLIM & ESTILIZADO) ── */}
-      <div className="p-2.5 sm:p-3 bg-white/[0.02] border border-white/[0.08] backdrop-blur-xl rounded-2xl space-y-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.37)]">
+      <div className="p-2.5 sm:p-3 bg-[#030a18]/[0.92] border border-white/[0.1] rounded-2xl space-y-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.37)]">
         {/* ALERTA INTELIGENTE DE PROTECCIÓN DE CONTRASTE (Solo si el fondo es riesgoso) */}
         {contrastAnalysis.status === 'warning' && (
           <div className="p-2 sm:p-2.5 rounded-xl border bg-rose-500/10 border-rose-500/30 flex items-center justify-between gap-2 text-xs font-mono animate-fade-in">

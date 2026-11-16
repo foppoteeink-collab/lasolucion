@@ -163,12 +163,12 @@ export const NeuralAnalysisModal: React.FC<NeuralAnalysisModalProps> = ({ isOpen
 
   return (
     <div 
-      className="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in"
+      className="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-4 bg-black/88 animate-in fade-in"
       role="dialog"
       aria-modal="true"
       aria-labelledby="neural-modal-title"
     >
-      <div className="bg-[#030712]/95 border border-cyan-500/35 rounded-2xl sm:rounded-3xl w-full max-w-2xl max-h-[90dvh] sm:max-h-[88vh] flex flex-col shadow-[0_0_50px_rgba(0,240,255,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] overflow-hidden backdrop-blur-2xl relative text-left">
+      <div className="bg-[#030712]/[0.98] border border-cyan-500/35 rounded-2xl sm:rounded-3xl w-full max-w-2xl max-h-[90dvh] sm:max-h-[88vh] flex flex-col shadow-[0_0_50px_rgba(0,240,255,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] overflow-hidden relative text-left">
         
         {/* Micrograno táctil Moxen Vidrio */}
         <span className="vi-grano opacity-5" aria-hidden="true" />
@@ -185,23 +185,23 @@ export const NeuralAnalysisModal: React.FC<NeuralAnalysisModalProps> = ({ isOpen
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-anton uppercase tracking-wider text-cyan-300 bg-cyan-950/70 px-2 py-0.5 rounded-lg border border-cyan-500/40">
-                  Diagnóstico Holístico
+                  Resumen de Enfoque
                 </span>
                 {analysisSource === 'ai' && (
                   <span className="text-[10px] font-mono font-bold bg-emerald-950/90 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] flex items-center gap-1">
                     <Sparkles className="w-3 h-3 text-emerald-400 animate-pulse" />
-                    <span>Inteligencia KAI Activa</span>
+                    <span>IA KAI Activa</span>
                   </span>
                 )}
                 {analysisSource === 'heuristics' && (
                   <span className="text-[10px] font-mono font-bold bg-amber-950/90 text-amber-300 px-2 py-0.5 rounded-full border border-amber-500/50 flex items-center gap-1">
                     <ShieldCheck className="w-3 h-3 text-amber-400" />
-                    <span>Modo Autónomo Local</span>
+                    <span>Modo Local</span>
                   </span>
                 )}
               </div>
               <h3 id="neural-modal-title" className="text-base sm:text-lg font-anton tracking-wider text-white uppercase mt-0.5">
-                Diagnóstico Neural Integral
+                Diagnóstico de Hábitos y Rendimiento
               </h3>
             </div>
           </div>

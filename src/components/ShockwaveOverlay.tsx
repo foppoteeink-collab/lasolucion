@@ -209,20 +209,20 @@ export const ShockwaveOverlay: React.FC = () => {
                   }}
                 />
 
-                {/* Resplandor vertical anamórfico difuminado */}
+                {/* Resplandor vertical anamórfico suave */}
                 <motion.div
                   initial={{ scaleX: 0.1, opacity: 0 }}
                   animate={{
                     scaleX: [0.1, 1],
-                    opacity: [0, 0.8, 0],
+                    opacity: [0, 0.65, 0],
                   }}
                   transition={{
                     duration: isEpic ? 0.75 : 0.55,
                     ease: [0.16, 1, 0.3, 1],
                   }}
-                  className="absolute w-full h-[40px] pointer-events-none blur-lg"
+                  className="absolute w-full h-[36px] pointer-events-none"
                   style={{
-                    background: palette.streakGrad,
+                    background: `radial-gradient(ellipse 65% 50% at 50% 50%, ${palette.beamGlow} 0%, transparent 75%)`,
                   }}
                 />
               </div>
@@ -327,7 +327,6 @@ export const ShockwaveOverlay: React.FC = () => {
                         border: `1px solid ${palette.shardBorder}`,
                         boxShadow: palette.shardGlow,
                         clipPath: 'polygon(50% 0%, 100% 38%, 78% 100%, 22% 100%, 0% 38%)',
-                        backdropFilter: 'blur(3px)',
                         transformOrigin: 'center center',
                       }}
                     />

@@ -232,15 +232,22 @@ export const SatelliteKaiHub: React.FC<SatelliteKaiHubProps> = ({
                         <stop offset="100%" stopColor="rgba(15,7,28,0.98)" />
                       </radialGradient>
                     </defs>
+                    {isActive && (
+                      <polygon
+                        points="50,4 92,26 92,74 50,96 8,74 8,26"
+                        fill="none"
+                        stroke={item.accentColor}
+                        strokeWidth="8"
+                        strokeLinejoin="round"
+                        opacity="0.24"
+                      />
+                    )}
                     <polygon
                       points="50,4 92,26 92,74 50,96 8,74 8,26"
                       fill={isActive ? `url(#hex-grad-${item.id})` : 'rgba(10, 8, 20, 0.90)'}
                       stroke={isActive ? item.accentColor : 'rgba(192, 132, 252, 0.45)'}
                       strokeWidth={isActive ? '3.5' : '2'}
                       strokeLinejoin="round"
-                      style={{
-                        filter: isActive ? `drop-shadow(0 0 12px ${item.glowColor})` : 'none',
-                      }}
                     />
                   </svg>
                 )}
@@ -289,7 +296,6 @@ export const SatelliteKaiHub: React.FC<SatelliteKaiHubProps> = ({
                   className="relative z-10 transition-all duration-200"
                   style={{
                     color: isActive ? item.accentColor : 'rgba(203, 213, 225, 0.88)',
-                    filter: isActive ? `drop-shadow(0 0 8px ${item.accentColor})` : 'none',
                     transform: isActive ? 'scale(1.12)' : 'scale(0.92)',
                   }}
                 >

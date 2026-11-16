@@ -68,7 +68,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
 
       return (
         <div className="min-h-screen bg-[#070417] flex items-center justify-center p-4 text-white font-sans">
-          <div className="max-w-md w-full bg-slate-900/90 border border-cyan-500/30 rounded-2xl p-6 shadow-2xl backdrop-blur-xl text-center flex flex-col items-center gap-4">
+          <div className="max-w-md w-full bg-slate-900/[0.97] border border-cyan-500/30 rounded-2xl p-6 shadow-2xl text-center flex flex-col items-center gap-4">
             <div className={`p-3 rounded-full ${isUpdate ? 'bg-cyan-500/10 border border-cyan-500/30 text-cyan-400' : 'bg-red-500/10 border border-red-500/30 text-red-400'} animate-pulse`}>
               {isUpdate ? <RefreshCw className="w-10 h-10 animate-spin" /> : <AlertTriangle className="w-10 h-10" />}
             </div>

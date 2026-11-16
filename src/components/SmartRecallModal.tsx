@@ -165,7 +165,7 @@ export const SmartRecallModal: React.FC<SmartRecallModalProps> = ({
 
   return (
     <div 
-      className="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
+      className="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-4 bg-black/88 animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div 

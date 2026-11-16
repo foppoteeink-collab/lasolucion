@@ -93,7 +93,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           cache: 'no-store',
           headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' },
         });
-        if (res.ok && mounted) {
+        const contentType = res.headers.get('content-type') || '';
+        if (res.ok && contentType.includes('application/json') && mounted) {
           const data = await res.json();
           setPwaBuildInfo((prev) => ({
             ...prev,
@@ -132,7 +133,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [currentCurrency, setCurrentCurrency] = useState<string>(getSavedCurrencySymbol);
   const [savingsTarget, setSavingsTarget] = useState<number>(getSavedSavingsTarget);
   const [audioTesting, setAudioTesting] = useState(false);
-  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(notificationService.getPermission());
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(() => notificationService.getPermission());
+
+  useEffect(() => {
+    let active = true;
+    notificationService.syncPermissionAsync().then((perm) => {
+      if (active) setNotificationPermission(perm);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
   const [notifSettings, setNotifSettings] = useState<NotificationSettings>(getNotificationSettings);
   const [notifTestFeedback, setNotifTestFeedback] = useState<string | null>(null);
   const [currencyChangedToast, setCurrencyChangedToast] = useState<string | null>(null);
@@ -486,7 +497,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   return (
     <div ref={chicleContainerRef} className="space-y-6 pb-36 sm:pb-32">
       {/* HEADER & SUB-TABS NAVIGATION */}
-      <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-2xl border border-white/10 p-3 sm:p-5 shadow-[0_12px_40px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.12)] relative overflow-hidden space-y-3">
+      <div className="w-full rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.94] border border-white/10 p-3 sm:p-5 shadow-[0_12px_40px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.12)] relative overflow-hidden space-y-3">
         {/* Micrograno táctil Moxen Vidrio */}
         <span className="vi-grano opacity-5" aria-hidden="true" />
         
@@ -561,7 +572,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         {activeSubTab === 'preferences' && (
           <div className="space-y-6 animate-fade-in">
             {/* AUDIO & FEEDBACK TÁCTICO */}
-            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-xl p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-5">
+            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.93] p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-5">
               {/* Micrograno táctil Moxen Vidrio */}
               <span className="vi-grano opacity-5" aria-hidden="true" />
 
@@ -875,7 +886,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
 
             {/* HERO CARD COMPACTA: SISTEMA ÓPTICO TÁCTICO & CONTROL ECLIPSE MOXEN */}
-            <div className="w-full rounded-2xl bg-[#030816]/85 backdrop-blur-xl p-4 sm:p-5 border border-white/10 shadow-[0_8px_25px_rgba(0,0,0,0.35)] relative overflow-hidden space-y-3">
+            <div className="w-full rounded-2xl bg-[#040a1a]/[0.93] p-4 sm:p-5 border border-white/10 shadow-[0_8px_25px_rgba(0,0,0,0.35)] relative overflow-hidden space-y-3">
               <span className="vi-grano opacity-5" aria-hidden="true" />
               
               {/* CABECERA INTEGRADA: Título + Interruptor Eclipse alineados horizontalmente */}
@@ -983,7 +994,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* PERSONALIZADOR DE FONDO & COLOR */}
-            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-xl p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
+            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.93] p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
               <span className="vi-grano opacity-5" aria-hidden="true" />
               <div className="relative z-10">
                 <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-widest mb-1 transition-colors" style={{ color: 'var(--aura-color-1, #00f0ff)' }}>
@@ -1039,7 +1050,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* ILUMINACIÓN, HUD, TIPOGRAFÍA & RENDIMIENTO VISUAL */}
-            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-xl p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-5">
+            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.93] p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-5">
               <span className="vi-grano opacity-5" aria-hidden="true" />
               
               <div className="flex items-center justify-between border-b border-white/10 pb-3 relative z-10">
@@ -1282,7 +1293,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* VISTA PREVIA DEL NÚCLEO CUÁNTICO DE CARGA (SINCRONIZADO EN TIEMPO REAL) */}
-            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-xl p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
+            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.93] p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
               <span className="vi-grano opacity-5" aria-hidden="true" />
               <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
@@ -1320,7 +1331,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         {activeSubTab === 'gameplay' && (
           <div className="space-y-6 animate-fade-in">
             {/* SELECTOR DE DENSIDAD NARRATIVA (ROLE 5 CRO/COPY) */}
-            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-xl p-5 sm:p-6 border border-cyan-500/35 shadow-[0_12px_35px_rgba(0,0,0,0.4),0_0_20px_rgba(0,240,255,0.12)] relative overflow-hidden space-y-4">
+            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.93] p-5 sm:p-6 border border-cyan-500/35 shadow-[0_12px_35px_rgba(0,0,0,0.4),0_0_20px_rgba(0,240,255,0.12)] relative overflow-hidden space-y-4">
               <span className="vi-grano opacity-5" aria-hidden="true" />
 
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 relative z-10">
@@ -1402,7 +1413,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* GUÍA DE BIENVENIDA & INDUCCIÓN DE KAI */}
-            <div className="w-full rounded-2xl sm:rounded-3xl bg-gradient-to-r from-cyan-950/40 via-[#030816]/90 to-blue-950/30 backdrop-blur-xl p-5 sm:p-6 border border-cyan-500/30 shadow-[0_12px_35px_rgba(0,0,0,0.4),0_0_20px_rgba(0,240,255,0.1)] relative overflow-hidden space-y-3">
+            <div className="w-full rounded-2xl sm:rounded-3xl bg-gradient-to-r from-cyan-950/60 via-[#040a1a]/95 to-blue-950/50 p-5 sm:p-6 border border-cyan-500/30 shadow-[0_12px_35px_rgba(0,0,0,0.4),0_0_20px_rgba(0,240,255,0.1)] relative overflow-hidden space-y-3">
               <span className="vi-grano opacity-5" aria-hidden="true" />
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
                 <div className="space-y-1">
@@ -1435,7 +1446,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* PERSONALIDAD & VOZ DE KAI */}
-            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-xl p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
+            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.93] p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
               <span className="vi-grano opacity-5" aria-hidden="true" />
 
               <div className="flex items-center justify-between relative z-10">
@@ -1488,7 +1499,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* MECÁNICAS RPG */}
-            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-xl p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
+            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.93] p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
               <span className="vi-grano opacity-5" aria-hidden="true" />
 
               <h3 className="text-xs font-anton text-purple-400 uppercase tracking-wider flex items-center gap-2 relative z-10">
@@ -1498,11 +1509,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               {/* Tareas Dinámicas */}
               <div className="flex items-center justify-between gap-4 py-2 border-b border-white/[0.08] relative z-10">
                 <div>
-                  <h4 className="text-sm font-anton tracking-wider uppercase text-white flex items-center gap-2 mb-1">
-                    <Sparkles className="w-4 h-4 text-cyan-400"/> Generador de Tareas Dinámicas
+                  <h4 className="text-sm font-anton tracking-wider uppercase text-white flex items-center gap-2 mb-0.5">
+                    <Sparkles className="w-4 h-4 text-cyan-400"/> Tareas Sugeridas
                   </h4>
                   <p className="text-xs text-slate-400">
-                    Detecta déficits de hábitos y propone tareas secundarias limitadas de bonificación de XP.
+                    Sugerencias automáticas para ganar puntos extra en hábitos rezagados.
                   </p>
                 </div>
                 <ChicleToggle
@@ -1510,18 +1521,18 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   onChange={() => toggleSetting('enableDynamicQuests')}
                   color="cyan"
                   size="md"
-                  ariaLabel="Alternar Generador de Tareas Dinámicas"
+                  ariaLabel="Alternar Tareas Sugeridas"
                 />
               </div>
 
               {/* Familiar RPG */}
               <div className="flex items-center justify-between gap-4 py-2 border-b border-white/[0.08] relative z-10">
                 <div>
-                  <h4 className="text-sm font-anton tracking-wider uppercase text-white flex items-center gap-2 mb-1">
-                    <Activity className="w-4 h-4 text-purple-400"/> Compañero / Familiar RPG
+                  <h4 className="text-sm font-anton tracking-wider uppercase text-white flex items-center gap-2 mb-0.5">
+                    <Activity className="w-4 h-4 text-purple-400"/> Asistente KAI en Pantalla
                   </h4>
                   <p className="text-xs text-slate-400">
-                    Muestra un Familiar visual que evoluciona basándose en tu atributo dominante de maestría.
+                    Muestra el orbe flotante de KAI para consultas rápidas.
                   </p>
                 </div>
                 <ChicleToggle
@@ -1529,18 +1540,18 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   onChange={() => toggleSetting('enableCompanion')}
                   color="purple"
                   size="md"
-                  ariaLabel="Alternar Compañero / Familiar RPG"
+                  ariaLabel="Alternar Asistente KAI"
                 />
               </div>
 
               {/* Modo Estricto */}
               <div className="flex items-center justify-between gap-4 py-2 relative z-10">
                 <div>
-                  <h4 className="text-sm font-anton tracking-wider uppercase text-white flex items-center gap-2 mb-1">
-                    <ShieldAlert className="w-4 h-4 text-red-400"/> Modo Estricto (Castigo de Maestría)
+                  <h4 className="text-sm font-anton tracking-wider uppercase text-white flex items-center gap-2 mb-0.5">
+                    <ShieldAlert className="w-4 h-4 text-red-400"/> Modo Exigente
                   </h4>
                   <p className="text-xs text-slate-400">
-                    Si fallas un hábito, las penalizaciones de racha y XP son más severas.
+                    Aplica mayor descuento de puntos si dejas hábitos pendientes.
                   </p>
                 </div>
                 <ChicleToggle
@@ -1548,13 +1559,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   onChange={() => toggleSetting('strictMode')}
                   color="red"
                   size="md"
-                  ariaLabel="Alternar Modo Estricto"
+                  ariaLabel="Alternar Modo Exigente"
                 />
               </div>
             </div>
 
             {/* COMPAÑERO CUÁNTICO KAI: SELECCIÓN Y FORJA */}
-            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-xl p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
+            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.93] p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
               <span className="vi-grano opacity-5" aria-hidden="true" />
               <div className="flex items-center justify-between gap-3 relative z-10">
                 <div className="flex items-center gap-2">
@@ -1605,7 +1616,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* PROTOCOLO DE INDUCCIÓN Y GUÍA TÁCTICA DE KAI */}
-            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-xl p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
+            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.93] p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
               <span className="vi-grano opacity-5" aria-hidden="true" />
               <div className="flex items-center justify-between gap-3 relative z-10">
                 <div className="flex items-center gap-2">
@@ -1719,7 +1730,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         {/* ===================== TAB 2: TESORERÍA ===================== */}
         {activeSubTab === 'finances' && (
           <div className="space-y-6 animate-fade-in">
-            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-xl p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-6">
+            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.93] p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-6">
               <span className="vi-grano opacity-5" aria-hidden="true" />
 
               {/* HEADER DE TESORERÍA */}
@@ -1862,7 +1873,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             )}
 
             {/* 1. PUENTE DIRECTO TABLET ↔ TELÉFONO */}
-            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-xl p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
+            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.93] p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
               <span className="vi-grano opacity-5" aria-hidden="true" />
               <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-3 relative z-10">
                 <div className="flex items-center gap-2">
@@ -1910,7 +1921,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* 2. ESTADO DE FIRESTORE & USUARIO */}
-            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-xl p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-5">
+            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.93] p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-5">
               <span className="vi-grano opacity-5" aria-hidden="true" />
               <div className="flex items-center justify-between border-b border-white/10 pb-4 relative z-10">
                 <h3 className="text-sm font-anton text-white uppercase tracking-wider flex items-center gap-2">
@@ -2001,7 +2012,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* 3. RESPALDO LOCAL JSON & CSV */}
-            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-xl p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
+            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.93] p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
               <span className="vi-grano opacity-5" aria-hidden="true" />
               <div className="flex items-start gap-3 relative z-10">
                 <div className="p-2.5 rounded-2xl bg-white/[0.05] border border-white/15 text-cyan-300 shrink-0">
@@ -2048,7 +2059,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* 4. PLANTILLAS DE HORARIOS */}
-            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-xl p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
+            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.93] p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
               <span className="vi-grano opacity-5" aria-hidden="true" />
               <div className="flex items-start gap-3 relative z-10">
                 <div className="p-2.5 rounded-2xl bg-emerald-950/80 border border-emerald-500/40 text-emerald-400 shrink-0">
@@ -2089,7 +2100,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <GoogleDriveSyncCard />
 
             {/* 6. APLICACIÓN INSTALABLE PWA */}
-            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-xl p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
+            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.93] p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
               <span className="vi-grano opacity-5" aria-hidden="true" />
               <div className="flex items-center justify-between relative z-10">
                 <div className="flex items-center gap-2">
@@ -2211,7 +2222,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* 6. CREDENCIALES DE IA (GEMINI) */}
-            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#030816]/85 backdrop-blur-xl p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
+            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.93] p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
               <span className="vi-grano opacity-5" aria-hidden="true" />
               <div className="flex items-center justify-between border-b border-white/10 pb-3 relative z-10">
                 <div className="flex items-center gap-2">
@@ -2286,7 +2297,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* 7. ZONA CRÍTICA */}
-            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#140205]/90 backdrop-blur-xl p-6 border border-red-500/30 shadow-[0_12px_35px_rgba(239,68,68,0.1),inset_0_1px_0_rgba(255,255,255,0.06)] relative overflow-hidden space-y-4">
+            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#140205]/[0.95] p-6 border border-red-500/30 shadow-[0_12px_35px_rgba(239,68,68,0.1),inset_0_1px_0_rgba(255,255,255,0.06)] relative overflow-hidden space-y-4">
               <span className="vi-grano opacity-5" aria-hidden="true" />
               <div className="flex items-start gap-3 relative z-10">
                 <div className="p-3 rounded-2xl bg-red-950/80 border border-red-700/60 text-red-400 shrink-0">

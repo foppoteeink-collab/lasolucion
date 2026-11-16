@@ -54,10 +54,10 @@ export const MainLogo: React.FC<MainLogoProps> = ({
     >
       {/* Resplandor ambiental de plasma orgánico sincronizado con la paleta de Ajustes (Malla Aurora) */}
       <motion.div
-        className="absolute inset-x-2 inset-y-1 -z-10 rounded-full pointer-events-none"
+        className="absolute -inset-x-1 -inset-y-1 -z-10 rounded-full pointer-events-none"
         animate={{
-          opacity: [0.35, 0.65, 0.35],
-          scale: [0.95, 1.08, 0.95],
+          opacity: [0.32, 0.58, 0.32],
+          scale: [0.96, 1.05, 0.96],
         }}
         transition={{
           duration: 8,
@@ -66,9 +66,8 @@ export const MainLogo: React.FC<MainLogoProps> = ({
         }}
         style={{
           background: forceColor
-            ? forceColor
-            : `radial-gradient(ellipse at center, ${palette.glow} 0%, ${palette.glowSecondary} 60%, transparent 85%)`,
-          filter: 'blur(14px)',
+            ? `radial-gradient(ellipse at center, ${forceColor}55 0%, transparent 70%)`
+            : `radial-gradient(ellipse at center, ${palette.glow} 0%, ${palette.glowSecondary} 45%, transparent 75%)`,
         }}
       />
 
@@ -90,9 +89,6 @@ export const MainLogo: React.FC<MainLogoProps> = ({
               backgroundImage: forceColor ? undefined : palette.gradient,
               backgroundColor: forceColor || undefined,
               animationDuration: animDuration,
-              filter: forceColor
-                ? `drop-shadow(0 0 10px ${forceColor})`
-                : `drop-shadow(0 2px 10px ${palette.glow}) drop-shadow(0 0 18px ${palette.glowSecondary})`,
             }}
           />
 

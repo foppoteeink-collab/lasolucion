@@ -88,7 +88,7 @@ export const ClearDayConfirmModal: React.FC<ClearDayConfirmModalProps> = ({
 
   const modalContent = (
     <div
-      className="fixed inset-0 z-[180] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200 portal-modal-root"
+      className="fixed inset-0 z-[180] flex items-center justify-center p-3 sm:p-4 bg-black/88 animate-in fade-in duration-200 portal-modal-root"
       onClick={handleCloseAction}
     >
       <div

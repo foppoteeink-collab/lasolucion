@@ -138,7 +138,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = (props) => {
         )}
       </div>
       <div style={lineStyle} className="les-line w-[3.5px] rounded-full shrink-0 my-0.5 transition-all duration-300" />
-      <div style={infoBoxStyle} className={"flex-1 min-w-0 px-2.5 py-2 sm:px-3.5 sm:py-2.5 flex items-center justify-between gap-2 sm:gap-3 relative isolate rounded-xl border backdrop-blur-xl group-hover:brightness-110 " + (isMenuOpen ? "ring-1 ring-cyan-500/40 shadow-[0_0_15px_rgba(0,240,255,0.25)] " : "") + (isCompleted ? "opacity-90" : "")}>
+      <div style={infoBoxStyle} className={"flex-1 min-w-0 px-2.5 py-2 sm:px-3.5 sm:py-2.5 flex items-center justify-between gap-2 sm:gap-3 relative isolate rounded-xl border group-hover:brightness-110 " + (isMenuOpen ? "ring-1 ring-cyan-500/40 shadow-[0_0_15px_rgba(0,240,255,0.25)] " : "") + (isCompleted ? "opacity-90" : "")}>
         <span className="vi-grano" aria-hidden="true" />
         <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
           <button
@@ -160,8 +160,8 @@ const TaskCardComponent: React.FC<TaskCardProps> = (props) => {
             }}
             disabled={isDayEnded}
             style={isCompleted ? undefined : { borderColor: hexToRgba(activeLineColor, 0.40), boxShadow: '0 0 10px ' + hexToRgba(activeLineColor, 0.18) }}
-            className={"w-9 h-9 sm:w-10 sm:h-10 border flex items-center justify-center transition-all cursor-pointer shrink-0 relative select-none " + (isCompleted ? "bg-gradient-to-br from-emerald-400 to-emerald-500 border-emerald-300 text-slate-950 shadow-[0_0_14px_rgba(16,185,129,0.55)] rounded-xl" : isFutureDay ? "bg-black/40 text-cyan-400/60 hover:bg-white/[0.04] rounded-xl" : "bg-black/45 text-white hover:bg-black/30 rounded-xl")}
-            title={isFutureDay ? 'Día futuro: modo planificación' : isCounterHabit ? (isCompleted ? `${task.title} - Completado hoy` : `${task.title} - Toca para sumar +1 (${task.currentCount || 0}/${task.targetCount})`) : isCompleted ? 'Desmarcar tarea' : 'Marcar como completada'}
+            className={"w-9 h-9 sm:w-10 sm:h-10 border flex items-center justify-center transition-all cursor-pointer shrink-0 relative select-none " + (isCompleted ? "bg-gradient-to-br from-emerald-400 to-emerald-500 border-emerald-300 text-slate-950 shadow-[0_0_14px_rgba(16,185,129,0.55)] rounded-xl" : isFutureDay ? "bg-black/40 text-cyan-400/60 hover:bg-white/[0.04] rounded-xl" : "bg-black/30 hover:bg-emerald-950/40 ring-1 ring-white/10 hover:ring-emerald-400/50 rounded-xl")}
+            title={isFutureDay ? 'Día futuro: modo planificación' : isCounterHabit ? (isCompleted ? `${task.title} - Completado hoy` : `${task.title} - Toca para sumar +1 (${task.currentCount || 0}/${task.targetCount})`) : isCompleted ? 'Desmarcar tarea' : '✅ Toca para marcar como completada'}
             aria-label={isCompleted ? "Desmarcar tarea: " + task.title : isCounterHabit ? "Sumar +1 a " + task.title : "Completar tarea: " + task.title}
           >
             {isCompleted ? (
@@ -175,7 +175,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = (props) => {
               </div>
             ) : (
               <div className="flex items-center justify-center">
-                {getCategoryIcon(task.category, activeLineColor)}
+                <Icon name="check" className="w-5 h-5 stroke-[2.5] text-slate-600 group-hover:text-slate-400 transition-colors duration-150" />
                 {isFutureDay && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-cyan-400 ring-2 ring-black" />}
               </div>
             )}
@@ -261,6 +261,26 @@ const TaskCardComponent: React.FC<TaskCardProps> = (props) => {
                   {!isDayEnded && !isFutureDay && !isCompleted && onIncrementHabit && (
                     <span className={"px-1 py-0.2 rounded text-black text-[9px] font-bold uppercase " + catStyle.checkboxBorder.split(' ')[0]}>+1</span>
                   )}
+                </button>
+              )}
+              {/* Botón Foco Rápido */}
+              {!isCompleted && !isDayEnded && onOpenPomodoro && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (soundFX.playPomodoroChime) {
+                      soundFX.playPomodoroChime();
+                    } else {
+                      soundFX.playClick();
+                    }
+                    onOpenPomodoro(task.title, task.category);
+                  }}
+                  className="inline-flex items-center gap-1 ml-auto shrink-0 px-2 py-0.5 rounded-lg bg-cyan-950/60 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-900 hover:border-cyan-400 text-[10.5px] font-mono font-bold transition-all cursor-pointer active:scale-95"
+                  title="Iniciar modo foco (Pomodoro)"
+                >
+                  <Icon name="timer" className="w-3 h-3 text-cyan-400" />
+                  <span>Foco</span>
                 </button>
               )}
             </div>

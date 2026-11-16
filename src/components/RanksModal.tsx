@@ -46,7 +46,7 @@ export const RanksModal: React.FC<RanksModalProps> = ({ isOpen, onClose, current
 
   return createPortal(
     <div 
-      className="fixed inset-0 z-[180] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200 portal-modal-root select-none pointer-events-auto font-sans"
+      className="fixed inset-0 z-[180] flex items-center justify-center p-3 sm:p-4 bg-black/88 animate-in fade-in duration-200 portal-modal-root select-none pointer-events-auto font-sans"
       onClick={onClose}
     >
       <div 

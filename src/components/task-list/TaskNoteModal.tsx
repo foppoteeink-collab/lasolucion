@@ -37,11 +37,11 @@ export const TaskNoteModal: React.FC<TaskNoteModalProps> = ({
 
   const modalContent = (
     <div
-      className="fixed inset-0 z-[180] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md portal-modal-root"
+      className="fixed inset-0 z-[180] flex items-center justify-center p-3 sm:p-4 bg-black/88 portal-modal-root"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md max-h-[88dvh] sm:max-h-[84vh] flex flex-col bg-[#011420] border border-cyan-500/50 rounded-2xl sm:rounded-3xl shadow-[0_0_30px_rgba(0,240,255,0.25)] relative text-left overflow-hidden backdrop-blur-md"
+        className="w-full max-w-md max-h-[88dvh] sm:max-h-[84vh] flex flex-col bg-[#011420] border border-cyan-500/50 rounded-2xl sm:rounded-3xl shadow-[0_0_30px_rgba(0,240,255,0.25)] relative text-left overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-4 sm:p-5 pb-3 border-b border-cyan-500/30 bg-[#000a14] shrink-0">

@@ -269,7 +269,7 @@ export const KaiInteractiveSpotlightTour: React.FC = () => {
       {/* Fallback backdrop when target is not yet located on DOM */}
       {!hasTarget && (
         <div
-          className="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 pointer-events-auto"
+          className="fixed inset-0 bg-black/88 z-50 pointer-events-auto"
           onClick={handleSkip}
         />
       )}

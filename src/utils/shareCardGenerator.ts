@@ -15,7 +15,7 @@ const showIOSShareCardModal = (imageUrl: string, fileName: string) => {
 
   const modal = document.createElement('div');
   modal.id = 'ios-share-card-modal';
-  modal.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background-color:rgba(0,0,0,0.85);backdrop-filter:blur(8px);padding:16px;';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background-color:rgba(0,0,0,0.9);padding:16px;';
   
   modal.innerHTML = `
     <div style="position:relative;max-width:340px;width:100%;background-color:#0f172a;border:1px solid rgba(0,240,255,0.4);border-radius:16px;padding:16px;display:flex;flex-direction:column;align-items:center;gap:12px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.8);">

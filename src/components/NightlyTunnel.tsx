@@ -189,9 +189,9 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
       role="dialog"
       aria-modal="true"
       aria-labelledby="nightly-tunnel-title"
-      className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md"
+      className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4 bg-black/88"
     >
-      <div className="relative w-full max-w-xl flex flex-col bg-[#030712]/95 border border-cyan-500/35 rounded-2xl sm:rounded-3xl shadow-[0_0_50px_rgba(0,240,255,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] text-white overflow-hidden max-h-[92dvh] backdrop-blur-2xl text-left">
+      <div className="relative w-full max-w-xl flex flex-col bg-[#030712]/[0.98] border border-cyan-500/35 rounded-2xl sm:rounded-3xl shadow-[0_0_50px_rgba(0,240,255,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] text-white overflow-hidden max-h-[92dvh] text-left">
 
         {/* Micrograno táctil */}
         <span className="vi-grano opacity-5" aria-hidden="true" />
@@ -382,7 +382,7 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
           <div>
             <div className="flex items-center justify-between gap-2 mb-1.5 flex-wrap">
               <label className="text-[11px] font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1.5">
-                <Icon name="bookOpen" className="w-3 h-3 text-indigo-400" /> Nota de Bitácora Nocturna (Opcional)
+                <Icon name="bookOpen" className="w-3 h-3 text-indigo-400" /> Mi Bitácora del Día (Reflexión)
               </label>
               <div className="flex items-center gap-1.5">
                 <span className={`text-[10px] font-mono ${
@@ -403,7 +403,7 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
               value={reflectionText}
               onChange={e => setReflectionText(e.target.value)}
               aria-label="Reflexión de la jornada diaria"
-              placeholder="¿Qué victoria o aprendizaje consolidó tu foco hoy?..."
+              placeholder="¿Qué lograste hoy o qué aprendiste para mañana?..."
               className="w-full bg-[#000a14] border border-cyan-900/70 rounded-xl p-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 resize-none h-14"
             />
           </div>

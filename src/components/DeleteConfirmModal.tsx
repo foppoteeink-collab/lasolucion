@@ -56,7 +56,7 @@ export function DeleteConfirmModal({ task, onClose, onConfirm }: DeleteConfirmMo
 
   return (
     <div 
-      className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-sm animate-in fade-in"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/88 animate-in fade-in"
       onClick={handleCloseAction}
     >
       <div 

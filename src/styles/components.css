@@ -90,14 +90,16 @@
 /* ========================================================================== */
 /* BOTONES PRINCIPALES CON ANIMACIÓN DE ATENCIÓN (CALL-TO-ACTION NEON)       */
 /* ========================================================================== */
-.btn-neon-hunter {
-  position: relative;
-  overflow: hidden;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+@layer components {
+  .btn-neon-hunter {
+    position: relative;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
 }
 
 /* Efecto Shimmer de barrido de luz táctico (optimizado a 60 FPS, reactivo al hover) */

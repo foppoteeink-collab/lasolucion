@@ -117,11 +117,11 @@ export const MonthlyCalendarModal: React.FC<MonthlyCalendarModalProps> = ({
 
   const modalContent = (
     <div
-      className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-fade-in portal-modal-root"
+      className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-4 bg-black/88 animate-fade-in portal-modal-root"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md max-h-[92dvh] overflow-y-auto scrollbar-none flex flex-col bg-[#030712]/95 border border-cyan-500/40 rounded-2xl sm:rounded-3xl shadow-[0_0_50px_rgba(0,240,255,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] relative text-left backdrop-blur-2xl"
+        className="w-full max-w-md max-h-[92dvh] overflow-y-auto scrollbar-none flex flex-col bg-[#030712]/[0.98] border border-cyan-500/40 rounded-2xl sm:rounded-3xl shadow-[0_0_50px_rgba(0,240,255,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] relative text-left"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Grano esmerilado táctil Moxen Vidrio */}

@@ -509,7 +509,7 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
   const CustomTooltipBar = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-[#001830]/95 backdrop-blur-md border border-cyan-500/50 p-2.5 rounded-xl shadow-[0_0_20px_rgba(0,240,255,0.25)]">
+        <div className="bg-[#001830]/[0.97] border border-cyan-500/50 p-2.5 rounded-xl shadow-[0_0_20px_rgba(0,240,255,0.25)]">
           <p className="text-white text-[10px] uppercase tracking-wider font-bold mb-1">{label}</p>
           <p className="text-white text-sm font-mono font-black flex items-center gap-1.5">
             <Icon name="timer" className="w-3.5 h-3.5 text-cyan-400" />
@@ -524,7 +524,7 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
   const CustomTooltipPie = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-[#001830]/95 backdrop-blur-md border border-fuchsia-500/50 p-2.5 rounded-xl shadow-[0_0_20px_rgba(217,70,239,0.25)] z-30">
+        <div className="bg-[#001830]/[0.97] border border-fuchsia-500/50 p-2.5 rounded-xl shadow-[0_0_20px_rgba(217,70,239,0.25)] z-30">
           <p className="text-fuchsia-300 text-[10px] uppercase tracking-wider font-bold mb-1">{payload[0].name}</p>
           <p className="text-white text-sm font-mono font-black flex items-center gap-1.5">
             <Icon name="checkCircle" className="w-3.5 h-3.5 text-fuchsia-400" />
@@ -540,7 +540,7 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-[#001830]/95 backdrop-blur-md border border-purple-500/50 p-3 rounded-xl shadow-[0_0_20px_rgba(168,85,247,0.3)] text-white text-xs max-w-xs space-y-1.5">
+        <div className="bg-[#001830]/[0.97] border border-purple-500/50 p-3 rounded-xl shadow-[0_0_20px_rgba(168,85,247,0.3)] text-white text-xs max-w-xs space-y-1.5">
           <p className="font-anton uppercase tracking-wider text-purple-300 text-sm flex items-center gap-1.5">
             <Icon name="brain" className="w-3.5 h-3.5 text-purple-400" />
             {data.fullName}
@@ -618,7 +618,7 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
       {/* 4 MASTER SUB-TABS SELECTOR (MOXEN CHIP MENU GROUP)                 */}
       {/* ─────────────────────────────────────────────────────────────────── */}
       <div
-        className="sticky top-0 z-30 mb-4 mf-8-menu-chip-group mf-chip-group justify-start sm:justify-center backdrop-blur-xl"
+        className="sticky top-0 z-30 mb-4 mf-8-menu-chip-group mf-chip-group justify-start sm:justify-center bg-[#030712]/[0.94] rounded-2xl p-1.5 border border-white/10 shadow-lg"
         role="listbox"
         aria-label="Secciones de Perfil y Estadísticas"
       >
@@ -925,7 +925,7 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
                         if (active && payload && payload.length) {
                           const data = payload[0].payload;
                           return (
-                            <div className="bg-[#001830] border border-emerald-900/50 rounded-xl p-3 shadow-xl backdrop-blur-md">
+                            <div className="bg-[#001830] border border-emerald-900/50 rounded-xl p-3 shadow-xl">
                               <p className="font-bold text-emerald-300 text-xs tracking-wider mb-1 uppercase">{data.phase}</p>
                               <p className="font-black text-white text-sm mb-1">{data.name}</p>
                               <p className="text-white text-xs font-semibold">Alcanzado: {data.date}</p>

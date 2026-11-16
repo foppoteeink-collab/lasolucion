@@ -75,7 +75,7 @@ export const MonthlyCalendar: React.FC<MonthlyCalendarProps> = ({
   const todayStr = getTodayDateString();
 
   return (
-    <div className="relative isolate rounded-2xl sm:rounded-3xl p-4 sm:p-6 bg-surface-card border border-white/10 backdrop-blur-2xl shadow-[0_0_35px_rgba(0,0,0,0.6)] overflow-hidden font-sans tracking-wide text-white">
+    <div className="relative isolate rounded-2xl sm:rounded-3xl p-4 sm:p-6 bg-[#040a1a]/[0.95] border border-white/10 shadow-[0_0_35px_rgba(0,0,0,0.6)] overflow-hidden font-sans tracking-wide text-white">
        {/* Ambient corner glows */}
        <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
        <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />

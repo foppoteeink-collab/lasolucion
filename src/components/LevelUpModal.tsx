@@ -107,7 +107,7 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.2, ease: 'easeOut' }}
-      className="fixed inset-0 z-[120] flex items-center justify-center p-3 sm:p-4 bg-black/95 backdrop-blur-xl font-sans"
+      className="fixed inset-0 z-[120] flex items-center justify-center p-3 sm:p-4 bg-black/95 font-sans"
       onClick={onClose}
     >
       {/* Sci-Fi Ambient Background Glows */}
@@ -132,7 +132,7 @@ export const LevelUpModal: React.FC<LevelUpModalProps> = ({
         initial={{ y: 18, opacity: 0, scale: 0.96 }}
         animate={{ y: 0, opacity: 1, scale: 1 }}
         transition={{ duration: 0.2, ease: 'easeOut' }}
-        className="relative w-full max-w-md max-h-[90dvh] sm:max-h-[85vh] flex flex-col rounded-3xl bg-[#030712]/98 border border-cyan-400/50 shadow-[0_0_80px_rgba(0,240,255,0.3),inset_0_1px_0_rgba(255,255,255,0.2)] text-center overflow-hidden backdrop-blur-2xl"
+        className="relative w-full max-w-md max-h-[90dvh] sm:max-h-[85vh] flex flex-col rounded-3xl bg-[#030712]/[0.99] border border-cyan-400/50 shadow-[0_0_80px_rgba(0,240,255,0.3),inset_0_1px_0_rgba(255,255,255,0.2)] text-center overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Micrograno táctil Moxen Vidrio */}

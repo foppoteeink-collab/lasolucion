@@ -559,8 +559,8 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[120] bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-fadeIn portal-modal-root">
-      <div className="relative w-full max-w-4xl max-h-[92dvh] sm:max-h-[88vh] bg-[#030712]/95 border border-cyan-500/35 rounded-2xl sm:rounded-3xl shadow-[0_0_50px_rgba(0,240,255,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] flex flex-col overflow-hidden text-white backdrop-blur-2xl">
+    <div className="fixed inset-0 z-[120] bg-black/88 flex items-center justify-center p-3 sm:p-4 animate-fadeIn portal-modal-root">
+      <div className="relative w-full max-w-4xl max-h-[92dvh] sm:max-h-[88vh] bg-[#030712]/[0.98] border border-cyan-500/35 rounded-2xl sm:rounded-3xl shadow-[0_0_50px_rgba(0,240,255,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] flex flex-col overflow-hidden text-white">
         
         {/* Micrograno táctil Moxen Vidrio */}
         <span className="vi-grano opacity-5" aria-hidden="true" />
@@ -569,7 +569,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
         <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent pointer-events-none" />
 
         {/* ─── ENCABEZADO MOXEN OBSIDIAN ─── */}
-        <div className="px-4 sm:px-6 py-3.5 border-b border-white/10 flex items-center justify-between bg-[#040814]/90 backdrop-blur-md relative z-10">
+        <div className="px-4 sm:px-6 py-3.5 border-b border-white/10 flex items-center justify-between bg-[#040814]/[0.96] relative z-10">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-cyan-500/15 border border-cyan-400/40 text-cyan-300 shadow-[0_0_14px_rgba(0,240,255,0.3)]">
               <Sparkles className="w-5 h-5" />
@@ -1658,7 +1658,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
         </div>
 
         {/* ─── PIE DEL MODAL MOXEN THUMB-ZONE ─── */}
-        <div className="p-3.5 sm:p-5 border-t border-white/10 bg-[#030712]/95 backdrop-blur-md flex items-center justify-between gap-3 relative z-10">
+        <div className="p-3.5 sm:p-5 border-t border-white/10 bg-[#030712]/[0.98] flex items-center justify-between gap-3 relative z-10">
           <div className="flex items-center gap-2 text-xs font-mono text-slate-400 min-w-0">
             <span className="shrink-0">KAI Activo:</span>
             <span className="px-2.5 py-1 rounded-lg bg-cyan-950/60 border border-cyan-500/40 text-cyan-300 font-anton tracking-wider uppercase text-xs truncate">
@@ -1682,7 +1682,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
 
         {/* ─── MODAL DE CONFIRMACIÓN: RETIRAR RELIQUIA DE BÓVEDA ─── */}
         {relicToDelete && (
-          <div className="fixed inset-0 z-[160] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
+          <div className="fixed inset-0 z-[160] flex items-center justify-center p-4 bg-black/86 animate-fadeIn">
             <div className="w-full max-w-sm p-5 rounded-2xl bg-[#030914] border border-rose-500/60 shadow-[0_0_35px_rgba(244,63,94,0.35)] text-center space-y-4">
               <div className="w-12 h-12 mx-auto rounded-2xl bg-rose-950/80 border border-rose-500/50 flex items-center justify-center text-rose-400">
                 <Trash2 className="w-6 h-6" />

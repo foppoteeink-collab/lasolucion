@@ -86,11 +86,11 @@ export const TaskHeaderHUD: React.FC<TaskHeaderHUDProps> = ({
 
       {/* Finalized Day / Lock Banner */}
       {isDayFinalized && (
-        <div className="p-3 rounded-2xl bg-indigo-950/40 border border-indigo-500/40 backdrop-blur-md flex items-center justify-between text-indigo-200">
+        <div className="p-3 rounded-2xl bg-indigo-950/85 border border-indigo-500/40 flex items-center justify-between text-indigo-200">
           <div className="flex items-center gap-2.5">
             <Lock className="w-4 h-4 text-indigo-400 shrink-0" />
             <span className="text-xs font-bold text-white">
-              Ciclo Consolidado ({finalizedInfo?.finalizedAt ? new Date(finalizedInfo.finalizedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Hoy'})
+              Jornada Cerrada ({finalizedInfo?.finalizedAt ? new Date(finalizedInfo.finalizedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Hoy'})
             </span>
           </div>
 

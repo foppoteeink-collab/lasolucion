@@ -3,6 +3,11 @@
 
 import { useUIStore } from '../store/useUIStore';
 import { hapticPresets, triggerHaptic } from './haptics';
+import {
+  createGuardedAudioContext,
+  isAudioIpcDisabled,
+  probeAudioServiceAvailability,
+} from './audioProbe';
 
 const isPomodoroFocusActive = (): boolean => {
   try {
@@ -53,7 +58,7 @@ class SoundFX {
   }
 
   private createCtxNow() {
-    if (this.ctx || this.ctxDisabled || typeof window === 'undefined' || !hasUserActivation()) return;
+    if (this.ctx || this.ctxDisabled || isAudioIpcDisabled() || typeof window === 'undefined' || !hasUserActivation()) return;
     const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     if (!AudioCtx) {
       this.ctxDisabled = true;
@@ -61,7 +66,13 @@ class SoundFX {
     }
 
     try {
-      this.ctx = new AudioCtx();
+      const guardedCtx = createGuardedAudioContext(AudioCtx);
+      if (!guardedCtx) {
+        this.ctx = null;
+        this.ctxDisabled = true;
+        return;
+      }
+      this.ctx = guardedCtx;
       // Dynamic night detection: gentle rolloff after 22:00 (10 PM) or before 06:00
       const currentHour = new Date().getHours();
       const isNight = currentHour >= 22 || currentHour < 6;
@@ -93,7 +104,7 @@ class SoundFX {
   }
 
   private initCtx(onColdReady?: () => void) {
-    if (typeof window === 'undefined' || this.ctxDisabled || !hasUserActivation()) return;
+    if (typeof window === 'undefined' || this.ctxDisabled || isAudioIpcDisabled() || !hasUserActivation()) return;
     if (this.ctx) {
       if (this.ctx.state === 'suspended') {
         this.ctx.resume().catch(() => {});
@@ -105,13 +116,19 @@ class SoundFX {
       this.pendingReadyCallbacks.push(onColdReady);
     }
 
-    // Defer first AudioContext construction until after the current UI click renders/paints
-    // so tab switches and menus never stall waiting on hardware audio IPC.
+    // Defer first AudioContext probe & construction until after the current frame paints,
+    // and pre-probe AudioService IPC asynchronously so a wedged audio daemon never freezes the UI thread.
     if (!this.ctxInitScheduled) {
       this.ctxInitScheduled = true;
       const runInit = () => {
-        setTimeout(() => {
+        void probeAudioServiceAvailability().then((available) => {
           this.ctxInitScheduled = false;
+          if (!available || isAudioIpcDisabled()) {
+            this.ctxDisabled = true;
+            this.pendingReadyCallbacks.length = 0;
+            this.pendingAmbientTokens.clear();
+            return;
+          }
           this.createCtxNow();
           if (this.ctx) {
             if (this.ctx.state === 'suspended' && hasUserActivation()) {
@@ -125,14 +142,15 @@ class SoundFX {
             });
           } else {
             this.pendingReadyCallbacks.length = 0;
+            this.pendingAmbientTokens.clear();
           }
-        }, 16);
+        });
       };
 
       if (typeof requestAnimationFrame === 'function') {
         requestAnimationFrame(runInit);
       } else {
-        runInit();
+        setTimeout(runInit, 0);
       }
     }
   }
@@ -1085,6 +1103,7 @@ class SoundFX {
     }
 
     if (!this.ctx) {
+      if (this.ctxDisabled || isAudioIpcDisabled() || !hasUserActivation()) return;
       const token = ++this.ambientOpSeq;
       this.pendingAmbientTokens.set(type, token);
       this.initCtx(() => {

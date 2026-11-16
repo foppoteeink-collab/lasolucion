@@ -32,6 +32,7 @@ const OmniPomodoroBadge: React.FC<{
   return (
     <motion.button
       type="button"
+      onPointerDown={(e) => e.stopPropagation()}
       onClick={(e) => {
         e.stopPropagation();
         soundFX.playClick();
@@ -76,6 +77,28 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
   const kaiShape = usePlayerStore((s) => s.stats.kaiShape || 'prism');
   const kaiVoiceTone = usePlayerStore((s) => s.stats.kaiVoiceTone || 'coach');
   const [kaiSpeech, setKaiSpeech] = useState<string | null>(null);
+  const speechTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearSpeech = useCallback(() => {
+    if (speechTimerRef.current) {
+      clearTimeout(speechTimerRef.current);
+      speechTimerRef.current = null;
+    }
+    setKaiSpeech(null);
+  }, []);
+
+  const speakKai = useCallback((phrase: string, durationMs?: number) => {
+    if (speechTimerRef.current) {
+      clearTimeout(speechTimerRef.current);
+    }
+    setKaiSpeech(phrase);
+    // Tiempo de lectura dinámico y pausado: mínimo 9 segundos
+    const calculatedDuration = durationMs || Math.max(9000, phrase.length * 110);
+    speechTimerRef.current = setTimeout(() => {
+      setKaiSpeech(null);
+      speechTimerRef.current = null;
+    }, calculatedDuration);
+  }, []);
 
   // Atomic selectors for TaskStore: counts only
   const todayStr = getTodayDateString();
@@ -88,9 +111,14 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
   const copy = useNarrativeCopy();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showQuickChat, setShowQuickChat] = useState(false);
   const [hasRecentVictory, setHasRecentVictory] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const dragOffsetRef = useRef({ x: 0, y: 0 });
   const isDraggingRef = useRef(false);
+  const dragCleanupRef = useRef<(() => void) | null>(null);
 
   const isStreakAtRisk = useMemo(() => {
     const currentHour = new Date().getHours();
@@ -113,16 +141,14 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
       soundFX.playLevelUp();
       triggerHaptic([30, 40, 50]);
       const phrase = getKaiPhrase('EPIC_TASK_CLEARED', kaiVoiceTone);
-      setKaiSpeech(phrase);
-      const speechTimer = setTimeout(() => setKaiSpeech(null), 3600);
+      speakKai(phrase);
       const timer = setTimeout(() => setHasRecentVictory(false), 3000);
       return () => {
         clearTimeout(timer);
-        clearTimeout(speechTimer);
       };
     }
     prevCompletedRef.current = completedTodayTasks;
-  }, [completedTodayTasks, kaiVoiceTone]);
+  }, [completedTodayTasks, kaiVoiceTone, speakKai]);
 
   // Alerta sensorial y vocal de racha en riesgo
   const hasAlertedStreakRef = useRef(false);
@@ -131,14 +157,12 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
       hasAlertedStreakRef.current = true;
       triggerHaptic([35, 45]);
       const phrase = getKaiPhrase('STREAK_WARNING', kaiVoiceTone);
-      setKaiSpeech(phrase);
-      const timer = setTimeout(() => setKaiSpeech(null), 4500);
-      return () => clearTimeout(timer);
+      speakKai(phrase);
     }
     if (!isStreakAtRisk) {
       hasAlertedStreakRef.current = false;
     }
-  }, [isStreakAtRisk, kaiVoiceTone]);
+  }, [isStreakAtRisk, kaiVoiceTone, speakKai]);
 
   // Dimensiones seguras de viewport
   const [viewportDims, setViewportDims] = useState(() => ({
@@ -169,6 +193,88 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
       bottom: 8,
     }),
     [viewportDims.width, viewportDims.height]
+  );
+
+  // Clamp drag offset when viewport shrinks or rotates
+  useEffect(() => {
+    setDragOffset((prev) => {
+      const clampedX = Math.min(dragConstraints.right, Math.max(dragConstraints.left, prev.x));
+      const clampedY = Math.min(dragConstraints.bottom, Math.max(dragConstraints.top, prev.y));
+      if (clampedX === prev.x && clampedY === prev.y) return prev;
+      const next = { x: clampedX, y: clampedY };
+      dragOffsetRef.current = next;
+      return next;
+    });
+  }, [dragConstraints]);
+
+  useEffect(() => {
+    return () => {
+      dragCleanupRef.current?.();
+      dragCleanupRef.current = null;
+    };
+  }, []);
+
+  const handleHubPointerDown = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (isMenuOpen) return;
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+
+      dragCleanupRef.current?.();
+
+      const startClientX = e.clientX;
+      const startClientY = e.clientY;
+      const startOffsetX = dragOffsetRef.current.x;
+      const startOffsetY = dragOffsetRef.current.y;
+      const pointerId = e.pointerId;
+      let didMovePastThreshold = false;
+
+      const handlePointerMove = (moveEvent: PointerEvent) => {
+        if (moveEvent.pointerId !== pointerId) return;
+        const dx = moveEvent.clientX - startClientX;
+        const dy = moveEvent.clientY - startClientY;
+
+        if (!didMovePastThreshold) {
+          if (Math.hypot(dx, dy) <= 6) return;
+          didMovePastThreshold = true;
+          isDraggingRef.current = true;
+          setIsDragging(true);
+        }
+
+        const nextX = Math.min(dragConstraints.right, Math.max(dragConstraints.left, startOffsetX + dx));
+        const nextY = Math.min(dragConstraints.bottom, Math.max(dragConstraints.top, startOffsetY + dy));
+        const next = { x: nextX, y: nextY };
+        dragOffsetRef.current = next;
+        setDragOffset(next);
+      };
+
+      const finishPointer = (upEvent: PointerEvent) => {
+        if (upEvent.pointerId !== pointerId) return;
+        cleanup();
+        setIsDragging(false);
+        if (didMovePastThreshold) {
+          setTimeout(() => {
+            isDraggingRef.current = false;
+          }, 120);
+        } else {
+          isDraggingRef.current = false;
+        }
+      };
+
+      const cleanup = () => {
+        window.removeEventListener('pointermove', handlePointerMove);
+        window.removeEventListener('pointerup', finishPointer);
+        window.removeEventListener('pointercancel', finishPointer);
+        if (dragCleanupRef.current === cleanup) {
+          dragCleanupRef.current = null;
+        }
+      };
+
+      dragCleanupRef.current = cleanup;
+      window.addEventListener('pointermove', handlePointerMove);
+      window.addEventListener('pointerup', finishPointer);
+      window.addEventListener('pointercancel', finishPointer);
+    },
+    [isMenuOpen, dragConstraints]
   );
 
   // Burbujas del Menú KAI con íconos SVG Clear Stamp y efecto Gooey
@@ -345,10 +451,21 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
     const now = Date.now();
     if (now < lastToggleTimeRef.current || now - lastToggleTimeRef.current < 160) return;
     lastToggleTimeRef.current = now;
+    // Si el menú está cerrado, mostrar el chat rápido primero en lugar de abrir el menú radial
+    if (!isMenuOpen && !showQuickChat) {
+      soundFX.playClick();
+      triggerHaptic(20);
+      setShowQuickChat(true);
+      return;
+    }
+    if (showQuickChat) {
+      setShowQuickChat(false);
+      return;
+    }
     soundFX.playClick();
     triggerHaptic(20);
     setIsMenuOpen((prev) => !prev);
-  }, []);
+  }, [isMenuOpen, showQuickChat]);
 
   const handleSelectItem = useCallback((item: SatelliteHubItem) => {
     soundFX.playClick();
@@ -400,6 +517,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
             onClick={(e) => {
               e.stopPropagation();
               setIsMenuOpen(false);
+              setShowQuickChat(false);
             }}
           />
         )}
@@ -407,13 +525,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
 
       {/* DRON HOLOGRÁFICO FLOTANTE KAI (Adaptativo para diestros y zurdos) */}
       <motion.div
-        drag={!isMenuOpen}
-        dragMomentum={false}
-        dragConstraints={dragConstraints}
-        dragElastic={0.04}
-        whileDrag={{ scale: 1.08 }}
-        onDragStart={() => { isDraggingRef.current = true; }}
-        onDragEnd={() => { setTimeout(() => { isDraggingRef.current = false; }, 120); }}
+        onPointerDown={handleHubPointerDown}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         className={`fixed z-[60] pointer-events-auto select-none touch-none will-change-transform omni-companion-hub-root ${
@@ -433,32 +545,145 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
         }}
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{
-          scale: 1,
-          opacity: isMenuOpen || isHovered ? 1 : 0.9,
+          scale: isDragging ? 1.08 : 1,
+          opacity: isMenuOpen || isHovered || isDragging ? 1 : 0.9,
           // Al abrir, KAI se desplaza hacia el centro exacto de la pantalla
-          x: isMenuOpen ? openOffset.x : 0,
-          y: isMenuOpen ? openOffset.y : 0,
+          x: isMenuOpen ? openOffset.x : dragOffset.x,
+          y: isMenuOpen ? openOffset.y : dragOffset.y,
         }}
-        transition={{ type: 'spring', damping: 26, stiffness: 540, mass: 0.45 }}
+        transition={
+          isDragging
+            ? { duration: 0 }
+            : { type: 'spring', damping: 34, stiffness: 880, mass: 0.35 }
+        }
       >
         <div className="relative flex flex-col items-center touch-none">
-          {/* Micro-Transmisión de KAI (8-12 palabras contextuales) */}
+          {/* Micro-Transmisión e Interacción de KAI / Oráculo (Siempre al frente) */}
           <AnimatePresence>
             {kaiSpeech && (
               <motion.div
-                role="status"
-                aria-live="polite"
-                initial={{ opacity: 0, y: 8, scale: 0.94 }}
+                role="dialog"
+                aria-label="Mensaje del Oráculo KAI"
+                initial={{ opacity: 0, y: 12, scale: 0.92 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -6, scale: 0.94 }}
-                transition={{ duration: 0.2 }}
-                className="absolute -top-12 right-0 sm:right-auto sm:left-1/2 sm:-translate-x-1/2 max-w-[260px] px-3 py-1.5 rounded-xl bg-[#040d1a]/95 border border-cyan-400/50 shadow-tactical-glow text-white text-[11px] font-medium leading-tight text-center z-50 pointer-events-none"
+                exit={{ opacity: 0, y: -8, scale: 0.92 }}
+                transition={{ duration: 0.25, ease: 'easeOut' }}
+                onMouseEnter={() => {
+                  // Pausar auto-cierre mientras el usuario pasa el mouse para lectura tranquila
+                  if (speechTimerRef.current) {
+                    clearTimeout(speechTimerRef.current);
+                    speechTimerRef.current = null;
+                  }
+                }}
+                className="absolute bottom-full mb-3.5 right-0 sm:right-auto sm:left-1/2 sm:-translate-x-1/2 w-[280px] sm:w-[320px] p-3 rounded-2xl bg-[#030d1d]/95 border border-cyan-400/80 shadow-[0_12px_40px_rgba(0,240,255,0.4),0_0_20px_rgba(0,240,255,0.25)] backdrop-blur-xl text-white z-[110] pointer-events-auto select-auto"
               >
-                <span className="text-cyan-300 font-bold mr-1">KAI:</span>
-                <span>"{kaiSpeech}"</span>
+                {/* Flecha indicadora apuntando a KAI */}
+                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-cyan-400/90" />
+
+                {/* Header con título y botón de cierre X */}
+                <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-cyan-500/25">
+                  <div className="flex items-center gap-1.5 text-cyan-300 font-bold text-[11px] font-mono tracking-wider uppercase">
+                    <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
+                    <span>Oráculo KAI</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      soundFX.playClick();
+                      clearSpeech();
+                    }}
+                    className="w-5 h-5 rounded-lg bg-white/10 hover:bg-white/25 text-slate-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer text-xs font-bold active:scale-95"
+                    aria-label="Cerrar mensaje"
+                    title="Cerrar (X)"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {/* Mensaje principal legible */}
+                <p className="text-[12px] sm:text-[12.5px] font-sans font-medium text-slate-100 leading-snug text-left py-0.5">
+                  "{kaiSpeech}"
+                </p>
+
+                {/* Barra de interacción y respuesta */}
+                <div className="mt-2.5 pt-2 border-t border-white/10 flex items-center gap-1.5 justify-end">
+                  {onOpenOracleWithPrompt && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        soundFX.playClick();
+                        const contextPrompt = `KAI me acaba de decir: "${kaiSpeech}". ¿Qué me recomiendas hacer ahora?`;
+                        clearSpeech();
+                        onOpenOracleWithPrompt(contextPrompt);
+                      }}
+                      className="px-2.5 py-1 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/35 border border-cyan-400/50 text-cyan-300 hover:text-cyan-100 text-[10.5px] font-mono font-bold flex items-center gap-1 transition-all cursor-pointer shadow-sm active:scale-95"
+                      title="Abrir conversación con el Oráculo"
+                    >
+                      <Icon name="sparkles" className="w-3 h-3 text-cyan-400" />
+                      <span>Responder al Oráculo</span>
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      soundFX.playClick();
+                      clearSpeech();
+                    }}
+                    className="px-2 py-1 rounded-xl bg-white/[0.08] hover:bg-white/20 text-slate-300 hover:text-white text-[10.5px] font-mono font-medium transition-colors cursor-pointer active:scale-95"
+                  >
+                    Entendido
+                  </button>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* Panel de Chat Rápido con KAI */}
+          {showQuickChat && !kaiSpeech && (
+            <div
+              className="absolute bottom-[calc(100%+12px)] right-0 w-72 bg-[#040d1e]/95 border border-cyan-500/40 rounded-2xl shadow-[0_0_30px_rgba(0,0,0,0.9),0_0_20px_rgba(0,240,255,0.15)] z-[115] overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="px-3 pt-3 pb-2 border-b border-white/10 flex items-center justify-between">
+                <span className="text-xs font-bold text-cyan-300">¿En qué te ayudo?</span>
+                <button
+                  type="button"
+                  onClick={() => setShowQuickChat(false)}
+                  className="text-slate-500 hover:text-white text-xs cursor-pointer"
+                >✕</button>
+              </div>
+              <div className="p-2.5 space-y-1.5">
+                {[
+                  { label: '⚡ Organiza mi día de hoy', action: () => { setShowQuickChat(false); if (onOpenOracleWithPrompt) onOpenOracleWithPrompt('Organiza mi día de hoy con las tareas que tengo pendientes. Dame un horario realista.'); } },
+                  { label: '🎯 ¿Por qué tarea empiezo?', action: () => { setShowQuickChat(false); if (onOpenOracleWithPrompt) onOpenOracleWithPrompt('Tengo varias tareas. ¿Cuál debería hacer primero para ser más productivo hoy?'); } },
+                  { label: '🧘 Dame motivación ahora', action: () => { speakKai('Cada tarea que completas es un paso hacia quien quieres ser. ¡Vamos, tú puedes!'); setShowQuickChat(false); } },
+                  { label: '➕ Agrégame una tarea', action: () => { setShowQuickChat(false); openTaskForm('task'); } },
+                  { label: '📋 Ver plantillas de rutina', action: () => { setShowQuickChat(false); if (onOpenOracleWithPrompt) onOpenOracleWithPrompt(''); } },
+                ].map(({ label, action }) => (
+                  <button
+                    key={label}
+                    type="button"
+                    onClick={action}
+                    className="w-full text-left px-3 py-2 rounded-xl bg-white/[0.04] hover:bg-cyan-950/60 border border-white/10 hover:border-cyan-500/40 text-sm text-slate-200 hover:text-white transition-all cursor-pointer active:scale-[0.98] flex items-center gap-2"
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <div className="px-3 pb-2.5">
+                <button
+                  type="button"
+                  onClick={() => { setShowQuickChat(false); setIsMenuOpen(true); }}
+                  className="w-full py-2 rounded-xl bg-cyan-400/10 hover:bg-cyan-400/20 border border-cyan-400/30 text-cyan-300 text-xs font-mono font-bold transition-all cursor-pointer"
+                >
+                  Ver todas las opciones →
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Badge de pomodoro si está corriendo (aislado en micro-componente para 0 re-renders a 1 Hz) */}
           {!isMenuOpen && (
@@ -506,7 +731,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
                 auraState={auraState}
                 triggerVictoryWave={hasRecentVictory}
                 isProjecting={isMenuOpen}
-                className="drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)] pointer-events-auto cursor-pointer"
+                className="pointer-events-auto cursor-pointer"
               />
             </motion.div>
           </div>
@@ -524,8 +749,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
                   triggerHaptic([20, 30]);
                   startDay();
                   const phrase = getKaiPhrase('DAY_START', kaiVoiceTone);
-                  setKaiSpeech(phrase);
-                  setTimeout(() => setKaiSpeech(null), 3600);
+                  speakKai(phrase);
                 }}
                 initial={{ opacity: 0, y: -4, scale: 0.92 }}
                 animate={{
@@ -564,8 +788,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
                   triggerHaptic([25, 40]);
                   finishDay();
                   const phrase = getKaiPhrase('NIGHTLY_CLOSE_SUCCESS', kaiVoiceTone);
-                  setKaiSpeech(phrase);
-                  setTimeout(() => setKaiSpeech(null), 3600);
+                  speakKai(phrase);
                 }}
                 initial={{ opacity: 0, y: -4, scale: 0.92 }}
                 animate={{

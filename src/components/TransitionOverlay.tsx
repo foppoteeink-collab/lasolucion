@@ -22,7 +22,7 @@ export const TransitionOverlay: React.FC<TransitionOverlayProps> = ({ isVisible 
 
   return (
     <div 
-      className={`fixed inset-0 z-[100] flex items-center justify-center bg-[#070417]/90 backdrop-blur-sm pointer-events-none transition-opacity duration-150 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
+      className={`fixed inset-0 z-[100] flex items-center justify-center bg-[#070417]/[0.96] pointer-events-none transition-opacity duration-150 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
       onTransitionEnd={onAnimationEnd}
     >
       <div 

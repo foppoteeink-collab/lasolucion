@@ -673,11 +673,11 @@ export const JournalView: React.FC<JournalViewProps> = ({
       {/* Inline Modal for Quick Note Edit with Portalled Rendering */}
       {editingTask && typeof document !== 'undefined' && createPortal(
         <div 
-          className="fixed inset-0 z-[180] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200 portal-modal-root font-sans"
+          className="fixed inset-0 z-[180] flex items-center justify-center p-4 bg-black/88 animate-in fade-in duration-200 portal-modal-root font-sans"
           onClick={() => setEditingTask(null)}
         >
           <div 
-            className="w-full max-w-md max-h-[88dvh] sm:max-h-[84vh] flex flex-col overflow-hidden bg-[#030712]/95 border border-cyan-500/35 rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-[0_0_50px_rgba(0,240,255,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] text-left relative backdrop-blur-2xl"
+            className="w-full max-w-md max-h-[88dvh] sm:max-h-[84vh] flex flex-col overflow-hidden bg-[#030712]/[0.98] border border-cyan-500/35 rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-[0_0_50px_rgba(0,240,255,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] text-left relative"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Micrograno táctil Moxen Vidrio */}

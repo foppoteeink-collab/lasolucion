@@ -440,15 +440,14 @@ export const HoloCompanion: React.FC<HoloCompanionProps> = ({
             : { duration: 4.2, repeat: Infinity, ease: 'easeInOut' }
         }
       >
-        {/* RESPLANDOR DIFUSO AMBIENTAL DEL PRISMA */}
+        {/* RESPLANDOR DIFUSO AMBIENTAL DEL PRISMA (Sin filter:blur por cuadro) */}
         <div
           className="absolute rounded-full pointer-events-none -z-10"
           style={{
-            width: `${Math.round(80 * scaleMultiplier)}px`,
-            height: `${Math.round(80 * scaleMultiplier)}px`,
-            filter: `blur(${Math.max(4, Math.round(14 * scaleMultiplier))}px)`,
-            backgroundColor: `${activeColor}30`,
-            opacity: isHovered || isProjecting ? 0.8 : 0.45,
+            width: `${Math.round(115 * scaleMultiplier)}px`,
+            height: `${Math.round(115 * scaleMultiplier)}px`,
+            background: `radial-gradient(circle, ${activeColor}48 0%, ${activeColor}18 42%, transparent 72%)`,
+            opacity: isHovered || isProjecting ? 0.9 : 0.6,
           }}
         />
 
@@ -551,7 +550,7 @@ export const HoloCompanion: React.FC<HoloCompanionProps> = ({
       {/* HUD SCI-FI INFERIOR CON EL ARQUETIPO (OPCIONAL) */}
       {showHUD && (
         <div className="mt-2.5 flex flex-col items-center text-center">
-          <div className="flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-black/60 border border-white/10 backdrop-blur-md">
+          <div className="flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-black/85 border border-white/15">
             <span className="text-xs">{baseConfig.symbolicAvatar}</span>
             <span
               className="text-[10px] font-mono font-bold tracking-wider uppercase"

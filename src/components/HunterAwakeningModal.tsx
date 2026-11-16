@@ -302,9 +302,9 @@ export const HunterAwakeningModal: React.FC<HunterAwakeningModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[150] flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-md animate-fade-in font-sans">
+    <div className="fixed inset-0 z-[150] flex items-center justify-center p-3 sm:p-5 bg-black/88 animate-fade-in font-sans">
       <div 
-        className="w-full max-w-4xl max-h-[94dvh] sm:max-h-[90vh] flex flex-col rounded-2xl sm:rounded-3xl bg-[#030712]/95 border border-cyan-500/35 shadow-[0_0_60px_rgba(0,240,255,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] relative overflow-hidden backdrop-blur-2xl text-white text-left"
+        className="w-full max-w-4xl max-h-[94dvh] sm:max-h-[90vh] flex flex-col rounded-2xl sm:rounded-3xl bg-[#030712]/[0.98] border border-cyan-500/35 shadow-[0_0_60px_rgba(0,240,255,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] relative overflow-hidden text-white text-left"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Micrograno táctil Moxen Vidrio */}
@@ -646,11 +646,11 @@ export const HunterAwakeningModal: React.FC<HunterAwakeningModalProps> = ({
 
                           {/* Cabecera de la Tarjeta */}
                           <div className="relative z-10 flex items-center justify-between gap-2">
-                            <span className="text-[10px] font-mono tracking-widest font-black uppercase text-slate-300 bg-black/60 px-2.5 py-0.5 rounded-lg border border-white/10 backdrop-blur-md">
+                            <span className="text-[10px] font-mono tracking-widest font-black uppercase text-slate-300 bg-black/75 px-2.5 py-0.5 rounded-lg border border-white/10">
                               #{cardNum}
                             </span>
                             <span
-                              className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold border backdrop-blur-md flex items-center gap-1 ${theme.statPill}`}
+                              className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold border flex items-center gap-1 ${theme.statPill}`}
                             >
                               <span
                                 className="w-1.5 h-1.5 rounded-full"
@@ -663,7 +663,7 @@ export const HunterAwakeningModal: React.FC<HunterAwakeningModalProps> = ({
                           {/* Avatar Central con paralaje (.in-forma) */}
                           <div className="relative z-10 flex flex-col items-center justify-center my-auto py-2 text-center">
                             <div
-                              className="in-forma relative w-20 h-20 rounded-2xl bg-gradient-to-br from-black/80 via-[#0a0f1d]/90 to-black/80 border flex items-center justify-center text-4xl shadow-[0_0_25px_rgba(0,0,0,0.8)] backdrop-blur-xl mb-2.5 transition-transform"
+                              className="in-forma relative w-20 h-20 rounded-2xl bg-gradient-to-br from-black/90 via-[#0a0f1d] to-black/90 border flex items-center justify-center text-4xl shadow-[0_0_25px_rgba(0,0,0,0.8)] mb-2.5 transition-transform"
                               style={{
                                 borderColor: `${theme.accent}66`,
                                 boxShadow: `0 0 25px ${theme.glow}, inset 0 1px 1px rgba(255,255,255,0.35)`,

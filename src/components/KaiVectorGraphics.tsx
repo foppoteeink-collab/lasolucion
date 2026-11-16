@@ -37,7 +37,6 @@ export const KaiVectorGraphics: React.FC<KaiVectorGraphicsProps> = ({
 }) => {
   const reactId = useId().replace(/:/g, '_');
   const gradientId = propGlowFilterId ? propGlowFilterId.replace('-neon-glow', '') : `kai_${reactId}`;
-  const filterId = `${gradientId}-neon-glow`;
 
   // Color primario del neón: dorado de ascensión si tiene 66 días, de lo contrario activeColor (naranja/ámbar por defecto en el canon)
   const lineColor = has66Days ? '#fbbf24' : activeColor;
@@ -54,17 +53,6 @@ export const KaiVectorGraphics: React.FC<KaiVectorGraphicsProps> = ({
       className={`overflow-visible select-none ${className}`}
     >
       <defs>
-        {/* Filtro Bloom Neón de Alta Intensidad (Doble Gaussiano) */}
-        <filter id={filterId} x="-40%" y="-40%" width="180%" height="180%">
-          <feGaussianBlur stdDeviation={has66Days ? 4.2 : 3.2} result="wideBlur" />
-          <feGaussianBlur stdDeviation={has66Days ? 1.8 : 1.2} result="tightBlur" />
-          <feMerge>
-            <feMergeNode in="wideBlur" />
-            <feMergeNode in="tightBlur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-
         {/* Gradiente Ámbar/Dorado para ojos incandescentes */}
         <radialGradient id={`${gradientId}-fire-eye`} cx="50%" cy="50%" r="50%">
           <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
@@ -171,11 +159,11 @@ export const KaiVectorGraphics: React.FC<KaiVectorGraphicsProps> = ({
         `}
       </style>
 
-      {/* ─── 0. BASE DE LEVITACIÓN Y REJILLA HOLOGRÁFICA (EXACTA A LA REFERENCIA) ─── */}
+      {/* ─── 0. BASE DE LEVITACIÓN Y REJILLA HOLOGRÁFICA (SIN FEXBLUR PARA 60 FPS) ─── */}
       <g opacity={0.88}>
         <line x1="48" y1="158" x2="112" y2="158" stroke={lineColor} strokeWidth="1" opacity="0.35" />
         <line x1="32" y1="163" x2="128" y2="163" stroke={lineColor} strokeWidth="0.8" opacity="0.2" />
-        {/* Sombra de levitación en 2 capas */}
+        {/* Sombra de levitación multicapa sin blur rasterizado */}
         <ellipse
           cx="80"
           cy="154"
@@ -187,11 +175,18 @@ export const KaiVectorGraphics: React.FC<KaiVectorGraphicsProps> = ({
         <ellipse
           cx="80"
           cy="154"
+          rx="28"
+          ry="4.2"
+          fill={lineColor}
+          opacity={0.22}
+        />
+        <ellipse
+          cx="80"
+          cy="154"
           rx="22"
           ry="3"
           fill={lineColor}
-          opacity={0.7}
-          filter={`url(#${filterId})`}
+          opacity={0.62}
         />
         <ellipse cx="80" cy="154" rx="14" ry="1.8" fill="#ffffff" opacity="0.85" />
       </g>
@@ -206,18 +201,38 @@ export const KaiVectorGraphics: React.FC<KaiVectorGraphicsProps> = ({
             ry="28"
             fill="none"
             stroke={lineColor}
+            strokeWidth="4.2"
+            strokeDasharray="4 6"
+            className="animate-spin"
+            style={{ animationDuration: '16s', transformOrigin: '80px 85px' }}
+            opacity="0.18"
+          />
+          <ellipse
+            cx="80"
+            cy="85"
+            rx="66"
+            ry="28"
+            fill="none"
+            stroke={lineColor}
             strokeWidth="1.4"
             strokeDasharray="4 6"
             className="animate-spin"
             style={{ animationDuration: '16s', transformOrigin: '80px 85px' }}
-            filter={`url(#${filterId})`}
+          />
+          <circle
+            cx="146"
+            cy="85"
+            r="5"
+            fill={lineColor}
+            opacity="0.28"
+            className="animate-spin"
+            style={{ animationDuration: '16s', transformOrigin: '80px 85px' }}
           />
           <circle
             cx="146"
             cy="85"
             r="3"
             fill="#ffffff"
-            filter={`url(#${filterId})`}
             className="animate-spin"
             style={{ animationDuration: '16s', transformOrigin: '80px 85px' }}
           />
@@ -226,7 +241,14 @@ export const KaiVectorGraphics: React.FC<KaiVectorGraphicsProps> = ({
 
       {/* ─── 0.2 CORONA HOLOGRÁFICA SUPREMA (66 DÍAS) ─── */}
       {has66Days && (
-        <g filter={`url(#${filterId})`}>
+        <g>
+          <polygon
+            points="80,6 72,16 76,14 80,17 84,14 88,16"
+            stroke="#fbbf24"
+            strokeWidth="4.5"
+            fill="none"
+            opacity="0.24"
+          />
           <polygon
             points="80,6 72,16 76,14 80,17 84,14 88,16"
             stroke="#fbbf24"
@@ -239,21 +261,21 @@ export const KaiVectorGraphics: React.FC<KaiVectorGraphicsProps> = ({
 
       {/* ─── 0.3 CRISTALES DE ASCENSIÓN ACUMULATIVOS ─── */}
       {ascensionCrystalsCount > 0 && (
-        <g filter={`url(#${filterId})`}>
+        <g>
           {ascensionCrystalsCount >= 1 && (
-            <polygon points="14,85 18,80 22,85 18,90" stroke={lineColor} strokeWidth="1.4" fill={`${lineColor}35`} />
+            <polygon points="14,85 18,80 22,85 18,90" stroke={lineColor} strokeWidth="1.6" fill={`${lineColor}45`} />
           )}
           {ascensionCrystalsCount >= 2 && (
-            <polygon points="146,85 142,80 138,85 142,90" stroke={lineColor} strokeWidth="1.4" fill={`${lineColor}35`} />
+            <polygon points="146,85 142,80 138,85 142,90" stroke={lineColor} strokeWidth="1.6" fill={`${lineColor}45`} />
           )}
           {ascensionCrystalsCount >= 3 && (
-            <polygon points="80,146 76,142 80,138 84,142" stroke={lineColor} strokeWidth="1.4" fill={`${lineColor}35`} />
+            <polygon points="80,146 76,142 80,138 84,142" stroke={lineColor} strokeWidth="1.6" fill={`${lineColor}45`} />
           )}
           {ascensionCrystalsCount >= 4 && (
-            <polygon points="38,40 42,36 46,40 42,44" stroke={lineColor} strokeWidth="1.4" fill={`${lineColor}35`} />
+            <polygon points="38,40 42,36 46,40 42,44" stroke={lineColor} strokeWidth="1.6" fill={`${lineColor}45`} />
           )}
           {ascensionCrystalsCount >= 5 && (
-            <polygon points="122,40 118,36 114,40 118,44" stroke={lineColor} strokeWidth="1.4" fill={`${lineColor}35`} />
+            <polygon points="122,40 118,36 114,40 118,44" stroke={lineColor} strokeWidth="1.6" fill={`${lineColor}45`} />
           )}
         </g>
       )}
@@ -265,14 +287,31 @@ export const KaiVectorGraphics: React.FC<KaiVectorGraphicsProps> = ({
       {/* ──────────────── 1. PRISMA ORIGINAL (🔺) ──────────────── */}
       {shapeId === 'prism' && (
         <g>
-          {/* Capa 1: Resplandor Neón */}
-          <g filter={`url(#${filterId})`}>
+          {/* Halo vectorial multicapa sin feGaussianBlur */}
+          <polygon
+            points="80,22 138,128 22,128"
+            stroke={lineColor}
+            strokeWidth="8.5"
+            strokeLinejoin="round"
+            fill="none"
+            opacity="0.14"
+          />
+          <polygon
+            points="80,22 138,128 22,128"
+            stroke={lineColor}
+            strokeWidth="5.2"
+            strokeLinejoin="round"
+            fill="none"
+            opacity="0.3"
+          />
+          {/* Capa 1: Estructura Neón */}
+          <g>
             <polygon
               points="80,22 138,128 22,128"
               stroke={lineColor}
-              strokeWidth="3.4"
+              strokeWidth="3.2"
               strokeLinejoin="round"
-              fill="rgba(5, 12, 18, 0.55)"
+              fill="rgba(5, 12, 18, 0.65)"
             />
             <line x1="80" y1="22" x2="80" y2="70" stroke={lineColor} strokeWidth="2.8" strokeLinecap="round" />
             <line x1="80" y1="99" x2="80" y2="128" stroke={lineColor} strokeWidth="2.8" strokeLinecap="round" />
@@ -282,6 +321,7 @@ export const KaiVectorGraphics: React.FC<KaiVectorGraphicsProps> = ({
             <line x1="110" y1="85" x2="138" y2="128" stroke={secondaryStroke} strokeWidth="1.8" opacity="0.8" />
             <line x1="50" y1="85" x2="80" y2="128" stroke={secondaryStroke} strokeWidth="2" opacity="0.85" />
             <line x1="110" y1="85" x2="80" y2="128" stroke={secondaryStroke} strokeWidth="2" opacity="0.85" />
+            <circle cx="80" cy="22" r="5" fill={lineColor} opacity="0.32" />
             <circle cx="80" cy="22" r="3.5" fill="#ffffff" />
           </g>
           {/* Capa 2: Núcleo Láser Lanza-Luz */}
@@ -316,7 +356,6 @@ export const KaiVectorGraphics: React.FC<KaiVectorGraphicsProps> = ({
               viewBox={originalViewBox}
               preserveAspectRatio="xMidYMid meet"
               style={{ overflow: 'hidden', '--color-aura-activa': lineColor } as React.CSSProperties}
-              filter={`url(#${filterId})`}
               dangerouslySetInnerHTML={{ __html: innerContent }}
             />
           );
@@ -353,8 +392,8 @@ export const KaiVectorGraphics: React.FC<KaiVectorGraphicsProps> = ({
             style={{ overflow: 'hidden' }}
           >
             <g id={`${gradientId}-custom-multiverse-body`}>
-              {/* Capa Base con Bloom Neón / Sombra de Estilo */}
-            <g filter={`url(#${filterId})`}>
+              {/* Capa Halo Neón vectorial + Estructura Base */}
+            <g>
               {customForm.polygons?.map((p, idx) => (
                 <polygon
                   key={`poly-${idx}`}
@@ -436,10 +475,10 @@ export const KaiVectorGraphics: React.FC<KaiVectorGraphicsProps> = ({
                           <ellipse
                             cx={eye.cx}
                             cy={eye.cy}
-                            rx={eye.rx}
-                            ry={eye.ry}
-                            fill="#ffffff"
-                            filter={`url(#${filterId})`}
+                            rx={eye.rx + 1.5}
+                            ry={eye.ry + 1.5}
+                            fill={customLineColor}
+                            opacity="0.24"
                           />
                           <ellipse
                             cx={eye.cx}
@@ -558,9 +597,18 @@ export const KaiVectorGraphics: React.FC<KaiVectorGraphicsProps> = ({
                             rx={eye.rx}
                             ry={eye.ry}
                             stroke={customLineColor}
+                            strokeWidth="4.5"
+                            fill="none"
+                            opacity="0.25"
+                          />
+                          <ellipse
+                            cx={eye.cx}
+                            cy={eye.cy}
+                            rx={eye.rx}
+                            ry={eye.ry}
+                            stroke={customLineColor}
                             strokeWidth="2.4"
                             fill="none"
-                            filter={`url(#${filterId})`}
                           />
                           <ellipse
                             cx={eye.cx}
@@ -585,9 +633,9 @@ export const KaiVectorGraphics: React.FC<KaiVectorGraphicsProps> = ({
                 <circle
                   cx={customForm.coreEye.cx}
                   cy={customForm.coreEye.cy}
-                  r={customForm.coreEye.r}
-                  fill="#ffffff"
-                  filter={`url(#${filterId})`}
+                  r={customForm.coreEye.r + 2}
+                  fill={customLineColor}
+                  opacity="0.26"
                 />
                 <circle
                   cx={customForm.coreEye.cx}
@@ -648,12 +696,21 @@ export const KaiVectorGraphics: React.FC<KaiVectorGraphicsProps> = ({
                 <path
                   d={customForm.mouth.d}
                   stroke={customLineColor}
+                  strokeWidth={isPixel ? '5.4' : '5.2'}
+                  strokeLinecap={isPixel ? 'square' : 'round'}
+                  strokeLinejoin={isPixel ? 'miter' : 'round'}
+                  shapeRendering={isPixel ? 'crispEdges' : 'auto'}
+                  fill="none"
+                  opacity="0.28"
+                />
+                <path
+                  d={customForm.mouth.d}
+                  stroke={customLineColor}
                   strokeWidth={isPixel ? '3.6' : '3.2'}
                   strokeLinecap={isPixel ? 'square' : 'round'}
                   strokeLinejoin={isPixel ? 'miter' : 'round'}
                   shapeRendering={isPixel ? 'crispEdges' : 'auto'}
                   fill="none"
-                  filter={`url(#${filterId})`}
                 />
                 <path
                   d={customForm.mouth.d}
@@ -691,9 +748,11 @@ export const KaiVectorGraphics: React.FC<KaiVectorGraphicsProps> = ({
                   : { animation: 'kai-prism-look 4.2s infinite ease-in-out' }
               }
             >
-              <circle cx="80" cy="85" r={justClicked ? 14.5 : 13} stroke={lineColor} strokeWidth="3.2" fill="none" filter={`url(#${filterId})`} />
+              <circle cx="80" cy="85" r={justClicked ? 14.5 : 13} stroke={lineColor} strokeWidth="6" fill="none" opacity="0.24" />
+              <circle cx="80" cy="85" r={justClicked ? 14.5 : 13} stroke={lineColor} strokeWidth="3.2" fill="none" />
               <circle cx="80" cy="85" r={justClicked ? 14.5 : 13} stroke="#ffffff" strokeWidth="1.2" fill="none" />
-              <circle cx="80" cy="85" r={justClicked ? 7.5 : 6} fill={lineColor} filter={`url(#${filterId})`} />
+              <circle cx="80" cy="85" r={justClicked ? 9.5 : 8} fill={lineColor} opacity="0.3" />
+              <circle cx="80" cy="85" r={justClicked ? 7.5 : 6} fill={lineColor} />
               <circle cx="80" cy="85" r={justClicked ? 4.2 : 3} fill="#ffffff" />
               <circle cx="82.4" cy="82.6" r="1.5" fill="#ffffff" opacity="0.9" />
             </g>
@@ -713,7 +772,8 @@ export const KaiVectorGraphics: React.FC<KaiVectorGraphicsProps> = ({
               style={isFocusTrance ? { transform: 'translateY(19px)' } : { animation: 'kai-prism-eyelid-d 4.2s infinite ease-in' }}
             />
           </g>
-          <path d="M 50 85 C 60 67, 100 67, 110 85 C 100 103, 60 103, 50 85 Z" stroke={lineColor} strokeWidth="3.4" fill="none" filter={`url(#${filterId})`} />
+          <path d="M 50 85 C 60 67, 100 67, 110 85 C 100 103, 60 103, 50 85 Z" stroke={lineColor} strokeWidth="6.4" fill="none" opacity="0.24" />
+          <path d="M 50 85 C 60 67, 100 67, 110 85 C 100 103, 60 103, 50 85 Z" stroke={lineColor} strokeWidth="3.4" fill="none" />
           <path d="M 50 85 C 60 67, 100 67, 110 85 C 100 103, 60 103, 50 85 Z" stroke={coreStroke} strokeWidth="1.1" fill="none" opacity="0.9" />
         </g>
       )}

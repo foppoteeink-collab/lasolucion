@@ -77,30 +77,30 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   const monthNameShort = dateObj.toLocaleDateString('es-ES', { month: 'short' }).replace('.', '');
 
   return (
-    <div className="relative isolate rounded-2xl bg-surface-card border border-white/10 backdrop-blur-xl p-2 sm:p-2.5 text-white transition-all shadow-[0_4px_20px_rgba(0,0,0,0.4)]">
+    <div className="relative isolate rounded-2xl bg-[#040a1a]/[0.94] border border-white/10 p-2 sm:p-2.5 text-white transition-all shadow-[0_4px_20px_rgba(0,0,0,0.4)]">
       {/* Grano esmerilado táctil */}
       <span className="vi-grano opacity-5" aria-hidden="true" />
 
       {/* ====================================================================
           FILA PRINCIPAL RESPONSIVE (MÓVIL EN 2 NIVELES / DESKTOP EN 1 LÍNEA)
           ==================================================================== */}
-      {/* 1. MODO ESCRITORIO / TABLET (>= 640px): BARRA ZEN EN UNA SOLA LÍNEA */}
-      <div className="hidden sm:flex items-center justify-between gap-2 relative z-10">
+      {/* 1. MODO ESCRITORIO / TABLET (>= 640px): BARRA ZEN RESPONSIVE SIN SOLAPAMIENTO */}
+      <div className="hidden sm:flex flex-wrap items-center justify-between gap-1.5 relative z-10">
         {/* BLOQUE IZQUIERDO: Navegación de Fecha Rápida */}
-        <div className="flex items-center gap-1.5 min-w-0">
+        <div className="flex items-center gap-1 min-w-0">
           <button 
             type="button"
             onClick={handlePrevDay} 
-            className="w-8 h-8 rounded-xl bg-white/[0.04] hover:bg-cyan-950/50 border border-white/10 hover:border-cyan-400/50 text-slate-300 hover:text-cyan-300 flex items-center justify-center transition-all cursor-pointer active:scale-90 shrink-0"
+            className="w-7 h-7 rounded-lg bg-white/[0.04] hover:bg-cyan-950/50 border border-white/10 hover:border-cyan-400/50 text-slate-300 hover:text-cyan-300 flex items-center justify-center transition-all cursor-pointer active:scale-90 shrink-0"
             title="Día anterior"
             aria-label="Día anterior"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="w-3.5 h-3.5" />
           </button>
 
           {/* Fecha Actual */}
-          <div className="flex items-center gap-2 min-w-0 px-2.5 py-1 rounded-xl bg-black/40 border border-white/10">
-            <span className="text-sm font-anton uppercase tracking-wide text-white truncate capitalize">
+          <div className="flex items-center gap-1.5 min-w-0 px-2 py-0.5 rounded-lg bg-black/40 border border-white/10">
+            <span className="text-xs sm:text-[13px] font-anton uppercase tracking-wide text-white truncate capitalize">
               {dayNameShort}, {dayNumber} {monthNameShort}
             </span>
 
@@ -131,18 +131,18 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           <button 
             type="button"
             onClick={handleNextDay} 
-            className="w-8 h-8 rounded-xl bg-white/[0.04] hover:bg-cyan-950/50 border border-white/10 hover:border-cyan-400/50 text-slate-300 hover:text-cyan-300 flex items-center justify-center transition-all cursor-pointer active:scale-90 shrink-0"
+            className="w-7 h-7 rounded-lg bg-white/[0.04] hover:bg-cyan-950/50 border border-white/10 hover:border-cyan-400/50 text-slate-300 hover:text-cyan-300 flex items-center justify-center transition-all cursor-pointer active:scale-90 shrink-0"
             title="Día siguiente"
             aria-label="Día siguiente"
           >
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-3.5 h-3.5" />
           </button>
 
           {/* Alternador de Tira Semanal (7 Días) */}
           <button
             type="button"
             onClick={toggleWeekStrip}
-            className={`px-2 py-1 rounded-xl border text-[11px] font-mono font-bold flex items-center gap-1 transition-all cursor-pointer active:scale-90 shrink-0 ${
+            className={`h-7 px-2 rounded-lg border text-[10.5px] font-mono font-bold flex items-center gap-1 transition-all cursor-pointer active:scale-90 shrink-0 ${
               showWeekStrip
                 ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400/60 shadow-[0_0_8px_rgba(0,240,255,0.25)]'
                 : 'bg-white/[0.03] hover:bg-white/[0.08] text-slate-400 hover:text-slate-200 border-white/10'
@@ -156,7 +156,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         </div>
 
         {/* BLOQUE DERECHO: Acciones Tácticas (Descanso, Datepicker, + Tarea) */}
-        <div className="flex items-center gap-1.5 shrink-0 ml-auto">
+        <div className="flex items-center gap-1 shrink-0 ml-auto">
           {/* Modo Descanso */}
           <button
             type="button"
@@ -168,15 +168,15 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               }
             }}
             data-tour="rest-mode-btn"
-            className={`h-8 px-2.5 rounded-xl border transition-all cursor-pointer flex items-center gap-1.5 active:scale-90 text-xs font-mono font-bold ${
+            className={`h-7 px-2 rounded-lg border transition-all cursor-pointer flex items-center gap-1 active:scale-90 text-xs font-mono font-bold ${
               isCurrentDateRest
                 ? 'bg-emerald-950/80 text-emerald-300 border-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.35)] ring-1 ring-emerald-400'
                 : 'bg-white/[0.03] text-slate-400 border-white/10 hover:border-emerald-500/50 hover:text-emerald-300'
             }`}
             title={isCurrentDateRest ? 'Día de descanso activo: sin daño de HP y hábitos protegidos' : 'Activar día de descanso para esta fecha'}
           >
-            <span className="text-sm leading-none">{isCurrentDateRest ? '🌿' : '🛡️'}</span>
-            <span className="text-[11px] font-anton uppercase tracking-wider">
+            <span className="text-xs leading-none">{isCurrentDateRest ? '🌿' : '🛡️'}</span>
+            <span className="text-[10.5px] font-anton uppercase tracking-wider">
               {isCurrentDateRest ? 'En Descanso' : 'Pausa'}
             </span>
           </button>
@@ -188,7 +188,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               soundFX.playClick();
               setIsMonthlyModalOpen(true);
             }}
-            className="w-8 h-8 rounded-xl bg-white/[0.04] hover:bg-cyan-950/50 border border-white/10 hover:border-cyan-400/50 text-slate-300 hover:text-cyan-300 flex items-center justify-center transition-all cursor-pointer active:scale-95"
+            className="w-7 h-7 rounded-lg bg-white/[0.04] hover:bg-cyan-950/50 border border-white/10 hover:border-cyan-400/50 text-slate-300 hover:text-cyan-300 flex items-center justify-center transition-all cursor-pointer active:scale-95"
             title="Abrir Planificador Mensual Completo"
             aria-label="Abrir Planificador Mensual"
           >
@@ -203,10 +203,10 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 soundFX.playClick();
                 onOpenAddModal();
               }}
-              className="btn-neon-hunter h-8 px-3 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1 shadow-lg cursor-pointer"
+              className="btn-neon-hunter h-7 px-2.5 rounded-lg text-[11px] uppercase tracking-wider flex items-center gap-1 shadow-lg cursor-pointer"
               title="Nueva Tarea, Hábito o Planificación"
             >
-              <Icon name="plus" className="w-3.5 h-3.5 stroke-[3]" />
+              <Icon name="plus" className="w-3 h-3 stroke-[3]" />
               <span>Tarea</span>
             </button>
           )}

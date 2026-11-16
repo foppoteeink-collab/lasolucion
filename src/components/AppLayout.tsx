@@ -260,26 +260,76 @@ export function AppLayout() {
     soundFX.setEnabled(soundEnabled);
   }, [soundEnabled]);
 
-  // Prefetch lazy secondary tab chunks during idle time so first tab switch is instant
+  // Prefetch lazy secondary tab chunks sequentially during idle time without choking initial paint or dev transform queue
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
     const navConn = (navigator as unknown as { connection?: { saveData?: boolean } }).connection;
     if (navConn?.saveData) return;
 
-    const prefetchChunks = () => {
-      void import('./WeeklyStats').catch(() => {});
-      void import('./JournalView').catch(() => {});
-      void import('./RewardShop').catch(() => {});
-      void import('./SkillTreeAndSettings').catch(() => {});
-      void import('./SettingsView').catch(() => {});
-    };
+    let cancelled = false;
+    const stepTimers = new Set<ReturnType<typeof setTimeout>>();
 
-    const prefetchModalChunks = () => {
-      void import('./OracleModal').catch(() => {});
-      void import('./NeuralAnalysisModal').catch(() => {});
-      void import('./DailyFinanceModal').catch(() => {});
-      void import('./KaiWorkshopModal').catch(() => {});
-      void import('./ScenarioSimulatorPanel').catch(() => {});
+    const waitMs = (ms: number) =>
+      new Promise<void>((resolve) => {
+        const id = setTimeout(() => {
+          stepTimers.delete(id);
+          resolve();
+        }, ms);
+        stepTimers.add(id);
+      });
+
+    const prefetchSequentially = async () => {
+      const tabImporters = [
+        () => import('./WeeklyStats'),
+        () => import('./JournalView'),
+        () => import('./RewardShop'),
+        () => import('./SkillTreeAndSettings'),
+        () => import('./SettingsView'),
+      ];
+
+      for (const loadChunk of tabImporters) {
+        if (cancelled) return;
+        try {
+          await loadChunk();
+        } catch {}
+        if (cancelled) return;
+        await waitMs(150);
+      }
+
+      if (cancelled) return;
+
+      await waitMs(1200);
+      const devFastModals = [
+        () => import('./task-list/TaskFormModal'),
+        () => import('./PomodoroTimer'),
+      ];
+      for (const loadModal of devFastModals) {
+        if (cancelled) return;
+        try {
+          await loadModal();
+        } catch {}
+        if (cancelled) return;
+        await waitMs(350);
+      }
+
+      if (import.meta.env.DEV || cancelled) return;
+
+      const modalImporters = [
+        () => import('./OracleModal'),
+        () => import('./NeuralAnalysisModal'),
+        () => import('./DailyFinanceModal'),
+        () => import('./KaiWorkshopModal'),
+        () => import('./ScenarioSimulatorPanel'),
+      ];
+
+      for (const loadModal of modalImporters) {
+        if (cancelled) return;
+        try {
+          await loadModal();
+        } catch {}
+        if (cancelled) return;
+        await waitMs(200);
+      }
     };
 
     const w = window as unknown as {
@@ -289,26 +339,29 @@ export function AppLayout() {
 
     let idleId: number | null = null;
     let fallbackTimer: ReturnType<typeof setTimeout> | null = null;
-    let modalTimer: ReturnType<typeof setTimeout> | null = null;
 
     if (typeof w.requestIdleCallback === 'function') {
       idleId = w.requestIdleCallback(() => {
-        prefetchChunks();
-        modalTimer = setTimeout(prefetchModalChunks, 800);
-      }, { timeout: 1500 });
+        if (!cancelled) {
+          void prefetchSequentially();
+        }
+      }, { timeout: 2200 });
     } else {
       fallbackTimer = setTimeout(() => {
-        prefetchChunks();
-        modalTimer = setTimeout(prefetchModalChunks, 800);
-      }, 900);
+        if (!cancelled) {
+          void prefetchSequentially();
+        }
+      }, 1400);
     }
 
     return () => {
+      cancelled = true;
       if (idleId !== null && typeof w.cancelIdleCallback === 'function') {
         w.cancelIdleCallback(idleId);
       }
       if (fallbackTimer !== null) clearTimeout(fallbackTimer);
-      if (modalTimer !== null) clearTimeout(modalTimer);
+      stepTimers.forEach((id) => clearTimeout(id));
+      stepTimers.clear();
     };
   }, []);
 
@@ -385,7 +438,6 @@ export function AppLayout() {
           }`}
           style={{
             boxShadow: isGlowing ? 'inset 0 0 150px rgba(150,0,255,0.5)' : 'none',
-            backdropFilter: isGlowing ? 'brightness(1.1) saturate(1.2)' : 'none'
           }}
         />
 
@@ -433,7 +485,7 @@ export function AppLayout() {
               />
             </div>
 
-          <div className="w-full max-w-6xl mx-auto flex-1 bg-[#030712]/40 backdrop-blur-xl border border-white/10 rounded-2xl sm:rounded-3xl shadow-2xl px-2.5 py-3.5 sm:p-6">
+          <div className="w-full max-w-6xl mx-auto flex-1 bg-[#030712]/[0.84] border border-white/10 rounded-2xl sm:rounded-3xl shadow-2xl px-2.5 py-3.5 sm:p-6">
             {/* [Existing content omitted for brevity, but kept in place] */}
             {authError && (
               <div className="mb-4 p-3 rounded-xl bg-[#1a0500] border border-[#fb5607]/60 text-[#fb5607] text-xs flex items-center justify-between gap-3 shadow-[0_0_15px_rgba(251,86,7,0.3)]">
@@ -782,7 +834,7 @@ export function AppLayout() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md overflow-y-auto"
+            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 overflow-y-auto"
             onClick={(e) => {
               if (e.target === e.currentTarget) {
                 soundFX.playClick();

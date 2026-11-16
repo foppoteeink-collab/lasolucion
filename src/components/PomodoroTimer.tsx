@@ -295,7 +295,7 @@ export const PomodoroTimer: React.FC<PomodoroTimerProps> = React.memo(({
   return (
     <div
       id="pomodoro-timer-container"
-      className="w-full rounded-2xl sm:rounded-3xl bg-[#01101a]/95 border border-cyan-500/40 p-3.5 sm:p-5 shadow-[0_0_35px_rgba(0,240,255,0.22)] backdrop-blur-xl text-white relative"
+      className="w-full rounded-2xl sm:rounded-3xl bg-[#01101a]/[0.98] border border-cyan-500/40 p-3.5 sm:p-5 shadow-[0_0_35px_rgba(0,240,255,0.22)] text-white relative"
     >
       {/* ROW 1: Mode Switcher + Editable Objective + Quick Task Link + Close */}
       <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-white/10">
@@ -393,7 +393,7 @@ export const PomodoroTimer: React.FC<PomodoroTimerProps> = React.memo(({
             </button>
 
             {isTaskDropdownOpen && (
-              <div className="absolute top-full right-0 mt-1.5 w-64 max-h-56 overflow-y-auto bg-[#00101b] border border-cyan-500/50 rounded-xl shadow-[0_4px_25px_rgba(0,0,0,0.85)] p-1.5 z-50 backdrop-blur-xl animate-fadeIn">
+              <div className="absolute top-full right-0 mt-1.5 w-64 max-h-56 overflow-y-auto bg-[#00101b] border border-cyan-500/50 rounded-xl shadow-[0_4px_25px_rgba(0,0,0,0.85)] p-1.5 z-50 animate-fadeIn">
                 <div className="px-2 py-1 text-[10px] font-mono text-cyan-400 uppercase tracking-wider border-b border-white/10 flex items-center justify-between">
                   <span>Tareas Pendientes</span>
                   <span className="font-bold">({pendingTasks.length})</span>

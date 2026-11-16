@@ -6,6 +6,44 @@ import { getTodayDateString, formatDateFullSpanish } from '../utils/date';
 import { useTaskStore } from '../store/useTaskStore';
 import { useUIStore } from '../store/useUIStore';
 
+const HEATMAP_INTENSITY_CLASSES: Record<string, readonly [string, string, string, string, string]> = {
+  cuerpo: [
+    'bg-[#1a0808] border border-red-950/80 hover:border-red-700',
+    'bg-red-900/80 border border-red-700/60',
+    'bg-red-600 border border-red-500/60',
+    'bg-orange-500 shadow-[0_0_5px_rgba(249,115,22,0.5)] border border-orange-400/80',
+    'bg-orange-400 shadow-[0_0_7px_rgba(251,146,60,0.7)] border border-orange-300',
+  ],
+  mente: [
+    'bg-[#120024] border border-purple-950/80 hover:border-purple-700',
+    'bg-purple-900/80 border border-purple-800/60',
+    'bg-purple-700 border border-purple-600/60',
+    'bg-purple-500 shadow-[0_0_5px_rgba(168,85,247,0.5)] border border-purple-400/80',
+    'bg-fuchsia-400 shadow-[0_0_7px_rgba(232,121,249,0.7)] border border-fuchsia-300',
+  ],
+  vida: [
+    'bg-[#001c10] border border-emerald-950/80 hover:border-emerald-700',
+    'bg-emerald-900/80 border border-emerald-800/60',
+    'bg-emerald-700 border border-emerald-600/60',
+    'bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)] border border-emerald-400/80',
+    'bg-emerald-400 shadow-[0_0_7px_rgba(52,211,153,0.7)] border border-emerald-300',
+  ],
+  'sueño': [
+    'bg-[#06001e] border border-indigo-950/80 hover:border-indigo-700',
+    'bg-indigo-900/80 border border-indigo-800/60',
+    'bg-indigo-600 border border-indigo-500/60',
+    'bg-indigo-400 shadow-[0_0_5px_rgba(129,140,248,0.5)] border border-indigo-300/80',
+    'bg-indigo-300 shadow-[0_0_7px_rgba(165,180,252,0.7)] border border-indigo-200',
+  ],
+  todas: [
+    'bg-[#001c38] border border-blue-900/80 hover:border-cyan-500',
+    'bg-blue-900/80 border border-blue-800/60',
+    'bg-blue-600 border border-blue-500/60',
+    'bg-cyan-500 shadow-[0_0_5px_rgba(6,182,212,0.5)] border border-cyan-400/80',
+    'bg-cyan-400 shadow-[0_0_7px_rgba(0,240,255,0.7)] border border-cyan-300',
+  ],
+};
+
 interface IntelligenceOverlayProps {
   onUpdateStats?: (updater: PlayerStats | ((prev: PlayerStats) => PlayerStats)) => void;
   stats: PlayerStats;
@@ -13,7 +51,7 @@ interface IntelligenceOverlayProps {
   pomodoroSessions: PomodoroSession[];
 }
 
-export const IntelligenceOverlay: React.FC<IntelligenceOverlayProps> = ({ stats, tasksByDate, pomodoroSessions, onUpdateStats }) => {
+export const IntelligenceOverlay: React.FC<IntelligenceOverlayProps> = React.memo(({ stats, tasksByDate, pomodoroSessions, onUpdateStats }) => {
   const [heatmapArea, setHeatmapArea] = useState<string>('todas');
   const { heatmap, insights, alerts, evolvedRank } = useAdvancedIntelligence(stats, tasksByDate, pomodoroSessions, heatmapArea);
   const [heatmapRange, setHeatmapRange] = useState<30 | 90 | 180 | 365>(90);
@@ -405,70 +443,28 @@ export const IntelligenceOverlay: React.FC<IntelligenceOverlayProps> = ({ stats,
                     <span className="h-3.5 flex items-center">D</span>
                   </div>
 
-                  <div className="flex gap-1.5">
+                  <div className="flex gap-1.5" style={{ contain: 'layout style' }}>
                     {/* Columns of 7 days strictly aligned */}
-                    {calendarWeeks.map((week, weekIdx) => (
-                      <div key={weekIdx} className="flex flex-col gap-1.5">
-                        {Array.from({ length: 7 }).map((_, dayIdx) => {
-                           const dayData = week[dayIdx];
-                           if (!dayData) return <div key={dayIdx} className="w-3.5 h-3.5 rounded-sm bg-transparent" />;
-                           
-                           const getIntensityColor = (level: number) => {
-                              if (heatmapArea === 'cuerpo') {
-                                 switch(level) {
-                                   case 4: return 'bg-orange-400 shadow-[0_0_8px_rgba(251,146,60,0.8)] border border-orange-300';
-                                   case 3: return 'bg-orange-500 shadow-[0_0_5px_rgba(249,115,22,0.6)] border border-orange-400/80';
-                                   case 2: return 'bg-red-600 border border-red-500/60';
-                                   case 1: return 'bg-red-900/80 border border-red-700/60';
-                                   default: return 'bg-[#1a0808] border border-red-950/80 hover:border-red-700';
-                                 }
-                              } else if (heatmapArea === 'mente') {
-                                 switch(level) {
-                                   case 4: return 'bg-fuchsia-400 shadow-[0_0_8px_rgba(232,121,249,0.8)] border border-fuchsia-300';
-                                   case 3: return 'bg-purple-500 shadow-[0_0_5px_rgba(168,85,247,0.6)] border border-purple-400/80';
-                                   case 2: return 'bg-purple-700 border border-purple-600/60';
-                                   case 1: return 'bg-purple-900/80 border border-purple-800/60';
-                                   default: return 'bg-[#120024] border border-purple-950/80 hover:border-purple-700';
-                                 }
-                              } else if (heatmapArea === 'vida') {
-                                 switch(level) {
-                                   case 4: return 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)] border border-emerald-300';
-                                   case 3: return 'bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.6)] border border-emerald-400/80';
-                                   case 2: return 'bg-emerald-700 border border-emerald-600/60';
-                                   case 1: return 'bg-emerald-900/80 border border-emerald-800/60';
-                                   default: return 'bg-[#001c10] border border-emerald-950/80 hover:border-emerald-700';
-                                 }
-                              } else if (heatmapArea === 'sueño') {
-                                 switch(level) {
-                                   case 4: return 'bg-indigo-300 shadow-[0_0_8px_rgba(165,180,252,0.8)] border border-indigo-200';
-                                   case 3: return 'bg-indigo-400 shadow-[0_0_5px_rgba(129,140,248,0.6)] border border-indigo-300/80';
-                                   case 2: return 'bg-indigo-600 border border-indigo-500/60';
-                                   case 1: return 'bg-indigo-900/80 border border-indigo-800/60';
-                                   default: return 'bg-[#06001e] border border-indigo-950/80 hover:border-indigo-700';
-                                 }
-                              }
-                              switch(level) {
-                                 case 4: return 'bg-cyan-400 shadow-[0_0_8px_rgba(0,240,255,0.8)] border border-cyan-300';
-                                 case 3: return 'bg-cyan-500 shadow-[0_0_5px_rgba(6,182,212,0.6)] border border-cyan-400/80';
-                                 case 2: return 'bg-blue-600 border border-blue-500/60';
-                                 case 1: return 'bg-blue-900/80 border border-blue-800/60';
-                                 default: return 'bg-[#001c38] border border-blue-900/80 hover:border-cyan-500';
-                              }
-                           };
-
-                           const isSelected = selectedNode?.date === dayData.date;
-
-                           return (
-                             <button 
-                               key={dayIdx} 
-                               onClick={() => setSelectedNode(dayData)}
-                               className={`w-3.5 h-3.5 rounded-sm ${getIntensityColor(dayData.intensity)} ${isSelected ? 'ring-2 ring-white scale-125 z-10' : ''} transition-all hover:scale-125 cursor-pointer`}
-                               title={dayData.label || `${dayData.date} - ${dayData.totalXp} XP`}
-                             />
-                           );
-                        })}
-                      </div>
-                    ))}
+                    {calendarWeeks.map((week, weekIdx) => {
+                      const areaPalette = HEATMAP_INTENSITY_CLASSES[heatmapArea] || HEATMAP_INTENSITY_CLASSES.todas;
+                      return (
+                        <div key={weekIdx} className="flex flex-col gap-1.5">
+                          {Array.from({ length: 7 }).map((_, dayIdx) => {
+                            const dayData = week[dayIdx];
+                            if (!dayData) return <div key={dayIdx} className="w-3.5 h-3.5 rounded-sm bg-transparent" />;
+                            const isSelected = selectedNode?.date === dayData.date;
+                            return (
+                              <button
+                                key={dayIdx}
+                                onClick={() => setSelectedNode(dayData)}
+                                className={`w-3.5 h-3.5 rounded-sm ${areaPalette[dayData.intensity] || areaPalette[0]} ${isSelected ? 'ring-2 ring-white scale-125 z-10' : ''} transition-transform duration-150 hover:scale-125 cursor-pointer`}
+                                title={dayData.label || `${dayData.date} - ${dayData.totalXp} XP`}
+                              />
+                            );
+                          })}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
@@ -491,4 +487,5 @@ export const IntelligenceOverlay: React.FC<IntelligenceOverlayProps> = ({ stats,
        </div>
     </div>
   );
-};
+});
+IntelligenceOverlay.displayName = 'IntelligenceOverlay';

@@ -135,14 +135,14 @@ export const HeroProfileModal: React.FC<HeroProfileModalProps> = ({
 
   return createPortal(
     <div 
-      className="fixed inset-0 z-[180] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-fade-in font-sans portal-modal-root select-none pointer-events-auto"
+      className="fixed inset-0 z-[180] flex items-center justify-center p-3 sm:p-4 bg-black/88 animate-fade-in font-sans portal-modal-root select-none pointer-events-auto"
       onClick={onClose}
     >
       <div 
         role="dialog"
         aria-modal="true"
         aria-labelledby="hero-profile-modal-title"
-        className="w-full max-w-lg max-h-[90dvh] flex flex-col bg-[#030712]/95 border border-cyan-500/35 rounded-2xl sm:rounded-3xl shadow-[0_0_50px_rgba(0,240,255,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] relative text-left overflow-hidden backdrop-blur-2xl text-white"
+        className="w-full max-w-lg max-h-[90dvh] flex flex-col bg-[#030712]/[0.98] border border-cyan-500/35 rounded-2xl sm:rounded-3xl shadow-[0_0_50px_rgba(0,240,255,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] relative text-left overflow-hidden text-white"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Micrograno táctil Moxen Vidrio */}

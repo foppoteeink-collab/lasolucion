@@ -36,7 +36,7 @@ export const PWAInstallBanner: React.FC = () => {
   return (
     <>
       {/* Floating PWA Install Banner */}
-      <div className="fixed bottom-20 sm:bottom-6 right-4 left-4 sm:left-auto sm:max-w-md z-40 bg-slate-900/95 dark:bg-[#0d1527]/95 backdrop-blur-md border border-cyan-500/40 rounded-2xl p-4 shadow-[0_10px_30px_rgba(0,240,255,0.25)] text-slate-100 animate-in fade-in slide-in-from-bottom-4 transition-all duration-300">
+      <div className="fixed bottom-20 sm:bottom-6 right-4 left-4 sm:left-auto sm:max-w-md z-40 bg-slate-900/[0.97] dark:bg-[#0d1527]/[0.97] border border-cyan-500/40 rounded-2xl p-4 shadow-[0_10px_30px_rgba(0,240,255,0.25)] text-slate-100 animate-in fade-in slide-in-from-bottom-4 transition-all duration-300">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-md shadow-cyan-500/20 shrink-0">
@@ -80,7 +80,7 @@ export const PWAInstallBanner: React.FC = () => {
 
       {/* iOS Installation Instructions Modal */}
       {showIOSModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 animate-in fade-in">
           <div className="bg-slate-900 border border-cyan-500/40 rounded-3xl max-w-sm w-full p-6 shadow-2xl text-slate-100 relative">
             <button
               onClick={() => setShowIOSModal(false)}

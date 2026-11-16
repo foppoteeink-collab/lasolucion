@@ -44,7 +44,7 @@ export const OfflineIndicator: React.FC<OfflineIndicatorProps> = ({ cloudSync })
   if (!isOnline || syncStatus === 'offline') {
     return (
       <div 
-        className="fixed bottom-16 sm:bottom-4 left-4 z-50 flex items-center gap-2.5 rounded-2xl bg-amber-950/95 backdrop-blur-md px-4 py-2.5 text-xs font-bold text-amber-200 border border-amber-500/60 shadow-[0_0_20px_rgba(245,158,11,0.35)] animate-in slide-in-from-bottom-2"
+        className="fixed bottom-16 sm:bottom-4 left-4 z-50 flex items-center gap-2.5 rounded-2xl bg-amber-950/[0.97] px-4 py-2.5 text-xs font-bold text-amber-200 border border-amber-500/60 shadow-[0_0_20px_rgba(245,158,11,0.35)] animate-in slide-in-from-bottom-2"
         role="status"
         aria-live="polite"
       >

@@ -53,7 +53,7 @@ export const SleepScheduleModal: React.FC<SleepScheduleModalProps> = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby="sleep-modal-title"
-        className="fixed inset-0 z-[180] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md portal-modal-root select-none font-sans"
+        className="fixed inset-0 z-[180] flex items-center justify-center p-4 bg-black/88 portal-modal-root select-none font-sans"
         onClick={() => {
           soundFX.playClick();
           onClose();
@@ -64,7 +64,7 @@ export const SleepScheduleModal: React.FC<SleepScheduleModalProps> = ({
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
           onClick={(e) => e.stopPropagation()}
-          className="relative w-full max-w-md p-6 overflow-hidden rounded-2xl sm:rounded-3xl bg-[#030712]/95 border border-indigo-500/40 shadow-2xl shadow-indigo-950/50 text-white backdrop-blur-2xl"
+          className="relative w-full max-w-md p-6 overflow-hidden rounded-2xl sm:rounded-3xl bg-[#030712]/[0.98] border border-indigo-500/40 shadow-2xl shadow-indigo-950/50 text-white"
         >
           <span className="vi-grano opacity-5" aria-hidden="true" />
           <div className="absolute top-0 right-0 w-36 h-36 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />

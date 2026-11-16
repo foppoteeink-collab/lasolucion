@@ -534,10 +534,10 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
     <div className="flex flex-col gap-2 font-sans tracking-wide pb-32 sm:pb-36">
       {/* Unified Dashboard Header Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-2">
-        <div className="lg:col-span-4">
+        <div className="lg:col-span-6">
           <CalendarView currentDate={currentDate} onChangeDate={onChangeDate} onOpenAddModal={() => openAddModal('task')} />
         </div>
-        <div className="lg:col-span-8">
+        <div className="lg:col-span-6">
           <QuickHabitsWidget
             tasks={tasks}
             onIncrementHabit={onIncrementHabit}

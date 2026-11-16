@@ -14,8 +14,15 @@ const EMPTY_TASKS: any[] = [];
 
 export default function App() {
   const ensureTodayTasks = useTaskStore(s => s.ensureTodayTasks);
-  const todayTasks = useTaskStore(s => s.tasksByDate[getTodayDateString()] ?? EMPTY_TASKS);
+  const todayStr = getTodayDateString();
+  const todayTasks = useTaskStore(s => s.tasksByDate[todayStr] ?? EMPTY_TASKS);
   const streakDays = usePlayerStore(s => s.stats.streakDays);
+  const isDayStarted = useTaskStore(s => Boolean(s.startedDays?.[todayStr]));
+  const isDayFinished = usePlayerStore(s => Boolean(s.stats.finalizedDays?.[todayStr]));
+  const reflections = useAppStore(s => s.reflections);
+  const sleepLogs = usePlayerStore(s => s.stats.sleepLogs);
+  const hasJournalEntry = Boolean(reflections?.[todayStr] || sleepLogs?.[todayStr]);
+  const dayStartHour = usePlayerStore(s => s.stats.dayStartHour ?? 8);
   const scheduledRef = useRef(false);
 
   useEffect(() => {
@@ -54,13 +61,17 @@ export default function App() {
     });
   }, [ensureTodayTasks]);
 
-  // Re-programar notificaciones cuando cambian las tareas del día o la racha
+  // Re-programar notificaciones cuando cambian las tareas del día, jornada o racha
   useEffect(() => {
-    if (todayTasks.length === 0 && !scheduledRef.current) return;
-    scheduledRef.current = true;
-
-    scheduleAll({ tasks: todayTasks, streakDays });
-  }, [todayTasks, streakDays]);
+    scheduleAll({ 
+      tasks: todayTasks, 
+      streakDays,
+      isDayStarted,
+      isDayFinished,
+      hasJournalEntry,
+      dayStartHour
+    });
+  }, [todayTasks, streakDays, isDayStarted, isDayFinished, hasJournalEntry, dayStartHour]);
 
   return (
     <TimerProvider>

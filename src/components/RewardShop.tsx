@@ -282,7 +282,7 @@ export const RewardShop: React.FC = () => {
     <div className="space-y-4 font-sans tracking-wide pb-20 text-white">
       
       {/* ─── 1. BÓVEDA HEADER HUD (MINIMALISTA & CYBERPUNK) ─── */}
-      <div className="relative overflow-hidden rounded-2xl bg-[#030614]/95 border border-purple-500/35 p-3.5 sm:p-4.5 flex flex-wrap items-center justify-between gap-3 shadow-[0_0_30px_rgba(168,85,247,0.15)] backdrop-blur-md">
+      <div className="relative overflow-hidden rounded-2xl bg-[#030614]/[0.96] border border-purple-500/35 p-3.5 sm:p-4.5 flex flex-wrap items-center justify-between gap-3 shadow-[0_0_30px_rgba(168,85,247,0.15)]">
         <div className="absolute -top-12 -right-12 w-36 h-36 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-12 -left-12 w-36 h-36 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -627,14 +627,14 @@ export const RewardShop: React.FC = () => {
       <AnimatePresence>
         {isAddModalOpen && typeof document !== 'undefined' && createPortal(
           <div 
-            className="fixed inset-0 z-[180] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in font-sans portal-modal-root"
+            className="fixed inset-0 z-[180] flex items-center justify-center p-4 bg-black/88 animate-fade-in font-sans portal-modal-root"
             onClick={() => setIsAddModalOpen(false)}
           >
             <motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="w-full max-w-sm bg-[#030712]/95 border border-cyan-500/35 rounded-2xl sm:rounded-3xl shadow-[0_0_50px_rgba(0,240,255,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] overflow-hidden backdrop-blur-2xl relative text-left"
+              className="w-full max-w-sm bg-[#030712]/[0.98] border border-cyan-500/35 rounded-2xl sm:rounded-3xl shadow-[0_0_50px_rgba(0,240,255,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] overflow-hidden relative text-left"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Micrograno táctil Moxen Vidrio */}

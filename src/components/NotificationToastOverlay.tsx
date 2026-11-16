@@ -103,7 +103,7 @@ export const NotificationToastOverlay: React.FC = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9, x: 50 }}
             transition={{ duration: 0.25 }}
-            className={`pointer-events-auto bg-[#070e17]/95 backdrop-blur-md border ${getBorderColor(toast.type)} rounded-2xl p-4 shadow-2xl flex items-start gap-3 relative overflow-hidden`}
+            className={`pointer-events-auto bg-[#070e17]/[0.98] border ${getBorderColor(toast.type)} rounded-2xl p-4 shadow-2xl flex items-start gap-3 relative overflow-hidden`}
           >
             {/* Ambient Background Glow */}
             <div className="absolute -right-8 -bottom-8 w-24 h-24 bg-cyan-500/10 rounded-full blur-xl pointer-events-none" />

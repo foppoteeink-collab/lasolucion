@@ -168,14 +168,14 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-2 sm:p-4 bg-black/85 backdrop-blur-md animate-fade-in font-sans portal-modal-root select-none pointer-events-auto"
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-2 sm:p-4 bg-black/88 animate-fade-in font-sans portal-modal-root select-none pointer-events-auto"
       onClick={onClose}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="archetypes-modal-title"
-        className="w-full max-w-xl md:max-w-2xl max-h-[92dvh] sm:max-h-[88vh] flex flex-col rounded-2xl sm:rounded-3xl bg-[#030712]/95 border border-cyan-500/35 shadow-[0_0_50px_rgba(0,240,255,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] relative overflow-hidden backdrop-blur-2xl text-white text-left m-auto shrink-0"
+        className="w-full max-w-xl md:max-w-2xl max-h-[92dvh] sm:max-h-[88vh] flex flex-col rounded-2xl sm:rounded-3xl bg-[#030712]/[0.98] border border-cyan-500/35 shadow-[0_0_50px_rgba(0,240,255,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] relative overflow-hidden text-white text-left m-auto shrink-0"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Micrograno táctil Moxen Vidrio */}
@@ -276,7 +276,7 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
                     </div>
 
                     <span
-                      className={`text-[9px] sm:text-[9.5px] font-mono px-2 py-0.5 rounded-full font-bold border flex items-center gap-1 backdrop-blur-md ${theme.statPill}`}
+                      className={`text-[9px] sm:text-[9.5px] font-mono px-2 py-0.5 rounded-full font-bold border flex items-center gap-1 ${theme.statPill}`}
                     >
                       <Sparkles className="w-2.5 h-2.5" style={{ color: theme.accent }} />
                       {arch.statBonus}

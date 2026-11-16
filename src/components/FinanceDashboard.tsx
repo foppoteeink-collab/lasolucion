@@ -301,7 +301,7 @@ export const FinanceDashboard: React.FC<FinanceDashboardProps> = ({ expenses, se
   };
 
   return (
-    <div className="mt-8 mb-8 bg-[#00150b]/80 border border-emerald-900/40 p-5 sm:p-7 rounded-3xl shadow-[0_0_40px_rgba(16,185,129,0.05)] relative overflow-hidden backdrop-blur-md">
+    <div className="mt-8 mb-8 bg-[#00150b]/[0.92] border border-emerald-900/40 p-5 sm:p-7 rounded-3xl shadow-[0_0_40px_rgba(16,185,129,0.05)] relative overflow-hidden">
       <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/5 blur-3xl pointer-events-none"></div>
       
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2 relative z-10">
