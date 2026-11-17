@@ -20,7 +20,9 @@ import {
   Landmark,
   Trash2,
   Link,
-  Plus
+  Plus,
+  Volume2,
+  Share2
 } from 'lucide-react';
 import { usePlayerStore } from '../store/usePlayerStore';
 import { useAppStore } from '../store/useAppStore';
@@ -35,6 +37,8 @@ import { triggerShockwave } from '../utils/celebration';
 import { forgeKaiFromImage, forgeAllKaiVariantsFromImage } from '../services/aiService';
 import { QuantumCubeLoader } from './QuantumCubeLoader';
 import { useNarrativeCopy } from '../hooks/useNarrativeCopy';
+import { speakKaiDialogue } from '../utils/voice';
+import { generateAndShareKaiTradingCard } from '../utils/shareCardGenerator';
 
 export const KAI_TEMPERAMENTS = [
   {
@@ -319,6 +323,8 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
   const [forgeError, setForgeError] = useState<string | null>(null);
   const [equippedFeedback, setEquippedFeedback] = useState(false);
   const [relicToDelete, setRelicToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [isSharingCard, setIsSharingCard] = useState<string | null>(null);
+  const [speakingRelicId, setSpeakingRelicId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Progresión de Hábitos 21d / 66d
@@ -553,6 +559,25 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
     });
     setEquippedFeedback(true);
     setTimeout(() => setEquippedFeedback(false), 4500);
+  };
+
+  const handleSpeakQuote = (quote: string, mood?: KaiTemperament, id?: string) => {
+    if (!quote) return;
+    soundFX.playClick();
+    setSpeakingRelicId(id || 'active');
+    speakKaiDialogue(quote, mood || 'stoic', () => {
+      setSpeakingRelicId(null);
+    });
+  };
+
+  const handleShareTradingCard = async (targetKai: KaiCustomForm, id?: string) => {
+    soundFX.playClick();
+    setIsSharingCard(id || targetKai.id || targetKai.name);
+    try {
+      await generateAndShareKaiTradingCard({ kai: targetKai, stats });
+    } finally {
+      setIsSharingCard(null);
+    }
   };
 
   const handleLinkHabitToRelic = (relicId: string, habitId: string, habitTitle: string) => {
@@ -862,11 +887,21 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                               </div>
                             </div>
 
-                            {/* Frase de Personalidad */}
+                            {/* Frase de Personalidad con Botón de Voz */}
                             {relic.personalityQuote && (
-                              <p className="text-[10px] text-slate-300 italic bg-black/40 px-2.5 py-1.5 rounded-xl border border-white/5 line-clamp-2 mb-3">
-                                "{relic.personalityQuote}"
-                              </p>
+                              <div className="flex items-center gap-1.5 mb-3 bg-black/40 px-2.5 py-1.5 rounded-xl border border-white/5">
+                                <p className="text-[10px] text-slate-300 italic line-clamp-2 flex-1">
+                                  "{relic.personalityQuote}"
+                                </p>
+                                <button
+                                  type="button"
+                                  onClick={() => handleSpeakQuote(relic.personalityQuote || '', relic.mood, relicId)}
+                                  className="p-1 rounded-lg text-cyan-400 hover:text-white hover:bg-cyan-950/60 transition-colors shrink-0 cursor-pointer"
+                                  title="Escuchar voz de KAI"
+                                >
+                                  <Volume2 className={`w-3.5 h-3.5 ${speakingRelicId === relicId ? 'animate-bounce text-cyan-300' : ''}`} />
+                                </button>
+                              </div>
                             )}
 
                             {/* Selector de Hábito Custodiado */}
@@ -922,11 +957,22 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                             </div>
                           </div>
 
-                          {/* Botón de Equipar */}
-                          <div className="pt-3 border-t border-white/5 flex items-center justify-between">
-                            <span className="text-[9px] font-mono text-slate-500">
-                              {relic.createdAt ? new Date(relic.createdAt).toLocaleDateString() : 'Activo'}
-                            </span>
+                          {/* Botón de Equipar & Ficha Coleccionable */}
+                          <div className="pt-3 border-t border-white/5 flex items-center justify-between gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleShareTradingCard(relic, relicId)}
+                              disabled={isSharingCard === relicId}
+                              className="px-2.5 py-1.5 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 border border-purple-400/40 text-purple-200 hover:text-white font-anton text-[11px] uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+                              title="Generar y compartir Carta Holográfica Coleccionable"
+                            >
+                              {isSharingCard === relicId ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <Share2 className="w-3.5 h-3.5 text-purple-400" />
+                              )}
+                              <span>Ficha</span>
+                            </button>
 
                             {isEquipped ? (
                               <span className="text-xs font-anton tracking-wider uppercase text-emerald-300 bg-emerald-950/80 border border-emerald-400/60 px-3.5 py-1.5 rounded-xl shadow-[0_0_12px_rgba(16,185,129,0.3)] flex items-center gap-1.5">
@@ -1500,14 +1546,24 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
 
                       {/* Cita y Acciones de Adopción */}
                       <div className="w-full space-y-2.5 z-10">
-                        {/* Diálogo */}
-                        <div className="p-2.5 rounded-xl bg-black/60 border border-fuchsia-500/30 text-center relative">
-                          <span className="text-[10px] font-mono uppercase text-fuchsia-300 font-bold block mb-0.5">
-                            💬 {activeVariant.name}:
-                          </span>
-                          <p className="text-xs text-white italic font-medium leading-relaxed">
-                            "{activeVariant.personalityQuote || '¡He despertado con forma y voluntad propia!'}"
-                          </p>
+                        {/* Diálogo con Botón de Voz */}
+                        <div className="p-2.5 rounded-xl bg-black/60 border border-fuchsia-500/30 flex items-center justify-between gap-2">
+                          <div className="flex-1 text-center min-w-0">
+                            <span className="text-[10px] font-mono uppercase text-fuchsia-300 font-bold block mb-0.5 truncate">
+                              💬 {activeVariant.name}:
+                            </span>
+                            <p className="text-xs text-white italic font-medium leading-relaxed line-clamp-2">
+                              "{activeVariant.personalityQuote || '¡He despertado con forma y voluntad propia!'}"
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleSpeakQuote(activeVariant.personalityQuote || '¡He despertado!', activeVariant.mood, 'pedestal_active')}
+                            className="p-2 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/25 border border-cyan-400/40 text-cyan-300 hover:text-white transition-all shrink-0 cursor-pointer"
+                            title="Escuchar voz de KAI"
+                          >
+                            <Volume2 className={`w-4 h-4 ${speakingRelicId === 'pedestal_active' ? 'animate-bounce text-cyan-300' : ''}`} />
+                          </button>
                         </div>
 
                         {/* Badges de ADN */}
@@ -1527,15 +1583,32 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                           )}
                         </div>
 
-                        {/* Botón Adoptar Este KAI */}
-                        <button
-                          type="button"
-                          onClick={() => handleEquipCustomForm(activeVariant)}
-                          className="w-full py-3 rounded-xl bg-gradient-to-r from-fuchsia-600 via-purple-600 to-cyan-500 hover:opacity-95 text-white font-black uppercase tracking-wider text-xs shadow-[0_0_20px_rgba(217,70,239,0.4)] transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-95"
-                        >
-                          <Check className="w-4 h-4 stroke-[3]" />
-                          <span>¡Adoptar & Equipar este KAI!</span>
-                        </button>
+                        {/* Botónes: Adoptar KAI & Carta Holográfica */}
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleEquipCustomForm(activeVariant)}
+                            className="flex-1 py-3 rounded-xl bg-gradient-to-r from-fuchsia-600 via-purple-600 to-cyan-500 hover:opacity-95 text-white font-black uppercase tracking-wider text-xs shadow-[0_0_20px_rgba(217,70,239,0.4)] transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-95"
+                          >
+                            <Check className="w-4 h-4 stroke-[3]" />
+                            <span>¡Adoptar KAI!</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleShareTradingCard(activeVariant, 'pedestal_active')}
+                            disabled={isSharingCard === 'pedestal_active'}
+                            className="px-3.5 py-3 rounded-xl bg-purple-950/80 hover:bg-purple-900 border border-purple-400/50 text-purple-200 text-xs font-anton tracking-wider uppercase transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 disabled:opacity-50"
+                            title="Generar y compartir Carta Holográfica Coleccionable"
+                          >
+                            {isSharingCard === 'pedestal_active' ? (
+                              <Loader2 className="w-4 h-4 animate-spin text-purple-300" />
+                            ) : (
+                              <Share2 className="w-4 h-4 text-purple-300" />
+                            )}
+                            <span className="hidden sm:inline">Carta</span>
+                          </button>
+                        </div>
 
                         {/* Toast de Éxito al Equipar */}
                         {equippedFeedback && (

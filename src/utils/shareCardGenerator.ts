@@ -1,4 +1,4 @@
-import { PlayerStats } from '../types';
+import { PlayerStats, KaiCustomForm } from '../types';
 
 export interface ShareCardPayload {
   stats: PlayerStats;
@@ -6,6 +6,11 @@ export interface ShareCardPayload {
   completionRate?: number;
   xpEarnedToday?: number;
   grade?: string;
+}
+
+export interface KaiTradingCardPayload {
+  kai: KaiCustomForm;
+  stats: PlayerStats;
 }
 
 const showIOSShareCardModal = (imageUrl: string, fileName: string) => {
@@ -240,3 +245,369 @@ export const generateAndShareLegacyCard = async (payload: ShareCardPayload): Pro
     canvas.height = 0;
   }
 };
+
+/**
+ * Carga la silueta SVG pura o imagen de KAI en un elemento Image listo para Canvas.
+ */
+async function loadKaiImageForCanvas(kai: KaiCustomForm): Promise<HTMLImageElement | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+
+    let resolved = false;
+    const timeout = setTimeout(() => {
+      if (!resolved) {
+        resolved = true;
+        resolve(null);
+      }
+    }, 4500);
+
+    img.onload = () => {
+      if (!resolved) {
+        resolved = true;
+        clearTimeout(timeout);
+        resolve(img);
+      }
+    };
+
+    img.onerror = () => {
+      if (!resolved) {
+        resolved = true;
+        clearTimeout(timeout);
+        resolve(null);
+      }
+    };
+
+    if (kai.imageUrl) {
+      img.src = kai.imageUrl;
+    } else if (kai.svgContent) {
+      let svg = kai.svgContent;
+      // Normalizar atributos de viewBox y dimensiones fijas para rasterizado nítido en canvas
+      if (!svg.includes('viewBox=')) {
+        svg = svg.replace(/<svg\b/i, '<svg viewBox="0 0 300 300"');
+      }
+      if (!svg.includes('width=') || svg.includes('width="100%"')) {
+        svg = svg.replace(/<svg\b([^>]*)>/i, '<svg$1 width="500" height="500">');
+      }
+      const encoded = encodeURIComponent(svg);
+      img.src = `data:image/svg+xml;charset=utf-8,${encoded}`;
+    } else {
+      resolve(null);
+    }
+  });
+}
+
+function wrapCanvasText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  maxWidth: number,
+  lineHeight: number,
+  maxLines: number = 3
+) {
+  const words = text.split(' ');
+  let line = '';
+  let currentY = y;
+  let linesCount = 0;
+
+  for (let n = 0; n < words.length; n++) {
+    const testLine = line + words[n] + ' ';
+    const metrics = ctx.measureText(testLine);
+    const testWidth = metrics.width;
+    if (testWidth > maxWidth && n > 0) {
+      ctx.fillText(line.trim(), x, currentY);
+      line = words[n] + ' ';
+      currentY += lineHeight;
+      linesCount++;
+      if (linesCount >= maxLines - 1 && n < words.length - 1) {
+        const remaining = words.slice(n).join(' ');
+        let truncated = remaining;
+        while (ctx.measureText(truncated + '...').width > maxWidth && truncated.length > 0) {
+          truncated = truncated.slice(0, -1);
+        }
+        ctx.fillText(truncated + '...', x, currentY);
+        return;
+      }
+    } else {
+      line = testLine;
+    }
+  }
+  ctx.fillText(line.trim(), x, currentY);
+}
+
+/**
+ * 🎴 Generador de Carta Holográfica Coleccionable de KAI (Trading Card 9:16).
+ * Renderiza en cliente una tarjeta coleccionable de edición limitada lista para compartir
+ * en WhatsApp, Instagram Stories o guardar en la galería de fotos.
+ */
+export const generateAndShareKaiTradingCard = async (
+  payload: KaiTradingCardPayload
+): Promise<boolean> => {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return false;
+
+  const { kai, stats } = payload;
+  const isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const isLowMemory =
+    typeof navigator !== 'undefined' &&
+    (navigator as any).deviceMemory !== undefined &&
+    (navigator as any).deviceMemory <= 4;
+
+  const baseWidth = isMobile || isLowMemory ? 720 : 1080;
+  const baseHeight = isMobile || isLowMemory ? 1280 : 1920;
+  const scale = baseWidth / 1080;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = baseWidth;
+  canvas.height = baseHeight;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return false;
+
+  ctx.scale(scale, scale);
+
+  // Paleta de color temática según el estilo del Multiverso
+  let accentColor = '#00f0ff';
+  let secondaryColor = '#ec4899';
+  let styleLabel = 'EDICIÓN MULTIVERSO';
+
+  switch (kai.artStyle) {
+    case 'pixar':
+      accentColor = '#f97316';
+      secondaryColor = '#fbbf24';
+      styleLabel = 'ANIMACIÓN PIXAR 3D';
+      break;
+    case 'cartoon':
+      accentColor = '#ef4444';
+      secondaryColor = '#facc15';
+      styleLabel = 'CARTOON NETWORK CLÁSICO';
+      break;
+    case 'anime':
+      accentColor = '#a855f7';
+      secondaryColor = '#6366f1';
+      styleLabel = 'ANIME SHONEN JAPONÉS';
+      break;
+    case 'pop':
+      accentColor = '#ec4899';
+      secondaryColor = '#06b6d4';
+      styleLabel = 'POP ART // VINYL TOY';
+      break;
+    case 'doodle':
+      accentColor = '#06b6d4';
+      secondaryColor = '#ec4899';
+      styleLabel = 'FOPPOTEE INK DOODLE';
+      break;
+    case 'clay3d':
+      accentColor = '#f59e0b';
+      secondaryColor = '#84cc16';
+      styleLabel = 'CLAYMATION 3D // PLASTILINA';
+      break;
+  }
+
+  try {
+    if (typeof document !== 'undefined' && (document as any).fonts?.ready) {
+      try {
+        await (document as any).fonts.ready;
+      } catch (_) {}
+    }
+
+    // 1. Fondo Oscuro Cósmico con Halo Radial
+    const bgGrad = ctx.createLinearGradient(0, 0, 0, 1920);
+    bgGrad.addColorStop(0, '#030814');
+    bgGrad.addColorStop(0.4, '#071228');
+    bgGrad.addColorStop(1, '#020409');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, 1080, 1920);
+
+    // Halo centrado en el KAI
+    const auraGrad = ctx.createRadialGradient(540, 680, 60, 540, 680, 500);
+    auraGrad.addColorStop(0, `${accentColor}40`);
+    auraGrad.addColorStop(0.5, `${secondaryColor}15`);
+    auraGrad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = auraGrad;
+    ctx.fillRect(0, 0, 1080, 1920);
+
+    // 2. Marco Holográfico de Edición Coleccionable
+    ctx.strokeStyle = accentColor;
+    ctx.lineWidth = 5;
+    ctx.strokeRect(54, 54, 972, 1812);
+
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(70, 70, 940, 1780);
+
+    // Esquinas cromadas decorativas
+    const drawCorner = (cx: number, cy: number, dx: number, dy: number) => {
+      ctx.strokeStyle = secondaryColor;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy + dy * 35);
+      ctx.lineTo(cx, cy);
+      ctx.lineTo(cx + dx * 35, cy);
+      ctx.stroke();
+    };
+    drawCorner(70, 70, 1, 1);
+    drawCorner(1010, 70, -1, 1);
+    drawCorner(70, 1850, 1, -1);
+    drawCorner(1010, 1850, -1, -1);
+
+    // 3. Encabezado de la Carta
+    ctx.fillStyle = accentColor;
+    ctx.font = 'bold 24px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('★ CARTA COLECCIONABLE DE EDICIÓN LIMITADA ★', 540, 140);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 20px monospace';
+    ctx.fillText(`KAI MULTIVERSE // ${styleLabel}`, 540, 178);
+
+    // 4. Pedestal Holográfico & Silueta de KAI
+    ctx.beginPath();
+    ctx.arc(540, 660, 240, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(2, 6, 20, 0.85)';
+    ctx.fill();
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = `${accentColor}80`;
+    ctx.stroke();
+
+    // Anillo exterior decorativo
+    ctx.beginPath();
+    ctx.arc(540, 660, 260, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Cargar y pintar la imagen de KAI
+    const kaiImg = await loadKaiImageForCanvas(kai);
+    if (kaiImg) {
+      const renderSize = 400;
+      ctx.drawImage(kaiImg, 540 - renderSize / 2, 660 - renderSize / 2, renderSize, renderSize);
+    } else {
+      // Fallback si no hay imagen
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '90px sans-serif';
+      ctx.fillText('✨', 540, 700);
+    }
+
+    // Badge de Objeto de Origen
+    if (kai.detectedObject) {
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+      ctx.strokeStyle = `${accentColor}60`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(540 - 180, 930, 360, 48, 24);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = accentColor;
+      ctx.font = 'bold 20px monospace';
+      ctx.fillText(`🎯 ORIGEN: ${kai.detectedObject.toUpperCase()}`, 540, 962);
+    }
+
+    // 5. Nombre del KAI
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '900 64px sans-serif';
+    ctx.fillText(kai.name.toUpperCase(), 540, 1070);
+
+    // 6. Frase de Personalidad (Cita Carismática)
+    if (kai.personalityQuote) {
+      ctx.fillStyle = 'rgba(4, 15, 35, 0.85)';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(120, 1120, 840, 140, 20);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#e2e8f0';
+      ctx.font = 'italic 28px sans-serif';
+      ctx.textAlign = 'center';
+      wrapCanvasText(ctx, `"${kai.personalityQuote}"`, 540, 1175, 780, 40, 2);
+    }
+
+    // 7. Estadísticas del Cazador / Dueño
+    const drawStatPill = (x: number, y: number, w: number, h: number, title: string, val: string, color: string) => {
+      ctx.fillStyle = 'rgba(5, 12, 28, 0.9)';
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.roundRect(x, y, w, h, 16);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = 'bold 20px monospace';
+      ctx.fillText(title, x + w / 2, y + 42);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 36px sans-serif';
+      ctx.fillText(val, x + w / 2, y + 92);
+    };
+
+    drawStatPill(120, 1310, 260, 120, 'RACHA ACTIVA', `🔥 ${stats.streakDays || 0} DÍAS`, '#f59e0b');
+    drawStatPill(410, 1310, 260, 120, 'NIVEL CAZADOR', `NV. ${stats.level || 1}`, '#10b981');
+    drawStatPill(700, 1310, 260, 120, 'TEMPERAMENTO', (kai.mood || 'ESTOICO').toUpperCase(), accentColor);
+
+    // 8. Datos del Operador
+    const heroName = (stats.username || stats.fullName || 'OPERADOR TÁCTICO').toUpperCase();
+    ctx.fillStyle = '#cbd5e1';
+    ctx.font = '24px monospace';
+    ctx.fillText(`ENTRENADOR / CAZADOR: ${heroName}`, 540, 1500);
+
+    // 9. Pie de Carta & Branding
+    ctx.fillStyle = accentColor;
+    ctx.font = 'bold 28px sans-serif';
+    ctx.fillText('FORJADO EN LA SOLUCIÓN // PWA DE DISCIPLINA & HÁBITOS', 540, 1680);
+
+    ctx.fillStyle = '#64748b';
+    ctx.font = '22px monospace';
+    ctx.fillText(window.location.origin, 540, 1730);
+
+    // Generar Blob PNG
+    const blob: Blob | null = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png', 0.95));
+    if (!blob) return false;
+
+    const safeFileName = `carta-kai-${kai.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}.png`;
+    const file = new File([blob], safeFileName, { type: 'image/png' });
+
+    // Compartir nativo
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({
+          title: `Mi KAI: ${kai.name}`,
+          text: `¡Mira a mi compañero ${kai.name} (${styleLabel}) forjado en La Solución! Racha actual: 🔥 ${stats.streakDays || 0} días.`,
+          files: [file],
+        });
+        return true;
+      } catch (shareErr: any) {
+        if (shareErr.name === 'AbortError') return true;
+        console.warn('[KaiShareCard] navigator.share cancel or error:', shareErr);
+      }
+    }
+
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const url = URL.createObjectURL(blob);
+
+    if (isIOS) {
+      showIOSShareCardModal(url, safeFileName);
+      return true;
+    }
+
+    // Descarga directa
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = safeFileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    return true;
+  } catch (err) {
+    console.warn('[KaiShareCard] Error generando carta:', err);
+    return false;
+  } finally {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    canvas.width = 0;
+    canvas.height = 0;
+  }
+};
+
