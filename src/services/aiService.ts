@@ -9,7 +9,14 @@ import {
   VoiceParseResult,
   parseVoiceTranscriptLocally,
   normalizeCategory,
+  ParsedVoiceFinanceEntry,
+  VoiceFinanceParseResult,
+  parseVoiceFinanceLocally,
+  normalizeFinanceCategory,
+  NightlyReflectionAnalysis,
+  extractTomorrowTasksFromReflection,
 } from '../utils/speechRecognition';
+import { FINANCE_EXPENSE_CATEGORIES, FINANCE_INCOME_CATEGORIES } from '../utils/finance';
 import { detectHabitEnergy, HABIT_ENERGY_DETAILS } from '../utils/habitEnergyDetector';
 
 export function getEffectiveGeminiApiKey(): string | null {
@@ -1697,6 +1704,179 @@ Genera el JSON estructurado.`;
   }
 
   return parseVoiceTranscriptLocally(trimmed);
+}
+
+/**
+ * FASE 3A: Extrae ingresos y gastos desde un dictado natural en español usando Gemini IA,
+ * con fallback instantáneo al parser local offline.
+ */
+export async function parseVoiceFinanceWithAI(params: {
+  transcript: string;
+  kaiName?: string;
+}): Promise<VoiceFinanceParseResult> {
+  const { transcript, kaiName = 'KAI' } = params;
+  const trimmed = (transcript || '').trim();
+  if (!trimmed) return parseVoiceFinanceLocally('');
+
+  const systemInstruction = `Eres ${kaiName}, asistente financiero personal de "La Solución".
+Convierte el dictado del usuario en español en una lista JSON de movimientos financieros (ingresos o gastos).
+
+Devuelve SOLO JSON válido con esta estructura exacta:
+{
+  "kaiReply": "Frase breve (máx 16 palabras) confirmando los movimientos detectados.",
+  "entries": [
+    {
+      "type": "income" | "expense",
+      "amount": 180.5,
+      "description": "Concepto claro y breve",
+      "category": "Una categoría exacta de las listas permitidas"
+    }
+  ]
+}
+
+Categorías válidas de INGRESO ("income"): ${FINANCE_INCOME_CATEGORIES.join(' | ')}
+Categorías válidas de GASTO ("expense"): ${FINANCE_EXPENSE_CATEGORIES.join(' | ')}`;
+
+  try {
+    const raw = await fetchGeminiPrompt(`Dictado financiero:\n"""\n${trimmed}\n"""`, {
+      systemInstruction,
+      jsonMode: true,
+      timeoutMs: 12000,
+    });
+
+    if (raw) {
+      const cleaned = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```$/i, '').trim();
+      const parsed = JSON.parse(cleaned);
+      const rawEntries = Array.isArray(parsed?.entries) ? parsed.entries : [];
+      const nowId = Date.now();
+
+      const entries: ParsedVoiceFinanceEntry[] = rawEntries
+        .filter((e: any) => e && Number(e.amount) > 0)
+        .slice(0, 10)
+        .map((e: any, idx: number): ParsedVoiceFinanceEntry => {
+          const type: 'income' | 'expense' = e.type === 'income' ? 'income' : 'expense';
+          const description = typeof e.description === 'string' && e.description.trim()
+            ? e.description.trim()
+            : (type === 'income' ? 'Ingreso por voz' : 'Gasto por voz');
+          return {
+            id: `vfin-ai-${nowId}-${idx}`,
+            type,
+            amount: Math.round(Number(e.amount) * 100) / 100,
+            description,
+            category: normalizeFinanceCategory(type, e.category, description),
+          };
+        });
+
+      if (entries.length > 0) {
+        return {
+          entries,
+          kaiReply:
+            typeof parsed.kaiReply === 'string' && parsed.kaiReply.trim()
+              ? parsed.kaiReply.trim()
+              : `Separé ${entries.length} ${entries.length === 1 ? 'movimiento' : 'movimientos'} listos para registrar.`,
+          usedRemoteAI: true,
+        };
+      }
+    }
+  } catch (err) {
+    console.warn('[VoiceFinanceAI] Fallback local:', err);
+  }
+
+  return parseVoiceFinanceLocally(trimmed);
+}
+
+/**
+ * FASE 3C: Analiza una reflexión nocturna (dictada o escrita), genera feedback breve
+ * para leer con Voz Viva y extrae posibles tareas pendientes para mañana.
+ */
+export async function analyzeNightlyReflectionWithAI(params: {
+  reflection: string;
+  completionRate: number;
+  completedCount: number;
+  totalCount: number;
+  kaiName?: string;
+}): Promise<NightlyReflectionAnalysis> {
+  const { reflection, completionRate, completedCount, totalCount, kaiName = 'KAI' } = params;
+  const trimmed = (reflection || '').trim();
+  if (!trimmed) {
+    return extractTomorrowTasksFromReflection('', completionRate);
+  }
+
+  const systemInstruction = `Eres ${kaiName}, compañero de cierre nocturno en "La Solución".
+Recibes la reflexión nocturna del usuario y sus estadísticas del día.
+Devuelve SOLO JSON válido con esta forma exacta:
+{
+  "kaiFeedback": "Respuesta empática, cálida y breve en español (máximo 25 palabras) ideal para leerse en voz alta antes de dormir.",
+  "tomorrowTasks": [
+    {
+      "title": "Pendiente concreto para mañana si el usuario lo mencionó en su reflexión",
+      "category": "clientes" | "limpieza" | "entrenamiento" | "comida" | "creativo" | "habito" | "estudio" | "pomodoro" | "trabajo" | "rutina",
+      "timeBlock": "HH:MM - HH:MM" (opcional, solo si mencionó hora)
+    }
+  ]
+}
+Si la reflexión NO menciona pendientes para mañana, devuelve "tomorrowTasks": []. Nunca inventes tareas que el usuario no mencionó.`;
+
+  const prompt = `Resumen de hoy: ${completedCount}/${totalCount} misiones completadas (${completionRate}%).
+Reflexión nocturna del usuario:
+"""
+${trimmed}
+"""`;
+
+  try {
+    const raw = await fetchGeminiPrompt(prompt, {
+      systemInstruction,
+      jsonMode: true,
+      timeoutMs: 12000,
+    });
+
+    if (raw) {
+      const cleaned = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```$/i, '').trim();
+      const parsed = JSON.parse(cleaned);
+      const nowId = Date.now();
+      const rawTasks = Array.isArray(parsed?.tomorrowTasks) ? parsed.tomorrowTasks : [];
+
+      const tomorrowTasks: ParsedVoiceItem[] = rawTasks
+        .filter((t: any) => t && typeof t.title === 'string' && t.title.trim().length >= 3)
+        .slice(0, 5)
+        .map((t: any, idx: number): ParsedVoiceItem => {
+          const title = t.title.trim();
+          const category = normalizeCategory(t.category, title);
+          const timeBlock =
+            typeof t.timeBlock === 'string' && /^\d{2}:\d{2}(\s*-\s*\d{2}:\d{2})?$/.test(t.timeBlock.trim())
+              ? t.timeBlock.trim()
+              : undefined;
+          return {
+            id: `nightly-ai-${nowId}-${idx}`,
+            kind: 'task',
+            title,
+            category,
+            timeBlock,
+            targetDateOffset: 1,
+            frequency: 'once',
+            priority: 'media',
+            xpReward: 25,
+            coinReward: 10,
+            quickIcon: '🌅',
+          };
+        });
+
+      const kaiFeedback =
+        typeof parsed?.kaiFeedback === 'string' && parsed.kaiFeedback.trim()
+          ? parsed.kaiFeedback.trim()
+          : extractTomorrowTasksFromReflection(trimmed, completionRate).kaiFeedback;
+
+      return {
+        kaiFeedback,
+        tomorrowTasks,
+        usedRemoteAI: true,
+      };
+    }
+  } catch (err) {
+    console.warn('[NightlyReflectionAI] Fallback local:', err);
+  }
+
+  return extractTomorrowTasksFromReflection(trimmed, completionRate);
 }
 
 

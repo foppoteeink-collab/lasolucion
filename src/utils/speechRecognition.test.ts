@@ -1,6 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseVoiceTranscriptLocally } from './speechRecognition';
+import {
+  parseVoiceTranscriptLocally,
+  parseVoiceFinanceLocally,
+  detectVoiceFocusIntent,
+  extractTomorrowTasksFromReflection,
+} from './speechRecognition';
 
 test('parseVoiceTranscriptLocally splits multi-intent Spanish dictation into tasks and habits', () => {
   const result = parseVoiceTranscriptLocally(
@@ -67,4 +72,47 @@ test('parseVoiceTranscriptLocally returns empty items safely on blank transcript
   const result = parseVoiceTranscriptLocally('   ');
   assert.equal(result.items.length, 0);
   assert.ok(result.kaiReply.length > 0);
+});
+
+test('parseVoiceFinanceLocally extracts mixed income and expense entries with categories', () => {
+  const result = parseVoiceFinanceLocally(
+    'Gasté 180 en comida y recibí 1,500 de un cliente, también pagué 450 de gasolina'
+  );
+
+  assert.equal(result.entries.length, 3);
+  const [food, client, gas] = result.entries;
+
+  assert.equal(food.type, 'expense');
+  assert.equal(food.amount, 180);
+  assert.equal(food.category, 'Alimentación / Comida');
+
+  assert.equal(client.type, 'income');
+  assert.equal(client.amount, 1500);
+  assert.equal(client.category, 'Trabajo / Clientes');
+
+  assert.equal(gas.type, 'expense');
+  assert.equal(gas.amount, 450);
+  assert.equal(gas.category, 'Operaciones / Transporte');
+});
+
+test('detectVoiceFocusIntent parses Pomodoro duration, title, and category', () => {
+  const intent = detectVoiceFocusIntent('Pon un foco de 30 minutos para diseñar el logo del cliente');
+  assert.ok(intent);
+  assert.equal(intent.durationMinutes, 30);
+  assert.equal(intent.title, 'Diseñar el logo del cliente');
+  assert.equal(intent.category, 'clientes');
+
+  const noIntent = detectVoiceFocusIntent('Comprar pan y leche hoy');
+  assert.equal(noIntent, null);
+});
+
+test('extractTomorrowTasksFromReflection pulls tomorrow action items and gives warm feedback', () => {
+  const res = extractTomorrowTasksFromReflection(
+    'Hoy avancé súper bien con el proyecto. Mañana a las 9 tengo que llamar al contador y no olvidar enviar la propuesta.',
+    85
+  );
+
+  assert.ok(res.kaiFeedback.includes('85%'));
+  assert.ok(res.tomorrowTasks.length >= 1);
+  assert.equal(res.tomorrowTasks[0].targetDateOffset, 1);
 });

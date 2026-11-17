@@ -38,6 +38,7 @@ import { useTaskStore } from '../store/useTaskStore';
 import { getTodayDateString } from '../utils/date';
 import { QuantumSoundscapeConsole } from './QuantumSoundscapeConsole';
 import { quantumSoundscape, SoundscapeState } from '../utils/quantumSoundscape';
+import { speakKaiDialogue, stopKaiDialogue } from '../utils/voice';
 
 interface PomodoroTimerProps {
   initialTaskTitle?: string;
@@ -78,7 +79,10 @@ export const PomodoroTimer: React.FC<PomodoroTimerProps> = React.memo(({
   } = useTimer();
 
   const stats = usePlayerStore(state => state.stats);
-  const todayTasks = useTaskStore(state => state.tasksByDate[getTodayDateString()] ?? EMPTY_TASK_LIST);
+  const soundEnabled = useUIStore(state => state.soundEnabled);
+  const todayStr = getTodayDateString();
+  const todayTasks = useTaskStore(state => state.tasksByDate[todayStr] ?? EMPTY_TASK_LIST);
+  const toggleTaskCompletion = useTaskStore(state => state.toggleTaskCompletion);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isTaskDropdownOpen, setIsTaskDropdownOpen] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
@@ -88,8 +92,53 @@ export const PomodoroTimer: React.FC<PomodoroTimerProps> = React.memo(({
   const [showSoundscape, setShowSoundscape] = useState(false);
   const [entropyWarning, setEntropyWarning] = useState<string | null>(null);
   const [lastToggledInfo, setLastToggledInfo] = useState<string | null>(null);
+  const [isVoiceCoachEnabled, setIsVoiceCoachEnabled] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('lasolucion_pomodoro_voice_coach');
+      return saved === null ? true : saved === 'true';
+    } catch {
+      return true;
+    }
+  });
+  const [showCompletionPrompt, setShowCompletionPrompt] = useState(false);
+  const prevPomodorosRef = React.useRef(completedPomodorosToday);
 
   const pendingTasks = useMemo(() => todayTasks.filter((t: any) => !t.completed), [todayTasks]);
+
+  const matchedPendingTask = useMemo(() => {
+    const clean = (taskTitle || '').trim().toLowerCase();
+    if (!clean) return null;
+    return pendingTasks.find((t: any) => (t.title || '').trim().toLowerCase() === clean) || null;
+  }, [pendingTasks, taskTitle]);
+
+  const toggleVoiceCoach = () => {
+    soundFX.playClick();
+    const next = !isVoiceCoachEnabled;
+    setIsVoiceCoachEnabled(next);
+    try {
+      localStorage.setItem('lasolucion_pomodoro_voice_coach', String(next));
+    } catch {}
+    if (!next) {
+      stopKaiDialogue();
+    } else if (soundEnabled) {
+      speakKaiDialogue('Coach vocal activado. Te acompaño en tu enfoque.', stats?.kaiCustomForm?.mood || 'determined');
+    }
+  };
+
+  // Detectar finalización de bloque Pomodoro para felicitar con Voz Viva y ofrecer marcar la tarea completada
+  useEffect(() => {
+    if (completedPomodorosToday > prevPomodorosRef.current) {
+      setShowCompletionPrompt(true);
+      if (isVoiceCoachEnabled && soundEnabled) {
+        const cleanGoal = taskTitle?.trim() || 'tu bloque de enfoque';
+        speakKaiDialogue(
+          `¡Bloque completado! Gran concentración en ${cleanGoal}. Respira un momento.`,
+          stats?.kaiCustomForm?.mood || 'cheerful'
+        );
+      }
+    }
+    prevPomodorosRef.current = completedPomodorosToday;
+  }, [completedPomodorosToday, isVoiceCoachEnabled, soundEnabled, taskTitle, stats?.kaiCustomForm?.mood]);
 
   const handleSafeResetClick = () => {
     soundFX.playClick();
@@ -119,11 +168,29 @@ export const PomodoroTimer: React.FC<PomodoroTimerProps> = React.memo(({
   }, [todayTasks]);
 
   const handleTogglePlay = () => {
-    if (!isRunning && mode === 'work' && systemEntropy >= 100) {
-      soundFX.playClick();
-      triggerHaptic([30, 40]);
-      setEntropyWarning('⚡ MODO RESCATE: Ciclo iniciado para romper la inercia.');
-      setTimeout(() => setEntropyWarning(null), 6000);
+    if (!isRunning) {
+      setShowCompletionPrompt(false);
+      if (mode === 'work' && systemEntropy >= 100) {
+        soundFX.playClick();
+        triggerHaptic([30, 40]);
+        setEntropyWarning('⚡ MODO RESCATE: Ciclo iniciado para romper la inercia.');
+        setTimeout(() => setEntropyWarning(null), 6000);
+      } else {
+        setEntropyWarning(null);
+      }
+
+      if (isVoiceCoachEnabled && soundEnabled) {
+        const mood = stats?.kaiCustomForm?.mood || 'determined';
+        if (mode === 'work') {
+          const goal = taskTitle?.trim();
+          const phrase = goal
+            ? `Enfoque activado en ${goal}. Cero distracciones, vamos con todo.`
+            : 'Sesión de enfoque iniciada. Un solo objetivo a la vez.';
+          speakKaiDialogue(phrase, mood);
+        } else {
+          speakKaiDialogue('Tiempo de descanso. Suelta la pantalla, estira los hombros y respira profundo.', 'zen');
+        }
+      }
     } else {
       setEntropyWarning(null);
     }
@@ -429,15 +496,32 @@ export const PomodoroTimer: React.FC<PomodoroTimerProps> = React.memo(({
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={handleClosePomodoro}
-          className="p-1.5 rounded-xl bg-black/40 text-slate-400 hover:text-white border border-white/10 hover:border-cyan-400/50 transition cursor-pointer shrink-0"
-          title="Minimizar panel"
-          aria-label="Cerrar panel de Pomodoro"
-        >
-          <X className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <button
+            type="button"
+            onClick={toggleVoiceCoach}
+            aria-pressed={isVoiceCoachEnabled}
+            className={`px-2 py-1.5 rounded-xl border text-[10px] font-mono font-bold flex items-center gap-1 transition cursor-pointer ${
+              isVoiceCoachEnabled
+                ? 'bg-cyan-500/20 border-cyan-400/60 text-cyan-200 shadow-[0_0_8px_rgba(0,240,255,0.2)]'
+                : 'bg-black/40 border-white/10 text-slate-400 hover:text-white'
+            }`}
+            title={isVoiceCoachEnabled ? 'Coach Vocal KAI activo (toca para silenciar)' : 'Activar Coach Vocal de KAI'}
+          >
+            {isVoiceCoachEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
+            <span className="hidden sm:inline">Voz KAI</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleClosePomodoro}
+            className="p-1.5 rounded-xl bg-black/40 text-slate-400 hover:text-white border border-white/10 hover:border-cyan-400/50 transition cursor-pointer shrink-0"
+            title="Minimizar panel"
+            aria-label="Cerrar panel de Pomodoro"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       {/* ROW 2: Clock + Primary Controls */}
@@ -496,6 +580,40 @@ export const PomodoroTimer: React.FC<PomodoroTimerProps> = React.memo(({
             </div>
           </div>
         </div>
+
+        {/* Banner Post-Sesión: Marcar tarea completada al vuelo */}
+        {showCompletionPrompt && matchedPendingTask && (
+          <div className="w-full bg-emerald-950/75 border border-emerald-400/60 rounded-xl p-2.5 text-xs text-emerald-100 flex flex-wrap items-center justify-between gap-2 shadow-[0_0_15px_rgba(16,185,129,0.25)]">
+            <span className="font-medium truncate">
+              🎯 ¿Terminaste <strong>“{matchedPendingTask.title}”</strong>?
+            </span>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  soundFX.playLevelUp();
+                  triggerHaptic([20, 35]);
+                  toggleTaskCompletion(todayStr, matchedPendingTask.id);
+                  setShowCompletionPrompt(false);
+                  if (isVoiceCoachEnabled && soundEnabled) {
+                    speakKaiDialogue('¡Misión marcada como completada! Excelente trabajo.', stats?.kaiCustomForm?.mood || 'cheerful');
+                  }
+                }}
+                className="px-2.5 py-1 rounded-lg bg-emerald-400 hover:bg-emerald-300 text-black font-anton uppercase tracking-wider text-[11px] flex items-center gap-1 cursor-pointer active:scale-95"
+              >
+                <Check className="w-3.5 h-3.5 stroke-[3]" />
+                <span>Completar tarea</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowCompletionPrompt(false)}
+                className="px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-slate-200 text-[11px] cursor-pointer"
+              >
+                Aún no
+              </button>
+            </div>
+          </div>
+        )}
 
         {entropyWarning && (
           <div className="w-full bg-rose-950/90 border border-rose-500/80 rounded-xl p-2 text-xs text-rose-200">

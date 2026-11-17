@@ -1,18 +1,30 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
+import { Mic, MicOff, Volume2, Sparkles, Plus, Check } from 'lucide-react';
 import { Icon } from './common/Icon';
 import { triggerShockwave } from '../utils/celebration';
 import { soundFX } from '../utils/audio';
-import { getTodayDateString, formatDateFullSpanish } from '../utils/date';
+import { getTodayDateString, formatDateFullSpanish, addDaysToDateString } from '../utils/date';
 import { DAILY_REWARDS } from '../data/defaults';
 import { PlayerStats, TaskItem, PomodoroSession } from '../types';
 import { getArchetypeByName, getCompanionEvolution } from '../data/archetypes';
 import { HoloCompanion } from './HoloCompanion';
 import { usePlayerStore } from '../store/usePlayerStore';
+import { useTaskStore } from '../store/useTaskStore';
+import { useUIStore } from '../store/useUIStore';
 import { evaluateOverchargeContract } from '../utils/level3Systems';
 import { generateAndShareLegacyCard } from '../utils/shareCardGenerator';
 import { getKaiPhrase } from '../data/kaiVoiceMatrix';
 import { useNarrativeCopy } from '../hooks/useNarrativeCopy';
+import {
+  createVoiceRecognizer,
+  isSpeechRecognitionSupported,
+  NightlyReflectionAnalysis,
+  ParsedVoiceItem,
+  VoiceRecognizerController,
+} from '../utils/speechRecognition';
+import { analyzeNightlyReflectionWithAI } from '../services/aiService';
+import { speakKaiDialogue, stopKaiDialogue } from '../utils/voice';
 
 interface NightlyTunnelProps {
   isOpen: boolean;
@@ -37,19 +49,52 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
 }) => {
   const [reflectionText, setReflectionText] = useState('');
   const [isConsolidating, setIsConsolidating] = useState(false);
+  const [isDictating, setIsDictating] = useState(false);
+  const [isAnalyzingReflection, setIsAnalyzingReflection] = useState(false);
+  const [nightlyAnalysis, setNightlyAnalysis] = useState<NightlyReflectionAnalysis | null>(null);
+  const [scheduledTomorrowIds, setScheduledTomorrowIds] = useState<Record<string, boolean>>({});
+  const [dictationError, setDictationError] = useState<string | null>(null);
+  const [isSpeakingFeedback, setIsSpeakingFeedback] = useState(false);
+
+  const recognizerRef = useRef<VoiceRecognizerController | null>(null);
+  const reflectionRef = useRef('');
+  const soundEnabled = useUIStore((s) => s.soundEnabled);
   const copy = useNarrativeCopy();
 
   const now = new Date();
   const currentLocalTime = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
   const [customBedtime, setCustomBedtime] = useState(currentLocalTime);
 
+  useEffect(() => {
+    reflectionRef.current = reflectionText;
+  }, [reflectionText]);
+
   // Reset state whenever modal opens
   useEffect(() => {
     if (isOpen) {
       setReflectionText('');
+      reflectionRef.current = '';
       setIsConsolidating(false);
+      setIsDictating(false);
+      setIsAnalyzingReflection(false);
+      setNightlyAnalysis(null);
+      setScheduledTomorrowIds({});
+      setDictationError(null);
       setCustomBedtime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }));
+    } else {
+      if (recognizerRef.current) {
+        recognizerRef.current.abort();
+        recognizerRef.current = null;
+      }
+      stopKaiDialogue();
     }
+    return () => {
+      if (recognizerRef.current) {
+        recognizerRef.current.abort();
+        recognizerRef.current = null;
+      }
+      stopKaiDialogue();
+    };
   }, [isOpen]);
 
   useEffect(() => {
@@ -379,12 +424,120 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
           )}
 
           {/* Journal / Reflection Note */}
-          <div>
-            <div className="flex items-center justify-between gap-2 mb-1.5 flex-wrap">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
               <label className="text-[11px] font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1.5">
                 <Icon name="bookOpen" className="w-3 h-3 text-indigo-400" /> Mi Bitácora del Día (Reflexión)
               </label>
               <div className="flex items-center gap-1.5">
+                {isSpeechRecognitionSupported() && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDictationError(null);
+                      if (isDictating) {
+                        soundFX.playClick();
+                        recognizerRef.current?.stop();
+                        recognizerRef.current = null;
+                        setIsDictating(false);
+                        setTimeout(async () => {
+                          const txt = reflectionRef.current.trim();
+                          if (txt.length >= 10) {
+                            setIsAnalyzingReflection(true);
+                            try {
+                              const res = await analyzeNightlyReflectionWithAI({
+                                reflection: txt,
+                                completionRate,
+                                completedCount: completedToday.length,
+                                totalCount: totalTasks,
+                                kaiName: stats.kaiCustomForm?.name || 'KAI',
+                              });
+                              setNightlyAnalysis(res);
+                              if (soundEnabled && res.kaiFeedback) {
+                                setIsSpeakingFeedback(true);
+                                speakKaiDialogue(res.kaiFeedback, stats.kaiCustomForm?.mood || 'zen', () => setIsSpeakingFeedback(false));
+                              }
+                            } finally {
+                              setIsAnalyzingReflection(false);
+                            }
+                          }
+                        }, 300);
+                        return;
+                      }
+                      soundFX.playClick();
+                      stopKaiDialogue();
+                      const basePrefix = reflectionRef.current.trim();
+                      const rec = createVoiceRecognizer({
+                        onInterim: (live) => {
+                          const next = basePrefix ? `${basePrefix} ${live}` : live;
+                          setReflectionText(next);
+                          reflectionRef.current = next;
+                        },
+                        onFinal: (fin) => {
+                          const next = basePrefix ? `${basePrefix} ${fin}` : fin;
+                          setReflectionText(next);
+                          reflectionRef.current = next;
+                        },
+                        onError: (msg) => {
+                          setDictationError(msg);
+                          setIsDictating(false);
+                          recognizerRef.current = null;
+                        },
+                        onEnd: () => {
+                          setIsDictating(false);
+                          recognizerRef.current = null;
+                        },
+                      });
+                      if (rec) {
+                        recognizerRef.current = rec;
+                        setIsDictating(true);
+                        rec.start();
+                      }
+                    }}
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold border flex items-center gap-1 transition-all cursor-pointer active:scale-95 ${
+                      isDictating
+                        ? 'bg-rose-500/25 border-rose-400 text-rose-200 animate-pulse'
+                        : 'bg-fuchsia-950/60 hover:bg-fuchsia-900/70 border-fuchsia-400/50 text-fuchsia-200'
+                    }`}
+                    title={isDictating ? 'Detener dictado y analizar con KAI' : 'Dictar tu reflexión nocturna por voz'}
+                  >
+                    {isDictating ? <MicOff className="w-3 h-3" /> : <Mic className="w-3 h-3" />}
+                    <span>{isDictating ? 'Detener' : 'Dictar'}</span>
+                  </button>
+                )}
+
+                {!isDictating && reflectionText.trim().length >= 12 && (
+                  <button
+                    type="button"
+                    disabled={isAnalyzingReflection}
+                    onClick={async () => {
+                      soundFX.playClick();
+                      setIsAnalyzingReflection(true);
+                      try {
+                        const res = await analyzeNightlyReflectionWithAI({
+                          reflection: reflectionText.trim(),
+                          completionRate,
+                          completedCount: completedToday.length,
+                          totalCount: totalTasks,
+                          kaiName: stats.kaiCustomForm?.name || 'KAI',
+                        });
+                        setNightlyAnalysis(res);
+                        if (soundEnabled && res.kaiFeedback) {
+                          setIsSpeakingFeedback(true);
+                          speakKaiDialogue(res.kaiFeedback, stats.kaiCustomForm?.mood || 'zen', () => setIsSpeakingFeedback(false));
+                        }
+                      } finally {
+                        setIsAnalyzingReflection(false);
+                      }
+                    }}
+                    className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-cyan-950/70 hover:bg-cyan-900/80 border border-cyan-400/50 text-cyan-200 flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                    title="Pedir a KAI un resumen y extraer pendientes para mañana"
+                  >
+                    <Sparkles className={`w-3 h-3 ${isAnalyzingReflection ? 'animate-spin' : ''}`} />
+                    <span>{isAnalyzingReflection ? 'Analizando...' : 'Analizar'}</span>
+                  </button>
+                )}
+
                 <span className={`text-[10px] font-mono ${
                   hasValidReflection ? 'text-emerald-400 font-bold' : 'text-slate-400'
                 }`}>
@@ -403,9 +556,96 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
               value={reflectionText}
               onChange={e => setReflectionText(e.target.value)}
               aria-label="Reflexión de la jornada diaria"
-              placeholder="¿Qué lograste hoy o qué aprendiste para mañana?..."
-              className="w-full bg-[#000a14] border border-cyan-900/70 rounded-xl p-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 resize-none h-14"
+              placeholder='¿Qué lograste hoy o qué quieres dejar listo para mañana? (También puedes pulsar "Dictar")...'
+              className="w-full bg-[#000a14] border border-cyan-900/70 rounded-xl p-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 resize-none h-16"
             />
+            {dictationError && (
+              <p className="text-[11px] text-rose-300 font-mono">{dictationError}</p>
+            )}
+
+            {/* Devolución de KAI + Pendientes detectados para mañana */}
+            {nightlyAnalysis && (
+              <div className="p-2.5 rounded-xl bg-cyan-950/35 border border-cyan-400/35 space-y-2">
+                <div className="flex items-start gap-2">
+                  <Sparkles className="w-3.5 h-3.5 text-cyan-300 shrink-0 mt-0.5" />
+                  <p className="text-[11.5px] text-cyan-100 flex-1 leading-snug">
+                    “{nightlyAnalysis.kaiFeedback}”
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFX.playClick();
+                      setIsSpeakingFeedback(true);
+                      speakKaiDialogue(nightlyAnalysis.kaiFeedback, stats.kaiCustomForm?.mood || 'zen', () => setIsSpeakingFeedback(false));
+                    }}
+                    className="p-1 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/30 text-cyan-300 cursor-pointer shrink-0"
+                    title="Escuchar a KAI"
+                  >
+                    <Volume2 className={`w-3.5 h-3.5 ${isSpeakingFeedback ? 'animate-bounce text-white' : ''}`} />
+                  </button>
+                </div>
+
+                {nightlyAnalysis.tomorrowTasks.length > 0 && (
+                  <div className="pt-1.5 border-t border-cyan-500/20 space-y-1.5">
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-amber-300 block">
+                      🌅 Pendientes detectados para mañana:
+                    </span>
+                    <div className="space-y-1">
+                      {nightlyAnalysis.tomorrowTasks.map((t: ParsedVoiceItem) => {
+                        const isScheduled = Boolean(scheduledTomorrowIds[t.id]);
+                        return (
+                          <div
+                            key={t.id}
+                            className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg bg-black/45 border border-white/10"
+                          >
+                            <div className="min-w-0 flex-1">
+                              <span className="text-xs text-white font-medium truncate block">
+                                {t.title}
+                              </span>
+                              {t.timeBlock && (
+                                <span className="text-[10px] font-mono text-sky-300">{t.timeBlock}</span>
+                              )}
+                            </div>
+                            <button
+                              type="button"
+                              disabled={isScheduled}
+                              onClick={() => {
+                                soundFX.playClick();
+                                const tomorrowDate = addDaysToDateString(todayStr, 1);
+                                const taskStore = useTaskStore.getState();
+                                taskStore.ensureTasksForDate(tomorrowDate);
+                                taskStore.addTask(tomorrowDate, {
+                                  id: `nightly-plan-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+                                  title: t.title,
+                                  category: t.category,
+                                  priority: t.priority,
+                                  xpReward: t.xpReward,
+                                  coinReward: t.coinReward,
+                                  completed: false,
+                                  timeBlock: t.timeBlock,
+                                  reminderTime: t.timeBlock ? t.timeBlock.split('-')[0].trim() : undefined,
+                                  isCustom: true,
+                                  quickIcon: '🌅',
+                                });
+                                setScheduledTomorrowIds((prev) => ({ ...prev, [t.id]: true }));
+                              }}
+                              className={`px-2 py-1 rounded-lg text-[10px] font-mono font-bold flex items-center gap-1 shrink-0 transition-all cursor-pointer ${
+                                isScheduled
+                                  ? 'bg-emerald-500/25 border border-emerald-400/50 text-emerald-200 cursor-default'
+                                  : 'bg-amber-400/20 hover:bg-amber-400/35 border border-amber-400/50 text-amber-200'
+                              }`}
+                            >
+                              {isScheduled ? <Check className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
+                              <span>{isScheduled ? 'Agendada' : 'Agendar mañana'}</span>
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

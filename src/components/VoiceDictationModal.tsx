@@ -15,24 +15,32 @@ import {
   Volume2,
   RotateCcw,
   Wand2,
+  Wallet,
+  Play,
 } from 'lucide-react';
 import { HoloCompanion } from './HoloCompanion';
 import { useUIStore } from '../store/useUIStore';
 import { usePlayerStore } from '../store/usePlayerStore';
 import { useTaskStore } from '../store/useTaskStore';
-import { CustomHabit, TaskItem } from '../types';
+import { useAppStore } from '../store/useAppStore';
+import { useTimer } from '../context/TimerContext';
+import { CustomHabit, FinancialTransaction, TaskItem } from '../types';
 import {
   createVoiceRecognizer,
+  detectVoiceFocusIntent,
   isSpeechRecognitionSupported,
+  ParsedVoiceFinanceEntry,
+  ParsedVoiceFocusIntent,
   ParsedVoiceItem,
   VoiceRecognizerController,
 } from '../utils/speechRecognition';
-import { parseVoiceTranscriptToItems } from '../services/aiService';
+import { parseVoiceFinanceWithAI, parseVoiceTranscriptToItems } from '../services/aiService';
 import { speakKaiDialogue, stopKaiDialogue } from '../utils/voice';
 import { soundFX } from '../utils/audio';
 import { triggerHaptic } from '../utils/haptics';
 import { addDaysToDateString, formatDateForDisplay, parseLocalDate } from '../utils/date';
 import { detectHabitEnergy, HABIT_ENERGY_DETAILS } from '../utils/habitEnergyDetector';
+import { formatMoney, getSavedCurrencySymbol } from '../utils/finance';
 
 interface VoiceDictationModalProps {
   isOpen: boolean;
@@ -41,8 +49,8 @@ interface VoiceDictationModalProps {
 
 const EXAMPLE_PROMPTS = [
   'A las 7 entrenar pierna, a las 10 junta con el cliente y tomar 8 vasos de agua todos los días',
-  'Mañana a las 9 entregar reporte urgente, a las 4 ordenar mi escritorio y leer 20 minutos diario',
-  'Crear el hábito de meditar 10 minutos cada día y hoy a las 6 salir a correr',
+  'Gasté 180 en comida y recibí 1500 de un cliente',
+  'Pon un foco de 25 minutos para diseñar la presentación',
 ];
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -68,6 +76,8 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({ isOpen
   const setCustomHabits = useTaskStore((s) => s.setCustomHabits);
   const addTask = useTaskStore((s) => s.addTask);
   const ensureTasksForDate = useTaskStore((s) => s.ensureTasksForDate);
+  const setExpenses = useAppStore((s) => s.setExpenses);
+  const { handleOpenPomodoroForTask } = useTimer();
 
   const kaiName = stats?.kaiCustomForm?.name || 'KAI';
   const kaiMood = stats?.kaiCustomForm?.mood || 'stoic';
@@ -78,10 +88,13 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({ isOpen
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [parsedItems, setParsedItems] = useState<ParsedVoiceItem[]>([]);
+  const [detectedFocus, setDetectedFocus] = useState<ParsedVoiceFocusIntent | null>(null);
+  const [detectedFinance, setDetectedFinance] = useState<ParsedVoiceFinanceEntry[]>([]);
   const [kaiReply, setKaiReply] = useState<string | null>(null);
   const [usedRemoteAI, setUsedRemoteAI] = useState<boolean>(false);
   const [isSpeakingReply, setIsSpeakingReply] = useState(false);
   const [injectedSuccess, setInjectedSuccess] = useState<string | null>(null);
+  const currencySymbol = getSavedCurrencySymbol();
 
   const speechSupported = isSpeechRecognitionSupported();
   const recognizerRef = useRef<VoiceRecognizerController | null>(null);
@@ -115,6 +128,8 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({ isOpen
     setTranscript('');
     transcriptRef.current = '';
     setParsedItems([]);
+    setDetectedFocus(null);
+    setDetectedFinance([]);
     setKaiReply(null);
     setErrorMsg(null);
     setInjectedSuccess(null);
@@ -149,10 +164,49 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({ isOpen
     }
 
     setErrorMsg(null);
+    setDetectedFocus(null);
+    setDetectedFinance([]);
+    setParsedItems([]);
     setIsAnalyzing(true);
     soundFX.playClick();
 
     try {
+      // 1. Verificar intención directa de Pomodoro / Foco
+      const focusIntent = detectVoiceFocusIntent(text);
+      if (focusIntent) {
+        setDetectedFocus(focusIntent);
+        const focusReply = `Listo para enfocar ${focusIntent.durationMinutes} minutos en "${focusIntent.title}".`;
+        setKaiReply(focusReply);
+        setUsedRemoteAI(false);
+        triggerHaptic(20);
+        if (soundEnabled) {
+          setIsSpeakingReply(true);
+          speakKaiDialogue(focusReply, kaiMood, () => setIsSpeakingReply(false));
+        }
+        return;
+      }
+
+      // 2. Verificar si es un dictado financiero claro (verbo financiero + monto numérico)
+      const looksFinancial =
+        /(?:^|[\s,.;:])(?:gast[eé]|pagu[eé]|compr[eé]|cost[oó]|recib[ií]|cobr[eé]|gan[eé]|ingres[eé]|vend[ií]|me\s+pagaron|n[oó]mina|salario)(?=$|[\s,.;:])/i.test(text) &&
+        /\d/.test(text);
+
+      if (looksFinancial) {
+        const finRes = await parseVoiceFinanceWithAI({ transcript: text, kaiName });
+        if (finRes.entries.length > 0) {
+          setDetectedFinance(finRes.entries);
+          setKaiReply(finRes.kaiReply);
+          setUsedRemoteAI(finRes.usedRemoteAI);
+          triggerHaptic(20);
+          if (soundEnabled && finRes.kaiReply) {
+            setIsSpeakingReply(true);
+            speakKaiDialogue(finRes.kaiReply, kaiMood, () => setIsSpeakingReply(false));
+          }
+          return;
+        }
+      }
+
+      // 3. Flujo principal: Tareas y Hábitos 21/66
       const result = await parseVoiceTranscriptToItems({
         transcript: text,
         currentDateLabel: formatDateForDisplay(currentViewDate),
@@ -644,6 +698,105 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({ isOpen
             {errorMsg && (
               <div className="p-3 rounded-xl bg-rose-950/60 border border-rose-500/40 text-rose-200 text-xs leading-relaxed">
                 {errorMsg}
+              </div>
+            )}
+
+            {/* Comando de Foco / Pomodoro Detectado */}
+            {detectedFocus && (
+              <div className="p-3.5 rounded-2xl bg-gradient-to-br from-cyan-950/60 to-indigo-950/50 border border-cyan-400/50 space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-8 h-8 rounded-xl bg-cyan-500/20 border border-cyan-400/50 flex items-center justify-center text-cyan-300 shrink-0">
+                      <Clock className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[10px] font-mono uppercase tracking-wider text-cyan-300 block">
+                        ⏱️ Comando de Enfoque ({detectedFocus.durationMinutes} min)
+                      </span>
+                      <p className="text-sm font-bold text-white truncate">{detectedFocus.title}</p>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFX.playClick();
+                    triggerHaptic([20, 30]);
+                    handleOpenPomodoroForTask(detectedFocus.title, detectedFocus.category);
+                    onClose();
+                  }}
+                  className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-cyan-400 to-sky-400 hover:brightness-110 text-[#020617] font-anton uppercase tracking-wider text-xs flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(0,240,255,0.4)] cursor-pointer active:scale-[0.98]"
+                >
+                  <Play className="w-3.5 h-3.5 fill-current" />
+                  <span>Abrir Pomodoro con este objetivo</span>
+                </button>
+              </div>
+            )}
+
+            {/* Movimientos Financieros Detectados desde Dictado Principal */}
+            {detectedFinance.length > 0 && (
+              <div className="p-3.5 rounded-2xl bg-emerald-950/25 border border-emerald-400/45 space-y-2.5">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-emerald-300 flex items-center gap-1.5">
+                    <Wallet className="w-3.5 h-3.5" />
+                    Movimientos Financieros ({detectedFinance.length})
+                  </span>
+                </div>
+                <div className="space-y-1.5">
+                  {detectedFinance.map((entry) => (
+                    <div
+                      key={entry.id}
+                      className={`flex items-center justify-between gap-2 px-3 py-2 rounded-xl border text-xs ${
+                        entry.type === 'income'
+                          ? 'bg-emerald-950/50 border-emerald-500/40'
+                          : 'bg-orange-950/50 border-orange-500/40'
+                      }`}
+                    >
+                      <div className="min-w-0 flex-1">
+                        <span className="font-bold text-white truncate block">{entry.description}</span>
+                        <span className="text-[10px] font-mono text-slate-300">{entry.category}</span>
+                      </div>
+                      <span className={`font-anton text-xs shrink-0 ${entry.type === 'income' ? 'text-emerald-300' : 'text-orange-300'}`}>
+                        {entry.type === 'income' ? '+' : '-'}{formatMoney(entry.amount, currencySymbol)}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setDetectedFinance((prev) => prev.filter((x) => x.id !== entry.id))}
+                        className="text-slate-400 hover:text-rose-300 p-0.5 cursor-pointer"
+                        aria-label="Quitar movimiento"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFX.playCoin();
+                    triggerHaptic([20, 35]);
+                    const nowIso = new Date().toISOString();
+                    const nowTs = Date.now();
+                    const txs: FinancialTransaction[] = detectedFinance.map((entry, idx) => ({
+                      id: `tx-voice-hub-${nowTs}-${idx}-${Math.random().toString(36).substring(2, 6)}`,
+                      date: currentViewDate,
+                      type: entry.type,
+                      description: entry.description,
+                      amount: entry.amount,
+                      category: entry.category,
+                      createdAt: nowIso,
+                    }));
+                    setExpenses((prev) => [...txs, ...prev]);
+                    const msg = `¡Listo! Registré ${txs.length} ${txs.length === 1 ? 'movimiento' : 'movimientos'} en tu tesorería.`;
+                    setInjectedSuccess(msg);
+                    if (soundEnabled) speakKaiDialogue(msg, kaiMood);
+                    setTimeout(() => onClose(), 900);
+                  }}
+                  className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-400 to-cyan-400 hover:brightness-110 text-[#020617] font-anton uppercase tracking-wider text-xs flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(16,185,129,0.4)] cursor-pointer active:scale-[0.98]"
+                >
+                  <Check className="w-4 h-4 stroke-[3]" />
+                  <span>Registrar {detectedFinance.length} {detectedFinance.length === 1 ? 'movimiento' : 'movimientos'} en Finanzas</span>
+                </button>
               </div>
             )}
 

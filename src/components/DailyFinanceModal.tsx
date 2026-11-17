@@ -11,10 +11,15 @@ import {
   Sparkles,
   Eye,
   EyeOff,
-  RotateCcw
+  RotateCcw,
+  Mic,
+  MicOff,
+  Check
 } from 'lucide-react';
 import { TaskItem, FinancialTransaction } from '../types';
 import { useAppStore } from '../store/useAppStore';
+import { useUIStore } from '../store/useUIStore';
+import { usePlayerStore } from '../store/usePlayerStore';
 import { 
   formatMoney, 
   getSavedCurrencySymbol, 
@@ -24,6 +29,14 @@ import {
 } from '../utils/finance';
 import { formatDateForDisplay } from '../utils/date';
 import { soundFX } from '../utils/audio';
+import {
+  createVoiceRecognizer,
+  isSpeechRecognitionSupported,
+  ParsedVoiceFinanceEntry,
+  VoiceRecognizerController,
+} from '../utils/speechRecognition';
+import { parseVoiceFinanceWithAI } from '../services/aiService';
+import { speakKaiDialogue, stopKaiDialogue } from '../utils/voice';
 
 interface DailyFinanceModalProps {
   isOpen: boolean;
@@ -56,7 +69,142 @@ export const DailyFinanceModal: React.FC<DailyFinanceModalProps> = ({
   onOpenStats,
 }) => {
   const { expenses, setExpenses } = useAppStore();
+  const soundEnabled = useUIStore((s) => s.soundEnabled);
+  const kaiMood = usePlayerStore((s) => s.stats?.kaiCustomForm?.mood || 'stoic');
+  const kaiName = usePlayerStore((s) => s.stats?.kaiCustomForm?.name || 'KAI');
   const [currencySymbol, setCurrency] = useState<string>(getSavedCurrencySymbol);
+
+  // Voice Finance State
+  const [showVoicePanel, setShowVoicePanel] = useState(false);
+  const [isVoiceListening, setIsVoiceListening] = useState(false);
+  const [voiceTranscript, setVoiceTranscript] = useState('');
+  const [isVoiceParsing, setIsVoiceParsing] = useState(false);
+  const [voiceEntries, setVoiceEntries] = useState<ParsedVoiceFinanceEntry[]>([]);
+  const [voiceReply, setVoiceReply] = useState<string | null>(null);
+  const [voiceError, setVoiceError] = useState<string | null>(null);
+  const voiceRecRef = useRef<VoiceRecognizerController | null>(null);
+  const voiceTranscriptRef = useRef('');
+
+  useEffect(() => {
+    voiceTranscriptRef.current = voiceTranscript;
+  }, [voiceTranscript]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      voiceRecRef.current?.abort();
+      voiceRecRef.current = null;
+      setIsVoiceListening(false);
+      setShowVoicePanel(false);
+      setVoiceTranscript('');
+      setVoiceEntries([]);
+      setVoiceReply(null);
+      setVoiceError(null);
+    }
+    return () => {
+      voiceRecRef.current?.abort();
+      voiceRecRef.current = null;
+    };
+  }, [isOpen]);
+
+  const runVoiceFinanceParse = async (textOverride?: string) => {
+    const txt = (textOverride ?? voiceTranscriptRef.current).trim();
+    if (!txt) return;
+    setIsVoiceParsing(true);
+    setVoiceError(null);
+    try {
+      const res = await parseVoiceFinanceWithAI({ transcript: txt, kaiName });
+      setVoiceEntries(res.entries);
+      setVoiceReply(res.kaiReply);
+      if (res.entries.length === 0) {
+        setVoiceError('No detecté un monto claro. Ej: "Gasté 180 en comida y recibí 1500 de un cliente".');
+      }
+    } finally {
+      setIsVoiceParsing(false);
+    }
+  };
+
+  const handleToggleFinanceVoice = () => {
+    soundFX.playClick();
+    setVoiceError(null);
+
+    if (isVoiceListening) {
+      voiceRecRef.current?.stop();
+      voiceRecRef.current = null;
+      setIsVoiceListening(false);
+      setTimeout(() => {
+        if (voiceTranscriptRef.current.trim().length >= 3) {
+          void runVoiceFinanceParse(voiceTranscriptRef.current);
+        }
+      }, 280);
+      return;
+    }
+
+    setShowVoicePanel(true);
+    setVoiceEntries([]);
+    setVoiceReply(null);
+
+    if (!isSpeechRecognitionSupported()) {
+      return;
+    }
+
+    stopKaiDialogue();
+    const rec = createVoiceRecognizer({
+      onInterim: (live) => {
+        setVoiceTranscript(live);
+        voiceTranscriptRef.current = live;
+      },
+      onFinal: (fin) => {
+        setVoiceTranscript(fin);
+        voiceTranscriptRef.current = fin;
+      },
+      onError: (msg) => {
+        setVoiceError(msg);
+        setIsVoiceListening(false);
+        voiceRecRef.current = null;
+      },
+      onEnd: () => {
+        setIsVoiceListening(false);
+        voiceRecRef.current = null;
+      },
+    });
+    if (rec) {
+      voiceRecRef.current = rec;
+      setIsVoiceListening(true);
+      rec.start();
+    }
+  };
+
+  const handleSaveVoiceEntries = () => {
+    if (voiceEntries.length === 0) return;
+    soundFX.playCoin();
+    const nowIso = new Date().toISOString();
+    const nowTs = Date.now();
+    const newTxs: FinancialTransaction[] = voiceEntries.map((entry, idx) => ({
+      id: `tx-voice-${nowTs}-${idx}-${Math.random().toString(36).substring(2, 6)}`,
+      date: currentDate,
+      type: entry.type,
+      description: entry.description,
+      amount: entry.amount,
+      category: entry.category,
+      createdAt: nowIso,
+    }));
+
+    setExpenses((prev) => [...newTxs, ...prev]);
+
+    const msg =
+      newTxs.length === 1
+        ? `Movimiento registrado: ${newTxs[0].description}.`
+        : `${newTxs.length} movimientos registrados en tu tesorería.`;
+    if (soundEnabled) {
+      speakKaiDialogue(msg, kaiMood);
+    }
+
+    setVoiceEntries([]);
+    setVoiceTranscript('');
+    voiceTranscriptRef.current = '';
+    setVoiceReply(null);
+    setShowVoicePanel(false);
+  };
   const [isPrivacyMode, setIsPrivacyMode] = useState<boolean>(() => {
     try {
       return localStorage.getItem('taskquest_finance_privacy_mode') === 'true';
@@ -394,10 +542,123 @@ export const DailyFinanceModal: React.FC<DailyFinanceModalProps> = ({
                 </button>
               </div>
 
-              <span className="text-[10px] text-cyan-300 font-mono hidden sm:flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-cyan-400" /> Registro Express
-              </span>
+              <button
+                type="button"
+                onClick={handleToggleFinanceVoice}
+                className={`px-2.5 py-1.5 rounded-xl border text-[11px] font-anton uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer shrink-0 active:scale-95 ${
+                  isVoiceListening
+                    ? 'bg-rose-500/25 border-rose-400 text-rose-200 animate-pulse shadow-[0_0_12px_rgba(244,63,94,0.4)]'
+                    : 'bg-fuchsia-950/60 hover:bg-fuchsia-900/70 border-fuchsia-400/50 text-fuchsia-200 shadow-[0_0_10px_rgba(217,70,239,0.2)]'
+                }`}
+                title='Dictar gastos o ingresos por voz (ej: "Gasté 180 en comida")'
+              >
+                {isVoiceListening ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
+                <span>{isVoiceListening ? 'Detener' : 'Dictar'}</span>
+              </button>
             </div>
+
+            {/* Panel Inline de Finanzas por Voz */}
+            {showVoicePanel && (
+              <div className="p-3 rounded-xl bg-fuchsia-950/20 border border-fuchsia-400/35 space-y-2.5">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[10.5px] font-mono font-bold uppercase tracking-wider text-fuchsia-300 flex items-center gap-1.5">
+                    <Sparkles className={`w-3 h-3 ${isVoiceParsing ? 'animate-spin' : ''}`} />
+                    {isVoiceListening
+                      ? 'Escuchando movimientos... toca Detener al terminar'
+                      : isVoiceParsing
+                        ? 'KAI separando montos y categorías...'
+                        : 'Dictado Financiero Rápido'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      voiceRecRef.current?.stop();
+                      setIsVoiceListening(false);
+                      setShowVoicePanel(false);
+                    }}
+                    className="text-slate-400 hover:text-white text-xs cursor-pointer"
+                    aria-label="Cerrar dictado financiero"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="text"
+                    value={voiceTranscript}
+                    onChange={(e) => {
+                      setVoiceTranscript(e.target.value);
+                      voiceTranscriptRef.current = e.target.value;
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        void runVoiceFinanceParse();
+                      }
+                    }}
+                    placeholder='Ej: "Gasté 180 en comida y recibí 1500 de un cliente"'
+                    className="flex-1 bg-black/60 border border-white/15 focus:border-fuchsia-400/70 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-slate-500 outline-none"
+                  />
+                  {!isVoiceListening && voiceTranscript.trim().length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => void runVoiceFinanceParse()}
+                      disabled={isVoiceParsing}
+                      className="px-2.5 py-1.5 rounded-lg bg-fuchsia-500/25 hover:bg-fuchsia-500/40 border border-fuchsia-400/60 text-fuchsia-100 text-[11px] font-mono font-bold cursor-pointer shrink-0 disabled:opacity-50"
+                    >
+                      Analizar
+                    </button>
+                  )}
+                </div>
+
+                {voiceError && (
+                  <p className="text-[11px] text-rose-300 font-mono">{voiceError}</p>
+                )}
+
+                {voiceReply && voiceEntries.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-[11px] text-cyan-200 italic">“{voiceReply}”</p>
+                    <div className="space-y-1.5">
+                      {voiceEntries.map((entry) => (
+                        <div
+                          key={entry.id}
+                          className={`flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg border text-xs ${
+                            entry.type === 'income'
+                              ? 'bg-emerald-950/40 border-emerald-500/40'
+                              : 'bg-orange-950/40 border-orange-500/40'
+                          }`}
+                        >
+                          <div className="min-w-0 flex-1">
+                            <span className="font-bold text-white truncate block">{entry.description}</span>
+                            <span className="text-[10px] font-mono text-slate-300">{entry.category}</span>
+                          </div>
+                          <span className={`font-anton text-xs shrink-0 ${entry.type === 'income' ? 'text-emerald-300' : 'text-orange-300'}`}>
+                            {entry.type === 'income' ? '+' : '-'}{formatMoney(entry.amount, currencySymbol)}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setVoiceEntries((prev) => prev.filter((x) => x.id !== entry.id))}
+                            className="text-slate-400 hover:text-rose-300 p-0.5 cursor-pointer"
+                            aria-label="Quitar movimiento"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleSaveVoiceEntries}
+                      className="w-full py-2 rounded-xl bg-gradient-to-r from-emerald-400 to-cyan-400 text-black font-anton uppercase tracking-wider text-xs flex items-center justify-center gap-1.5 shadow-[0_0_15px_rgba(16,185,129,0.4)] cursor-pointer active:scale-[0.98]"
+                    >
+                      <Check className="w-3.5 h-3.5 stroke-[3]" />
+                      <span>Registrar {voiceEntries.length} {voiceEntries.length === 1 ? 'movimiento' : 'movimientos'}</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Quick Concept Presets Row */}
             <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 custom-scrollbar text-[10px] font-mono">

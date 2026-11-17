@@ -20,10 +20,19 @@ import {
   Bookmark,
   MessageSquarePlus,
   Brain,
-  FileDown
+  FileDown,
+  Mic,
+  MicOff,
+  Volume2
 } from 'lucide-react';
 import { TaskItem, TaskCategory, PlayerStats, RecallItem } from '../types';
 import { soundFX } from '../utils/audio';
+import {
+  createVoiceRecognizer,
+  isSpeechRecognitionSupported,
+  VoiceRecognizerController,
+} from '../utils/speechRecognition';
+import { speakKaiDialogue, stopKaiDialogue } from '../utils/voice';
 import { getTodayDateString, addDaysToDateString } from '../utils/date';
 import { loadSavedStats, safeGetItem, safeSetItem } from '../utils/storage';
 import { 
@@ -107,6 +116,64 @@ export const JournalView: React.FC<JournalViewProps> = ({
   const [editText, setEditText] = useState('');
   const [editingReflectionDate, setEditingReflectionDate] = useState<string | null>(null);
   const [reflectionText, setReflectionText] = useState('');
+  const [dictatingTarget, setDictatingTarget] = useState<'reflection' | 'note' | null>(null);
+  const [speakingDate, setSpeakingDate] = useState<string | null>(null);
+  const voiceRecRef = React.useRef<VoiceRecognizerController | null>(null);
+
+  const stopJournalDictation = React.useCallback(() => {
+    if (voiceRecRef.current) {
+      voiceRecRef.current.stop();
+      voiceRecRef.current = null;
+    }
+    setDictatingTarget(null);
+  }, []);
+
+  const toggleJournalDictation = React.useCallback(
+    (target: 'reflection' | 'note') => {
+      soundFX.playClick();
+      if (dictatingTarget === target) {
+        stopJournalDictation();
+        return;
+      }
+      stopJournalDictation();
+      stopKaiDialogue();
+
+      const basePrefix = (target === 'reflection' ? reflectionText : editText).trim();
+      const rec = createVoiceRecognizer({
+        onInterim: (live) => {
+          const combined = basePrefix ? `${basePrefix} ${live}` : live;
+          if (target === 'reflection') setReflectionText(combined);
+          else setEditText(combined);
+        },
+        onFinal: (fin) => {
+          const combined = basePrefix ? `${basePrefix} ${fin}` : fin;
+          if (target === 'reflection') setReflectionText(combined);
+          else setEditText(combined);
+        },
+        onError: () => {
+          setDictatingTarget(null);
+          voiceRecRef.current = null;
+        },
+        onEnd: () => {
+          setDictatingTarget(null);
+          voiceRecRef.current = null;
+        },
+      });
+      if (rec) {
+        voiceRecRef.current = rec;
+        setDictatingTarget(target);
+        rec.start();
+      }
+    },
+    [dictatingTarget, reflectionText, editText, stopJournalDictation]
+  );
+
+  React.useEffect(() => {
+    return () => {
+      voiceRecRef.current?.abort();
+      stopKaiDialogue();
+    };
+  }, []);
 
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -511,29 +578,52 @@ export const JournalView: React.FC<JournalViewProps> = ({
                   <div className="px-4 sm:px-5 py-3 bg-[#000a14] border-b border-amber-500/30">
                     {editingReflectionDate === date ? (
                       <div className="space-y-2">
-                        <span className="text-xs font-black text-amber-300 flex items-center gap-1.5 font-anton uppercase tracking-wide">
-                          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                          Reflexión / Aprendizaje Global del Día:
-                        </span>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-black text-amber-300 flex items-center gap-1.5 font-anton uppercase tracking-wide">
+                            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                            Reflexión / Aprendizaje Global del Día:
+                          </span>
+                          {isSpeechRecognitionSupported() && (
+                            <button
+                              type="button"
+                              onClick={() => toggleJournalDictation('reflection')}
+                              className={`px-2 py-0.5 rounded-full text-[10.5px] font-mono font-bold border flex items-center gap-1 cursor-pointer transition-all ${
+                                dictatingTarget === 'reflection'
+                                  ? 'bg-rose-500/25 border-rose-400 text-rose-200 animate-pulse'
+                                  : 'bg-fuchsia-950/60 hover:bg-fuchsia-900/70 border-fuchsia-400/50 text-fuchsia-200'
+                              }`}
+                              title="Dictar reflexión por voz"
+                            >
+                              {dictatingTarget === 'reflection' ? <MicOff className="w-3 h-3" /> : <Mic className="w-3 h-3" />}
+                              <span>{dictatingTarget === 'reflection' ? 'Detener' : 'Dictar'}</span>
+                            </button>
+                          )}
+                        </div>
                         <textarea
                           rows={3}
                           maxLength={5000}
                           value={reflectionText}
                           onChange={(e) => setReflectionText(e.target.value)}
-                          placeholder="¿Qué aprendiste hoy? ¿Qué salió excelente y qué mejorarás mañana?"
+                          placeholder="¿Qué aprendiste hoy? ¿Qué salió excelente y qué mejorarás mañana? (También puedes dictar con voz)"
                           className="w-full p-2.5 rounded-xl bg-[#011420] border border-amber-500/40 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400"
                         />
                         <div className="flex items-center justify-end gap-2">
                           <button
                             type="button"
-                            onClick={() => setEditingReflectionDate(null)}
-                            className="px-2.5 py-1 text-xs text-slate-400 hover:text-white"
+                            onClick={() => {
+                              stopJournalDictation();
+                              setEditingReflectionDate(null);
+                            }}
+                            className="px-2.5 py-1 text-xs text-slate-400 hover:text-white cursor-pointer"
                           >
                             Cancelar
                           </button>
                           <button
                             type="button"
-                            onClick={() => handleSaveReflection(date)}
+                            onClick={() => {
+                              stopJournalDictation();
+                              handleSaveReflection(date);
+                            }}
                             className="px-3 py-1 bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-anton uppercase tracking-wider rounded-lg cursor-pointer shadow-[0_0_10px_rgba(245,158,11,0.4)]"
                           >
                             Guardar Reflexión
@@ -553,16 +643,31 @@ export const JournalView: React.FC<JournalViewProps> = ({
                             </p>
                           </div>
                         </div>
-                        <button
-                          onClick={() => {
-                            setEditingReflectionDate(date);
-                            setReflectionText(reflection);
-                          }}
-                          className="text-amber-400 hover:text-white p-1 rounded-lg hover:bg-amber-900/30 shrink-0"
-                          title="Editar reflexión"
-                        >
-                          <Edit3 className="w-3.5 h-3.5" />
-                        </button>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              soundFX.playClick();
+                              setSpeakingDate(date);
+                              speakKaiDialogue(reflection, activeStats?.kaiCustomForm?.mood || 'zen', () => setSpeakingDate(null));
+                            }}
+                            className="text-cyan-400 hover:text-white p-1 rounded-lg hover:bg-cyan-900/30 cursor-pointer"
+                            title="Escuchar reflexión con voz de KAI"
+                          >
+                            <Volume2 className={`w-3.5 h-3.5 ${speakingDate === date ? 'animate-bounce text-white' : ''}`} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingReflectionDate(date);
+                              setReflectionText(reflection);
+                            }}
+                            className="text-amber-400 hover:text-white p-1 rounded-lg hover:bg-amber-900/30 cursor-pointer"
+                            title="Editar reflexión"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -710,9 +815,25 @@ export const JournalView: React.FC<JournalViewProps> = ({
               </button>
             </div>
 
-            <p className="text-xs text-slate-300 mb-2 font-medium relative z-10">
-              Escribe en qué trabajaste específicamente o puntos clave de repaso:
-            </p>
+            <div className="flex items-center justify-between gap-2 mb-2 relative z-10">
+              <p className="text-xs text-slate-300 font-medium">
+                Escribe o dicta en qué trabajaste o puntos clave de repaso:
+              </p>
+              {isSpeechRecognitionSupported() && (
+                <button
+                  type="button"
+                  onClick={() => toggleJournalDictation('note')}
+                  className={`px-2 py-0.5 rounded-full text-[10.5px] font-mono font-bold border flex items-center gap-1 cursor-pointer shrink-0 transition-all ${
+                    dictatingTarget === 'note'
+                      ? 'bg-rose-500/25 border-rose-400 text-rose-200 animate-pulse'
+                      : 'bg-fuchsia-950/60 hover:bg-fuchsia-900/70 border-fuchsia-400/50 text-fuchsia-200'
+                  }`}
+                >
+                  {dictatingTarget === 'note' ? <MicOff className="w-3 h-3" /> : <Mic className="w-3 h-3" />}
+                  <span>{dictatingTarget === 'note' ? 'Detener' : 'Dictar'}</span>
+                </button>
+              )}
+            </div>
 
             <textarea
               autoFocus

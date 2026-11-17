@@ -40,7 +40,6 @@ const DailyFinanceModal = lazy(() => import('./DailyFinanceModal').then(m => ({ 
 const KaiWorkshopModal = lazy(() => import('./KaiWorkshopModal').then(m => ({ default: m.KaiWorkshopModal })));
 const VoiceDictationModal = lazy(() => import('./VoiceDictationModal').then(m => ({ default: m.VoiceDictationModal })));
 
-import { DailyBossWidget } from './DailyBossWidget';
 import { DailyScheduleStrip } from './DailyScheduleStrip';
 import { SciFiGridBackground } from './SciFiGridBackground';
 import { TransitionOverlay } from './TransitionOverlay';
