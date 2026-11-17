@@ -3,7 +3,14 @@ import { firebaseAI, firebaseConfig } from '../firebase';
 import { autoArrangeSchedule, cleanScheduleTitle } from '../utils/timeUtils';
 import { generateProceduralSchedule, generateProceduralAnalysis, getArchetypeProfile } from '../utils/proceduralHeuristics';
 import { parseDays } from '../data/defaults';
-import { KaiCustomForm, KaiMultiverseStyle, KaiTemperament } from '../types';
+import { KaiCustomForm, KaiMultiverseStyle, KaiTemperament, PriorityLevel, HabitEnergyType } from '../types';
+import {
+  ParsedVoiceItem,
+  VoiceParseResult,
+  parseVoiceTranscriptLocally,
+  normalizeCategory,
+} from '../utils/speechRecognition';
+import { detectHabitEnergy, HABIT_ENERGY_DETAILS } from '../utils/habitEnergyDetector';
 
 export function getEffectiveGeminiApiKey(): string | null {
   if (typeof window !== 'undefined') {
@@ -1528,6 +1535,170 @@ export async function forgeAllKaiVariantsFromImage(params: {
 
   return result;
 }
+
+/**
+ * FASE 2: Analiza un dictado natural por voz (o texto rápido) del usuario usando Gemini IA
+ * y lo desglosa en tareas puntuales y hábitos 21/66 estructurados listos para inyectar en la agenda.
+ * Si no hay conexión, clave o cuota disponible, cae transparentemente al motor heurístico local.
+ */
+export async function parseVoiceTranscriptToItems(params: {
+  transcript: string;
+  currentDateLabel?: string;
+  kaiName?: string;
+}): Promise<VoiceParseResult> {
+  const { transcript, currentDateLabel = 'hoy', kaiName = 'KAI' } = params;
+  const trimmed = (transcript || '').trim();
+  if (!trimmed) {
+    return parseVoiceTranscriptLocally('');
+  }
+
+  const systemInstruction = `Eres ${kaiName}, el compañero táctico de productividad de "La Solución".
+Tu misión es transformar un dictado natural del usuario en español en una lista JSON estructurada de tareas puntuales ("task") y hábitos recurrentes ("habit").
+
+REGLAS ESTRICTAS:
+1. Devuelve SOLO JSON válido con esta forma exacta:
+{
+  "kaiReply": "Frase breve (máx 18 palabras), motivadora y cálida en español confirmando lo capturado.",
+  "items": [
+    {
+      "kind": "task" | "habit",
+      "title": "Título claro, accionable y limpio en español (sin muletillas ni horas redundantes)",
+      "category": "clientes" | "limpieza" | "entrenamiento" | "comida" | "creativo" | "habito" | "estudio" | "pomodoro" | "trabajo" | "rutina",
+      "timeBlock": "HH:MM - HH:MM" (opcional, formato 24h si el usuario mencionó hora; si solo dijo inicio, suma 1 hora),
+      "targetDateOffset": 0 (0 = fecha actual vista, 1 = mañana, 2 = pasado mañana),
+      "frequency": "once" | "daily" | "specific_days",
+      "specificDays": [1, 3, 5] (opcional, 0=Dom, 1=Lun .. 6=Sab solo si mencionó días específicos),
+      "targetCount": 1 (número entero >= 1 para hábitos, ej. 8 si dijo "8 vasos de agua"),
+      "unit": "vez" | "vasos" | "min" | "páginas" | "litros" | "km" (opcional, para hábitos),
+      "priority": "baja" | "media" | "alta" | "epica",
+      "quickIcon": "Un solo emoji representativo",
+      "notes": "Detalle breve opcional si dio contexto extra"
+    }
+  ]
+}
+2. Si el usuario menciona varias cosas en una sola frase, sepáralas en múltiples elementos dentro de "items".
+3. Clasifica como "habit" (con frequency "daily" o "specific_days") todo lo que mencione "todos los días", "diario", "hábito", "cada día" o días repetitivos ("todos los lunes y miércoles"). Todo lo demás es "task" con frequency "once".
+4. Respeta siempre las categorías válidas exactas.`;
+
+  const prompt = `Fecha actual de contexto: ${currentDateLabel}.
+Dictado del usuario:
+"""
+${trimmed}
+"""
+Genera el JSON estructurado.`;
+
+  try {
+    const raw = await fetchGeminiPrompt(prompt, {
+      systemInstruction,
+      jsonMode: true,
+      timeoutMs: 14000,
+    });
+
+    if (raw) {
+      const cleanedJson = raw
+        .replace(/^```json\s*/i, '')
+        .replace(/^```\s*/i, '')
+        .replace(/```$/i, '')
+        .trim();
+
+      const parsed = JSON.parse(cleanedJson);
+      const rawItems = Array.isArray(parsed?.items) ? parsed.items : [];
+
+      if (rawItems.length > 0) {
+        const nowId = Date.now();
+        const validPriorities: PriorityLevel[] = ['baja', 'media', 'alta', 'epica'];
+
+        const normalizedItems: ParsedVoiceItem[] = rawItems
+          .filter((it: any) => it && typeof it.title === 'string' && it.title.trim().length > 0)
+          .slice(0, 12)
+          .map((it: any, idx: number): ParsedVoiceItem => {
+            const kind: 'task' | 'habit' = it.kind === 'habit' ? 'habit' : 'task';
+            const title = it.title.trim();
+            const category = normalizeCategory(it.category, title);
+            const priority: PriorityLevel = validPriorities.includes(it.priority) ? it.priority : 'media';
+
+            const specificDays = Array.isArray(it.specificDays)
+              ? it.specificDays
+                  .map((d: any) => Number(d))
+                  .filter((d: number) => Number.isInteger(d) && d >= 0 && d <= 6)
+              : undefined;
+
+            const frequency: 'once' | 'daily' | 'specific_days' =
+              it.frequency === 'specific_days' && specificDays && specificDays.length > 0
+                ? 'specific_days'
+                : it.frequency === 'daily' || kind === 'habit'
+                  ? 'daily'
+                  : 'once';
+
+            const rawOffset = Number(it.targetDateOffset);
+            const targetDateOffset =
+              kind === 'habit'
+                ? 0
+                : Number.isInteger(rawOffset) && rawOffset >= 0 && rawOffset <= 14
+                  ? rawOffset
+                  : 0;
+
+            const timeBlock =
+              typeof it.timeBlock === 'string' && /^\d{2}:\d{2}(\s*-\s*\d{2}:\d{2})?$/.test(it.timeBlock.trim())
+                ? it.timeBlock.trim()
+                : undefined;
+
+            const habitEnergyType: HabitEnergyType | undefined =
+              kind === 'habit' ? detectHabitEnergy(title, category) : undefined;
+
+            const defaultIcon = habitEnergyType ? HABIT_ENERGY_DETAILS[habitEnergyType].icon : '⚡';
+            const quickIcon =
+              typeof it.quickIcon === 'string' && it.quickIcon.trim().length > 0 && it.quickIcon.trim().length <= 4
+                ? it.quickIcon.trim()
+                : defaultIcon;
+
+            const targetCount =
+              kind === 'habit'
+                ? Math.max(1, Math.min(999, Number(it.targetCount) || 1))
+                : undefined;
+
+            const xpReward = priority === 'epica' ? 50 : priority === 'alta' ? 35 : kind === 'habit' ? 20 : 25;
+            const coinReward = priority === 'epica' ? 25 : priority === 'alta' ? 15 : kind === 'habit' ? 8 : 10;
+
+            return {
+              id: `voice-ai-${nowId}-${idx}`,
+              kind,
+              title,
+              category,
+              timeBlock,
+              targetDateOffset,
+              frequency,
+              specificDays: specificDays && specificDays.length > 0 ? specificDays : undefined,
+              targetCount,
+              unit: kind === 'habit' ? (typeof it.unit === 'string' && it.unit.trim() ? it.unit.trim() : 'vez') : undefined,
+              priority,
+              xpReward,
+              coinReward,
+              quickIcon,
+              habitEnergyType,
+              notes: typeof it.notes === 'string' && it.notes.trim() ? it.notes.trim() : undefined,
+            };
+          });
+
+        if (normalizedItems.length > 0) {
+          return {
+            items: normalizedItems,
+            kaiReply:
+              typeof parsed.kaiReply === 'string' && parsed.kaiReply.trim()
+                ? parsed.kaiReply.trim()
+                : `¡Listo! Desglosé ${normalizedItems.length} objetivos para tu agenda.`,
+            usedRemoteAI: true,
+          };
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[VoiceAI] Fallback a parser heurístico local:', err);
+  }
+
+  return parseVoiceTranscriptLocally(trimmed);
+}
+
 
 
 

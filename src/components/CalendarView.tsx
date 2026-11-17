@@ -1,10 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Icon } from './common/Icon';
-import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Mic } from 'lucide-react';
 import { soundFX } from '../utils/audio';
 import { addDaysToDateString, getTodayDateString, parseLocalDate } from '../utils/date';
 import { usePlayerStore } from '../store/usePlayerStore';
+import { useUIStore } from '../store/useUIStore';
 import { MonthlyCalendarModal } from './MonthlyCalendarModal';
 
 interface CalendarViewProps {
@@ -20,6 +21,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 }) => {
   const restDays = usePlayerStore((s) => s.stats.restDays);
   const toggleRestDay = usePlayerStore((s) => s.toggleRestDay);
+  const openVoiceDictation = useUIStore((s) => s.openVoiceDictation);
   const isCurrentDateRest = Boolean(currentDate && restDays?.[currentDate]);
 
   const [isMonthlyModalOpen, setIsMonthlyModalOpen] = useState(false);
@@ -195,6 +197,20 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             <Icon name="calendar" className="w-3.5 h-3.5 text-cyan-300" />
           </button>
 
+          {/* Botón Dictado por Voz con KAI */}
+          <button
+            type="button"
+            onClick={() => {
+              soundFX.playClick();
+              openVoiceDictation();
+            }}
+            className="w-7 h-7 rounded-lg bg-fuchsia-950/60 hover:bg-fuchsia-900/70 border border-fuchsia-400/50 hover:border-fuchsia-300 text-fuchsia-300 hover:text-white flex items-center justify-center transition-all cursor-pointer active:scale-95 shadow-[0_0_10px_rgba(217,70,239,0.25)]"
+            title="Dictar tareas o hábitos por voz con KAI"
+            aria-label="Dictar tareas o hábitos por voz con KAI"
+          >
+            <Mic className="w-3.5 h-3.5" />
+          </button>
+
           {/* Botón Añadir Tarea */}
           {onOpenAddModal && (
             <button
@@ -297,6 +313,20 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             aria-label="Abrir calendario mensual"
           >
             <Icon name="calendar" className="w-3.5 h-3.5 text-cyan-300" />
+          </button>
+
+          {/* Botón Dictado por Voz Móvil */}
+          <button
+            type="button"
+            onClick={() => {
+              soundFX.playClick();
+              openVoiceDictation();
+            }}
+            className="w-7 h-7 rounded-lg bg-fuchsia-950/60 hover:bg-fuchsia-900/70 border border-fuchsia-400/50 text-fuchsia-300 flex items-center justify-center transition-all cursor-pointer active:scale-95 shrink-0"
+            title="Dictar por voz con KAI"
+            aria-label="Dictar tareas o hábitos por voz"
+          >
+            <Mic className="w-3.5 h-3.5" />
           </button>
 
           {/* Botón Añadir Tarea Móvil */}

@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Icon } from '../common/Icon';
-// Removed lucide-react import
+import { Mic } from 'lucide-react';
 import { TaskCategory, HabitEnergyType } from '../../types';
 import { HABIT_ENERGY_DETAILS, detectHabitEnergy } from '../../utils/habitEnergyDetector';
 import { CATEGORY_COLORS } from '../../data/categoryColors';
 import { soundFX } from '../../utils/audio';
 import { useTaskStore } from '../../store/useTaskStore';
+import { useUIStore } from '../../store/useUIStore';
 import { getTodayDateString } from '../../utils/date';
 import { countHighPriorityCompletedToday, MAX_CRITICAL_PRIORITY_CHARGES_PER_DAY } from '../../utils/level3Systems';
 
@@ -146,6 +147,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
   const [isIconManuallyChosen, setIsIconManuallyChosen] = useState(Boolean(editingTaskId));
   const currentViewDate = useTaskStore((s) => s.currentViewDate);
   const setCurrentViewDate = useTaskStore((s) => s.setCurrentViewDate);
+  const openVoiceDictation = useUIStore((s) => s.openVoiceDictation);
   const isViewingToday = currentViewDate === getTodayDateString();
   const currentViewTasks = useTaskStore((s) => s.tasksByDate[s.currentViewDate] || EMPTY_TASKS);
   const criticalUsedToday = countHighPriorityCompletedToday(currentViewTasks);
@@ -336,17 +338,34 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                 </p>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                soundFX.playClick();
-                onClose();
-              }}
-              className="w-8 h-8 rounded-xl bg-white/[0.04] hover:bg-white/10 border border-white/10 hover:border-cyan-400/40 text-slate-400 hover:text-white flex items-center justify-center transition-all cursor-pointer shrink-0 ml-2 active:scale-95"
-              title="Cerrar modal (Esc)"
-            >
-              <Icon name="x" className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-1.5 shrink-0 ml-2">
+              {!editingTaskId && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFX.playClick();
+                    onClose();
+                    openVoiceDictation();
+                  }}
+                  className="h-8 px-2.5 rounded-xl bg-fuchsia-950/60 hover:bg-fuchsia-900/70 border border-fuchsia-400/50 text-fuchsia-200 hover:text-white flex items-center gap-1.5 text-[11px] font-anton uppercase tracking-wider transition-all cursor-pointer active:scale-95 shadow-[0_0_12px_rgba(217,70,239,0.25)]"
+                  title="Dictar múltiples tareas o hábitos por voz con KAI"
+                >
+                  <Mic className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Voz</span>
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  soundFX.playClick();
+                  onClose();
+                }}
+                className="w-8 h-8 rounded-xl bg-white/[0.04] hover:bg-white/10 border border-white/10 hover:border-cyan-400/40 text-slate-400 hover:text-white flex items-center justify-center transition-all cursor-pointer active:scale-95"
+                title="Cerrar modal (Esc)"
+              >
+                <Icon name="x" className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
           <form onSubmit={onSubmit} className="flex-1 flex flex-col min-h-0 overflow-hidden">

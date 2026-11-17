@@ -69,6 +69,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
   const navigationMode = useUIStore((s) => s.navigationMode);
   const handDominance = useUIStore((s) => s.handDominance);
   const openTaskForm = useUIStore((s) => s.openTaskForm);
+  const openVoiceDictation = useUIStore((s) => s.openVoiceDictation);
 
   // Atomic selectors for PlayerStore
   const coins = usePlayerStore((s) => s.stats.coins || 0);
@@ -657,6 +658,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
               </div>
               <div className="p-2.5 space-y-1.5">
                 {[
+                  { label: '🎙️ Dictar tareas o hábitos por voz', action: () => { setShowQuickChat(false); openVoiceDictation(); } },
                   { label: '⚡ Organiza mi día de hoy', action: () => { setShowQuickChat(false); if (onOpenOracleWithPrompt) onOpenOracleWithPrompt('Organiza mi día de hoy con las tareas que tengo pendientes. Dame un horario realista.'); } },
                   { label: '🎯 ¿Por qué tarea empiezo?', action: () => { setShowQuickChat(false); if (onOpenOracleWithPrompt) onOpenOracleWithPrompt('Tengo varias tareas. ¿Cuál debería hacer primero para ser más productivo hoy?'); } },
                   { label: '🧘 Dame motivación ahora', action: () => { speakKai('Cada tarea que completas es un paso hacia quien quieres ser. ¡Vamos, tú puedes!'); setShowQuickChat(false); } },

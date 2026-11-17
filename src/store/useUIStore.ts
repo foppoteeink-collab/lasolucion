@@ -66,6 +66,7 @@ interface UIState {
   isDayRhythmOpen: boolean;
   isTaskFormOpen: boolean;
   taskFormInitialTab: 'task' | 'habit' | 'oracle';
+  isVoiceDictationOpen: boolean;
   isTacticalGuideOpen: boolean;
   tacticalGuideInitialStep: number;
   surpriseBossData: { archetypeName: string; buffName: string; buffDescription: string } | null;
@@ -87,6 +88,8 @@ interface UIState {
   toggleSound: () => void;
   openTaskForm: (tab?: 'task' | 'habit' | 'oracle') => void;
   closeTaskForm: () => void;
+  openVoiceDictation: () => void;
+  closeVoiceDictation: () => void;
   openTacticalGuide: (step?: number) => void;
   closeTacticalGuide: () => void;
   openSurpriseBoss: (data: { archetypeName: string; buffName: string; buffDescription: string }) => void;
@@ -405,6 +408,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   isDayRhythmOpen: false,
   isTaskFormOpen: false,
   taskFormInitialTab: 'task',
+  isVoiceDictationOpen: false,
   isTacticalGuideOpen: false,
   tacticalGuideInitialStep: 1,
   surpriseBossData: null,
@@ -412,6 +416,8 @@ export const useUIStore = create<UIState>((set, get) => ({
 
   openTaskForm: (tab = 'task') => set({ isTaskFormOpen: true, taskFormInitialTab: tab }),
   closeTaskForm: () => set({ isTaskFormOpen: false }),
+  openVoiceDictation: () => set({ isVoiceDictationOpen: true }),
+  closeVoiceDictation: () => set({ isVoiceDictationOpen: false }),
   openTacticalGuide: (step = 1) => set({ isTacticalGuideOpen: true, tacticalGuideInitialStep: step }),
   closeTacticalGuide: () => set({ isTacticalGuideOpen: false }),
 

@@ -38,6 +38,7 @@ const DeleteConfirmModal = lazy(() => import('./DeleteConfirmModal').then(m => (
 const PomodoroTimer = lazy(() => import('./PomodoroTimer').then(m => ({ default: m.PomodoroTimer })));
 const DailyFinanceModal = lazy(() => import('./DailyFinanceModal').then(m => ({ default: m.DailyFinanceModal })));
 const KaiWorkshopModal = lazy(() => import('./KaiWorkshopModal').then(m => ({ default: m.KaiWorkshopModal })));
+const VoiceDictationModal = lazy(() => import('./VoiceDictationModal').then(m => ({ default: m.VoiceDictationModal })));
 
 import { DailyBossWidget } from './DailyBossWidget';
 import { DailyScheduleStrip } from './DailyScheduleStrip';
@@ -89,6 +90,8 @@ export function AppLayout() {
   const isTacticalGuideOpen = useUIStore((s) => s.isTacticalGuideOpen);
   const tacticalGuideInitialStep = useUIStore((s) => s.tacticalGuideInitialStep);
   const closeTacticalGuide = useUIStore((s) => s.closeTacticalGuide);
+  const isVoiceDictationOpen = useUIStore((s) => s.isVoiceDictationOpen);
+  const closeVoiceDictation = useUIStore((s) => s.closeVoiceDictation);
 
   // PlayerStore state and mutator
   const stats = usePlayerStore((s) => s.stats);
@@ -870,6 +873,16 @@ export function AppLayout() {
                 isOpen={isKaiWorkshopOpen}
                 onClose={() => setIsKaiWorkshopOpen(false)}
                 onOpenShop={() => setActiveTab('shop')}
+              />
+            </Suspense>
+          )}
+
+          {/* DICTADO NEURAL POR VOZ CON KAI (Fase 2) */}
+          {isVoiceDictationOpen && (
+            <Suspense fallback={null}>
+              <VoiceDictationModal
+                isOpen={isVoiceDictationOpen}
+                onClose={closeVoiceDictation}
               />
             </Suspense>
           )}
