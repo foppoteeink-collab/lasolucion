@@ -183,9 +183,10 @@ export async function fetchGeminiPrompt(
   const sanitizedPrompt = promptText.trim().slice(0, 12000);
   const candidateModels = Array.from(
     new Set([
-      options.modelName || 'gemini-3.1-flash-lite',
-      'gemini-3.1-flash-lite',
-      'gemini-3.8-flash',
+      options.modelName || 'gemini-2.5-flash-lite',
+      'gemini-2.5-flash-lite',
+      'gemini-2.5-flash',
+      'gemini-2.0-flash',
       'gemini-flash-latest'
     ])
   );
@@ -458,7 +459,7 @@ export async function generateScheduleFrontend(
 
   let generatedText = "";
   const text = await fetchGeminiPrompt(prompt, {
-    modelName: 'gemini-3.1-flash-lite',
+    modelName: 'gemini-2.5-flash-lite',
     systemInstruction,
     jsonMode: true,
     timeoutMs: 30000,
@@ -605,7 +606,7 @@ ${historyContext}
     - Proporciona exactamente 3 acciones tácticas concretas y ejecutables que el cliente debe priorizar hoy para maximizar la productividad y mantener la trayectoria de crecimiento.
   `;
 
-  const text = await fetchGeminiPrompt(prompt, 'gemini-3.1-flash-lite');
+  const text = await fetchGeminiPrompt(prompt, 'gemini-2.5-flash-lite');
   if (text) {
     return { analysis: text, source: 'ai' };
   }
@@ -798,9 +799,7 @@ export async function generateGeminiNativeImage(params: {
 
   const IMAGE_MODELS = [
     'gemini-2.5-flash-image',
-    'gemini-3.1-flash-image',
-    'gemini-3.1-flash-lite-image',
-    'gemini-3-pro-image-preview',
+    'gemini-2.0-flash-exp-image-generation',
   ];
 
   for (const modelName of IMAGE_MODELS) {
@@ -1264,9 +1263,8 @@ SECONDARY_COLOR: #hex
   let lastErrorMessage = '';
 
   const CANDIDATE_MODELS = [
-    'gemini-3-flash-preview',
-    'gemini-3.5-flash',
-    'gemini-3.8-flash',
+    'gemini-2.5-flash',
+    'gemini-2.0-flash',
     'gemini-flash-latest',
   ];
 

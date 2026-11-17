@@ -5,7 +5,9 @@ import {
   parseVoiceFinanceLocally,
   detectVoiceFocusIntent,
   extractTomorrowTasksFromReflection,
+  splitMixedVoiceDictation,
 } from './speechRecognition';
+import { sanitizeTextForSpeech } from './voice';
 
 test('parseVoiceTranscriptLocally splits multi-intent Spanish dictation into tasks and habits', () => {
   const result = parseVoiceTranscriptLocally(
@@ -115,4 +117,25 @@ test('extractTomorrowTasksFromReflection pulls tomorrow action items and gives w
   assert.ok(res.kaiFeedback.includes('85%'));
   assert.ok(res.tomorrowTasks.length >= 1);
   assert.equal(res.tomorrowTasks[0].targetDateOffset, 1);
+});
+
+test('splitMixedVoiceDictation preserves both expenses and tasks in a single sentence', () => {
+  const { financeText, taskText } = splitMixedVoiceDictation(
+    'Gasté 200 en gasolina y a las 6 entrenar espalda'
+  );
+
+  assert.ok(financeText.toLowerCase().includes('200'));
+  assert.ok(taskText.toLowerCase().includes('entrenar espalda'));
+
+  const fin = parseVoiceFinanceLocally(financeText);
+  const tasks = parseVoiceTranscriptLocally(taskText);
+  assert.equal(fin.entries.length, 1);
+  assert.equal(fin.entries[0].amount, 200);
+  assert.equal(tasks.items.length, 1);
+  assert.equal(tasks.items[0].category, 'entrenamiento');
+});
+
+test('sanitizeTextForSpeech strips emojis and markdown without breaking Spanish words', () => {
+  const cleaned = sanitizeTextForSpeech('🔥 ¡Bloque completado! **Gran foco** 🎯 +25 XP ✨');
+  assert.equal(cleaned, '¡Bloque completado! Gran foco +25 XP');
 });

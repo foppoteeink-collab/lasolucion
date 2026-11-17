@@ -39,6 +39,7 @@ import { getTodayDateString } from '../utils/date';
 import { QuantumSoundscapeConsole } from './QuantumSoundscapeConsole';
 import { quantumSoundscape, SoundscapeState } from '../utils/quantumSoundscape';
 import { speakKaiDialogue, stopKaiDialogue } from '../utils/voice';
+import { handleToggleTask } from '../engine/gameEngine';
 
 interface PomodoroTimerProps {
   initialTaskTitle?: string;
@@ -82,7 +83,6 @@ export const PomodoroTimer: React.FC<PomodoroTimerProps> = React.memo(({
   const soundEnabled = useUIStore(state => state.soundEnabled);
   const todayStr = getTodayDateString();
   const todayTasks = useTaskStore(state => state.tasksByDate[todayStr] ?? EMPTY_TASK_LIST);
-  const toggleTaskCompletion = useTaskStore(state => state.toggleTaskCompletion);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isTaskDropdownOpen, setIsTaskDropdownOpen] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
@@ -590,10 +590,9 @@ export const PomodoroTimer: React.FC<PomodoroTimerProps> = React.memo(({
             <div className="flex items-center gap-1.5 shrink-0">
               <button
                 type="button"
-                onClick={() => {
-                  soundFX.playLevelUp();
+                onClick={(e) => {
                   triggerHaptic([20, 35]);
-                  toggleTaskCompletion(todayStr, matchedPendingTask.id);
+                  handleToggleTask(matchedPendingTask.id, e);
                   setShowCompletionPrompt(false);
                   if (isVoiceCoachEnabled && soundEnabled) {
                     speakKaiDialogue('¡Misión marcada como completada! Excelente trabajo.', stats?.kaiCustomForm?.mood || 'cheerful');

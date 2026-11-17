@@ -31,7 +31,7 @@ export interface TimerContextType {
   setIsPomodoroOpen: React.Dispatch<React.SetStateAction<boolean>>;
   pomodoroPreFill: { title: string; category: TaskCategory };
   setPomodoroPreFill: React.Dispatch<React.SetStateAction<{ title: string; category: TaskCategory }>>;
-  handleOpenPomodoroForTask: (taskTitle: string, category: TaskCategory) => void;
+  handleOpenPomodoroForTask: (taskTitle: string, category: TaskCategory, customMinutes?: number) => void;
   handlePomodoroComplete: (session: PomodoroSession) => void;
 
   // Running Timer State & Controls
@@ -342,13 +342,30 @@ const setFocusModeActive = useUIStore(s => s.setFocusModeActive);
     };
   }, [isRunning, targetEndTime, handleFinishTimer]);
 
-  const handleOpenPomodoroForTask = (newTitle: string, newCategory: TaskCategory) => {
+  const handleOpenPomodoroForTask = (
+    newTitle: string,
+    newCategory: TaskCategory,
+    customMinutes?: number
+  ) => {
     soundFX.playClick();
     setPomodoroPreFill({ title: newTitle, category: newCategory });
+    useAppStore.getState().setPomodoroPreFill({ title: newTitle, category: newCategory });
     setTaskTitle(newTitle);
     setCategory(newCategory);
+    if (
+      typeof customMinutes === 'number' &&
+      Number.isFinite(customMinutes) &&
+      customMinutes >= 1 &&
+      customMinutes <= 180 &&
+      !isRunning
+    ) {
+      const customSeconds = Math.round(customMinutes * 60);
+      setMode('work');
+      setInitialTimeLeft(customSeconds);
+      setTimeLeft(customSeconds);
+    }
     setIsPomodoroOpen(true);
-    
+    useUIStore.getState().setModalState('isPomodoroOpen', true);
   };
 
   const syncAmbientState = () => {

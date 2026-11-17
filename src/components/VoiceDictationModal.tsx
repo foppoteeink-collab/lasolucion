@@ -32,6 +32,7 @@ import {
   ParsedVoiceFinanceEntry,
   ParsedVoiceFocusIntent,
   ParsedVoiceItem,
+  splitMixedVoiceDictation,
   VoiceRecognizerController,
 } from '../utils/speechRecognition';
 import { parseVoiceFinanceWithAI, parseVoiceTranscriptToItems } from '../services/aiService';
@@ -186,44 +187,40 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({ isOpen
         return;
       }
 
-      // 2. Verificar si es un dictado financiero claro (verbo financiero + monto numérico)
-      const looksFinancial =
-        /(?:^|[\s,.;:])(?:gast[eé]|pagu[eé]|compr[eé]|cost[oó]|recib[ií]|cobr[eé]|gan[eé]|ingres[eé]|vend[ií]|me\s+pagaron|n[oó]mina|salario)(?=$|[\s,.;:])/i.test(text) &&
-        /\d/.test(text);
+      // 2. Separar dictado mixto (Finanzas + Tareas/Hábitos en la misma frase sin descartar ninguno)
+      const { financeText, taskText } = splitMixedVoiceDictation(text);
 
-      if (looksFinancial) {
-        const finRes = await parseVoiceFinanceWithAI({ transcript: text, kaiName });
-        if (finRes.entries.length > 0) {
-          setDetectedFinance(finRes.entries);
-          setKaiReply(finRes.kaiReply);
-          setUsedRemoteAI(finRes.usedRemoteAI);
-          triggerHaptic(20);
-          if (soundEnabled && finRes.kaiReply) {
-            setIsSpeakingReply(true);
-            speakKaiDialogue(finRes.kaiReply, kaiMood, () => setIsSpeakingReply(false));
-          }
-          return;
-        }
-      }
+      const [finRes, taskRes] = await Promise.all([
+        financeText ? parseVoiceFinanceWithAI({ transcript: financeText, kaiName }) : Promise.resolve(null),
+        taskText
+          ? parseVoiceTranscriptToItems({
+              transcript: taskText,
+              currentDateLabel: formatDateForDisplay(currentViewDate),
+              kaiName,
+            })
+          : Promise.resolve(null),
+      ]);
 
-      // 3. Flujo principal: Tareas y Hábitos 21/66
-      const result = await parseVoiceTranscriptToItems({
-        transcript: text,
-        currentDateLabel: formatDateForDisplay(currentViewDate),
-        kaiName,
-      });
+      const foundFinance = finRes?.entries || [];
+      const foundTasks = taskRes?.items || [];
 
-      setParsedItems(result.items);
-      setKaiReply(result.kaiReply);
-      setUsedRemoteAI(result.usedRemoteAI);
+      setDetectedFinance(foundFinance);
+      setParsedItems(foundTasks);
+      setUsedRemoteAI(Boolean(finRes?.usedRemoteAI || taskRes?.usedRemoteAI));
 
-      if (result.items.length === 0) {
-        setErrorMsg('No pude identificar misiones claras. Intenta dictar algo como "A las 8 entrenar y tomar agua todos los días".');
+      if (foundFinance.length === 0 && foundTasks.length === 0) {
+        setErrorMsg('No pude identificar misiones ni movimientos claros. Intenta dictar algo como "A las 8 entrenar y tomar agua todos los días".');
       } else {
+        const combinedReply =
+          foundFinance.length > 0 && foundTasks.length > 0
+            ? `¡Perfecto! Separé ${foundFinance.length} ${foundFinance.length === 1 ? 'movimiento financiero' : 'movimientos financieros'} y ${foundTasks.length} ${foundTasks.length === 1 ? 'misión' : 'misiones'} para tu jornada.`
+            : (finRes?.kaiReply || taskRes?.kaiReply || '¡Listo! Todo organizado para confirmar.');
+
+        setKaiReply(combinedReply);
         triggerHaptic(20);
-        if (soundEnabled && result.kaiReply) {
+        if (soundEnabled && combinedReply) {
           setIsSpeakingReply(true);
-          speakKaiDialogue(result.kaiReply, kaiMood, () => setIsSpeakingReply(false));
+          speakKaiDialogue(combinedReply, kaiMood, () => setIsSpeakingReply(false));
         }
       }
     } catch (err) {
@@ -722,7 +719,11 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({ isOpen
                   onClick={() => {
                     soundFX.playClick();
                     triggerHaptic([20, 30]);
-                    handleOpenPomodoroForTask(detectedFocus.title, detectedFocus.category);
+                    handleOpenPomodoroForTask(
+                      detectedFocus.title,
+                      detectedFocus.category,
+                      detectedFocus.durationMinutes
+                    );
                     onClose();
                   }}
                   className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-cyan-400 to-sky-400 hover:brightness-110 text-[#020617] font-anton uppercase tracking-wider text-xs flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(0,240,255,0.4)] cursor-pointer active:scale-[0.98]"
@@ -788,9 +789,20 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({ isOpen
                     }));
                     setExpenses((prev) => [...txs, ...prev]);
                     const msg = `¡Listo! Registré ${txs.length} ${txs.length === 1 ? 'movimiento' : 'movimientos'} en tu tesorería.`;
-                    setInjectedSuccess(msg);
-                    if (soundEnabled) speakKaiDialogue(msg, kaiMood);
-                    setTimeout(() => onClose(), 900);
+                    setDetectedFinance([]);
+                    if (parsedItems.length === 0) {
+                      setInjectedSuccess(msg);
+                      if (soundEnabled) speakKaiDialogue(msg, kaiMood);
+                      setTimeout(() => onClose(), 900);
+                    } else {
+                      addFloatingEffect({
+                        x: typeof window !== 'undefined' ? window.innerWidth / 2 : 200,
+                        y: typeof window !== 'undefined' ? window.innerHeight * 0.25 : 140,
+                        text: `💸 +${txs.length} en Tesorería`,
+                        type: 'coins',
+                      });
+                      if (soundEnabled) speakKaiDialogue(msg, kaiMood);
+                    }
                   }}
                   className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-400 to-cyan-400 hover:brightness-110 text-[#020617] font-anton uppercase tracking-wider text-xs flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(16,185,129,0.4)] cursor-pointer active:scale-[0.98]"
                 >

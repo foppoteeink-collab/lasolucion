@@ -52,6 +52,7 @@ export const SidebarHUD: React.FC<SidebarHUDProps> = ({
   const setModalState = useUIStore((s) => s.setModalState);
   const isPomodoroOpen = useUIStore((s) => s.isPomodoroOpen);
   const openTaskForm = useUIStore((s) => s.openTaskForm);
+  const openVoiceDictation = useUIStore((s) => s.openVoiceDictation);
   const handDominance = useUIStore((s) => s.handDominance);
 
   // Atomic selectors for PlayerStore
@@ -333,6 +334,18 @@ export const SidebarHUD: React.FC<SidebarHUDProps> = ({
   const gadgetItems: SidebarNavItem[] = useMemo(
     () => [
       {
+        id: 'voice-dictation',
+        label: 'Dictar Voz',
+        icon: 'mic',
+        accentColor: '#e879f9',
+        type: 'gadget',
+        onClick: () => {
+          soundFX.playClick();
+          openVoiceDictation();
+          setIsMobileOpen(false);
+        },
+      },
+      {
         id: 'pomodoro',
         label: 'Foco',
         icon: 'timer',
@@ -389,6 +402,7 @@ export const SidebarHUD: React.FC<SidebarHUDProps> = ({
       setModalState,
       onOpenOracleWithPrompt,
       openTaskForm,
+      openVoiceDictation,
       onOpenFinance,
       onOpenKaiWorkshop,
     ]

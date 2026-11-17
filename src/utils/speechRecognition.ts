@@ -659,3 +659,42 @@ export function extractTomorrowTasksFromReflection(
     usedRemoteAI: false,
   };
 }
+
+/**
+ * Separa un dictado mixto que combina gastos/ingresos con tareas/hábitos en la misma frase.
+ * Ej: "Gasté 200 en gasolina y a las 6 entrenar espalda"
+ * -> financeText: "Gasté 200 en gasolina"
+ * -> taskText: "a las 6 entrenar espalda"
+ */
+export function splitMixedVoiceDictation(transcript: string): {
+  financeText: string;
+  taskText: string;
+} {
+  const cleanText = (transcript || '').trim();
+  if (!cleanText) return { financeText: '', taskText: '' };
+
+  const clauses = cleanText
+    .split(/(?:\n+|;+|\.\s+|,\s+(?:y\s+|luego\s+|despu[eé]s\s+|tambi[eé]n\s+)?|\s+(?:y\s+tambi[eé]n|y\s+luego|y\s+despu[eé]s|adem[aá]s|tambi[eé]n)\s+|\s+y\s+(?=(?:a\s+las?|de\s+\d|gast[eé]|pagu[eé]|compr[eé]|cost[oó]|recib[ií]|cobr[eé]|gan[eé]|ingres[eé]|vend[ií]|me\s+pagaron|tomar|beber|leer|hacer|ir|entrenar|llamar|enviar|revisar|estudiar|meditar|limpiar|cocinar|crear|terminar|escribir|trabajar|junta|reuni[oó]n|cita|el\s+h[aá]bito|un\s+h[aá]bito|quiero|necesito|tengo|recordar)))/i)
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  const financeClauses: string[] = [];
+  const taskClauses: string[] = [];
+
+  const financeVerbRx = /(?:^|[\s,.;:])(?:gast[eé]|gasto|pagu[eé]|pago|compr[eé]|compra|cost[oó]|recib[ií]|cobr[eé]|gan[eé]|ingres[eé]|ingreso|vend[ií]|venta|me\s+pagaron|me\s+depositaron|me\s+transfirieron|n[oó]mina|salario|sueldo)(?=$|[\s,.;:])/i;
+  const nonTimeAmountRx = /(?:[$€₡£]\s*)?(?:\d{1,3}(?:,\d{3})+|\d+(?:[.,]\d{1,2})?)(?!\s*:\d{2})/;
+
+  for (const clause of clauses) {
+    const looksFinancial = financeVerbRx.test(clause) && nonTimeAmountRx.test(clause);
+    if (looksFinancial) {
+      financeClauses.push(clause);
+    } else {
+      taskClauses.push(clause);
+    }
+  }
+
+  return {
+    financeText: financeClauses.join(', '),
+    taskText: taskClauses.join(', '),
+  };
+}
