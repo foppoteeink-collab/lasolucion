@@ -29,7 +29,8 @@ function getLatestMtimeMs(dirOrFile: string): number {
 function computeSourceBuildRev(): string {
   const srcMtime = getLatestMtimeMs(path.resolve(__dirname, 'src'));
   const htmlMtime = getLatestMtimeMs(path.resolve(__dirname, 'index.html'));
-  const maxMtime = Math.max(srcMtime, htmlMtime);
+  const pubMtime = getLatestMtimeMs(path.resolve(__dirname, 'public'));
+  const maxMtime = Math.max(srcMtime, htmlMtime, pubMtime, Date.now());
   return `rev-${Math.floor(maxMtime)}`;
 }
 
@@ -39,10 +40,15 @@ function generateSelfHealingServiceWorker(buildRev: string, additionalAssets: st
     '/index.html',
     '/manifest.webmanifest',
     '/icon.svg',
+    '/icon-v2.svg',
     '/apple-touch-icon.png',
+    '/apple-touch-icon-v2.png',
     '/pwa-192x192.png',
+    '/pwa-192x192-v2.png',
     '/pwa-512x512.png',
+    '/pwa-512x512-v2.png',
     '/pwa-maskable-512x512.png',
+    '/pwa-maskable-512x512-v2.png',
     ...additionalAssets
   ];
 

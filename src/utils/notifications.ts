@@ -139,8 +139,8 @@ export class NotificationService {
     if (permission !== 'granted') return false;
 
     const origin = typeof window !== 'undefined' && window.location ? window.location.origin : '';
-    const iconUrl = origin ? `${origin}/pwa-192x192.png` : '/pwa-192x192.png';
-    const badgeUrl = origin ? `${origin}/pwa-192x192.png` : '/pwa-192x192.png';
+    const iconUrl = origin ? `${origin}/pwa-192x192-v2.png` : '/pwa-192x192-v2.png';
+    const badgeUrl = origin ? `${origin}/pwa-192x192-v2.png` : '/pwa-192x192-v2.png';
 
     const notifOptions: NotificationOptions = {
       body,
