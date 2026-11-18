@@ -68,7 +68,6 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
   const isPomodoroOpen = useUIStore((s) => s.isPomodoroOpen);
   const navigationMode = useUIStore((s) => s.navigationMode);
   const handDominance = useUIStore((s) => s.handDominance);
-  const openTaskForm = useUIStore((s) => s.openTaskForm);
   const openVoiceDictation = useUIStore((s) => s.openVoiceDictation);
 
   // Atomic selectors for PlayerStore
@@ -93,8 +92,8 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
       clearTimeout(speechTimerRef.current);
     }
     setKaiSpeech(phrase);
-    // Tiempo de lectura dinámico y pausado: mínimo 9 segundos
-    const calculatedDuration = durationMs || Math.max(9000, phrase.length * 110);
+    // Tiempo de lectura ágil y discreto: ~6 segundos
+    const calculatedDuration = durationMs || Math.max(5800, Math.min(9500, phrase.length * 75));
     speechTimerRef.current = setTimeout(() => {
       setKaiSpeech(null);
       speechTimerRef.current = null;
@@ -112,7 +111,6 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
   const copy = useNarrativeCopy();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [showQuickChat, setShowQuickChat] = useState(false);
   const [hasRecentVictory, setHasRecentVictory] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -286,7 +284,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
         label: 'Tareas',
         categoryBadge: 'TAREAS',
         type: 'page',
-        icon: <Icon name="checkCircle" className="w-5 h-5" />,
+        icon: <Icon name="checkCircle" className="w-[18px] h-[18px]" />,
         accentColor: '#00f0ff',
         glowColor: 'rgba(0, 240, 255, 0.45)',
         liveStat: pendingTodayTasks > 0 ? `${pendingTodayTasks} pendientes` : 'Completas',
@@ -297,7 +295,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
         label: 'Diario',
         categoryBadge: 'BITÁCORA',
         type: 'page',
-        icon: <Icon name="bookOpen" className="w-5 h-5" />,
+        icon: <Icon name="bookOpen" className="w-[18px] h-[18px]" />,
         accentColor: '#38bdf8',
         glowColor: 'rgba(56, 189, 248, 0.45)',
         liveStat: 'Reflexión diaria',
@@ -308,7 +306,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
         label: 'Tienda',
         categoryBadge: 'ARSENAL',
         type: 'page',
-        icon: <Icon name="shoppingBag" className="w-5 h-5" />,
+        icon: <Icon name="shoppingBag" className="w-[18px] h-[18px]" />,
         accentColor: '#10b981',
         glowColor: 'rgba(16, 185, 129, 0.45)',
         liveStat: `${coins} Monedas`,
@@ -319,7 +317,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
         label: 'Lab',
         categoryBadge: 'MAESTRÍA',
         type: 'page',
-        icon: <Icon name="flask" className="w-5 h-5" />,
+        icon: <Icon name="flask" className="w-[18px] h-[18px]" />,
         accentColor: '#8b5cf6',
         glowColor: 'rgba(139, 92, 246, 0.45)',
         liveStat: 'Árbol de talentos',
@@ -330,7 +328,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
         label: 'Perfil',
         categoryBadge: 'RANGO',
         type: 'page',
-        icon: <Icon name="barChart" className="w-5 h-5" />,
+        icon: <Icon name="barChart" className="w-[18px] h-[18px]" />,
         accentColor: '#06b6d4',
         glowColor: 'rgba(6, 182, 212, 0.45)',
         liveStat: `Nivel ${level} • ${rankTitle}`,
@@ -341,21 +339,32 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
         label: 'Ajustes',
         categoryBadge: 'SISTEMA',
         type: 'page',
-        icon: <Icon name="settings" className="w-5 h-5" />,
+        icon: <Icon name="settings" className="w-[18px] h-[18px]" />,
         accentColor: '#ec4899',
         glowColor: 'rgba(236, 72, 153, 0.45)',
         liveStat: 'Configuración',
         action: () => setActiveTab('settings'),
       },
       {
+        id: 'voice',
+        label: 'Voz',
+        categoryBadge: 'VOZ',
+        type: 'gadget',
+        icon: <Icon name="mic" className="w-[18px] h-[18px]" />,
+        accentColor: '#e879f9',
+        glowColor: 'rgba(232, 121, 249, 0.45)',
+        liveStat: 'Dictar a KAI',
+        action: () => openVoiceDictation(),
+      },
+      {
         id: 'workshop',
         label: 'Taller KAI',
         categoryBadge: 'FORJA',
         type: 'gadget',
-        icon: <Icon name="palette" className="w-5 h-5" />,
+        icon: <Icon name="palette" className="w-[18px] h-[18px]" />,
         accentColor: '#d946ef',
         glowColor: 'rgba(217, 70, 239, 0.5)',
-        liveStat: '',
+        liveStat: 'Forja & Bóveda',
         action: () => {
           if (onOpenKaiWorkshop) onOpenKaiWorkshop();
         },
@@ -365,7 +374,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
         label: 'Foco',
         categoryBadge: 'POMODORO',
         type: 'gadget',
-        icon: <Icon name="timer" className="w-5 h-5" />,
+        icon: <Icon name="timer" className="w-[18px] h-[18px]" />,
         accentColor: '#f43f5e',
         glowColor: 'rgba(244, 63, 94, 0.45)',
         liveStat: isTimerRunning ? 'En curso' : '25:00 min',
@@ -376,7 +385,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
         label: 'Oráculo',
         categoryBadge: 'NEURAL',
         type: 'gadget',
-        icon: <Icon name="sparkles" className="w-5 h-5" />,
+        icon: <Icon name="sparkles" className="w-[18px] h-[18px]" />,
         accentColor: '#eab308',
         glowColor: 'rgba(234, 179, 8, 0.55)',
         liveStat: 'Mente & Estrategia',
@@ -391,7 +400,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
         label: 'Finanzas',
         categoryBadge: 'FINANZAS',
         type: 'gadget',
-        icon: <Icon name="wallet" className="w-5 h-5" />,
+        icon: <Icon name="wallet" className="w-[18px] h-[18px]" />,
         accentColor: '#10b981',
         glowColor: 'rgba(16, 185, 129, 0.45)',
         liveStat: 'Ingresos/Gastos',
@@ -404,7 +413,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
         label: 'Diagnóstico',
         categoryBadge: 'NEURAL',
         type: 'gadget',
-        icon: <Icon name="brain" className="w-5 h-5" />,
+        icon: <Icon name="brain" className="w-[18px] h-[18px]" />,
         accentColor: '#00f0ff',
         glowColor: 'rgba(0, 240, 255, 0.55)',
         liveStat: 'Simulador & IA',
@@ -423,7 +432,7 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
       setActiveTab,
       setModalState,
       onOpenOracleWithPrompt,
-      openTaskForm,
+      openVoiceDictation,
       onOpenFinance,
       onOpenKaiWorkshop,
       onOpenNeuralAnalysis,
@@ -452,21 +461,12 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
     const now = Date.now();
     if (now < lastToggleTimeRef.current || now - lastToggleTimeRef.current < 160) return;
     lastToggleTimeRef.current = now;
-    // Si el menú está cerrado, mostrar el chat rápido primero en lugar de abrir el menú radial
-    if (!isMenuOpen && !showQuickChat) {
-      soundFX.playClick();
-      triggerHaptic(20);
-      setShowQuickChat(true);
-      return;
-    }
-    if (showQuickChat) {
-      setShowQuickChat(false);
-      return;
-    }
+    // 1 solo clic abre o cierra directamente la órbita satelital (sin paso intermedio)
+    clearSpeech();
     soundFX.playClick();
-    triggerHaptic(20);
+    triggerHaptic(18);
     setIsMenuOpen((prev) => !prev);
-  }, [isMenuOpen, showQuickChat]);
+  }, [clearSpeech]);
 
   const handleSelectItem = useCallback((item: SatelliteHubItem) => {
     soundFX.playClick();
@@ -506,19 +506,18 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
 
   return (
     <>
-      {/* TELÓN DE CIERRE GLOBAL */}
+      {/* VELO TRANSLÚCIDO SUAVE (Deja respirar tu app detrás sin apagar la pantalla) */}
       <AnimatePresence>
         {isMenuOpen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.14 }}
-            className="fixed inset-0 z-[55] bg-black/70 pointer-events-auto cursor-pointer"
+            transition={{ duration: 0.18 }}
+            className="fixed inset-0 z-[55] bg-[#020612]/38 backdrop-blur-[4px] pointer-events-auto cursor-pointer"
             onClick={(e) => {
               e.stopPropagation();
               setIsMenuOpen(false);
-              setShowQuickChat(false);
             }}
           />
         )}
@@ -559,133 +558,81 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
         }
       >
         <div className="relative flex flex-col items-center touch-none">
-          {/* Micro-Transmisión e Interacción de KAI / Oráculo (Siempre al frente) */}
+          {/* Cápsula de Cristal Minimalista para Diálogos de KAI (Estilo Dynamic Island) */}
           <AnimatePresence>
-            {kaiSpeech && (
+            {kaiSpeech && !isMenuOpen && (
               <motion.div
-                role="dialog"
-                aria-label="Mensaje del Oráculo KAI"
-                initial={{ opacity: 0, y: 12, scale: 0.92 }}
+                role="status"
+                aria-label="Mensaje de KAI"
+                initial={{ opacity: 0, y: 8, scale: 0.96 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -8, scale: 0.92 }}
-                transition={{ duration: 0.25, ease: 'easeOut' }}
+                exit={{ opacity: 0, y: 6, scale: 0.96 }}
+                transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                 onMouseEnter={() => {
-                  // Pausar auto-cierre mientras el usuario pasa el mouse para lectura tranquila
                   if (speechTimerRef.current) {
                     clearTimeout(speechTimerRef.current);
                     speechTimerRef.current = null;
                   }
                 }}
-                className="absolute bottom-full mb-3.5 right-0 sm:right-auto sm:left-1/2 sm:-translate-x-1/2 w-[280px] sm:w-[320px] p-3 rounded-2xl bg-[#030d1d]/95 border border-cyan-400/80 shadow-[0_12px_40px_rgba(0,240,255,0.4),0_0_20px_rgba(0,240,255,0.25)] backdrop-blur-xl text-white z-[110] pointer-events-auto select-auto"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  soundFX.playClick();
+                  clearSpeech();
+                }}
+                className={`absolute bottom-full mb-2.5 ${
+                  handDominance === 'left' ? 'left-0' : 'right-0'
+                } w-[250px] sm:w-[290px] px-3 py-2.5 rounded-2xl bg-[#060c18]/85 border border-white/12 shadow-[0_10px_30px_rgba(0,0,0,0.55)] backdrop-blur-2xl text-slate-100 z-[110] pointer-events-auto cursor-pointer group`}
               >
-                {/* Flecha indicadora apuntando a KAI */}
-                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-cyan-400/90" />
+                <div className="flex items-start gap-2.5">
+                  {/* Hilo vertical sutil con el color del aura */}
+                  <span
+                    className="w-[2px] self-stretch rounded-full shrink-0 opacity-85"
+                    style={{ backgroundColor: 'var(--aura-color-1, #00f0ff)' }}
+                    aria-hidden="true"
+                  />
 
-                {/* Header con título y botón de cierre X */}
-                <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-cyan-500/25">
-                  <div className="flex items-center gap-1.5 text-cyan-300 font-bold text-[11px] font-mono tracking-wider uppercase">
-                    <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
-                    <span>Oráculo KAI</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      soundFX.playClick();
-                      clearSpeech();
-                    }}
-                    className="w-5 h-5 rounded-lg bg-white/10 hover:bg-white/25 text-slate-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer text-xs font-bold active:scale-95"
-                    aria-label="Cerrar mensaje"
-                    title="Cerrar (X)"
-                  >
-                    ✕
-                  </button>
-                </div>
+                  {/* Texto limpio sin cajas ni comillas innecesarias */}
+                  <p className="text-[12px] font-sans font-normal text-slate-100/95 leading-snug text-left flex-1">
+                    {kaiSpeech}
+                  </p>
 
-                {/* Mensaje principal legible */}
-                <p className="text-[12px] sm:text-[12.5px] font-sans font-medium text-slate-100 leading-snug text-left py-0.5">
-                  "{kaiSpeech}"
-                </p>
-
-                {/* Barra de interacción y respuesta */}
-                <div className="mt-2.5 pt-2 border-t border-white/10 flex items-center gap-1.5 justify-end">
-                  {onOpenOracleWithPrompt && (
+                  {/* Micro-acciones ultra discretas */}
+                  <div className="flex items-center gap-1 shrink-0 -mr-0.5">
+                    {onOpenOracleWithPrompt && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          soundFX.playClick();
+                          const contextPrompt = `KAI me comentó: "${kaiSpeech}". ¿Qué me recomiendas hacer ahora?`;
+                          clearSpeech();
+                          onOpenOracleWithPrompt(contextPrompt);
+                        }}
+                        className="w-6 h-6 rounded-full bg-white/[0.05] hover:bg-cyan-500/20 text-cyan-300/80 hover:text-cyan-200 flex items-center justify-center transition-colors cursor-pointer"
+                        title="Responder en el Oráculo"
+                        aria-label="Responder en el Oráculo"
+                      >
+                        <Icon name="sparkles" className="w-3 h-3" />
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         soundFX.playClick();
-                        const contextPrompt = `KAI me acaba de decir: "${kaiSpeech}". ¿Qué me recomiendas hacer ahora?`;
                         clearSpeech();
-                        onOpenOracleWithPrompt(contextPrompt);
                       }}
-                      className="px-2.5 py-1 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/35 border border-cyan-400/50 text-cyan-300 hover:text-cyan-100 text-[10.5px] font-mono font-bold flex items-center gap-1 transition-all cursor-pointer shadow-sm active:scale-95"
-                      title="Abrir conversación con el Oráculo"
+                      className="w-6 h-6 rounded-full hover:bg-white/10 text-slate-400/75 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+                      aria-label="Cerrar mensaje"
+                      title="Cerrar"
                     >
-                      <Icon name="sparkles" className="w-3 h-3 text-cyan-400" />
-                      <span>Responder al Oráculo</span>
+                      <Icon name="x" className="w-3 h-3" />
                     </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      soundFX.playClick();
-                      clearSpeech();
-                    }}
-                    className="px-2 py-1 rounded-xl bg-white/[0.08] hover:bg-white/20 text-slate-300 hover:text-white text-[10.5px] font-mono font-medium transition-colors cursor-pointer active:scale-95"
-                  >
-                    Entendido
-                  </button>
+                  </div>
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
-
-          {/* Panel de Chat Rápido con KAI */}
-          {showQuickChat && !kaiSpeech && (
-            <div
-              className="absolute bottom-[calc(100%+12px)] right-0 w-72 bg-[#040d1e]/95 border border-cyan-500/40 rounded-2xl shadow-[0_0_30px_rgba(0,0,0,0.9),0_0_20px_rgba(0,240,255,0.15)] z-[115] overflow-hidden"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="px-3 pt-3 pb-2 border-b border-white/10 flex items-center justify-between">
-                <span className="text-xs font-bold text-cyan-300">¿En qué te ayudo?</span>
-                <button
-                  type="button"
-                  onClick={() => setShowQuickChat(false)}
-                  className="text-slate-500 hover:text-white text-xs cursor-pointer"
-                >✕</button>
-              </div>
-              <div className="p-2.5 space-y-1.5">
-                {[
-                  { label: '🎙️ Dictar tareas o hábitos por voz', action: () => { setShowQuickChat(false); openVoiceDictation(); } },
-                  { label: '⚡ Organiza mi día de hoy', action: () => { setShowQuickChat(false); if (onOpenOracleWithPrompt) onOpenOracleWithPrompt('Organiza mi día de hoy con las tareas que tengo pendientes. Dame un horario realista.'); } },
-                  { label: '🎯 ¿Por qué tarea empiezo?', action: () => { setShowQuickChat(false); if (onOpenOracleWithPrompt) onOpenOracleWithPrompt('Tengo varias tareas. ¿Cuál debería hacer primero para ser más productivo hoy?'); } },
-                  { label: '🧘 Dame motivación ahora', action: () => { speakKai('Cada tarea que completas es un paso hacia quien quieres ser. ¡Vamos, tú puedes!'); setShowQuickChat(false); } },
-                  { label: '➕ Agrégame una tarea', action: () => { setShowQuickChat(false); openTaskForm('task'); } },
-                  { label: '📋 Ver plantillas de rutina', action: () => { setShowQuickChat(false); if (onOpenOracleWithPrompt) onOpenOracleWithPrompt(''); } },
-                ].map(({ label, action }) => (
-                  <button
-                    key={label}
-                    type="button"
-                    onClick={action}
-                    className="w-full text-left px-3 py-2 rounded-xl bg-white/[0.04] hover:bg-cyan-950/60 border border-white/10 hover:border-cyan-500/40 text-sm text-slate-200 hover:text-white transition-all cursor-pointer active:scale-[0.98] flex items-center gap-2"
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-              <div className="px-3 pb-2.5">
-                <button
-                  type="button"
-                  onClick={() => { setShowQuickChat(false); setIsMenuOpen(true); }}
-                  className="w-full py-2 rounded-xl bg-cyan-400/10 hover:bg-cyan-400/20 border border-cyan-400/30 text-cyan-300 text-xs font-mono font-bold transition-all cursor-pointer"
-                >
-                  Ver todas las opciones →
-                </button>
-              </div>
-            </div>
-          )}
 
           {/* Badge de pomodoro si está corriendo (aislado en micro-componente para 0 re-renders a 1 Hz) */}
           {!isMenuOpen && (
