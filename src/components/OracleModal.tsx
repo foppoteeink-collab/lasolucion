@@ -29,6 +29,7 @@ import {
   generateScheduleFrontend, 
   hasActiveGeminiKey, 
   getEffectiveGeminiApiKey, 
+  getCustomUserApiKey,
   saveGeminiApiKey, 
   removeGeminiApiKey 
 } from '../services/aiService';
@@ -75,7 +76,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
   // Gemini API Key state inside Oracle
   const [isKeyConfigured, setIsKeyConfigured] = useState(() => hasActiveGeminiKey());
   const [showKeyInput, setShowKeyInput] = useState(false);
-  const [inputKey, setInputKey] = useState(() => getEffectiveGeminiApiKey() || '');
+  const [inputKey, setInputKey] = useState(() => getCustomUserApiKey() || '');
   const [keySavedToast, setKeySavedToast] = useState<string | null>(null);
   const [showKeyText, setShowKeyText] = useState(false);
 
@@ -97,7 +98,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
       soundFX.playOracleAtmosphere();
       const active = hasActiveGeminiKey();
       setIsKeyConfigured(active);
-      setInputKey(getEffectiveGeminiApiKey() || '');
+      setInputKey(getCustomUserApiKey() || '');
       // Solo forzar 'local' si no hay clave Gemini Y no hay preferencia guardada
       if (!active && !localStorage.getItem('kai_oracle_engine_preference')) {
         setEnginePreference('local');
@@ -794,7 +795,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                       type={showKeyText ? 'text' : 'password'}
                       value={inputKey}
                       onChange={(e) => setInputKey(e.target.value)}
-                      placeholder="AIzaSy... (Pega tu clave de Google Gemini aquí)"
+                      placeholder={hasActiveGeminiKey() ? "✓ Clave del sistema activa (o pega tu clave personalizada)" : "AIzaSy... (Pega tu clave de Google Gemini aquí)"}
                       className="w-full bg-black/60 border border-white/15 focus:aura-border-primary rounded-xl px-3 py-2 text-xs text-white font-mono placeholder:text-slate-500 outline-none pr-14"
                     />
                     <button

@@ -32,8 +32,8 @@ jobs:
       - name: Static Typecheck (TypeScript)
         run: npm run lint
 
-      - name: Execute Resilient Unit Tests
-        run: npx tsx src/utils/level3Systems.test.ts
+      - name: Execute Full Resilient Unit Test Suite
+        run: npm test
 
       - name: Build Production Bundle (Vite)
         run: npm run build

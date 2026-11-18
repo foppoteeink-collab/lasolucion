@@ -19,11 +19,27 @@ import {
 import { FINANCE_EXPENSE_CATEGORIES, FINANCE_INCOME_CATEGORIES } from '../utils/finance';
 import { detectHabitEnergy, HABIT_ENERGY_DETAILS } from '../utils/habitEnergyDetector';
 
-export function getEffectiveGeminiApiKey(): string | null {
+export function getCustomUserApiKey(): string | null {
   if (typeof window !== 'undefined') {
     const custom = window.localStorage.getItem('lasolucion_gemini_api_key');
     if (custom && custom.trim()) return custom.trim();
   }
+  return null;
+}
+
+export function getEffectiveGeminiApiKey(): string | null {
+  // 1. User custom override has highest priority
+  const custom = getCustomUserApiKey();
+  if (custom) return custom;
+
+  // 2. Vite environment variable fallback (e.g. from .env / .env.local)
+  try {
+    const envKey = (import.meta as any).env?.VITE_GEMINI_API_KEY || (import.meta as any).env?.GEMINI_API_KEY;
+    if (typeof envKey === 'string' && envKey.trim()) {
+      return envKey.trim();
+    }
+  } catch {}
+
   return null;
 }
 
