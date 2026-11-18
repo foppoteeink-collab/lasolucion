@@ -67,7 +67,7 @@ export const LegendaryBountyCard: React.FC<LegendaryBountyCardProps> = ({
       ref={cardRef}
       style={vidrioStyle}
       role="region"
-      aria-label="Misión legendaria del día"
+      aria-label="Objetivo prioritario del día"
       onClick={(e) => {
         if ((e.target as HTMLElement).closest('button')) return;
         onOpenEditModal(task);
@@ -104,7 +104,7 @@ export const LegendaryBountyCard: React.FC<LegendaryBountyCardProps> = ({
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="optic-active-card text-[10.5px] font-mono font-bold tracking-wider px-2 py-0.5 rounded-md bg-amber-400 text-black shadow-sm">
-                MISIÓN LEGENDARIA · 2X
+                OBJETIVO PRIORITARIO · 2X
               </span>
               {task.timeBlock && (
                 <span className="text-[10px] font-mono font-bold aura-text-primary bg-[#040814]/90 px-2 py-0.5 rounded-md border aura-border-subtle flex items-center gap-1 tabular-nums">

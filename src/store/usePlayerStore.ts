@@ -72,6 +72,7 @@ const INITIAL_PLAYER_STATS: PlayerStats = {
   sleepLogs: {},
   kaiShape: 'prism',
   kaiAuraColor: '#00f0ff',
+  kaiAuraIntensity: 'normal',
   kaiParticleEffect: 'none',
   kaiCustomForm: null,
   kaiVault: [],
@@ -170,27 +171,8 @@ export const usePlayerStore = create<PlayerState>()(
         return { stats: nextStats };
       }),
 
-      takeDamage: (amount) => {
-        let result = { died: false, xpLost: 0, coinsLost: 0 };
-        let shouldOpenCollapse = false;
-
-        set((state) => {
-          const currentHp = state.stats.hp ?? 100;
-          const newHp = Math.max(0, currentHp - amount);
-          
-          if (newHp <= 0) {
-            result.died = true;
-            shouldOpenCollapse = true;
-            return { stats: { ...state.stats, hp: 0 } };
-          } else {
-            return { stats: { ...state.stats, hp: newHp } };
-          }
-        });
-
-        if (shouldOpenCollapse) {
-          useUIStore.getState().setModalState('isHunterCollapseOpen', true);
-        }
-        return result;
+      takeDamage: (_amount) => {
+        return { died: false, xpLost: 0, coinsLost: 0 };
       },
 
       revivePlayer: (method: 'xp' | 'coins') => {
@@ -485,13 +467,8 @@ export const usePlayerStore = create<PlayerState>()(
         useUIStore.getState().setModalState('isLevelUpOpen', true);
       },
 
-      triggerSurpriseBoss: (data) => {
-        const bossInfo = {
-          archetypeName: data?.archetypeName || 'Comandante de la Procrastinación',
-          buffName: data?.buffName || 'Incursión Táctica Indeseada',
-          buffDescription: data?.buffDescription || 'Se ha detectado una fluctuación de rendimiento. Neutraliza tus tareas pendientes para evitar penalizaciones de HP.'
-        };
-        useUIStore.getState().openSurpriseBoss(bossInfo);
+      triggerSurpriseBoss: (_data) => {
+        // No-op: Bosses sorpresa eliminados
       },
 
       addLootBoxes: (count) => set((state) => ({

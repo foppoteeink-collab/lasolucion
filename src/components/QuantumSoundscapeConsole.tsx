@@ -25,6 +25,9 @@ import {
   Zap,
   Sparkles,
   Check,
+  CloudRain,
+  Trees,
+  Heart,
 } from 'lucide-react';
 import { soundFX } from '../utils/audio';
 import { triggerHaptic } from '../utils/haptics';
@@ -40,19 +43,51 @@ export const QuantumSoundscapeConsole: React.FC<QuantumSoundscapeConsoleProps> =
 }) => {
   const [state, setState] = useState<SoundscapeState>(quantumSoundscape.getState());
   const [focusedInfo, setFocusedInfo] = useState<{ title: string; desc: string } | null>(null);
+  const [activeNatureLayers, setActiveNatureLayers] = useState<('rain' | 'fire' | 'forest' | 'heartbeat')[]>(() => {
+    return soundFX.getActiveAmbientLayers();
+  });
 
   useEffect(() => {
     const unsub = quantumSoundscape.subscribe((s) => setState(s));
     return () => unsub();
   }, []);
 
+  const handleToggleNatureLayer = (layer: 'rain' | 'fire' | 'forest' | 'heartbeat', label: string, desc: string) => {
+    soundFX.playClick();
+    triggerHaptic(20);
+    soundFX.toggleAmbientLayer(layer, state.masterVolume);
+    const updated = soundFX.getActiveAmbientLayers();
+    setActiveNatureLayers([...updated]);
+    if (updated.includes(layer)) {
+      setFocusedInfo({
+        title: `Capa Natural • ${label}`,
+        desc,
+      });
+    }
+  };
+
+  const isAnyAudioActive = state.isPlaying || activeNatureLayers.length > 0;
+
   const handleTogglePlay = () => {
     soundFX.playClick();
     triggerHaptic(25);
-    if (!state.isPlaying) {
+    if (isAnyAudioActive) {
+      if (state.isPlaying) {
+        quantumSoundscape.stop(0.25);
+      }
+      if (activeNatureLayers.length > 0) {
+        soundFX.stopAmbientSound();
+        setActiveNatureLayers([]);
+      }
+    } else {
       onActivateQuantum?.();
+      quantumSoundscape.start(0.3);
     }
-    quantumSoundscape.togglePlay();
+  };
+
+  const handleMasterVolume = (val: number) => {
+    quantumSoundscape.setMasterVolume(val);
+    soundFX.setAmbientVolume(val);
   };
 
   const handleChime = () => {
@@ -398,6 +433,77 @@ export const QuantumSoundscapeConsole: React.FC<QuantumSoundscapeConsoleProps> =
         </div>
       </div>
 
+      {/* Capas Acústicas Naturales (Preservadas) */}
+      <div className="p-2.5 rounded-xl border border-white/10 bg-black/45 space-y-2">
+        <div className="flex items-center justify-between px-1">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-200 flex items-center gap-1.5">
+            <CloudRain className="w-3.5 h-3.5 text-sky-400" />
+            <span>Capas Acústicas Naturales</span>
+          </span>
+          <span className="text-[10px] font-mono text-slate-400">
+            {activeNatureLayers.length > 0 ? `${activeNatureLayers.length} activa(s)` : 'Opcional'}
+          </span>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 font-mono text-[10px]">
+          {/* Lluvia */}
+          <button
+            type="button"
+            onClick={() => handleToggleNatureLayer('rain', 'Lluvia Suave', 'Aislamiento relajante para concentración profunda')}
+            aria-pressed={activeNatureLayers.includes('rain')}
+            className={`px-2.5 py-2 rounded-lg border transition cursor-pointer flex items-center justify-center gap-1.5 ${
+              activeNatureLayers.includes('rain')
+                ? 'aura-bg-soft font-bold optic-active-card'
+                : 'bg-black/60 border-white/10 text-slate-300 hover:text-white'
+            }`}
+          >
+            <CloudRain className="w-3 h-3 text-sky-400" />
+            <span>Lluvia</span>
+          </button>
+          {/* Olas */}
+          <button
+            type="button"
+            onClick={() => handleToggleNatureLayer('fire', 'Olas del Mar', 'Cadencia rítmica natural y reducción de estrés')}
+            aria-pressed={activeNatureLayers.includes('fire')}
+            className={`px-2.5 py-2 rounded-lg border transition cursor-pointer flex items-center justify-center gap-1.5 ${
+              activeNatureLayers.includes('fire')
+                ? 'aura-bg-soft font-bold optic-active-card'
+                : 'bg-black/60 border-white/10 text-slate-300 hover:text-white'
+            }`}
+          >
+            <Waves className="w-3 h-3 text-cyan-400" />
+            <span>Olas</span>
+          </button>
+          {/* Bosque */}
+          <button
+            type="button"
+            onClick={() => handleToggleNatureLayer('forest', 'Bosque Zen', 'Brisa suave y fauna forestal armónica')}
+            aria-pressed={activeNatureLayers.includes('forest')}
+            className={`px-2.5 py-2 rounded-lg border transition cursor-pointer flex items-center justify-center gap-1.5 ${
+              activeNatureLayers.includes('forest')
+                ? 'aura-bg-soft font-bold optic-active-card'
+                : 'bg-black/60 border-white/10 text-slate-300 hover:text-white'
+            }`}
+          >
+            <Trees className="w-3 h-3 text-emerald-400" />
+            <span>Bosque</span>
+          </button>
+          {/* Latido */}
+          <button
+            type="button"
+            onClick={() => handleToggleNatureLayer('heartbeat', 'Latido 60 BPM', 'Coherencia cardíaca y anclaje temporal')}
+            aria-pressed={activeNatureLayers.includes('heartbeat')}
+            className={`px-2.5 py-2 rounded-lg border transition cursor-pointer flex items-center justify-center gap-1.5 ${
+              activeNatureLayers.includes('heartbeat')
+                ? 'aura-bg-soft font-bold optic-active-card'
+                : 'bg-black/60 border-white/10 text-slate-300 hover:text-white'
+            }`}
+          >
+            <Heart className={`w-3 h-3 text-rose-400 ${activeNatureLayers.includes('heartbeat') ? 'animate-pulse' : ''}`} />
+            <span>Latido</span>
+          </button>
+        </div>
+      </div>
+
       {/* Guide Info Banner */}
       <div className="px-3 py-1.5 rounded-xl bg-black/40 border border-white/10 flex items-center gap-2 text-[11px] font-mono" role="status">
         <Info className="w-3.5 h-3.5 aura-text-primary shrink-0" />
@@ -418,7 +524,7 @@ export const QuantumSoundscapeConsole: React.FC<QuantumSoundscapeConsoleProps> =
             max="1"
             step="0.02"
             value={state.masterVolume}
-            onChange={(e) => quantumSoundscape.setMasterVolume(parseFloat(e.target.value))}
+            onChange={(e) => handleMasterVolume(parseFloat(e.target.value))}
             aria-label="Volumen Master de Paisaje Sonoro"
             aria-valuemin={0}
             aria-valuemax={100}
@@ -467,15 +573,15 @@ export const QuantumSoundscapeConsole: React.FC<QuantumSoundscapeConsoleProps> =
           <button
             type="button"
             onClick={handleTogglePlay}
-            aria-pressed={state.isPlaying}
-            aria-label={state.isPlaying ? 'Silenciar paisaje sonoro' : 'Activar paisaje sonoro'}
+            aria-pressed={isAnyAudioActive}
+            aria-label={isAnyAudioActive ? 'Silenciar todo el paisaje sonoro' : 'Activar paisaje sonoro'}
             className={`chicle-btn px-3 py-1 rounded-xl text-[10px] font-bold uppercase transition cursor-pointer flex items-center gap-1 ${
-              state.isPlaying
+              isAnyAudioActive
                 ? 'bg-rose-500/20 border border-rose-500/60 text-rose-300 hover:bg-rose-500/30'
                 : 'aura-btn-gradient optic-active-card'
             }`}
           >
-            {state.isPlaying ? (
+            {isAnyAudioActive ? (
               <>
                 <Pause className="w-3 h-3 fill-current" />
                 <span>Silenciar</span>

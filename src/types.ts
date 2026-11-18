@@ -138,6 +138,7 @@ export interface PlayerStats {
   // ─── Ecosistema Infinito de KAI ─────────────────────────────
   kaiShape?: KaiShapeKey;
   kaiAuraColor?: string;
+  kaiAuraIntensity?: KaiAuraIntensity;
   kaiParticleEffect?: string;
   kaiCustomForm?: KaiCustomForm | null;
   kaiVault?: KaiCustomForm[];
@@ -184,6 +185,7 @@ export type MonetizationFeatureKey =
   | 'priority_support';
 
 export type KaiShapeKey = 'prism' | 'custom';
+export type KaiAuraIntensity = 'subtle' | 'normal' | 'radiant';
 export type KaiMultiverseStyle =
   | 'pixar'
   | 'cartoon'

@@ -190,26 +190,12 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
       }));
     }
 
-    // Health mechanics
-    if (isRestDay) {
-      soundFX.playHeal();
-    } else if (completionRate >= 80) {
+    // Health & Rest
+    if (isRestDay || completionRate >= 80) {
       playerStore.heal(40);
       soundFX.playHeal();
     } else {
-      const incompleteImportant = allTasks.filter(t =>
-        !t.completed && (t.priority === 'alta' || t.priority === 'epica' || t.isHabit || t.category === 'habito')
-      );
-      let totalDamage = 0;
-      incompleteImportant.forEach(t => {
-        if (t.priority === 'epica') totalDamage += 8;
-        else if (t.priority === 'alta') totalDamage += 4;
-        else totalDamage += 2;
-      });
-      if (totalDamage > 0) {
-        const dmg = playerStore.takeDamage(totalDamage);
-        window.dispatchEvent(new CustomEvent('player-damage', { detail: { amount: totalDamage, ...dmg } }));
-      }
+      playerStore.heal(20);
     }
 
     // Journal Entry

@@ -319,6 +319,6 @@ export const NARRATIVE_COPY: Record<NarrativeMode, NarrativeCopySet> = {
   },
 };
 
-export function getNarrativeCopy(mode: NarrativeMode = 'tactical'): NarrativeCopySet {
-  return NARRATIVE_COPY[mode] || NARRATIVE_COPY.tactical;
+export function getNarrativeCopy(mode: NarrativeMode = 'minimal'): NarrativeCopySet {
+  return NARRATIVE_COPY[mode] || NARRATIVE_COPY.minimal;
 }

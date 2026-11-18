@@ -23,16 +23,17 @@ import {
   Link,
   Plus,
   Volume2,
-  Share2
+  Share2,
+  Sun
 } from 'lucide-react';
 import { usePlayerStore } from '../store/usePlayerStore';
 import { useAppStore } from '../store/useAppStore';
 import { useTaskStore } from '../store/useTaskStore';
 import { useUIStore } from '../store/useUIStore';
-import { KAI_OFFICIAL_SHAPES, KAI_AURAS_REGISTRY, KAI_MULTIVERSE_STYLES, KaiShapeDefinition } from '../data/kaiShapes';
+import { KAI_OFFICIAL_SHAPES, KAI_AURAS_REGISTRY, KAI_AURA_INTENSITY_OPTIONS, KAI_MULTIVERSE_STYLES, KaiShapeDefinition } from '../data/kaiShapes';
 import { KaiVectorGraphics } from './KaiVectorGraphics';
 import { KAICompanion } from './KAICompanion';
-import { KaiShapeKey, KaiCustomForm, KaiMultiverseStyle, KaiTemperament } from '../types';
+import { KaiShapeKey, KaiCustomForm, KaiMultiverseStyle, KaiTemperament, KaiAuraIntensity } from '../types';
 import { soundFX } from '../utils/audio';
 import { triggerShockwave } from '../utils/celebration';
 import { forgeKaiFromImage, forgeAllKaiVariantsFromImage } from '../services/aiService';
@@ -395,6 +396,16 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
     }));
   };
 
+  const handleSelectAuraIntensity = (intensity: KaiAuraIntensity) => {
+    soundFX.playClick();
+    setStats((prev) => ({
+      ...prev,
+      kaiAuraIntensity: intensity,
+    }));
+  };
+
+  const currentAuraIntensity: KaiAuraIntensity = stats.kaiAuraIntensity || 'normal';
+
   const handleSelectParticle = (particle: string) => {
     soundFX.playItemEquip();
     setStats((prev) => ({
@@ -634,6 +645,66 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
       };
     });
   };
+
+  const renderAuraIntensityPanel = () => (
+    <div className="p-4 rounded-2xl bg-[#040814]/90 border border-white/10 flex flex-col sm:flex-row items-center gap-4">
+      {/* Vista previa en vivo sobre el fondo oscuro real de la app (#030712) */}
+      <div
+        className="w-24 h-24 shrink-0 rounded-2xl bg-[#030712] border border-white/10 flex items-center justify-center relative overflow-hidden shadow-inner"
+        data-preserve-optic="true"
+      >
+        <KAICompanion
+          size={62}
+          interactive={false}
+          auraIntensity={currentAuraIntensity}
+        />
+      </div>
+
+      {/* Selector de Intensidad */}
+      <div className="flex-1 w-full space-y-2.5">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h4 className="text-xs font-black uppercase text-slate-200 tracking-wider flex items-center gap-2">
+            <Sun className="w-4 h-4 text-cyan-400" />
+            <span>Intensidad del Aura &amp; Visibilidad</span>
+          </h4>
+          <span className="text-[10px] font-mono text-slate-400">
+            Contraluz + borde luminoso
+          </span>
+        </div>
+
+        <p className="text-[11px] text-slate-400 leading-snug">
+          Ajusta el resplandor detrás y alrededor de la silueta para que KAI nunca se pierda sobre fondos oscuros.
+        </p>
+
+        <div className="grid grid-cols-3 gap-2">
+          {KAI_AURA_INTENSITY_OPTIONS.map((opt) => {
+            const isActive = currentAuraIntensity === opt.id;
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                aria-pressed={isActive}
+                onClick={() => handleSelectAuraIntensity(opt.id)}
+                className={`px-3 py-2 rounded-xl border text-left transition-all cursor-pointer active:scale-95 ${
+                  isActive
+                    ? 'bg-cyan-500/15 border-cyan-400/80 shadow-[0_0_16px_rgba(0,240,255,0.22)] text-white'
+                    : 'bg-black/40 border-white/10 hover:border-white/25 text-slate-300 hover:text-white'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-1">
+                  <span className="text-xs font-bold block">{opt.label}</span>
+                  {isActive && <Check className="w-3.5 h-3.5 text-cyan-300 shrink-0" />}
+                </div>
+                <span className="text-[9.5px] text-slate-400 block mt-0.5 leading-tight">
+                  {opt.tagline}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
 
   return createPortal(
     <div
@@ -1166,16 +1237,12 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
               {/* Resumen de Ascensión */}
               <div className="p-5 rounded-3xl bg-[#040a1a]/[0.94] border border-amber-500/40 shadow-[0_8px_28px_rgba(245,158,11,0.12)] flex flex-col md:flex-row items-center justify-between gap-5">
                 <div className="flex items-center gap-4">
-                  <div className="w-20 h-20 shrink-0 relative flex items-center justify-center bg-black/60 rounded-2xl border border-amber-500/40 p-1" data-preserve-optic="true">
-                    <KaiVectorGraphics
-                      shapeId={stats.kaiShape || 'prism'}
-                      activeColor={has66Days ? '#fbbf24' : systemPalette.c1}
-                      secondaryColor={systemPalette.c2}
-                      glowFilterId="ascension-hero"
-                      has21Days={has21Days}
-                      has66Days={has66Days}
-                      ascensionCrystalsCount={ascensionCrystals}
-                      customForm={stats.kaiCustomForm}
+                  <div className="w-20 h-20 shrink-0 relative flex items-center justify-center bg-[#030712] rounded-2xl border border-amber-500/40 p-1 overflow-hidden" data-preserve-optic="true">
+                    <KAICompanion
+                      size={60}
+                      interactive={false}
+                      auraColor={has66Days ? '#fbbf24' : undefined}
+                      auraIntensity={currentAuraIntensity}
                     />
                   </div>
 
@@ -1260,6 +1327,9 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                   </div>
                 </div>
               </div>
+
+              {/* Selector de Intensidad del Aura (Contraluz + Rim Light) */}
+              {renderAuraIntensityPanel()}
 
               {/* Selector de Auras Elementales Desbloqueadas */}
               <div className="space-y-3">
@@ -1893,43 +1963,55 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                   <Shield className="w-5 h-5 text-cyan-300" />
                   <div>
                     <span className="text-xs font-black uppercase text-cyan-300 block tracking-wide">
-                      Efectos de Partículas & Cosméticos de KAI
+                      Resplandor y Auras de KAI
                     </span>
                     <p className="text-[11px] text-slate-300">
-                      Equipa efectos de fondo holográficos. Puedes adquirir nuevos módulos con las Monedas del juego en la Tienda.
+                      Los efectos avanzados se desbloquean con tu constancia real en hábitos (hitos de 21 y 66 días).
                     </p>
                   </div>
                 </div>
 
-                {onOpenShop && (
-                  <button
-                    type="button"
-                    onClick={() => { onClose(); onOpenShop(); }}
-                    className="px-3 py-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500 hover:text-black border border-cyan-400 text-cyan-200 text-xs font-bold transition-all cursor-pointer whitespace-nowrap"
-                  >
-                    Ir a la Tienda
-                  </button>
-                )}
+                <div className="flex items-center gap-2 text-[11px] font-mono text-slate-400">
+                  <span className="text-amber-400 font-bold">{habits21Count}</span> a 21d · <span className="text-amber-400 font-bold">{habits66Count}</span> a 66d
+                </div>
               </div>
+
+              {/* Selector de Intensidad del Aura (Contraluz + Rim Light) */}
+              {renderAuraIntensityPanel()}
 
               {/* Grid de Efectos */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
-                  { id: 'none', name: 'Presencia Pura', icon: '⚪', badge: 'CANÓNICO', desc: 'Silueta limpia y minimalista sin accesorios.' },
-                  { id: 'plasma_lightning', name: 'Rayos de Plasma', icon: '⚡', badge: 'ALTO VOLTAJE', desc: 'Arcos eléctricos crepitando con resplandor neón en tiempo real.' },
-                  { id: 'wings', name: 'Alas Cibernéticas', icon: '🪽', badge: 'AERO TÁCTICO', desc: 'Alas biomecánicas holográficas desplegadas a ambos lados.' },
-                  { id: 'hex_shield', name: 'Escudo Hexagonal', icon: '🛡️', badge: 'CAMPO FUERZA', desc: 'Cúpula protectora con rejilla de colmena giratoria.' },
-                  { id: 'solar', name: 'Corona & Orbes', icon: '👑', badge: 'ASCENSIÓN', desc: 'Corona dorada con 3 orbes de energía en órbita continua.' },
-                  { id: 'hud_visor', name: 'Visor HUD Militar', icon: '🎯', badge: 'CYBER TÁCTICO', desc: 'Retícula de combate con escáner láser horizontal activo.' },
-                  { id: 'matrix', name: 'Tormenta Digital', icon: '🟩', badge: 'MATRIX', desc: 'Cascatas de código binario fluyendo alrededor de tu compañero.' },
+                  { id: 'none', name: 'Presencia Pura', icon: '⚪', badge: 'CANÓNICO', desc: 'Silueta limpia y minimalista sin accesorios.', requiredStreak: 0 },
+                  { id: 'plasma_lightning', name: 'Rayos de Plasma', icon: '⚡', badge: 'ENFOQUE', desc: 'Arcos sutiles crepitando con energía mental.', requiredStreak: 0 },
+                  { id: 'hex_shield', name: 'Escudo Protector', icon: '🛡️', badge: 'DISCIPLINA', desc: 'Cúpula protectora con rejilla de colmena giratoria.', requiredStreak: 0 },
+                  { id: 'wings', name: 'Alas Vectoriales', icon: '🪽', badge: 'HÁBITO 21D', desc: 'Desplegadas al superar los 21 días de inercia neuronal.', requiredStreak: 21 },
+                  { id: 'hud_visor', name: 'Visor de Precisión', icon: '🎯', badge: 'HÁBITO 21D', desc: 'Retícula de concentración profunda y claridad.', requiredStreak: 21 },
+                  { id: 'matrix', name: 'Tormenta Digital', icon: '🟩', badge: 'HÁBITO 21D', desc: 'Cascadas de código fluyendo en estado de flujo puro.', requiredStreak: 21 },
+                  { id: 'solar', name: 'Corona & Orbes de Maestría', icon: '👑', badge: 'MAESTRÍA 66D', desc: 'Corona dorada conferida al consolidar un hábito en 66 días.', requiredStreak: 66 },
                 ].map((item) => {
+                  const isUnlocked = item.requiredStreak === 0 || (item.requiredStreak === 21 && has21Days) || (item.requiredStreak === 66 && has66Days);
                   const isEquipped = (stats.kaiParticleEffect || 'none') === item.id;
                   return (
                     <div
                       key={item.id}
-                      onClick={() => handleSelectParticle(item.id)}
+                      onClick={() => {
+                        if (!isUnlocked) {
+                          soundFX.playClick();
+                          triggerHaptic(20);
+                          notificationService.triggerNotification(
+                            '🔒 Resplandor Bloqueado',
+                            `Mantén cualquier hábito por ${item.requiredStreak} días para desbloquear este resplandor de KAI. (Racha actual: ${topStreak}d)`,
+                            '🛡️'
+                          );
+                          return;
+                        }
+                        handleSelectParticle(item.id);
+                      }}
                       className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between ${
-                        isEquipped
+                        !isUnlocked
+                          ? 'bg-[#040814]/40 border-white/5 opacity-60 hover:opacity-80'
+                          : isEquipped
                           ? 'bg-purple-950/40 border-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.3)]'
                           : 'bg-[#040814] border-white/10 hover:border-white/20'
                       }`}
@@ -1937,16 +2019,27 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                       <div>
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-2xl">{item.icon}</span>
-                          <span className="text-[8px] font-mono text-cyan-300 bg-cyan-950/70 border border-cyan-500/30 px-1.5 py-0.5 rounded font-bold tracking-wider">
+                          <span className={`text-[8px] font-mono px-1.5 py-0.5 rounded font-bold tracking-wider ${
+                            !isUnlocked 
+                              ? 'text-slate-500 bg-white/5 border border-white/5'
+                              : 'text-cyan-300 bg-cyan-950/70 border border-cyan-500/30'
+                          }`}>
                             {item.badge}
                           </span>
                         </div>
-                        <h4 className="text-xs font-bold text-white">{item.name}</h4>
+                        <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
+                          <span>{item.name}</span>
+                          {!isUnlocked && <Lock className="w-3 h-3 text-slate-500" />}
+                        </h4>
                         <p className="text-[10px] text-slate-400 mt-1 leading-snug">{item.desc}</p>
                       </div>
 
                       <div className="pt-3 mt-3 border-t border-white/5 flex items-center justify-between">
-                        {isEquipped ? (
+                        {!isUnlocked ? (
+                          <span className="text-[9px] font-mono text-slate-500">
+                            {topStreak}/{item.requiredStreak}d racha
+                          </span>
+                        ) : isEquipped ? (
                           <span className="text-[9px] font-mono text-purple-300 font-bold bg-purple-900/60 border border-purple-400/50 px-2 py-0.5 rounded">
                             Equipado
                           </span>

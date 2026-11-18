@@ -320,9 +320,9 @@
   animation: modalFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-/* Hide floating companion when modals are open on mobile/desktop */
+/* Hide floating companion when modals are open on mobile/desktop (use visibility instead of display:none to preserve SVG <defs> references across the document) */
 body.modal-open-hide-floating .omni-companion-hub-root {
-  display: none !important;
+  visibility: hidden !important;
   pointer-events: none !important;
   opacity: 0 !important;
 }

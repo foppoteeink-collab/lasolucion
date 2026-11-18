@@ -342,6 +342,7 @@ export const KaiVectorGraphics: React.FC<KaiVectorGraphicsProps> = ({
             eyeOffset,
             isTracking: isTrackingMouse,
             isSpeaking: justClicked,
+            scopeId: gradientId,
           });
           const viewBoxMatch = processed.match(/viewBox=["']([^"']+)["']/i);
           const originalViewBox = viewBoxMatch ? viewBoxMatch[1] : '0 0 300 300';

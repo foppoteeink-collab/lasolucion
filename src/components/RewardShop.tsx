@@ -29,7 +29,7 @@ import { calculateDynamicShopCost } from '../utils/level3Systems';
 import { getTodayDateString } from '../utils/date';
 import { useNarrativeCopy } from '../hooks/useNarrativeCopy';
 
-type FilterTab = 'todos' | 'vida_real' | 'perks' | 'kai' | 'descanso' | 'personalizados' | 'mochila';
+type FilterTab = 'todos' | 'vida_real' | 'perks' | 'descanso' | 'personalizados' | 'mochila';
 
 export const RewardShop: React.FC = () => {
   const copy = useNarrativeCopy();
@@ -111,9 +111,6 @@ export const RewardShop: React.FC = () => {
     
     const success = usePlayerStore.getState().purchaseItem(finalCost, (prev) => {
       let extra: any = {};
-      if (reward.id === 'perk-healing-potion') {
-        extra = { hp: Math.min(prev.maxHp || 100, (prev.hp ?? 100) + 30) };
-      }
       if (reward.id === 'perk-streak-shield') {
         extra = { streakShields: Math.min((prev.streakShields || 0) + 1, 3) };
       }
@@ -121,9 +118,6 @@ export const RewardShop: React.FC = () => {
         const now = Date.now();
         const currentExpires = prev.focusPotionExpiresAt || now;
         extra = { focusPotionExpiresAt: Math.max(now, currentExpires) + 3600000 };
-      }
-      if (reward.id === 'kai-neural-core') {
-        extra = { kaiNeuralForgeCharges: (prev.kaiNeuralForgeCharges || 0) + 1 };
       }
       if (reward.id === 'kai-freeze-capsule') {
         const inv = [...(prev.inventory || [])];
@@ -147,23 +141,8 @@ export const RewardShop: React.FC = () => {
       if (reward.id === 'kai-synaptic-booster') {
         extra = { synapticBoosters: (prev.synapticBoosters || 0) + 1 };
       }
-      if (reward.id === 'kai-wings-cyber') {
-        extra = { kaiParticleEffect: 'wings' };
-      }
-      if (reward.id === 'kai-particle-matrix') {
-        extra = { kaiParticleEffect: 'matrix' };
-      }
-      if (reward.id === 'kai-particle-solar') {
-        extra = { kaiParticleEffect: 'solar' };
-      }
       if (reward.id === 'perk-tactical-energy-vial') {
         extra = { tacticalEnergyVials: (prev.tacticalEnergyVials || 0) + 3 };
-      }
-      if (reward.id === 'perk-archetype-evolution-core') {
-        extra = { archetypeEvolutionCores: (prev.archetypeEvolutionCores || 0) + 1 };
-      }
-      if (reward.id === 'kai-skin-infinite-horizon') {
-        extra = { kaiParticleEffect: 'infinite-horizon' };
       }
       if (reward.id === 'kai-overcharge-contract') {
         extra = {
@@ -182,49 +161,29 @@ export const RewardShop: React.FC = () => {
       return;
     }
 
-    if (reward.id === 'perk-healing-potion') {
-      triggerScreenFlash('heal');
-      triggerHaptic([100]);
-      notificationService.triggerNotification('¡HP Restaurado! 💖', 'Te has curado 30 puntos de vida usando una Poción de Curación Mayor.', '💖');
-    } else if (reward.id === 'perk-focus-potion') {
+    if (reward.id === 'perk-focus-potion') {
       triggerScreenFlash('buff');
       triggerHaptic([50, 100, 50]);
-      notificationService.triggerNotification('¡Poción de Enfoque Activa! 🧪', 'Durante la próxima hora, ganarás 50% más monedas y experiencia en todas tus tareas.', '🧪');
+      notificationService.triggerNotification('¡Estímulo de Foco Activo! 🧪', 'Durante la próxima hora, ganarás 50% más monedas y experiencia en todas tus tareas.', '🧪');
     } else if (reward.id === 'perk-streak-shield') {
       triggerHaptic([80, 80]);
       notificationService.triggerNotification('¡Escudo Forjado! 🛡️', 'Tu racha está protegida ante cualquier imprevisto.', '🛡️');
-    } else if (reward.id === 'kai-neural-core') {
-      triggerScreenFlash('buff');
-      triggerHaptic([100, 50, 100]);
-      notificationService.triggerNotification('¡Carga de Forja Activada! 📸', '+1 Carga obtenida para escanear cualquier objeto real con tu cámara en el Taller KAI.', '📸');
     } else if (reward.id === 'kai-freeze-capsule') {
       triggerScreenFlash('buff');
       triggerHaptic([80, 40]);
-      notificationService.triggerNotification('¡Cápsula Criogénica Guardada! ❄️', 'Añadida a tu mochila para congelar un hábito si te lesionas o viajas sin perder tu racha.', '❄️');
+      notificationService.triggerNotification('¡Cápsula de Pausa Guardada! ❄️', 'Añadida a tu mochila para congelar un hábito si te lesionas o viajas sin perder tu racha.', '❄️');
     } else if (reward.id === 'kai-synaptic-booster') {
       triggerScreenFlash('buff');
       triggerHaptic([120]);
-      notificationService.triggerNotification('¡Acelerador Sináptico Adquirido! ⚡', 'Tu próximo registro de hábito avanzará al doble hacia tus 21 y 66 días.', '⚡');
+      notificationService.triggerNotification('¡Impulso de Consistencia Adquirido! ⚡', 'Tu próximo registro de hábito avanzará al doble hacia tus 21 y 66 días.', '⚡');
     } else if (reward.id === 'perk-tactical-energy-vial') {
       triggerScreenFlash('buff');
       triggerHaptic([50, 100, 50]);
-      notificationService.triggerNotification('¡Vial de Energía Táctica Activo! 🧪', '+3 Cargas tácticas añadidas: ganarás +50% XP y Monedas en tus próximas 3 acciones.', '🧪');
-    } else if (reward.id === 'perk-archetype-evolution-core') {
-      triggerScreenFlash('buff');
-      triggerHaptic([100, 200, 100]);
-      notificationService.triggerNotification('¡Núcleo de Evolución Integrado! 💠', 'Tu bono permanente de Afinidad Arquetípica ha aumentado +10% adicional.', '💠');
-    } else if (reward.id === 'kai-skin-infinite-horizon') {
-      triggerScreenFlash('buff');
-      triggerHaptic([200]);
-      notificationService.triggerNotification('¡Skin Horizonte Infinito Equipado! 🌌', 'Tu compañero KAI luce un diseño cósmico legendario.', '🌌');
+      notificationService.triggerNotification('¡Vial de Energía Activo! ✨', '+3 Cargas añadidas: ganarás +50% XP y Monedas en tus próximas 3 acciones.', '✨');
     } else if (reward.id === 'kai-overcharge-contract') {
       triggerScreenFlash('buff');
       triggerHaptic([120, 60, 120]);
-      notificationService.triggerNotification('¡Contrato de Sobrecarga Sellado! 🔥', '100🪙 en juego: cierra hoy con ≥85% de tus misiones para ganar +250 XP y recuperar tus monedas.', '🔥');
-    } else if (reward.id.startsWith('kai-')) {
-      triggerScreenFlash('buff');
-      triggerHaptic([60, 60]);
-      notificationService.triggerNotification('¡Módulo KAI Equipado! 💠', `Has equipado ${reward.title} en tu compañero.`, '💠');
+      notificationService.triggerNotification('¡Compromiso de Enfoque Sellado! 🎯', '100🪙 en juego: cierra hoy con ≥85% de tus tareas para ganar +250 XP y recuperar tus monedas.', '🎯');
     } else {
       triggerHaptic([40, 60, 40]);
       notificationService.triggerNotification(`¡Disfruta tu premio! ${reward.icon}`, `Has canjeado "${reward.title}". Te lo has ganado con disciplina.`, reward.icon);
@@ -275,8 +234,7 @@ export const RewardShop: React.FC = () => {
       const isCustom = r.id.startsWith('custom-');
       if (activeTab === 'todos') return true;
       if (activeTab === 'personalizados') return isCustom;
-      if (activeTab === 'kai') return r.category === 'kai' || r.id.startsWith('kai-');
-      if (activeTab === 'perks') return r.category === 'perk';
+      if (activeTab === 'perks') return r.category === 'perk' || r.id.startsWith('kai-');
       if (activeTab === 'vida_real') return r.category === 'ocio' || r.category === 'comida' || isCustom;
       if (activeTab === 'descanso') return r.category === 'descanso';
       return true;
@@ -365,20 +323,7 @@ export const RewardShop: React.FC = () => {
             }`}
           >
             <Shield className={`w-3.5 h-3.5 ${activeTab === 'perks' ? 'aura-text-primary' : 'aura-text-soft'}`} />
-            <span>Potenciadores</span>
-          </button>
-
-          <button
-            type="button"
-            role="option"
-            aria-selected={activeTab === 'kai'}
-            onClick={() => { soundFX.playClick(); setActiveTab('kai'); }}
-            className={`chicle-btn mf-8-menu-chip-group__chip mf-chip mf-chip--sm ${
-              activeTab === 'kai' ? 'mf-8-menu-chip-group__chip--active mf-chip--active aura-bg-soft aura-border-primary aura-text-primary optic-active-card' : ''
-            }`}
-          >
-            <Bot className={`w-3.5 h-3.5 ${activeTab === 'kai' ? 'aura-text-primary' : 'text-slate-300'}`} />
-            <span>KAI & Hábitos</span>
+            <span>Hábitos & Enfoque</span>
           </button>
 
           <button

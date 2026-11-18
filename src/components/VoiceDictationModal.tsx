@@ -755,6 +755,8 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({
                     archetype={archetype}
                     size={hasAnyOutput ? 86 : 114}
                     interactive={false}
+                    isProjecting={true}
+                    isSpeaking={isSpeakingReply}
                     auraState={
                       injectedSuccess
                         ? 'victory'

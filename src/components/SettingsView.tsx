@@ -6,7 +6,7 @@ import {
   Coins, Volume2, VolumeX, Target, Sun, Moon, ArrowUpRight, CheckCheck,
   SlidersHorizontal, Smartphone, Share, PlusSquare, FlaskConical,
   Compass, Eye, Layout, Bell, BellOff, BellRing, Zap, Flame, Timer, Palette, ChevronLeft, Wallet, Type, Lock, Hand, Clock,
-  ArrowLeft, ArrowRight
+  ArrowLeft, ArrowRight, Headphones, Waves
 } from 'lucide-react';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 import { GameSettings } from '../types';
@@ -29,6 +29,7 @@ import { formatHourToHuman } from '../utils/timeUtils';
 const OracleModal = lazy(() => import('./OracleModal').then(m => ({ default: m.OracleModal })));
 const ScenarioSimulatorPanel = lazy(() => import('./ScenarioSimulatorPanel').then(m => ({ default: m.ScenarioSimulatorPanel })));
 import { GoogleDriveSyncCard } from './GoogleDriveSyncCard';
+import { QuantumSoundscapeConsole } from './QuantumSoundscapeConsole';
 import { restoreAppState } from '../services/googleDriveService';
 import { KAI_OFFICIAL_SHAPES } from '../data/kaiShapes';
 import { KAI_VOICE_TONE_CONFIG, KaiVoiceTone } from '../data/kaiVoiceMatrix';
@@ -751,21 +752,21 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       </div>
                     </div>
 
-                    {/* Alerta de Boss */}
+                    {/* Alerta de Tarea Prioritaria */}
                     <div className="flex items-center justify-between gap-3 py-2 border-b border-white/[0.08]">
                       <div className="flex items-center gap-2">
-                        <Zap className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                        <Zap className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                         <div>
-                          <p className="text-xs font-bold text-white">Alerta de Boss</p>
-                          <p className="text-[10px] text-slate-400">Avisa a las 20:00 si el Boss del día sigue vivo</p>
+                          <p className="text-xs font-bold text-white">Objetivo Prioritario</p>
+                          <p className="text-[10px] text-slate-400">Avisa a las 20:00 si tu tarea principal del día sigue pendiente</p>
                         </div>
                       </div>
                       <ChicleToggle
                         checked={!!notifSettings.bossAlert}
                         onChange={() => handleToggleNotifSetting('bossAlert')}
-                        color="red"
+                        color="amber"
                         size="sm"
-                        ariaLabel="Alternar alerta de Boss"
+                        ariaLabel="Alternar alerta de objetivo prioritario"
                       />
                     </div>
 
@@ -871,6 +872,32 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     <span>24 Horas (14:00)</span>
                   </button>
                 </div>
+              </div>
+            </div>
+
+            {/* ═══ LABORATORIO ACÚSTICO & FRECUENCIAS DE ENFOQUE (PAISAJE SONORO) ═══ */}
+            <div className="w-full relative isolate rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.94] p-5 sm:p-6 border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.45)] overflow-hidden space-y-4">
+              <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
+
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shrink-0">
+                    <Headphones className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-anton uppercase tracking-wider text-white flex items-center gap-2">
+                      Laboratorio Acústico & Frecuencias
+                    </h3>
+                    <p className="text-xs text-slate-400">
+                      Paisajes sonoros generativos, ondas binaurales (Alpha/Beta), ruido marrón y frecuencias orgánicas.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="relative z-10 pt-2 border-t border-white/10">
+                <QuantumSoundscapeConsole compact={false} />
               </div>
             </div>
           </div>

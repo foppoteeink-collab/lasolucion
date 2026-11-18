@@ -186,7 +186,7 @@ class QuantumSoundscapeEngine {
     noiseType: 'brown',
     binauralMode: 'beta',
     dronePreset: 'deep',
-    autoSyncPomodoro: true,
+    autoSyncPomodoro: false,
   };
 
   private listeners: Set<(state: SoundscapeState) => void> = new Set();

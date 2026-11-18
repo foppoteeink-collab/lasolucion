@@ -364,8 +364,8 @@ export const getSavedNarrativeMode = (): NarrativeMode => {
       }
     } catch (e) {}
   }
-  applyNarrativeMode('tactical');
-  return 'tactical';
+  applyNarrativeMode('minimal');
+  return 'minimal';
 };
 
 const getSavedTimeFormat = (): '12h' | '24h' => {
@@ -637,8 +637,8 @@ export const useUIStore = create<UIState>((set, get) => ({
 
   setDeleteConfirmTask: (task) => set({ deleteConfirmTask: task }),
   
-  openSurpriseBoss: (data) => {
-    get().setModalState('isSurpriseBossOpen', true, data);
+  openSurpriseBoss: (_data) => {
+    // No-op: Bosses sorpresa eliminados
   },
 
   triggerScreenFlash: (type) => {

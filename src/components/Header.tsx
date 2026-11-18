@@ -8,7 +8,7 @@ import {
   VolumeX, 
   LogOut, 
   LogIn,
-  Swords,
+  ListTodo,
   BookOpen,
   ShoppingBag,
   FlaskConical,
@@ -49,7 +49,7 @@ interface HeaderProps {
 
 const NAV_TABS = [
   { id: 'stats', label: 'Perfil', icon: Shield },
-  { id: 'dashboard', label: 'Tareas', icon: Swords },
+  { id: 'dashboard', label: 'Tareas', icon: ListTodo },
   { id: 'journal', label: 'Bitácora', icon: BookOpen },
   { id: 'shop', label: 'Tienda', icon: ShoppingBag },
   { id: 'skills', label: 'Lab', icon: FlaskConical },

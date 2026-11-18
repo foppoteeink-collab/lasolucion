@@ -1,5 +1,5 @@
 import React from 'react';
-import { KaiShapeKey, KaiMultiverseStyle } from '../types';
+import { KaiShapeKey, KaiMultiverseStyle, KaiAuraIntensity } from '../types';
 
 export interface KaiShapeDefinition {
   id: KaiShapeKey;
@@ -172,5 +172,103 @@ export const KAI_MULTIVERSE_STYLES: MultiverseStyleDefinition[] = [
     sampleEmoji: '🏺🎭',
   },
 ];
+
+export interface KaiAuraIntensityOption {
+  id: KaiAuraIntensity;
+  label: string;
+  tagline: string;
+}
+
+export const KAI_AURA_INTENSITY_OPTIONS: KaiAuraIntensityOption[] = [
+  {
+    id: 'subtle',
+    label: 'Sutil',
+    tagline: 'Contraluz discreto y borde fino',
+  },
+  {
+    id: 'normal',
+    label: 'Media',
+    tagline: 'Balance ideal para toda la app',
+  },
+  {
+    id: 'radiant',
+    label: 'Radiante',
+    tagline: 'Máximo contraste en figuras oscuras',
+  },
+];
+
+function hexToRgbTriplet(color: string): string {
+  if (!color || typeof color !== 'string') return '0, 240, 255';
+  const trimmed = color.trim();
+  const shortMatch = trimmed.match(/^#([a-f\d])([a-f\d])([a-f\d])$/i);
+  if (shortMatch) {
+    const r = parseInt(shortMatch[1] + shortMatch[1], 16);
+    const g = parseInt(shortMatch[2] + shortMatch[2], 16);
+    const b = parseInt(shortMatch[3] + shortMatch[3], 16);
+    return `${r}, ${g}, ${b}`;
+  }
+  const fullMatch = trimmed.match(/^#([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
+  if (fullMatch) {
+    const r = parseInt(fullMatch[1], 16);
+    const g = parseInt(fullMatch[2], 16);
+    const b = parseInt(fullMatch[3], 16);
+    return `${r}, ${g}, ${b}`;
+  }
+  return '0, 240, 255';
+}
+
+export interface KaiAuraVisuals {
+  backlightSizeRatio: number;
+  backlightGradient: string;
+  backlightOpacity: number;
+  backlightHoverOpacity: number;
+  customFilter: string;
+  prismFilter: string;
+}
+
+/**
+ * Calcula los parámetros visuales del sistema combinado (Contraluz radial + Rim Light pegado a la silueta)
+ * para garantizar que KAI sea siempre visible sobre fondos oscuros incluso en figuras con tonos negros.
+ */
+export function getKaiAuraVisuals(
+  intensity: KaiAuraIntensity = 'normal',
+  activeColor: string = '#00f0ff'
+): KaiAuraVisuals {
+  const rgb = hexToRgbTriplet(activeColor);
+
+  switch (intensity) {
+    case 'subtle':
+      return {
+        backlightSizeRatio: 1.08,
+        backlightGradient: `radial-gradient(circle, rgba(255, 255, 255, 0.14) 0%, rgba(${rgb}, 0.36) 28%, rgba(${rgb}, 0.14) 54%, transparent 74%)`,
+        backlightOpacity: 0.65,
+        backlightHoverOpacity: 0.88,
+        customFilter: `drop-shadow(0 0 1.2px rgba(255, 255, 255, 0.45)) drop-shadow(0 0 4px rgba(${rgb}, 0.55)) drop-shadow(0 0 12px rgba(${rgb}, 0.34))`,
+        prismFilter: 'none',
+      };
+
+    case 'radiant':
+      return {
+        backlightSizeRatio: 1.48,
+        backlightGradient: `radial-gradient(circle, rgba(255, 255, 255, 0.34) 0%, rgba(${rgb}, 0.68) 26%, rgba(${rgb}, 0.3) 54%, transparent 76%)`,
+        backlightOpacity: 0.94,
+        backlightHoverOpacity: 1,
+        customFilter: `drop-shadow(0 0 2.2px rgba(255, 255, 255, 0.92)) drop-shadow(0 0 7px rgba(${rgb}, 0.95)) drop-shadow(0 0 22px rgba(${rgb}, 0.68))`,
+        prismFilter: `drop-shadow(0 0 10px rgba(${rgb}, 0.55))`,
+      };
+
+    case 'normal':
+    default:
+      return {
+        backlightSizeRatio: 1.28,
+        backlightGradient: `radial-gradient(circle, rgba(255, 255, 255, 0.24) 0%, rgba(${rgb}, 0.52) 26%, rgba(${rgb}, 0.22) 54%, transparent 75%)`,
+        backlightOpacity: 0.84,
+        backlightHoverOpacity: 0.98,
+        customFilter: `drop-shadow(0 0 1.6px rgba(255, 255, 255, 0.72)) drop-shadow(0 0 5px rgba(${rgb}, 0.82)) drop-shadow(0 0 16px rgba(${rgb}, 0.5))`,
+        prismFilter: `drop-shadow(0 0 6px rgba(${rgb}, 0.32))`,
+      };
+  }
+}
+
 
 

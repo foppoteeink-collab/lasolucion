@@ -6,34 +6,8 @@ export const spawnJuiceParticle = (particle: Omit<FloatingEffect, 'id'>) => {
   useUIStore.getState().addFloatingEffect(particle);
 };
 
-export const spawnBossEmojiExplosion = (originX?: number, originY?: number) => {
-  if (typeof window === 'undefined') return;
-  const centerX = originX || window.innerWidth / 2;
-  const centerY = originY || window.innerHeight / 2;
-
-  const emojiItems = [
-    { text: '⚡ PROTOCOLO NÉMESIS: DERROTADO', color: 'text-purple-300 bg-[#040a1a]/[0.96] border-purple-500/80 shadow-[0_0_25px_rgba(168,85,247,0.75)]' },
-    { text: '🌐 MODO OVERDRIVE QUANTUM', color: 'aura-text-primary bg-[#040a1a]/[0.96] aura-border-primary aura-glow' },
-    { text: '🛡️ SINTONIZACIÓN DE ARQUETIPO', color: 'text-amber-300 bg-[#040a1a]/[0.96] border-amber-400/80 shadow-[0_0_25px_rgba(251,191,36,0.75)]' },
-    { text: '💎 BOTÍN CIBERNÉTICO LEGENDARIO', color: 'text-emerald-300 bg-[#040a1a]/[0.96] border-emerald-400/80 shadow-[0_0_25px_rgba(52,211,153,0.75)]' },
-    { text: '⚔️ IMPACTO CRÍTICO DE DISCIPLINA', color: 'text-rose-300 bg-[#040a1a]/[0.96] border-rose-500/80 shadow-[0_0_25px_rgba(244,63,94,0.75)]' },
-    { text: '🔥 SOBRECARGA DE FLUJO MÁXIMA', color: 'text-orange-300 bg-[#040a1a]/[0.96] border-orange-400/80 shadow-[0_0_25px_rgba(251,146,60,0.75)]' },
-  ];
-
-  emojiItems.forEach((item, index) => {
-    const offsetX = (index - 2.5) * 55;
-    const offsetY = (index % 2 === 0 ? -1 : 1) * 35 - 40;
-    setTimeout(() => {
-      spawnJuiceParticle({
-        x: Math.max(20, Math.min(window.innerWidth - 220, centerX + offsetX)),
-        y: Math.max(60, centerY + offsetY),
-        text: item.text,
-        type: 'custom',
-        isCrit: true,
-        colorClass: item.color,
-      });
-    }, index * 70);
-  });
+export const spawnBossEmojiExplosion = (_originX?: number, _originY?: number) => {
+  // No-op: Pirotecnia invasiva eliminada
 };
 
 export const FloatingJuiceOverlay: React.FC = React.memo(() => {

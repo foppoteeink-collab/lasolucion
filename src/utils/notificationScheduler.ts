@@ -241,8 +241,8 @@ function scheduleBossAlert(tasks: TaskItem[]): void {
   const id = setTimeout(async () => {
     // Verificar que el boss sigue sin derrotar al momento de la notificación
     await notificationService.pushToOS(
-      '⚔️ ¡El Boss expira a medianoche!',
-      `"${bossTask.title}" aún no ha sido derrotado. ¡Tienes 4 horas para hacerlo!`,
+      '🎯 Recordatorio de Objetivo Prioritario',
+      `"${bossTask.title}" sigue pendiente. Aún tienes tiempo para cerrar el día con éxito.`,
       { tag: 'boss-alert', renotify: true }
     );
   }, ms);

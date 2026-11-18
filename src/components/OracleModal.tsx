@@ -720,7 +720,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h3 id="oracle-modal-title" className="text-base sm:text-lg font-anton uppercase tracking-wider text-white">
-                    Oráculo Neural KAI
+                    Asistente IA de Planificación KAI
                   </h3>
                   <button
                     type="button"
@@ -751,7 +751,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                 triggerHaptic(15);
                 onClose();
               }}
-              aria-label="Cerrar Oráculo Neural KAI"
+              aria-label="Cerrar Asistente IA de Planificación KAI"
               className="chicle-btn w-9 h-9 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 text-slate-300 hover:text-white flex items-center justify-center cursor-pointer shrink-0"
               title="Cerrar (Esc)"
             >

@@ -183,10 +183,9 @@ export async function fetchGeminiPrompt(
   const sanitizedPrompt = promptText.trim().slice(0, 12000);
   const candidateModels = Array.from(
     new Set([
-      options.modelName || 'gemini-2.5-flash-lite',
-      'gemini-2.5-flash-lite',
-      'gemini-2.5-flash',
-      'gemini-2.0-flash',
+      options.modelName || 'gemini-3.5-flash-lite',
+      'gemini-3.5-flash-lite',
+      'gemini-3.8-flash',
       'gemini-flash-latest'
     ])
   );
@@ -459,7 +458,7 @@ export async function generateScheduleFrontend(
 
   let generatedText = "";
   const text = await fetchGeminiPrompt(prompt, {
-    modelName: 'gemini-2.5-flash-lite',
+    modelName: 'gemini-3.5-flash-lite',
     systemInstruction,
     jsonMode: true,
     timeoutMs: 30000,
@@ -606,7 +605,7 @@ ${historyContext}
     - Proporciona exactamente 3 acciones tácticas concretas y ejecutables que el cliente debe priorizar hoy para maximizar la productividad y mantener la trayectoria de crecimiento.
   `;
 
-  const text = await fetchGeminiPrompt(prompt, 'gemini-2.5-flash-lite');
+  const text = await fetchGeminiPrompt(prompt, 'gemini-3.5-flash-lite');
   if (text) {
     return { analysis: text, source: 'ai' };
   }
@@ -1263,8 +1262,8 @@ SECONDARY_COLOR: #hex
   let lastErrorMessage = '';
 
   const CANDIDATE_MODELS = [
-    'gemini-2.5-flash',
-    'gemini-2.0-flash',
+    'gemini-3.5-flash-lite',
+    'gemini-3.8-flash',
     'gemini-flash-latest',
   ];
 
@@ -1486,6 +1485,7 @@ export async function forgeAllKaiVariantsFromImage(params: {
   let completed = 0;
   const variantsMap = new Map<KaiMultiverseStyle, KaiCustomForm>();
   let sharedDetectedObject: string | undefined = undefined;
+  let lastErrorMessage = '';
 
   // Ejecutamos la forja de los 6 estilos en paralelo con Promise.allSettled
   const tasks = OFFICIAL_MULTIVERSE_STYLES.map(async (style) => {
@@ -1507,7 +1507,10 @@ export async function forgeAllKaiVariantsFromImage(params: {
         variantsMap.set(style, res);
       }
       return res;
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.message && !lastErrorMessage) {
+        lastErrorMessage = err.message;
+      }
       console.warn(`[MultiForge] Fallo estilo ${style}:`, err);
       return null;
     } finally {
@@ -1535,7 +1538,11 @@ export async function forgeAllKaiVariantsFromImage(params: {
   }
 
   if (result.length === 0) {
-    throw new Error('No se pudo generar ninguna variante de KAI. Por favor verifica tu foto o intenta de nuevo.');
+    throw new Error(
+      lastErrorMessage
+        ? `No se pudo generar ninguna variante de KAI (${lastErrorMessage}).`
+        : 'No se pudo generar ninguna variante de KAI. Por favor verifica tu foto o intenta de nuevo.'
+    );
   }
 
   return result;

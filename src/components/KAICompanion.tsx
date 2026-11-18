@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo, useId } from 'react';
 import { motion } from 'motion/react';
-import { KaiCustomForm, KaiMultiverseStyle, KaiShapeKey } from '../types';
+import { KaiCustomForm, KaiMultiverseStyle, KaiShapeKey, KaiAuraIntensity } from '../types';
+import { getKaiAuraVisuals } from '../data/kaiShapes';
 import { KaiVectorGraphics } from './KaiVectorGraphics';
 import { KaiCosmeticEffects } from './KaiCosmeticEffects';
 import { usePlayerStore } from '../store/usePlayerStore';
@@ -10,6 +11,7 @@ export interface KAICompanionProps {
   customForm?: KaiCustomForm | null;
   shapeId?: KaiShapeKey;
   auraColor?: string;
+  auraIntensity?: KaiAuraIntensity;
   size?: 'nano' | 'xs' | 'sm' | 'md' | 'lg' | 'xl' | number;
   className?: string;
   interactive?: boolean;
@@ -23,10 +25,21 @@ export interface KAICompanionProps {
   scale?: number;
 }
 
+const SEMANTIC_KAI_SVG_IDS = new Set([
+  'kai-body',
+  'kai-eyes',
+  'kai-pupils',
+  'kai-mouth',
+  'kai-left-hand',
+  'kai-right-hand',
+]);
+
 /**
  * Inyecta el color de la variable --color-aura-activa al atributo stroke o fill
  * del código SVG devuelto por la Forja Neural e inserta el motor de animación orgánica
  * viva (parpadeo natural, respiración corporal squash & stretch, flotación de extremidades y seguimiento ocular).
+ * También aísla los IDs internos (<defs>, gradientes, filtros, clipPaths) por instancia para evitar
+ * colisiones cuando otra instancia de KAI se oculta al abrir modales como Háblame.
  */
 export function injectAuraColorIntoSvg(
   rawSvg: string,
@@ -36,6 +49,7 @@ export function injectAuraColorIntoSvg(
     eyeOffset?: { x: number; y: number };
     isTracking?: boolean;
     isSpeaking?: boolean;
+    scopeId?: string;
   }
 ): string {
   if (!rawSvg || typeof rawSvg !== 'string') return '';
@@ -67,6 +81,36 @@ export function injectAuraColorIntoSvg(
   const eyeY = options?.eyeOffset?.y !== undefined ? options.eyeOffset.y.toFixed(2) : '0';
   const isTracking = Boolean(options?.isTracking);
   const isSpeaking = Boolean(options?.isSpeaking);
+  const safeScope = options?.scopeId
+    ? options.scopeId.replace(/[^a-zA-Z0-9_-]/g, '_')
+    : '';
+  const scopePrefix = safeScope ? `svg[data-kai-scope="${safeScope}"] ` : '';
+
+  // Aislar IDs internos de <defs> (gradientes, filtros, clipPaths, máscaras, patrones)
+  // para impedir que url(#id) apunte a otra instancia oculta en el DOM (ej. al abrir Háblame)
+  if (safeScope) {
+    const idMap = new Map<string, string>();
+    cleaned.replace(/\bid=(["'])([^"']+)\1/gi, (m, _q, id) => {
+      if (!SEMANTIC_KAI_SVG_IDS.has(id)) {
+        idMap.set(id, `${safeScope}_${id}`);
+      }
+      return m;
+    });
+    if (idMap.size > 0) {
+      cleaned = cleaned.replace(/\bid=(["'])([^"']+)\1/gi, (m, q, id) => {
+        const mapped = idMap.get(id);
+        return mapped ? `id=${q}${mapped}${q}` : m;
+      });
+      cleaned = cleaned.replace(/url\(\s*(['"]?)#([^)'"]+)\1\s*\)/gi, (m, q, id) => {
+        const mapped = idMap.get(id);
+        return mapped ? `url(${q}#${mapped}${q})` : m;
+      });
+      cleaned = cleaned.replace(/(\b(?:xlink:)?href=)(["'])#([^"']+)\2/gi, (m, attr, q, id) => {
+        const mapped = idMap.get(id);
+        return mapped ? `${attr}${q}#${mapped}${q}` : m;
+      });
+    }
+  }
 
   // Inyectar etiquetas de clases heurísticas si la IA no proporcionó los IDs semánticos
   if (!cleaned.includes('kai-eyes') && !cleaned.includes('id="kai-eyes"')) {
@@ -127,29 +171,29 @@ export function injectAuraColorIntoSvg(
     50% { transform: translateY(3.5px) rotate(4.5deg); }
   }
 
-  #kai-body, .kai-body, [data-kai="body"] {
+  ${scopePrefix}#kai-body, ${scopePrefix}.kai-body, ${scopePrefix}[data-kai="body"] {
     transform-origin: 80px 145px;
     animation: kai-live-body 4.4s infinite ease-in-out;
   }
-  #kai-eyes, .kai-eyes, [data-kai="eyes"] {
+  ${scopePrefix}#kai-eyes, ${scopePrefix}.kai-eyes, ${scopePrefix}[data-kai="eyes"] {
     transform-origin: 80px 75px;
     animation: kai-live-blink 4.6s infinite ease-in-out;
   }
-  #kai-pupils, .kai-pupil, [data-kai="pupils"], [data-kai="pupil"] {
+  ${scopePrefix}#kai-pupils, ${scopePrefix}.kai-pupil, ${scopePrefix}[data-kai="pupils"], ${scopePrefix}[data-kai="pupil"] {
     ${isTracking
       ? `transform: translate(${eyeX}px, ${eyeY}px) !important; transition: transform 0.12s cubic-bezier(0.2, 0, 0, 1) !important;`
       : `animation: kai-live-gaze 5.2s infinite ease-in-out;`
     }
   }
-  #kai-mouth, .kai-mouth, [data-kai="mouth"] {
+  ${scopePrefix}#kai-mouth, ${scopePrefix}.kai-mouth, ${scopePrefix}[data-kai="mouth"] {
     transform-origin: 80px 105px;
     animation: ${isSpeaking ? 'kai-live-mouth-talk 0.35s infinite ease-in-out' : 'kai-live-mouth-breath 4.2s infinite ease-in-out'};
   }
-  #kai-left-hand, .kai-left-hand, [data-kai="left-hand"] {
+  ${scopePrefix}#kai-left-hand, ${scopePrefix}.kai-left-hand, ${scopePrefix}[data-kai="left-hand"] {
     transform-origin: 35px 95px;
     animation: kai-live-hand-l 3.6s infinite ease-in-out;
   }
-  #kai-right-hand, .kai-right-hand, [data-kai="right-hand"] {
+  ${scopePrefix}#kai-right-hand, ${scopePrefix}.kai-right-hand, ${scopePrefix}[data-kai="right-hand"] {
     transform-origin: 125px 95px;
     animation: kai-live-hand-r 3.6s infinite ease-in-out -1.2s;
   }
@@ -162,6 +206,7 @@ export function injectAuraColorIntoSvg(
     if (!newAttrs.includes('xmlns')) newAttrs += ' xmlns="http://www.w3.org/2000/svg"';
     if (!newAttrs.includes('width')) newAttrs += ' width="100%"';
     if (!newAttrs.includes('height')) newAttrs += ' height="100%"';
+    if (safeScope && !newAttrs.includes('data-kai-scope')) newAttrs += ` data-kai-scope="${safeScope}"`;
     return `<svg ${newAttrs.trim()}>${livingStyles}`;
   });
 
@@ -282,6 +327,7 @@ export const KAICompanion: React.FC<KAICompanionProps> = ({
   customForm,
   shapeId,
   auraColor,
+  auraIntensity,
   size = 'md',
   className = '',
   interactive = true,
@@ -395,6 +441,12 @@ export const KAICompanion: React.FC<KAICompanionProps> = ({
     return '#00f0ff';
   }, [auraState, auraColor, stats?.kaiAuraColor]);
 
+  const effectiveAuraIntensity: KaiAuraIntensity = auraIntensity || stats?.kaiAuraIntensity || 'normal';
+  const auraVisuals = useMemo(
+    () => getKaiAuraVisuals(effectiveAuraIntensity, effectiveAuraColor),
+    [effectiveAuraIntensity, effectiveAuraColor]
+  );
+
   // Dimensiones según el prop size
   const { widthPx, heightPx } = useMemo(() => {
     if (typeof size === 'number') {
@@ -449,8 +501,9 @@ export const KAICompanion: React.FC<KAICompanionProps> = ({
       eyeOffset: effectiveEyeOffset,
       isTracking: effectiveIsTracking,
       isSpeaking: effectiveIsSpeaking,
+      scopeId: resolvedGlowFilterId,
     });
-  }, [effectiveShape, effectiveCustomForm, effectiveImageUrl, effectiveAuraColor, effectiveEyeOffset, effectiveIsTracking, effectiveIsSpeaking]);
+  }, [effectiveShape, effectiveCustomForm, effectiveImageUrl, effectiveAuraColor, effectiveEyeOffset, effectiveIsTracking, effectiveIsSpeaking, resolvedGlowFilterId]);
 
   return (
     <motion.div
@@ -464,7 +517,7 @@ export const KAICompanion: React.FC<KAICompanionProps> = ({
           height: `${heightPx}px`,
         } as React.CSSProperties
       }
-      className={`relative select-none flex items-center justify-center ${
+      className={`relative isolate select-none flex items-center justify-center ${
         interactive ? 'cursor-pointer' : ''
       } ${className}`}
       onClick={handleClick}
@@ -479,10 +532,21 @@ export const KAICompanion: React.FC<KAICompanionProps> = ({
         ease: 'easeInOut',
       }}
     >
+      {/* 0. AURA CONTRALUZ ADAPTATIVA (Contraluz suave detrás de la silueta) */}
+      <div
+        className="absolute rounded-full pointer-events-none z-0 transition-all duration-300"
+        style={{
+          width: `${Math.round(widthPx * auraVisuals.backlightSizeRatio)}px`,
+          height: `${Math.round(widthPx * auraVisuals.backlightSizeRatio)}px`,
+          background: auraVisuals.backlightGradient,
+          opacity: auraVisuals.backlightOpacity,
+        }}
+      />
+
       {/* 1. RENDERIZADO FORJA NEURAL: RAMA ILUSTRACIÓN REAL (OPCIÓN A: ARTE HD + OJOS VIVOS) */}
       {effectiveShape === 'custom' && effectiveImageUrl ? (
         <motion.div
-          className="w-full h-full flex items-center justify-center relative"
+          className="w-full h-full flex items-center justify-center relative z-10"
           animate={{
             scale: [1, 1.025, 1],
           }}
@@ -497,7 +561,7 @@ export const KAICompanion: React.FC<KAICompanionProps> = ({
             alt={effectiveCustomForm?.name || 'Compañero KAI'}
             className="w-full h-full object-contain pointer-events-none select-none transition-all duration-300"
             style={{
-              filter: `drop-shadow(0 0 16px ${effectiveAuraColor}80) drop-shadow(0 0 28px ${effectiveAuraColor}40)`,
+              filter: auraVisuals.customFilter,
             }}
           />
 
@@ -517,15 +581,20 @@ export const KAICompanion: React.FC<KAICompanionProps> = ({
       ) : effectiveShape === 'custom' && renderedSvgHtml ? (
         /* 2. RENDERIZADO FORJA NEURAL: RAMA VECTORIAL VIVA */
         <div
-          className="w-full h-full flex items-center justify-center transition-all duration-300 [&>svg]:w-full [&>svg]:h-full [&>svg]:overflow-visible"
+          className="w-full h-full flex items-center justify-center relative z-10 transition-all duration-300 [&>svg]:w-full [&>svg]:h-full [&>svg]:overflow-visible"
           style={{
-            filter: `drop-shadow(0 0 14px ${effectiveAuraColor}70)`,
+            filter: auraVisuals.customFilter,
           }}
           dangerouslySetInnerHTML={{ __html: renderedSvgHtml }}
         />
       ) : (
         /* 3. RENDERIZADO FORMA BASE GÉNESIS (EL PRISMA) */
-        <div className="w-full h-full flex items-center justify-center">
+        <div
+          className="w-full h-full flex items-center justify-center relative z-10 transition-all duration-300"
+          style={{
+            filter: effectiveShape === 'custom' ? auraVisuals.customFilter : auraVisuals.prismFilter,
+          }}
+        >
           <KaiVectorGraphics
             shapeId={effectiveShape}
             activeColor={effectiveAuraColor}

@@ -194,6 +194,7 @@ export function mergePlayerStats(local: PlayerStats, remote: PlayerStats): Playe
     // CRITICAL: Protect user's local KAI equipment & customization choices from stale remote snapshots
     kaiShape: local.kaiShape || remote.kaiShape || 'prism',
     kaiAuraColor: local.kaiAuraColor || remote.kaiAuraColor || '#00f0ff',
+    kaiAuraIntensity: local.kaiAuraIntensity || remote.kaiAuraIntensity || 'normal',
     kaiCustomForm: (() => {
       const merged = local.kaiCustomForm || remote.kaiCustomForm || null;
       if (merged && !merged.imageUrl && merged.storageRef && typeof window !== 'undefined') {

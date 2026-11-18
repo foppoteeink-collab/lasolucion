@@ -24,7 +24,7 @@ import { getTodayDateString, getYesterdayDateString, addDaysToDateString, parseL
 import { soundFX } from '../utils/audio';
 import { notificationService } from '../utils/notifications';
 import { hapticPresets } from '../utils/haptics';
-import { spawnJuiceParticle, spawnBossEmojiExplosion } from '../components/FloatingJuiceOverlay';
+import { spawnJuiceParticle } from '../components/FloatingJuiceOverlay';
 import { getRequiredXpForLevel } from '../data/defaults';
 import { triggerShockwave } from '../utils/celebration';
 import { safeSetItem, safeRemoveItem } from '../utils/storage';
@@ -43,17 +43,6 @@ import {
   revertXpAndCoins,
 } from '../utils/level3Systems';
 import { enqueueOutboxOperation } from '../services/offlineOutboxService';
-
-const triggerBossEmojiConfetti = () => {
-  try {
-    triggerShockwave({ color: 'gold', intensity: 'epic' });
-    setTimeout(() => {
-      triggerShockwave({ color: 'violet', intensity: 'epic' });
-    }, 300);
-  } catch (err) {
-    console.error('Error in triggerBossEmojiConfetti:', err);
-  }
-};
 
 /**
  * Contexto unificado de stores para el motor de juego.
@@ -560,15 +549,11 @@ export const handleToggleTask = (taskId: string, e?: any) => {
       if (impactPoints >= 3.0) {
         triggeredBoss = true;
         try {
-          safeLogEvent('boss_defeated', { trigger: 'weighted_impact_points', points: impactPoints });
+          safeLogEvent('daily_focus_milestone', { trigger: 'weighted_impact_points', points: impactPoints });
         } catch {}
-        triggerBossEmojiConfetti();
-        if (typeof window !== 'undefined') {
-          spawnBossEmojiExplosion(hitX, hitY);
-        }
         setTimeout(() => {
           handleClaimBossBounty();
-        }, 250);
+        }, 200);
       }
     }
 
@@ -816,15 +801,11 @@ export const handleIncrementHabit = (taskId: string, e?: any) => {
       if (impactPoints >= 3.0) {
         statePlayer.setStats((prev) => ({ ...prev, lastEncounterDate: today }));
         try {
-          safeLogEvent('boss_defeated', { trigger: 'habit_weighted_impact', points: impactPoints });
+          safeLogEvent('daily_focus_milestone', { trigger: 'habit_weighted_impact', points: impactPoints });
         } catch {}
-        triggerBossEmojiConfetti();
-        if (typeof window !== 'undefined') {
-          spawnBossEmojiExplosion(hitX, hitY);
-        }
         setTimeout(() => {
           handleClaimBossBounty();
-        }, 250);
+        }, 200);
       }
     }
   }
@@ -1317,11 +1298,9 @@ export const handleClaimBossBounty = () => {
   if (hasClaimedBossToday()) return;
   const xpReward = 50;
   const coinReward = 20;
-  const hpReward = 50;
   
   const { player: statePlayer, ui: stateUI } = getEngineContext();
   
-  statePlayer.heal(hpReward);
   const newStats = checkLevelUp(statePlayer.stats, xpReward, coinReward);
   const todayStr = getTodayDateString();
   statePlayer.setStats({
@@ -1329,17 +1308,16 @@ export const handleClaimBossBounty = () => {
     lastBossDefeatedDate: todayStr
   });
   
-  soundFX.playBossDefeated();
+  soundFX.playSuccess();
   
   if (typeof window !== 'undefined') {
-     spawnJuiceParticle({ x: window.innerWidth / 2, y: window.innerHeight / 2, text: '💖 ¡JEFE DERROTADO & HP RESTAURADO!', type: 'boss', isCrit: true });
-     stateUI.addFloatingEffect({ x: window.innerWidth / 2, y: window.innerHeight / 2 - 20, text: `+${xpReward} XP`, type: 'xp' });
-     setTimeout(() => {
-       stateUI.addFloatingEffect({ x: window.innerWidth / 2, y: window.innerHeight / 2 - 40, text: `+${coinReward} Monedas`, type: 'coins' });
-     }, 150);
-     setTimeout(() => {
-       stateUI.addFloatingEffect({ x: window.innerWidth / 2, y: window.innerHeight / 2 - 60, text: `+${hpReward} HP 💖`, type: 'heal' });
-     }, 300);
+    stateUI.addFloatingEffect({
+      x: window.innerWidth / 2,
+      y: window.innerHeight / 2 - 20,
+      text: `🌟 Hito de Enfoque Diario: +${xpReward} XP, +${coinReward} 🪙`,
+      type: 'xp',
+      isCrit: true,
+    });
   }
 };
 export const hasClaimedBossToday = (): boolean => {

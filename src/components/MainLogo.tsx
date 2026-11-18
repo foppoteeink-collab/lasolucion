@@ -23,13 +23,13 @@ export const MainLogo: React.FC<MainLogoProps> = ({
   const [imageError, setImageError] = useState(false);
   const palette = useSystemPalette();
 
-  // Calibración de altura proporcional para mantener la proporción exacta 864x129 (letras puras sin caja)
+  // Calibración sutil y refinada: mantiene proporción 864x129 elegante sin invadir el HUD
   const sizeClasses = {
-    sm: 'h-[20px] sm:h-[28px]',
-    md: 'h-[20px] xs:h-[22px] sm:h-[36px] lg:h-[42px]',
-    lg: 'h-[25px] xs:h-[28px] sm:h-[42px] lg:h-[50px]',
-    xl: 'h-[48px] sm:h-[60px]',
-    massive: 'h-[64px] sm:h-[80px]',
+    sm: 'h-[14px] sm:h-[18px]',
+    md: 'h-[16px] xs:h-[18px] sm:h-[22px] lg:h-[26px]',
+    lg: 'h-[18px] xs:h-[22px] sm:h-[28px] lg:h-[32px]',
+    xl: 'h-[28px] sm:h-[38px]',
+    massive: 'h-[40px] sm:h-[50px]',
   };
 
   const textSizeClasses = {

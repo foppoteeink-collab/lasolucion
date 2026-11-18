@@ -320,7 +320,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                   {editingTaskId 
                     ? (isEditingHabitMode ? (is2166HabitMode ? 'Editar Hábito 21/66' : 'Editar Recordatorio Semanal') : 'Editar Tarea')
                     : (activeTab === 'oracle'
-                        ? 'Oráculo & Plantillas'
+                        ? 'Asistente IA & Plantillas'
                         : activeTab === 'habit'
                           ? (is2166HabitMode ? 'Nuevo Hábito (21/66 Días)' : 'Nuevo Recordatorio Semanal')
                           : 'Nueva Tarea de Hoy'
@@ -329,7 +329,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                 </h3>
                 <p className="text-[10.5px] sm:text-xs text-slate-400 font-mono">
                   {activeTab === 'oracle'
-                    ? 'Planificador inteligente con tu compañero KAI y plantillas de rutina'
+                    ? 'Planificador inteligente con tu asistente KAI y plantillas de rutina'
                     : isEditingHabitMode 
                       ? (is2166HabitMode 
                           ? 'Define tu rutina diaria para fortalecer hábitos en 21/66 días'
@@ -427,7 +427,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                     }`}
                   >
                     <Icon name="sparkles" className="w-3.5 h-3.5" />
-                    <span>Oráculo & IA</span>
+                    <span>Asistente IA</span>
                   </button>
                 </div>
               )}
@@ -440,10 +440,10 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                       </div>
                       <div className="flex-1">
                         <h4 className="text-sm font-bold text-white font-anton tracking-wide uppercase flex items-center gap-2">
-                          Oráculo KAI
+                          Asistente Inteligente KAI
                         </h4>
                         <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                          Pide a Kai que divida una meta compleja en pasos diarios, organice tu jornada o te dé un micro-plan contra la procrastinación.
+                          Pide a KAI que divida una meta compleja en pasos diarios, organice tu jornada o te dé un micro-plan contra la procrastinación.
                         </p>
                       </div>
                     </div>
@@ -456,7 +456,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                       className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-black font-anton tracking-wider text-xs uppercase flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(251,191,36,0.35)] transition-all cursor-pointer active:scale-95"
                     >
                       <Icon name="sparkles" className="w-4 h-4" />
-                      <span>Consultar al Oráculo</span>
+                      <span>Abrir Asistente IA</span>
                     </button>
                   </div>
                   <div className="p-4 rounded-2xl bg-gradient-to-br from-cyan-500/15 via-[#040818] to-indigo-950/30 border border-cyan-500/30 space-y-3 shadow-lg">
@@ -1068,7 +1068,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                   }}
                   className="chicle-btn w-full py-2.5 px-4 rounded-xl bg-white/[0.05] hover:bg-white/[0.12] text-slate-200 hover:text-white font-anton uppercase text-xs tracking-wider transition-all border border-white/15 cursor-pointer text-center"
                 >
-                  Cerrar Oráculo
+                  Cerrar Asistente IA
                 </button>
               ) : (
                 <>

@@ -31,8 +31,6 @@ const KaiWelcomeOnboarding = lazy(() => import('./common/KaiWelcomeOnboarding').
 const DailyRewardsModal = lazy(() => import('./DailyRewardsModal').then(m => ({ default: m.DailyRewardsModal })));
 const LevelUpModal = lazy(() => import('./LevelUpModal').then(m => ({ default: m.LevelUpModal })));
 const NightlyTunnel = lazy(() => import('./NightlyTunnel').then(m => ({ default: m.NightlyTunnel })));
-const SurpriseBossModal = lazy(() => import('./SurpriseBossModal').then(m => ({ default: m.SurpriseBossModal })));
-const HunterCollapseModal = lazy(() => import('./HunterCollapseModal').then(m => ({ default: m.HunterCollapseModal })));
 const KaiInteractiveSpotlightTour = lazy(() => import('./common/KaiInteractiveSpotlightTour').then(m => ({ default: m.KaiInteractiveSpotlightTour })));
 const DeleteConfirmModal = lazy(() => import('./DeleteConfirmModal').then(m => ({ default: m.DeleteConfirmModal })));
 const PomodoroTimer = lazy(() => import('./PomodoroTimer').then(m => ({ default: m.PomodoroTimer })));
@@ -44,7 +42,6 @@ import { DailyScheduleStrip } from './DailyScheduleStrip';
 import { SciFiGridBackground } from './SciFiGridBackground';
 import { TransitionOverlay } from './TransitionOverlay';
 import { QuantumCubeLoader } from './QuantumCubeLoader';
-import { DamageOverlay } from './DamageOverlay';
 import { ShockwaveOverlay } from './ShockwaveOverlay';
 import { DailyProgressWidget } from './DailyProgressWidget';
 import { BetaConsentModal } from './BetaConsentModal';
@@ -76,9 +73,6 @@ export function AppLayout() {
   const isDayTemplatesOpen = useUIStore((s) => s.isDayTemplatesOpen);
   const isPomodoroOpen = useUIStore((s) => s.isPomodoroOpen);
   const isNightlyReflectionOpen = useUIStore((s) => s.isNightlyReflectionOpen);
-  const isSurpriseBossOpen = useUIStore((s) => s.isSurpriseBossOpen);
-  const isHunterCollapseOpen = useUIStore((s) => s.isHunterCollapseOpen);
-  const surpriseBossData = useUIStore((s) => s.surpriseBossData);
   const deleteConfirmTask = useUIStore((s) => s.deleteConfirmTask);
   const floatingRewards = useUIStore((s) => s.floatingRewards);
   const zenMode = useUIStore((s) => s.zenMode);
@@ -461,7 +455,6 @@ export function AppLayout() {
 
         <FloatingGainEffect rewards={floatingRewards} />
         <FloatingJuiceOverlay />
-        <DamageOverlay />
         {!zenMode && <ShockwaveOverlay />}
         <NotificationToastOverlay />
 
@@ -739,18 +732,6 @@ export function AppLayout() {
         </Suspense>
       )}
 
-      {isSurpriseBossOpen && (
-        <Suspense fallback={null}>
-          <SurpriseBossModal
-            isOpen={isSurpriseBossOpen}
-            onClose={() => setModalState('isSurpriseBossOpen', false)}
-            archetypeName={surpriseBossData?.archetypeName || 'Ruptura de Inercia'}
-            buffName={surpriseBossData?.buffName || 'Inercia Superada'}
-            buffDescription={surpriseBossData?.buffDescription || '¡Conquistaste 3 misiones o hábitos prioritarios hoy! Tu vitalidad (+50 HP) y recursos se restauran al máximo.'}
-          />
-        </Suspense>
-      )}
-
       {deleteConfirmTask && (
         <Suspense fallback={null}>
           <DeleteConfirmModal
@@ -758,13 +739,6 @@ export function AppLayout() {
             onClose={() => setDeleteConfirmTask(null)}
             onConfirm={executeDeleteTask}
           />
-        </Suspense>
-      )}
-
-      {/* Hunter Collapse / Revival Modal */}
-      {isHunterCollapseOpen && (
-        <Suspense fallback={null}>
-          <HunterCollapseModal />
         </Suspense>
       )}
 

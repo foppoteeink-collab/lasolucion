@@ -433,7 +433,7 @@ const setFocusModeActive = useUIStore(s => s.setFocusModeActive);
     }
   };
 
-  const resetTimer = (forceSafe = false) => {
+  const resetTimer = (_forceSafe = false) => {
     soundFX.playClick();
     setFocusModeActive(false);
     
@@ -445,23 +445,6 @@ const setFocusModeActive = useUIStore(s => s.setFocusModeActive);
       }
     } catch (e) {}
 
-    // PENALIZACIÓN CON PERÍODO DE GRACIA (90 segundos):
-    // Si abandona un foco activo habiendo superado los 90s y no es un reinicio seguro
-    const elapsedSeconds = initialTimeLeft - timeLeft;
-    const GRACE_PERIOD_SECONDS = 90;
-
-    if (mode === 'work' && isRunning && elapsedSeconds > GRACE_PERIOD_SECONDS && !forceSafe) {
-      const damage = 15;
-      usePlayerStore.getState().takeDamage(damage);
-      soundFX.playClick();
-      window.dispatchEvent(new CustomEvent('player-damage', { detail: { amount: damage, reason: `Foco roto en: ${taskTitle}` } }));
-      notificationService.triggerNotification(
-        '¡Foco Roto! 💔',
-        `Has perdido ${damage} HP por abandonar tu sesión de concentración.`,
-        '🩸'
-      );
-    }
-    
     setIsRunning(false);
     setTargetEndTime(null);
     setTimeLeft(initialTimeLeft);

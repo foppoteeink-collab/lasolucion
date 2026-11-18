@@ -1,9 +1,11 @@
-import React, { useMemo, useState, useEffect, useRef } from 'react';
+import React, { useMemo, useState, useEffect, useRef, useId } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { soundFX } from '../utils/audio';
 import { KaiVectorGraphics } from './KaiVectorGraphics';
 import { KaiCosmeticEffects } from './KaiCosmeticEffects';
-import { KaiShapeKey, KaiCustomForm } from '../types';
+import { injectAuraColorIntoSvg } from './KAICompanion';
+import { KaiShapeKey, KaiCustomForm, KaiAuraIntensity } from '../types';
+import { getKaiAuraVisuals } from '../data/kaiShapes';
 import { usePlayerStore } from '../store/usePlayerStore';
 import { useAppStore } from '../store/useAppStore';
 
@@ -137,6 +139,7 @@ export interface HoloCompanionProps {
   shapeId?: KaiShapeKey;
   customForm?: KaiCustomForm | null;
   auraColor?: string;
+  auraIntensity?: KaiAuraIntensity;
   particleEffect?: string;
   size?: 'nano' | 'xs' | 'sm' | 'md' | 'lg' | 'xl' | number;
   className?: string;
@@ -148,6 +151,7 @@ export interface HoloCompanionProps {
   auraState?: CompanionAuraState;
   triggerVictoryWave?: boolean;
   isProjecting?: boolean;
+  isSpeaking?: boolean;
 }
 
 /**
@@ -160,6 +164,7 @@ export const HoloCompanion: React.FC<HoloCompanionProps> = ({
   shapeId,
   customForm,
   auraColor,
+  auraIntensity,
   particleEffect,
   size = 'md',
   className = '',
@@ -170,7 +175,10 @@ export const HoloCompanion: React.FC<HoloCompanionProps> = ({
   auraState = 'normal',
   triggerVictoryWave = false,
   isProjecting = false,
+  isSpeaking = false,
 }) => {
+  const rawReactId = useId();
+  const instanceScopeId = rawReactId.replace(/[^a-zA-Z0-9_-]/g, '_');
   const containerRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
   const [justClicked, setJustClicked] = useState(false);
@@ -183,6 +191,7 @@ export const HoloCompanion: React.FC<HoloCompanionProps> = ({
   const effectiveShape: KaiShapeKey = shapeId || stats?.kaiShape || 'prism';
   const effectiveCustomForm = customForm !== undefined ? customForm : stats?.kaiCustomForm;
   const effectiveParticle = particleEffect || stats?.kaiParticleEffect || 'none';
+  const effectiveAuraIntensity: KaiAuraIntensity = auraIntensity || stats?.kaiAuraIntensity || 'normal';
 
   // Detección de progresión 21d (Maltz) y 66d (Lally / Maestría)
   const habits21Count = useMemo(() => {
@@ -226,6 +235,11 @@ export const HoloCompanion: React.FC<HoloCompanionProps> = ({
     if (has66Days) return '#d97706';
     return baseConfig.secondaryGlow || '#0284c7';
   }, [auraState, has66Days, baseConfig.secondaryGlow]);
+
+  const auraVisuals = useMemo(
+    () => getKaiAuraVisuals(effectiveAuraIntensity, activeColor),
+    [effectiveAuraIntensity, activeColor]
+  );
 
   // Activación de onda de victoria cuando triggerVictoryWave cambia a true
   useEffect(() => {
@@ -387,7 +401,43 @@ export const HoloCompanion: React.FC<HoloCompanionProps> = ({
     if (onClick) onClick();
   };
 
-  const gradientId = useMemo(() => `pyramid-${baseConfig.id}-${auraState}`, [baseConfig.id, auraState]);
+  const gradientId = useMemo(
+    () => `pyramid-${baseConfig.id}-${auraState}-${instanceScopeId}`,
+    [baseConfig.id, auraState, instanceScopeId]
+  );
+
+  // Hidratar imageUrl desde localStorage si viene por storageRef (igual que KAICompanion)
+  const effectiveImageUrl = useMemo(() => {
+    if (effectiveShape !== 'custom' || !effectiveCustomForm) return null;
+    if (effectiveCustomForm.imageUrl) return effectiveCustomForm.imageUrl;
+    if (effectiveCustomForm.storageRef && typeof window !== 'undefined') {
+      const storageKey = effectiveCustomForm.storageRef.replace('local:', '');
+      return window.localStorage.getItem(storageKey) || null;
+    }
+    return null;
+  }, [effectiveShape, effectiveCustomForm]);
+
+  // Procesar SVG custom con aislamiento de IDs (<defs>) por instancia para que nunca se pierda al abrir modales
+  const renderedCustomSvg = useMemo(() => {
+    if (effectiveShape !== 'custom' || !effectiveCustomForm?.svgContent || effectiveImageUrl) return null;
+    const artStyle = effectiveCustomForm.artStyle || 'neon-geometry';
+    return injectAuraColorIntoSvg(effectiveCustomForm.svgContent, artStyle, activeColor, {
+      eyeOffset,
+      isTracking: isTrackingMouse,
+      isSpeaking: isSpeaking || justClicked,
+      scopeId: `holo_${instanceScopeId}`,
+    });
+  }, [
+    effectiveShape,
+    effectiveCustomForm,
+    effectiveImageUrl,
+    activeColor,
+    eyeOffset,
+    isTrackingMouse,
+    isSpeaking,
+    justClicked,
+    instanceScopeId,
+  ]);
 
   return (
     <div
@@ -404,7 +454,7 @@ export const HoloCompanion: React.FC<HoloCompanionProps> = ({
     >
       {/* CONTENEDOR FLOTANTE CON LEVITACIÓN CUÁNTICA */}
       <motion.div
-        className="relative flex flex-col items-center justify-center will-change-transform"
+        className="relative isolate flex flex-col items-center justify-center will-change-transform"
         style={{
           transformOrigin: '50% 50%',
         }}
@@ -440,15 +490,25 @@ export const HoloCompanion: React.FC<HoloCompanionProps> = ({
             : { duration: 4.2, repeat: Infinity, ease: 'easeInOut' }
         }
       >
-        {/* RESPLANDOR DIFUSO AMBIENTAL DEL PRISMA (Sin filter:blur por cuadro) */}
-        <div
-          className="absolute rounded-full pointer-events-none -z-10"
+        {/* AURA CONTRALUZ ADAPTATIVA (Envuelve y recorta siluetas oscuras a 60 FPS) */}
+        <motion.div
+          className="absolute rounded-full pointer-events-none z-0 transition-opacity duration-300"
           style={{
-            width: `${Math.round(115 * scaleMultiplier)}px`,
-            height: `${Math.round(115 * scaleMultiplier)}px`,
-            background: `radial-gradient(circle, ${activeColor}48 0%, ${activeColor}18 42%, transparent 72%)`,
-            opacity: isHovered || isProjecting ? 0.9 : 0.6,
+            width: `${Math.round(svgWidth * auraVisuals.backlightSizeRatio)}px`,
+            height: `${Math.round(svgWidth * auraVisuals.backlightSizeRatio)}px`,
+            background: auraVisuals.backlightGradient,
+            opacity: isHovered || isProjecting ? auraVisuals.backlightHoverOpacity : auraVisuals.backlightOpacity,
           }}
+          animate={
+            isProjecting
+              ? { scale: 1.04 }
+              : { scale: [0.96, 1.05, 0.96] }
+          }
+          transition={
+            isProjecting
+              ? { duration: 0.25, ease: 'easeOut' }
+              : { duration: 3.8, repeat: Infinity, ease: 'easeInOut' }
+          }
         />
 
         {/* ONDA EXPANSIVA CUÁNTICA AL VENCER */}
@@ -499,50 +559,48 @@ export const HoloCompanion: React.FC<HoloCompanionProps> = ({
           } as React.CSSProperties}
           className="relative z-10 flex items-center justify-center"
         >
-          {effectiveShape === 'custom' && effectiveCustomForm?.svgContent ? (
-            <div
-              className="w-full h-full flex items-center justify-center [&>svg]:w-full [&>svg]:h-full [&>svg]:overflow-visible select-none pointer-events-none"
+          {effectiveShape === 'custom' && effectiveImageUrl ? (
+            <img
+              src={effectiveImageUrl}
+              alt={effectiveCustomForm?.name || 'KAI'}
+              className="w-full h-full object-contain pointer-events-none select-none transition-all duration-300"
               style={{
-                filter: `drop-shadow(0 0 12px ${activeColor}70)`,
-              }}
-              dangerouslySetInnerHTML={{
-                __html: (() => {
-                  const raw = effectiveCustomForm.svgContent;
-                  if (!raw) return '';
-                  const firstSvg = raw.indexOf('<svg');
-                  const lastSvg = raw.lastIndexOf('</svg>');
-                  if (firstSvg !== -1 && lastSvg !== -1 && lastSvg > firstSvg) {
-                    return raw.substring(firstSvg, lastSvg + 6);
-                  }
-                  return raw.replace(/={2,}\s*[a-zA-Z0-9_\-]+\s*={2,}/g, '').trim();
-                })(),
+                filter: auraVisuals.customFilter,
               }}
             />
-          ) : effectiveShape === 'custom' && effectiveCustomForm?.imageUrl ? (
-            <img
-              src={effectiveCustomForm.imageUrl}
-              alt={effectiveCustomForm.name || 'KAI'}
-              className="w-full h-full object-contain pointer-events-none select-none"
+          ) : effectiveShape === 'custom' && renderedCustomSvg ? (
+            <div
+              className="w-full h-full flex items-center justify-center [&>svg]:w-full [&>svg]:h-full [&>svg]:overflow-visible select-none pointer-events-none transition-all duration-300"
               style={{
-                filter: `drop-shadow(0 0 12px ${activeColor}80)`,
+                filter: auraVisuals.customFilter,
+              }}
+              dangerouslySetInnerHTML={{
+                __html: renderedCustomSvg,
               }}
             />
           ) : (
-            <KaiVectorGraphics
-              shapeId={effectiveShape}
-              activeColor={activeColor}
-              secondaryColor={activeSecondaryColor}
-              glowFilterId={`${gradientId}-neon-glow`}
-              isHovered={isHovered}
-              justClicked={justClicked}
-              eyeOffset={eyeOffset}
-              isTrackingMouse={isTrackingMouse}
-              isFocusTrance={auraState === 'focus_trance'}
-              has21Days={has21Days}
-              has66Days={has66Days}
-              ascensionCrystalsCount={ascensionCrystalsCount}
-              customForm={effectiveCustomForm}
-            />
+            <div
+              className="w-full h-full flex items-center justify-center transition-all duration-300"
+              style={{
+                filter: effectiveShape === 'custom' ? auraVisuals.customFilter : auraVisuals.prismFilter,
+              }}
+            >
+              <KaiVectorGraphics
+                shapeId={effectiveShape}
+                activeColor={activeColor}
+                secondaryColor={activeSecondaryColor}
+                glowFilterId={`${gradientId}-neon-glow`}
+                isHovered={isHovered}
+                justClicked={justClicked}
+                eyeOffset={eyeOffset}
+                isTrackingMouse={isTrackingMouse}
+                isFocusTrance={auraState === 'focus_trance'}
+                has21Days={has21Days}
+                has66Days={has66Days}
+                ascensionCrystalsCount={ascensionCrystalsCount}
+                customForm={effectiveCustomForm}
+              />
+            </div>
           )}
         </div>
       </motion.div>
