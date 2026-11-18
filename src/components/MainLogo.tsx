@@ -23,13 +23,14 @@ export const MainLogo: React.FC<MainLogoProps> = ({
   const [imageError, setImageError] = useState(false);
   const palette = useSystemPalette();
 
-  // Calibración sutil y refinada: mantiene proporción 864x129 elegante sin invadir el HUD
+  // Calibración de tamaños: Proporción 4.95:1 (594x120)
+  // Calibrado ergonómicamente para mobile: acompaña la escala de los controles del HUD (h-8 = 32px) con presencia nítida
   const sizeClasses = {
-    sm: 'h-[14px] sm:h-[18px]',
-    md: 'h-[16px] xs:h-[18px] sm:h-[22px] lg:h-[26px]',
-    lg: 'h-[18px] xs:h-[22px] sm:h-[28px] lg:h-[32px]',
-    xl: 'h-[28px] sm:h-[38px]',
-    massive: 'h-[40px] sm:h-[50px]',
+    sm: 'h-[20px] sm:h-[24px]',
+    md: 'h-[28px] xs:h-[30px] sm:h-[34px] lg:h-[38px]',
+    lg: 'h-[36px] xs:h-[40px] sm:h-[46px] lg:h-[50px]',
+    xl: 'h-[46px] sm:h-[56px]',
+    massive: 'h-[56px] sm:h-[70px]',
   };
 
   const textSizeClasses = {
@@ -49,7 +50,7 @@ export const MainLogo: React.FC<MainLogoProps> = ({
       className={`relative inline-flex items-center justify-center select-none shrink-0 group transition-all duration-200 hover:scale-[1.03] ${
         onClick ? 'cursor-pointer' : ''
       } ${sizeClasses[size]} ${className}`}
-      style={{ aspectRatio: '864 / 129' }}
+      style={{ aspectRatio: '594 / 120' }}
     >
       {/* Resplandor ambiental de plasma orgánico sincronizado con la paleta de Ajustes (Malla Aurora) */}
       <motion.div
