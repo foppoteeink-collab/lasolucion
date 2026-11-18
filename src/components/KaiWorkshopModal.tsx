@@ -24,7 +24,8 @@ import {
   Plus,
   Volume2,
   Share2,
-  Sun
+  Sun,
+  Lock
 } from 'lucide-react';
 import { usePlayerStore } from '../store/usePlayerStore';
 import { useAppStore } from '../store/useAppStore';
@@ -42,6 +43,8 @@ import { useNarrativeCopy } from '../hooks/useNarrativeCopy';
 import { speakKaiDialogue } from '../utils/voice';
 import { generateAndShareKaiTradingCard } from '../utils/shareCardGenerator';
 import { useSystemPalette } from '../utils/systemPalette';
+import { triggerHaptic } from '../utils/haptics';
+import { notificationService } from '../utils/notifications';
 
 export const KAI_TEMPERAMENTS = [
   {
