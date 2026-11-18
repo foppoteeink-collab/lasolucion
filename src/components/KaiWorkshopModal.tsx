@@ -1,95 +1,35 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { motion, AnimatePresence } from 'motion/react';
 import { 
   Sparkles, 
   X, 
-  Check, 
   Crown, 
   Camera, 
-  Upload, 
-  Zap, 
   Layers, 
   Shield, 
-  Palette, 
-  RotateCcw,
-  Flame,
-  Award,
-  AlertCircle,
-  HelpCircle,
-  Loader2,
-  Landmark,
-  Trash2,
-  Link,
-  Plus,
-  Volume2,
-  Share2,
-  Sun,
-  Lock
+  Landmark, 
+  Trash2 
 } from 'lucide-react';
 import { usePlayerStore } from '../store/usePlayerStore';
 import { useAppStore } from '../store/useAppStore';
 import { useTaskStore } from '../store/useTaskStore';
-import { useUIStore } from '../store/useUIStore';
-import { KAI_OFFICIAL_SHAPES, KAI_AURAS_REGISTRY, KAI_AURA_INTENSITY_OPTIONS, KAI_MULTIVERSE_STYLES, KaiShapeDefinition } from '../data/kaiShapes';
-import { KaiVectorGraphics } from './KaiVectorGraphics';
-import { KAICompanion } from './KAICompanion';
-import { KaiShapeKey, KaiCustomForm, KaiMultiverseStyle, KaiTemperament, KaiAuraIntensity } from '../types';
+import { KAI_OFFICIAL_SHAPES } from '../data/kaiShapes';
+import { KaiShapeKey, KaiCustomForm, KaiTemperament, KaiAuraIntensity } from '../types';
 import { soundFX } from '../utils/audio';
 import { triggerShockwave } from '../utils/celebration';
-import { forgeKaiFromImage, forgeAllKaiVariantsFromImage } from '../services/aiService';
-import { QuantumCubeLoader } from './QuantumCubeLoader';
 import { useNarrativeCopy } from '../hooks/useNarrativeCopy';
 import { speakKaiDialogue } from '../utils/voice';
 import { generateAndShareKaiTradingCard } from '../utils/shareCardGenerator';
 import { useSystemPalette } from '../utils/systemPalette';
-import { triggerHaptic } from '../utils/haptics';
-import { notificationService } from '../utils/notifications';
 
-export const KAI_TEMPERAMENTS = [
-  {
-    id: 'stoic' as KaiTemperament,
-    label: 'Estoico',
-    fullName: 'Estoico / Firme',
-    icon: '🛡️',
-    description: 'Mirada seria, ceño de guerrero y boca recta determinada. Sin sonrisas tontas.',
-  },
-  {
-    id: 'mischievous' as KaiTemperament,
-    label: 'Pícaro',
-    fullName: 'Pícaro / Astuto',
-    icon: '😼',
-    description: 'Media sonrisa ladeada, mirada de reojo y actitud desafiante.',
-  },
-  {
-    id: 'fierce' as KaiTemperament,
-    label: 'Feroz',
-    fullName: 'Feroz / Táctico',
-    icon: '⚡',
-    description: 'Mirada afilada e intensa, visor de combate y postura de batalla.',
-  },
-  {
-    id: 'mystic' as KaiTemperament,
-    label: 'Místico',
-    fullName: 'Místico / Sabio',
-    icon: '🧘',
-    description: 'Ojos serenos semi-cerrados, calma zen y sabiduría cósmica.',
-  },
-  {
-    id: 'cheerful' as KaiTemperament,
-    label: 'Alegre',
-    fullName: 'Alegre / Radiante',
-    icon: '🌟',
-    description: 'Sonrisa vivaz y ojos brillantes llenos de entusiasmo.',
-  },
-  {
-    id: 'zen' as KaiTemperament,
-    label: 'Dormilón',
-    fullName: 'Zen / Dormilón',
-    icon: '🥱',
-    description: 'Párpados pesados, actitud lánguida y pacífica.',
-  },
-];
+import { WorkshopShapesTab } from './workshop/WorkshopShapesTab';
+import { WorkshopEvolutionTab } from './workshop/WorkshopEvolutionTab';
+import { WorkshopArmoryTab } from './workshop/WorkshopArmoryTab';
+import { WorkshopVaultTab } from './workshop/WorkshopVaultTab';
+import { WorkshopForgeTab } from './workshop/WorkshopForgeTab';
+import { KAI_TEMPERAMENTS } from './workshop/workshopConstants';
+
+export { KAI_TEMPERAMENTS };
 
 interface KaiWorkshopModalProps {
   isOpen: boolean;
@@ -99,186 +39,9 @@ interface KaiWorkshopModalProps {
 
 type WorkshopTab = 'forge' | 'vault' | 'shapes' | 'evolution' | 'armory';
 
-const renderStyleMiniPreview = (styleId: KaiMultiverseStyle) => {
-  switch (styleId) {
-    case 'pixar':
-      return (
-        <svg viewBox="0 0 50 50" className="w-10 h-10 drop-shadow-[0_2px_6px_rgba(249,115,22,0.5)]">
-          <defs>
-            <radialGradient id="mini-pixar-body" cx="38%" cy="30%" r="65%">
-              <stop offset="0%" stopColor="#fdba74" />
-              <stop offset="60%" stopColor="#f97316" />
-              <stop offset="100%" stopColor="#c2410c" />
-            </radialGradient>
-            <radialGradient id="mini-pixar-eye-l" cx="35%" cy="30%" r="60%">
-              <stop offset="0%" stopColor="#7dd3fc" />
-              <stop offset="100%" stopColor="#0369a1" />
-            </radialGradient>
-          </defs>
-          {/* Body - smooth rounded 3D sphere shape */}
-          <ellipse cx="25" cy="30" rx="17" ry="14" fill="url(#mini-pixar-body)" />
-          {/* Head / face area */}
-          <circle cx="25" cy="18" r="11" fill="url(#mini-pixar-body)" />
-          {/* Eyes - large expressive Pixar style */}
-          <circle cx="20" cy="16" r="4.5" fill="white" />
-          <circle cx="30" cy="16" r="4.5" fill="white" />
-          <circle cx="20" cy="17" r="2.8" fill="url(#mini-pixar-eye-l)" />
-          <circle cx="30" cy="17" r="2.8" fill="#0369a1" />
-          <circle cx="20" cy="17" r="1.4" fill="#0f172a" />
-          <circle cx="30" cy="17" r="1.4" fill="#0f172a" />
-          {/* Catchlights */}
-          <circle cx="21.5" cy="15.5" r="0.9" fill="white" />
-          <circle cx="31.5" cy="15.5" r="0.9" fill="white" />
-          {/* Smile */}
-          <path d="M20,23 Q25,27 30,23" fill="none" stroke="#7c2d12" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
-      );
-
-    case 'cartoon':
-      return (
-        <svg viewBox="0 0 50 50" className="w-10 h-10 drop-shadow-[0_2px_6px_rgba(239,68,68,0.5)]">
-          {/* Cartoon Network style - thick outlines, flat color, geometric */}
-          <circle cx="25" cy="18" r="12" fill="#facc15" stroke="#050505" strokeWidth="3" />
-          <rect x="10" y="28" width="30" height="16" rx="3" fill="#ef4444" stroke="#050505" strokeWidth="3" />
-          {/* Big cartoon eyes */}
-          <circle cx="20" cy="16" r="5" fill="white" stroke="#050505" strokeWidth="2.5" />
-          <circle cx="30" cy="16" r="5" fill="white" stroke="#050505" strokeWidth="2.5" />
-          <circle cx="20" cy="17" r="2.5" fill="#050505" />
-          <circle cx="30" cy="17" r="2.5" fill="#050505" />
-          <circle cx="21" cy="15.5" r="1" fill="white" />
-          <circle cx="31" cy="15.5" r="1" fill="white" />
-          {/* Thick eyebrows floating */}
-          <rect x="15" y="8" width="7" height="3" rx="1.5" fill="#050505" transform="rotate(-8,18.5,9.5)" />
-          <rect x="28" y="8" width="7" height="3" rx="1.5" fill="#050505" transform="rotate(8,31.5,9.5)" />
-          {/* Big grin */}
-          <path d="M18,22 Q25,28 32,22" fill="#050505" stroke="#050505" strokeWidth="0.5" />
-        </svg>
-      );
-
-    case 'anime':
-      return (
-        <svg viewBox="0 0 50 50" className="w-10 h-10 drop-shadow-[0_2px_6px_rgba(99,102,241,0.6)]">
-          <defs>
-            <linearGradient id="mini-anime-eye" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#a5b4fc" />
-              <stop offset="100%" stopColor="#3730a3" />
-            </linearGradient>
-          </defs>
-          {/* Face */}
-          <ellipse cx="25" cy="22" rx="13" ry="14" fill="#fde8d8" stroke="#111827" strokeWidth="1.8" />
-          {/* Spiky hair */}
-          <polygon points="14,14 12,4 18,12" fill="#4f46e5" stroke="#111827" strokeWidth="1.2" strokeLinejoin="round" />
-          <polygon points="19,11 18,2 24,11" fill="#4f46e5" stroke="#111827" strokeWidth="1.2" strokeLinejoin="round" />
-          <polygon points="24,11 25,2 30,11" fill="#4f46e5" stroke="#111827" strokeWidth="1.2" strokeLinejoin="round" />
-          <polygon points="29,12 34,3 36,13" fill="#4f46e5" stroke="#111827" strokeWidth="1.2" strokeLinejoin="round" />
-          {/* Anime eyes - tall almond shape with gradient */}
-          <ellipse cx="19" cy="21" rx="4" ry="5.5" fill="url(#mini-anime-eye)" stroke="#111827" strokeWidth="1.8" />
-          <ellipse cx="31" cy="21" rx="4" ry="5.5" fill="url(#mini-anime-eye)" stroke="#111827" strokeWidth="1.8" />
-          <ellipse cx="19" cy="21" rx="2" ry="2.8" fill="#1e1b4b" />
-          <ellipse cx="31" cy="21" rx="2" ry="2.8" fill="#1e1b4b" />
-          <circle cx="17.5" cy="18.5" r="1.2" fill="white" opacity="0.9" />
-          <circle cx="29.5" cy="18.5" r="1.2" fill="white" opacity="0.9" />
-          {/* Mouth */}
-          <path d="M22,29 Q25,32 28,29" fill="none" stroke="#c2410c" strokeWidth="1.4" strokeLinecap="round" />
-        </svg>
-      );
-
-    case 'pop':
-      return (
-        <svg viewBox="0 0 50 50" className="w-10 h-10 drop-shadow-[0_2px_6px_rgba(236,72,153,0.5)]">
-          <defs>
-            <radialGradient id="mini-pop-head" cx="35%" cy="25%" r="65%">
-              <stop offset="0%" stopColor="#f9a8d4" />
-              <stop offset="100%" stopColor="#db2777" />
-            </radialGradient>
-          </defs>
-          {/* Funko-style big head */}
-          <circle cx="25" cy="17" r="14" fill="url(#mini-pop-head)" />
-          {/* Vinyl shine highlight */}
-          <ellipse cx="20" cy="11" rx="5" ry="3" fill="white" opacity="0.5" transform="rotate(-20,20,11)" />
-          {/* Small compact body */}
-          <rect x="15" y="29" width="20" height="15" rx="4" fill="#db2777" />
-          {/* Iconic button eyes */}
-          <circle cx="19.5" cy="16" r="3.5" fill="#0f172a" />
-          <circle cx="30.5" cy="16" r="3.5" fill="#0f172a" />
-          <circle cx="18.5" cy="14.5" r="1.2" fill="white" opacity="0.8" />
-          <circle cx="29.5" cy="14.5" r="1.2" fill="white" opacity="0.8" />
-          {/* Simple smile */}
-          <path d="M20,22 Q25,25.5 30,22" fill="none" stroke="#0f172a" strokeWidth="1.8" strokeLinecap="round" />
-        </svg>
-      );
-
-    case 'doodle':
-      return (
-        <svg viewBox="0 0 50 50" className="w-10 h-10 drop-shadow-[0_2px_6px_rgba(6,182,212,0.4)]">
-          {/* Foppotee Totem Head with antenna ears */}
-          <path d="M14,14 L11,5 L19,11 L31,11 L39,5 L36,14 L39,30 L11,30 Z" fill="#06b6d4" stroke="#0a0a0c" strokeWidth="2" strokeLinejoin="round" />
-          {/* Accordion neck folds */}
-          <line x1="16" y1="33" x2="34" y2="33" stroke="#0a0a0c" strokeWidth="2.2" strokeLinecap="round" />
-          <line x1="18" y1="36" x2="32" y2="36" stroke="#ec4899" strokeWidth="2.2" strokeLinecap="round" />
-          <line x1="20" y1="39" x2="30" y2="39" stroke="#facc15" strokeWidth="2.2" strokeLinecap="round" />
-          {/* Hypnotic eyes */}
-          <circle cx="19" cy="18" r="4.5" fill="white" stroke="#0a0a0c" strokeWidth="1.8" />
-          <circle cx="31" cy="18" r="4.5" fill="white" stroke="#0a0a0c" strokeWidth="1.8" />
-          {/* Concentric pupils */}
-          <circle cx="19" cy="18" r="2.2" fill="#0a0a0c" />
-          <circle cx="31" cy="18" r="2.2" fill="#0a0a0c" />
-          <circle cx="18" cy="17" r="0.9" fill="#06b6d4" />
-          <circle cx="30" cy="17" r="0.9" fill="#06b6d4" />
-          {/* Classic Foppotee toothed grid smile */}
-          <rect x="18" y="24" width="14" height="4" rx="1.5" fill="white" stroke="#0a0a0c" strokeWidth="1.4" />
-          <line x1="22" y1="24" x2="22" y2="28" stroke="#0a0a0c" strokeWidth="1.2" />
-          <line x1="25" y1="24" x2="25" y2="28" stroke="#0a0a0c" strokeWidth="1.2" />
-          <line x1="28" y1="24" x2="28" y2="28" stroke="#0a0a0c" strokeWidth="1.2" />
-          {/* Chest Reactor - The Prisma Triangle */}
-          <polygon points="25,41 29,48 21,48" fill="#facc15" stroke="#0a0a0c" strokeWidth="1.4" />
-          <circle cx="25" cy="45.5" r="0.8" fill="#0a0a0c" />
-          {/* Orbiting micro-sparks */}
-          <path d="M5,12 L6.5,8 L8,12 L5,10 L8,10Z" fill="#ec4899" />
-          <path d="M42,16 L43.5,12 L45,16 L42,14 L45,14Z" fill="#facc15" />
-        </svg>
-      );
-
-    case 'clay3d':
-    default:
-      return (
-        <svg viewBox="0 0 50 50" className="w-10 h-10 drop-shadow-[0_2px_6px_rgba(249,115,22,0.4)]">
-          <defs>
-            <radialGradient id="mini-clay-body" cx="35%" cy="30%" r="65%">
-              <stop offset="0%" stopColor="#fdba74" />
-              <stop offset="55%" stopColor="#f97316" />
-              <stop offset="100%" stopColor="#9a3412" />
-            </radialGradient>
-            <radialGradient id="mini-clay-eye-l" cx="30%" cy="30%" r="65%">
-              <stop offset="0%" stopColor="#a3e635" />
-              <stop offset="100%" stopColor="#4d7c0f" />
-            </radialGradient>
-          </defs>
-          {/* Clay body - soft rounded edges like real clay */}
-          <circle cx="25" cy="22" r="15" fill="url(#mini-clay-body)" />
-          {/* Clay highlight - matte shine */}
-          <ellipse cx="19" cy="14" rx="6" ry="4" fill="white" opacity="0.22" transform="rotate(-15,19,14)" />
-          {/* Clay ball eyes */}
-          <circle cx="19" cy="19" r="5" fill="url(#mini-clay-eye-l)" />
-          <circle cx="31" cy="19" r="5" fill="url(#mini-clay-eye-l)" />
-          <circle cx="19" cy="19" r="2.5" fill="#1a2e05" />
-          <circle cx="31" cy="19" r="2.5" fill="#1a2e05" />
-          <circle cx="17.5" cy="17.5" r="1.2" fill="white" opacity="0.7" />
-          <circle cx="29.5" cy="17.5" r="1.2" fill="white" opacity="0.7" />
-          {/* Clay mouth - indented groove */}
-          <path d="M19,27 Q25,31 31,27" fill="none" stroke="#9a3412" strokeWidth="2.5" strokeLinecap="round" />
-          {/* Tubular arms - clay style */}
-          <circle cx="10" cy="32" r="4" fill="#f97316" />
-          <circle cx="40" cy="32" r="4" fill="#f97316" />
-        </svg>
-      );
-  }
-};
-
 export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
   isOpen,
   onClose,
-  onOpenShop,
 }) => {
   const copy = useNarrativeCopy();
   const { stats, setStats } = usePlayerStore();
@@ -314,25 +77,9 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
   const [activeTab, setActiveTab] = useState<WorkshopTab>('shapes');
   const systemPalette = useSystemPalette();
 
-  // Neural Forge States
-  const [capturedImageBase64, setCapturedImageBase64] = useState<string | null>(null);
-  const [forgePrompt, setForgePrompt] = useState<string>('');
-  const [selectedStyle, setSelectedStyle] = useState<KaiMultiverseStyle>('pixar');
-
-  const [selectedMood, setSelectedMood] = useState<KaiTemperament>('stoic');
-  const [isForging, setIsForging] = useState(false);
-  const [forgedResult, setForgedResult] = useState<KaiCustomForm | null>(null);
-  const [forgedVariants, setForgedVariants] = useState<KaiCustomForm[]>([]);
-  const [selectedVariantIndex, setSelectedVariantIndex] = useState<number>(0);
-  const [saveAllFeedback, setSaveAllFeedback] = useState<boolean>(false);
-  const [liveDetectedObject, setLiveDetectedObject] = useState<string | null>(null);
-  const [forgeProgressText, setForgeProgressText] = useState<string>('');
-  const [forgeError, setForgeError] = useState<string | null>(null);
-  const [equippedFeedback, setEquippedFeedback] = useState(false);
   const [relicToDelete, setRelicToDelete] = useState<{ id: string; name: string } | null>(null);
   const [isSharingCard, setIsSharingCard] = useState<string | null>(null);
   const [speakingRelicId, setSpeakingRelicId] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Progresión de Hábitos 21d / 66d
   const habits21Count = useMemo(() => {
@@ -362,8 +109,32 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
   const progress21 = Math.min(100, Math.round((topStreak / 21) * 100));
   const progress66 = Math.min(100, Math.round((topStreak / 66) * 100));
 
-  // Cargas de Forja (Modo de pruebas activo: capacidad completa temporal de 9999 para experimentación libre)
-  const forgeCharges: number = stats.kaiNeuralForgeCharges ?? 9999;
+  const currentAuraIntensity: KaiAuraIntensity = stats.kaiAuraIntensity || 'normal';
+
+  const vaultItems = useMemo(() => {
+    const items: KaiCustomForm[] = [];
+    const idsSeen = new Set<string>();
+
+    if (stats.kaiVault && stats.kaiVault.length > 0) {
+      for (const item of stats.kaiVault) {
+        const key = item.id || item.name;
+        if (!idsSeen.has(key)) {
+          idsSeen.add(key);
+          items.push(item);
+        }
+      }
+    }
+
+    if (stats.kaiCustomForm) {
+      const key = stats.kaiCustomForm.id || stats.kaiCustomForm.name;
+      if (!idsSeen.has(key)) {
+        idsSeen.add(key);
+        items.unshift(stats.kaiCustomForm);
+      }
+    }
+
+    return items;
+  }, [stats.kaiVault, stats.kaiCustomForm]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -407,8 +178,6 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
     }));
   };
 
-  const currentAuraIntensity: KaiAuraIntensity = stats.kaiAuraIntensity || 'normal';
-
   const handleSelectParticle = (particle: string) => {
     soundFX.playItemEquip();
     setStats((prev) => ({
@@ -417,116 +186,10 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
     }));
   };
 
-  // Procesamiento de imagen en cliente (compresión canvas)
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const maxDim = 480;
-        let width = img.width;
-        let height = img.height;
-
-        if (width > height) {
-          if (width > maxDim) {
-            height = Math.round((height * maxDim) / width);
-            width = maxDim;
-          }
-        } else {
-          if (height > maxDim) {
-            width = Math.round((width * maxDim) / height);
-            height = maxDim;
-          }
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(img, 0, 0, width, height);
-          const compressed = canvas.toDataURL('image/jpeg', 0.72);
-          setCapturedImageBase64(compressed);
-          setForgeError(null);
-        }
-      };
-      img.src = event.target?.result as string;
-    };
-    reader.readAsDataURL(file);
-    // Resetear valor para que volver a seleccionar la misma foto dispare onChange
-    e.target.value = '';
-  };
-
-  const handleRunNeuralForge = async () => {
-    if (!capturedImageBase64) return;
-
-    soundFX.playClick();
-    setIsForging(true);
-    setForgedVariants([]);
-    setForgedResult(null);
-    setSelectedVariantIndex(0);
-    setLiveDetectedObject(null);
-    setForgeError(null);
-    setForgeProgressText('Paso 1: Analizando imagen con tu compañero KAI...');
-
-    try {
-      const variants = await forgeAllKaiVariantsFromImage({
-        imageBase64: capturedImageBase64,
-        promptDescription: forgePrompt.trim(),
-        mood: selectedMood,
-        onProgress: (info) => {
-          if (info.detectedObject) {
-            setLiveDetectedObject(info.detectedObject);
-          }
-          setForgeProgressText(
-            info.completed > 0
-              ? `Forjando 6 variantes del Multiverso: ${info.completed} de ${info.total} listas...`
-              : info.detectedObject
-              ? `🎯 Objeto: "${info.detectedObject}". Creando 6 estilos...`
-              : 'Escaneando objeto con IA...'
-          );
-          if (info.variants && info.variants.length > 0) {
-            setForgedVariants([...info.variants]);
-            setForgedResult((prev) => prev || info.variants[0]);
-          }
-        },
-      });
-
-      if (variants && variants.length > 0) {
-        soundFX.playFanfare();
-        triggerShockwave({ color: 'violet', intensity: 'epic' });
-        setForgedVariants(variants);
-        setForgedResult(variants[0]);
-        setSelectedVariantIndex(0);
-        setLiveDetectedObject(variants[0].detectedObject || null);
-
-        // Registrar forma conservando modo libre
-        setStats((prev) => ({
-          ...prev,
-          kaiNeuralForgeCharges: 9999,
-        }));
-      } else {
-        setForgeError('No se pudo procesar la silueta. Intenta con un objeto con fondo más despejado.');
-      }
-    } catch (err: any) {
-      console.error('[Forja Neural 6 Variantes] Error procesando:', err);
-      setForgeError(err?.message || 'Error de conexión con el motor neural. Inténtalo de nuevo.');
-    } finally {
-      setIsForging(false);
-    }
-  };
-
-  const handleSaveAllVariantsToVault = () => {
-    if (!forgedVariants || forgedVariants.length === 0) return;
-    soundFX.playFanfare();
-    triggerShockwave({ color: 'gold', intensity: 'medium' });
-
+  const handleSaveAllVariantsToVault = (variants: KaiCustomForm[]) => {
     setStats((prev) => {
       const currentVault = prev.kaiVault ? [...prev.kaiVault] : [];
-      forgedVariants.forEach((variant, idx) => {
+      variants.forEach((variant, idx) => {
         const entryWithId: KaiCustomForm = {
           ...variant,
           id: variant.id || `relic_${Date.now()}_${idx}`,
@@ -544,21 +207,16 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
         kaiVault: currentVault,
       };
     });
-
-    setSaveAllFeedback(true);
-    setTimeout(() => setSaveAllFeedback(false), 3500);
   };
 
-  const handleEquipCustomForm = (targetForm?: KaiCustomForm) => {
-    const formToEquip = targetForm || forgedResult;
-    if (!formToEquip) return;
+  const handleEquipCustomForm = (targetForm: KaiCustomForm) => {
     soundFX.playFanfare();
     triggerShockwave({ color: 'gold', intensity: 'epic' });
 
     const entryWithId: KaiCustomForm = {
-      ...formToEquip,
-      id: formToEquip.id || `relic_${Date.now()}`,
-      createdAt: formToEquip.createdAt || new Date().toISOString(),
+      ...targetForm,
+      id: targetForm.id || `relic_${Date.now()}`,
+      createdAt: targetForm.createdAt || new Date().toISOString(),
     };
 
     setStats((prev) => {
@@ -579,8 +237,6 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
         kaiVault: currentVault,
       };
     });
-    setEquippedFeedback(true);
-    setTimeout(() => setEquippedFeedback(false), 4500);
   };
 
   const handleSpeakQuote = (quote: string, mood?: KaiTemperament, id?: string) => {
@@ -648,66 +304,6 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
       };
     });
   };
-
-  const renderAuraIntensityPanel = () => (
-    <div className="p-4 rounded-2xl bg-[#040814]/90 border border-white/10 flex flex-col sm:flex-row items-center gap-4">
-      {/* Vista previa en vivo sobre el fondo oscuro real de la app (#030712) */}
-      <div
-        className="w-24 h-24 shrink-0 rounded-2xl bg-[#030712] border border-white/10 flex items-center justify-center relative overflow-hidden shadow-inner"
-        data-preserve-optic="true"
-      >
-        <KAICompanion
-          size={62}
-          interactive={false}
-          auraIntensity={currentAuraIntensity}
-        />
-      </div>
-
-      {/* Selector de Intensidad */}
-      <div className="flex-1 w-full space-y-2.5">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h4 className="text-xs font-black uppercase text-slate-200 tracking-wider flex items-center gap-2">
-            <Sun className="w-4 h-4 text-cyan-400" />
-            <span>Intensidad del Aura &amp; Visibilidad</span>
-          </h4>
-          <span className="text-[10px] font-mono text-slate-400">
-            Contraluz + borde luminoso
-          </span>
-        </div>
-
-        <p className="text-[11px] text-slate-400 leading-snug">
-          Ajusta el resplandor detrás y alrededor de la silueta para que KAI nunca se pierda sobre fondos oscuros.
-        </p>
-
-        <div className="grid grid-cols-3 gap-2">
-          {KAI_AURA_INTENSITY_OPTIONS.map((opt) => {
-            const isActive = currentAuraIntensity === opt.id;
-            return (
-              <button
-                key={opt.id}
-                type="button"
-                aria-pressed={isActive}
-                onClick={() => handleSelectAuraIntensity(opt.id)}
-                className={`px-3 py-2 rounded-xl border text-left transition-all cursor-pointer active:scale-95 ${
-                  isActive
-                    ? 'bg-cyan-500/15 border-cyan-400/80 shadow-[0_0_16px_rgba(0,240,255,0.22)] text-white'
-                    : 'bg-black/40 border-white/10 hover:border-white/25 text-slate-300 hover:text-white'
-                }`}
-              >
-                <div className="flex items-center justify-between gap-1">
-                  <span className="text-xs font-bold block">{opt.label}</span>
-                  {isActive && <Check className="w-3.5 h-3.5 text-cyan-300 shrink-0" />}
-                </div>
-                <span className="text-[9.5px] text-slate-400 block mt-0.5 leading-tight">
-                  {opt.tagline}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
 
   return createPortal(
     <div
@@ -792,9 +388,9 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
           >
             <Landmark className="w-3.5 h-3.5" />
             <span>Bóveda / Museo</span>
-            {((stats.kaiVault?.length || 0) > 0 || stats.kaiCustomForm) && (
+            {vaultItems.length > 0 && (
               <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono tabular-nums ${activeTab === 'vault' ? 'bg-black/25 text-[#030712] font-bold optic-inner-badge' : 'bg-white/10 text-slate-200 border border-white/10'}`}>
-                {stats.kaiVault?.length || (stats.kaiCustomForm ? 1 : 0)}
+                {vaultItems.length}
               </span>
             )}
           </button>
@@ -854,1213 +450,83 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
         {/* ─── CONTENIDO DE PESTAÑAS ─── */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 custom-scrollbar">
           
-          {/* ═══════════════════════════════════════════════════════════════ */}
-          {/* TAB: 🏛️ BÓVEDA / MUSEO DE KAI (RELIQUIAS & GUARDIANES DE HÁBITOS) */}
-          {/* ═══════════════════════════════════════════════════════════════ */}
-          {activeTab === 'vault' && (() => {
-            const vaultItems: KaiCustomForm[] = [];
-            const idsSeen = new Set<string>();
+          {/* TAB: FORJA NEURAL */}
+          {activeTab === 'forge' && (
+            <WorkshopForgeTab
+              onEquipCustomForm={handleEquipCustomForm}
+              onSaveAllToVault={handleSaveAllVariantsToVault}
+              onShareTradingCard={handleShareTradingCard}
+              onSpeakQuote={handleSpeakQuote}
+              speakingRelicId={speakingRelicId}
+              isSharingCard={isSharingCard}
+            />
+          )}
 
-            if (stats.kaiVault && stats.kaiVault.length > 0) {
-              for (const item of stats.kaiVault) {
-                const key = item.id || item.name;
-                if (!idsSeen.has(key)) {
-                  idsSeen.add(key);
-                  vaultItems.push(item);
-                }
-              }
-            }
+          {/* TAB: BÓVEDA / MUSEO */}
+          {activeTab === 'vault' && (
+            <WorkshopVaultTab
+              vaultItems={vaultItems}
+              currentShape={stats.kaiShape}
+              customForm={stats.kaiCustomForm}
+              habitList={habitList}
+              speakingRelicId={speakingRelicId}
+              isSharingCard={isSharingCard}
+              onOpenForge={() => { soundFX.playClick(); setActiveTab('forge'); }}
+              onRequestDeleteRelic={(relic) => setRelicToDelete(relic)}
+              onSpeakQuote={handleSpeakQuote}
+              onLinkHabitToRelic={handleLinkHabitToRelic}
+              onShareTradingCard={handleShareTradingCard}
+              onEquipCustomForm={handleEquipCustomForm}
+              onClose={onClose}
+            />
+          )}
 
-            if (stats.kaiCustomForm) {
-              const key = stats.kaiCustomForm.id || stats.kaiCustomForm.name;
-              if (!idsSeen.has(key)) {
-                idsSeen.add(key);
-                vaultItems.unshift(stats.kaiCustomForm);
-              }
-            }
-
-            return (
-              <div className="space-y-5">
-                {/* Cabecera del Museo */}
-                <div className="p-4 rounded-2xl bg-[#040a1a]/[0.94] border border-emerald-500/30 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2.5">
-                    <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
-                      <Landmark className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h3 className="text-xs sm:text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                        <span>{copy.workshopVaultTitle}</span>
-                        <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-                          {vaultItems.length} {vaultItems.length === 1 ? 'Reliquia' : 'Reliquias'}
-                        </span>
-                      </h3>
-                      <p className="text-[11px] text-slate-300 mt-0.5">
-                        Tus compañeros creados. Vincula un KAI a cualquier hábito para protegerlo.
-                      </p>
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => { soundFX.playClick(); setActiveTab('forge'); }}
-                    className="px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500 hover:text-black border border-emerald-400 text-emerald-200 text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5"
-                  >
-                    <Camera className="w-3.5 h-3.5" />
-                    <span>Forjar Nuevo</span>
-                  </button>
-                </div>
-
-                {/* Si no hay reliquias aún */}
-                {vaultItems.length === 0 ? (
-                  <div className="p-8 text-center rounded-2xl border border-dashed border-white/10 bg-white/[0.02] space-y-3 max-w-md mx-auto">
-                    <div className="w-12 h-12 mx-auto rounded-2xl bg-emerald-950/40 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-                      <Landmark className="w-6 h-6" />
-                    </div>
-                    <h4 className="text-sm font-bold text-white">Tu galería está vacía</h4>
-                    <p className="text-xs text-slate-400 leading-relaxed">
-                      Crea tu primer asistente personalizado para vincularlo a tus hábitos diarios.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => { soundFX.playClick(); setActiveTab('forge'); }}
-                      className="px-4 py-2 rounded-xl bg-gradient-to-r from-fuchsia-600 to-cyan-500 text-white font-bold text-xs uppercase tracking-wider transition-all cursor-pointer"
-                    >
-                      {copy.workshopVaultEmptyCta}
-                    </button>
-                  </div>
-                ) : (
-                  /* Grid de Reliquias */
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {vaultItems.map((relic, idx) => {
-                      const relicId = relic.id || `relic_${idx}`;
-                      const isEquipped = stats.kaiShape === 'custom' && (stats.kaiCustomForm?.id === relicId || stats.kaiCustomForm?.name === relic.name);
-                      const linkedHabit = habitList.find(h => h.id === relic.habitIdLinked || h.title === relic.habitTitleLinked);
-
-                      return (
-                        <div
-                          key={relicId}
-                          className={`p-4 rounded-2xl border transition-all flex flex-col justify-between group relative overflow-hidden ${
-                            isEquipped
-                              ? 'bg-[#040a1a]/[0.96] border-emerald-400/80 shadow-[0_0_25px_rgba(16,185,129,0.22),inset_0_1px_0_rgba(255,255,255,0.1)] optic-active-card'
-                              : 'bg-[#040814]/80 border-white/10 hover:border-emerald-500/30 hover:bg-white/[0.04]'
-                          }`}
-                        >
-                          <div>
-                            <div className="flex items-center gap-3 mb-3">
-                              <div className="w-16 h-16 shrink-0 relative flex items-center justify-center bg-black/70 rounded-2xl border border-white/10 p-1.5 overflow-hidden shadow-inner">
-                                <KAICompanion
-                                  customForm={relic}
-                                  shapeId="custom"
-                                  size={60}
-                                  interactive={false}
-                                />
-                              </div>
-
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-center justify-between gap-1">
-                                  <h4 className="text-sm font-anton tracking-wide text-white truncate">{relic.name}</h4>
-                                  <button
-                                    type="button"
-                                    onClick={() => setRelicToDelete({ id: relicId, name: relic.name })}
-                                    title="Retirar de la Bóveda"
-                                    aria-label={`Retirar ${relic.name} de la Bóveda`}
-                                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-950/30 transition-colors cursor-pointer"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </button>
-                                </div>
-                                <span className="text-[10px] font-mono text-emerald-400 block truncate mt-0.5">
-                                  🎯 {relic.detectedObject || 'Objeto Forjado'}
-                                </span>
-                                <span className="inline-block mt-1 px-2 py-0.5 rounded-lg text-[9px] font-mono bg-white/5 border border-white/10 text-slate-300 uppercase">
-                                  {relic.artStyle || 'Multiverso'}
-                                </span>
-                              </div>
-                            </div>
-
-                            {/* Frase de Personalidad con Botón de Voz */}
-                            {relic.personalityQuote && (
-                              <div className="flex items-center gap-1.5 mb-3 bg-black/40 px-2.5 py-1.5 rounded-xl border border-white/5">
-                                <p className="text-[10px] text-slate-300 italic line-clamp-2 flex-1">
-                                  "{relic.personalityQuote}"
-                                </p>
-                                <button
-                                  type="button"
-                                  onClick={() => handleSpeakQuote(relic.personalityQuote || '', relic.mood, relicId)}
-                                  className="p-1 rounded-lg text-cyan-400 hover:text-white hover:bg-cyan-950/60 transition-colors shrink-0 cursor-pointer"
-                                  title="Escuchar voz de KAI"
-                                >
-                                  <Volume2 className={`w-3.5 h-3.5 ${speakingRelicId === relicId ? 'animate-bounce text-cyan-300' : ''}`} />
-                                </button>
-                              </div>
-                            )}
-
-                            {/* Selector de Hábito Custodiado */}
-                            <div className="space-y-1 mb-3 pt-2.5 border-t border-white/5">
-                              <label className="text-[9px] font-mono uppercase text-slate-400 flex items-center gap-1 font-bold">
-                                <Link className="w-3 h-3 text-cyan-400" />
-                                <span>Hábito que Custodia:</span>
-                              </label>
-
-                              {habitList.length > 0 ? (
-                                <select
-                                  value={relic.habitIdLinked || ''}
-                                  onChange={(e) => {
-                                    const selectedId = e.target.value;
-                                    const matched = habitList.find(h => h.id === selectedId);
-                                    handleLinkHabitToRelic(relicId, selectedId, matched?.title || '');
-                                  }}
-                                  aria-label={`Hábito vinculado a ${relic.name}`}
-                                  className="w-full bg-[#030712] border border-white/15 text-white rounded-xl px-2.5 py-1.5 text-[10px] font-mono focus:border-emerald-400 focus:outline-none cursor-pointer"
-                                >
-                                  <option value="">(Sin vincular a hábito)</option>
-                                  {habitList.map((h) => (
-                                    <option key={h.id} value={h.id}>
-                                      {h.title} ({h.streak || 0}d racha)
-                                    </option>
-                                  ))}
-                                </select>
-                              ) : (
-                                <div className="space-y-1.5 pt-0.5">
-                                  <span className="text-[10px] text-slate-400 font-mono block">
-                                    No tienes hábitos activos en tu rutina.
-                                  </span>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      onClose();
-                                      useUIStore.getState().openTaskForm('habit');
-                                    }}
-                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 hover:bg-emerald-500 hover:text-black font-anton text-[10px] uppercase tracking-wider transition-all w-fit cursor-pointer"
-                                  >
-                                    <Plus className="w-3 h-3 stroke-[3]" />
-                                    <span>Crear Hábito Kaizen</span>
-                                  </button>
-                                </div>
-                              )}
-
-                              {linkedHabit && (
-                                <div className="flex items-center gap-1.5 text-[9px] font-mono text-amber-300 bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20 mt-1.5">
-                                  <Flame className="w-3 h-3 text-amber-400" />
-                                  <span>Racha protegida: {linkedHabit.streak || 0} días</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Botón de Equipar & Ficha Coleccionable */}
-                          <div className="pt-3 border-t border-white/5 flex items-center justify-between gap-2">
-                            <button
-                              type="button"
-                              onClick={() => handleShareTradingCard(relic, relicId)}
-                              disabled={isSharingCard === relicId}
-                              className="px-2.5 py-1.5 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 border border-purple-400/40 text-purple-200 hover:text-white font-anton text-[11px] uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 disabled:opacity-50"
-                              title="Generar y compartir Carta Holográfica Coleccionable"
-                            >
-                              {isSharingCard === relicId ? (
-                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                              ) : (
-                                <Share2 className="w-3.5 h-3.5 text-purple-400" />
-                              )}
-                              <span>Ficha</span>
-                            </button>
-
-                            {isEquipped ? (
-                              <span className="text-xs font-anton tracking-wider uppercase text-emerald-300 bg-emerald-950/80 border border-emerald-400/60 px-3.5 py-1.5 rounded-xl shadow-[0_0_12px_rgba(16,185,129,0.3)] flex items-center gap-1.5">
-                                <Check className="w-3.5 h-3.5 stroke-[3]" />
-                                Activo
-                              </span>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={() => handleEquipCustomForm(relic)}
-                                className="chicle-btn px-4 py-1.5 rounded-xl bg-emerald-500/20 border border-emerald-400/40 hover:bg-emerald-400 hover:text-black font-anton text-xs uppercase tracking-wider text-emerald-200 transition-all cursor-pointer active:scale-95"
-                              >
-                                Equipar
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            );
-          })()}
-
-          {/* ═══════════════════════════════════════════════════════════════ */}
-          {/* TAB 1: FORMA GÉNESIS (EL PRISMA) */}
-          {/* ═══════════════════════════════════════════════════════════════ */}
+          {/* TAB: FORMA GÉNESIS */}
           {activeTab === 'shapes' && (
-            <div className="space-y-5">
-              <div className="flex items-center justify-between pb-1 border-b border-white/5">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                  Compañero Génesis & Creaciones
-                </span>
-                <span className="text-[10px] font-mono text-cyan-300">
-                  Forma Sagrada Día 0
-                </span>
-              </div>
-
-              {/* Grid: El Prisma Cuántico y Compañero Forjado IA */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
-                {/* 1. EL PRISMA CUÁNTICO */}
-                {(() => {
-                  const isSelected = stats.kaiShape !== 'custom';
-                  return (
-                    <div
-                      onClick={() => handleSelectShape('prism')}
-                      className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between group relative overflow-hidden ${
-                        isSelected
-                          ? 'aura-bg-soft aura-border-primary aura-glow-subtle optic-active-card'
-                          : 'bg-[#040814]/80 border-white/10 hover:aura-border-subtle hover:bg-white/[0.04]'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3.5">
-                        <div className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 relative flex items-center justify-center bg-black/70 rounded-2xl border border-white/10 p-1.5 overflow-hidden shadow-inner" data-preserve-optic="true">
-                          <KaiVectorGraphics
-                            shapeId="prism"
-                            activeColor={isSelected ? systemPalette.c1 : '#94a3b8'}
-                            secondaryColor={systemPalette.c2}
-                            glowFilterId="preview-genesis-prism"
-                            has21Days={has21Days}
-                            has66Days={has66Days}
-                            ascensionCrystalsCount={ascensionCrystals}
-                          />
-                        </div>
-
-                        <div className="flex-1 min-w-0 flex flex-col gap-1">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-sm">🔺</span>
-                            <h4 className="text-sm sm:text-base font-anton tracking-wide text-white truncate">El Prisma</h4>
-                          </div>
-                          <span className="text-[10px] font-mono text-cyan-300 block tracking-wider uppercase">
-                            ORÁCULO // PRIMA
-                          </span>
-                          <span className="inline-block self-start px-2 py-0.5 rounded-lg text-[9px] font-mono bg-white/5 border border-white/10 text-slate-300">
-                            Visión & Foco Mental
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="pt-3 mt-3 border-t border-white/10 flex items-center justify-between">
-                        <span className="text-[10px] font-mono text-slate-400">
-                          {isSelected ? '● Estado: Activo' : 'Compañero Canónico'}
-                        </span>
-                        {isSelected ? (
-                          <span className="text-xs font-anton tracking-wider uppercase text-cyan-300 bg-cyan-950/80 border border-cyan-400/60 px-3 py-1 rounded-xl shadow-[0_0_12px_rgba(0,240,255,0.3)] flex items-center gap-1.5">
-                            <Check className="w-3.5 h-3.5 text-cyan-300 stroke-[3]" />
-                            Equipado
-                          </span>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleSelectShape('prism');
-                            }}
-                            className="chicle-btn px-4 py-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-400 hover:text-black border border-cyan-400/40 font-anton text-xs uppercase tracking-wider text-cyan-200 transition-all cursor-pointer active:scale-95"
-                          >
-                            Equipar
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })()}
-
-                {/* Tarjeta de Forma Forjada por IA (Si existe) */}
-                {stats.kaiCustomForm && (
-                  <div
-                    onClick={() => handleSelectShape('custom')}
-                    className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between group relative overflow-hidden ${
-                      stats.kaiShape === 'custom'
-                        ? 'bg-fuchsia-950/40 border-fuchsia-400/80 shadow-[0_0_25px_rgba(217,70,239,0.25),inset_0_1px_0_rgba(255,255,255,0.1)]'
-                        : 'bg-[#040814]/80 border-white/10 hover:border-fuchsia-500/40 hover:bg-[#12041e]'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3.5">
-                      <div className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 relative flex items-center justify-center bg-black/70 rounded-2xl border border-fuchsia-500/30 p-1 overflow-hidden shadow-inner">
-                        <KAICompanion
-                          customForm={stats.kaiCustomForm}
-                          shapeId="custom"
-                          size={60}
-                          interactive={false}
-                        />
-                      </div>
-
-                      <div className="flex-1 min-w-0 flex flex-col gap-1">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-sm">✨</span>
-                          <h4 className="text-sm sm:text-base font-anton tracking-wide text-fuchsia-200 truncate">{stats.kaiCustomForm.name}</h4>
-                        </div>
-                        <span className="text-[10px] font-mono text-fuchsia-400 block tracking-wider uppercase">
-                          FORJA NEURAL IA
-                        </span>
-                        <span className="inline-block self-start px-2 py-0.5 rounded-lg text-[9px] font-mono bg-fuchsia-500/15 text-fuchsia-300 border border-fuchsia-500/30">
-                          {stats.kaiCustomForm.detectedObject || 'Personalizado'}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="pt-3 mt-3 border-t border-white/10 flex items-center justify-between">
-                      <span className="text-[10px] font-mono text-slate-400">
-                        {stats.kaiShape === 'custom' ? '● Estado: Activo' : 'Creación Neural'}
-                      </span>
-                      {stats.kaiShape === 'custom' ? (
-                        <span className="text-xs font-anton tracking-wider uppercase text-fuchsia-300 bg-fuchsia-950/80 border border-fuchsia-400/60 px-3 py-1 rounded-xl shadow-[0_0_12px_rgba(217,70,239,0.3)] flex items-center gap-1.5">
-                          <Check className="w-3.5 h-3.5 text-fuchsia-300 stroke-[3]" />
-                          Equipado
-                        </span>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleSelectShape('custom');
-                          }}
-                          className="chicle-btn px-4 py-1.5 rounded-xl bg-fuchsia-500/20 hover:bg-fuchsia-400 hover:text-black font-anton text-xs uppercase tracking-wider text-fuchsia-200 transition-all cursor-pointer border border-fuchsia-500/40 active:scale-95"
-                        >
-                          Equipar
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+            <WorkshopShapesTab
+              currentShape={stats.kaiShape}
+              customForm={stats.kaiCustomForm}
+              systemPalette={systemPalette}
+              has21Days={has21Days}
+              has66Days={has66Days}
+              ascensionCrystals={ascensionCrystals}
+              onSelectShape={handleSelectShape}
+            />
           )}
 
-          {/* ═══════════════════════════════════════════════════════════════ */}
-          {/* TAB 2: PROGRESIÓN ACUMULATIVA (21d / 66d & ASCENSIÓN) */}
-          {/* ═══════════════════════════════════════════════════════════════ */}
+          {/* TAB: EVOLUCIÓN */}
           {activeTab === 'evolution' && (
-            <div className="space-y-6">
-              {/* Resumen de Ascensión */}
-              <div className="p-5 rounded-3xl bg-[#040a1a]/[0.94] border border-amber-500/40 shadow-[0_8px_28px_rgba(245,158,11,0.12)] flex flex-col md:flex-row items-center justify-between gap-5">
-                <div className="flex items-center gap-4">
-                  <div className="w-20 h-20 shrink-0 relative flex items-center justify-center bg-[#030712] rounded-2xl border border-amber-500/40 p-1 overflow-hidden" data-preserve-optic="true">
-                    <KAICompanion
-                      size={60}
-                      interactive={false}
-                      auraColor={has66Days ? '#fbbf24' : undefined}
-                      auraIntensity={currentAuraIntensity}
-                    />
-                  </div>
-
-                  <div>
-                    <span className="text-[10px] font-mono text-amber-400 font-bold uppercase tracking-wider block">
-                      Ascensión Cuántica
-                    </span>
-                    <h3 className="text-base font-bold text-white tracking-wide flex items-center gap-2">
-                      <span>KAI {has66Days ? `Grado ${ascensionGrade}` : (has21Days ? 'Guardián 21d' : 'Forma Inicial')}</span>
-                      {has66Days && <Crown className="w-4 h-4 text-amber-400" />}
-                    </h3>
-                    <p className="text-xs text-slate-400 mt-0.5 max-w-md">
-                      {has66Days
-                        ? `${habits66Count} hábitos dominados a 66 días. Cristales orbitales activos.`
-                        : has21Days
-                        ? 'Inercia de 21 días superada. Auras desbloqueadas.'
-                        : 'Alcanza 21 días de racha en un hábito para despertar auras.'}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <div className="text-center p-3 rounded-2xl bg-black/50 border border-white/10 min-w-[90px]">
-                    <span className="text-[10px] font-mono text-slate-400 uppercase block font-bold">21 Días</span>
-                    <span className="text-xl font-black text-purple-300 font-mono">{habits21Count}</span>
-                    <span className="text-[9px] text-slate-400 block">Hábitos</span>
-                  </div>
-
-                  <div className="text-center p-3 rounded-2xl bg-black/50 border border-amber-500/40 min-w-[90px]">
-                    <span className="text-[10px] font-mono text-amber-400 uppercase block font-bold">66 Días</span>
-                    <span className="text-xl font-black text-amber-300 font-mono">{habits66Count}</span>
-                    <span className="text-[9px] text-amber-400/80 block">Maestrías</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Radar Kaizen de Neuroplasticidad & Automatismo */}
-              <div className="p-4 rounded-2xl bg-[#040916] border border-cyan-500/30 space-y-3.5">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="text-xs font-black uppercase tracking-wider text-cyan-300 flex items-center gap-1.5 font-anton">
-                    <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-                    Radar de Inercia Kaizen {topHabit ? `(Hábito Líder: ${topHabit.title})` : ''}
-                  </span>
-                  <span className="text-[10px] font-mono text-slate-300">
-                    Racha activa: <strong className="text-amber-300">{topStreak} días</strong>
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 font-mono text-xs">
-                  {/* Umbral 21d */}
-                  <div className="p-3 rounded-xl bg-black/60 border border-purple-500/30 space-y-1.5">
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span className="text-purple-300 font-bold">1. Adaptación (Maltz 21d)</span>
-                      <span className="text-slate-300">{Math.min(21, topStreak)}/21d ({progress21}%)</span>
-                    </div>
-                    <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-purple-500 to-cyan-400 rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(168,85,247,0.5)]"
-                        style={{ width: `${progress21}%` }}
-                      />
-                    </div>
-                    <span className="text-[9px] text-slate-400 block">
-                      {topStreak >= 21 ? '✅ Circuito neuronal establecido. Auras desbloqueadas.' : `Faltan ${Math.max(0, 21 - topStreak)} días para consolidar la neuroplasticidad.`}
-                    </span>
-                  </div>
-
-                  {/* Umbral 66d */}
-                  <div className="p-3 rounded-xl bg-black/60 border border-amber-500/30 space-y-1.5">
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span className="text-amber-300 font-bold">2. Automatismo (Lally 66d)</span>
-                      <span className="text-slate-300">{Math.min(66, topStreak)}/66d ({progress66}%)</span>
-                    </div>
-                    <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-amber-500 to-yellow-300 rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]"
-                        style={{ width: `${progress66}%` }}
-                      />
-                    </div>
-                    <span className="text-[9px] text-slate-400 block">
-                      {topStreak >= 66 ? '👑 Hábito maestro en piloto automático. Ascensión completa.' : `Faltan ${Math.max(0, 66 - topStreak)} días para automatismo permanente.`}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Selector de Intensidad del Aura (Contraluz + Rim Light) */}
-              {renderAuraIntensityPanel()}
-
-              {/* Selector de Auras Elementales Desbloqueadas */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-black uppercase text-slate-300 tracking-wider flex items-center gap-2">
-                    <Palette className="w-4 h-4 text-cyan-400" />
-                    <span>Auras Elementales Desbloqueadas por Hábitos</span>
-                  </h4>
-                  <span className="text-[10px] font-mono text-slate-400">
-                    {KAI_AURAS_REGISTRY.filter(a => a.requiredStreak === 0 || (a.requiredStreak === 21 && has21Days) || (a.requiredStreak === 66 && has66Days)).length} de {KAI_AURAS_REGISTRY.length} Desbloqueadas
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {KAI_AURAS_REGISTRY.map((aura) => {
-                    const isUnlocked = aura.requiredStreak === 0 || (aura.requiredStreak === 21 && has21Days) || (aura.requiredStreak === 66 && has66Days);
-                    const isEquipped = stats.kaiAuraColor === aura.color;
-
-                    return (
-                      <div
-                        key={aura.id}
-                        onClick={() => { if (isUnlocked) handleSelectAura(aura.color); }}
-                        className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
-                          isUnlocked
-                            ? 'bg-[#040814] border-white/10 hover:border-white/30 cursor-pointer'
-                            : 'bg-black/30 border-white/5 opacity-50 cursor-not-allowed'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div
-                            className="w-8 h-8 rounded-full shrink-0 shadow-md border flex items-center justify-center"
-                            style={{
-                              backgroundColor: `${aura.color}25`,
-                              borderColor: aura.color,
-                              boxShadow: `0 0 10px ${aura.glow}`,
-                            }}
-                          >
-                            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: aura.color }} />
-                          </div>
-
-                          <div>
-                            <span className="text-xs font-bold text-white block">{aura.name}</span>
-                            <span className="text-[10px] font-mono text-slate-400">
-                              {aura.requiredStreak === 0
-                                ? 'Disponible Día 0'
-                                : aura.requiredStreak === 21
-                                ? 'Requiere Hábito 21d'
-                                : 'Requiere Hábito 66d'}
-                            </span>
-                          </div>
-                        </div>
-
-                        {isUnlocked ? (
-                          isEquipped ? (
-                            <span className="text-[10px] font-mono font-black text-emerald-400 bg-emerald-950/60 border border-emerald-500/40 px-2 py-0.5 rounded">
-                              Activa
-                            </span>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={(e) => { e.stopPropagation(); handleSelectAura(aura.color); }}
-                              className="px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 text-[10px] font-mono font-bold text-slate-200"
-                            >
-                              Aplicar
-                            </button>
-                          )
-                        ) : (
-                          <span className="text-[10px] font-mono text-slate-500">🔒 Bloqueada</span>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
+            <WorkshopEvolutionTab
+              habits21Count={habits21Count}
+              habits66Count={habits66Count}
+              has21Days={has21Days}
+              has66Days={has66Days}
+              ascensionGrade={ascensionGrade}
+              ascensionCrystals={ascensionCrystals}
+              topHabit={topHabit}
+              topStreak={topStreak}
+              progress21={progress21}
+              progress66={progress66}
+              currentAuraIntensity={currentAuraIntensity}
+              currentAuraColor={stats.kaiAuraColor}
+              onSelectAuraIntensity={handleSelectAuraIntensity}
+              onSelectAura={handleSelectAura}
+            />
           )}
 
-          {/* ═══════════════════════════════════════════════════════════════ */}
-          {/* TAB 3: 📸 FORJA NEURAL DEL MULTIVERSO (6 VARIANTES EN PARALELO) */}
-          {/* ═══════════════════════════════════════════════════════════════ */}
-          {activeTab === 'forge' && (() => {
-            const activeVariant: KaiCustomForm | null =
-              forgedVariants.length > 0
-                ? (forgedVariants[selectedVariantIndex] || forgedResult || forgedVariants[0])
-                : null;
-            const activeStyleDef = activeVariant?.artStyle
-              ? KAI_MULTIVERSE_STYLES.find((s) => s.id === activeVariant.artStyle)
-              : null;
-
-            return (
-              <div className="space-y-4">
-                {/* 1. Encabezado Contextual de la Forja */}
-                {forgedVariants.length > 0 ? (
-                  <div className="p-3.5 rounded-2xl bg-gradient-to-r from-fuchsia-950/70 via-purple-950/50 to-cyan-950/70 border border-fuchsia-500/40 flex flex-wrap items-center justify-between gap-3 shadow-[0_0_25px_rgba(217,70,239,0.2)]">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-fuchsia-500 to-cyan-500 p-0.5 flex items-center justify-center shrink-0">
-                        <div className="w-full h-full bg-[#040814] rounded-[10px] flex items-center justify-center">
-                          <Sparkles className="w-5 h-5 text-fuchsia-300" />
-                        </div>
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-black uppercase text-white tracking-wide">
-                            {liveDetectedObject || activeVariant?.detectedObject
-                              ? `🎯 Objeto: "${liveDetectedObject || activeVariant?.detectedObject}"`
-                              : 'Multiverso Revelado'}
-                          </span>
-                          <span className="text-[10px] font-mono font-bold text-emerald-300 bg-emerald-950/80 border border-emerald-400/50 px-2 py-0.5 rounded-full">
-                            {forgedVariants.length} de 6 Estilos Disponibles
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-slate-300">
-                          Compara las 6 interpretaciones en paralelo. Toca cualquier estilo para verla en el pedestal o adoptarla.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={handleSaveAllVariantsToVault}
-                        className="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/60 text-amber-200 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-[0_0_12px_rgba(245,158,11,0.25)]"
-                        title="Guardar las 6 variantes en tu Bóveda de Reliquias"
-                      >
-                        <Landmark className="w-3.5 h-3.5 text-amber-300" />
-                        <span>Guardar las 6 en Bóveda</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setCapturedImageBase64(null);
-                          setForgedVariants([]);
-                          setForgedResult(null);
-                          setSelectedVariantIndex(0);
-                          setLiveDetectedObject(null);
-                          setForgeError(null);
-                        }}
-                        className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <Camera className="w-3.5 h-3.5 text-fuchsia-400" />
-                        <span>Forjar otro objeto</span>
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="p-3.5 rounded-2xl bg-gradient-to-r from-fuchsia-950/40 via-[#0a0f24] to-cyan-950/40 border border-fuchsia-500/30 flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-fuchsia-500/15 border border-fuchsia-500/30 flex items-center justify-center text-fuchsia-300 shrink-0">
-                        <Sparkles className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-black uppercase text-white tracking-wide">
-                            🌌 Forja Neural del Multiverso (6 Estilos en Paralelo)
-                          </span>
-                          <span className="text-[9px] font-mono text-cyan-300 bg-cyan-950/80 border border-cyan-400/40 px-2 py-0.5 rounded-full font-bold">
-                            1 Foto = 6 Opciones
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-slate-300">
-                          Toma una foto de cualquier objeto real. La IA sintetizará simultáneamente las 6 dimensiones estéticas canónicas para que elijas tu favorita.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Feedback Toast de Bóveda */}
-                {saveAllFeedback && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="p-2.5 rounded-xl bg-amber-950/90 border border-amber-400 text-amber-200 text-center font-mono text-xs font-bold flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(245,158,11,0.35)]"
-                  >
-                    <Landmark className="w-4 h-4 text-amber-300" />
-                    <span>🎉 ¡Las {forgedVariants.length} variantes fueron guardadas con éxito en tu Bóveda de Reliquias!</span>
-                  </motion.div>
-                )}
-
-                {/* 2. Cuerpo Principal: Opciones Listas vs Captura */}
-                {forgedVariants.length > 0 && activeVariant ? (
-                  /* ─── ESTADO: 6 VARIANTES GENERADAS (MULTIVERSE SELECTION STUDIO) ─── */
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-                    {/* Columna Izquierda: Galería Interactiva de las 6 Opciones */}
-                    <div className="lg:col-span-7 space-y-2.5">
-                      <div className="flex items-center justify-between px-1">
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                          <span>Galaxia de Variantes ({forgedVariants.length})</span>
-                        </span>
-                        <span className="text-[10px] font-mono text-fuchsia-300">
-                          Toca una para inspeccionar
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                        {forgedVariants.map((variant, idx) => {
-                          const isSelected = selectedVariantIndex === idx;
-                          const styleDef = KAI_MULTIVERSE_STYLES.find((s) => s.id === variant.artStyle);
-                          const shortName = styleDef?.name.split('/')[0].trim() || variant.artStyle;
-                          const badgeLabel =
-                            styleDef?.badge
-                              .replace('VECTOR // ', '')
-                              .replace('ILUSTRACIÓN ', '')
-                              .replace('VECTOR ', '') || 'MULTIVERSO';
-
-                          return (
-                            <div
-                              key={variant.id || `${variant.artStyle}_${idx}`}
-                              onClick={() => {
-                                soundFX.playClick();
-                                setSelectedVariantIndex(idx);
-                                setForgedResult(variant);
-                              }}
-                              className={`p-2.5 rounded-2xl border text-left transition-all cursor-pointer relative group flex flex-col justify-between ${
-                                isSelected
-                                  ? 'bg-fuchsia-950/70 border-fuchsia-400/90 shadow-[0_0_20px_rgba(217,70,239,0.35)] ring-2 ring-fuchsia-400/80'
-                                  : 'bg-[#040814]/80 border-white/10 hover:border-white/30 hover:bg-white/5'
-                              }`}
-                            >
-                              {/* Encabezado del Estilo */}
-                              <div className="flex items-center justify-between gap-1 mb-1">
-                                <span className="text-[10px] font-bold text-white flex items-center gap-1 truncate">
-                                  <span>{styleDef?.icon || '🎨'}</span>
-                                  <span className="truncate">{shortName}</span>
-                                </span>
-                                <span className="text-[8px] font-mono text-fuchsia-300 bg-fuchsia-950/80 px-1 py-0.5 rounded border border-fuchsia-500/30 whitespace-nowrap">
-                                  {badgeLabel}
-                                </span>
-                              </div>
-
-                              {/* Mini Showcase Centrado */}
-                              <div className="w-20 h-20 mx-auto my-1.5 rounded-xl bg-black/60 border border-white/10 flex items-center justify-center p-1 group-hover:scale-105 transition-transform overflow-hidden relative">
-                                <div className="absolute inset-0 bg-radial from-fuchsia-500/10 via-transparent to-transparent pointer-events-none" />
-                                <KAICompanion customForm={variant} shapeId="custom" size={72} />
-                              </div>
-
-                              {/* Nombre y Estado */}
-                              <div className="space-y-1.5 mt-1">
-                                <span className="text-[11px] font-bold text-white block truncate text-center">
-                                  {variant.name}
-                                </span>
-                                {isSelected ? (
-                                  <div className="w-full py-1 rounded-lg bg-fuchsia-600/40 border border-fuchsia-400/60 text-[9px] font-mono font-bold text-fuchsia-200 text-center flex items-center justify-center gap-1">
-                                    <Sparkles className="w-3 h-3 text-fuchsia-300" />
-                                    <span>En Pedestal</span>
-                                  </div>
-                                ) : (
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      soundFX.playClick();
-                                      setSelectedVariantIndex(idx);
-                                      setForgedResult(variant);
-                                    }}
-                                    className="w-full py-1 rounded-lg bg-white/5 hover:bg-white/15 text-slate-300 text-[9px] font-mono font-medium transition-colors text-center"
-                                  >
-                                    Inspeccionar
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Columna Derecha: Pedestal de Inspección & Adopción Hero */}
-                    <div className="lg:col-span-5 p-4 rounded-2xl bg-gradient-to-b from-[#040814] via-[#060c20] to-[#040814] border border-white/10 space-y-3 flex flex-col items-center justify-between relative overflow-hidden min-h-[380px]">
-                      {/* Luz de fondo sutil */}
-                      <div className="absolute inset-0 bg-radial from-fuchsia-600/15 via-transparent to-transparent pointer-events-none blur-xl" />
-
-                      {/* Header del Pedestal */}
-                      <div className="w-full flex items-center justify-between z-10">
-                        <span className="text-[11px] font-bold uppercase text-slate-400 tracking-wide flex items-center gap-1.5 truncate">
-                          <Sparkles className="w-3.5 h-3.5 text-fuchsia-400 shrink-0" />
-                          <span className="truncate">{activeVariant.name}</span>
-                        </span>
-                        <span className="text-[9px] font-mono text-fuchsia-300 font-bold bg-fuchsia-950/80 border border-fuchsia-400/50 px-2 py-0.5 rounded-full shrink-0">
-                          {activeStyleDef?.name || activeVariant.artStyle}
-                        </span>
-                      </div>
-
-                      {/* Pedestal Holográfico con KAI */}
-                      <div className="w-52 h-52 relative flex items-center justify-center p-2 z-10 my-auto">
-                        <div className="absolute inset-0 rounded-full border border-fuchsia-500/20 animate-ping opacity-25" />
-                        <div className="absolute inset-2 rounded-full border border-dashed border-fuchsia-400/30 animate-[spin_20s_linear_infinite]" />
-                        <div className="absolute inset-5 rounded-full border border-dotted border-cyan-400/30 animate-[spin_12s_linear_infinite_reverse]" />
-                        <div className="absolute bottom-1 w-32 h-4 bg-fuchsia-500/20 blur-md rounded-full pointer-events-none" />
-
-                        <motion.div
-                          key={`${activeVariant.artStyle}_${activeVariant.name}`}
-                          initial={{ scale: 0.85, opacity: 0, y: 12 }}
-                          animate={{ scale: 1, opacity: 1, y: 0 }}
-                          transition={{ type: 'spring', stiffness: 220, damping: 18 }}
-                          className="relative z-10 w-48 h-48 flex items-center justify-center"
-                        >
-                          <KAICompanion customForm={activeVariant} shapeId="custom" size={185} />
-                        </motion.div>
-                      </div>
-
-                      {/* Cita y Acciones de Adopción */}
-                      <div className="w-full space-y-2.5 z-10">
-                        {/* Diálogo con Botón de Voz */}
-                        <div className="p-2.5 rounded-xl bg-black/60 border border-fuchsia-500/30 flex items-center justify-between gap-2">
-                          <div className="flex-1 text-center min-w-0">
-                            <span className="text-[10px] font-mono uppercase text-fuchsia-300 font-bold block mb-0.5 truncate">
-                              💬 {activeVariant.name}:
-                            </span>
-                            <p className="text-xs text-white italic font-medium leading-relaxed line-clamp-2">
-                              "{activeVariant.personalityQuote || '¡He despertado con forma y voluntad propia!'}"
-                            </p>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => handleSpeakQuote(activeVariant.personalityQuote || '¡He despertado!', activeVariant.mood, 'pedestal_active')}
-                            className="p-2 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/25 border border-cyan-400/40 text-cyan-300 hover:text-white transition-all shrink-0 cursor-pointer"
-                            title="Escuchar voz de KAI"
-                          >
-                            <Volume2 className={`w-4 h-4 ${speakingRelicId === 'pedestal_active' ? 'animate-bounce text-cyan-300' : ''}`} />
-                          </button>
-                        </div>
-
-                        {/* Badges de ADN */}
-                        <div className="flex flex-wrap items-center justify-center gap-1.5">
-                          {activeVariant.detectedObject && (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-cyan-950/70 border border-cyan-400/40 text-[10px] font-mono text-cyan-300 font-medium">
-                              🎯 {activeVariant.detectedObject}
-                            </span>
-                          )}
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-fuchsia-950/70 border border-fuchsia-400/40 text-[10px] font-mono text-fuchsia-200 uppercase font-medium">
-                            {activeStyleDef?.icon || '🎨'} {activeVariant.artStyle}
-                          </span>
-                          {activeVariant.mood && (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-purple-950/70 border border-purple-400/40 text-[10px] font-mono text-purple-200 capitalize font-medium">
-                              🛡️ {activeVariant.mood}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Botónes: Adoptar KAI & Carta Holográfica */}
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleEquipCustomForm(activeVariant)}
-                            className="flex-1 py-3 rounded-xl bg-gradient-to-r from-fuchsia-600 via-purple-600 to-cyan-500 hover:opacity-95 text-white font-black uppercase tracking-wider text-xs shadow-[0_0_20px_rgba(217,70,239,0.4)] transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-95"
-                          >
-                            <Check className="w-4 h-4 stroke-[3]" />
-                            <span>¡Adoptar KAI!</span>
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => handleShareTradingCard(activeVariant, 'pedestal_active')}
-                            disabled={isSharingCard === 'pedestal_active'}
-                            className="px-3.5 py-3 rounded-xl bg-purple-950/80 hover:bg-purple-900 border border-purple-400/50 text-purple-200 text-xs font-anton tracking-wider uppercase transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 disabled:opacity-50"
-                            title="Generar y compartir Carta Holográfica Coleccionable"
-                          >
-                            {isSharingCard === 'pedestal_active' ? (
-                              <Loader2 className="w-4 h-4 animate-spin text-purple-300" />
-                            ) : (
-                              <Share2 className="w-4 h-4 text-purple-300" />
-                            )}
-                            <span className="hidden sm:inline">Carta</span>
-                          </button>
-                        </div>
-
-                        {/* Toast de Éxito al Equipar */}
-                        {equippedFeedback && (
-                          <motion.div
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            className="w-full p-2 rounded-xl bg-emerald-950/90 border border-emerald-400 text-center font-mono text-[11px] font-bold text-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.4)]"
-                          >
-                            🎉 ¡{activeVariant.name} ha sido equipado en toda la app!
-                          </motion.div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  /* ─── ESTADO: CAPTURA & FORJA DE LAS 6 VARIANTES ─── */
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Columna Izquierda: Captura y Parámetros */}
-                    <div className="p-4 rounded-2xl bg-[#040814] border border-white/10 space-y-3.5 flex flex-col justify-between">
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*"
-                        capture="environment"
-                        onChange={handleFileChange}
-                        className="hidden"
-                      />
-
-                      {/* 1. Zona de Imagen */}
-                      <div className="space-y-1.5">
-                        <span className="text-[11px] font-bold uppercase text-slate-400 block tracking-wide">
-                          1. Foto del Objeto
-                        </span>
-
-                        {capturedImageBase64 ? (
-                          <div className="space-y-2">
-                            <div
-                              onClick={() => fileInputRef.current?.click()}
-                              className="relative rounded-xl overflow-hidden border border-fuchsia-500/40 bg-black aspect-video flex items-center justify-center cursor-pointer group max-h-48"
-                              title="Toca para cambiar la foto"
-                            >
-                              <img
-                                src={capturedImageBase64}
-                                alt="Captura"
-                                className="max-h-full max-w-full object-contain"
-                              />
-                              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center text-xs font-mono text-white transition-opacity gap-1.5">
-                                <Camera className="w-4 h-4 text-fuchsia-400" />
-                                <span>Cambiar foto</span>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                              <button
-                                type="button"
-                                onClick={() => fileInputRef.current?.click()}
-                                className="flex-1 py-1.5 px-3 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-mono font-medium text-slate-300 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-                              >
-                                <Camera className="w-3 h-3 text-fuchsia-400" />
-                                <span>Cambiar</span>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setCapturedImageBase64(null);
-                                  setForgedResult(null);
-                                  setForgedVariants([]);
-                                }}
-                                className="py-1.5 px-3 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 border border-rose-500/30 text-[10px] font-mono text-rose-300 transition-colors cursor-pointer"
-                              >
-                                Quitar
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div
-                            onClick={() => fileInputRef.current?.click()}
-                            className="border border-dashed border-fuchsia-500/30 hover:border-fuchsia-400/80 rounded-xl p-5 text-center cursor-pointer bg-fuchsia-950/10 hover:bg-fuchsia-950/20 transition-all flex flex-col items-center justify-center gap-2"
-                          >
-                            <div className="w-10 h-10 rounded-full bg-fuchsia-500/10 border border-fuchsia-500/30 flex items-center justify-center text-fuchsia-400">
-                              <Camera className="w-5 h-5" />
-                            </div>
-                            <div>
-                              <span className="text-xs font-bold text-white block">
-                                Tomar o subir foto
-                              </span>
-                              <span className="text-[10px] text-slate-400 block mt-0.5">
-                                Fotografía nítida de cualquier objeto para darle vida
-                              </span>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* 2. Selector de Temperamento */}
-                      <div className="space-y-1.5">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-bold uppercase text-slate-400">
-                            2. Temperamento de KAI
-                          </span>
-                          <span className="text-[10px] font-mono text-cyan-300">
-                            {KAI_TEMPERAMENTS.find((t) => t.id === selectedMood)?.label}
-                          </span>
-                        </div>
-                        <div className="grid grid-cols-3 gap-1.5">
-                          {KAI_TEMPERAMENTS.map((t) => {
-                            const isSelected = selectedMood === t.id;
-                            return (
-                              <button
-                                key={t.id}
-                                type="button"
-                                onClick={() => {
-                                  soundFX.playClick();
-                                  setSelectedMood(t.id);
-                                }}
-                                className={`py-1.5 px-2 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-1.5 ${
-                                  isSelected
-                                    ? 'bg-cyan-950/70 border-cyan-400/80 shadow-[0_0_12px_rgba(6,182,212,0.3)] text-white'
-                                    : 'bg-black/40 border-white/10 hover:border-white/20 text-slate-400 hover:text-slate-200'
-                                }`}
-                              >
-                                <span className="text-xs">{t.icon}</span>
-                                <span className="text-[10px] font-bold truncate">{t.label}</span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      {/* 3. Input Limpio de Detalle o Rasgo Especial */}
-                      <div className="space-y-1.5">
-                        <label className="text-[11px] font-bold text-slate-400 flex items-center justify-between">
-                          <span>3. Detalle o Rasgo Especial</span>
-                          <span className="text-[10px] text-slate-500 font-normal">Opcional</span>
-                        </label>
-                        <input
-                          type="text"
-                          value={forgePrompt}
-                          onChange={(e) => setForgePrompt(e.target.value)}
-                          placeholder="Ej: Con cuernos de fuego, con bufanda ninja, lentes oscuros..."
-                          className="w-full px-3 py-2 rounded-xl bg-black/60 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-fuchsia-400/80 transition-colors"
-                        />
-                      </div>
-
-                      {forgeError && (
-                        <div className="p-2.5 rounded-xl bg-rose-950/40 border border-rose-500/40 text-xs text-rose-300 flex items-center gap-2">
-                          <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
-                          <span className="text-[11px]">{forgeError}</span>
-                        </div>
-                      )}
-
-                      {/* Botón Principal: Forjar las 6 Variantes */}
-                      <button
-                        type="button"
-                        onClick={handleRunNeuralForge}
-                        disabled={!capturedImageBase64 || isForging}
-                        className="w-full py-3.5 rounded-xl bg-gradient-to-r from-fuchsia-600 via-purple-600 to-cyan-500 hover:opacity-95 disabled:opacity-30 text-white font-black text-xs uppercase tracking-wider shadow-[0_0_20px_rgba(217,70,239,0.35)] transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-[0.99]"
-                      >
-                        {isForging ? (
-                          <>
-                            <Loader2 className="w-4 h-4 animate-spin text-white" />
-                            <span className="truncate">{forgeProgressText || 'Materializando con IA...'}</span>
-                          </>
-                        ) : (
-                          <>
-                            <Zap className="w-4 h-4 fill-white" />
-                            <span>✨ Dar Vida: Forjar las 6 Variantes</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
-
-                    {/* Columna Derecha: Escenario Holográfico o Previsualización */}
-                    <div className="p-4 rounded-2xl bg-gradient-to-b from-[#040814] via-[#060c20] to-[#040814] border border-white/10 space-y-3 flex flex-col items-center justify-between relative overflow-hidden min-h-[300px]">
-                      {/* Luz de fondo sutil */}
-                      <div className="absolute inset-0 bg-radial from-fuchsia-600/10 via-transparent to-transparent pointer-events-none blur-xl" />
-
-                      {/* Header de la columna derecha */}
-                      <div className="w-full flex items-center justify-between z-10">
-                        <span className="text-[11px] font-bold uppercase text-slate-400 tracking-wide flex items-center gap-1.5">
-                          <Sparkles className="w-3 h-3 text-fuchsia-400" />
-                          <span>Pedestal Multiverso</span>
-                        </span>
-                        {isForging ? (
-                          <span className="text-[9px] font-mono text-cyan-300 font-bold bg-cyan-950/80 border border-cyan-400/50 px-2 py-0.5 rounded-full animate-pulse">
-                            ⚡ Forjando 6 Estilos...
-                          </span>
-                        ) : null}
-                      </div>
-
-                      {/* Pedestal Holográfico Central */}
-                      <div className="w-48 h-48 relative flex items-center justify-center p-2 z-10 my-auto">
-                        <div className="absolute inset-0 rounded-full border border-fuchsia-500/20 animate-ping opacity-25" />
-                        <div className="absolute inset-2 rounded-full border border-dashed border-fuchsia-400/30 animate-[spin_20s_linear_infinite]" />
-                        <div className="absolute inset-5 rounded-full border border-dotted border-cyan-400/30 animate-[spin_12s_linear_infinite_reverse]" />
-                        <div className="absolute bottom-1 w-28 h-4 bg-fuchsia-500/15 blur-md rounded-full pointer-events-none" />
-
-                        {isForging ? (
-                          <div className="text-center p-3 text-cyan-300 space-y-3 z-10 animate-pulse flex flex-col items-center">
-                            <div className="py-1">
-                              <QuantumCubeLoader size="sm" speed="slow" showLabel={false} />
-                            </div>
-                            <div className="space-y-0.5 max-w-[200px]">
-                              <span className="text-xs font-bold text-white block truncate">
-                                {liveDetectedObject ? `🎯 "${liveDetectedObject}"` : 'Escaneando objeto...'}
-                              </span>
-                              <span className="text-[10px] text-cyan-300/80 font-mono block leading-tight">
-                                {forgeProgressText || 'Materializando 6 dimensiones'}
-                              </span>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="text-center p-4 text-slate-500 space-y-2 z-10">
-                            <div className="w-12 h-12 mx-auto rounded-2xl bg-fuchsia-950/30 border border-fuchsia-500/20 flex items-center justify-center">
-                              <Sparkles className="w-6 h-6 text-fuchsia-400/70" />
-                            </div>
-                            <span className="text-xs font-bold text-slate-300 block">
-                              Cámara Multiversal Lista
-                            </span>
-                            <span className="text-[10px] text-slate-400 block max-w-[190px] mx-auto leading-relaxed">
-                              Sube tu foto para crear simultáneamente los 6 estilos canónicos
-                            </span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Muestra de los 6 Estilos Canónicos que se Forjarán */}
-                      <div className="w-full space-y-1.5 z-10">
-                        <span className="text-[9px] font-mono uppercase text-slate-400 block text-center tracking-wider">
-                          Estilos del Multiverso a generar:
-                        </span>
-                        <div className="grid grid-cols-3 gap-1.5">
-                          {KAI_MULTIVERSE_STYLES.map((st) => (
-                            <div
-                              key={st.id}
-                              className="p-1.5 rounded-xl bg-black/40 border border-white/5 flex items-center gap-1.5"
-                            >
-                              <span className="text-xs shrink-0">{st.icon}</span>
-                              <div className="min-w-0">
-                                <span className="text-[10px] font-bold text-slate-300 block truncate">
-                                  {st.name.split('/')[0].trim()}
-                                </span>
-                                <span className="text-[8px] font-mono text-slate-500 block truncate">
-                                  {st.badge.replace('VECTOR // ', '').replace('ILUSTRACIÓN ', '')}
-                                </span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })()}
-
-          {/* ═══════════════════════════════════════════════════════════════ */}
-          {/* TAB 4: ARMERÍA & ACCESORIOS */}
-          {/* ═══════════════════════════════════════════════════════════════ */}
+          {/* TAB: ARMERÍA */}
           {activeTab === 'armory' && (
-            <div className="space-y-5">
-              <div className="p-4 rounded-2xl bg-[#040814]/80 border aura-border-subtle flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2.5">
-                  <Shield className="w-5 h-5 text-cyan-300" />
-                  <div>
-                    <span className="text-xs font-black uppercase text-cyan-300 block tracking-wide">
-                      Resplandor y Auras de KAI
-                    </span>
-                    <p className="text-[11px] text-slate-300">
-                      Los efectos avanzados se desbloquean con tu constancia real en hábitos (hitos de 21 y 66 días).
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 text-[11px] font-mono text-slate-400">
-                  <span className="text-amber-400 font-bold">{habits21Count}</span> a 21d · <span className="text-amber-400 font-bold">{habits66Count}</span> a 66d
-                </div>
-              </div>
-
-              {/* Selector de Intensidad del Aura (Contraluz + Rim Light) */}
-              {renderAuraIntensityPanel()}
-
-              {/* Grid de Efectos */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {[
-                  { id: 'none', name: 'Presencia Pura', icon: '⚪', badge: 'CANÓNICO', desc: 'Silueta limpia y minimalista sin accesorios.', requiredStreak: 0 },
-                  { id: 'plasma_lightning', name: 'Rayos de Plasma', icon: '⚡', badge: 'ENFOQUE', desc: 'Arcos sutiles crepitando con energía mental.', requiredStreak: 0 },
-                  { id: 'hex_shield', name: 'Escudo Protector', icon: '🛡️', badge: 'DISCIPLINA', desc: 'Cúpula protectora con rejilla de colmena giratoria.', requiredStreak: 0 },
-                  { id: 'wings', name: 'Alas Vectoriales', icon: '🪽', badge: 'HÁBITO 21D', desc: 'Desplegadas al superar los 21 días de inercia neuronal.', requiredStreak: 21 },
-                  { id: 'hud_visor', name: 'Visor de Precisión', icon: '🎯', badge: 'HÁBITO 21D', desc: 'Retícula de concentración profunda y claridad.', requiredStreak: 21 },
-                  { id: 'matrix', name: 'Tormenta Digital', icon: '🟩', badge: 'HÁBITO 21D', desc: 'Cascadas de código fluyendo en estado de flujo puro.', requiredStreak: 21 },
-                  { id: 'solar', name: 'Corona & Orbes de Maestría', icon: '👑', badge: 'MAESTRÍA 66D', desc: 'Corona dorada conferida al consolidar un hábito en 66 días.', requiredStreak: 66 },
-                ].map((item) => {
-                  const isUnlocked = item.requiredStreak === 0 || (item.requiredStreak === 21 && has21Days) || (item.requiredStreak === 66 && has66Days);
-                  const isEquipped = (stats.kaiParticleEffect || 'none') === item.id;
-                  return (
-                    <div
-                      key={item.id}
-                      onClick={() => {
-                        if (!isUnlocked) {
-                          soundFX.playClick();
-                          triggerHaptic(20);
-                          notificationService.triggerNotification(
-                            '🔒 Resplandor Bloqueado',
-                            `Mantén cualquier hábito por ${item.requiredStreak} días para desbloquear este resplandor de KAI. (Racha actual: ${topStreak}d)`,
-                            '🛡️'
-                          );
-                          return;
-                        }
-                        handleSelectParticle(item.id);
-                      }}
-                      className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between ${
-                        !isUnlocked
-                          ? 'bg-[#040814]/40 border-white/5 opacity-60 hover:opacity-80'
-                          : isEquipped
-                          ? 'bg-purple-950/40 border-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.3)]'
-                          : 'bg-[#040814] border-white/10 hover:border-white/20'
-                      }`}
-                    >
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-2xl">{item.icon}</span>
-                          <span className={`text-[8px] font-mono px-1.5 py-0.5 rounded font-bold tracking-wider ${
-                            !isUnlocked 
-                              ? 'text-slate-500 bg-white/5 border border-white/5'
-                              : 'text-cyan-300 bg-cyan-950/70 border border-cyan-500/30'
-                          }`}>
-                            {item.badge}
-                          </span>
-                        </div>
-                        <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
-                          <span>{item.name}</span>
-                          {!isUnlocked && <Lock className="w-3 h-3 text-slate-500" />}
-                        </h4>
-                        <p className="text-[10px] text-slate-400 mt-1 leading-snug">{item.desc}</p>
-                      </div>
-
-                      <div className="pt-3 mt-3 border-t border-white/5 flex items-center justify-between">
-                        {!isUnlocked ? (
-                          <span className="text-[9px] font-mono text-slate-500">
-                            {topStreak}/{item.requiredStreak}d racha
-                          </span>
-                        ) : isEquipped ? (
-                          <span className="text-[9px] font-mono text-purple-300 font-bold bg-purple-900/60 border border-purple-400/50 px-2 py-0.5 rounded">
-                            Equipado
-                          </span>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); handleSelectParticle(item.id); }}
-                            className="text-[9px] font-mono text-slate-300 hover:text-white px-2 py-0.5 rounded bg-white/10"
-                          >
-                            Equipar
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+            <WorkshopArmoryTab
+              habits21Count={habits21Count}
+              habits66Count={habits66Count}
+              has21Days={has21Days}
+              has66Days={has66Days}
+              topStreak={topStreak}
+              currentParticle={stats.kaiParticleEffect}
+              currentAuraIntensity={currentAuraIntensity}
+              onSelectParticle={handleSelectParticle}
+              onSelectAuraIntensity={handleSelectAuraIntensity}
+            />
           )}
 
         </div>
