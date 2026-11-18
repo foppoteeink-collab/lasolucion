@@ -335,7 +335,7 @@ export const SidebarHUD: React.FC<SidebarHUDProps> = ({
     () => [
       {
         id: 'voice-dictation',
-        label: 'Dictar Voz',
+        label: 'Háblame',
         icon: 'mic',
         accentColor: '#e879f9',
         type: 'gadget',
@@ -355,20 +355,6 @@ export const SidebarHUD: React.FC<SidebarHUDProps> = ({
         onClick: () => {
           soundFX.playClick();
           setModalState('isPomodoroOpen', true);
-          setIsMobileOpen(false);
-        },
-      },
-      {
-        id: 'oracle',
-        label: 'Oráculo',
-        icon: 'sparkles',
-        accentColor: '#eab308',
-        type: 'gadget',
-        onClick: () => {
-          soundFX.playClick();
-          if (onOpenOracleWithPrompt) {
-            onOpenOracleWithPrompt();
-          }
           setIsMobileOpen(false);
         },
       },

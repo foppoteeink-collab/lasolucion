@@ -1877,6 +1877,94 @@ ${trimmed}
   return extractTomorrowTasksFromReflection(trimmed, completionRate);
 }
 
+/**
+ * Conversación viva y contextual de KAI dentro de "Háblame".
+ * Lee el estado real del usuario (racha, nivel, tareas de hoy) y responde
+ * breve, humano y accionable listo para la Voz Viva.
+ */
+export async function askKaiConversationAI(params: {
+  message: string;
+  kaiName?: string;
+  stats: any;
+  todayTasks: any[];
+  history?: Array<{ role: 'user' | 'kai'; text: string }>;
+}): Promise<{ reply: string; usedRemoteAI: boolean }> {
+  const { message, kaiName = 'KAI', stats, todayTasks = [], history = [] } = params;
+  const trimmed = (message || '').trim();
+
+  const completed = todayTasks.filter((t) => t && t.completed);
+  const pending = todayTasks.filter((t) => t && !t.completed && t.title);
+  const streak = stats?.streakDays || 0;
+  const level = stats?.level || 1;
+  const userName = stats?.username || stats?.fullName || '';
+
+  const fallbackReply = (): string => {
+    const lower = trimmed.toLowerCase();
+    if (/por\s+qu[eé]\s+tarea|cu[aá]l\s+(?:empiezo|hago)|qu[eé]\s+hago\s+primero|qu[eé]\s+me\s+recomiendas/.test(lower)) {
+      if (pending.length > 0) {
+        const first = pending[0];
+        const timeHint = first.timeBlock ? ` (${first.timeBlock})` : '';
+        return `Empieza por "${first.title}"${timeHint}. Completar la primera pieza rompe la inercia y te quedan ${pending.length} pendientes hoy.`;
+      }
+      return `¡Ya completaste todo lo que tenías hoy! Aprovecha para descansar o dictarme si quieres adelantar algo para mañana.`;
+    }
+    if (/motivaci[oó]n|cansado|desmotivado|bloqueado|estresado|ánimo|animo/.test(lower)) {
+      return streak > 0
+        ? `Llevas ${streak} días de racha y nivel ${level}. No necesitas hacerlo perfecto hoy, solo dar un paso pequeño de 5 minutos ahora mismo.`
+        : `Respira hondo. Elige una sola cosa pequeña de hoy y haz solo los primeros 5 minutos; yo te acompaño.`;
+    }
+    if (/hola|buenos|buenas/.test(lower)) {
+      const greetingName = userName ? ` ${userName}` : '';
+      return pending.length > 0
+        ? `¡Hola${greetingName}! Hoy llevas ${completed.length} de ${todayTasks.length} completadas. Dime qué quieres agendar, registrar o consultar.`
+        : `¡Hola${greetingName}! Estoy aquí contigo. Puedes dictarme tareas, hábitos, gastos, pedirme un diagnóstico o iniciar foco.`;
+    }
+    return pending.length > 0
+      ? `Hoy llevas ${completed.length} completadas y ${pending.length} pendientes; tu siguiente foco natural es "${pending[0].title}". ¿Quieres que iniciemos un Pomodoro o ajustamos algo?`
+      : `Te escucho. Puedo agendar tus tareas o hábitos, anotar gastos, hacerte un diagnóstico real o iniciar un bloque de enfoque.`;
+  };
+
+  if (!trimmed) {
+    return { reply: fallbackReply(), usedRemoteAI: false };
+  }
+
+  const pendingPreview = pending
+    .slice(0, 6)
+    .map((t) => `${t.title}${t.timeBlock ? ` [${t.timeBlock}]` : ''}`)
+    .join('; ');
+
+  const recentHistory = history
+    .slice(-4)
+    .map((h) => `${h.role === 'user' ? 'Usuario' : kaiName}: ${h.text}`)
+    .join('\n');
+
+  const systemInstruction = `Eres ${kaiName}, el compañero personal de productividad en "La Solución".
+Hablas en español natural, cercano, claro y directo — como un amigo lúcido, sin jerga exagerada ni formato markdown.
+Responde en máximo 2 o 3 frases cortas (máximo 45 palabras en total) porque tu respuesta se escuchará en voz alta.
+Usa los datos reales del usuario cuando aporten valor.`;
+
+  const prompt = `Contexto real del usuario hoy:
+- Nombre: ${userName || 'Usuario'} | Nivel: ${level} | Racha: ${streak} días
+- Progreso hoy: ${completed.length}/${todayTasks.length} completadas
+- Pendientes principales: ${pendingPreview || 'Ninguna pendiente'}
+${recentHistory ? `\nConversación reciente:\n${recentHistory}\n` : ''}
+Usuario dice: "${trimmed}"`;
+
+  try {
+    const aiText = await fetchGeminiPrompt(prompt, {
+      systemInstruction,
+      timeoutMs: 12000,
+    });
+    if (aiText && aiText.trim()) {
+      return { reply: aiText.trim(), usedRemoteAI: true };
+    }
+  } catch (err) {
+    console.warn('[KaiConversationAI] Fallback local:', err);
+  }
+
+  return { reply: fallbackReply(), usedRemoteAI: false };
+}
+
 
 
 

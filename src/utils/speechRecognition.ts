@@ -698,3 +698,76 @@ export function splitMixedVoiceDictation(transcript: string): {
     taskText: taskClauses.join(', '),
   };
 }
+
+// ─── Router Unificado de Intenciones para "Háblame" ──────────────────────────
+
+export type VoiceIntentRoute =
+  | 'focus'
+  | 'diagnostic'
+  | 'planner'
+  | 'conversation'
+  | 'mixed_actions';
+
+/**
+ * Clasifica la intención principal de lo que el usuario le dice a KAI en "Háblame":
+ * - 'focus': pidió un Pomodoro / bloque de concentración
+ * - 'diagnostic': pidió diagnóstico, análisis de progreso, racha o rendimiento
+ * - 'planner': pidió armar un horario completo o ver plantillas de rutina
+ * - 'conversation': pregunta abierta, consejo, motivación o charla con KAI
+ * - 'mixed_actions': crear tareas, hábitos 21/66 o registrar finanzas
+ */
+export function classifyVoiceIntent(transcript: string): VoiceIntentRoute {
+  const clean = (transcript || '').trim();
+  if (!clean) return 'conversation';
+
+  // 1. Intención directa de Pomodoro / Foco
+  if (detectVoiceFocusIntent(clean)) {
+    return 'focus';
+  }
+
+  const lower = clean.toLowerCase();
+
+  // 2. Diagnóstico personal / análisis de progreso
+  const isDiagnostic =
+    /(?:^|[\s,.;:¿?])(?:diagn[oó]stico|anal[ií]za(?:me)?|an[aá]lisis|c[oó]mo\s+voy|c[oó]mo\s+est[aá]\s+mi\s+(?:semana|progreso|racha|rendimiento|avance)|eval[uú]a(?:me)?|resumen\s+de\s+mi\s+(?:progreso|semana|desempe[ñn]o)|qu[eé]\s+patrones|cu[eé]ntame\s+c[oó]mo\s+voy)(?=$|[\s,.;:?])/i.test(
+      lower
+    );
+  if (isDiagnostic) {
+    return 'diagnostic';
+  }
+
+  // 3. Planificador masivo de horario / plantillas de rutina
+  const isPlanner =
+    /(?:^|[\s,.;:¿?])(?:plantillas?(?:\s+de\s+rutina)?|arma(?:me)?\s+(?:un\s+|mi\s+)?horario\s+completo|organiza(?:me)?\s+(?:todo\s+)?mi\s+d[ií]a|planifica(?:me)?\s+(?:todo\s+)?(?:el|mi)\s+d[ií]a|abrir?\s+(?:el\s+)?or[aá]culo|planificador\s+visual)(?=$|[\s,.;:?])/i.test(
+      lower
+    );
+  if (isPlanner) {
+    return 'planner';
+  }
+
+  // 4. Si tiene acción explícita de finanzas, horario concreto, hábito o verbo imperativo de crear -> acciones
+  const { financeText } = splitMixedVoiceDictation(clean);
+  if (financeText) {
+    return 'mixed_actions';
+  }
+
+  const hasExplicitActionCue =
+    /(?:^|[\s,.;:])(?:agrega(?:me)?|a[ñn]ade(?:me)?|crea(?:me)?|pon(?:me)?|recu[eé]rdame|recordar|tengo\s+que|debo|necesito|todos\s+los\s+d[ií]as|cada\s+d[ií]a|diariamente|diario|h[aá]bito|a\s+las?\s+\d|de\s+\d{1,2}\s+a\s+\d{1,2}|mañana\s+a\s+las?)(?=$|[\s,.;:])/i.test(
+      lower
+    );
+  if (hasExplicitActionCue) {
+    return 'mixed_actions';
+  }
+
+  // 5. Pregunta abierta, saludo, consejo, motivación o duda -> conversación viva con KAI
+  const isConversational =
+    /[?¿]/.test(clean) ||
+    /(?:^|[\s,.;:¡!])(?:hola|buenos\s+d[ií]as|buenas\s+tardes|buenas\s+noches|qu[eé]\s+me\s+recomiendas|por\s+qu[eé]\s+tarea|cu[aá]l\s+(?:debo|hago|empiezo)|dame\s+(?:motivaci[oó]n|un\s+consejo|ánimo|animo)|estoy\s+(?:cansado|bloqueado|estresado|desmotivado|perdido)|ay[uú]dame|c[oó]mo\s+(?:puedo|hago|empiezo)|qu[eé]\s+opinas|qu[eé]\s+hago|gracias|qui[eé]n\s+eres)(?=$|[\s,.;:!?])/i.test(
+      lower
+    );
+  if (isConversational) {
+    return 'conversation';
+  }
+
+  return 'mixed_actions';
+}

@@ -876,12 +876,14 @@ export function AppLayout() {
             </Suspense>
           )}
 
-          {/* DICTADO NEURAL POR VOZ CON KAI (Fase 2) */}
+          {/* HÁBLAME — CENTRO UNIFICADO DE VOZ E IA DE KAI */}
           {isVoiceDictationOpen && (
             <Suspense fallback={null}>
               <VoiceDictationModal
                 isOpen={isVoiceDictationOpen}
                 onClose={closeVoiceDictation}
+                onOpenOracleWithPrompt={handleOpenOracleWithPrompt}
+                onOpenTemplates={() => setIsDayTemplatesOpen(true)}
               />
             </Suspense>
           )}

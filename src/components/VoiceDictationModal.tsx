@@ -13,10 +13,12 @@ import {
   Flame,
   Zap,
   Volume2,
-  RotateCcw,
-  Wand2,
   Wallet,
   Play,
+  Keyboard,
+  Send,
+  Copy,
+  Activity,
 } from 'lucide-react';
 import { HoloCompanion } from './HoloCompanion';
 import { useUIStore } from '../store/useUIStore';
@@ -26,6 +28,7 @@ import { useAppStore } from '../store/useAppStore';
 import { useTimer } from '../context/TimerContext';
 import { CustomHabit, FinancialTransaction, TaskItem } from '../types';
 import {
+  classifyVoiceIntent,
   createVoiceRecognizer,
   detectVoiceFocusIntent,
   isSpeechRecognitionSupported,
@@ -35,7 +38,12 @@ import {
   splitMixedVoiceDictation,
   VoiceRecognizerController,
 } from '../utils/speechRecognition';
-import { parseVoiceFinanceWithAI, parseVoiceTranscriptToItems } from '../services/aiService';
+import {
+  askKaiConversationAI,
+  generateNeuralAnalysisAI,
+  parseVoiceFinanceWithAI,
+  parseVoiceTranscriptToItems,
+} from '../services/aiService';
 import { speakKaiDialogue, stopKaiDialogue } from '../utils/voice';
 import { soundFX } from '../utils/audio';
 import { triggerHaptic } from '../utils/haptics';
@@ -46,12 +54,15 @@ import { formatMoney, getSavedCurrencySymbol } from '../utils/finance';
 interface VoiceDictationModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpenOracleWithPrompt?: (promptText?: string) => void;
+  onOpenTemplates?: () => void;
 }
 
-const EXAMPLE_PROMPTS = [
-  'A las 7 entrenar pierna, a las 10 junta con el cliente y tomar 8 vasos de agua todos los días',
-  'Gasté 180 en comida y recibí 1500 de un cliente',
-  'Pon un foco de 25 minutos para diseñar la presentación',
+const QUICK_SUGGESTIONS = [
+  'Hazme un diagnóstico de cómo voy',
+  '¿Por qué tarea empiezo hoy?',
+  'Gasté 150 en comida y a las 7 entrenar',
+  'Pon un foco de 25 minutos para avanzar',
 ];
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -67,47 +78,105 @@ const CATEGORY_LABELS: Record<string, string> = {
   rutina: 'Rutina',
 };
 
-export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({ isOpen, onClose }) => {
+function renderDiagnosticMarkdown(text: string): React.ReactNode[] {
+  return text.split('\n').map((line, idx) => {
+    const trimmed = line.trim();
+    if (!trimmed) return <div key={idx} className="h-1.5" />;
+    if (/^#{1,3}\s+/.test(trimmed)) {
+      return (
+        <p key={idx} className="text-[11px] font-semibold uppercase tracking-wider text-cyan-300 mt-2.5 mb-1">
+          {trimmed.replace(/^#{1,3}\s+/, '').replace(/\*\*/g, '')}
+        </p>
+      );
+    }
+    if (/^[-*•]\s+/.test(trimmed)) {
+      return (
+        <div key={idx} className="flex items-start gap-2 text-xs text-slate-200/95 leading-relaxed">
+          <span className="text-cyan-400 mt-0.5">·</span>
+          <span>{trimmed.replace(/^[-*•]\s+/, '').replace(/\*\*/g, '')}</span>
+        </div>
+      );
+    }
+    return (
+      <p key={idx} className="text-xs text-slate-200/95 leading-relaxed">
+        {trimmed.replace(/\*\*/g, '')}
+      </p>
+    );
+  });
+}
+
+function summarizeDiagnosticForVoice(analysis: string, stats: any, todayTasks: TaskItem[]): string {
+  const completed = todayTasks.filter((t) => t.completed).length;
+  const total = todayTasks.length;
+  const streak = stats?.streakDays || 0;
+  const firstPlainLine = analysis
+    .split('\n')
+    .map((l) => l.replace(/[#*_`>-]/g, '').trim())
+    .find((l) => l.length > 28 && l.length < 180);
+
+  if (firstPlainLine) {
+    return firstPlainLine;
+  }
+  return `Listo tu diagnóstico. Llevas racha de ${streak} días y hoy completaste ${completed} de ${total} misiones. Aquí abajo tienes tu análisis completo.`;
+}
+
+export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({
+  isOpen,
+  onClose,
+  onOpenOracleWithPrompt,
+  onOpenTemplates,
+}) => {
   const soundEnabled = useUIStore((s) => s.soundEnabled);
   const addFloatingEffect = useUIStore((s) => s.addFloatingEffect);
 
   const stats = usePlayerStore((s) => s.stats);
   const currentViewDate = useTaskStore((s) => s.currentViewDate);
+  const tasksByDate = useTaskStore((s) => s.tasksByDate);
   const customHabits = useTaskStore((s) => s.customHabits);
   const setCustomHabits = useTaskStore((s) => s.setCustomHabits);
   const addTask = useTaskStore((s) => s.addTask);
   const ensureTasksForDate = useTaskStore((s) => s.ensureTasksForDate);
+
   const setExpenses = useAppStore((s) => s.setExpenses);
+  const habitMastery = useAppStore((s) => s.habitMastery);
+  const reflections = useAppStore((s) => s.reflections);
   const { handleOpenPomodoroForTask } = useTimer();
 
+  const todayTasks = tasksByDate[currentViewDate] || [];
   const kaiName = stats?.kaiCustomForm?.name || 'KAI';
   const kaiMood = stats?.kaiCustomForm?.mood || 'stoic';
   const archetype = stats?.characterClass || 'sabio';
 
+  const speechSupported = isSpeechRecognitionSupported();
   const [isListening, setIsListening] = useState(false);
+  const [showKeyboardInput, setShowKeyboardInput] = useState(!speechSupported);
   const [transcript, setTranscript] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Resultados unificados
   const [parsedItems, setParsedItems] = useState<ParsedVoiceItem[]>([]);
   const [detectedFocus, setDetectedFocus] = useState<ParsedVoiceFocusIntent | null>(null);
   const [detectedFinance, setDetectedFinance] = useState<ParsedVoiceFinanceEntry[]>([]);
+  const [diagnosticReport, setDiagnosticReport] = useState<{ text: string; source: 'ai' | 'heuristics' } | null>(null);
+  const [showPlannerActions, setShowPlannerActions] = useState(false);
+  const [copiedDiagnostic, setCopiedDiagnostic] = useState(false);
+  const [conversationHistory, setConversationHistory] = useState<Array<{ role: 'user' | 'kai'; text: string }>>([]);
+
   const [kaiReply, setKaiReply] = useState<string | null>(null);
-  const [usedRemoteAI, setUsedRemoteAI] = useState<boolean>(false);
   const [isSpeakingReply, setIsSpeakingReply] = useState(false);
   const [injectedSuccess, setInjectedSuccess] = useState<string | null>(null);
-  const currencySymbol = getSavedCurrencySymbol();
 
-  const speechSupported = isSpeechRecognitionSupported();
+  const currencySymbol = getSavedCurrencySymbol();
   const recognizerRef = useRef<VoiceRecognizerController | null>(null);
   const transcriptRef = useRef('');
-  const autoAnalyzeOnStopRef = useRef(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     transcriptRef.current = transcript;
   }, [transcript]);
 
-  const stopListening = useCallback((shouldAnalyze = false) => {
-    autoAnalyzeOnStopRef.current = shouldAnalyze;
+  const stopListening = useCallback(() => {
     if (recognizerRef.current) {
       recognizerRef.current.stop();
       recognizerRef.current = null;
@@ -115,149 +184,21 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({ isOpen
     setIsListening(false);
   }, []);
 
-  const handleClose = useCallback(() => {
-    stopListening(false);
-    stopKaiDialogue();
-    soundFX.playClick();
-    onClose();
-  }, [onClose, stopListening]);
-
-  // Resetear estado al abrir y gestionar bloqueo de floating elements + Escape
-  useEffect(() => {
-    if (!isOpen) return;
-
-    setTranscript('');
-    transcriptRef.current = '';
-    setParsedItems([]);
-    setDetectedFocus(null);
-    setDetectedFinance([]);
-    setKaiReply(null);
-    setErrorMsg(null);
-    setInjectedSuccess(null);
-    setIsAnalyzing(false);
-    setIsListening(false);
-
-    document.body.classList.add('modal-open-hide-floating');
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        handleClose();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      document.body.classList.remove('modal-open-hide-floating');
-      window.removeEventListener('keydown', handleKeyDown);
-      if (recognizerRef.current) {
-        recognizerRef.current.abort();
-        recognizerRef.current = null;
-      }
-      stopKaiDialogue();
-    };
-  }, [isOpen, handleClose]);
-
-  const runAnalysis = useCallback(async (textToAnalyze?: string) => {
-    const text = (textToAnalyze ?? transcriptRef.current).trim();
-    if (!text) {
-      setErrorMsg('Dicta o escribe al menos una tarea o hábito para que KAI lo estructure.');
-      return;
-    }
-
-    setErrorMsg(null);
-    setDetectedFocus(null);
-    setDetectedFinance([]);
-    setParsedItems([]);
-    setIsAnalyzing(true);
-    soundFX.playClick();
-
-    try {
-      // 1. Verificar intención directa de Pomodoro / Foco
-      const focusIntent = detectVoiceFocusIntent(text);
-      if (focusIntent) {
-        setDetectedFocus(focusIntent);
-        const focusReply = `Listo para enfocar ${focusIntent.durationMinutes} minutos en "${focusIntent.title}".`;
-        setKaiReply(focusReply);
-        setUsedRemoteAI(false);
-        triggerHaptic(20);
-        if (soundEnabled) {
-          setIsSpeakingReply(true);
-          speakKaiDialogue(focusReply, kaiMood, () => setIsSpeakingReply(false));
-        }
-        return;
-      }
-
-      // 2. Separar dictado mixto (Finanzas + Tareas/Hábitos en la misma frase sin descartar ninguno)
-      const { financeText, taskText } = splitMixedVoiceDictation(text);
-
-      const [finRes, taskRes] = await Promise.all([
-        financeText ? parseVoiceFinanceWithAI({ transcript: financeText, kaiName }) : Promise.resolve(null),
-        taskText
-          ? parseVoiceTranscriptToItems({
-              transcript: taskText,
-              currentDateLabel: formatDateForDisplay(currentViewDate),
-              kaiName,
-            })
-          : Promise.resolve(null),
-      ]);
-
-      const foundFinance = finRes?.entries || [];
-      const foundTasks = taskRes?.items || [];
-
-      setDetectedFinance(foundFinance);
-      setParsedItems(foundTasks);
-      setUsedRemoteAI(Boolean(finRes?.usedRemoteAI || taskRes?.usedRemoteAI));
-
-      if (foundFinance.length === 0 && foundTasks.length === 0) {
-        setErrorMsg('No pude identificar misiones ni movimientos claros. Intenta dictar algo como "A las 8 entrenar y tomar agua todos los días".');
-      } else {
-        const combinedReply =
-          foundFinance.length > 0 && foundTasks.length > 0
-            ? `¡Perfecto! Separé ${foundFinance.length} ${foundFinance.length === 1 ? 'movimiento financiero' : 'movimientos financieros'} y ${foundTasks.length} ${foundTasks.length === 1 ? 'misión' : 'misiones'} para tu jornada.`
-            : (finRes?.kaiReply || taskRes?.kaiReply || '¡Listo! Todo organizado para confirmar.');
-
-        setKaiReply(combinedReply);
-        triggerHaptic(20);
-        if (soundEnabled && combinedReply) {
-          setIsSpeakingReply(true);
-          speakKaiDialogue(combinedReply, kaiMood, () => setIsSpeakingReply(false));
-        }
-      }
-    } catch (err) {
-      console.error('[VoiceDictation] Analysis error:', err);
-      setErrorMsg('Ocurrió un error al analizar el dictado. Intenta nuevamente.');
-    } finally {
-      setIsAnalyzing(false);
-    }
-  }, [currentViewDate, kaiName, kaiMood, soundEnabled]);
-
-  const handleToggleMic = () => {
-    setErrorMsg(null);
-    setInjectedSuccess(null);
-
-    if (isListening) {
-      soundFX.playClick();
-      triggerHaptic(15);
-      stopListening(true);
-      // Pequeña espera para capturar la última palabra del reconocimiento antes de analizar
-      setTimeout(() => {
-        if (transcriptRef.current.trim().length >= 3) {
-          void runAnalysis(transcriptRef.current);
-        }
-      }, 280);
-      return;
-    }
-
+  const startListening = useCallback(() => {
     if (!speechSupported) {
-      setErrorMsg('Tu navegador no soporta dictado de micrófono nativo. ¡Pero puedes escribir tus ideas abajo y KAI las estructurará al instante!');
+      setShowKeyboardInput(true);
+      setTimeout(() => inputRef.current?.focus(), 60);
       return;
     }
 
     stopKaiDialogue();
-    soundFX.playClick();
-    triggerHaptic([15, 25]);
-    setParsedItems([]);
-    setKaiReply(null);
+    setErrorMsg(null);
+    setInjectedSuccess(null);
+
+    if (recognizerRef.current) {
+      recognizerRef.current.abort();
+      recognizerRef.current = null;
+    }
 
     const recognizer = createVoiceRecognizer({
       onInterim: (liveText) => {
@@ -272,24 +213,248 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({ isOpen
         setErrorMsg(friendly);
         setIsListening(false);
         recognizerRef.current = null;
+        setShowKeyboardInput(true);
       },
       onEnd: () => {
         setIsListening(false);
         recognizerRef.current = null;
-        if (autoAnalyzeOnStopRef.current) {
-          autoAnalyzeOnStopRef.current = false;
-        }
       },
     });
 
     if (!recognizer) {
-      setErrorMsg('No se pudo activar el micrófono. Escribe tus tareas en el recuadro inferior.');
+      setShowKeyboardInput(true);
       return;
     }
 
     recognizerRef.current = recognizer;
     setIsListening(true);
     recognizer.start();
+  }, [speechSupported]);
+
+  const handleClose = useCallback(() => {
+    stopListening();
+    stopKaiDialogue();
+    soundFX.playClick();
+    onClose();
+  }, [onClose, stopListening]);
+
+  // Al abrir: resetear estado, ocultar botones flotantes y arrancar escucha automática
+  useEffect(() => {
+    if (!isOpen) return;
+
+    setTranscript('');
+    transcriptRef.current = '';
+    setParsedItems([]);
+    setDetectedFocus(null);
+    setDetectedFinance([]);
+    setDiagnosticReport(null);
+    setShowPlannerActions(false);
+    setKaiReply(null);
+    setErrorMsg(null);
+    setInjectedSuccess(null);
+    setIsAnalyzing(false);
+    setShowKeyboardInput(!speechSupported);
+    setConversationHistory([]);
+
+    document.body.classList.add('modal-open-hide-floating');
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
+    // Auto-escucha natural apenas aparece KAI
+    let autoStartTimer: number | undefined;
+    if (speechSupported) {
+      autoStartTimer = window.setTimeout(() => {
+        startListening();
+      }, 180);
+    }
+
+    return () => {
+      if (autoStartTimer) clearTimeout(autoStartTimer);
+      document.body.classList.remove('modal-open-hide-floating');
+      window.removeEventListener('keydown', handleKeyDown);
+      if (recognizerRef.current) {
+        recognizerRef.current.abort();
+        recognizerRef.current = null;
+      }
+      stopKaiDialogue();
+    };
+  }, [isOpen, speechSupported, handleClose, startListening]);
+
+  const speakResponse = useCallback(
+    (text: string) => {
+      if (!soundEnabled || !text) return;
+      setIsSpeakingReply(true);
+      speakKaiDialogue(text, kaiMood, () => setIsSpeakingReply(false));
+    },
+    [soundEnabled, kaiMood]
+  );
+
+  const runAnalysis = useCallback(
+    async (textToAnalyze?: string) => {
+      const text = (textToAnalyze ?? transcriptRef.current).trim();
+      if (!text) return;
+
+      setErrorMsg(null);
+      setDetectedFocus(null);
+      setDetectedFinance([]);
+      setParsedItems([]);
+      setDiagnosticReport(null);
+      setShowPlannerActions(false);
+      setInjectedSuccess(null);
+      setIsAnalyzing(true);
+      soundFX.playClick();
+
+      const intent = classifyVoiceIntent(text);
+
+      try {
+        // 1. Foco / Pomodoro
+        if (intent === 'focus') {
+          const focusIntent = detectVoiceFocusIntent(text);
+          if (focusIntent) {
+            setDetectedFocus(focusIntent);
+            const reply = `Listo para enfocar ${focusIntent.durationMinutes} minutos en "${focusIntent.title}".`;
+            setKaiReply(reply);
+            triggerHaptic(20);
+            speakResponse(reply);
+            return;
+          }
+        }
+
+        // 2. Diagnóstico completo integrado en Háblame
+        if (intent === 'diagnostic') {
+          const diag = await generateNeuralAnalysisAI(
+            stats,
+            archetype,
+            habitMastery,
+            todayTasks,
+            reflections,
+            tasksByDate
+          );
+          setDiagnosticReport({ text: diag.analysis, source: diag.source });
+          const voiceSummary = summarizeDiagnosticForVoice(diag.analysis, stats, todayTasks);
+          setKaiReply(voiceSummary);
+          triggerHaptic(20);
+          speakResponse(voiceSummary);
+          return;
+        }
+
+        // 3. Planificador masivo / Plantillas de rutina
+        if (intent === 'planner') {
+          setShowPlannerActions(true);
+          const reply = 'Puedo abrir tu planificador visual con tu petición lista o mostrarte tus plantillas de rutina.';
+          setKaiReply(reply);
+          triggerHaptic(20);
+          speakResponse(reply);
+          return;
+        }
+
+        // 4. Conversación natural / Coach / "¿Por qué tarea empiezo?"
+        if (intent === 'conversation') {
+          const convo = await askKaiConversationAI({
+            message: text,
+            kaiName,
+            stats,
+            todayTasks,
+            history: conversationHistory,
+          });
+          setKaiReply(convo.reply);
+          setConversationHistory((prev) => [
+            ...prev.slice(-4),
+            { role: 'user', text },
+            { role: 'kai', text: convo.reply },
+          ]);
+          triggerHaptic(18);
+          speakResponse(convo.reply);
+          return;
+        }
+
+        // 5. Acciones mixtas: Finanzas + Tareas y Hábitos 21/66 en la misma frase
+        const { financeText, taskText } = splitMixedVoiceDictation(text);
+
+        const [finRes, taskRes] = await Promise.all([
+          financeText ? parseVoiceFinanceWithAI({ transcript: financeText, kaiName }) : Promise.resolve(null),
+          taskText
+            ? parseVoiceTranscriptToItems({
+                transcript: taskText,
+                currentDateLabel: formatDateForDisplay(currentViewDate),
+                kaiName,
+              })
+            : Promise.resolve(null),
+        ]);
+
+        const foundFinance = finRes?.entries || [];
+        const foundTasks = taskRes?.items || [];
+
+        setDetectedFinance(foundFinance);
+        setParsedItems(foundTasks);
+
+        if (foundFinance.length === 0 && foundTasks.length === 0) {
+          // Si no detectó acciones estructuradas, responder conversacionalmente
+          const convo = await askKaiConversationAI({
+            message: text,
+            kaiName,
+            stats,
+            todayTasks,
+            history: conversationHistory,
+          });
+          setKaiReply(convo.reply);
+          speakResponse(convo.reply);
+        } else {
+          const combinedReply =
+            foundFinance.length > 0 && foundTasks.length > 0
+              ? `Listo. Separé ${foundFinance.length} ${foundFinance.length === 1 ? 'movimiento' : 'movimientos'} y ${foundTasks.length} ${foundTasks.length === 1 ? 'objetivo' : 'objetivos'} para confirmar.`
+              : (finRes?.kaiReply || taskRes?.kaiReply || 'Listo, todo preparado para confirmar.');
+
+          setKaiReply(combinedReply);
+          triggerHaptic(20);
+          speakResponse(combinedReply);
+        }
+      } catch (err) {
+        console.error('[Hablame] Error procesando:', err);
+        setErrorMsg('No pude procesar eso ahora mismo. Intenta hablar o escribir de nuevo.');
+      } finally {
+        setIsAnalyzing(false);
+      }
+    },
+    [
+      stats,
+      archetype,
+      habitMastery,
+      todayTasks,
+      reflections,
+      tasksByDate,
+      kaiName,
+      conversationHistory,
+      currentViewDate,
+      speakResponse,
+    ]
+  );
+
+  // Tocar a KAI (o el botón central): si está escuchando, detiene y procesa; si no, vuelve a escuchar
+  const handleTapKai = () => {
+    if (isAnalyzing) return;
+    soundFX.playClick();
+    triggerHaptic(18);
+
+    if (isListening) {
+      stopListening();
+      setTimeout(() => {
+        if (transcriptRef.current.trim().length >= 2) {
+          void runAnalysis(transcriptRef.current);
+        }
+      }, 260);
+      return;
+    }
+
+    // Nuevo turno de voz
+    setTranscript('');
+    transcriptRef.current = '';
+    startListening();
   };
 
   const handleToggleItemKind = (id: string) => {
@@ -320,13 +485,6 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({ isOpen
   const handleRemoveItem = (id: string) => {
     soundFX.playClick();
     setParsedItems((prev) => prev.filter((it) => it.id !== id));
-  };
-
-  const handleSpeakReply = () => {
-    if (!kaiReply) return;
-    soundFX.playClick();
-    setIsSpeakingReply(true);
-    speakKaiDialogue(kaiReply, kaiMood, () => setIsSpeakingReply(false));
   };
 
   const handleInjectToAgenda = () => {
@@ -391,7 +549,6 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({ isOpen
         habitsModified = true;
         habitsCreated++;
 
-        // Inyectar inmediatamente en la fecha actual vista si aplica hoy
         const viewDayOfWeek = parseLocalDate(currentViewDate).getDay();
         const appliesToday =
           newHabit.frequencyType === 'daily' ||
@@ -452,521 +609,611 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({ isOpen
     const summaryParts: string[] = [];
     if (tasksCreated > 0) summaryParts.push(`${tasksCreated} ${tasksCreated === 1 ? 'tarea' : 'tareas'}`);
     if (habitsCreated > 0) summaryParts.push(`${habitsCreated} ${habitsCreated === 1 ? 'hábito' : 'hábitos'}`);
-    const summaryText = `¡Agregado! ${summaryParts.join(' y ')} en tu agenda.`;
+    const summaryText = `Listo, agregué ${summaryParts.join(' y ')} a tu agenda.`;
 
     addFloatingEffect({
       x: typeof window !== 'undefined' ? window.innerWidth / 2 : 200,
       y: typeof window !== 'undefined' ? window.innerHeight * 0.25 : 140,
-      text: `🎙️ +${validItems.length} ${validItems.length === 1 ? 'misión' : 'misiones'} por voz`,
+      text: `+${validItems.length} en tu agenda`,
       type: 'custom',
       colorClass: 'text-cyan-300',
     });
 
+    setParsedItems([]);
     setInjectedSuccess(summaryText);
+    speakResponse(summaryText);
 
-    if (soundEnabled) {
-      speakKaiDialogue(summaryText, kaiMood);
+    if (detectedFinance.length === 0) {
+      setTimeout(() => onClose(), 950);
     }
-
-    setTimeout(() => {
-      onClose();
-    }, 950);
   };
 
   if (!isOpen) return null;
 
+  const hasAnyOutput =
+    Boolean(kaiReply) ||
+    parsedItems.length > 0 ||
+    detectedFinance.length > 0 ||
+    Boolean(detectedFocus) ||
+    Boolean(diagnosticReport) ||
+    showPlannerActions;
+
   const modalContent = (
     <AnimatePresence>
-      <div
-        className="fixed inset-0 z-[175] flex items-center justify-center p-2.5 sm:p-4 bg-black/88 backdrop-blur-sm overflow-hidden font-sans portal-modal-root"
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.22 }}
+        className="fixed inset-0 z-[175] flex flex-col items-center justify-between p-4 sm:p-6 bg-[#020612]/78 backdrop-blur-2xl overflow-hidden font-sans portal-modal-root text-white"
         onClick={(e) => {
           if (e.target === e.currentTarget) handleClose();
         }}
       >
-        <motion.div
-          initial={{ opacity: 0, scale: 0.94, y: 12 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.94, y: 12 }}
-          transition={{ type: 'spring', damping: 28, stiffness: 360 }}
-          className="relative w-full max-w-lg max-h-[92vh] flex flex-col rounded-3xl bg-[#030816]/[0.98] border border-cyan-500/40 shadow-[0_0_60px_rgba(0,240,255,0.2),0_0_40px_rgba(0,0,0,0.9)] overflow-hidden text-white"
-        >
-          {/* Glows ambientales */}
-          <div className="absolute -top-20 -right-20 w-56 h-56 bg-cyan-500/15 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-20 -left-20 w-56 h-56 bg-fuchsia-500/15 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent pointer-events-none" />
+        {/* Resplandor ambiental ultra sutil */}
+        <div
+          className="pointer-events-none fixed inset-0 opacity-35"
+          style={{
+            background:
+              'radial-gradient(circle at 50% 34%, rgba(var(--aura-glow-rgb, 0, 240, 255), 0.22) 0%, transparent 55%)',
+          }}
+        />
 
-          {/* Header */}
-          <div className="shrink-0 flex items-center justify-between px-4 py-3.5 sm:px-5 border-b border-white/10 bg-[#020612]/90 relative z-10">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="relative shrink-0">
-                <HoloCompanion
-                  archetype={archetype}
-                  size={44}
-                  interactive={false}
-                  auraState={isListening ? 'focus_trance' : injectedSuccess ? 'victory' : 'normal'}
-                />
-                {isListening && (
-                  <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-rose-500 border-2 border-[#020612] animate-ping" />
-                )}
-              </div>
-              <div className="min-w-0">
-                <h3 className="text-sm sm:text-base font-anton uppercase tracking-wide text-white flex items-center gap-1.5 truncate">
-                  <span>Dictado Neural con {kaiName}</span>
-                </h3>
-                <p className="text-[11px] text-cyan-300/80 font-mono truncate">
-                  Habla libremente · KAI separa tus tareas, horarios y hábitos 21/66
-                </p>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleClose}
-              className="w-8 h-8 rounded-xl bg-white/[0.05] hover:bg-white/15 border border-white/10 text-slate-400 hover:text-white flex items-center justify-center transition-all cursor-pointer shrink-0 active:scale-95"
-              aria-label="Cerrar dictado por voz"
-              title="Cerrar (Esc)"
-            >
-              <X className="w-4 h-4" />
-            </button>
+        {/* Barra superior mínima: nombre + cierre discreto */}
+        <div className="w-full max-w-xl flex items-center justify-between relative z-10 shrink-0">
+          <div className="flex items-center gap-2 text-xs text-slate-300/80">
+            <span
+              className={`w-2 h-2 rounded-full transition-colors ${
+                isListening
+                  ? 'bg-fuchsia-400 animate-pulse'
+                  : isAnalyzing
+                    ? 'bg-cyan-400 animate-ping'
+                    : 'bg-white/30'
+              }`}
+            />
+            <span className="font-medium tracking-wide">{kaiName}</span>
+            <span className="text-slate-500">·</span>
+            <span className="text-slate-400 text-[11px]">
+              {isListening ? 'Escuchando' : isAnalyzing ? 'Pensando...' : isSpeakingReply ? 'Hablando' : 'En espera'}
+            </span>
           </div>
 
-          {/* Cuerpo Scrolleable */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 custom-scrollbar relative z-10">
-            {/* Banner de éxito */}
-            {injectedSuccess && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="p-3.5 rounded-2xl bg-emerald-950/70 border border-emerald-400/60 text-emerald-200 flex items-center gap-2.5 shadow-[0_0_25px_rgba(16,185,129,0.3)]"
+          <button
+            type="button"
+            onClick={handleClose}
+            className="w-9 h-9 rounded-full bg-white/[0.06] hover:bg-white/[0.14] border border-white/10 text-slate-300 hover:text-white flex items-center justify-center transition-all cursor-pointer active:scale-95"
+            aria-label="Cerrar Háblame"
+            title="Cerrar (Esc)"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* ESCENARIO CENTRAL: KAI VIVO + SUBTÍTULO + RESPUESTAS DE CRISTAL */}
+        <div
+          className="flex-1 w-full max-w-xl flex flex-col items-center justify-center gap-5 overflow-y-auto py-4 px-1 custom-scrollbar relative z-10"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* KAI Protagonista con Ondas Orgánicas */}
+          <div className="relative flex flex-col items-center justify-center shrink-0 mt-2">
+            <div className="relative flex items-center justify-center">
+              {isListening && (
+                <>
+                  <motion.span
+                    animate={{ scale: [1, 1.55, 1], opacity: [0.35, 0, 0.35] }}
+                    transition={{ duration: 2.1, repeat: Infinity, ease: 'easeInOut' }}
+                    className="absolute w-32 h-32 rounded-full pointer-events-none"
+                    style={{
+                      border: '1.5px solid var(--aura-color-1, #00f0ff)',
+                    }}
+                  />
+                  <motion.span
+                    animate={{ scale: [1, 1.9, 1], opacity: [0.22, 0, 0.22] }}
+                    transition={{ duration: 2.1, repeat: Infinity, delay: 0.65, ease: 'easeInOut' }}
+                    className="absolute w-32 h-32 rounded-full pointer-events-none"
+                    style={{
+                      border: '1px solid var(--aura-color-1, #00f0ff)',
+                    }}
+                  />
+                </>
+              )}
+
+              {isSpeakingReply && !isListening && (
+                <motion.span
+                  animate={{ scale: [1, 1.25, 1], opacity: [0.28, 0.08, 0.28] }}
+                  transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
+                  className="absolute w-32 h-32 rounded-full bg-cyan-400/20 blur-xl pointer-events-none"
+                />
+              )}
+
+              <motion.button
+                type="button"
+                onClick={handleTapKai}
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.94 }}
+                animate={{
+                  scale: isListening ? [1, 1.05, 1] : isAnalyzing ? 0.98 : 1,
+                }}
+                transition={
+                  isListening
+                    ? { duration: 1.8, repeat: Infinity, ease: 'easeInOut' }
+                    : { duration: 0.2 }
+                }
+                className="relative z-10 p-3 rounded-full cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60"
+                aria-label={isListening ? 'Tocar a KAI para enviar lo que dijiste' : 'Tocar a KAI para hablar'}
+                title={isListening ? 'Toca a KAI al terminar de hablar' : 'Toca a KAI para volver a hablar'}
               >
-                <div className="w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-400 flex items-center justify-center shrink-0">
-                  <Check className="w-4 h-4 text-emerald-300" />
-                </div>
-                <span className="text-xs sm:text-sm font-bold">{injectedSuccess}</span>
-              </motion.div>
-            )}
-
-            {/* Zona Central de Micrófono + Ondas */}
-            <div className="flex flex-col items-center justify-center py-2 space-y-3">
-              <div className="relative flex items-center justify-center">
-                {isListening && (
-                  <>
-                    <motion.span
-                      animate={{ scale: [1, 1.55, 1], opacity: [0.45, 0, 0.45] }}
-                      transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-                      className="absolute w-20 h-20 rounded-full bg-rose-500/35 pointer-events-none"
-                    />
-                    <motion.span
-                      animate={{ scale: [1, 1.9, 1], opacity: [0.25, 0, 0.25] }}
-                      transition={{ duration: 1.5, repeat: Infinity, delay: 0.35, ease: 'easeInOut' }}
-                      className="absolute w-20 h-20 rounded-full bg-cyan-400/25 pointer-events-none"
-                    />
-                  </>
-                )}
-
-                <button
-                  type="button"
-                  onClick={handleToggleMic}
-                  disabled={isAnalyzing}
-                  className={`relative z-10 w-20 h-20 rounded-full flex flex-col items-center justify-center transition-all cursor-pointer active:scale-95 border-2 ${
-                    isListening
-                      ? 'bg-gradient-to-br from-rose-500 to-fuchsia-600 border-rose-200 text-white shadow-[0_0_35px_rgba(244,63,94,0.7)]'
-                      : 'bg-gradient-to-br from-cyan-400 via-sky-500 to-indigo-600 border-cyan-200/80 text-[#020617] shadow-[0_0_30px_rgba(0,240,255,0.45)] hover:shadow-[0_0_40px_rgba(0,240,255,0.65)]'
-                  }`}
-                  aria-label={isListening ? 'Detener dictado y analizar' : 'Iniciar dictado por voz'}
-                >
-                  {isListening ? (
-                    <MicOff className="w-8 h-8 stroke-[2.5]" />
-                  ) : (
-                    <Mic className="w-8 h-8 stroke-[2.5]" />
-                  )}
-                </button>
-              </div>
-
-              {/* Visualizador de estado de escucha */}
-              <div className="text-center space-y-1">
-                {isListening ? (
-                  <div className="flex items-center justify-center gap-1.5">
-                    <span className="inline-flex items-end gap-0.5 h-3.5">
-                      {[0, 1, 2, 3, 4].map((bar) => (
-                        <motion.span
-                          key={bar}
-                          animate={{ height: ['25%', '100%', '35%'] }}
-                          transition={{ duration: 0.55, repeat: Infinity, delay: bar * 0.1 }}
-                          className="w-1 rounded-full bg-rose-400"
-                        />
-                      ))}
-                    </span>
-                    <span className="text-xs font-mono font-bold text-rose-300 uppercase tracking-wider">
-                      Escuchando... toca de nuevo para analizar
-                    </span>
-                  </div>
-                ) : isAnalyzing ? (
-                  <div className="flex items-center justify-center gap-1.5 text-cyan-300 text-xs font-mono font-bold">
-                    <Sparkles className="w-3.5 h-3.5 animate-spin" />
-                    <span>{kaiName} está desglosando tu dictado...</span>
-                  </div>
-                ) : (
-                  <p className="text-xs text-slate-300 font-medium">
-                    {speechSupported
-                      ? 'Pulsa el micrófono y di varias tareas o hábitos de corrido'
-                      : 'Escribe tus tareas en lenguaje natural y KAI las organiza por ti'}
-                  </p>
-                )}
-              </div>
+                <HoloCompanion
+                  archetype={archetype}
+                  size={hasAnyOutput ? 86 : 114}
+                  interactive={false}
+                  auraState={
+                    injectedSuccess
+                      ? 'victory'
+                      : isListening || isAnalyzing
+                        ? 'focus_trance'
+                        : 'normal'
+                  }
+                />
+              </motion.button>
             </div>
 
-            {/* Cuadro de Transcripción Editable */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-[10.5px] font-mono uppercase tracking-wider text-slate-400">
-                  Transcripción en vivo (editable)
-                </label>
-                {transcript && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundFX.playClick();
-                      setTranscript('');
-                      transcriptRef.current = '';
-                      setParsedItems([]);
-                      setKaiReply(null);
-                      setErrorMsg(null);
-                    }}
-                    className="text-[10.5px] font-mono text-slate-400 hover:text-cyan-300 flex items-center gap-1 cursor-pointer"
-                  >
-                    <RotateCcw className="w-3 h-3" />
-                    <span>Limpiar</span>
-                  </button>
-                )}
-              </div>
-              <textarea
-                value={transcript}
-                onChange={(e) => {
-                  setTranscript(e.target.value);
-                  transcriptRef.current = e.target.value;
-                }}
-                rows={3}
-                placeholder='Ej: "Mañana a las 7 entrenar pierna, a las 10 junta con el cliente y tomar 8 vasos de agua todos los días"'
-                className="w-full rounded-2xl bg-black/55 border border-white/15 focus:border-cyan-400/70 focus:ring-1 focus:ring-cyan-400/50 px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-slate-500 outline-none resize-none transition-all"
-              />
-
-              {/* Botón manual de análisis cuando hay texto y no está grabando */}
-              {!isListening && transcript.trim().length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => void runAnalysis()}
-                  disabled={isAnalyzing}
-                  className="w-full py-2.5 px-4 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-400/50 text-cyan-200 font-anton uppercase tracking-wider text-xs flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-[0.99] disabled:opacity-50"
-                >
-                  <Wand2 className={`w-3.5 h-3.5 ${isAnalyzing ? 'animate-spin' : ''}`} />
-                  <span>{parsedItems.length > 0 ? 'Volver a analizar con KAI' : `Analizar dictado con ${kaiName}`}</span>
-                </button>
+            {/* Indicador visual suave debajo de KAI */}
+            <div className="mt-2 min-h-[24px] flex items-center justify-center">
+              {isListening ? (
+                <div className="flex items-center gap-2 text-xs text-slate-300/90">
+                  <span className="inline-flex items-end gap-[3px] h-3">
+                    {[0, 1, 2, 3].map((bar) => (
+                      <motion.span
+                        key={bar}
+                        animate={{ height: ['25%', '100%', '35%'] }}
+                        transition={{ duration: 0.55, repeat: Infinity, delay: bar * 0.1 }}
+                        className="w-[2.5px] rounded-full"
+                        style={{ backgroundColor: 'var(--aura-color-1, #00f0ff)' }}
+                      />
+                    ))}
+                  </span>
+                  <span>
+                    {transcript.trim()
+                      ? 'Toca a KAI cuando termines'
+                      : 'Te escucho...'}
+                  </span>
+                </div>
+              ) : isAnalyzing ? (
+                <div className="flex items-center gap-1.5 text-xs text-cyan-300/90">
+                  <Sparkles className="w-3.5 h-3.5 animate-spin" />
+                  <span>{kaiName} está pensando...</span>
+                </div>
+              ) : (
+                <span className="text-[11.5px] text-slate-400">
+                  Toca a {kaiName} para hablarle
+                </span>
               )}
             </div>
+          </div>
 
-            {/* Ejemplos rápidos (solo cuando está vacío y sin resultados) */}
-            {!transcript && parsedItems.length === 0 && !isListening && (
-              <div className="space-y-1.5">
-                <span className="text-[10px] font-mono uppercase tracking-wider text-slate-500">
-                  Prueba tocando un ejemplo:
-                </span>
-                <div className="space-y-1.5">
-                  {EXAMPLE_PROMPTS.map((sample, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => {
-                        soundFX.playClick();
-                        setTranscript(sample);
-                        transcriptRef.current = sample;
-                        void runAnalysis(sample);
-                      }}
-                      className="w-full text-left px-3 py-2 rounded-xl bg-white/[0.03] hover:bg-cyan-950/40 border border-white/10 hover:border-cyan-400/40 text-[11.5px] text-slate-300 hover:text-cyan-100 transition-all cursor-pointer"
-                    >
-                      “{sample}”
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+          {/* Subtítulo flotante con lo que vas diciendo */}
+          {transcript && (
+            <motion.p
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center text-sm sm:text-base font-normal text-white/90 max-w-md leading-relaxed px-3"
+            >
+              “{transcript}”
+            </motion.p>
+          )}
 
-            {/* Mensajes de error */}
-            {errorMsg && (
-              <div className="p-3 rounded-xl bg-rose-950/60 border border-rose-500/40 text-rose-200 text-xs leading-relaxed">
-                {errorMsg}
-              </div>
-            )}
+          {/* Sugerencias discretas solo cuando no hay texto ni resultado aún */}
+          {!transcript && !hasAnyOutput && !isAnalyzing && (
+            <div className="flex flex-wrap items-center justify-center gap-2 max-w-md pt-1">
+              {QUICK_SUGGESTIONS.map((sample, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => {
+                    stopListening();
+                    setTranscript(sample);
+                    transcriptRef.current = sample;
+                    void runAnalysis(sample);
+                  }}
+                  className="px-3 py-1.5 rounded-full bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 text-[11.5px] text-slate-300 hover:text-white transition-all cursor-pointer active:scale-95"
+                >
+                  {sample}
+                </button>
+              ))}
+            </div>
+          )}
 
-            {/* Comando de Foco / Pomodoro Detectado */}
-            {detectedFocus && (
-              <div className="p-3.5 rounded-2xl bg-gradient-to-br from-cyan-950/60 to-indigo-950/50 border border-cyan-400/50 space-y-3">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className="w-8 h-8 rounded-xl bg-cyan-500/20 border border-cyan-400/50 flex items-center justify-center text-cyan-300 shrink-0">
-                      <Clock className="w-4 h-4" />
-                    </div>
-                    <div className="min-w-0">
-                      <span className="text-[10px] font-mono uppercase tracking-wider text-cyan-300 block">
-                        ⏱️ Comando de Enfoque ({detectedFocus.durationMinutes} min)
-                      </span>
-                      <p className="text-sm font-bold text-white truncate">{detectedFocus.title}</p>
-                    </div>
-                  </div>
+          {/* Error discreto */}
+          {errorMsg && (
+            <div className="w-full max-w-md px-3.5 py-2.5 rounded-2xl bg-rose-950/50 border border-rose-500/35 text-rose-200 text-xs text-center">
+              {errorMsg}
+            </div>
+          )}
+
+          {/* Confirmación de éxito */}
+          {injectedSuccess && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="w-full max-w-md px-4 py-2.5 rounded-2xl bg-emerald-950/60 border border-emerald-400/45 text-emerald-200 flex items-center justify-center gap-2 text-xs font-medium"
+            >
+              <Check className="w-4 h-4 text-emerald-300 shrink-0" />
+              <span>{injectedSuccess}</span>
+            </motion.div>
+          )}
+
+          {/* CÁPSULA DE RESPUESTA DE KAI */}
+          {kaiReply && !injectedSuccess && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="w-full max-w-md px-4 py-3 rounded-2xl bg-[#070e1d]/85 border border-white/12 shadow-[0_12px_36px_rgba(0,0,0,0.45)] backdrop-blur-2xl flex items-start gap-3"
+            >
+              <span
+                className="w-[2px] self-stretch rounded-full shrink-0"
+                style={{ backgroundColor: 'var(--aura-color-1, #00f0ff)' }}
+              />
+              <p className="text-[13px] text-slate-100 leading-relaxed flex-1">
+                {kaiReply}
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  soundFX.playClick();
+                  speakResponse(kaiReply);
+                }}
+                className="w-7 h-7 rounded-full bg-white/[0.06] hover:bg-white/[0.14] text-cyan-300 flex items-center justify-center cursor-pointer shrink-0 transition-colors"
+                title="Volver a escuchar"
+                aria-label="Volver a escuchar a KAI"
+              >
+                <Volume2 className={`w-3.5 h-3.5 ${isSpeakingReply ? 'animate-bounce text-white' : ''}`} />
+              </button>
+            </motion.div>
+          )}
+
+          {/* DIAGNÓSTICO COMPLETO INTEGRADO (sin abrir modal duplicado) */}
+          {diagnosticReport && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="w-full max-w-md p-4 rounded-2xl bg-[#060c1a]/88 border border-white/12 backdrop-blur-2xl space-y-2.5 max-h-[34vh] overflow-y-auto custom-scrollbar"
+            >
+              <div className="flex items-center justify-between gap-2 pb-2 border-b border-white/10">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-cyan-300">
+                  <Activity className="w-3.5 h-3.5" />
+                  <span>Diagnóstico de tu progreso</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => {
                     soundFX.playClick();
-                    triggerHaptic([20, 30]);
-                    handleOpenPomodoroForTask(
-                      detectedFocus.title,
-                      detectedFocus.category,
-                      detectedFocus.durationMinutes
-                    );
-                    onClose();
+                    navigator.clipboard?.writeText(diagnosticReport.text).catch(() => {});
+                    setCopiedDiagnostic(true);
+                    setTimeout(() => setCopiedDiagnostic(false), 2000);
                   }}
-                  className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-cyan-400 to-sky-400 hover:brightness-110 text-[#020617] font-anton uppercase tracking-wider text-xs flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(0,240,255,0.4)] cursor-pointer active:scale-[0.98]"
+                  className="px-2 py-1 rounded-lg bg-white/[0.05] hover:bg-white/10 text-[10.5px] text-slate-300 flex items-center gap-1 cursor-pointer"
                 >
-                  <Play className="w-3.5 h-3.5 fill-current" />
-                  <span>Abrir Pomodoro con este objetivo</span>
+                  {copiedDiagnostic ? <Check className="w-3 h-3 text-emerald-300" /> : <Copy className="w-3 h-3" />}
+                  <span>{copiedDiagnostic ? 'Copiado' : 'Copiar'}</span>
                 </button>
               </div>
-            )}
+              <div className="space-y-1">{renderDiagnosticMarkdown(diagnosticReport.text)}</div>
+            </motion.div>
+          )}
 
-            {/* Movimientos Financieros Detectados desde Dictado Principal */}
-            {detectedFinance.length > 0 && (
-              <div className="p-3.5 rounded-2xl bg-emerald-950/25 border border-emerald-400/45 space-y-2.5">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-emerald-300 flex items-center gap-1.5">
-                    <Wallet className="w-3.5 h-3.5" />
-                    Movimientos Financieros ({detectedFinance.length})
-                  </span>
-                </div>
-                <div className="space-y-1.5">
-                  {detectedFinance.map((entry) => (
-                    <div
-                      key={entry.id}
-                      className={`flex items-center justify-between gap-2 px-3 py-2 rounded-xl border text-xs ${
-                        entry.type === 'income'
-                          ? 'bg-emerald-950/50 border-emerald-500/40'
-                          : 'bg-orange-950/50 border-orange-500/40'
-                      }`}
+          {/* ACCESOS CONTEXTUALES A PLANIFICADOR / PLANTILLAS (solo si lo pediste) */}
+          {showPlannerActions && (
+            <div className="w-full max-w-md flex flex-wrap items-center justify-center gap-2">
+              {onOpenOracleWithPrompt && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFX.playClick();
+                    const p = transcriptRef.current.trim();
+                    onClose();
+                    onOpenOracleWithPrompt(p || undefined);
+                  }}
+                  className="px-4 py-2 rounded-full bg-cyan-400/20 hover:bg-cyan-400/30 border border-cyan-400/50 text-cyan-100 text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-all"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Abrir Planificador Visual</span>
+                </button>
+              )}
+              {onOpenTemplates && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFX.playClick();
+                    onClose();
+                    onOpenTemplates();
+                  }}
+                  className="px-4 py-2 rounded-full bg-white/[0.06] hover:bg-white/[0.14] border border-white/15 text-slate-200 text-xs font-medium cursor-pointer transition-all"
+                >
+                  Ver Plantillas de Rutina
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* COMANDO DE FOCO / POMODORO */}
+          {detectedFocus && (
+            <div className="w-full max-w-md p-3.5 rounded-2xl bg-[#071020]/88 border border-cyan-400/40 backdrop-blur-2xl flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <span className="text-[10.5px] text-cyan-300 font-medium block">
+                  Bloque de foco · {detectedFocus.durationMinutes} min
+                </span>
+                <p className="text-sm font-semibold text-white truncate">{detectedFocus.title}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  soundFX.playClick();
+                  triggerHaptic([20, 30]);
+                  handleOpenPomodoroForTask(
+                    detectedFocus.title,
+                    detectedFocus.category,
+                    detectedFocus.durationMinutes
+                  );
+                  onClose();
+                }}
+                className="px-3.5 py-2 rounded-full bg-cyan-400 hover:bg-cyan-300 text-[#020612] text-xs font-bold flex items-center gap-1.5 shrink-0 cursor-pointer active:scale-95"
+              >
+                <Play className="w-3.5 h-3.5 fill-current" />
+                <span>Iniciar</span>
+              </button>
+            </div>
+          )}
+
+          {/* MOVIMIENTOS FINANCIEROS DETECTADOS */}
+          {detectedFinance.length > 0 && (
+            <div className="w-full max-w-md p-3.5 rounded-2xl bg-[#061218]/88 border border-emerald-400/35 backdrop-blur-2xl space-y-2.5">
+              <div className="flex items-center gap-1.5 text-[11px] font-medium text-emerald-300">
+                <Wallet className="w-3.5 h-3.5" />
+                <span>Tesorería ({detectedFinance.length})</span>
+              </div>
+              <div className="space-y-1.5">
+                {detectedFinance.map((entry) => (
+                  <div
+                    key={entry.id}
+                    className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-white/[0.04] border border-white/10 text-xs"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <span className="font-medium text-white truncate block">{entry.description}</span>
+                      <span className="text-[10px] text-slate-400">{entry.category}</span>
+                    </div>
+                    <span className={`font-semibold text-xs shrink-0 ${entry.type === 'income' ? 'text-emerald-300' : 'text-orange-300'}`}>
+                      {entry.type === 'income' ? '+' : '-'}{formatMoney(entry.amount, currencySymbol)}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setDetectedFinance((prev) => prev.filter((x) => x.id !== entry.id))}
+                      className="text-slate-400 hover:text-rose-300 p-0.5 cursor-pointer"
+                      aria-label="Quitar movimiento"
                     >
-                      <div className="min-w-0 flex-1">
-                        <span className="font-bold text-white truncate block">{entry.description}</span>
-                        <span className="text-[10px] font-mono text-slate-300">{entry.category}</span>
-                      </div>
-                      <span className={`font-anton text-xs shrink-0 ${entry.type === 'income' ? 'text-emerald-300' : 'text-orange-300'}`}>
-                        {entry.type === 'income' ? '+' : '-'}{formatMoney(entry.amount, currencySymbol)}
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  soundFX.playCoin();
+                  triggerHaptic([20, 35]);
+                  const nowIso = new Date().toISOString();
+                  const nowTs = Date.now();
+                  const txs: FinancialTransaction[] = detectedFinance.map((entry, idx) => ({
+                    id: `tx-voice-hub-${nowTs}-${idx}-${Math.random().toString(36).substring(2, 6)}`,
+                    date: currentViewDate,
+                    type: entry.type,
+                    description: entry.description,
+                    amount: entry.amount,
+                    category: entry.category,
+                    createdAt: nowIso,
+                  }));
+                  setExpenses((prev) => [...txs, ...prev]);
+                  const msg = `Listo, registré ${txs.length} ${txs.length === 1 ? 'movimiento' : 'movimientos'} en tus finanzas.`;
+                  setDetectedFinance([]);
+                  if (parsedItems.length === 0) {
+                    setInjectedSuccess(msg);
+                    speakResponse(msg);
+                    setTimeout(() => onClose(), 900);
+                  } else {
+                    addFloatingEffect({
+                      x: typeof window !== 'undefined' ? window.innerWidth / 2 : 200,
+                      y: typeof window !== 'undefined' ? window.innerHeight * 0.25 : 140,
+                      text: `+${txs.length} en Finanzas`,
+                      type: 'coins',
+                    });
+                    speakResponse(msg);
+                  }
+                }}
+                className="w-full py-2 rounded-full bg-emerald-400 hover:bg-emerald-300 text-[#020612] text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.98]"
+              >
+                <Check className="w-3.5 h-3.5 stroke-[3]" />
+                <span>Guardar en Finanzas</span>
+              </button>
+            </div>
+          )}
+
+          {/* TAREAS Y HÁBITOS DETECTADOS */}
+          {parsedItems.length > 0 && (
+            <div className="w-full max-w-md space-y-2">
+              {parsedItems.map((item) => {
+                const isHabit = item.kind === 'habit';
+                const targetDateStr = item.targetDateOffset > 0
+                  ? addDaysToDateString(currentViewDate, item.targetDateOffset)
+                  : currentViewDate;
+                const dateLabel =
+                  item.targetDateOffset === 0
+                    ? 'Hoy'
+                    : item.targetDateOffset === 1
+                      ? 'Mañana'
+                      : formatDateForDisplay(targetDateStr);
+
+                return (
+                  <div
+                    key={item.id}
+                    className="p-3 rounded-2xl bg-[#070e1d]/85 border border-white/12 backdrop-blur-2xl space-y-2"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm leading-none shrink-0" aria-hidden="true">
+                        {item.quickIcon}
                       </span>
+                      <input
+                        type="text"
+                        value={item.title}
+                        onChange={(e) => handleUpdateTitle(item.id, e.target.value)}
+                        className="flex-1 min-w-0 bg-transparent text-xs sm:text-sm font-medium text-white border-b border-transparent focus:border-cyan-400/50 outline-none py-0.5"
+                        aria-label="Título de la misión"
+                      />
                       <button
                         type="button"
-                        onClick={() => setDetectedFinance((prev) => prev.filter((x) => x.id !== entry.id))}
-                        className="text-slate-400 hover:text-rose-300 p-0.5 cursor-pointer"
-                        aria-label="Quitar movimiento"
+                        onClick={() => handleRemoveItem(item.id)}
+                        className="p-1 rounded-full text-slate-400 hover:text-rose-300 hover:bg-white/5 transition-colors cursor-pointer shrink-0"
+                        aria-label="Descartar"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
-                  ))}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    soundFX.playCoin();
-                    triggerHaptic([20, 35]);
-                    const nowIso = new Date().toISOString();
-                    const nowTs = Date.now();
-                    const txs: FinancialTransaction[] = detectedFinance.map((entry, idx) => ({
-                      id: `tx-voice-hub-${nowTs}-${idx}-${Math.random().toString(36).substring(2, 6)}`,
-                      date: currentViewDate,
-                      type: entry.type,
-                      description: entry.description,
-                      amount: entry.amount,
-                      category: entry.category,
-                      createdAt: nowIso,
-                    }));
-                    setExpenses((prev) => [...txs, ...prev]);
-                    const msg = `¡Listo! Registré ${txs.length} ${txs.length === 1 ? 'movimiento' : 'movimientos'} en tu tesorería.`;
-                    setDetectedFinance([]);
-                    if (parsedItems.length === 0) {
-                      setInjectedSuccess(msg);
-                      if (soundEnabled) speakKaiDialogue(msg, kaiMood);
-                      setTimeout(() => onClose(), 900);
-                    } else {
-                      addFloatingEffect({
-                        x: typeof window !== 'undefined' ? window.innerWidth / 2 : 200,
-                        y: typeof window !== 'undefined' ? window.innerHeight * 0.25 : 140,
-                        text: `💸 +${txs.length} en Tesorería`,
-                        type: 'coins',
-                      });
-                      if (soundEnabled) speakKaiDialogue(msg, kaiMood);
-                    }
-                  }}
-                  className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-400 to-cyan-400 hover:brightness-110 text-[#020617] font-anton uppercase tracking-wider text-xs flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(16,185,129,0.4)] cursor-pointer active:scale-[0.98]"
-                >
-                  <Check className="w-4 h-4 stroke-[3]" />
-                  <span>Registrar {detectedFinance.length} {detectedFinance.length === 1 ? 'movimiento' : 'movimientos'} en Finanzas</span>
-                </button>
-              </div>
-            )}
 
-            {/* Resultados Estructurados por KAI */}
-            {parsedItems.length > 0 && (
-              <div className="space-y-3 pt-1">
-                {/* Respuesta de KAI con botón de Voz Viva */}
-                {kaiReply && (
-                  <div className="p-3 rounded-2xl bg-cyan-950/40 border border-cyan-400/35 flex items-start gap-2.5">
-                    <Sparkles className="w-4 h-4 text-cyan-300 shrink-0 mt-0.5" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-cyan-100 leading-snug">“{kaiReply}”</p>
-                      <span className="inline-block mt-1 text-[9.5px] font-mono uppercase tracking-wider text-cyan-400/75">
-                        {usedRemoteAI ? '✨ Procesado con Gemini IA' : '⚡ Motor Táctico Instantáneo'}
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleSpeakReply}
-                      className="p-1.5 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/30 border border-cyan-400/40 text-cyan-300 cursor-pointer shrink-0 transition-colors"
-                      title="Escuchar respuesta de KAI"
-                      aria-label="Escuchar respuesta de KAI"
-                    >
-                      <Volume2 className={`w-3.5 h-3.5 ${isSpeakingReply ? 'animate-bounce text-white' : ''}`} />
-                    </button>
-                  </div>
-                )}
-
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-300">
-                    Detectado ({parsedItems.length}) · Edita o confirma
-                  </span>
-                  <span className="text-[10px] font-mono text-slate-500">
-                    Toca Tarea/Hábito para cambiar tipo
-                  </span>
-                </div>
-
-                {/* Lista de tarjetas editables */}
-                <div className="space-y-2">
-                  {parsedItems.map((item) => {
-                    const isHabit = item.kind === 'habit';
-                    const targetDateStr = item.targetDateOffset > 0
-                      ? addDaysToDateString(currentViewDate, item.targetDateOffset)
-                      : currentViewDate;
-                    const dateLabel =
-                      item.targetDateOffset === 0
-                        ? 'Hoy / Vista'
-                        : item.targetDateOffset === 1
-                          ? 'Mañana'
-                          : formatDateForDisplay(targetDateStr);
-
-                    return (
-                      <div
-                        key={item.id}
-                        className={`p-3 rounded-2xl border transition-all space-y-2 ${
+                    <div className="flex flex-wrap items-center gap-1.5 text-[10px]">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleItemKind(item.id)}
+                        className={`px-2 py-0.5 rounded-full border font-medium flex items-center gap-1 cursor-pointer transition-all ${
                           isHabit
-                            ? 'bg-purple-950/30 border-purple-400/40'
-                            : 'bg-slate-900/70 border-cyan-500/30'
+                            ? 'bg-purple-500/20 border-purple-400/45 text-purple-200'
+                            : 'bg-cyan-500/15 border-cyan-400/40 text-cyan-200'
                         }`}
+                        title="Toca para alternar entre Tarea y Hábito 21/66"
                       >
-                        <div className="flex items-center gap-2">
-                          <span className="text-base leading-none shrink-0" aria-hidden="true">
-                            {item.quickIcon}
-                          </span>
-                          <input
-                            type="text"
-                            value={item.title}
-                            onChange={(e) => handleUpdateTitle(item.id, e.target.value)}
-                            className="flex-1 min-w-0 bg-transparent text-xs sm:text-sm font-bold text-white border-b border-transparent focus:border-cyan-400/60 outline-none py-0.5"
-                            aria-label="Título de la misión"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveItem(item.id)}
-                            className="p-1 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-950/40 transition-colors cursor-pointer shrink-0"
-                            title="Descartar este elemento"
-                            aria-label="Descartar este elemento"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
+                        {isHabit ? <Flame className="w-2.5 h-2.5" /> : <Zap className="w-2.5 h-2.5" />}
+                        <span>{isHabit ? 'Hábito 21/66' : 'Tarea'}</span>
+                      </button>
 
-                        {/* Metadata Chips */}
-                        <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-mono">
-                          <button
-                            type="button"
-                            onClick={() => handleToggleItemKind(item.id)}
-                            className={`px-2 py-0.5 rounded-full border font-bold uppercase flex items-center gap-1 cursor-pointer transition-all active:scale-95 ${
-                              isHabit
-                                ? 'bg-purple-500/25 border-purple-400/60 text-purple-200 hover:bg-purple-500/35'
-                                : 'bg-cyan-500/20 border-cyan-400/50 text-cyan-200 hover:bg-cyan-500/30'
-                            }`}
-                            title="Clic para alternar entre Tarea puntual y Hábito 21/66"
-                          >
-                            {isHabit ? <Flame className="w-2.5 h-2.5" /> : <Zap className="w-2.5 h-2.5" />}
-                            <span>{isHabit ? 'Hábito 21/66' : 'Tarea'}</span>
-                          </button>
+                      <span className="px-2 py-0.5 rounded-full bg-white/[0.06] text-slate-300">
+                        {CATEGORY_LABELS[item.category] || item.category}
+                      </span>
 
-                          <span className="px-2 py-0.5 rounded-full bg-white/[0.06] border border-white/10 text-slate-300">
-                            {CATEGORY_LABELS[item.category] || item.category}
-                          </span>
+                      {item.timeBlock && (
+                        <span className="px-2 py-0.5 rounded-full bg-white/[0.06] text-sky-200 flex items-center gap-1">
+                          <Clock className="w-2.5 h-2.5" />
+                          <span>{item.timeBlock}</span>
+                        </span>
+                      )}
 
-                          {item.timeBlock && (
-                            <span className="px-2 py-0.5 rounded-full bg-sky-500/15 border border-sky-400/40 text-sky-200 flex items-center gap-1">
-                              <Clock className="w-2.5 h-2.5" />
-                              <span>{item.timeBlock}</span>
-                            </span>
-                          )}
+                      {!isHabit && (
+                        <span className="px-2 py-0.5 rounded-full bg-white/[0.06] text-amber-200 flex items-center gap-1">
+                          <Calendar className="w-2.5 h-2.5" />
+                          <span>{dateLabel}</span>
+                        </span>
+                      )}
 
-                          {!isHabit && (
-                            <span className="px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-400/35 text-amber-200 flex items-center gap-1">
-                              <Calendar className="w-2.5 h-2.5" />
-                              <span>{dateLabel}</span>
-                            </span>
-                          )}
+                      {isHabit && item.targetCount && item.targetCount > 1 && (
+                        <span className="px-2 py-0.5 rounded-full bg-white/[0.06] text-emerald-200">
+                          {item.targetCount} {item.unit || 'veces'}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
 
-                          {isHabit && item.targetCount && item.targetCount > 1 && (
-                            <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-400/40 text-emerald-200">
-                              Meta: {item.targetCount} {item.unit || 'veces'}
-                            </span>
-                          )}
-
-                          <span className="ml-auto text-slate-400">
-                            +{item.xpReward} XP · +{item.coinReward} 🪙
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Footer de Confirmación */}
-          {parsedItems.length > 0 && !injectedSuccess && (
-            <div className="shrink-0 p-3.5 sm:p-4 border-t border-white/10 bg-[#020612]/95 flex items-center gap-2 relative z-10">
-              <button
-                type="button"
-                onClick={handleClose}
-                className="px-3.5 py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/10 border border-white/10 text-xs font-mono text-slate-300 cursor-pointer transition-colors"
-              >
-                Cancelar
-              </button>
               <button
                 type="button"
                 onClick={handleInjectToAgenda}
-                className="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-cyan-400 via-sky-400 to-purple-500 hover:brightness-110 text-[#020617] font-anton uppercase tracking-wider text-xs sm:text-sm flex items-center justify-center gap-2 shadow-[0_0_25px_rgba(0,240,255,0.4)] transition-all cursor-pointer active:scale-[0.98]"
+                className="w-full py-2.5 rounded-full bg-cyan-400 hover:bg-cyan-300 text-[#020612] text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 shadow-[0_8px_24px_rgba(0,240,255,0.28)] cursor-pointer active:scale-[0.98]"
               >
                 <Check className="w-4 h-4 stroke-[3]" />
                 <span>
-                  Añadir {parsedItems.length} {parsedItems.length === 1 ? 'elemento' : 'elementos'} a mi agenda
+                  Añadir {parsedItems.length} {parsedItems.length === 1 ? 'a mi agenda' : 'elementos a mi agenda'}
                 </span>
               </button>
             </div>
           )}
-        </motion.div>
-      </div>
+        </div>
+
+        {/* BARRA INFERIOR MINIMALISTA: Micrófono + Espacio para escribir */}
+        <div
+          className="w-full max-w-md flex flex-col items-center gap-2.5 relative z-10 shrink-0 pb-1"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {showKeyboardInput && (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                stopListening();
+                if (transcript.trim()) {
+                  void runAnalysis(transcript);
+                }
+              }}
+              className="w-full flex items-center gap-2 px-3.5 py-2 rounded-full bg-[#070f1f]/90 border border-white/15 focus-within:border-cyan-400/60 backdrop-blur-2xl shadow-[0_8px_28px_rgba(0,0,0,0.45)]"
+            >
+              <input
+                ref={inputRef}
+                type="text"
+                value={transcript}
+                onChange={(e) => {
+                  setTranscript(e.target.value);
+                  transcriptRef.current = e.target.value;
+                }}
+                placeholder={`Escríbele a ${kaiName}...`}
+                className="flex-1 bg-transparent text-xs sm:text-sm text-white placeholder-slate-400 outline-none"
+              />
+              <button
+                type="submit"
+                disabled={isAnalyzing || !transcript.trim()}
+                className="w-8 h-8 rounded-full bg-cyan-400 hover:bg-cyan-300 disabled:bg-white/10 disabled:text-slate-500 text-[#020612] flex items-center justify-center transition-all cursor-pointer active:scale-95 shrink-0"
+                aria-label="Enviar a KAI"
+              >
+                <Send className="w-3.5 h-3.5" />
+              </button>
+            </form>
+          )}
+
+          <div className="flex items-center gap-2.5">
+            {speechSupported && (
+              <button
+                type="button"
+                onClick={handleTapKai}
+                disabled={isAnalyzing}
+                className={`h-11 px-5 rounded-full border text-xs font-medium flex items-center gap-2 transition-all cursor-pointer active:scale-95 backdrop-blur-xl ${
+                  isListening
+                    ? 'bg-rose-500/20 border-rose-400/60 text-rose-200'
+                    : 'bg-white/[0.08] hover:bg-white/[0.14] border-white/15 text-white'
+                }`}
+              >
+                {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4 text-cyan-300" />}
+                <span>{isListening ? 'Listo, responder' : 'Hablar'}</span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() => {
+                soundFX.playClick();
+                if (isListening) stopListening();
+                setShowKeyboardInput((prev) => {
+                  const next = !prev;
+                  if (next) setTimeout(() => inputRef.current?.focus(), 60);
+                  return next;
+                });
+              }}
+              className={`h-11 px-4 rounded-full border text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 backdrop-blur-xl ${
+                showKeyboardInput
+                  ? 'bg-cyan-500/15 border-cyan-400/45 text-cyan-200'
+                  : 'bg-white/[0.06] hover:bg-white/[0.12] border-white/12 text-slate-300 hover:text-white'
+              }`}
+              aria-label="Escribir en lugar de hablar"
+            >
+              <Keyboard className="w-4 h-4" />
+              <span>Escribir</span>
+            </button>
+          </div>
+        </div>
+      </motion.div>
     </AnimatePresence>
   );
 

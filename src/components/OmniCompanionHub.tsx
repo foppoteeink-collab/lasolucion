@@ -347,13 +347,13 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
       },
       {
         id: 'voice',
-        label: 'Voz',
-        categoryBadge: 'VOZ',
+        label: 'Háblame',
+        categoryBadge: 'IA',
         type: 'gadget',
         icon: <Icon name="mic" className="w-[18px] h-[18px]" />,
         accentColor: '#e879f9',
         glowColor: 'rgba(232, 121, 249, 0.45)',
-        liveStat: 'Dictar a KAI',
+        liveStat: 'IA, voz y diagnóstico',
         action: () => openVoiceDictation(),
       },
       {
@@ -381,21 +381,6 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
         action: () => setModalState('isPomodoroOpen', true),
       },
       {
-        id: 'oracle',
-        label: 'Oráculo',
-        categoryBadge: 'NEURAL',
-        type: 'gadget',
-        icon: <Icon name="sparkles" className="w-[18px] h-[18px]" />,
-        accentColor: '#eab308',
-        glowColor: 'rgba(234, 179, 8, 0.55)',
-        liveStat: 'Mente & Estrategia',
-        action: () => {
-          if (onOpenOracleWithPrompt) {
-            onOpenOracleWithPrompt();
-          }
-        },
-      },
-      {
         id: 'finance',
         label: 'Finanzas',
         categoryBadge: 'FINANZAS',
@@ -408,19 +393,6 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
           if (onOpenFinance) onOpenFinance();
         },
       },
-      {
-        id: 'neural',
-        label: 'Diagnóstico',
-        categoryBadge: 'NEURAL',
-        type: 'gadget',
-        icon: <Icon name="brain" className="w-[18px] h-[18px]" />,
-        accentColor: '#00f0ff',
-        glowColor: 'rgba(0, 240, 255, 0.55)',
-        liveStat: 'Simulador & IA',
-        action: () => {
-          if (onOpenNeuralAnalysis) onOpenNeuralAnalysis();
-        },
-      },
     ],
     [
       pendingTodayTasks,
@@ -431,11 +403,9 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
       kaiShape,
       setActiveTab,
       setModalState,
-      onOpenOracleWithPrompt,
       openVoiceDictation,
       onOpenFinance,
       onOpenKaiWorkshop,
-      onOpenNeuralAnalysis,
     ]
   );
 
@@ -598,23 +568,20 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
 
                   {/* Micro-acciones ultra discretas */}
                   <div className="flex items-center gap-1 shrink-0 -mr-0.5">
-                    {onOpenOracleWithPrompt && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          soundFX.playClick();
-                          const contextPrompt = `KAI me comentó: "${kaiSpeech}". ¿Qué me recomiendas hacer ahora?`;
-                          clearSpeech();
-                          onOpenOracleWithPrompt(contextPrompt);
-                        }}
-                        className="w-6 h-6 rounded-full bg-white/[0.05] hover:bg-cyan-500/20 text-cyan-300/80 hover:text-cyan-200 flex items-center justify-center transition-colors cursor-pointer"
-                        title="Responder en el Oráculo"
-                        aria-label="Responder en el Oráculo"
-                      >
-                        <Icon name="sparkles" className="w-3 h-3" />
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        soundFX.playClick();
+                        clearSpeech();
+                        openVoiceDictation();
+                      }}
+                      className="w-6 h-6 rounded-full bg-white/[0.05] hover:bg-fuchsia-500/20 text-fuchsia-300/85 hover:text-fuchsia-200 flex items-center justify-center transition-colors cursor-pointer"
+                      title="Responder a KAI (Háblame)"
+                      aria-label="Responder a KAI"
+                    >
+                      <Icon name="mic" className="w-3 h-3" />
+                    </button>
                     <button
                       type="button"
                       onClick={(e) => {

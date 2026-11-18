@@ -6,6 +6,7 @@ import {
   detectVoiceFocusIntent,
   extractTomorrowTasksFromReflection,
   splitMixedVoiceDictation,
+  classifyVoiceIntent,
 } from './speechRecognition';
 import { sanitizeTextForSpeech } from './voice';
 
@@ -138,4 +139,12 @@ test('splitMixedVoiceDictation preserves both expenses and tasks in a single sen
 test('sanitizeTextForSpeech strips emojis and markdown without breaking Spanish words', () => {
   const cleaned = sanitizeTextForSpeech('🔥 ¡Bloque completado! **Gran foco** 🎯 +25 XP ✨');
   assert.equal(cleaned, '¡Bloque completado! Gran foco +25 XP');
+});
+
+test('classifyVoiceIntent routes focus, diagnostic, planner, conversation, and mixed actions cleanly', () => {
+  assert.equal(classifyVoiceIntent('Pon un foco de 30 minutos para leer'), 'focus');
+  assert.equal(classifyVoiceIntent('Hazme un diagnóstico de cómo voy'), 'diagnostic');
+  assert.equal(classifyVoiceIntent('Ármame un horario completo o ver plantillas'), 'planner');
+  assert.equal(classifyVoiceIntent('¿Por qué tarea empiezo hoy?'), 'conversation');
+  assert.equal(classifyVoiceIntent('Gasté 180 en comida y a las 7 entrenar'), 'mixed_actions');
 });
