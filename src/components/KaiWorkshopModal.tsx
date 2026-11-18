@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Sparkles, 
@@ -39,6 +40,7 @@ import { QuantumCubeLoader } from './QuantumCubeLoader';
 import { useNarrativeCopy } from '../hooks/useNarrativeCopy';
 import { speakKaiDialogue } from '../utils/voice';
 import { generateAndShareKaiTradingCard } from '../utils/shareCardGenerator';
+import { useSystemPalette } from '../utils/systemPalette';
 
 export const KAI_TEMPERAMENTS = [
   {
@@ -306,6 +308,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
   }, [customHabits, habitMastery]);
 
   const [activeTab, setActiveTab] = useState<WorkshopTab>('shapes');
+  const systemPalette = useSystemPalette();
 
   // Neural Forge States
   const [capturedImageBase64, setCapturedImageBase64] = useState<string | null>(null);
@@ -359,16 +362,21 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
   const forgeCharges: number = stats.kaiNeuralForgeCharges ?? 9999;
 
   useEffect(() => {
+    if (!isOpen) return;
+    document.body.classList.add('modal-open-hide-floating');
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
+      if (e.key === 'Escape') {
         onClose();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.classList.remove('modal-open-hide-floating');
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen || typeof document === 'undefined') return null;
 
   const handleSelectShape = (shapeId: KaiShapeKey) => {
     soundFX.playItemEquip();
@@ -627,27 +635,35 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
     });
   };
 
-  return (
-    <div className="fixed inset-0 z-[120] bg-black/88 flex items-center justify-center p-3 sm:p-4 animate-fadeIn portal-modal-root">
-      <div className="relative w-full max-w-4xl max-h-[92dvh] sm:max-h-[88vh] bg-[#030712]/[0.98] border border-cyan-500/35 rounded-2xl sm:rounded-3xl shadow-[0_0_50px_rgba(0,240,255,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] flex flex-col overflow-hidden text-white">
+  return createPortal(
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Taller de KAI"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="fixed inset-0 z-[170] bg-black/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-fadeIn portal-modal-root"
+    >
+      <div className="relative isolate w-full max-w-4xl max-h-[92dvh] sm:max-h-[88vh] bg-[#030712]/[0.98] border border-white/10 rounded-2xl sm:rounded-3xl shadow-[0_20px_55px_rgba(0,0,0,0.85),0_0_36px_rgba(var(--aura-glow-rgb,0,240,255),0.16),inset_0_1px_0_rgba(255,255,255,0.12)] flex flex-col overflow-hidden text-white">
         
         {/* Micrograno táctil Moxen Vidrio */}
         <span className="vi-grano opacity-5" aria-hidden="true" />
 
         {/* Filamento especular superior */}
-        <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent pointer-events-none" />
+        <div className="absolute top-0 inset-x-0 h-px aura-top-filament pointer-events-none" />
 
         {/* ─── ENCABEZADO MOXEN OBSIDIAN ─── */}
         <div className="px-4 sm:px-6 py-3.5 border-b border-white/10 flex items-center justify-between bg-[#040814]/[0.96] relative z-10">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-cyan-500/15 border border-cyan-400/40 text-cyan-300 shadow-[0_0_14px_rgba(0,240,255,0.3)]">
+            <div className="w-9 h-9 rounded-xl aura-bg-soft border flex items-center justify-center shrink-0">
               <Sparkles className="w-5 h-5" />
             </div>
             <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
               <h2 className="text-base sm:text-lg font-anton tracking-wider text-white uppercase flex items-center gap-2">
                 Taller de KAI
               </h2>
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono text-cyan-300 bg-cyan-950/70 border border-cyan-500/40 font-normal w-fit">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono aura-bg-soft border font-normal w-fit">
                 Activo: {stats.kaiShape === 'custom' ? (stats.kaiCustomForm?.name || 'Forja IA') : (KAI_OFFICIAL_SHAPES.find(s => s.id === stats.kaiShape)?.name || 'El Prisma')}
               </span>
             </div>
@@ -656,18 +672,19 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 border border-transparent hover:border-white/10 transition-all cursor-pointer active:scale-95"
+            aria-label="Cerrar Taller de KAI"
+            className="w-9 h-9 rounded-xl text-slate-400 hover:text-white bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 transition-all flex items-center justify-center cursor-pointer active:scale-95"
             title="Cerrar (Esc)"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* ─── BARRA DE PESTAÑAS MOXEN SQUIRCLE ─── */}
+        {/* ─── BARRA DE PESTAÑAS UNIFICADA AURA ─── */}
         <div 
           role="tablist" 
           aria-label="Pestañas del Taller de KAI"
-          className="px-4 sm:px-6 py-2.5 bg-black/40 border-b border-white/10 flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-none relative z-10"
+          className="px-4 sm:px-6 py-2.5 bg-black/40 border-b border-white/10 flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar relative z-10"
         >
           <button
             type="button"
@@ -678,7 +695,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
             onClick={() => { soundFX.playClick(); setActiveTab('forge'); }}
             className={`px-3.5 py-2 text-xs font-anton tracking-wider uppercase rounded-xl flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap active:scale-95 ${
               activeTab === 'forge'
-                ? 'bg-fuchsia-500 text-black shadow-[0_0_16px_rgba(217,70,239,0.6)] font-bold'
+                ? 'aura-btn-gradient optic-active-card'
                 : 'text-slate-300 hover:text-white hover:bg-white/5'
             }`}
           >
@@ -695,14 +712,14 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
             onClick={() => { soundFX.playClick(); setActiveTab('vault'); }}
             className={`px-3.5 py-2 text-xs font-anton tracking-wider uppercase rounded-xl flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap active:scale-95 ${
               activeTab === 'vault'
-                ? 'bg-emerald-400 text-black shadow-[0_0_16px_rgba(52,211,153,0.6)] font-bold'
+                ? 'aura-btn-gradient optic-active-card'
                 : 'text-slate-300 hover:text-white hover:bg-white/5'
             }`}
           >
             <Landmark className="w-3.5 h-3.5" />
             <span>Bóveda / Museo</span>
             {((stats.kaiVault?.length || 0) > 0 || stats.kaiCustomForm) && (
-              <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-mono ${activeTab === 'vault' ? 'bg-black/30 text-black font-bold' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'}`}>
+              <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono tabular-nums ${activeTab === 'vault' ? 'bg-black/25 text-[#030712] font-bold optic-inner-badge' : 'bg-white/10 text-slate-200 border border-white/10'}`}>
                 {stats.kaiVault?.length || (stats.kaiCustomForm ? 1 : 0)}
               </span>
             )}
@@ -717,7 +734,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
             onClick={() => { soundFX.playClick(); setActiveTab('shapes'); }}
             className={`px-3.5 py-2 text-xs font-anton tracking-wider uppercase rounded-xl flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap active:scale-95 ${
               activeTab === 'shapes'
-                ? 'bg-cyan-400 text-black shadow-[0_0_16px_rgba(0,240,255,0.6)] font-bold'
+                ? 'aura-btn-gradient optic-active-card'
                 : 'text-slate-300 hover:text-white hover:bg-white/5'
             }`}
           >
@@ -734,7 +751,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
             onClick={() => { soundFX.playClick(); setActiveTab('evolution'); }}
             className={`px-3.5 py-2 text-xs font-anton tracking-wider uppercase rounded-xl flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap active:scale-95 ${
               activeTab === 'evolution'
-                ? 'bg-amber-400 text-black shadow-[0_0_16px_rgba(251,191,36,0.6)] font-bold'
+                ? 'aura-btn-gradient optic-active-card'
                 : 'text-slate-300 hover:text-white hover:bg-white/5'
             }`}
           >
@@ -751,7 +768,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
             onClick={() => { soundFX.playClick(); setActiveTab('armory'); }}
             className={`px-3.5 py-2 text-xs font-anton tracking-wider uppercase rounded-xl flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap active:scale-95 ${
               activeTab === 'armory'
-                ? 'bg-purple-400 text-black shadow-[0_0_16px_rgba(192,132,252,0.6)] font-bold'
+                ? 'aura-btn-gradient optic-active-card'
                 : 'text-slate-300 hover:text-white hover:bg-white/5'
             }`}
           >
@@ -761,7 +778,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
         </div>
 
         {/* ─── CONTENIDO DE PESTAÑAS ─── */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 scrollbar-thin scrollbar-thumb-cyan-800">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 custom-scrollbar">
           
           {/* ═══════════════════════════════════════════════════════════════ */}
           {/* TAB: 🏛️ BÓVEDA / MUSEO DE KAI (RELIQUIAS & GUARDIANES DE HÁBITOS) */}
@@ -791,7 +808,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
             return (
               <div className="space-y-5">
                 {/* Cabecera del Museo */}
-                <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-950/40 via-[#041018] to-emerald-950/40 border border-emerald-500/30 flex items-center justify-between gap-3">
+                <div className="p-4 rounded-2xl bg-[#040a1a]/[0.94] border border-emerald-500/30 flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2.5">
                     <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
                       <Landmark className="w-5 h-5" />
@@ -850,8 +867,8 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                           key={relicId}
                           className={`p-4 rounded-2xl border transition-all flex flex-col justify-between group relative overflow-hidden ${
                             isEquipped
-                              ? 'bg-[#01140e]/90 border-emerald-400/80 shadow-[0_0_25px_rgba(16,185,129,0.25),inset_0_1px_0_rgba(255,255,255,0.1)]'
-                              : 'bg-[#040814]/80 border-white/10 hover:border-emerald-500/30 hover:bg-[#05111b]'
+                              ? 'bg-[#040a1a]/[0.96] border-emerald-400/80 shadow-[0_0_25px_rgba(16,185,129,0.22),inset_0_1px_0_rgba(255,255,255,0.1)] optic-active-card'
+                              : 'bg-[#040814]/80 border-white/10 hover:border-emerald-500/30 hover:bg-white/[0.04]'
                           }`}
                         >
                           <div>
@@ -920,7 +937,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                                     handleLinkHabitToRelic(relicId, selectedId, matched?.title || '');
                                   }}
                                   aria-label={`Hábito vinculado a ${relic.name}`}
-                                  className="w-full bg-[#0a121f] border border-white/10 text-white rounded-xl px-2.5 py-1.5 text-[10px] font-mono focus:border-emerald-400 focus:outline-none cursor-pointer"
+                                  className="w-full bg-[#030712] border border-white/15 text-white rounded-xl px-2.5 py-1.5 text-[10px] font-mono focus:border-emerald-400 focus:outline-none cursor-pointer"
                                 >
                                   <option value="">(Sin vincular a hábito)</option>
                                   {habitList.map((h) => (
@@ -1022,16 +1039,16 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                       onClick={() => handleSelectShape('prism')}
                       className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between group relative overflow-hidden ${
                         isSelected
-                          ? 'bg-cyan-950/40 border-cyan-400/80 shadow-[0_0_25px_rgba(0,240,255,0.22),inset_0_1px_0_rgba(255,255,255,0.1)]'
-                          : 'bg-[#040814]/80 border-white/10 hover:border-cyan-500/40 hover:bg-[#061022]'
+                          ? 'aura-bg-soft aura-border-primary aura-glow-subtle optic-active-card'
+                          : 'bg-[#040814]/80 border-white/10 hover:aura-border-subtle hover:bg-white/[0.04]'
                       }`}
                     >
                       <div className="flex items-center gap-3.5">
-                        <div className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 relative flex items-center justify-center bg-black/70 rounded-2xl border border-white/10 p-1.5 overflow-hidden shadow-inner">
+                        <div className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 relative flex items-center justify-center bg-black/70 rounded-2xl border border-white/10 p-1.5 overflow-hidden shadow-inner" data-preserve-optic="true">
                           <KaiVectorGraphics
                             shapeId="prism"
-                            activeColor={isSelected ? '#00f0ff' : '#94a3b8'}
-                            secondaryColor="#0284c7"
+                            activeColor={isSelected ? systemPalette.c1 : '#94a3b8'}
+                            secondaryColor={systemPalette.c2}
                             glowFilterId="preview-genesis-prism"
                             has21Days={has21Days}
                             has66Days={has66Days}
@@ -1147,13 +1164,13 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
           {activeTab === 'evolution' && (
             <div className="space-y-6">
               {/* Resumen de Ascensión */}
-              <div className="p-5 rounded-3xl bg-gradient-to-r from-amber-950/40 via-[#0a0f24] to-[#030712] border border-amber-500/40 shadow-[0_0_25px_rgba(251,191,36,0.15)] flex flex-col md:flex-row items-center justify-between gap-5">
+              <div className="p-5 rounded-3xl bg-[#040a1a]/[0.94] border border-amber-500/40 shadow-[0_8px_28px_rgba(245,158,11,0.12)] flex flex-col md:flex-row items-center justify-between gap-5">
                 <div className="flex items-center gap-4">
-                  <div className="w-20 h-20 shrink-0 relative flex items-center justify-center bg-black/60 rounded-2xl border border-amber-500/40 p-1">
+                  <div className="w-20 h-20 shrink-0 relative flex items-center justify-center bg-black/60 rounded-2xl border border-amber-500/40 p-1" data-preserve-optic="true">
                     <KaiVectorGraphics
                       shapeId={stats.kaiShape || 'prism'}
-                      activeColor={has66Days ? '#fbbf24' : '#00f0ff'}
-                      secondaryColor="#0284c7"
+                      activeColor={has66Days ? '#fbbf24' : systemPalette.c1}
+                      secondaryColor={systemPalette.c2}
                       glowFilterId="ascension-hero"
                       has21Days={has21Days}
                       has66Days={has66Days}
@@ -1871,7 +1888,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
           {/* ═══════════════════════════════════════════════════════════════ */}
           {activeTab === 'armory' && (
             <div className="space-y-5">
-              <div className="p-4 rounded-2xl bg-[#001020] border border-cyan-500/30 flex items-center justify-between gap-3">
+              <div className="p-4 rounded-2xl bg-[#040814]/80 border aura-border-subtle flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2.5">
                   <Shield className="w-5 h-5 text-cyan-300" />
                   <div>
@@ -1953,10 +1970,10 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
         </div>
 
         {/* ─── PIE DEL MODAL MOXEN THUMB-ZONE ─── */}
-        <div className="p-3.5 sm:p-5 border-t border-white/10 bg-[#030712]/[0.98] flex items-center justify-between gap-3 relative z-10">
+        <div className="p-3.5 sm:p-5 border-t border-white/10 bg-[#040814]/[0.96] flex items-center justify-between gap-3 relative z-10">
           <div className="flex items-center gap-2 text-xs font-mono text-slate-400 min-w-0">
             <span className="shrink-0">KAI Activo:</span>
-            <span className="px-2.5 py-1 rounded-lg bg-cyan-950/60 border border-cyan-500/40 text-cyan-300 font-anton tracking-wider uppercase text-xs truncate">
+            <span className="px-2.5 py-1 rounded-lg aura-bg-soft border font-anton tracking-wider uppercase text-xs truncate">
               {stats.kaiShape === 'custom' ? (stats.kaiCustomForm?.name || copy.workshopCustomFallback) : (KAI_OFFICIAL_SHAPES.find(s => s.id === stats.kaiShape)?.name || 'El Prisma')}
             </span>
             {has66Days && (
@@ -1969,7 +1986,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="chicle-btn px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-white font-anton text-xs uppercase tracking-wider transition-all cursor-pointer active:scale-95 shrink-0"
+            className="chicle-btn px-5 py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.14] border border-white/15 text-white font-anton text-xs uppercase tracking-wider transition-all cursor-pointer shrink-0"
           >
             {copy.backToDashboardCta}
           </button>
@@ -1977,9 +1994,9 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
 
         {/* ─── MODAL DE CONFIRMACIÓN: RETIRAR RELIQUIA DE BÓVEDA ─── */}
         {relicToDelete && (
-          <div className="fixed inset-0 z-[160] flex items-center justify-center p-4 bg-black/86 animate-fadeIn">
-            <div className="w-full max-w-sm p-5 rounded-2xl bg-[#030914] border border-rose-500/60 shadow-[0_0_35px_rgba(244,63,94,0.35)] text-center space-y-4">
-              <div className="w-12 h-12 mx-auto rounded-2xl bg-rose-950/80 border border-rose-500/50 flex items-center justify-center text-rose-400">
+          <div className="fixed inset-0 z-[185] flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-fadeIn">
+            <div className="w-full max-w-sm p-5 rounded-2xl bg-[#030712]/[0.98] border border-rose-500/50 shadow-[0_16px_44px_rgba(0,0,0,0.85)] text-center space-y-4">
+              <div className="w-12 h-12 mx-auto rounded-2xl bg-rose-950/60 border border-rose-500/40 flex items-center justify-center text-rose-400">
                 <Trash2 className="w-6 h-6" />
               </div>
               <div>
@@ -1994,7 +2011,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setRelicToDelete(null)}
-                  className="py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-slate-200 text-xs font-anton tracking-wider uppercase transition cursor-pointer"
+                  className="py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.12] border border-white/15 text-slate-200 text-xs font-anton tracking-wider uppercase transition cursor-pointer"
                 >
                   Cancelar
                 </button>
@@ -2004,7 +2021,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
                     handleDeleteRelic(relicToDelete.id);
                     setRelicToDelete(null);
                   }}
-                  className="py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-anton tracking-wider uppercase font-bold shadow-[0_0_15px_rgba(244,63,94,0.4)] transition cursor-pointer active:scale-95"
+                  className="chicle-btn py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-anton tracking-wider uppercase font-bold transition cursor-pointer"
                 >
                   Retirar KAI
                 </button>
@@ -2014,7 +2031,8 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
         )}
 
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

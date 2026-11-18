@@ -97,7 +97,7 @@ export const SlashText: React.FC<SlashTextProps> = ({
   text,
   isCompleted,
   className = '',
-  slashColor = '#00f0ff',
+  slashColor = 'var(--aura-color-1, #00f0ff)',
 }) => {
   const containerRef = useRef<HTMLSpanElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 20 });
@@ -144,7 +144,7 @@ export const SlashText: React.FC<SlashTextProps> = ({
     return generaTrazoTachadura(effectiveWidth, effectiveHeight, seed);
   }, [effectiveWidth, effectiveHeight, seed]);
 
-  const activeColor = slashColor || '#00f0ff';
+  const activeColor = slashColor || 'var(--aura-color-1, #00f0ff)';
 
   return (
     <span ref={containerRef} className={`relative inline-block max-w-full truncate align-bottom ${className}`}>

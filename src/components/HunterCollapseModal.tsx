@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Skull, Heart, Coins, ShieldAlert, Sparkles, RefreshCw } from 'lucide-react';
 import { usePlayerStore } from '../store/usePlayerStore';
@@ -14,7 +15,15 @@ export const HunterCollapseModal: React.FC = () => {
   const addFloatingEffect = useUIStore((s) => s.addFloatingEffect);
   const copy = useNarrativeCopy();
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (!isOpen) return;
+    document.body.classList.add('modal-open-hide-floating');
+    return () => {
+      document.body.classList.remove('modal-open-hide-floating');
+    };
+  }, [isOpen]);
+
+  if (typeof document === 'undefined') return null;
 
   const currentXp = stats.currentXp || 0;
   const currentCoins = stats.coins || 0;
@@ -36,17 +45,15 @@ export const HunterCollapseModal: React.FC = () => {
     }
   };
 
-  return (
+  return createPortal(
     <AnimatePresence>
+      {isOpen && (
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[160] flex items-center justify-center p-4 sm:p-6 bg-black/92 font-sans"
+        className="fixed inset-0 z-[170] portal-modal-root bg-black/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 font-sans"
       >
-        {/* Ambient Red Glow */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(225,29,72,0.2)_0%,rgba(0,0,0,0.95)_85%)] pointer-events-none" />
-
         <motion.div
           role="dialog"
           aria-modal="true"
@@ -54,16 +61,18 @@ export const HunterCollapseModal: React.FC = () => {
           initial={{ scale: 0.9, y: 25 }}
           animate={{ scale: 1, y: 0 }}
           exit={{ scale: 0.9, opacity: 0 }}
-          className="w-full max-w-sm sm:max-w-md bg-[#08020a] rounded-3xl border-2 border-rose-600/80 shadow-[0_0_50px_rgba(225,29,72,0.4)] overflow-hidden relative text-white"
+          className="relative isolate w-full max-w-sm sm:max-w-md bg-[#030712]/[0.98] rounded-2xl sm:rounded-3xl border border-rose-500/50 shadow-[0_24px_64px_rgba(0,0,0,0.75)] overflow-hidden text-white"
         >
-          {/* Top pulse indicator */}
-          <div className="h-2 w-full bg-gradient-to-r from-rose-600 via-amber-500 to-rose-600 animate-pulse" />
+          {/* Micrograno táctil */}
+          <span className="vi-grano opacity-5" aria-hidden="true" />
 
-          <div className="p-6 sm:p-8 text-center flex flex-col items-center">
+          {/* Filamento superior peligro semántico */}
+          <div className="h-1.5 w-full bg-gradient-to-r from-rose-600 via-amber-500 to-rose-600 animate-pulse" aria-hidden="true" />
+
+          <div className="p-6 sm:p-8 text-center flex flex-col items-center relative z-10">
             {/* Skull & Warning Icon */}
             <div className="w-20 h-20 mb-3 relative flex items-center justify-center">
-              <div className="absolute inset-0 bg-rose-600/30 rounded-full blur-xl animate-pulse" />
-              <div className="w-16 h-16 rounded-2xl bg-rose-950/80 border border-rose-500/60 flex items-center justify-center shadow-[0_0_20px_rgba(225,29,72,0.6)]">
+              <div className="w-16 h-16 rounded-2xl bg-rose-950/70 border border-rose-500/60 flex items-center justify-center shadow-[0_0_20px_rgba(225,29,72,0.45)]">
                 <Skull className="w-9 h-9 text-rose-400 animate-bounce" />
               </div>
             </div>
@@ -72,7 +81,7 @@ export const HunterCollapseModal: React.FC = () => {
               {copy.collapseBadge}
             </span>
 
-            <h2 id="hunter-collapse-title" className="text-xl sm:text-2xl font-anton uppercase tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-white via-rose-200 to-rose-400 mb-2">
+            <h2 id="hunter-collapse-title" className="text-xl sm:text-2xl font-anton uppercase tracking-wider text-rose-200 mb-2">
               {copy.collapseTitle}
             </h2>
 
@@ -87,13 +96,13 @@ export const HunterCollapseModal: React.FC = () => {
                 type="button"
                 onClick={() => handleRevive('xp')}
                 aria-label={`${copy.collapsePenaltyLabel} pagando ${xpPenalty} XP para restaurar HP al 50%`}
-                className="w-full p-4 rounded-2xl bg-[#140510] hover:bg-[#200918] border border-rose-500/40 hover:border-rose-400 text-left transition-all cursor-pointer group shadow-inner"
+                className="chicle-btn !flex !flex-col !items-stretch w-full p-4 rounded-2xl bg-[#040814]/80 hover:bg-rose-950/40 border border-rose-500/40 hover:border-rose-400 text-left cursor-pointer group"
               >
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs font-anton tracking-wider text-rose-300 uppercase flex items-center gap-1.5">
                     <Sparkles className="w-4 h-4 text-amber-400" /> {copy.collapsePenaltyLabel}
                   </span>
-                  <span className="text-xs font-mono font-bold text-rose-400">
+                  <span className="text-xs font-mono tabular-nums font-bold text-rose-400">
                     -{xpPenalty} XP
                   </span>
                 </div>
@@ -108,17 +117,17 @@ export const HunterCollapseModal: React.FC = () => {
                 disabled={!canAffordCoins}
                 onClick={() => handleRevive('coins')}
                 aria-label={canAffordCoins ? `${copy.collapseRecoveryLabel} con 30 monedas para restaurar HP al 50%` : 'Monedas insuficientes para recuperación'}
-                className={`w-full p-4 rounded-2xl border text-left transition-all ${
+                className={`chicle-btn !flex !flex-col !items-stretch w-full p-4 rounded-2xl border text-left transition-all ${
                   canAffordCoins
-                    ? 'bg-[#001018] hover:bg-[#001c2a] border-amber-500/50 hover:border-amber-400 cursor-pointer'
-                    : 'bg-black/40 border-slate-800 opacity-50 cursor-not-allowed'
+                    ? 'bg-[#040814]/80 hover:bg-amber-950/30 border-amber-500/50 hover:border-amber-400 cursor-pointer'
+                    : 'bg-black/40 border-white/10 opacity-50 cursor-not-allowed'
                 }`}
               >
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs font-anton tracking-wider text-amber-300 uppercase flex items-center gap-1.5">
-                    <Coins className="w-4 h-4 text-yellow-400" /> {copy.collapseRecoveryLabel}
+                    <Coins className="w-4 h-4 text-amber-400" /> {copy.collapseRecoveryLabel}
                   </span>
-                  <span className="text-xs font-mono font-bold text-yellow-400">
+                  <span className="text-xs font-mono tabular-nums font-bold text-amber-300">
                     -30 Monedas
                   </span>
                 </div>
@@ -130,12 +139,14 @@ export const HunterCollapseModal: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-2 text-[10px] text-slate-400 font-mono">
-              <RefreshCw className="w-3.5 h-3.5 text-cyan-400" />
+              <RefreshCw className="w-3.5 h-3.5 aura-text-primary" />
               <span>Ambas opciones restablecen tu salud al 50% de HP vital.</span>
             </div>
           </div>
         </motion.div>
       </motion.div>
-    </AnimatePresence>
+      )}
+    </AnimatePresence>,
+    document.body
   );
 };

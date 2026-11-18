@@ -1,6 +1,15 @@
 import React, { useEffect, useRef, useMemo } from 'react';
+import { useUIStore, deriveSystemAuraPalette } from '../store/useUIStore';
 
-export type ChicleColor = 'cyan' | 'purple' | 'emerald' | 'amber' | 'indigo' | 'red';
+function parseHexToRgbTuple(hex: string): [number, number, number] {
+  let c = (hex || '').replace('#', '').trim();
+  if (c.length === 3) c = c.split('').map(x => x + x).join('');
+  const num = parseInt(c, 16);
+  if (isNaN(num)) return [0, 240, 255];
+  return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
+}
+
+export type ChicleColor = 'aura' | 'cyan' | 'purple' | 'emerald' | 'amber' | 'indigo' | 'red';
 export type ChicleSize = 'sm' | 'md' | 'lg';
 
 export interface ChicleToggleProps {
@@ -29,7 +38,7 @@ interface ChicleTheme {
   shineOn: number;
 }
 
-const THEMES: Record<ChicleColor, ChicleTheme> = {
+const THEMES: Record<Exclude<ChicleColor, 'aura'>, ChicleTheme> = {
   cyan: {
     trackOff: '#0a1018',
     borderOff: 'rgba(0, 240, 255, 0.25)',
@@ -145,7 +154,54 @@ export const ChicleToggle: React.FC<ChicleToggleProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rellenoRef = useRef<HTMLSpanElement>(null);
-  const theme = useMemo(() => THEMES[color] || THEMES.cyan, [color]);
+  const systemAura = useUIStore((s) => s.systemAura);
+  const opticMode = useUIStore((s) => s.opticMode);
+  const theme = useMemo<ChicleTheme>(() => {
+    if (color === 'aura' || color === 'cyan') {
+      if (opticMode === 'noir') {
+        return {
+          ...THEMES.cyan,
+          borderOff: 'rgba(255, 255, 255, 0.25)',
+          trackOn: '#1e293b',
+          borderOn: 'rgba(255, 255, 255, 0.7)',
+          glowOn: '0 0 10px rgba(255, 255, 255, 0.25)',
+          knobOn: [248, 250, 252],
+          knobOnShade: [148, 163, 184],
+        };
+      }
+      if (opticMode === 'eink') {
+        return {
+          ...THEMES.cyan,
+          borderOff: 'rgba(255, 255, 255, 0.5)',
+          trackOn: '#ffffff',
+          borderOn: '#ffffff',
+          glowOn: '',
+          knobOn: [15, 23, 42],
+          knobOnShade: [0, 0, 0],
+        };
+      }
+      if (systemAura?.colors && systemAura.colors.length >= 2) {
+        const { uiAccent1, uiAccent2 } = deriveSystemAuraPalette(systemAura.colors);
+        const [r, g, b] = parseHexToRgbTuple(uiAccent1);
+        const [r2, g2, b2] = parseHexToRgbTuple(uiAccent2);
+        return {
+          trackOff: '#040a1a',
+          borderOff: `rgba(${r}, ${g}, ${b}, 0.25)`,
+          knobOff: [190, 205, 220],
+          knobOffShade: [95, 115, 135],
+          shineOff: 0.85,
+          trackOn: `rgba(${Math.round(r * 0.22)}, ${Math.round(g * 0.22)}, ${Math.round(b * 0.22)}, 0.95)`,
+          borderOn: `rgba(${r}, ${g}, ${b}, 0.72)`,
+          glowOn: `0 0 12px rgba(${r}, ${g}, ${b}, 0.4)`,
+          knobOn: [r, g, b],
+          knobOnShade: [Math.round(r2 * 0.7), Math.round(g2 * 0.7), Math.round(b2 * 0.7)],
+          shineOn: 0.95,
+        };
+      }
+      return THEMES.cyan;
+    }
+    return THEMES[color] || THEMES.cyan;
+  }, [color, systemAura, opticMode]);
   const dimensions = useMemo(() => SIZES[size] || SIZES.md, [size]);
 
   const { w: W, h: H } = dimensions;
@@ -514,7 +570,7 @@ export const ChicleToggle: React.FC<ChicleToggleProps> = ({
       onPointerCancel={suelta}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
-      className={`relative inline-block flex-shrink-0 rounded-full transition-shadow duration-300 select-none ${
+      className={`chicle-toggle-root relative inline-block flex-shrink-0 rounded-full transition-shadow duration-300 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#030712] ${
         disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-grab active:cursor-grabbing'
       } ${className}`}
       style={{
@@ -525,7 +581,6 @@ export const ChicleToggle: React.FC<ChicleToggleProps> = ({
           checked ? theme.borderOn : theme.borderOff
         }${checked && theme.glowOn ? `, ${theme.glowOn}` : ''}`,
         touchAction: 'none',
-        outline: 'none',
         WebkitTapHighlightColor: 'transparent',
       }}
     >

@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, lazy, Suspense } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { soundFX } from '../utils/audio';
 import * as gameEngine from '../engine/gameEngine';
@@ -26,7 +27,6 @@ const SettingsView = lazy(() => import('./SettingsView').then(m => ({ default: m
 const DayTemplatesModal = lazy(() => import('./DayTemplatesModal').then(m => ({ default: m.DayTemplatesModal })));
 const OracleModal = lazy(() => import('./OracleModal').then(m => ({ default: m.OracleModal })));
 const NeuralAnalysisModal = lazy(() => import('./NeuralAnalysisModal').then(m => ({ default: m.NeuralAnalysisModal })));
-const HunterAwakeningModal = lazy(() => import('./HunterAwakeningModal').then(m => ({ default: m.HunterAwakeningModal })));
 const KaiWelcomeOnboarding = lazy(() => import('./common/KaiWelcomeOnboarding').then(m => ({ default: m.KaiWelcomeOnboarding })));
 const DailyRewardsModal = lazy(() => import('./DailyRewardsModal').then(m => ({ default: m.DailyRewardsModal })));
 const LevelUpModal = lazy(() => import('./LevelUpModal').then(m => ({ default: m.LevelUpModal })));
@@ -49,7 +49,6 @@ import { ShockwaveOverlay } from './ShockwaveOverlay';
 import { DailyProgressWidget } from './DailyProgressWidget';
 import { BetaConsentModal } from './BetaConsentModal';
 import { DayRhythmModal } from './task-list/DayRhythmModal';
-import { DailyFinanceWidget } from './DailyFinanceWidget';
 import { calculateDayFinanceTotals } from '../utils/finance';
 import { useNarrativeCopy } from '../hooks/useNarrativeCopy';
 import { ScrollReveal } from './common/ScrollReveal';
@@ -374,6 +373,23 @@ export function AppLayout() {
       return () => clearTimeout(t);
     }
   }, [floatingRewards]);
+
+  // Cerrar Pomodoro con Escape y ocultar flotantes mientras está abierto
+  React.useEffect(() => {
+    if (!isPomodoroOpen) return;
+    document.body.classList.add('modal-open-hide-floating');
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        soundFX.playClick();
+        setModalState('isPomodoroOpen', false);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.body.classList.remove('modal-open-hide-floating');
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [isPomodoroOpen, setModalState]);
 
   // Midnight / 3AM Date Sync Listener (Stale Date Fix)
   React.useEffect(() => {
@@ -829,41 +845,55 @@ export function AppLayout() {
         </Suspense>
       )}
 
-      {/* Cyberpunk Floating Pomodoro Pop-up Modal */}
-      <AnimatePresence>
-        {isPomodoroOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 overflow-y-auto"
-            onClick={(e) => {
-              if (e.target === e.currentTarget) {
-                soundFX.playClick();
-                setModalState('isPomodoroOpen', false);
-              }
-            }}
-          >
-            <motion.div
-              initial={{ scale: 0.92, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.92, opacity: 0, y: 20 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-              className="w-full max-w-lg my-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <Suspense fallback={null}>
-                <PomodoroTimer 
-                  onSessionComplete={handlePomodoroComplete} 
-                  initialTaskTitle={pomodoroPreFill.title}
-                  initialCategory={pomodoroPreFill.category}
-                  onClose={() => setModalState('isPomodoroOpen', false)}
-                />
-              </Suspense>
-            </motion.div>
-          </motion.div>
+      {/* Guía Interactiva Spotlight de KAI */}
+      {isTacticalGuideOpen && (
+        <Suspense fallback={null}>
+          <KaiInteractiveSpotlightTour />
+        </Suspense>
+      )}
+
+      {/* Cyberpunk Floating Pomodoro Pop-up Modal (Portaled above KAI & synced with Optic Modes) */}
+      {typeof document !== 'undefined' &&
+        createPortal(
+          <AnimatePresence>
+            {isPomodoroOpen && (
+              <motion.div
+                role="dialog"
+                aria-modal="true"
+                aria-label="Modo Foco Pomodoro"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-[170] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-sm overflow-y-auto portal-modal-root"
+                onClick={(e) => {
+                  if (e.target === e.currentTarget) {
+                    soundFX.playClick();
+                    setModalState('isPomodoroOpen', false);
+                  }
+                }}
+              >
+                <motion.div
+                  initial={{ scale: 0.94, opacity: 0, y: 16 }}
+                  animate={{ scale: 1, opacity: 1, y: 0 }}
+                  exit={{ scale: 0.94, opacity: 0, y: 16 }}
+                  transition={{ type: 'spring', damping: 26, stiffness: 360 }}
+                  className="w-full max-w-lg my-auto"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Suspense fallback={null}>
+                    <PomodoroTimer
+                      onSessionComplete={handlePomodoroComplete}
+                      initialTaskTitle={pomodoroPreFill.title}
+                      initialCategory={pomodoroPreFill.category}
+                      onClose={() => setModalState('isPomodoroOpen', false)}
+                    />
+                  </Suspense>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>,
+          document.body
         )}
-      </AnimatePresence>
 
           {/* TALLER CUÁNTICO DE KAI (Adaptable a Modos Ópticos Noir, Cobalto y Aurora) */}
           {isKaiWorkshopOpen && (

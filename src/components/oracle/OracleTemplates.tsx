@@ -62,7 +62,7 @@ export const OracleTemplates: React.FC<OracleTemplatesProps> = ({ onSelectTempla
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <span className="text-xs font-mono font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
-          <Zap className="w-3.5 h-3.5 text-cyan-400" />
+          <Zap className="w-3.5 h-3.5 aura-text-primary" />
           Horarios listos para usar
         </span>
         <span className="text-[11px] text-slate-400 font-sans">Elige una base y luego la editas</span>
@@ -86,15 +86,15 @@ export const OracleTemplates: React.FC<OracleTemplatesProps> = ({ onSelectTempla
                 onSelectTemplate(tpl.prompt, tpl.title);
               }
             }}
-            className="p-3 bg-[#07111c] hover:bg-cyan-950/40 focus:bg-cyan-950/40 border border-slate-800 hover:border-cyan-500/50 focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400/50 rounded-xl transition-all cursor-pointer group flex flex-col justify-between gap-2 shadow-sm active:scale-[0.98]"
+            className="chicle-btn !flex !flex-col !items-stretch !justify-between p-3.5 bg-[#040814]/80 hover:bg-white/[0.06] focus:bg-white/[0.06] border border-white/10 hover:aura-border-subtle focus:aura-border-primary focus:outline-none rounded-2xl transition-all cursor-pointer group gap-2 text-left"
           >
             <div>
               <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 font-mono font-bold text-xs text-slate-200 group-hover:text-cyan-300 transition-colors">
+                <div className="flex items-center gap-2 font-mono font-bold text-xs text-white group-hover:aura-text-soft transition-colors">
                   {tpl.icon}
                   <span>{tpl.title}</span>
                 </div>
-                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-black/60 border border-slate-800 text-slate-400 uppercase font-semibold">
+                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-md bg-black/50 border border-white/10 text-slate-300 uppercase font-semibold shrink-0">
                   {tpl.tag}
                 </span>
               </div>
@@ -103,7 +103,7 @@ export const OracleTemplates: React.FC<OracleTemplatesProps> = ({ onSelectTempla
               </p>
             </div>
             
-            <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[11px] font-mono text-cyan-400">
+            <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[11px] font-mono aura-text-primary font-bold">
               <span>Usar esta plantilla →</span>
             </div>
           </div>

@@ -5,7 +5,7 @@ import {
   Palette, CheckCircle2, Zap, Waves, Flame, Eye, EyeOff, X
 } from 'lucide-react';
 import { soundFX } from '../../utils/audio';
-import { deriveSystemAuraPalette } from '../../store/useUIStore';
+import { deriveSystemAuraPalette, hexToRgb } from '../../store/useUIStore';
 
 export interface MoxenMallaPreset {
   id: string;
@@ -347,6 +347,16 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
   const liveAuraPalette = useMemo(() => {
     return deriveSystemAuraPalette(pointColors.slice(0, pointCount));
   }, [pointColors, pointCount]);
+
+  const liveAuraGlowRgb = useMemo(() => hexToRgb(liveAuraPalette.uiAccent1), [liveAuraPalette.uiAccent1]);
+
+  const liveAuraCtaStyle = useMemo(
+    () => ({
+      '--aura-gradient': `linear-gradient(135deg, ${liveAuraPalette.uiAccent1} 0%, ${liveAuraPalette.uiAccent2} 100%)`,
+      '--aura-glow-rgb': liveAuraGlowRgb,
+    }) as React.CSSProperties,
+    [liveAuraPalette.uiAccent1, liveAuraPalette.uiAccent2, liveAuraGlowRgb]
+  );
 
   const currPreset = MOXEN_MALLA_PRESETS.find(p => p.id === activePreset) || MOXEN_MALLA_PRESETS[0];
 
@@ -1240,7 +1250,7 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
         </div>
 
         {/* Preset Pills: Fila dedicada horizontal con scroll suave y todos los 6 estilos */}
-        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-1 -mx-1 px-1">
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 -mx-1 px-1">
           {MOXEN_MALLA_PRESETS.map(p => {
             const isSelected = activePreset === p.id;
             return (
@@ -1250,9 +1260,18 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
                 onClick={() => handleSelectPreset(p.id)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-mono font-medium transition-all flex items-center gap-2 shrink-0 border cursor-pointer ${
                   isSelected
-                    ? 'bg-white/15 text-white border-white/40 shadow-[0_0_12px_rgba(255,255,255,0.15)] font-bold ring-1 ring-white/30'
-                    : 'bg-black/30 border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/[0.05]'
+                    ? 'optic-active-card text-white font-bold ring-1 ring-white/25'
+                    : 'bg-[#040814]/80 border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/[0.05]'
                 }`}
+                style={
+                  isSelected
+                    ? {
+                        background: `color-mix(in srgb, ${liveAuraPalette.uiAccent1} 18%, rgba(4, 10, 26, 0.94))`,
+                        borderColor: `color-mix(in srgb, ${liveAuraPalette.uiAccent1} 65%, transparent)`,
+                        boxShadow: `0 0 14px rgba(${liveAuraGlowRgb}, 0.25)`,
+                      }
+                    : undefined
+                }
                 title={p.desc}
               >
                 <span 
@@ -1288,7 +1307,7 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
         }}
       >
         {/* Canvas WebGL */}
-        <canvas ref={canvasRef} className="ml-lienzo" aria-hidden="true" />
+        <canvas ref={canvasRef} className="ml-lienzo" data-preserve-optic="true" aria-hidden="true" />
 
         {/* Capa de interacción y puntos flotantes */}
         <div ref={capaRef} className="ml-capa">
@@ -1321,19 +1340,28 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
               }}
               className={`chicle-btn absolute top-3 left-3 z-40 px-2.5 py-1.5 rounded-lg border transition-all cursor-pointer flex items-center gap-1.5 text-[11px] font-mono shadow-sm ${
                 showSimulatedUI
-                  ? 'bg-cyan-500/25 border-cyan-400 text-cyan-200 shadow-[0_0_12px_rgba(0,240,255,0.3)] font-bold'
+                  ? 'optic-active-card text-white font-bold'
                   : 'border-white/15 bg-black/75 hover:bg-black/90 text-white/80 hover:text-white'
               }`}
+              style={
+                showSimulatedUI
+                  ? {
+                      backgroundColor: `color-mix(in srgb, ${liveAuraPalette.uiAccent1} 22%, rgba(4, 10, 26, 0.92))`,
+                      borderColor: liveAuraPalette.uiAccent1,
+                      boxShadow: `0 0 12px rgba(${liveAuraGlowRgb}, 0.35)`,
+                    }
+                  : undefined
+              }
               title="Comprobar cómo se leen los textos y números sobre este fondo"
             >
               {showSimulatedUI ? (
                 <>
-                  <EyeOff className="w-3.5 h-3.5 text-cyan-300" />
+                  <EyeOff className="w-3.5 h-3.5" style={{ color: liveAuraPalette.uiAccent1 }} />
                   <span className="font-medium">Ocultar UI</span>
                 </>
               ) : (
                 <>
-                  <Eye className="w-3.5 h-3.5 text-cyan-400" />
+                  <Eye className="w-3.5 h-3.5" style={{ color: liveAuraPalette.uiAccent1 }} />
                   <span className="font-medium">Simular UI</span>
                 </>
               )}
@@ -1346,7 +1374,7 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
               className="chicle-btn absolute top-3 right-3 z-40 px-2.5 py-1.5 rounded-lg border border-white/15 bg-black/75 hover:bg-black/90 text-white/80 hover:text-white transition-all cursor-pointer flex items-center gap-1.5 text-[11px] font-mono shadow-sm"
               title="Expandir a pantalla completa"
             >
-              <Maximize2 className="w-3.5 h-3.5 text-cyan-400" />
+              <Maximize2 className="w-3.5 h-3.5" style={{ color: liveAuraPalette.uiAccent1 }} />
               <span className="hidden sm:inline font-medium">Pantalla Completa</span>
             </button>
           </>
@@ -1355,11 +1383,17 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
         {/* SIMULACIÓN DE INTERFAZ & EVALUACIÓN DE CONTRASTE (UBICADA A UN LADITO, SIN TAPAR EL CENTRO) */}
         {showSimulatedUI && (
           <div className="absolute top-11 right-2 sm:right-3 z-30 pointer-events-auto animate-fade-in max-w-[calc(100%-1rem)]">
-            <div className="w-[180px] sm:w-[220px] rounded-xl bg-[#030a18]/[0.95] p-2.5 sm:p-3 border border-white/20 shadow-[0_12px_30px_rgba(0,0,0,0.7)] space-y-2 transition-all">
+            <div className="relative isolate overflow-hidden w-[180px] sm:w-[220px] rounded-xl bg-[#040a1a]/[0.94] p-2.5 sm:p-3 border border-white/10 shadow-[0_12px_30px_rgba(0,0,0,0.7)] space-y-2 transition-all">
+              <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
+
               {/* Cabecera del HUD de prueba con botón cerrar rápido */}
-              <div className="flex items-center justify-between pb-1 border-b border-white/10">
-                <div className="flex items-center gap-1.5 text-cyan-400 text-[10px] font-mono font-bold uppercase tracking-wider">
-                  <Eye className="w-3 h-3 text-cyan-400" />
+              <div className="flex items-center justify-between pb-1 border-b border-white/10 relative z-10">
+                <div
+                  className="flex items-center gap-1.5 text-[10px] font-mono font-bold uppercase tracking-wider"
+                  style={{ color: liveAuraPalette.uiAccent1 }}
+                >
+                  <Eye className="w-3 h-3" style={{ color: liveAuraPalette.uiAccent1 }} />
                   <span>Muestra UI</span>
                 </div>
                 <button
@@ -1373,13 +1407,13 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
               </div>
 
               {/* Mini tarea de muestra representativa */}
-              <div className="space-y-0.5">
+              <div className="space-y-0.5 relative z-10">
                 <div className="flex items-center justify-between gap-1">
                   <span className="text-[11px] font-anton tracking-wide uppercase text-white truncate block">
                     Rutina Diaria
                   </span>
                   <span 
-                    className="text-[9px] font-mono font-bold px-1 py-0.2 rounded border shrink-0 transition-colors"
+                    className="text-[9px] font-mono tabular-nums font-bold px-1.5 py-0.5 rounded border shrink-0 transition-colors"
                     style={{
                       color: liveAuraPalette.uiAccent1,
                       borderColor: `color-mix(in srgb, ${liveAuraPalette.uiAccent1} 50%, transparent)`,
@@ -1395,8 +1429,8 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
               </div>
 
               {/* Barra de progreso y telemetría numérica */}
-              <div className="space-y-1">
-                <div className="flex items-center justify-between text-[10px] font-mono">
+              <div className="space-y-1 relative z-10">
+                <div className="flex items-center justify-between text-[10px] font-mono tabular-nums">
                   <span className="text-slate-300">Progreso</span>
                   <span className="font-bold" style={{ color: liveAuraPalette.uiAccent1 }}>75%</span>
                 </div>
@@ -1412,7 +1446,7 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
               </div>
 
               {/* Semáforo de Evaluación de Contraste Compacto */}
-              <div className={`p-1.5 rounded-lg border flex items-center gap-1.5 text-[9px] font-mono ${contrastAnalysis.badgeBg}`}>
+              <div className={`p-1.5 rounded-lg border flex items-center gap-1.5 text-[9px] font-mono relative z-10 ${contrastAnalysis.badgeBg}`}>
                 <span className={`w-1.5 h-1.5 rounded-full shrink-0 animate-pulse ${contrastAnalysis.dotBg}`} />
                 <div className="flex-1 min-w-0">
                   <span className="font-bold uppercase tracking-wider block truncate">
@@ -1434,12 +1468,27 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
             style={{ paddingTop: 'max(14px, env(safe-area-inset-top, 14px))' }}
           >
             {/* Badge de Estado Aurora Boreal */}
-            <div className="flex items-center gap-2 bg-[#000d1c]/[0.96] px-3 sm:px-4 py-2 rounded-full border border-cyan-500/40 shadow-[0_0_20px_rgba(0,240,255,0.25)]">
-              <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_10px_#00f0ff]" />
+            <div
+              className="flex items-center gap-2 bg-[#040a1a]/[0.94] px-3 sm:px-4 py-2 rounded-full border border-white/10"
+              style={{
+                borderColor: `color-mix(in srgb, ${liveAuraPalette.uiAccent1} 40%, transparent)`,
+                boxShadow: `0 0 20px rgba(${liveAuraGlowRgb}, 0.25)`,
+              }}
+            >
+              <span
+                className="w-2.5 h-2.5 rounded-full animate-pulse"
+                style={{
+                  backgroundColor: liveAuraPalette.uiAccent1,
+                  boxShadow: `0 0 10px ${liveAuraPalette.uiAccent1}`,
+                }}
+              />
               <span className="text-[11px] sm:text-xs font-mono font-black text-white tracking-wider uppercase">
                 {currPreset?.name || 'Malla Aurora'}
               </span>
-              <span className="text-[10px] font-mono font-bold text-cyan-300 border-l border-slate-700 pl-2">
+              <span
+                className="text-[10px] font-mono tabular-nums font-bold border-l border-white/15 pl-2"
+                style={{ color: liveAuraPalette.uiAccent1 }}
+              >
                 {pointCount} Tonos
               </span>
             </div>
@@ -1454,14 +1503,27 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
                   soundFX.playClick();
                   setShowSimulatedUI(!showSimulatedUI);
                 }}
-                className={`chicle-btn px-3 py-2 rounded-xl flex items-center gap-1.5 text-xs font-mono font-bold shadow-lg cursor-pointer border ${
+                className={`chicle-btn px-3 py-2 rounded-xl flex items-center gap-1.5 text-xs font-mono font-bold shadow-lg cursor-pointer border transition-all ${
                   showSimulatedUI
-                    ? 'bg-cyan-500/30 border-cyan-400 text-cyan-200 shadow-[0_0_12px_rgba(0,240,255,0.3)]'
-                    : 'bg-black/80 hover:bg-black/95 border-cyan-500/50 text-cyan-300 hover:text-white'
+                    ? 'optic-active-card text-white'
+                    : 'bg-[#040a1a]/[0.94] hover:bg-black/95 border-white/15 text-slate-200 hover:text-white'
                 }`}
+                style={
+                  showSimulatedUI
+                    ? {
+                        backgroundColor: `color-mix(in srgb, ${liveAuraPalette.uiAccent1} 25%, rgba(4, 10, 26, 0.94))`,
+                        borderColor: liveAuraPalette.uiAccent1,
+                        boxShadow: `0 0 14px rgba(${liveAuraGlowRgb}, 0.35)`,
+                      }
+                    : { borderColor: `color-mix(in srgb, ${liveAuraPalette.uiAccent1} 35%, transparent)` }
+                }
                 title="Comprobar cómo se leen los textos sobre este fondo"
               >
-                {showSimulatedUI ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                {showSimulatedUI ? (
+                  <EyeOff className="w-3.5 h-3.5" style={{ color: liveAuraPalette.uiAccent1 }} />
+                ) : (
+                  <Eye className="w-3.5 h-3.5" style={{ color: liveAuraPalette.uiAccent1 }} />
+                )}
                 <span className="hidden sm:inline">{showSimulatedUI ? 'Ocultar UI' : 'Simular UI'}</span>
               </button>
 
@@ -1473,10 +1535,19 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
                   soundFX.playClick();
                   setShowFsControls(!showFsControls);
                 }}
-                className="chicle-btn px-3 py-2 rounded-xl bg-black/90 hover:bg-black border border-cyan-500/50 text-cyan-300 hover:text-white flex items-center gap-1.5 text-xs font-mono font-bold shadow-lg cursor-pointer"
+                className={`chicle-btn px-3 py-2 rounded-xl bg-[#040a1a]/[0.94] hover:bg-black border border-white/15 text-slate-200 hover:text-white flex items-center gap-1.5 text-xs font-mono font-bold shadow-lg cursor-pointer transition-all ${
+                  showFsControls ? 'optic-active-card' : ''
+                }`}
+                style={{
+                  borderColor: `color-mix(in srgb, ${liveAuraPalette.uiAccent1} 40%, transparent)`,
+                }}
                 title={showFsControls ? 'Ocultar panel para vista limpia' : 'Mostrar panel de controles'}
               >
-                {showFsControls ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                {showFsControls ? (
+                  <EyeOff className="w-3.5 h-3.5" style={{ color: liveAuraPalette.uiAccent1 }} />
+                ) : (
+                  <Eye className="w-3.5 h-3.5" style={{ color: liveAuraPalette.uiAccent1 }} />
+                )}
                 <span className="hidden sm:inline">{showFsControls ? 'Ocultar Panel' : 'Panel de Control'}</span>
               </button>
 
@@ -1503,12 +1574,19 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
             style={{ paddingBottom: 'max(14px, env(safe-area-inset-bottom, 14px))' }}
           >
             <div
-              className="pointer-events-auto w-full max-w-3xl bg-[#00152b]/[0.97] border border-cyan-500/50 rounded-2xl p-3 sm:p-4 shadow-[0_20px_50px_rgba(0,0,0,0.9),0_0_30px_rgba(0,240,255,0.25)] space-y-3 max-h-[60vh] overflow-y-auto scrollbar-thin scrollbar-thumb-cyan-500/40"
+              className="pointer-events-auto relative isolate w-full max-w-3xl bg-[#040a1a]/[0.94] border border-white/10 rounded-2xl p-3 sm:p-4 shadow-[0_20px_50px_rgba(0,0,0,0.9)] space-y-3 max-h-[60vh] overflow-y-auto custom-scrollbar"
+              style={{
+                borderColor: `color-mix(in srgb, ${liveAuraPalette.uiAccent1} 35%, transparent)`,
+                boxShadow: `0 20px 50px rgba(0,0,0,0.9), 0 0 28px rgba(${liveAuraGlowRgb}, 0.2)`,
+              }}
             >
+              <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
+
               {/* FILA 1: PRESETS RÁPIDOS + SELECTOR DE NODOS (2, 3 o 4) + VELOCIDAD */}
-              <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-800/80">
+              <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-white/10 relative z-10">
                 {/* Presets en Pills scrollables */}
-                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none max-w-full">
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar max-w-full">
                   {MOXEN_MALLA_PRESETS.map(p => {
                     const isSelected = activePreset === p.id;
                     return (
@@ -1520,9 +1598,18 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
                         onClick={() => handleSelectPreset(p.id)}
                         className={`chicle-btn px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold tracking-wider flex items-center gap-1.5 shrink-0 border cursor-pointer transition-all ${
                           isSelected
-                            ? 'bg-cyan-500 text-black border-cyan-300 shadow-[0_0_12px_rgba(0,240,255,0.6)] font-black'
-                            : 'bg-[#000d1c] border-slate-800 text-slate-300 hover:text-white'
+                            ? 'optic-active-card text-[#030712] font-black'
+                            : 'bg-[#040814]/80 border-white/10 text-slate-300 hover:text-white'
                         }`}
+                        style={
+                          isSelected
+                            ? {
+                                background: `linear-gradient(135deg, ${liveAuraPalette.uiAccent1}, ${liveAuraPalette.uiAccent2})`,
+                                borderColor: liveAuraPalette.uiAccent1,
+                                boxShadow: `0 0 12px rgba(${liveAuraGlowRgb}, 0.5)`,
+                              }
+                            : undefined
+                        }
                       >
                         <span 
                           className="w-2 h-2 rounded-full shrink-0 border border-black/40"
@@ -1536,23 +1623,34 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
 
                 {/* Nodos (2, 3 o 4) y Velocidad */}
                 <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1 bg-[#000d1c] p-0.5 rounded-lg border border-slate-800">
-                    {([2, 3, 4] as const).map(num => (
-                      <button
-                        key={num}
-                        type="button"
-                        data-action="point-count"
-                        data-count={num}
-                        onClick={() => handleChangePointCount(num)}
-                        className={`px-2 py-0.5 rounded text-[11px] font-mono font-black transition-all cursor-pointer ${
-                          pointCount === num
-                            ? 'bg-cyan-500 text-black shadow-[0_0_10px_rgba(0,240,255,0.5)]'
-                            : 'text-slate-400 hover:text-white'
-                        }`}
-                      >
-                        {num}
-                      </button>
-                    ))}
+                  <div className="flex items-center gap-1 bg-[#040814]/80 p-0.5 rounded-lg border border-white/10">
+                    {([2, 3, 4] as const).map(num => {
+                      const isActiveCount = pointCount === num;
+                      return (
+                        <button
+                          key={num}
+                          type="button"
+                          data-action="point-count"
+                          data-count={num}
+                          onClick={() => handleChangePointCount(num)}
+                          className={`px-2 py-0.5 rounded text-[11px] font-mono tabular-nums font-black transition-all cursor-pointer ${
+                            isActiveCount
+                              ? 'optic-active-card text-[#030712]'
+                              : 'text-slate-400 hover:text-white'
+                          }`}
+                          style={
+                            isActiveCount
+                              ? {
+                                  backgroundColor: liveAuraPalette.uiAccent1,
+                                  boxShadow: `0 0 10px rgba(${liveAuraGlowRgb}, 0.5)`,
+                                }
+                              : undefined
+                          }
+                        >
+                          {num}
+                        </button>
+                      );
+                    })}
                   </div>
 
                   <button
@@ -1564,19 +1662,29 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
                     }}
                     className={`chicle-btn px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold flex items-center gap-1 border transition-all cursor-pointer ${
                       auroraSpeed === 'fast'
-                        ? 'bg-purple-950/80 border-purple-400/60 text-purple-300 shadow-[0_0_12px_rgba(168,85,247,0.3)]'
-                        : 'bg-[#000d1c] border-slate-800 text-slate-400'
+                        ? 'optic-active-card'
+                        : 'bg-[#040814]/80 border-white/10 text-slate-400 hover:text-white'
                     }`}
+                    style={
+                      auroraSpeed === 'fast'
+                        ? {
+                            background: `color-mix(in srgb, ${liveAuraPalette.uiAccent1} 16%, rgba(4, 10, 26, 0.94))`,
+                            borderColor: `color-mix(in srgb, ${liveAuraPalette.uiAccent1} 55%, transparent)`,
+                            color: liveAuraPalette.uiAccent1,
+                            boxShadow: `0 0 12px rgba(${liveAuraGlowRgb}, 0.25)`,
+                          }
+                        : undefined
+                    }
                   >
-                    <Waves className="w-3 h-3 text-cyan-400" />
+                    <Waves className="w-3 h-3" style={{ color: liveAuraPalette.uiAccent1 }} />
                     <span>{auroraSpeed === 'fast' ? '⚡ Viva' : '❄️ Calm'}</span>
                   </button>
                 </div>
               </div>
 
               {/* FILA 2: GEMAS ACTIVAS (TOCAR PARA SELECCIONAR) */}
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none flex-1">
+              <div className="flex items-center justify-between gap-2 relative z-10">
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar flex-1">
                   {pointColors.slice(0, pointCount).map((colHex, idx) => {
                     const isSelected = selectedPointIndex === idx;
                     return (
@@ -1591,15 +1699,24 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
                         }}
                         className={`chicle-btn px-2.5 py-1.5 rounded-xl border flex items-center gap-2 transition-all cursor-pointer shrink-0 ${
                           isSelected
-                            ? 'bg-cyan-950/80 border-cyan-400 shadow-[0_0_15px_rgba(0,240,255,0.4)] ring-2 ring-cyan-400/50'
-                            : 'bg-[#000d1c] border-slate-800 hover:border-slate-700'
+                            ? 'optic-active-card ring-1 ring-white/40'
+                            : 'bg-[#040814]/80 border-white/10 hover:border-white/25'
                         }`}
+                        style={
+                          isSelected
+                            ? {
+                                backgroundColor: `color-mix(in srgb, ${liveAuraPalette.uiAccent1} 18%, rgba(4, 10, 26, 0.94))`,
+                                borderColor: liveAuraPalette.uiAccent1,
+                                boxShadow: `0 0 15px rgba(${liveAuraGlowRgb}, 0.35)`,
+                              }
+                            : undefined
+                        }
                       >
                         <span
                           className="w-4 h-4 rounded-full shrink-0 border-2 border-white shadow-[0_0_8px_currentColor]"
                           style={{ background: colHex, color: colHex }}
                         />
-                        <span className="text-[11px] font-mono font-black text-white uppercase">
+                        <span className="text-[11px] font-mono tabular-nums font-black text-white uppercase">
                           {colHex}
                         </span>
                       </button>
@@ -1608,7 +1725,10 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
                 </div>
 
                 {/* Selector de color libre */}
-                <label className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-[#000d1c] border border-cyan-500/40 text-cyan-400 hover:text-cyan-200 cursor-pointer shrink-0 text-xs font-mono font-bold">
+                <label
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-[#040814]/80 border border-white/15 hover:border-white/30 cursor-pointer shrink-0 text-xs font-mono font-bold transition-colors"
+                  style={{ color: liveAuraPalette.uiAccent1 }}
+                >
                   <Palette className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">Color Libre</span>
                   <input
@@ -1622,7 +1742,7 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
               </div>
 
               {/* FILA 3: PALETA HUNTER NEÓN RÁPIDA (ASIGNA AL PUNTO SELECCIONADO AL INSTANTE) */}
-              <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar relative z-10">
                 <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest shrink-0">
                   Gema {selectedPointIndex + 1}:
                 </span>
@@ -1652,31 +1772,27 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
               </div>
 
               {/* FILA 4: ACCIONES PRINCIPALES Y SALIR */}
-              <div className="flex items-center gap-2 pt-1">
-                {/* Botón Aplicar al Sistema con Neón Cinético Dinámico */}
+              <div className="flex items-center gap-2 pt-1 relative z-10">
+                {/* Botón Aplicar al Sistema con Aura Dinámica */}
                 <button
                   type="button"
                   data-action="apply-system"
                   onClick={handleApplyToSystem}
-                  style={{
-                    '--n1': liveAuraPalette.uiAccent1,
-                    '--n2': liveAuraPalette.uiAccent2,
-                  } as React.CSSProperties}
-                  className={`btn-neon-hunter flex-1 py-3 px-3 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-lg ${
-                    applyFeedback ? 'is-flash' : ''
+                  style={applyFeedback ? undefined : liveAuraCtaStyle}
+                  className={`chicle-btn flex-1 py-3 px-3 rounded-xl font-anton text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-lg optic-active-card border ${
+                    applyFeedback
+                      ? 'bg-emerald-500 text-[#030712] border-emerald-300 shadow-[0_0_20px_rgba(16,185,129,0.5)]'
+                      : 'aura-btn-gradient'
                   }`}
                 >
                   {applyFeedback ? (
                     <>
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-300 stroke-[3]" />
-                      <span className="text-emerald-200">¡Atmósfera Activada!</span>
+                      <CheckCircle2 className="w-3.5 h-3.5 stroke-[3]" />
+                      <span>¡Atmósfera Activada!</span>
                     </>
                   ) : (
                     <>
-                      <Sparkles
-                        className="w-3.5 h-3.5 transition-colors"
-                        style={{ color: liveAuraPalette.uiAccent1, fill: liveAuraPalette.uiAccent1 }}
-                      />
+                      <Sparkles className="w-3.5 h-3.5 fill-current" />
                       <span>Aplicar como Fondo</span>
                     </>
                   )}
@@ -1687,10 +1803,10 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
                   type="button"
                   data-action="azar"
                   onClick={() => triggerAzarRef.current?.()}
-                  className="chicle-btn p-2.5 rounded-xl bg-[#000d1c] hover:bg-[#001830] border border-cyan-500/40 text-cyan-300 text-xs font-mono font-bold flex items-center justify-center cursor-pointer"
+                  className="chicle-btn p-2.5 rounded-xl bg-[#040814]/80 hover:bg-white/[0.08] border border-white/10 text-slate-200 text-xs font-mono font-bold flex items-center justify-center cursor-pointer transition-colors"
                   title="Barajar al azar"
                 >
-                  <Shuffle className="w-4 h-4 text-cyan-400" />
+                  <Shuffle className="w-4 h-4" style={{ color: liveAuraPalette.uiAccent1 }} />
                 </button>
 
                 {/* Reset */}
@@ -1698,7 +1814,7 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
                   type="button"
                   data-action="reset"
                   onClick={() => triggerResetRef.current?.()}
-                  className="chicle-btn p-2.5 rounded-xl bg-[#000d1c] hover:bg-[#001830] border border-slate-800 text-slate-300 text-xs font-mono font-bold flex items-center justify-center cursor-pointer"
+                  className="chicle-btn p-2.5 rounded-xl bg-[#040814]/80 hover:bg-white/[0.08] border border-white/10 text-slate-300 hover:text-white text-xs font-mono font-bold flex items-center justify-center cursor-pointer transition-colors"
                   title="Restablecer preset"
                 >
                   <RotateCcw className="w-4 h-4" />
@@ -1728,10 +1844,13 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
       </div>
 
       {/* ── DOCK DE CONTROL MINIMALISTA (ULTRA-SLIM & ESTILIZADO) ── */}
-      <div className="p-2.5 sm:p-3 bg-[#030a18]/[0.92] border border-white/[0.1] rounded-2xl space-y-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.37)]">
+      <div className="relative isolate overflow-hidden p-2.5 sm:p-3 bg-[#040a1a]/[0.94] border border-white/10 rounded-2xl space-y-2.5 shadow-[0_8px_30px_rgba(0,0,0,0.45)]">
+        <span className="vi-grano opacity-5" aria-hidden="true" />
+        <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
+
         {/* ALERTA INTELIGENTE DE PROTECCIÓN DE CONTRASTE (Solo si el fondo es riesgoso) */}
         {contrastAnalysis.status === 'warning' && (
-          <div className="p-2 sm:p-2.5 rounded-xl border bg-rose-500/10 border-rose-500/30 flex items-center justify-between gap-2 text-xs font-mono animate-fade-in">
+          <div className="p-2 sm:p-2.5 rounded-xl border bg-rose-500/10 border-rose-500/30 flex items-center justify-between gap-2 text-xs font-mono animate-fade-in relative z-10">
             <div className="flex items-center gap-2 min-w-0">
               <span className="w-2 h-2 rounded-full bg-rose-400 animate-pulse shrink-0 shadow-[0_0_8px_#f43f5e]" />
               <span className="text-[11px] text-rose-200 font-bold truncate">
@@ -1752,26 +1871,37 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
         )}
 
         {/* FILA 1: SELECTOR DE TONOS + VELOCIDAD + HERRAMIENTAS RÁPIDAS */}
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center justify-between gap-2 relative z-10">
           {/* Segmented Tonos [ 2 | 3 | 4 ] */}
-          <div className="flex items-center gap-0.5 bg-black/40 p-1 rounded-xl border border-white/10">
+          <div className="flex items-center gap-0.5 bg-[#040814]/80 p-1 rounded-xl border border-white/10">
             <span className="text-[10px] font-mono text-slate-400 px-1.5 uppercase tracking-wider hidden sm:inline font-semibold">
               Tonos:
             </span>
-            {([2, 3, 4] as const).map(num => (
-              <button
-                key={num}
-                type="button"
-                onClick={() => handleChangePointCount(num)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
-                  pointCount === num
-                    ? 'bg-white/20 text-white shadow-xs'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                {num}
-              </button>
-            ))}
+            {([2, 3, 4] as const).map(num => {
+              const isActiveCount = pointCount === num;
+              return (
+                <button
+                  key={num}
+                  type="button"
+                  onClick={() => handleChangePointCount(num)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-mono tabular-nums font-bold transition-all cursor-pointer ${
+                    isActiveCount
+                      ? 'optic-active-card text-[#030712] font-black'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                  style={
+                    isActiveCount
+                      ? {
+                          backgroundColor: liveAuraPalette.uiAccent1,
+                          boxShadow: `0 0 10px rgba(${liveAuraGlowRgb}, 0.45)`,
+                        }
+                      : undefined
+                  }
+                >
+                  {num}
+                </button>
+              );
+            })}
           </div>
 
           {/* Herramientas Rápidas: Velocidad + Azar + Reset + CSS */}
@@ -1785,8 +1915,8 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
               }}
               className={`px-2.5 py-1.5 rounded-xl text-xs font-mono font-bold flex items-center gap-1.5 border transition-all cursor-pointer ${
                 auroraSpeed === 'fast'
-                  ? 'shadow-[0_0_12px_rgba(255,255,255,0.1)]'
-                  : 'bg-black/30 border-white/10 text-slate-400 hover:text-white'
+                  ? 'optic-active-card shadow-[0_0_12px_rgba(255,255,255,0.1)]'
+                  : 'bg-[#040814]/80 border-white/10 text-slate-400 hover:text-white'
               }`}
               style={auroraSpeed === 'fast' ? {
                 background: `color-mix(in srgb, ${liveAuraPalette.uiAccent1} 15%, transparent)`,
@@ -1805,7 +1935,7 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
             <button
               type="button"
               onClick={() => triggerAzarRef.current?.()}
-              className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-black/30 hover:bg-black/50 border border-white/10 hover:border-white/25 text-slate-300 hover:text-white text-xs font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+              className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-[#040814]/80 hover:bg-white/[0.08] border border-white/10 hover:border-white/25 text-slate-300 hover:text-white text-xs font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer"
               title="Barajar al azar"
             >
               <Shuffle className="w-3.5 h-3.5" style={{ color: liveAuraPalette.uiAccent1 }} />
@@ -1816,7 +1946,7 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
             <button
               type="button"
               onClick={() => triggerResetRef.current?.()}
-              className="p-1.5 sm:p-2 rounded-xl bg-black/30 hover:bg-black/50 border border-white/10 hover:border-white/20 text-slate-400 hover:text-white transition-all cursor-pointer"
+              className="p-1.5 sm:p-2 rounded-xl bg-[#040814]/80 hover:bg-white/[0.08] border border-white/10 hover:border-white/20 text-slate-400 hover:text-white transition-all cursor-pointer"
               title="Restablecer"
             >
               <RotateCcw className="w-3.5 h-3.5" />
@@ -1829,7 +1959,7 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
               className={`p-1.5 sm:p-2 rounded-xl border transition-all cursor-pointer ${
                 copyFeedback
                   ? 'bg-emerald-950/80 border-emerald-400 text-emerald-300'
-                  : 'bg-black/30 hover:bg-black/50 border-white/10 text-slate-400 hover:text-white'
+                  : 'bg-[#040814]/80 hover:bg-white/[0.08] border-white/10 text-slate-400 hover:text-white'
               }`}
               title="Copiar CSS"
             >
@@ -1839,7 +1969,7 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
         </div>
 
         {/* FILA 2: RIBBON DE COLOR UNIFICADO (GEMAS ACTIVAS + PALETA RÁPIDA + COLOR PICKER) */}
-        <div className="flex items-center justify-between gap-2 p-2 bg-black/30 rounded-xl border border-white/10 overflow-x-auto scrollbar-none">
+        <div className="flex items-center justify-between gap-2 p-2 bg-[#040814]/80 rounded-xl border border-white/10 overflow-x-auto no-scrollbar relative z-10">
           {/* Gemas activas seleccionables */}
           <div className="flex items-center gap-2 shrink-0">
             {pointColors.slice(0, pointCount).map((colHex, idx) => {
@@ -1854,7 +1984,7 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
                   }}
                   className={`relative p-0.5 rounded-full transition-all cursor-pointer ${
                     isSelected
-                      ? 'ring-2 ring-white ring-offset-2 ring-offset-[#030a18] scale-110 shadow-[0_0_12px_rgba(255,255,255,0.4)]'
+                      ? 'ring-2 ring-white ring-offset-2 ring-offset-[#040a1a] scale-110 shadow-[0_0_12px_rgba(255,255,255,0.4)]'
                       : 'opacity-70 hover:opacity-100 hover:scale-105'
                   }`}
                   title={`Gema ${idx + 1}: ${colHex}`}
@@ -1871,7 +2001,7 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
           <div className="h-5 w-px bg-white/10 shrink-0" />
 
           {/* Swatches rápidos de paleta de color */}
-          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5">
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
             {HUNTER_SWATCHES.map((sw, sIdx) => {
               const isCurr = pointColors[selectedPointIndex]?.toLowerCase() === sw.hex.toLowerCase();
               return (
@@ -1881,7 +2011,7 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
                   onClick={() => handleUpdateColor(selectedPointIndex, sw.hex)}
                   className={`p-0.5 rounded-lg transition-all shrink-0 cursor-pointer ${
                     isCurr
-                      ? 'ring-1.5 ring-white scale-110 shadow-[0_0_8px_rgba(255,255,255,0.4)]'
+                      ? 'ring-1 ring-white scale-110 shadow-[0_0_8px_rgba(255,255,255,0.4)]'
                       : 'opacity-80 hover:opacity-100 hover:scale-105'
                   }`}
                   title={`${sw.name} (${sw.hex})`}
@@ -1899,7 +2029,7 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
 
           {/* Color picker libre */}
           <label
-            className="shrink-0 p-1.5 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white cursor-pointer transition-all flex items-center justify-center"
+            className="shrink-0 p-1.5 rounded-lg border border-white/10 bg-white/[0.04] hover:bg-white/[0.1] text-white/70 hover:text-white cursor-pointer transition-all flex items-center justify-center"
             title="Seleccionar color personalizado"
           >
             <Palette className="w-4 h-4 transition-colors" style={{ color: liveAuraPalette.uiAccent1 }} />
@@ -1912,29 +2042,25 @@ export const MoxenMalla: React.FC<MoxenMallaProps> = ({
           </label>
         </div>
 
-        {/* FILA 3: BOTÓN ESTELAR CON NEÓN CINÉTICO DINÁMICO */}
+        {/* FILA 3: BOTÓN ESTELAR CON AURA DINÁMICA */}
         <button
           type="button"
           onClick={handleApplyToSystem}
-          style={{
-            '--n1': liveAuraPalette.uiAccent1,
-            '--n2': liveAuraPalette.uiAccent2,
-          } as React.CSSProperties}
-          className={`btn-neon-hunter w-full py-3 px-4 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg ${
-            applyFeedback ? 'is-flash' : ''
+          style={applyFeedback ? undefined : liveAuraCtaStyle}
+          className={`chicle-btn relative z-10 w-full py-3 px-4 rounded-xl font-anton text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg optic-active-card border ${
+            applyFeedback
+              ? 'bg-emerald-500 text-[#030712] border-emerald-300 shadow-[0_0_20px_rgba(16,185,129,0.5)]'
+              : 'aura-btn-gradient'
           }`}
         >
           {applyFeedback ? (
             <>
-              <CheckCircle2 className="w-4 h-4 text-emerald-300 stroke-[3]" />
-              <span className="text-emerald-200">¡Atmósfera Activada en el Sistema!</span>
+              <CheckCircle2 className="w-4 h-4 stroke-[3]" />
+              <span>¡Atmósfera Activada en el Sistema!</span>
             </>
           ) : (
             <>
-              <Sparkles
-                className="w-4 h-4 transition-colors"
-                style={{ color: liveAuraPalette.uiAccent1, fill: liveAuraPalette.uiAccent1 }}
-              />
+              <Sparkles className="w-4 h-4 fill-current" />
               <span>Aplicar como Fondo del Sistema</span>
             </>
           )}

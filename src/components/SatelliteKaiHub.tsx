@@ -133,24 +133,27 @@ export const SatelliteKaiHub: React.FC<SatelliteKaiHubProps> = ({
           cy={HALF_STAGE}
           r={ORBIT_RADIUS}
           fill="none"
-          stroke="rgba(255, 255, 255, 0.12)"
+          stroke="rgba(255, 255, 255, 0.14)"
           strokeWidth="1"
+          className="satellite-orbit-ring"
         />
         <circle
           cx={HALF_STAGE}
           cy={HALF_STAGE}
           r={ORBIT_RADIUS - 34}
           fill="none"
-          stroke="rgba(255, 255, 255, 0.04)"
+          stroke="rgba(255, 255, 255, 0.05)"
           strokeWidth="1"
+          className="satellite-orbit-ring"
         />
       </svg>
 
       {/* Halo radial sutil centrado en KAI */}
       <div
+        data-ambient-glow="true"
         className="absolute inset-0 pointer-events-none transition-opacity duration-200"
         style={{
-          background: `radial-gradient(circle at 50% 50%, ${activeItem?.accentColor || '#00f0ff'}18 0%, transparent 52%)`,
+          background: `radial-gradient(circle at 50% 50%, color-mix(in srgb, ${activeItem?.accentColor || 'var(--aura-color-1, #00f0ff)'} 14%, transparent) 0%, transparent 52%)`,
           opacity: expanded ? 0.8 : 0,
         }}
       />
@@ -236,7 +239,7 @@ export const SatelliteKaiHub: React.FC<SatelliteKaiHubProps> = ({
 
                 {/* Etiqueta limpia y legible debajo del satélite */}
                 <span
-                  className="absolute left-1/2 -translate-x-1/2 pointer-events-none font-sans whitespace-nowrap transition-all duration-150"
+                  className="satellite-orbit-label absolute left-1/2 -translate-x-1/2 pointer-events-none font-sans whitespace-nowrap transition-all duration-150"
                   style={{
                     top: isActive ? 'calc(100% + 5px)' : 'calc(100% + 4px)',
                     fontSize: '9.5px',

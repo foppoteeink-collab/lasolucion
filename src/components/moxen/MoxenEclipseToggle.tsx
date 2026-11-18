@@ -44,9 +44,10 @@ export const MoxenEclipseToggle: React.FC<MoxenEclipseToggleProps> = ({
     <button
       type="button"
       role="switch"
+      aria-checked={isNight}
       onClick={handleToggle}
       aria-label={`Modo Óptico Eclipse: ${opticMode}`}
-      className={`ec-interruptor ${phaseClass} ${isNight ? 'is-noche' : ''} select-none outline-none focus:outline-none cursor-pointer transition-all active:scale-95 ${className}`}
+      className={`ec-interruptor ${phaseClass} ${isNight ? 'is-noche' : ''} select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--aura-color-1,#00f0ff)] focus-visible:ring-offset-2 focus-visible:ring-offset-[#030712] cursor-pointer transition-all active:scale-95 ${className}`}
       style={sizeStyles[size]}
       title={`Fase Eclipse activa: ${opticMode.toUpperCase()} (Toca para alternar fase)`}
     >

@@ -301,30 +301,32 @@ export const FinanceDashboard: React.FC<FinanceDashboardProps> = ({ expenses, se
   };
 
   return (
-    <div className="mt-8 mb-8 bg-[#00150b]/[0.92] border border-emerald-900/40 p-5 sm:p-7 rounded-3xl shadow-[0_0_40px_rgba(16,185,129,0.05)] relative overflow-hidden">
-      <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/5 blur-3xl pointer-events-none"></div>
+    <div className="relative isolate mt-2 mb-6 bg-[#040a1a]/[0.94] border border-white/10 p-5 sm:p-7 rounded-2xl sm:rounded-3xl shadow-[0_10px_34px_rgba(0,0,0,0.5)] overflow-hidden">
+      <span className="vi-grano opacity-5" aria-hidden="true" />
+      <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
       
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2 relative z-10">
           <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-emerald-900/50 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+              <div className="w-10 h-10 rounded-xl aura-bg-soft border aura-border-subtle flex items-center justify-center aura-text-primary shrink-0">
                 <TrendingUp className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">
+                <h3 className="text-sm sm:text-base font-anton text-white uppercase tracking-wider flex items-center gap-2">
                   Oficina de Finanzas
                 </h3>
-                <p className="text-[11px] text-emerald-400/80 font-mono">Consolidación de tesorería, flujo de caja y proyecciones</p>
+                <p className="text-[11px] text-slate-400 font-mono">Consolidación de tesorería, flujo de caja y proyecciones</p>
               </div>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
-              <span className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-950/60 text-emerald-300 rounded-xl text-xs font-bold border border-emerald-800/60" title="Divisa configurada en Ajustes">
-                <span>Divisa: <strong className="font-mono text-white">{currencySymbol}</strong></span>
+              <span className="flex items-center gap-1.5 px-3 py-1.5 bg-[#040814]/80 text-slate-300 rounded-xl text-xs font-bold border border-white/10" title="Divisa configurada en Ajustes">
+                <span>Divisa: <strong className="font-mono tabular-nums aura-text-primary">{currencySymbol}</strong></span>
               </span>
 
               <button
+                type="button"
                 onClick={exportToCSV}
-                className="flex items-center gap-2 px-3 py-1.5 bg-emerald-900/50 text-emerald-300 hover:text-white hover:bg-emerald-600/80 rounded-xl text-xs font-black uppercase tracking-wider transition-colors border border-emerald-700/60"
+                className="chicle-btn flex items-center gap-2 px-3 py-1.5 aura-bg-soft hover:brightness-110 aura-text-soft hover:text-white rounded-xl text-xs font-anton uppercase tracking-wider transition-all border aura-border-subtle cursor-pointer"
                 title="Descargar Reporte en CSV"
               >
                 <Download className="w-3.5 h-3.5" />
@@ -334,7 +336,7 @@ export const FinanceDashboard: React.FC<FinanceDashboardProps> = ({ expenses, se
               <button
                 type="button"
                 onClick={toggleCollapse}
-                className="p-1.5 rounded-xl bg-emerald-900/40 border border-emerald-700/50 text-emerald-400 hover:text-white hover:bg-emerald-600/60 transition-colors cursor-pointer"
+                className="chicle-btn w-9 h-9 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 text-slate-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
                 title={isCollapsed ? 'Expandir Finanzas' : 'Minimizar Finanzas'}
               >
                 {isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
@@ -343,362 +345,354 @@ export const FinanceDashboard: React.FC<FinanceDashboardProps> = ({ expenses, se
       </div>
       
       {!isCollapsed && (
-        <div className="mt-6">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 relative z-10">
-        <div className="bg-[#001a11]/90 p-4 sm:p-5 rounded-2xl border border-emerald-800/40 flex flex-col justify-between relative overflow-hidden group hover:border-emerald-500/50 transition-colors">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400/80">Total Ingresos</span>
-              <div className="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-                <ArrowUpRight className="w-4 h-4" />
-              </div>
-            </div>
-            <p className="text-xl sm:text-2xl font-black text-emerald-300 font-mono tracking-tight">
-              <AnimatedCounter value={financialTotals.income} prefix={`+${currencySymbol}`} />
-            </p>
-            <p className="text-[10px] text-emerald-600/80 font-mono mt-1">Tareas y entradas manuales</p>
-        </div>
-        
-        <div className="bg-[#1a0606]/90 p-4 sm:p-5 rounded-2xl border border-red-900/40 flex flex-col justify-between relative overflow-hidden group hover:border-red-500/50 transition-colors">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-black uppercase tracking-widest text-red-400/80">Total Gastos</span>
-              <div className="w-7 h-7 rounded-lg bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400">
-                <ArrowDownRight className="w-4 h-4" />
-              </div>
-            </div>
-            <p className="text-xl sm:text-2xl font-black text-red-400 font-mono tracking-tight">
-              <AnimatedCounter value={financialTotals.expense} prefix={`-${currencySymbol}`} />
-            </p>
-            <p className="text-[10px] text-red-500/60 font-mono mt-1">Egresos registrados</p>
-        </div>
-        
-        <div className="bg-[#001710]/90 p-4 sm:p-5 rounded-2xl border border-emerald-800/40 flex flex-col justify-between relative overflow-hidden group hover:border-emerald-500/50 transition-colors">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400/80">Balance Neto</span>
-              <div className={`w-7 h-7 rounded-lg border flex items-center justify-center ${
-                financialTotals.balance >= 0 ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-red-500/10 border-red-500/30 text-red-400'
-              }`}>
-                {financialTotals.balance >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-              </div>
-            </div>
-            <p className={`text-xl sm:text-2xl font-black font-mono tracking-tight ${financialTotals.balance >= 0 ? 'text-white' : 'text-red-400'}`}>
-              <AnimatedCounter 
-                value={Math.abs(financialTotals.balance)} 
-                prefix={`${financialTotals.balance >= 0 ? '+' : '-'}${currencySymbol}`} 
-              />
-            </p>
-            <p className="text-[10px] text-slate-400 font-mono mt-1">
-              {financialTotals.balance >= 0 ? 'Superávit consolidado' : 'Déficit acumulado'}
-            </p>
-        </div>
-
-        <div className="bg-[#041c14]/90 p-4 sm:p-5 rounded-2xl border border-emerald-800/40 flex flex-col justify-between relative overflow-hidden">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400/80">Tasa de Ahorro</span>
-              <div className="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-300">
-                <Percent className="w-3.5 h-3.5" />
-              </div>
-            </div>
-            <div className="flex items-baseline gap-2">
-              <p className="text-xl sm:text-2xl font-black text-emerald-300 font-mono tracking-tight">
-                {financialTotals.savingsRate}%
-              </p>
-              <span className="text-[10px] text-emerald-500/70 font-mono">del flujo</span>
-            </div>
-            <div className="w-full bg-slate-900 rounded-full h-1.5 mt-2 overflow-hidden border border-emerald-950">
-              <div 
-                className="bg-emerald-400 h-full rounded-full transition-all duration-700" 
-                style={{ width: `${Math.min(100, Math.max(0, financialTotals.savingsRate))}%` }} 
-              />
-            </div>
-        </div>
-      </div>
-
-      <div className="mb-6 relative z-10">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-            <div>
-              <h4 className="text-xs font-black text-emerald-400 uppercase tracking-widest flex items-center gap-2">
-                <Calendar className="w-4 h-4" /> Desglose por Período
-              </h4>
-              <p className="text-[11px] text-slate-400">Total acumulado segmentado según tu horizonte de planificación</p>
-            </div>
-            
-            <div className="flex bg-[#001c10] rounded-xl p-1 border border-emerald-900/60 overflow-x-auto">
-              <button 
-                onClick={() => setFinanceViewType('month')} 
-                className={`px-3 py-1.5 text-xs font-bold uppercase rounded-lg transition-all whitespace-nowrap ${
-                  financeViewType === 'month' ? 'bg-emerald-600 text-white shadow-md' : 'text-emerald-400 hover:text-white'
-                }`}
-              >
-                Mes
-              </button>
-              <button 
-                onClick={() => setFinanceViewType('quarter')} 
-                className={`px-3 py-1.5 text-xs font-bold uppercase rounded-lg transition-all whitespace-nowrap ${
-                  financeViewType === 'quarter' ? 'bg-emerald-600 text-white shadow-md' : 'text-emerald-400 hover:text-white'
-                }`}
-              >
-                Trimestre (3M)
-              </button>
-              <button 
-                onClick={() => setFinanceViewType('semester')} 
-                className={`px-3 py-1.5 text-xs font-bold uppercase rounded-lg transition-all whitespace-nowrap ${
-                  financeViewType === 'semester' ? 'bg-emerald-600 text-white shadow-md' : 'text-emerald-400 hover:text-white'
-                }`}
-              >
-                6 Meses
-              </button>
-              <button 
-                onClick={() => setFinanceViewType('year')} 
-                className={`px-3 py-1.5 text-xs font-bold uppercase rounded-lg transition-all whitespace-nowrap ${
-                  financeViewType === 'year' ? 'bg-emerald-600 text-white shadow-md' : 'text-emerald-400 hover:text-white'
-                }`}
-              >
-                Un Año
-              </button>
-              <button 
-                onClick={() => setFinanceViewType('all')} 
-                className={`px-3 py-1.5 text-xs font-bold uppercase rounded-lg transition-all whitespace-nowrap ${
-                  financeViewType === 'all' ? 'bg-emerald-600 text-white shadow-md' : 'text-emerald-400 hover:text-white'
-                }`}
-              >
-                Totales
-              </button>
-            </div>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {financeSummaries[financeViewType].map(summary => {
-            const totalFlow = summary.income + summary.expense;
-            const incomePercent = totalFlow > 0 ? Math.round((summary.income / totalFlow) * 100) : 50;
-
-            return (
-              <div key={summary.key} className="bg-[#00170d]/90 p-4 rounded-2xl border border-emerald-900/40 flex flex-col gap-3 relative overflow-hidden hover:border-emerald-600/40 transition-colors">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-black text-white uppercase tracking-wider capitalize truncate max-w-[200px]" title={summary.label}>
-                    {summary.label}
-                  </p>
-                  <div className="flex items-center gap-1.5">
-                    <span className={`text-[10px] px-2 py-0.5 rounded-md font-mono font-bold ${
-                      summary.balance >= 0 ? 'bg-emerald-900/50 text-emerald-300 border border-emerald-700/50' : 'bg-red-900/50 text-red-300 border border-red-700/50'
-                    }`}>
-                      {summary.savingsRate}% ahorro
-                    </span>
-                    {savingsTarget > 0 && (
-                      <span className={`text-[9px] px-1.5 py-0.5 rounded font-mono ${
-                        summary.savingsRate >= savingsTarget 
-                          ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' 
-                          : 'bg-amber-500/10 text-amber-400/80 border border-amber-500/30'
-                      }`} title={`Meta de ahorro configurada: ${savingsTarget}%`}>
-                        {summary.savingsRate >= savingsTarget ? '✓ Meta' : `Meta ${savingsTarget}%`}
-                      </span>
-                    )}
+        <div className="mt-6 relative z-10">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+            <div className="bg-[#040814]/80 p-4 sm:p-5 rounded-2xl border border-white/10 flex flex-col justify-between relative overflow-hidden group hover:border-emerald-500/40 transition-colors">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-anton uppercase tracking-wider text-slate-300">Total Ingresos</span>
+                  <div className="w-7 h-7 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                    <ArrowUpRight className="w-4 h-4" />
                   </div>
                 </div>
-
-                <div className="space-y-1 text-xs">
-                    <div className="flex justify-between items-center">
-                      <span className="text-slate-400 flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Ingresos:
-                      </span>
-                      <span className="text-emerald-300 font-mono font-bold">+{formatMoney(summary.income, currencySymbol)}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-slate-400 flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-red-400"></span> Gastos:
-                      </span>
-                      <span className="text-red-400 font-mono font-bold">-{formatMoney(summary.expense, currencySymbol)}</span>
-                    </div>
+                <p className="text-xl sm:text-2xl font-black text-emerald-400 font-mono tabular-nums tracking-tight">
+                  <AnimatedCounter value={financialTotals.income} prefix={`+${currencySymbol}`} />
+                </p>
+                <p className="text-[10px] text-slate-400 font-mono mt-1">Tareas y entradas manuales</p>
+            </div>
+            
+            <div className="bg-[#040814]/80 p-4 sm:p-5 rounded-2xl border border-white/10 flex flex-col justify-between relative overflow-hidden group hover:border-rose-500/40 transition-colors">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-anton uppercase tracking-wider text-slate-300">Total Gastos</span>
+                  <div className="w-7 h-7 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400">
+                    <ArrowDownRight className="w-4 h-4" />
+                  </div>
                 </div>
-
-                <div className="w-full bg-red-950/60 rounded-full h-2 overflow-hidden flex border border-emerald-950">
-                    <div 
-                      className="bg-emerald-500 h-full transition-all duration-500" 
-                      style={{ width: `${incomePercent}%` }} 
-                      title={`Ingresos: ${incomePercent}%`}
-                    />
+                <p className="text-xl sm:text-2xl font-black text-rose-400 font-mono tabular-nums tracking-tight">
+                  <AnimatedCounter value={financialTotals.expense} prefix={`-${currencySymbol}`} />
+                </p>
+                <p className="text-[10px] text-slate-400 font-mono mt-1">Egresos registrados</p>
+            </div>
+            
+            <div className="bg-[#040814]/80 p-4 sm:p-5 rounded-2xl border border-white/10 flex flex-col justify-between relative overflow-hidden group hover:border-white/20 transition-colors">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-anton uppercase tracking-wider text-slate-300">Balance Neto</span>
+                  <div className={`w-7 h-7 rounded-xl border flex items-center justify-center ${
+                    financialTotals.balance >= 0 ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-rose-500/10 border-rose-500/30 text-rose-400'
+                  }`}>
+                    {financialTotals.balance >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+                  </div>
                 </div>
+                <p className={`text-xl sm:text-2xl font-black font-mono tabular-nums tracking-tight ${financialTotals.balance >= 0 ? 'text-white' : 'text-rose-400'}`}>
+                  <AnimatedCounter 
+                    value={Math.abs(financialTotals.balance)} 
+                    prefix={`${financialTotals.balance >= 0 ? '+' : '-'}${currencySymbol}`} 
+                  />
+                </p>
+                <p className="text-[10px] text-slate-400 font-mono mt-1">
+                  {financialTotals.balance >= 0 ? 'Superávit consolidado' : 'Déficit acumulado'}
+                </p>
+            </div>
 
-                <div className="pt-2 border-t border-emerald-900/30 flex justify-between items-center text-sm font-black">
-                    <span className="text-slate-300 text-xs uppercase tracking-wider">Balance:</span>
-                    <span className={`font-mono ${summary.balance >= 0 ? 'text-emerald-300' : 'text-red-400'}`}>
-                      {summary.balance >= 0 ? '+' : '-'}{formatMoney(Math.abs(summary.balance), currencySymbol)}
-                    </span>
+            <div className="bg-[#040814]/80 p-4 sm:p-5 rounded-2xl border border-white/10 flex flex-col justify-between relative overflow-hidden">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-anton uppercase tracking-wider text-slate-300">Tasa de Ahorro</span>
+                  <div className="w-7 h-7 rounded-xl aura-bg-soft border aura-border-subtle flex items-center justify-center aura-text-primary">
+                    <Percent className="w-3.5 h-3.5" />
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-
-          {financeSummaries[financeViewType].length === 0 && (
-              <div className="col-span-full text-center py-8 text-xs text-slate-400 bg-[#00170d]/40 rounded-2xl border border-emerald-900/20">
-                No hay movimientos registrados para este agrupamiento temporal.
-              </div>
-          )}
-        </div>
-      </div>
-
-      {categoryBreakdown.length > 0 && (
-        <div className="mb-6 bg-[#00170d]/60 p-4 sm:p-5 rounded-2xl border border-emerald-900/40 relative z-10">
-          <h4 className="text-xs font-black text-emerald-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-            <Receipt className="w-4 h-4" /> Distribución de Gastos por Categoría
-          </h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {categoryBreakdown.map(cat => (
-              <div key={cat.name} className="space-y-1">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-slate-300 font-medium truncate">{cat.name}</span>
-                  <span className="font-mono font-bold text-red-400">
-                    {formatMoney(cat.amount, currencySymbol)} <span className="text-slate-500 text-[10px]">({cat.percent}%)</span>
-                  </span>
+                <div className="flex items-baseline gap-2">
+                  <p className="text-xl sm:text-2xl font-black text-emerald-400 font-mono tabular-nums tracking-tight">
+                    {financialTotals.savingsRate}%
+                  </p>
+                  <span className="text-[10px] text-slate-400 font-mono">del flujo</span>
                 </div>
-                <div className="w-full bg-slate-900/80 rounded-full h-1.5 overflow-hidden">
+                <div className="w-full bg-black/50 rounded-full h-1.5 mt-2 overflow-hidden border border-white/10">
                   <div 
-                    className="bg-gradient-to-r from-red-600 to-amber-500 h-full rounded-full transition-all duration-500" 
-                    style={{ width: `${cat.percent}%` }}
+                    className="bg-emerald-400 h-full rounded-full transition-all duration-700" 
+                    style={{ width: `${Math.min(100, Math.max(0, financialTotals.savingsRate))}%` }} 
                   />
                 </div>
-              </div>
-            ))}
+            </div>
           </div>
-        </div>
-      )}
 
-      <div className="bg-[#001209] p-4 sm:p-5 rounded-2xl border border-emerald-900/40 shadow-inner relative z-10">
-        <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between mb-4">
-            <div className="relative flex-1">
-              <Search className="w-4 h-4 text-emerald-600 absolute left-3 top-2.5" />
-              <input 
-                type="text" 
-                value={financeSearchTerm} 
-                onChange={e => setFinanceSearchTerm(e.target.value)}
-                placeholder="Buscar en descripción, categoría o fecha (ej: 2026-09)..."
-                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-[#001a10] border border-emerald-900/50 text-white placeholder:text-slate-500 focus:border-emerald-400 focus:outline-none"
-              />
-              {financeSearchTerm && (
-                <button 
-                  onClick={() => setFinanceSearchTerm('')} 
-                  className="absolute right-2.5 top-2.5 text-slate-500 hover:text-white text-xs"
-                >
-                  ✕
-                </button>
+          <div className="mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                <div>
+                  <h4 className="text-xs font-anton aura-text-primary uppercase tracking-wider flex items-center gap-2">
+                    <Calendar className="w-4 h-4" /> Desglose por Período
+                  </h4>
+                  <p className="text-[11px] text-slate-400">Total acumulado segmentado según tu horizonte de planificación</p>
+                </div>
+                
+                <div className="mf-chip-group flex bg-[#040814]/80 rounded-xl p-1 border border-white/10 overflow-x-auto no-scrollbar gap-1">
+                  {(
+                    [
+                      { id: 'month', label: 'Mes' },
+                      { id: 'quarter', label: 'Trimestre (3M)' },
+                      { id: 'semester', label: '6 Meses' },
+                      { id: 'year', label: 'Un Año' },
+                      { id: 'all', label: 'Totales' },
+                    ] as const
+                  ).map((period) => (
+                    <button
+                      key={period.id}
+                      type="button"
+                      onClick={() => setFinanceViewType(period.id)}
+                      className={`chicle-btn px-3 py-1.5 text-xs font-bold uppercase rounded-lg border transition-all whitespace-nowrap cursor-pointer ${
+                        financeViewType === period.id
+                          ? 'aura-bg-soft aura-text-primary aura-border-primary optic-active-card'
+                          : 'border-transparent text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      {period.label}
+                    </button>
+                  ))}
+                </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {financeSummaries[financeViewType].map(summary => {
+                const totalFlow = summary.income + summary.expense;
+                const incomePercent = totalFlow > 0 ? Math.round((summary.income / totalFlow) * 100) : 50;
+
+                return (
+                  <div key={summary.key} className="bg-[#040814]/80 p-4 rounded-2xl border border-white/10 flex flex-col gap-3 relative overflow-hidden hover:border-white/20 transition-colors">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-xs font-anton text-white uppercase tracking-wider truncate max-w-[200px]" title={summary.label}>
+                        {summary.label}
+                      </p>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span className={`text-[10px] px-2 py-0.5 rounded-lg font-mono tabular-nums font-bold ${
+                          summary.balance >= 0 ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/35' : 'bg-rose-500/15 text-rose-300 border border-rose-500/35'
+                        }`}>
+                          {summary.savingsRate}% ahorro
+                        </span>
+                        {savingsTarget > 0 && (
+                          <span className={`text-[9px] px-1.5 py-0.5 rounded-lg font-mono tabular-nums ${
+                            summary.savingsRate >= savingsTarget 
+                              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' 
+                              : 'bg-amber-500/10 text-amber-300 border border-amber-500/30'
+                          }`} title={`Meta de ahorro configurada: ${savingsTarget}%`}>
+                            {summary.savingsRate >= savingsTarget ? '✓ Meta' : `Meta ${savingsTarget}%`}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-1 text-xs">
+                        <div className="flex justify-between items-center">
+                          <span className="text-slate-400 flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Ingresos:
+                          </span>
+                          <span className="text-emerald-400 font-mono tabular-nums font-bold">+{formatMoney(summary.income, currencySymbol)}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-slate-400 flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-rose-400"></span> Gastos:
+                          </span>
+                          <span className="text-rose-400 font-mono tabular-nums font-bold">-{formatMoney(summary.expense, currencySymbol)}</span>
+                        </div>
+                    </div>
+
+                    <div className="w-full bg-rose-950/50 rounded-full h-2 overflow-hidden flex border border-white/10">
+                        <div 
+                          className="bg-emerald-500 h-full transition-all duration-500" 
+                          style={{ width: `${incomePercent}%` }} 
+                          title={`Ingresos: ${incomePercent}%`}
+                        />
+                    </div>
+
+                    <div className="pt-2 border-t border-white/10 flex justify-between items-center text-sm font-black">
+                        <span className="text-slate-300 text-xs font-anton uppercase tracking-wider">Balance:</span>
+                        <span className={`font-mono tabular-nums ${summary.balance >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                          {summary.balance >= 0 ? '+' : '-'}{formatMoney(Math.abs(summary.balance), currencySymbol)}
+                        </span>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {financeSummaries[financeViewType].length === 0 && (
+                  <div className="col-span-full text-center py-8 text-xs text-slate-400 bg-[#040814]/60 rounded-2xl border border-white/10">
+                    No hay movimientos registrados para este agrupamiento temporal.
+                  </div>
               )}
             </div>
+          </div>
 
-            <div className="flex bg-[#001c10] rounded-xl p-1 border border-emerald-900/50 shrink-0">
-              <button 
-                onClick={() => setFinanceTypeFilter('all')} 
-                className={`px-3 py-1 text-xs font-bold rounded-lg transition-colors ${
-                  financeTypeFilter === 'all' ? 'bg-emerald-700 text-white' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Todos ({allTransactions.length})
-              </button>
-              <button 
-                onClick={() => setFinanceTypeFilter('income')} 
-                className={`px-3 py-1 text-xs font-bold rounded-lg transition-colors ${
-                  financeTypeFilter === 'income' ? 'bg-emerald-700 text-white' : 'text-slate-400 hover:text-emerald-300'
-                }`}
-              >
-                Ingresos
-              </button>
-              <button 
-                onClick={() => setFinanceTypeFilter('expense')} 
-                className={`px-3 py-1 text-xs font-bold rounded-lg transition-colors ${
-                  financeTypeFilter === 'expense' ? 'bg-emerald-700 text-white' : 'text-slate-400 hover:text-red-300'
-                }`}
-              >
-                Gastos
-              </button>
+          {categoryBreakdown.length > 0 && (
+            <div className="mb-6 bg-[#040814]/80 p-4 sm:p-5 rounded-2xl border border-white/10">
+              <h4 className="text-xs font-anton aura-text-primary uppercase tracking-wider mb-3 flex items-center gap-2">
+                <Receipt className="w-4 h-4" /> Distribución de Gastos por Categoría
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {categoryBreakdown.map(cat => (
+                  <div key={cat.name} className="space-y-1">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-slate-300 font-medium truncate">{cat.name}</span>
+                      <span className="font-mono tabular-nums font-bold text-rose-400">
+                        {formatMoney(cat.amount, currencySymbol)} <span className="text-slate-400 text-[10px]">({cat.percent}%)</span>
+                      </span>
+                    </div>
+                    <div className="w-full bg-black/50 rounded-full h-1.5 overflow-hidden border border-white/5">
+                      <div 
+                        className="bg-gradient-to-r from-rose-500 to-orange-400 h-full rounded-full transition-all duration-500" 
+                        style={{ width: `${cat.percent}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-        </div>
+          )}
 
-        <div className="mb-3 px-3 py-2 bg-emerald-950/40 border border-emerald-800/30 rounded-xl flex items-center justify-between text-[11px] text-emerald-400/90">
-            <span>💡 Para registrar ingresos y egresos diarios, utiliza el widget <strong>Tesorería Diaria</strong> en la pestaña de Tareas.</span>
-            <span className="font-mono text-[10px] text-emerald-500">{filteredTransactions.length} registros</span>
-        </div>
+          <div className="bg-[#040814]/80 p-4 sm:p-5 rounded-2xl border border-white/10 shadow-inner">
+            <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between mb-4">
+                <div className="relative flex-1">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                  <input 
+                    type="text" 
+                    value={financeSearchTerm} 
+                    onChange={e => setFinanceSearchTerm(e.target.value)}
+                    placeholder="Buscar en descripción, categoría o fecha (ej: 2026-09)..."
+                    className="w-full pl-9 pr-8 py-2 text-xs rounded-xl bg-[#030712]/90 border border-white/15 text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
+                  />
+                  {financeSearchTerm && (
+                    <button 
+                      type="button"
+                      onClick={() => setFinanceSearchTerm('')} 
+                      className="absolute right-2.5 top-2 text-slate-400 hover:text-white text-xs cursor-pointer"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
 
-        {filteredTransactions.length === 0 ? (
-            <div className="text-center py-8 text-xs text-slate-400">
-              No se encontraron movimientos con los filtros seleccionados.
+                <div className="mf-chip-group flex bg-[#030712]/90 rounded-xl p-1 border border-white/10 shrink-0 gap-1">
+                  <button 
+                    type="button"
+                    onClick={() => setFinanceTypeFilter('all')} 
+                    className={`chicle-btn px-3 py-1 text-xs font-bold rounded-lg border transition-colors cursor-pointer ${
+                      financeTypeFilter === 'all'
+                        ? 'aura-bg-soft aura-text-primary aura-border-primary optic-active-card'
+                        : 'border-transparent text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    Todos (<span className="font-mono tabular-nums">{allTransactions.length}</span>)
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={() => setFinanceTypeFilter('income')} 
+                    className={`chicle-btn px-3 py-1 text-xs font-bold rounded-lg border transition-colors cursor-pointer ${
+                      financeTypeFilter === 'income'
+                        ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/60 optic-active-card'
+                        : 'border-transparent text-slate-400 hover:text-emerald-300'
+                    }`}
+                  >
+                    Ingresos
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={() => setFinanceTypeFilter('expense')} 
+                    className={`chicle-btn px-3 py-1 text-xs font-bold rounded-lg border transition-colors cursor-pointer ${
+                      financeTypeFilter === 'expense'
+                        ? 'bg-rose-500/20 text-rose-300 border-rose-400/60 optic-active-card'
+                        : 'border-transparent text-slate-400 hover:text-rose-300'
+                    }`}
+                  >
+                    Gastos
+                  </button>
+                </div>
             </div>
-        ) : (
-            <div className="overflow-x-auto max-h-80 overflow-y-auto scrollbar-thin">
-              <table className="w-full text-left border-collapse">
-                <thead className="sticky top-0 bg-[#001209] z-10">
-                    <tr className="border-b border-emerald-900/40 text-[10px] font-black uppercase text-emerald-500 tracking-wider">
-                      <th className="py-2.5 px-3">Fecha</th>
-                      <th className="py-2.5 px-3">Categoría</th>
-                      <th className="py-2.5 px-3">Descripción</th>
-                      <th className="py-2.5 px-3 text-right">Monto</th>
-                      <th className="py-2.5 px-3 w-10 text-right"></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {filteredTransactions.map(t => {
-                      const isIncome = t.type === 'income';
-                      const isTaskIncome = t.id.startsWith('task-');
-                      return (
-                          <tr key={t.id} className="border-b border-emerald-900/20 hover:bg-emerald-900/20 transition-colors">
-                            <td className="py-2.5 px-3 text-xs font-mono text-emerald-400/70 whitespace-nowrap">{t.date}</td>
-                            <td className="py-2.5 px-3 text-xs text-slate-300">
-                              <span className="px-2 py-0.5 rounded-md bg-emerald-950/80 border border-emerald-800/40 text-[11px]">
-                                {t.category}
-                              </span>
-                            </td>
-                            <td className="py-2.5 px-3 text-xs font-bold text-white">
-                                <div className="flex items-center gap-2">
-                                  <div className={`w-2 h-2 rounded-full shrink-0 ${isIncome ? 'bg-emerald-400' : 'bg-red-400'}`}></div>
-                                  <span className="truncate max-w-xs">{t.description}</span>
-                                </div>
-                            </td>
-                            <td className={`py-2.5 px-3 text-right font-mono font-bold text-xs whitespace-nowrap ${
-                              isIncome ? 'text-emerald-400' : 'text-red-400'
-                            }`}>
-                                {isIncome ? '+' : '-'}{formatMoney(t.amount, currencySymbol)}
-                            </td>
-                            <td className="py-2.5 px-3 text-right">
-                                {!isTaskIncome && (
-                                  deletingId === t.id ? (
-                                    <div className="flex items-center justify-end gap-1">
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          deleteExpense(t.id);
-                                          setDeletingId(null);
-                                        }}
-                                        className="px-2 py-0.5 text-[10px] font-bold bg-red-600 hover:bg-red-500 text-white rounded cursor-pointer transition-colors shadow-sm"
-                                        title="Confirmar eliminación"
-                                      >
-                                        Borrar
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => setDeletingId(null)}
-                                        className="px-1.5 py-0.5 text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 rounded cursor-pointer transition-colors"
-                                        title="Cancelar"
-                                      >
-                                        ✕
-                                      </button>
+
+            <div className="mb-3 px-3 py-2 aura-bg-soft border aura-border-subtle rounded-xl flex items-center justify-between gap-2 text-[11px] aura-text-soft">
+                <span>💡 Para registrar ingresos y egresos diarios, utiliza el widget <strong className="text-white">Tesorería Diaria</strong> en la pestaña de Tareas.</span>
+                <span className="font-mono tabular-nums text-[10px] text-slate-300 shrink-0">{filteredTransactions.length} registros</span>
+            </div>
+
+            {filteredTransactions.length === 0 ? (
+                <div className="text-center py-8 text-xs text-slate-400">
+                  No se encontraron movimientos con los filtros seleccionados.
+                </div>
+            ) : (
+                <div className="overflow-x-auto max-h-80 overflow-y-auto scrollbar-thin">
+                  <table className="w-full text-left border-collapse">
+                    <thead className="sticky top-0 bg-[#040814]/[0.96] z-10">
+                        <tr className="border-b border-white/10 text-[10px] font-anton uppercase text-slate-400 tracking-wider">
+                          <th className="py-2.5 px-3">Fecha</th>
+                          <th className="py-2.5 px-3">Categoría</th>
+                          <th className="py-2.5 px-3">Descripción</th>
+                          <th className="py-2.5 px-3 text-right">Monto</th>
+                          <th className="py-2.5 px-3 w-10 text-right"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {filteredTransactions.map(t => {
+                          const isIncome = t.type === 'income';
+                          const isTaskIncome = t.id.startsWith('task-');
+                          return (
+                              <tr key={t.id} className="border-b border-white/[0.06] hover:bg-white/[0.03] transition-colors">
+                                <td className="py-2.5 px-3 text-xs font-mono tabular-nums text-slate-400 whitespace-nowrap">{t.date}</td>
+                                <td className="py-2.5 px-3 text-xs text-slate-300">
+                                  <span className="px-2 py-0.5 rounded-lg bg-white/[0.04] border border-white/10 text-[11px]">
+                                    {t.category}
+                                  </span>
+                                </td>
+                                <td className="py-2.5 px-3 text-xs font-bold text-white">
+                                    <div className="flex items-center gap-2">
+                                      <div className={`w-2 h-2 rounded-full shrink-0 ${isIncome ? 'bg-emerald-400' : 'bg-rose-400'}`}></div>
+                                      <span className="truncate max-w-xs">{t.description}</span>
                                     </div>
-                                  ) : (
-                                    <button 
-                                      type="button"
-                                      onClick={() => setDeletingId(t.id)}
-                                      className="p-1 text-slate-500 hover:text-red-400 transition-colors rounded hover:bg-red-900/30 cursor-pointer"
-                                      title="Eliminar Registro"
-                                    >
-                                      <Trash2 className="w-3.5 h-3.5" />
-                                    </button>
-                                  )
-                                )}
-                            </td>
-                          </tr>
-                      );
-                    })}
-                </tbody>
-              </table>
-            </div>
-        )}
-      </div>
+                                </td>
+                                <td className={`py-2.5 px-3 text-right font-mono tabular-nums font-bold text-xs whitespace-nowrap ${
+                                  isIncome ? 'text-emerald-400' : 'text-rose-400'
+                                }`}>
+                                    {isIncome ? '+' : '-'}{formatMoney(t.amount, currencySymbol)}
+                                </td>
+                                <td className="py-2.5 px-3 text-right">
+                                    {!isTaskIncome && (
+                                      deletingId === t.id ? (
+                                        <div className="flex items-center justify-end gap-1">
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              deleteExpense(t.id);
+                                              setDeletingId(null);
+                                            }}
+                                            className="chicle-btn optic-active-card px-2 py-1 text-[10px] font-bold bg-rose-600 hover:bg-rose-500 text-white rounded-lg cursor-pointer transition-colors shadow-sm"
+                                            title="Confirmar eliminación"
+                                          >
+                                            Borrar
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => setDeletingId(null)}
+                                            className="chicle-btn px-2 py-1 text-[10px] bg-white/[0.05] hover:bg-white/[0.12] border border-white/15 text-slate-300 hover:text-white rounded-lg cursor-pointer transition-colors"
+                                            title="Cancelar"
+                                          >
+                                            ✕
+                                          </button>
+                                        </div>
+                                      ) : (
+                                        <button 
+                                          type="button"
+                                          onClick={() => setDeletingId(t.id)}
+                                          className="chicle-btn p-1.5 text-slate-400 hover:text-rose-400 transition-colors rounded-lg hover:bg-rose-500/15 cursor-pointer"
+                                          title="Eliminar Registro"
+                                        >
+                                          <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                      )
+                                    )}
+                                </td>
+                              </tr>
+                          );
+                        })}
+                    </tbody>
+                  </table>
+                </div>
+            )}
+          </div>
         </div>
       )}
     </div>

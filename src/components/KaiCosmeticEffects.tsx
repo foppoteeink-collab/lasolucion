@@ -247,10 +247,10 @@ export const KaiCosmeticEffects: React.FC<KaiCosmeticEffectsProps> = ({
       {effectId === 'hud_visor' && (
         <svg viewBox="0 0 160 160" className="absolute w-[125%] h-[125%] overflow-visible" fill="none">
           {/* Corchetes HUD de apuntado */}
-          <path d="M 40,55 L 30,55 L 30,70" stroke="#00f0ff" strokeWidth="2.5" strokeLinecap="round" />
-          <path d="M 120,55 L 130,55 L 130,70" stroke="#00f0ff" strokeWidth="2.5" strokeLinecap="round" />
-          <path d="M 40,115 L 30,115 L 30,100" stroke="#00f0ff" strokeWidth="2.5" strokeLinecap="round" />
-          <path d="M 120,115 L 130,115 L 130,100" stroke="#00f0ff" strokeWidth="2.5" strokeLinecap="round" />
+          <path d="M 40,55 L 30,55 L 30,70" stroke={activeColor} strokeWidth="2.5" strokeLinecap="round" />
+          <path d="M 120,55 L 130,55 L 130,70" stroke={activeColor} strokeWidth="2.5" strokeLinecap="round" />
+          <path d="M 40,115 L 30,115 L 30,100" stroke={activeColor} strokeWidth="2.5" strokeLinecap="round" />
+          <path d="M 120,115 L 130,115 L 130,100" stroke={activeColor} strokeWidth="2.5" strokeLinecap="round" />
 
           {/* Láser de escaneo horizontal */}
           <motion.line
@@ -258,7 +258,7 @@ export const KaiCosmeticEffects: React.FC<KaiCosmeticEffectsProps> = ({
             x2="125"
             y1="60"
             y2="60"
-            stroke="#00f0ff"
+            stroke={activeColor}
             strokeWidth="2"
             strokeOpacity="0.85"
             animate={{ y1: [55, 115, 55], y2: [55, 115, 55] }}
@@ -266,8 +266,8 @@ export const KaiCosmeticEffects: React.FC<KaiCosmeticEffectsProps> = ({
           />
 
           {/* Marcadores de telemetría */}
-          <text x="32" y="50" fill="#00f0ff" fontSize="7" fontFamily="monospace" fontWeight="bold">LOCK // KAI</text>
-          <text x="96" y="125" fill="#38bdf8" fontSize="7" fontFamily="monospace" fontWeight="bold">SYNC 100%</text>
+          <text x="32" y="50" fill={activeColor} fontSize="7" fontFamily="monospace" fontWeight="bold">LOCK // KAI</text>
+          <text x="96" y="125" fill={activeColor} fillOpacity="0.8" fontSize="7" fontFamily="monospace" fontWeight="bold">SYNC 100%</text>
         </svg>
       )}
 

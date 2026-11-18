@@ -37,23 +37,29 @@ export const TaskNoteModal: React.FC<TaskNoteModalProps> = ({
 
   const modalContent = (
     <div
-      className="fixed inset-0 z-[180] flex items-center justify-center p-3 sm:p-4 bg-black/88 portal-modal-root"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Nota de Repaso y Bitácora"
+      className="fixed inset-0 z-[180] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-sm portal-modal-root animate-fadeIn"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md max-h-[88dvh] sm:max-h-[84vh] flex flex-col bg-[#011420] border border-cyan-500/50 rounded-2xl sm:rounded-3xl shadow-[0_0_30px_rgba(0,240,255,0.25)] relative text-left overflow-hidden"
+        className="w-full max-w-md max-h-[88dvh] sm:max-h-[84vh] flex flex-col relative isolate bg-[#030712]/[0.98] border border-white/10 rounded-2xl sm:rounded-3xl shadow-[0_20px_55px_rgba(0,0,0,0.85),0_0_32px_rgba(var(--aura-glow-rgb,0,240,255),0.15)] text-left overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-4 sm:p-5 pb-3 border-b border-cyan-500/30 bg-[#000a14] shrink-0">
+        <span className="vi-grano opacity-5" aria-hidden="true" />
+        <div className="absolute top-0 inset-x-0 h-px aura-top-filament pointer-events-none" aria-hidden="true" />
+
+        <div className="relative z-10 flex items-center justify-between p-4 sm:p-5 pb-3 border-b border-white/10 bg-[#040814]/[0.96] shrink-0">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-xl bg-[#001020] border border-cyan-500/40 flex items-center justify-center text-cyan-400 shadow-[0_0_10px_rgba(0,240,255,0.2)] shrink-0">
+            <div className="w-9 h-9 rounded-xl aura-bg-soft border flex items-center justify-center shrink-0">
               <FileText className="w-4 h-4" />
             </div>
             <div className="min-w-0">
               <h3 className="text-sm font-anton tracking-wide text-white uppercase truncate">
                 Nota de Repaso & Bitácora
               </h3>
-              <p className="text-[11px] text-cyan-300 font-mono truncate max-w-[220px] sm:max-w-xs">
+              <p className="text-[11px] aura-text-soft font-mono truncate max-w-[220px] sm:max-w-xs">
                 {task.title}
               </p>
             </div>
@@ -61,14 +67,15 @@ export const TaskNoteModal: React.FC<TaskNoteModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-cyan-950/40 cursor-pointer shrink-0 min-w-[36px] min-h-[36px] flex items-center justify-center transition-colors"
-            title="Cerrar"
+            aria-label="Cerrar nota"
+            className="w-9 h-9 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 text-slate-400 hover:text-white flex items-center justify-center cursor-pointer shrink-0 transition-colors active:scale-95"
+            title="Cerrar (Esc)"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3">
+        <div className="relative z-10 flex-1 overflow-y-auto p-4 sm:p-5 space-y-3 custom-scrollbar">
           <p className="text-xs text-slate-300 leading-relaxed">
             Anota qué trabajaste específicamente, qué tema cubriste o detalles clave para recordar en tu repaso diario:
           </p>
@@ -80,7 +87,7 @@ export const TaskNoteModal: React.FC<TaskNoteModalProps> = ({
             placeholder="Ej. Repasé 15 verbos irregulares; avancé diseño de vista de misiones; 4 series pesadas en press militar..."
             rows={4}
             maxLength={5000}
-            className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl bg-[#000a14] border border-cyan-500/40 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/50 resize-none leading-relaxed"
+            className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl bg-[#040a1a]/90 border border-white/15 text-white placeholder-slate-500 focus:outline-none focus:border-white/40 resize-none leading-relaxed"
             onKeyDown={(e) => {
               if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
                 onSave();
@@ -89,12 +96,12 @@ export const TaskNoteModal: React.FC<TaskNoteModalProps> = ({
           />
         </div>
 
-        <div className="flex items-center justify-between gap-2 p-3 sm:p-4 border-t border-cyan-500/30 bg-[#000a14] shrink-0">
+        <div className="relative z-10 flex items-center justify-between gap-2 p-3.5 sm:p-4 border-t border-white/10 bg-[#040814]/[0.96] shrink-0">
           {noteText ? (
             <button
               type="button"
               onClick={onDelete}
-              className="px-3.5 py-2 rounded-xl bg-rose-950/40 text-rose-300 hover:bg-rose-900/60 text-xs font-bold border border-rose-500/40 cursor-pointer transition-colors min-h-[40px]"
+              className="chicle-btn px-3.5 py-2 rounded-xl bg-rose-950/40 text-rose-300 hover:bg-rose-900/60 text-xs font-bold border border-rose-500/40 cursor-pointer transition-colors min-h-[40px]"
             >
               Borrar Nota
             </button>
@@ -105,14 +112,14 @@ export const TaskNoteModal: React.FC<TaskNoteModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-3.5 py-2 rounded-xl bg-[#001420] text-slate-300 hover:text-white hover:bg-cyan-950/40 text-xs font-bold border border-cyan-500/30 cursor-pointer min-h-[40px] transition-colors"
+              className="px-3.5 py-2 rounded-xl bg-white/[0.05] text-slate-300 hover:text-white hover:bg-white/[0.12] text-xs font-bold border border-white/15 cursor-pointer min-h-[40px] transition-colors"
             >
               Cancelar
             </button>
             <button
               type="button"
               onClick={onSave}
-              className="px-4 py-2 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-black text-xs font-anton tracking-wider uppercase border border-cyan-300 shadow-[0_0_12px_rgba(0,240,255,0.4)] cursor-pointer transition-colors min-h-[40px]"
+              className="chicle-btn px-4 py-2 rounded-xl aura-btn-gradient optic-active-card text-xs font-anton tracking-wider uppercase cursor-pointer transition-colors min-h-[40px]"
             >
               Guardar Nota
             </button>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Cpu, RefreshCw, Loader2, X, ShieldCheck, Sparkles, AlertCircle, Copy, Check, Zap } from 'lucide-react';
 import { usePlayerStore } from '../store/usePlayerStore';
 import { useTaskStore } from '../store/useTaskStore';
@@ -150,45 +151,54 @@ export const NeuralAnalysisModal: React.FC<NeuralAnalysisModalProps> = ({ isOpen
   }, [isOpen]);
 
   useEffect(() => {
+    if (!isOpen) return;
+    document.body.classList.add('modal-open-hide-floating');
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
+      if (e.key === 'Escape') {
         onClose();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.classList.remove('modal-open-hide-floating');
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen || typeof document === 'undefined') return null;
 
-  return (
+  return createPortal(
     <div 
-      className="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-4 bg-black/88 animate-in fade-in"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="neural-modal-title"
+      className="fixed inset-0 z-[170] portal-modal-root bg-black/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-in fade-in"
+      onClick={onClose}
     >
-      <div className="bg-[#030712]/[0.98] border border-cyan-500/35 rounded-2xl sm:rounded-3xl w-full max-w-2xl max-h-[90dvh] sm:max-h-[88vh] flex flex-col shadow-[0_0_50px_rgba(0,240,255,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] overflow-hidden relative text-left">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="neural-modal-title"
+        className="relative isolate bg-[#030712]/[0.98] border border-white/10 rounded-2xl sm:rounded-3xl w-full max-w-2xl max-h-[90dvh] sm:max-h-[88vh] flex flex-col shadow-[0_24px_64px_rgba(0,0,0,0.75)] overflow-hidden text-left"
+        onClick={(e) => e.stopPropagation()}
+      >
         
         {/* Micrograno táctil Moxen Vidrio */}
         <span className="vi-grano opacity-5" aria-hidden="true" />
 
         {/* Filamento especular superior */}
-        <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent pointer-events-none" />
+        <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
 
         {/* Header */}
-        <div className="p-4 sm:p-5 bg-[#040814]/90 border-b border-white/10 flex items-center justify-between relative z-10">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-cyan-500/15 border border-cyan-400/40 text-cyan-300 shadow-[0_0_14px_rgba(0,240,255,0.3)]">
-              <Cpu className="w-5 h-5 text-cyan-300" />
+        <div className="p-4 sm:p-5 bg-[#040814]/[0.96] border-b border-white/10 flex items-center justify-between gap-3 relative z-10">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="p-2.5 rounded-xl aura-bg-soft border aura-border-subtle aura-text-primary aura-glow-subtle shrink-0">
+              <Cpu className="w-5 h-5 aura-text-primary" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-anton uppercase tracking-wider text-cyan-300 bg-cyan-950/70 px-2 py-0.5 rounded-lg border border-cyan-500/40">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] font-anton uppercase tracking-wider aura-text-soft aura-bg-soft px-2 py-0.5 rounded-lg border aura-border-subtle">
                   Resumen de Enfoque
                 </span>
                 {analysisSource === 'ai' && (
-                  <span className="text-[10px] font-mono font-bold bg-emerald-950/90 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)] flex items-center gap-1">
+                  <span className="text-[10px] font-mono font-bold bg-emerald-950/90 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/50 flex items-center gap-1">
                     <Sparkles className="w-3 h-3 text-emerald-400 animate-pulse" />
                     <span>IA KAI Activa</span>
                   </span>
@@ -200,7 +210,7 @@ export const NeuralAnalysisModal: React.FC<NeuralAnalysisModalProps> = ({ isOpen
                   </span>
                 )}
               </div>
-              <h3 id="neural-modal-title" className="text-base sm:text-lg font-anton tracking-wider text-white uppercase mt-0.5">
+              <h3 id="neural-modal-title" className="text-base sm:text-lg font-anton tracking-wider text-white uppercase mt-0.5 truncate">
                 Diagnóstico de Hábitos y Rendimiento
               </h3>
             </div>
@@ -209,7 +219,7 @@ export const NeuralAnalysisModal: React.FC<NeuralAnalysisModalProps> = ({ isOpen
             type="button"
             onClick={() => { soundFX.playClick(); onClose(); }} 
             aria-label="Cerrar diagnóstico neural"
-            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 border border-transparent hover:border-white/10 transition-all cursor-pointer active:scale-95"
+            className="chicle-btn w-9 h-9 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 text-slate-300 hover:text-white flex items-center justify-center cursor-pointer shrink-0"
             title="Cerrar (Esc)"
           >
             <X className="w-5 h-5" />
@@ -218,9 +228,9 @@ export const NeuralAnalysisModal: React.FC<NeuralAnalysisModalProps> = ({ isOpen
 
         {/* Content */}
         <div className="p-4 sm:p-5 overflow-y-auto custom-scrollbar space-y-4 flex-1 relative z-10">
-          <div className="p-4 rounded-2xl bg-[#020712]/90 border border-white/10 flex gap-3.5 items-start shadow-inner">
-            <div className="w-8 h-8 rounded-xl bg-black/60 border border-cyan-500/40 flex items-center justify-center shrink-0 text-cyan-300">
-              <Sparkles className="w-4 h-4 text-cyan-300" />
+          <div className="p-4 rounded-2xl bg-[#040814]/80 border border-white/10 flex gap-3.5 items-start shadow-inner">
+            <div className="w-8 h-8 rounded-xl bg-black/50 border aura-border-subtle flex items-center justify-center shrink-0 aura-text-primary">
+              <Sparkles className="w-4 h-4 aura-text-primary" />
             </div>
             <div className="text-xs text-slate-300 font-sans leading-relaxed">
               Diagnóstico integral de tus metas, hábitos y reflexiones, calibrado por tu compañero KAI para optimizar tu rendimiento.
@@ -228,7 +238,7 @@ export const NeuralAnalysisModal: React.FC<NeuralAnalysisModalProps> = ({ isOpen
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 border-b border-white/10 pb-2">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h4 className="text-xs font-anton font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
                 <ShieldCheck className="w-4 h-4 text-emerald-400" />
                 <span>Informe de Rendimiento</span>
@@ -243,9 +253,9 @@ export const NeuralAnalysisModal: React.FC<NeuralAnalysisModalProps> = ({ isOpen
                     setAnalysisEngine('auto');
                     handleRunAnalysis('auto');
                   }}
-                  className={`px-2 py-0.5 rounded-md font-bold transition-all cursor-pointer ${
+                  className={`chicle-btn px-2 py-0.5 rounded-md font-bold transition-all cursor-pointer ${
                     analysisEngine === 'auto'
-                      ? 'bg-cyan-500 text-slate-950 shadow-sm'
+                      ? 'aura-bg-primary optic-active-card'
                       : 'text-slate-400 hover:text-white'
                   }`}
                   title="Análisis holístico con KAI IA (Gemini)"
@@ -259,9 +269,9 @@ export const NeuralAnalysisModal: React.FC<NeuralAnalysisModalProps> = ({ isOpen
                     setAnalysisEngine('local');
                     handleRunAnalysis('local');
                   }}
-                  className={`px-2 py-0.5 rounded-md font-bold transition-all cursor-pointer ${
+                  className={`chicle-btn px-2 py-0.5 rounded-md font-bold transition-all cursor-pointer ${
                     analysisEngine === 'local'
-                      ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                      ? 'bg-emerald-500 text-slate-950 optic-active-card shadow-sm'
                       : 'text-slate-400 hover:text-white'
                   }`}
                   title="Análisis instantáneo local (Cero consumo de tokens)"
@@ -278,7 +288,7 @@ export const NeuralAnalysisModal: React.FC<NeuralAnalysisModalProps> = ({ isOpen
                   type="button"
                   onClick={handleCopyAnalysis}
                   aria-label="Copiar diagnóstico al portapapeles"
-                  className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 shadow-sm"
+                  className="chicle-btn px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 text-slate-200 text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer"
                   title="Copiar diagnóstico al portapapeles"
                 >
                   {copied ? (
@@ -288,7 +298,7 @@ export const NeuralAnalysisModal: React.FC<NeuralAnalysisModalProps> = ({ isOpen
                     </>
                   ) : (
                     <>
-                      <Copy className="w-3.5 h-3.5 text-cyan-300" />
+                      <Copy className="w-3.5 h-3.5 aura-text-primary" />
                       <span>Copiar</span>
                     </>
                   )}
@@ -300,7 +310,7 @@ export const NeuralAnalysisModal: React.FC<NeuralAnalysisModalProps> = ({ isOpen
                 onClick={() => handleRunAnalysis()}
                 disabled={isAnalyzing}
                 aria-label="Actualizar informe de rendimiento"
-                className="chicle-btn px-3.5 py-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-400 hover:text-black border border-cyan-400/40 text-cyan-200 disabled:opacity-50 text-xs font-anton uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shadow transition-all active:scale-95"
+                className="chicle-btn aura-btn-gradient optic-active-card px-3.5 py-1.5 rounded-xl disabled:opacity-50 text-xs font-anton uppercase tracking-wider flex items-center gap-1.5 cursor-pointer"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${isAnalyzing ? 'animate-spin' : ''}`} />
                 <span>{isAnalyzing ? 'Analizando...' : 'Actualizar'}</span>
@@ -309,9 +319,9 @@ export const NeuralAnalysisModal: React.FC<NeuralAnalysisModalProps> = ({ isOpen
           </div>
 
           {isAnalyzing ? (
-            <div className="p-10 bg-[#020712]/80 border border-white/10 rounded-2xl flex flex-col items-center justify-center text-center space-y-4 shadow-inner">
+            <div className="p-10 bg-[#040814]/80 border border-white/10 rounded-2xl flex flex-col items-center justify-center text-center space-y-4 shadow-inner" data-preserve-optic="true">
               <QuantumCubeLoader size="md" speed="slow" showLabel={false} />
-              <p className="text-xs font-mono text-cyan-300 max-w-sm">
+              <p className="text-xs font-mono aura-text-soft max-w-sm">
                 KAI está analizando tus metas, hábitos y reflexiones para calibrar tu rendimiento...
               </p>
             </div>
@@ -324,7 +334,7 @@ export const NeuralAnalysisModal: React.FC<NeuralAnalysisModalProps> = ({ isOpen
               <button
                 type="button"
                 onClick={() => handleRunAnalysis()}
-                className="px-3 py-1 bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/50 text-rose-200 rounded-lg text-xs font-mono font-bold flex items-center gap-1 cursor-pointer transition-all active:scale-95 shrink-0"
+                className="chicle-btn px-3 py-1 bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/50 text-rose-200 rounded-lg text-xs font-mono font-bold flex items-center gap-1 cursor-pointer shrink-0"
               >
                 <RefreshCw className="w-3 h-3 text-rose-300" />
                 <span>Reintentar</span>
@@ -338,29 +348,30 @@ export const NeuralAnalysisModal: React.FC<NeuralAnalysisModalProps> = ({ isOpen
                   <span>Sintetizado con IA:</span>
                 </div>
               )}
-              <div className="p-4 rounded-2xl bg-[#020712]/90 border border-white/10 text-xs text-slate-200 font-sans leading-relaxed shadow-inner max-h-[400px] overflow-y-auto space-y-1">
+              <div className="p-4 rounded-2xl bg-[#040814]/80 border border-white/10 text-xs text-slate-200 font-sans leading-relaxed shadow-inner max-h-[400px] overflow-y-auto custom-scrollbar space-y-1">
                 {renderMarkdown(analysisResult)}
               </div>
             </div>
           ) : (
-            <div className="text-center py-10 text-slate-400 text-xs font-mono border border-dashed border-white/10 rounded-2xl bg-white/[0.01]">
+            <div className="text-center py-10 text-slate-400 text-xs font-mono border border-dashed border-white/10 rounded-2xl bg-white/[0.02]">
               Presiona "Actualizar" para generar tu evaluación de rendimiento.
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-[#030712]/95 border-t border-white/10 flex justify-end relative z-10">
+        <div className="p-4 bg-[#040814]/[0.96] border-t border-white/10 flex justify-end relative z-10">
           <button
             type="button"
             onClick={() => { soundFX.playClick(); onClose(); }}
-            className="chicle-btn px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-white text-xs font-anton uppercase tracking-wider cursor-pointer transition-all active:scale-95"
+            className="chicle-btn px-5 py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.12] border border-white/15 text-slate-200 hover:text-white text-xs font-anton uppercase tracking-wider cursor-pointer"
           >
             Volver al Cockpit
           </button>
         </div>
 
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

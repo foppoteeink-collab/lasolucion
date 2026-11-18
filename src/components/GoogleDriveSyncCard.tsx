@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   Cloud, HardDrive, CheckCircle2, RefreshCw, AlertTriangle, 
-  Download, Upload, Check, AlertCircle, Sparkles, LogIn, KeyRound
+  Download, Upload, Check, AlertCircle, Sparkles, LogIn, KeyRound, X
 } from 'lucide-react';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { auth, createGoogleDriveProvider } from '../firebase';
@@ -33,6 +34,33 @@ export const GoogleDriveSyncCard: React.FC = () => {
   const [showUploadConfirm, setShowUploadConfirm] = useState(false);
   const [showDownloadConfirm, setShowDownloadConfirm] = useState(false);
   const [pendingDownloadData, setPendingDownloadData] = useState<any | null>(null);
+
+  const isAnyModalOpen = showUploadConfirm || (showDownloadConfirm && Boolean(pendingDownloadData));
+
+  // Manage body class and Escape key when confirmation modals are open
+  useEffect(() => {
+    if (!isAnyModalOpen) return;
+
+    document.body.classList.add('modal-open-hide-floating');
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (showUploadConfirm) {
+          setShowUploadConfirm(false);
+        }
+        if (showDownloadConfirm) {
+          setShowDownloadConfirm(false);
+          setPendingDownloadData(null);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.classList.remove('modal-open-hide-floating');
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isAnyModalOpen, showUploadConfirm, showDownloadConfirm]);
 
   /**
    * P0: Autorización Incremental Bajo Demanda (OAuth Scope Isolation)
@@ -237,206 +265,242 @@ export const GoogleDriveSyncCard: React.FC = () => {
   };
 
   return (
-    <div className="bg-[#00152b] p-5 sm:p-6 rounded-2xl border border-blue-900/60 space-y-5 shadow-lg relative overflow-hidden">
-      {/* Background glow accent */}
-      <div className="absolute -top-24 -right-24 w-48 h-48 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
+    <div className="relative isolate bg-[#040a1a]/[0.94] p-5 sm:p-6 rounded-2xl border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.45)] overflow-hidden">
+      <span className="vi-grano opacity-5" aria-hidden="true" />
+      <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
 
-      {/* Header */}
-      <div className="flex items-center justify-between border-b border-blue-950/80 pb-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-[#002244] border border-blue-600/40 text-cyan-300">
-            <HardDrive className="w-5 h-5 text-cyan-400" />
+      <div className="relative z-10 space-y-5">
+        {/* Header */}
+        <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl aura-bg-soft border aura-border-subtle aura-text-primary shrink-0">
+              <HardDrive className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-anton uppercase tracking-wider text-white flex items-center gap-2">
+                Nube de Google / Gmail (Google Drive)
+              </h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Respaldo voluntario y seguro en el almacenamiento de tu cuenta personal de Google.
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-sm font-black text-white flex items-center gap-2">
-              Nube de Google / Gmail (Google Drive)
-            </h3>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Respaldo voluntario y seguro en el almacenamiento de tu cuenta personal de Google.
-            </p>
-          </div>
+
+          {user && (
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-mono px-2.5 py-1 rounded-full aura-bg-soft aura-text-soft border aura-border-subtle flex items-center gap-1.5 shrink-0">
+                <span className="w-2 h-2 rounded-full aura-bg-primary animate-pulse" />
+                {driveAccessToken ? 'Drive Vinculado' : 'Google Auth OK'}
+              </span>
+            </div>
+          )}
         </div>
 
-        {user && (
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] font-mono px-2.5 py-1 rounded-full bg-cyan-950/80 text-cyan-300 border border-cyan-500/40 flex items-center gap-1.5 shrink-0">
-              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-              {driveAccessToken ? 'Drive Vinculado' : 'Google Auth OK'}
-            </span>
+        {/* Account status info */}
+        {!user ? (
+          <div className="bg-[#040814]/80 p-5 rounded-xl border border-white/10 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <p className="text-sm font-anton uppercase tracking-wider text-white flex items-center gap-2">
+                  <Cloud className="w-4 h-4 text-amber-400" /> Conecta tu cuenta de Gmail / Google
+                </p>
+                <p className="text-xs text-slate-400 leading-relaxed max-w-xl">
+                  Sin tarjeta de crédito ni permisos invasivos: autentícate gratis para respaldar tu avance cuando lo necesites.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={async () => {
+                  soundFX.playClick();
+                  await signInWithGoogle();
+                }}
+                className="chicle-btn aura-btn-gradient optic-active-card flex items-center justify-center gap-2.5 px-5 py-2.5 text-xs font-anton uppercase tracking-wider rounded-xl transition-all cursor-pointer shrink-0"
+              >
+                <LogIn className="w-4 h-4" />
+                <span>Acceder con Google</span>
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {/* User & file status banner */}
+            <div className="bg-[#040814]/80 p-4 rounded-xl border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full aura-bg-soft border aura-border-subtle flex items-center justify-center aura-text-primary font-bold shrink-0">
+                  {user.email?.charAt(0).toUpperCase() || 'G'}
+                </div>
+                <div>
+                  <p className="font-bold text-white">{user.displayName || 'Usuario de Google'}</p>
+                  <p className="text-slate-400 font-mono text-[11px]">{user.email}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {driveFile ? (
+                  <div className="text-right sm:text-right">
+                    <span className="text-emerald-400 font-bold text-[11px] flex items-center sm:justify-end gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Respaldo en la nube activo
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-mono tabular-nums block">
+                      Modificado: {new Date(driveFile.modifiedTime).toLocaleDateString()} {new Date(driveFile.modifiedTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                ) : hasChecked ? (
+                  <span className="text-slate-400 text-[11px] italic">
+                    Sin copia creada aún en Drive
+                  </span>
+                ) : !driveAccessToken ? (
+                  <button
+                    type="button"
+                    onClick={requestDriveAuthorization}
+                    disabled={isLoading}
+                    className="chicle-btn px-3 py-1.5 text-[11px] font-bold rounded-xl aura-bg-soft hover:brightness-110 aura-text-soft border aura-border-subtle flex items-center gap-1.5 transition-all cursor-pointer"
+                  >
+                    <KeyRound className="w-3.5 h-3.5 aura-text-primary" />
+                    Autorizar Drive
+                  </button>
+                ) : null}
+
+                {driveAccessToken && (
+                  <button
+                    type="button"
+                    onClick={() => checkDriveBackup()}
+                    disabled={isLoading}
+                    title="Comprobar archivo en Drive"
+                    className="chicle-btn p-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] aura-text-soft border border-white/10 transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Action buttons */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <button
+                type="button"
+                onClick={handleInitiateUpload}
+                disabled={isLoading}
+                className="chicle-btn min-h-[46px] px-4 py-3 aura-bg-soft hover:brightness-110 aura-text-soft hover:text-white font-anton text-xs uppercase tracking-wider rounded-xl border aura-border-subtle flex items-center justify-center gap-2.5 transition-all cursor-pointer shadow-sm disabled:opacity-50"
+              >
+                <Upload className="w-4 h-4 aura-text-primary" />
+                <span>Guardar en Google Drive</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handlePrepareDownload}
+                disabled={isLoading}
+                className="chicle-btn min-h-[46px] px-4 py-3 bg-white/[0.04] hover:bg-white/[0.1] text-slate-200 hover:text-white font-anton text-xs uppercase tracking-wider rounded-xl border border-white/15 hover:aura-border-subtle flex items-center justify-center gap-2.5 transition-all cursor-pointer shadow-sm disabled:opacity-50"
+              >
+                <Download className="w-4 h-4 aura-text-primary" />
+                <span>Cargar desde Google Drive</span>
+              </button>
+            </div>
+
+            {/* Active Cloud Sync Progress with Moxen Rayas */}
+            {isLoading && (
+              <div className="p-4 rounded-xl bg-[#030712]/90 border aura-border-subtle aura-glow-subtle animate-fade-in space-y-2 mt-3">
+                <MoxenRayas
+                  progress={syncProgress}
+                  variant="hero"
+                  theme="cyan"
+                  mode="active"
+                  title={syncOperation === 'upload' ? 'Sincronizando Respaldo con Google Drive' : 'Descargando Copia de Seguridad'}
+                  subtitle="Cifrado cuántico y empaquetado de estado PWA"
+                  totalUnits={driveFile?.size ? Number((Number(driveFile.size) / (1024 * 1024)).toFixed(1)) : 1.8}
+                  unitLabel="MB"
+                  showOdometer={true}
+                  showTimeRemaining={true}
+                />
+              </div>
+            )}
           </div>
         )}
+
+        {/* Feedback status message */}
+        {statusMessage && (
+          <div
+            className={`p-3.5 rounded-xl text-xs font-bold flex items-center gap-2.5 animate-fade-in ${
+              statusMessage.type === 'success'
+                ? 'bg-emerald-950/75 border border-emerald-500/60 text-emerald-300'
+                : statusMessage.type === 'error'
+                ? 'bg-rose-950/75 border border-rose-500/60 text-rose-300'
+                : 'aura-bg-soft border aura-border-subtle aura-text-soft'
+            }`}
+          >
+            {statusMessage.type === 'success' ? (
+              <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+            ) : statusMessage.type === 'error' ? (
+              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+            ) : (
+              <Sparkles className="w-4 h-4 aura-text-primary shrink-0" />
+            )}
+            <span>{statusMessage.text}</span>
+          </div>
+        )}
+
+        {/* Security Reassurance Footer */}
+        <div className="pt-2 border-t border-white/10 text-[10.5px] font-mono text-emerald-300/90 text-center sm:text-left leading-snug">
+          {AUTH_SECURITY_MICROCOPY}
+        </div>
       </div>
 
-      {/* Account status info */}
-      {!user ? (
-        <div className="bg-[#001c38]/60 p-5 rounded-xl border border-blue-950 space-y-3">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <p className="text-sm font-bold text-white flex items-center gap-2">
-                <Cloud className="w-4 h-4 text-amber-400" /> Conecta tu cuenta de Gmail / Google
-              </p>
-              <p className="text-xs text-slate-400 leading-relaxed max-w-xl">
-                Sin tarjeta de crédito ni permisos invasivos: autentícate gratis para respaldar tu avance cuando lo necesites.
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={async () => {
-                soundFX.playClick();
-                await signInWithGoogle();
-              }}
-              className="chicle-btn flex items-center justify-center gap-2.5 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-[0_0_15px_rgba(37,99,235,0.4)] transition-all cursor-pointer shrink-0"
-            >
-              <LogIn className="w-4 h-4" />
-              <span>Acceder con Google</span>
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {/* User & file status banner */}
-          <div className="bg-[#001c38]/70 p-4 rounded-xl border border-blue-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-blue-900/60 border border-cyan-500/40 flex items-center justify-center text-cyan-300 font-bold shrink-0">
-                {user.email?.charAt(0).toUpperCase() || 'G'}
-              </div>
-              <div>
-                <p className="font-bold text-white">{user.displayName || 'Usuario de Google'}</p>
-                <p className="text-slate-400 font-mono text-[11px]">{user.email}</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              {driveFile ? (
-                <div className="text-right sm:text-right">
-                  <span className="text-emerald-400 font-bold text-[11px] flex items-center sm:justify-end gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Respaldo en la nube activo
-                  </span>
-                  <span className="text-[10px] text-slate-400 font-mono block">
-                    Modificado: {new Date(driveFile.modifiedTime).toLocaleDateString()} {new Date(driveFile.modifiedTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                </div>
-              ) : hasChecked ? (
-                <span className="text-slate-400 text-[11px] italic">
-                  Sin copia creada aún en Drive
-                </span>
-              ) : !driveAccessToken ? (
-                <button
-                  type="button"
-                  onClick={requestDriveAuthorization}
-                  disabled={isLoading}
-                  className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-blue-900/50 hover:bg-blue-800 text-cyan-300 border border-cyan-500/30 flex items-center gap-1.5 transition-colors"
-                >
-                  <KeyRound className="w-3 h-3 text-cyan-400" />
-                  Autorizar Drive
-                </button>
-              ) : null}
-
-              {driveAccessToken && (
-                <button
-                  type="button"
-                  onClick={() => checkDriveBackup()}
-                  disabled={isLoading}
-                  title="Comprobar archivo en Drive"
-                  className="chicle-btn p-2 rounded-lg bg-blue-950/60 hover:bg-blue-900/60 text-cyan-300 border border-blue-800 transition-colors cursor-pointer disabled:opacity-50"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Action buttons */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-            <button
-              type="button"
-              onClick={handleInitiateUpload}
-              disabled={isLoading}
-              className="chicle-btn min-h-[46px] px-4 py-3 bg-[#002850] hover:bg-[#003870] text-cyan-300 hover:text-white font-black text-xs uppercase tracking-wider rounded-xl border border-cyan-600/50 hover:border-cyan-400 flex items-center justify-center gap-2.5 transition-all cursor-pointer shadow-sm disabled:opacity-50"
-            >
-              <Upload className="w-4 h-4 text-cyan-400" />
-              <span>Guardar en Google Drive</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handlePrepareDownload}
-              disabled={isLoading}
-              className="chicle-btn min-h-[46px] px-4 py-3 bg-[#002244] hover:bg-[#003060] text-blue-300 hover:text-white font-black text-xs uppercase tracking-wider rounded-xl border border-blue-600/50 hover:border-blue-400 flex items-center justify-center gap-2.5 transition-all cursor-pointer shadow-sm disabled:opacity-50"
-            >
-              <Download className="w-4 h-4 text-blue-400" />
-              <span>Cargar desde Google Drive</span>
-            </button>
-          </div>
-
-          {/* Active Cloud Sync Progress with Moxen Rayas */}
-          {isLoading && (
-            <div className="p-4 rounded-xl bg-black/80 border border-cyan-500/50 shadow-[0_0_20px_rgba(0,240,255,0.15)] animate-fade-in space-y-2 mt-3">
-              <MoxenRayas
-                progress={syncProgress}
-                variant="hero"
-                theme="cyan"
-                mode="active"
-                title={syncOperation === 'upload' ? 'Sincronizando Respaldo con Google Drive' : 'Descargando Copia de Seguridad'}
-                subtitle="Cifrado cuántico y empaquetado de estado PWA"
-                totalUnits={driveFile?.size ? Number((Number(driveFile.size) / (1024 * 1024)).toFixed(1)) : 1.8}
-                unitLabel="MB"
-                showOdometer={true}
-                showTimeRemaining={true}
-              />
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Feedback status message */}
-      {statusMessage && (
+      {/* PORTAL CONFIRMATION DIALOG: UPLOAD TO DRIVE */}
+      {showUploadConfirm && typeof document !== 'undefined' && createPortal(
         <div
-          className={`p-3.5 rounded-xl text-xs font-bold flex items-center gap-2.5 animate-fade-in ${
-            statusMessage.type === 'success'
-              ? 'bg-emerald-950/90 border border-emerald-500/80 text-emerald-300'
-              : statusMessage.type === 'error'
-              ? 'bg-rose-950/90 border border-rose-500/80 text-rose-300'
-              : 'bg-blue-950/90 border border-blue-500/80 text-cyan-300'
-          }`}
+          className="fixed inset-0 z-[185] portal-modal-root bg-black/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-fade-in"
+          onClick={() => setShowUploadConfirm(false)}
         >
-          {statusMessage.type === 'success' ? (
-            <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-          ) : statusMessage.type === 'error' ? (
-            <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
-          ) : (
-            <Sparkles className="w-4 h-4 text-cyan-400 shrink-0" />
-          )}
-          <span>{statusMessage.text}</span>
-        </div>
-      )}
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="drive-upload-confirm-title"
+            onClick={(e) => e.stopPropagation()}
+            className="relative isolate bg-[#030712]/[0.98] border border-white/10 rounded-2xl sm:rounded-3xl max-w-md w-full shadow-[0_24px_64px_rgba(0,0,0,0.75)] overflow-hidden"
+          >
+            <span className="vi-grano opacity-5" aria-hidden="true" />
+            <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
 
-      {/* CONFIRMATION DIALOG: UPLOAD TO DRIVE */}
-      {showUploadConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/88 animate-fade-in">
-          <div className="bg-[#001830] border border-cyan-500/60 p-6 rounded-2xl max-w-md w-full space-y-4 shadow-2xl">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-cyan-950 border border-cyan-500/50 text-cyan-300">
-                <Upload className="w-5 h-5 text-cyan-400" />
+            {/* Modal Header */}
+            <div className="relative z-10 flex items-center justify-between gap-3 px-5 py-4 bg-[#040814]/[0.96] border-b border-white/10">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2.5 rounded-xl aura-bg-soft border aura-border-subtle aura-text-primary shrink-0">
+                  <Upload className="w-5 h-5" />
+                </div>
+                <h4 id="drive-upload-confirm-title" className="text-base font-anton uppercase tracking-wider text-white truncate">
+                  ¿Guardar copia en Google Drive?
+                </h4>
               </div>
-              <h4 className="text-base font-black text-white">¿Guardar copia en Google Drive?</h4>
-            </div>
-
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Se creará o actualizará el archivo de respaldo seguro en tu Google Drive personal con tu progreso, misiones y hábitos.
-              {driveFile && (
-                <span className="block mt-1 text-amber-300 font-semibold text-[11px]">
-                  ⚠️ Sobrescribirá la copia del {new Date(driveFile.modifiedTime).toLocaleDateString()}.
-                </span>
-              )}
-            </p>
-
-            <div className="flex items-center justify-end gap-2.5 pt-2">
               <button
                 type="button"
                 onClick={() => setShowUploadConfirm(false)}
-                className="chicle-btn px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl transition-colors cursor-pointer"
+                aria-label="Cerrar"
+                className="chicle-btn w-9 h-9 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 text-slate-300 hover:text-white flex items-center justify-center cursor-pointer shrink-0"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="relative z-10 p-5 space-y-3">
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Se creará o actualizará el archivo de respaldo seguro en tu Google Drive personal con tu progreso, misiones y hábitos.
+                {driveFile && (
+                  <span className="block mt-2 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 font-semibold text-[11px] font-mono tabular-nums">
+                    ⚠️ Sobrescribirá la copia del {new Date(driveFile.modifiedTime).toLocaleDateString()}.
+                  </span>
+                )}
+              </p>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="relative z-10 flex items-center justify-end gap-2.5 px-5 py-4 bg-[#040814]/[0.96] border-t border-white/10">
+              <button
+                type="button"
+                onClick={() => setShowUploadConfirm(false)}
+                className="chicle-btn px-4 py-2 bg-white/[0.05] hover:bg-white/[0.12] border border-white/15 text-slate-200 hover:text-white text-xs font-bold rounded-xl transition-colors cursor-pointer"
               >
                 Cancelar
               </button>
@@ -444,68 +508,98 @@ export const GoogleDriveSyncCard: React.FC = () => {
                 type="button"
                 onClick={executeUpload}
                 disabled={isLoading}
-                className="chicle-btn px-5 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-black uppercase tracking-wider rounded-xl shadow-lg transition-all cursor-pointer flex items-center gap-2"
+                className="chicle-btn aura-btn-gradient optic-active-card px-5 py-2 text-xs font-anton uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center gap-2 disabled:opacity-50"
               >
                 {isLoading && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
-                Confirmar y Guardar
+                <span>Confirmar y Guardar</span>
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {/* Security Reassurance Footer */}
-      <div className="pt-2 border-t border-white/10 text-[10.5px] font-mono text-emerald-300/90 text-center sm:text-left leading-snug">
-        {AUTH_SECURITY_MICROCOPY}
-      </div>
+      {/* PORTAL CONFIRMATION DIALOG: DOWNLOAD/RESTORE FROM DRIVE */}
+      {showDownloadConfirm && pendingDownloadData && typeof document !== 'undefined' && createPortal(
+        <div
+          className="fixed inset-0 z-[185] portal-modal-root bg-black/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-fade-in"
+          onClick={() => {
+            setShowDownloadConfirm(false);
+            setPendingDownloadData(null);
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="drive-download-confirm-title"
+            onClick={(e) => e.stopPropagation()}
+            className="relative isolate bg-[#030712]/[0.98] border border-white/10 rounded-2xl sm:rounded-3xl max-w-md w-full shadow-[0_24px_64px_rgba(0,0,0,0.75)] overflow-hidden"
+          >
+            <span className="vi-grano opacity-5" aria-hidden="true" />
+            <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
 
-      {/* CONFIRMATION DIALOG: DOWNLOAD/RESTORE FROM DRIVE */}
-      {showDownloadConfirm && pendingDownloadData && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/88 animate-fade-in">
-          <div className="bg-[#001830] border border-amber-500/60 p-6 rounded-2xl max-w-md w-full space-y-4 shadow-2xl">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-amber-950 border border-amber-500/50 text-amber-300">
-                <AlertTriangle className="w-5 h-5 text-amber-400" />
+            {/* Modal Header */}
+            <div className="relative z-10 flex items-center justify-between gap-3 px-5 py-4 bg-[#040814]/[0.96] border-b border-white/10">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2.5 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-300 shrink-0">
+                  <AlertTriangle className="w-5 h-5 text-amber-400" />
+                </div>
+                <h4 id="drive-download-confirm-title" className="text-base font-anton uppercase tracking-wider text-white truncate">
+                  ¿Cargar partida desde Drive?
+                </h4>
               </div>
-              <h4 className="text-base font-black text-white">¿Cargar partida desde Google Drive?</h4>
-            </div>
-
-            <div className="text-xs text-slate-300 space-y-2">
-              <p>
-                Se aplicarán los datos guardados en la nube de tu Google Drive. Esto sincronizará:
-              </p>
-              <ul className="list-disc list-inside text-[11px] text-slate-400 space-y-1 font-mono">
-                <li>Nivel {pendingDownloadData.stats?.level || 1} • {pendingDownloadData.stats?.rankTitle || 'Aventurero'}</li>
-                <li>Monedas: {pendingDownloadData.stats?.coins || 0} • XP: {pendingDownloadData.stats?.xp || 0}</li>
-                <li>Hábitos: {pendingDownloadData.customHabits?.length || 0} registrados</li>
-                <li>Fecha del respaldo: {pendingDownloadData.exportedAt ? new Date(pendingDownloadData.exportedAt).toLocaleString() : 'N/A'}</li>
-              </ul>
-              <p className="text-amber-300 font-semibold pt-1">
-                ¿Deseas reemplazar el estado actual por los datos descargados de tu nube?
-              </p>
-            </div>
-
-            <div className="flex items-center justify-end gap-2.5 pt-2">
               <button
                 type="button"
                 onClick={() => {
                   setShowDownloadConfirm(false);
                   setPendingDownloadData(null);
                 }}
-                className="chicle-btn px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl transition-colors cursor-pointer"
+                aria-label="Cerrar"
+                className="chicle-btn w-9 h-9 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 text-slate-300 hover:text-white flex items-center justify-center cursor-pointer shrink-0"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="relative z-10 p-5 text-xs text-slate-300 space-y-3">
+              <p>
+                Se aplicarán los datos guardados en la nube de tu Google Drive. Esto sincronizará:
+              </p>
+              <ul className="list-disc list-inside text-[11px] text-slate-300 space-y-1.5 font-mono tabular-nums bg-[#040814]/80 border border-white/10 rounded-xl p-3">
+                <li>Nivel {pendingDownloadData.stats?.level || 1} • {pendingDownloadData.stats?.rankTitle || 'Aventurero'}</li>
+                <li>Monedas: {pendingDownloadData.stats?.coins || 0} • XP: {pendingDownloadData.stats?.xp || 0}</li>
+                <li>Hábitos: {pendingDownloadData.customHabits?.length || 0} registrados</li>
+                <li>Fecha del respaldo: {pendingDownloadData.exportedAt ? new Date(pendingDownloadData.exportedAt).toLocaleString() : 'N/A'}</li>
+              </ul>
+              <p className="text-amber-300 font-semibold">
+                ¿Deseas reemplazar el estado actual por los datos descargados de tu nube?
+              </p>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="relative z-10 flex items-center justify-end gap-2.5 px-5 py-4 bg-[#040814]/[0.96] border-t border-white/10">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDownloadConfirm(false);
+                  setPendingDownloadData(null);
+                }}
+                className="chicle-btn px-4 py-2 bg-white/[0.05] hover:bg-white/[0.12] border border-white/15 text-slate-200 hover:text-white text-xs font-bold rounded-xl transition-colors cursor-pointer"
               >
                 Cancelar
               </button>
               <button
                 type="button"
                 onClick={executeDownload}
-                className="chicle-btn px-5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black uppercase tracking-wider rounded-xl shadow-lg transition-all cursor-pointer"
+                className="chicle-btn optic-active-card px-5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-anton uppercase tracking-wider rounded-xl shadow-lg transition-all cursor-pointer"
               >
                 Sí, Cargar Datos
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

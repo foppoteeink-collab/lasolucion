@@ -168,10 +168,10 @@ export const OracleGuidedWizard: React.FC<OracleGuidedWizardProps> = ({ onComple
   return (
     <div className="space-y-4">
       {/* Step Progress Bar */}
-      <div className="bg-[#040d1a] border border-cyan-900/60 rounded-xl p-3 flex items-center justify-between">
+      <div className="bg-[#040814]/80 border border-white/10 rounded-xl p-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-mono font-bold text-cyan-300 uppercase tracking-wider flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+          <span className="text-xs font-mono font-bold aura-text-soft uppercase tracking-wider flex items-center gap-1.5 tabular-nums">
+            <Sparkles className="w-3.5 h-3.5 aura-text-primary" />
             Paso a paso · Pregunta {step} de 4
           </span>
         </div>
@@ -181,10 +181,10 @@ export const OracleGuidedWizard: React.FC<OracleGuidedWizardProps> = ({ onComple
               key={s} 
               className={`h-2 rounded-full transition-all ${
                 s === step 
-                  ? 'w-6 bg-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.6)]' 
+                  ? 'w-6 aura-bg-primary aura-glow-subtle optic-active-card' 
                   : s < step 
-                  ? 'w-3 bg-cyan-600' 
-                  : 'w-3 bg-slate-800'
+                  ? 'w-3 bg-white/40' 
+                  : 'w-3 bg-white/10'
               }`}
             />
           ))}
@@ -193,20 +193,20 @@ export const OracleGuidedWizard: React.FC<OracleGuidedWizardProps> = ({ onComple
 
       {/* STEP 1: Ciclo de Energía */}
       {step === 1 && (
-        <div className="bg-[#07111c] border border-cyan-900/50 rounded-xl p-4 space-y-4">
+        <div className="bg-[#040814]/80 border border-white/10 rounded-2xl p-4 space-y-4">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-cyan-950 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0">
+            <div className="w-9 h-9 rounded-xl aura-bg-soft border aura-border-subtle flex items-center justify-center aura-text-primary shrink-0">
               <Sun className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-slate-100 font-sans">1. ¿A qué hora te levantas y te acuestas?</h4>
+              <h4 className="text-sm font-anton uppercase tracking-wider text-white">1. ¿A qué hora te levantas y te acuestas?</h4>
               <p className="text-xs text-slate-400">Marca cuándo empieza y termina normalmente tu día.</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-            <div className="space-y-2 bg-black/40 border border-slate-800/80 p-3 rounded-xl">
-              <label className="text-xs font-mono font-bold text-cyan-300 flex items-center gap-1.5">
+            <div className="space-y-2 bg-black/40 border border-white/10 p-3 rounded-xl">
+              <label className="text-xs font-mono font-bold aura-text-soft flex items-center gap-1.5">
                 <Sun className="w-3.5 h-3.5 text-amber-400" />
                 Hora de Despertar:
               </label>
@@ -215,7 +215,7 @@ export const OracleGuidedWizard: React.FC<OracleGuidedWizardProps> = ({ onComple
                   type="time" 
                   value={wakeTime}
                   onChange={(e) => setWakeTime(e.target.value)}
-                  className="bg-[#03070d] border border-cyan-800 focus:border-cyan-400 rounded-lg px-3 py-2 text-sm text-cyan-200 font-mono outline-none w-full"
+                  className="bg-black/60 border border-white/15 focus:aura-border-primary rounded-lg px-3 py-2 text-sm text-white font-mono tabular-nums outline-none w-full"
                 />
               </div>
               <div className="flex gap-1.5 pt-1">
@@ -224,8 +224,8 @@ export const OracleGuidedWizard: React.FC<OracleGuidedWizardProps> = ({ onComple
                     key={t}
                     type="button"
                     onClick={() => setWakeTime(t)}
-                    className={`flex-1 py-1 text-[11px] font-mono rounded border transition-colors cursor-pointer ${
-                      wakeTime === t ? 'bg-cyan-500 text-slate-950 font-bold border-cyan-400' : 'bg-black/40 text-slate-400 border-slate-800 hover:text-white'
+                    className={`chicle-btn flex-1 py-1 text-[11px] font-mono tabular-nums rounded-lg border transition-colors cursor-pointer ${
+                      wakeTime === t ? 'aura-bg-primary font-bold aura-border-primary optic-active-card' : 'bg-white/[0.03] text-slate-300 border-white/10 hover:text-white hover:bg-white/[0.08]'
                     }`}
                   >
                     {t}
@@ -234,8 +234,8 @@ export const OracleGuidedWizard: React.FC<OracleGuidedWizardProps> = ({ onComple
               </div>
             </div>
 
-            <div className="space-y-2 bg-black/40 border border-slate-800/80 p-3 rounded-xl">
-              <label className="text-xs font-mono font-bold text-cyan-300 flex items-center gap-1.5">
+            <div className="space-y-2 bg-black/40 border border-white/10 p-3 rounded-xl">
+              <label className="text-xs font-mono font-bold aura-text-soft flex items-center gap-1.5">
                 <Moon className="w-3.5 h-3.5 text-indigo-400" />
                 Hora de Dormir:
               </label>
@@ -244,7 +244,7 @@ export const OracleGuidedWizard: React.FC<OracleGuidedWizardProps> = ({ onComple
                   type="time" 
                   value={sleepTime}
                   onChange={(e) => setSleepTime(e.target.value)}
-                  className="bg-[#03070d] border border-cyan-800 focus:border-cyan-400 rounded-lg px-3 py-2 text-sm text-cyan-200 font-mono outline-none w-full"
+                  className="bg-black/60 border border-white/15 focus:aura-border-primary rounded-lg px-3 py-2 text-sm text-white font-mono tabular-nums outline-none w-full"
                 />
               </div>
               <div className="flex gap-1.5 pt-1">
@@ -253,8 +253,8 @@ export const OracleGuidedWizard: React.FC<OracleGuidedWizardProps> = ({ onComple
                     key={t}
                     type="button"
                     onClick={() => setSleepTime(t)}
-                    className={`flex-1 py-1 text-[11px] font-mono rounded border transition-colors cursor-pointer ${
-                      sleepTime === t ? 'bg-cyan-500 text-slate-950 font-bold border-cyan-400' : 'bg-black/40 text-slate-400 border-slate-800 hover:text-white'
+                    className={`chicle-btn flex-1 py-1 text-[11px] font-mono tabular-nums rounded-lg border transition-colors cursor-pointer ${
+                      sleepTime === t ? 'aura-bg-primary font-bold aura-border-primary optic-active-card' : 'bg-white/[0.03] text-slate-300 border-white/10 hover:text-white hover:bg-white/[0.08]'
                     }`}
                   >
                     {t}
@@ -268,13 +268,13 @@ export const OracleGuidedWizard: React.FC<OracleGuidedWizardProps> = ({ onComple
 
       {/* STEP 2: Jornada Laboral o Estudio */}
       {step === 2 && (
-        <div className="bg-[#07111c] border border-cyan-900/50 rounded-xl p-4 space-y-4">
+        <div className="bg-[#040814]/80 border border-white/10 rounded-2xl p-4 space-y-4">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-cyan-950 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0">
+            <div className="w-9 h-9 rounded-xl aura-bg-soft border aura-border-subtle flex items-center justify-center aura-text-primary shrink-0">
               <Briefcase className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-slate-100 font-sans">2. Tu actividad principal (Trabajo o Estudio)</h4>
+              <h4 className="text-sm font-anton uppercase tracking-wider text-white">2. Tu actividad principal (Trabajo o Estudio)</h4>
               <p className="text-xs text-slate-400">¿Qué horario ocupa la mayor parte de tu jornada?</p>
             </div>
           </div>
@@ -294,19 +294,19 @@ export const OracleGuidedWizard: React.FC<OracleGuidedWizardProps> = ({ onComple
                   soundFX.playClick();
                   setWorkType(t.id as any);
                 }}
-                className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                className={`chicle-btn !flex-col !items-start p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
                   workType === t.id 
-                    ? 'bg-cyan-950/80 border-cyan-400 text-cyan-200 shadow-[0_0_12px_rgba(6,182,212,0.3)]' 
-                    : 'bg-black/40 border-slate-800 text-slate-400 hover:border-slate-700'
+                    ? 'aura-bg-soft aura-border-primary aura-glow-subtle optic-active-card' 
+                    : 'bg-black/40 border-white/10 text-slate-400 hover:border-white/20 hover:bg-white/[0.04]'
                 }`}
               >
-                <p className="text-xs font-bold font-mono text-slate-200">{t.title}</p>
+                <p className="text-xs font-bold font-mono text-white">{t.title}</p>
                 <p className="text-[10px] text-slate-400 mt-0.5">{t.desc}</p>
               </button>
             ))}
           </div>
 
-          <div className="space-y-3 bg-black/40 border border-slate-800/80 p-3.5 rounded-xl">
+          <div className="space-y-3 bg-black/40 border border-white/10 p-3.5 rounded-xl">
             <div>
               <label className="text-xs font-mono text-slate-400 block mb-1">Nombre o Título de la Actividad:</label>
               <input 
@@ -314,73 +314,73 @@ export const OracleGuidedWizard: React.FC<OracleGuidedWizardProps> = ({ onComple
                 value={workTitle}
                 onChange={(e) => setWorkTitle(e.target.value)}
                 placeholder="Ej. Atención a Clientes, Desarrollo Web, Oficina..."
-                className="w-full bg-[#03070d] border border-cyan-800 focus:border-cyan-400 rounded-lg px-3 py-1.5 text-xs text-slate-100 font-sans outline-none"
+                className="w-full bg-black/60 border border-white/15 focus:aura-border-primary rounded-lg px-3 py-1.5 text-xs text-white font-sans outline-none"
               />
             </div>
 
             {workType === 'partida' ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                 <div>
-                  <label className="text-[11px] font-mono text-cyan-300 block mb-1">Primer Turno (Mañana):</label>
+                  <label className="text-[11px] font-mono aura-text-soft block mb-1">Primer Turno (Mañana):</label>
                   <div className="flex items-center gap-2">
                     <input 
                       type="time" 
                       value={shift1Start}
                       onChange={(e) => setShift1Start(e.target.value)}
-                      className="bg-[#03070d] border border-cyan-800 rounded-lg px-2 py-1 text-xs text-cyan-200 font-mono flex-1"
+                      className="bg-black/60 border border-white/15 rounded-lg px-2 py-1 text-xs text-white font-mono tabular-nums flex-1"
                     />
                     <span className="text-slate-500 text-xs">a</span>
                     <input 
                       type="time" 
                       value={shift1End}
                       onChange={(e) => setShift1End(e.target.value)}
-                      className="bg-[#03070d] border border-cyan-800 rounded-lg px-2 py-1 text-xs text-cyan-200 font-mono flex-1"
+                      className="bg-black/60 border border-white/15 rounded-lg px-2 py-1 text-xs text-white font-mono tabular-nums flex-1"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-[11px] font-mono text-cyan-300 block mb-1">Segundo Turno (Tarde):</label>
+                  <label className="text-[11px] font-mono aura-text-soft block mb-1">Segundo Turno (Tarde):</label>
                   <div className="flex items-center gap-2">
                     <input 
                       type="time" 
                       value={shift2Start}
                       onChange={(e) => setShift2Start(e.target.value)}
-                      className="bg-[#03070d] border border-cyan-800 rounded-lg px-2 py-1 text-xs text-cyan-200 font-mono flex-1"
+                      className="bg-black/60 border border-white/15 rounded-lg px-2 py-1 text-xs text-white font-mono tabular-nums flex-1"
                     />
                     <span className="text-slate-500 text-xs">a</span>
                     <input 
                       type="time" 
                       value={shift2End}
                       onChange={(e) => setShift2End(e.target.value)}
-                      className="bg-[#03070d] border border-cyan-800 rounded-lg px-2 py-1 text-xs text-cyan-200 font-mono flex-1"
+                      className="bg-black/60 border border-white/15 rounded-lg px-2 py-1 text-xs text-white font-mono tabular-nums flex-1"
                     />
                   </div>
                 </div>
               </div>
             ) : (
               <div>
-                <label className="text-[11px] font-mono text-cyan-300 block mb-1">Horario Laboral:</label>
+                <label className="text-[11px] font-mono aura-text-soft block mb-1">Horario Laboral:</label>
                 <div className="flex items-center gap-2">
                   <input 
                     type="time" 
                     value={continuousStart}
                     onChange={(e) => setContinuousStart(e.target.value)}
-                    className="bg-[#03070d] border border-cyan-800 rounded-lg px-2 py-1 text-xs text-cyan-200 font-mono flex-1"
+                    className="bg-black/60 border border-white/15 rounded-lg px-2 py-1 text-xs text-white font-mono tabular-nums flex-1"
                   />
                   <span className="text-slate-500 text-xs">a</span>
                   <input 
                     type="time" 
                     value={continuousEnd}
                     onChange={(e) => setContinuousEnd(e.target.value)}
-                    className="bg-[#03070d] border border-cyan-800 rounded-lg px-2 py-1 text-xs text-cyan-200 font-mono flex-1"
+                    className="bg-black/60 border border-white/15 rounded-lg px-2 py-1 text-xs text-white font-mono tabular-nums flex-1"
                   />
                 </div>
               </div>
             )}
 
             {/* Días laborales */}
-            <div className="pt-2 border-t border-slate-800/80">
+            <div className="pt-2 border-t border-white/10">
               <label className="text-[11px] font-mono text-slate-400 block mb-1.5">Días en que aplica:</label>
               <div className="flex gap-1">
                 {dayLabels.map(d => (
@@ -388,10 +388,10 @@ export const OracleGuidedWizard: React.FC<OracleGuidedWizardProps> = ({ onComple
                     key={d.num}
                     type="button"
                     onClick={() => toggleWorkDay(d.num)}
-                    className={`flex-1 py-1 rounded text-xs font-mono font-bold cursor-pointer transition-colors ${
+                    className={`chicle-btn flex-1 py-1 rounded-lg text-xs font-mono font-bold cursor-pointer transition-colors ${
                       workDays.includes(d.num)
-                        ? 'bg-cyan-500 text-slate-950'
-                        : 'bg-black/60 text-slate-500 border border-slate-800'
+                        ? 'aura-bg-primary optic-active-card'
+                        : 'bg-white/[0.03] text-slate-400 border border-white/10 hover:text-white'
                     }`}
                   >
                     {d.name}
@@ -405,14 +405,14 @@ export const OracleGuidedWizard: React.FC<OracleGuidedWizardProps> = ({ onComple
 
       {/* STEP 3: Entrenamiento */}
       {step === 3 && (
-        <div className="bg-[#07111c] border border-cyan-900/50 rounded-xl p-4 space-y-4">
-          <div className="flex items-center justify-between">
+        <div className="bg-[#040814]/80 border border-white/10 rounded-2xl p-4 space-y-4">
+          <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-cyan-950 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0">
+              <div className="w-9 h-9 rounded-xl aura-bg-soft border aura-border-subtle flex items-center justify-center aura-text-primary shrink-0">
                 <Dumbbell className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="text-sm font-bold text-slate-100 font-sans">3. Ejercicio o entrenamiento</h4>
+                <h4 className="text-sm font-anton uppercase tracking-wider text-white">3. Ejercicio o entrenamiento</h4>
                 <p className="text-xs text-slate-400">¿Tienes algún bloque para gimnasio, deporte o moverte?</p>
               </div>
             </div>
@@ -423,8 +423,8 @@ export const OracleGuidedWizard: React.FC<OracleGuidedWizardProps> = ({ onComple
                 soundFX.playClick();
                 setHasTraining(!hasTraining);
               }}
-              className={`px-3 py-1 rounded-lg text-xs font-mono font-bold border transition-colors cursor-pointer ${
-                hasTraining ? 'bg-cyan-500 text-slate-950 border-cyan-400' : 'bg-black/60 text-slate-500 border-slate-800'
+              className={`chicle-btn px-3 py-1.5 rounded-xl text-xs font-mono font-bold border transition-colors cursor-pointer shrink-0 ${
+                hasTraining ? 'aura-bg-primary aura-border-primary optic-active-card' : 'bg-white/[0.03] text-slate-400 border-white/10 hover:text-white'
               }`}
             >
               {hasTraining ? 'Activado' : 'No entreno'}
@@ -432,22 +432,22 @@ export const OracleGuidedWizard: React.FC<OracleGuidedWizardProps> = ({ onComple
           </div>
 
           {hasTraining && (
-            <div className="space-y-3 bg-black/40 border border-slate-800/80 p-3.5 rounded-xl">
+            <div className="space-y-3 bg-black/40 border border-white/10 p-3.5 rounded-xl">
               <div>
-                <label className="text-[11px] font-mono text-cyan-300 block mb-1">Horario de Entrenamiento:</label>
+                <label className="text-[11px] font-mono aura-text-soft block mb-1">Horario de Entrenamiento:</label>
                 <div className="flex items-center gap-2">
                   <input 
                     type="time" 
                     value={trainStart}
                     onChange={(e) => setTrainStart(e.target.value)}
-                    className="bg-[#03070d] border border-cyan-800 rounded-lg px-2 py-1 text-xs text-cyan-200 font-mono flex-1"
+                    className="bg-black/60 border border-white/15 rounded-lg px-2 py-1 text-xs text-white font-mono tabular-nums flex-1"
                   />
                   <span className="text-slate-500 text-xs">a</span>
                   <input 
                     type="time" 
                     value={trainEnd}
                     onChange={(e) => setTrainEnd(e.target.value)}
-                    className="bg-[#03070d] border border-cyan-800 rounded-lg px-2 py-1 text-xs text-cyan-200 font-mono flex-1"
+                    className="bg-black/60 border border-white/15 rounded-lg px-2 py-1 text-xs text-white font-mono tabular-nums flex-1"
                   />
                 </div>
               </div>
@@ -460,10 +460,10 @@ export const OracleGuidedWizard: React.FC<OracleGuidedWizardProps> = ({ onComple
                       key={d.num}
                       type="button"
                       onClick={() => toggleTrainDay(d.num)}
-                      className={`flex-1 py-1 rounded text-xs font-mono font-bold cursor-pointer transition-colors ${
+                      className={`chicle-btn flex-1 py-1 rounded-lg text-xs font-mono font-bold cursor-pointer transition-colors ${
                         trainingDays.includes(d.num)
-                          ? 'bg-cyan-500 text-slate-950'
-                          : 'bg-black/60 text-slate-500 border border-slate-800'
+                          ? 'aura-bg-primary optic-active-card'
+                          : 'bg-white/[0.03] text-slate-400 border border-white/10 hover:text-white'
                       }`}
                     >
                       {d.name}
@@ -478,22 +478,22 @@ export const OracleGuidedWizard: React.FC<OracleGuidedWizardProps> = ({ onComple
                   <button
                     type="button"
                     onClick={() => setTrainingSplit('por_musculo')}
-                    className={`p-2 rounded-lg border text-left cursor-pointer transition-colors ${
-                      trainingSplit === 'por_musculo' ? 'bg-cyan-950/70 border-cyan-400 text-cyan-200' : 'bg-black/50 border-slate-800 text-slate-400'
+                    className={`chicle-btn !flex-col !items-start p-2.5 rounded-xl border text-left cursor-pointer transition-colors ${
+                      trainingSplit === 'por_musculo' ? 'aura-bg-soft aura-border-primary optic-active-card' : 'bg-white/[0.03] border-white/10 text-slate-400 hover:border-white/20'
                     }`}
                   >
-                    <p className="text-xs font-bold font-mono">Por Grupo Muscular</p>
+                    <p className="text-xs font-bold font-mono text-white">Por Grupo Muscular</p>
                     <p className="text-[10px] text-slate-400">Pierna, Espalda, Glúteo, Pecho diario</p>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setTrainingSplit('funcional')}
-                    className={`p-2 rounded-lg border text-left cursor-pointer transition-colors ${
-                      trainingSplit === 'funcional' ? 'bg-cyan-950/70 border-cyan-400 text-cyan-200' : 'bg-black/50 border-slate-800 text-slate-400'
+                    className={`chicle-btn !flex-col !items-start p-2.5 rounded-xl border text-left cursor-pointer transition-colors ${
+                      trainingSplit === 'funcional' ? 'aura-bg-soft aura-border-primary optic-active-card' : 'bg-white/[0.03] border-white/10 text-slate-400 hover:border-white/20'
                     }`}
                   >
-                    <p className="text-xs font-bold font-mono">Bloque Único General</p>
+                    <p className="text-xs font-bold font-mono text-white">Bloque Único General</p>
                     <p className="text-[10px] text-slate-400">Gimnasio / Cardio uniforme</p>
                   </button>
                 </div>
@@ -505,26 +505,26 @@ export const OracleGuidedWizard: React.FC<OracleGuidedWizardProps> = ({ onComple
 
       {/* STEP 4: Soporte y Desconexión */}
       {step === 4 && (
-        <div className="bg-[#07111c] border border-cyan-900/50 rounded-xl p-4 space-y-4">
+        <div className="bg-[#040814]/80 border border-white/10 rounded-2xl p-4 space-y-4">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-cyan-950 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0">
+            <div className="w-9 h-9 rounded-xl aura-bg-soft border aura-border-subtle flex items-center justify-center aura-text-primary shrink-0">
               <Utensils className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-slate-100 font-sans">4. Comidas, orden y tiempo libre</h4>
+              <h4 className="text-sm font-anton uppercase tracking-wider text-white">4. Comidas, orden y tiempo libre</h4>
               <p className="text-xs text-slate-400">Activa lo que quieras incluir automáticamente en tu horario.</p>
             </div>
           </div>
 
           <div className="space-y-2.5">
             {/* Almuerzo */}
-            <div className="flex items-center justify-between p-2.5 bg-black/40 border border-slate-800/80 rounded-xl">
+            <div className="flex items-center justify-between gap-2 p-2.5 bg-black/40 border border-white/10 rounded-xl">
               <div className="flex items-center gap-2">
                 <input 
                   type="checkbox" 
                   checked={hasLunch} 
                   onChange={(e) => setHasLunch(e.target.checked)}
-                  className="rounded border-slate-700 text-cyan-500 focus:ring-0 cursor-pointer"
+                  className="rounded border-white/20 focus:ring-0 cursor-pointer accent-cyan-400"
                 />
                 <span className="text-xs font-mono text-slate-200 font-bold">Almuerzo / Comida Principal</span>
               </div>
@@ -533,18 +533,18 @@ export const OracleGuidedWizard: React.FC<OracleGuidedWizardProps> = ({ onComple
                 value={lunchTime} 
                 onChange={(e) => setLunchTime(e.target.value)}
                 disabled={!hasLunch}
-                className="bg-[#03070d] border border-cyan-900 rounded px-2 py-1 text-xs text-cyan-300 font-mono w-36 text-center outline-none disabled:opacity-40"
+                className="bg-black/60 border border-white/15 rounded-lg px-2 py-1 text-xs aura-text-soft font-mono tabular-nums w-36 text-center outline-none disabled:opacity-40"
               />
             </div>
 
             {/* Limpieza */}
-            <div className="flex items-center justify-between p-2.5 bg-black/40 border border-slate-800/80 rounded-xl">
+            <div className="flex items-center justify-between gap-2 p-2.5 bg-black/40 border border-white/10 rounded-xl">
               <div className="flex items-center gap-2">
                 <input 
                   type="checkbox" 
                   checked={hasCleaning} 
                   onChange={(e) => setHasCleaning(e.target.checked)}
-                  className="rounded border-slate-700 text-cyan-500 focus:ring-0 cursor-pointer"
+                  className="rounded border-white/20 focus:ring-0 cursor-pointer accent-cyan-400"
                 />
                 <span className="text-xs font-mono text-slate-200 font-bold">Limpieza y Orden del Hogar</span>
               </div>
@@ -553,18 +553,18 @@ export const OracleGuidedWizard: React.FC<OracleGuidedWizardProps> = ({ onComple
                 value={cleaningTime} 
                 onChange={(e) => setCleaningTime(e.target.value)}
                 disabled={!hasCleaning}
-                className="bg-[#03070d] border border-cyan-900 rounded px-2 py-1 text-xs text-cyan-300 font-mono w-36 text-center outline-none disabled:opacity-40"
+                className="bg-black/60 border border-white/15 rounded-lg px-2 py-1 text-xs aura-text-soft font-mono tabular-nums w-36 text-center outline-none disabled:opacity-40"
               />
             </div>
 
             {/* Bloque Creativo */}
-            <div className="flex items-center justify-between p-2.5 bg-black/40 border border-slate-800/80 rounded-xl">
+            <div className="flex items-center justify-between gap-2 p-2.5 bg-black/40 border border-white/10 rounded-xl">
               <div className="flex items-center gap-2">
                 <input 
                   type="checkbox" 
                   checked={hasCreative} 
                   onChange={(e) => setHasCreative(e.target.checked)}
-                  className="rounded border-slate-700 text-cyan-500 focus:ring-0 cursor-pointer"
+                  className="rounded border-white/20 focus:ring-0 cursor-pointer accent-cyan-400"
                 />
                 <span className="text-xs font-mono text-slate-200 font-bold">Bloque Creativo / Lectura Nocturna</span>
               </div>
@@ -573,18 +573,18 @@ export const OracleGuidedWizard: React.FC<OracleGuidedWizardProps> = ({ onComple
                 value={creativeTime} 
                 onChange={(e) => setCreativeTime(e.target.value)}
                 disabled={!hasCreative}
-                className="bg-[#03070d] border border-cyan-900 rounded px-2 py-1 text-xs text-cyan-300 font-mono w-36 text-center outline-none disabled:opacity-40"
+                className="bg-black/60 border border-white/15 rounded-lg px-2 py-1 text-xs aura-text-soft font-mono tabular-nums w-36 text-center outline-none disabled:opacity-40"
               />
             </div>
 
             {/* Sábado Especial */}
-            <div className="flex items-center justify-between p-2.5 bg-black/40 border border-slate-800/80 rounded-xl">
+            <div className="flex items-center justify-between gap-2 p-2.5 bg-black/40 border border-white/10 rounded-xl">
               <div className="flex items-center gap-2">
                 <input 
                   type="checkbox" 
                   checked={hasSaturdayClass} 
                   onChange={(e) => setHasSaturdayClass(e.target.checked)}
-                  className="rounded border-slate-700 text-cyan-500 focus:ring-0 cursor-pointer"
+                  className="rounded border-white/20 focus:ring-0 cursor-pointer accent-cyan-400"
                 />
                 <span className="text-xs font-mono text-slate-200 font-bold">Sábado: Clase Especial o Tarea Grupal</span>
               </div>
@@ -593,7 +593,7 @@ export const OracleGuidedWizard: React.FC<OracleGuidedWizardProps> = ({ onComple
                 value={saturdayClassTime} 
                 onChange={(e) => setSaturdayClassTime(e.target.value)}
                 disabled={!hasSaturdayClass}
-                className="bg-[#03070d] border border-cyan-900 rounded px-2 py-1 text-xs text-cyan-300 font-mono w-36 text-center outline-none disabled:opacity-40"
+                className="bg-black/60 border border-white/15 rounded-lg px-2 py-1 text-xs aura-text-soft font-mono tabular-nums w-36 text-center outline-none disabled:opacity-40"
               />
             </div>
           </div>
@@ -609,7 +609,7 @@ export const OracleGuidedWizard: React.FC<OracleGuidedWizardProps> = ({ onComple
               soundFX.playClick();
               setStep((step - 1) as any);
             }}
-            className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-lg text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer transition-colors"
+            className="chicle-btn px-3.5 py-2 bg-white/[0.05] hover:bg-white/[0.12] border border-white/15 text-slate-200 hover:text-white rounded-xl text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
             <span>Anterior</span>
@@ -618,7 +618,7 @@ export const OracleGuidedWizard: React.FC<OracleGuidedWizardProps> = ({ onComple
           <button
             type="button"
             onClick={onCancel}
-            className="px-3.5 py-2 bg-transparent hover:bg-white/5 text-slate-400 hover:text-white rounded-lg text-xs font-mono cursor-pointer transition-colors"
+            className="chicle-btn px-3.5 py-2 bg-white/[0.05] hover:bg-white/[0.12] border border-white/15 text-slate-200 hover:text-white rounded-xl text-xs font-mono cursor-pointer transition-colors"
           >
             Cancelar
           </button>
@@ -631,7 +631,7 @@ export const OracleGuidedWizard: React.FC<OracleGuidedWizardProps> = ({ onComple
               soundFX.playClick();
               setStep((step + 1) as any);
             }}
-            className="px-5 py-2 bg-cyan-600 hover:bg-cyan-500 text-slate-950 rounded-lg text-xs font-mono font-black uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shadow-[0_0_15px_rgba(6,182,212,0.3)] transition-all active:scale-95"
+            className="chicle-btn aura-btn-gradient optic-active-card px-5 py-2 rounded-xl text-xs font-anton uppercase tracking-wider flex items-center gap-1.5 cursor-pointer"
           >
             <span>Siguiente</span>
             <ChevronRight className="w-4 h-4" />
@@ -640,9 +640,9 @@ export const OracleGuidedWizard: React.FC<OracleGuidedWizardProps> = ({ onComple
           <button
             type="button"
             onClick={handleFinish}
-            className="px-6 py-2.5 bg-gradient-to-r from-cyan-400 to-emerald-400 hover:from-cyan-300 hover:to-emerald-300 text-slate-950 rounded-xl text-xs font-mono font-black uppercase tracking-widest flex items-center gap-2 cursor-pointer shadow-[0_0_25px_rgba(6,182,212,0.5)] transition-all active:scale-95"
+            className="chicle-btn aura-btn-gradient optic-active-card px-6 py-2.5 rounded-xl text-xs font-anton uppercase tracking-wider flex items-center gap-2 cursor-pointer"
           >
-            <Sparkles className="w-4 h-4 text-slate-950" />
+            <Sparkles className="w-4 h-4" />
             <span>Crear borrador de agenda</span>
           </button>
         )}

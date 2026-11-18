@@ -25,32 +25,53 @@ html.optic-aurora #app-optical-canvas {
 html.optic-noir #app-optical-canvas,
 html.optic-noir body > .fixed.inset-0:not(#kai-sovereign-portal),
 html.optic-noir body > [role="dialog"],
-html.optic-noir .portal-modal-root {
+html.optic-noir body > .portal-modal-root {
   filter: grayscale(100%) contrast(1.18) brightness(0.98) !important;
   transition: filter 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
+/* Protección anti doble-filtro si algún nodo con .portal-modal-root vive dentro del canvas */
+html.optic-noir #app-optical-canvas .portal-modal-root,
+html.optic-eink #app-optical-canvas .portal-modal-root,
+html.optic-cobalt #app-optical-canvas .portal-modal-root {
+  filter: none !important;
+}
+
 /* En Noir Oscuro: Definición nítida de bordes para evitar que cajas oscuras se fundan o sobrepongan */
-html.optic-noir #app-optical-canvas .border,
-html.optic-noir #app-optical-canvas [class*="border-white"],
-html.optic-noir #app-optical-canvas [class*="border-cyan"],
-html.optic-noir #app-optical-canvas [class*="border-slate"],
-html.optic-noir #app-optical-canvas [class*="border-emerald"],
-html.optic-noir #app-optical-canvas [class*="border-purple"],
-html.optic-noir #app-optical-canvas [class*="border-amber"] {
+html.optic-noir :is(#app-optical-canvas, .portal-modal-root, body > [role="dialog"]) :is(
+  .border,
+  [class*="border-white"],
+  [class*="border-cyan"],
+  [class*="border-slate"],
+  [class*="border-emerald"],
+  [class*="border-purple"],
+  [class*="border-amber"],
+  [class*="border-rose"],
+  [class*="border-blue"],
+  [class*="border-yellow"],
+  [class*="border-orange"],
+  [class*="border-pink"],
+  [class*="border-indigo"],
+  [class*="border-red"],
+  [class*="border-fuchsia"],
+  [class*="border-teal"],
+  [class*="border-sky"],
+  [class*="border-violet"],
+  [class*="border-lime"]
+) {
   border-color: rgba(255, 255, 255, 0.18) !important;
 }
 
 /* Divisores nítidos en Noir Oscuro */
-html.optic-noir #app-optical-canvas [class*="border-b"] {
+html.optic-noir :is(#app-optical-canvas, .portal-modal-root, body > [role="dialog"]) [class*="border-b"] {
   border-bottom-color: rgba(255, 255, 255, 0.15) !important;
 }
-html.optic-noir #app-optical-canvas [class*="border-t"] {
+html.optic-noir :is(#app-optical-canvas, .portal-modal-root, body > [role="dialog"]) [class*="border-t"] {
   border-top-color: rgba(255, 255, 255, 0.15) !important;
 }
 
 /* Tarjetas y módulos activos en Noir Oscuro */
-html.optic-noir #app-optical-canvas .optic-active-card {
+html.optic-noir :is(#app-optical-canvas, .portal-modal-root, body > [role="dialog"]) .optic-active-card {
   border-color: rgba(255, 255, 255, 0.55) !important;
   box-shadow: 0 0 15px rgba(255, 255, 255, 0.12) !important;
 }
@@ -73,7 +94,7 @@ html.optic-eink #main-layout-wrapper {
 html.optic-eink #app-optical-canvas,
 html.optic-eink body > .fixed.inset-0:not(#kai-sovereign-portal),
 html.optic-eink body > [role="dialog"],
-html.optic-eink .portal-modal-root {
+html.optic-eink body > .portal-modal-root {
   /* Filtro de entintado profundo: Inversión completa con alto contraste que garantiza papel blanco puro y negros azabache */
   filter: invert(1) hue-rotate(180deg) grayscale(100%) contrast(1.5) brightness(1.02) !important;
   transition: filter 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
@@ -81,39 +102,21 @@ html.optic-eink .portal-modal-root {
 
 /* En la estructura previa a la inversión: forzar blanco puro para que al invertirse sea NEGRO AZABACHE PURO (#000000)
    PRESERVANDO font-weight natural para evitar ensanchamiento de textos y desbordamientos */
-html.optic-eink #app-optical-canvas p,
-html.optic-eink #app-optical-canvas span,
-html.optic-eink #app-optical-canvas h1,
-html.optic-eink #app-optical-canvas h2,
-html.optic-eink #app-optical-canvas h3,
-html.optic-eink #app-optical-canvas h4,
-html.optic-eink #app-optical-canvas h5,
-html.optic-eink #app-optical-canvas h6,
-html.optic-eink #app-optical-canvas label,
-html.optic-eink #app-optical-canvas input,
-html.optic-eink #app-optical-canvas textarea,
-html.optic-eink #app-optical-canvas select,
-html.optic-eink #app-optical-canvas button,
-html.optic-eink #app-optical-canvas a,
-html.optic-eink #app-optical-canvas strong,
-html.optic-eink #app-optical-canvas b,
-html.optic-eink #app-optical-canvas [class*="text-"] {
+html.optic-eink :is(#app-optical-canvas, .portal-modal-root, body > [role="dialog"]) :is(
+  p, span, h1, h2, h3, h4, h5, h6, label, input, textarea, select, button, a, strong, b, [class*="text-"]
+) {
   color: #ffffff !important;
   opacity: 1 !important;
   text-shadow: none !important;
 }
 
 /* Títulos y fuentes tácticas estilo Manga con grosor y nitidez simétrica */
-html.optic-eink #app-optical-canvas h1,
-html.optic-eink #app-optical-canvas h2,
-html.optic-eink #app-optical-canvas h3,
-html.optic-eink #app-optical-canvas h4,
-html.optic-eink #app-optical-canvas .font-anton {
+html.optic-eink :is(#app-optical-canvas, .portal-modal-root, body > [role="dialog"]) :is(h1, h2, h3, h4, .font-anton) {
   letter-spacing: 0.02em !important;
 }
 
 /* Iconos SVG tácticos: herencia de color limpia sin alterar grosores vectoriales ni baselines */
-html.optic-eink #app-optical-canvas svg:not(.ec-interruptor svg) {
+html.optic-eink :is(#app-optical-canvas, .portal-modal-root, body > [role="dialog"]) svg:not(.ec-interruptor svg):not([data-preserve-optic] svg) {
   color: #ffffff !important;
   opacity: 1 !important;
 }
@@ -126,86 +129,107 @@ html.optic-eink #app-optical-canvas svg:not(.ec-interruptor svg) {
    ═══════════════════════════════════════════════════════════════════════ */
 
 /* Bordes generales en elementos que los definen: color blanco nítido (negro al invertirse) */
-html.optic-eink #app-optical-canvas .border,
-html.optic-eink #app-optical-canvas [class*="border-white"],
-html.optic-eink #app-optical-canvas [class*="border-cyan"],
-html.optic-eink #app-optical-canvas [class*="border-slate"],
-html.optic-eink #app-optical-canvas [class*="border-emerald"],
-html.optic-eink #app-optical-canvas [class*="border-purple"],
-html.optic-eink #app-optical-canvas [class*="border-amber"],
-html.optic-eink #app-optical-canvas [class*="border-rose"],
-html.optic-eink #app-optical-canvas [class*="border-blue"] {
+html.optic-eink :is(#app-optical-canvas, .portal-modal-root, body > [role="dialog"]) :is(
+  .border,
+  [class*="border-white"],
+  [class*="border-cyan"],
+  [class*="border-slate"],
+  [class*="border-emerald"],
+  [class*="border-purple"],
+  [class*="border-amber"],
+  [class*="border-rose"],
+  [class*="border-blue"],
+  [class*="border-yellow"],
+  [class*="border-orange"],
+  [class*="border-pink"],
+  [class*="border-indigo"],
+  [class*="border-red"],
+  [class*="border-fuchsia"],
+  [class*="border-teal"],
+  [class*="border-sky"],
+  [class*="border-violet"],
+  [class*="border-lime"]
+) {
   border-color: #ffffff !important;
 }
 
 /* Divisores horizontales y verticales (respetar dirección única estricta sin crear cajas falsas) */
-html.optic-eink #app-optical-canvas [class*="border-b"] {
+html.optic-eink :is(#app-optical-canvas, .portal-modal-root, body > [role="dialog"]) [class*="border-b"] {
   border-bottom-color: #ffffff !important;
 }
 
-html.optic-eink #app-optical-canvas [class*="border-t"] {
+html.optic-eink :is(#app-optical-canvas, .portal-modal-root, body > [role="dialog"]) [class*="border-t"] {
   border-top-color: #ffffff !important;
 }
 
-html.optic-eink #app-optical-canvas [class*="border-l"] {
+html.optic-eink :is(#app-optical-canvas, .portal-modal-root, body > [role="dialog"]) [class*="border-l"] {
   border-left-color: #ffffff !important;
 }
 
-html.optic-eink #app-optical-canvas [class*="border-r"] {
+html.optic-eink :is(#app-optical-canvas, .portal-modal-root, body > [role="dialog"]) [class*="border-r"] {
   border-right-color: #ffffff !important;
 }
 
 /* Botones, selectores y campos de entrada con borde */
-html.optic-eink #app-optical-canvas button.border,
-html.optic-eink #app-optical-canvas input.border,
-html.optic-eink #app-optical-canvas select.border {
+html.optic-eink :is(#app-optical-canvas, .portal-modal-root, body > [role="dialog"]) :is(button.border, input.border, select.border) {
   border-color: #ffffff !important;
 }
 
-/* Eliminar sombras difusas que generan halos grises sucios */
-html.optic-eink #app-optical-canvas [class*="shadow-"],
-html.optic-eink #app-optical-canvas [class*="drop-shadow-"] {
+/* Eliminar sombras difusas y halos de widgets Moxen que generan manchas grises en tinta china */
+html.optic-eink :is(#app-optical-canvas, .portal-modal-root, body > [role="dialog"]) :is(
+  [class*="shadow-"],
+  [class*="drop-shadow-"],
+  .tl-forma,
+  .tl-punto,
+  .tl-globo,
+  .tl-eje,
+  .co-fila,
+  .co-dia,
+  .co-pct,
+  .sn-pincel,
+  .sn-asa,
+  .nv-barra-fill,
+  .nv-cometa,
+  .ry-relleno-layer,
+  .ry-barra-container,
+  .obsidian-panel,
+  .obsidian-modal,
+  .scifi-glass-panel,
+  .scifi-glass-modal,
+  .chicle-toggle-root
+) {
   box-shadow: none !important;
+  text-shadow: none !important;
   filter: none !important;
 }
 
 /* Card activa y elementos seleccionados en Noir Claro: Bloque negro con borde fino y simétrico */
-html.optic-eink #app-optical-canvas .optic-active-card {
+html.optic-eink :is(#app-optical-canvas, .portal-modal-root, body > [role="dialog"]) .optic-active-card {
   background-color: #ffffff !important; /* Al invertirse: negro sólido #000000 */
+  background-image: none !important;
   border-color: #ffffff !important;     /* Al invertirse: borde negro sólido #000000 */
   opacity: 1 !important;
 }
 
 /* Texto e iconos dentro de los elementos activos: negro en DOM -> blanco puro nítido al invertirse */
-html.optic-eink #app-optical-canvas .optic-active-card,
-html.optic-eink #app-optical-canvas .optic-active-card *,
-html.optic-eink #app-optical-canvas .optic-active-card p,
-html.optic-eink #app-optical-canvas .optic-active-card span,
-html.optic-eink #app-optical-canvas .optic-active-card h1,
-html.optic-eink #app-optical-canvas .optic-active-card h2,
-html.optic-eink #app-optical-canvas .optic-active-card h3,
-html.optic-eink #app-optical-canvas .optic-active-card h4,
-html.optic-eink #app-optical-canvas .optic-active-card div,
-html.optic-eink #app-optical-canvas .optic-active-card svg {
+html.optic-eink :is(#app-optical-canvas, .portal-modal-root, body > [role="dialog"]) .optic-active-card,
+html.optic-eink :is(#app-optical-canvas, .portal-modal-root, body > [role="dialog"]) .optic-active-card * {
   color: #000000 !important;             /* Al invertirse: blanco puro nítido #ffffff */
   opacity: 1 !important;
   font-weight: 700 !important;
 }
 
 /* Insignia interior dentro de la card activa: Cuadro blanco con letras negras al renderizar */
-html.optic-eink #app-optical-canvas .optic-active-card .optic-inner-badge,
-html.optic-eink #app-optical-canvas .optic-active-card .optic-inner-badge * {
+html.optic-eink :is(#app-optical-canvas, .portal-modal-root, body > [role="dialog"]) .optic-active-card .optic-inner-badge,
+html.optic-eink :is(#app-optical-canvas, .portal-modal-root, body > [role="dialog"]) .optic-active-card .optic-inner-badge * {
   background-color: #000000 !important; /* Al invertirse: fondo blanco #ffffff */
   border-color: #000000 !important;     /* Al invertirse: borde blanco #ffffff */
   color: #ffffff !important;             /* Al invertirse: letras negras #000000 */
 }
 
 /* Preservar avatares, fotos, gemas, logos y el interruptor cinemático Eclipse */
-html.optic-eink #app-optical-canvas img,
-html.optic-eink #app-optical-canvas video,
-html.optic-eink #app-optical-canvas .ec-interruptor,
-html.optic-eink #app-optical-canvas [data-preserve-optic] {
-  filter: invert(1) hue-rotate(180deg) grayscale(0%) contrast(0.85) !important;
+html.optic-eink :is(#app-optical-canvas, .portal-modal-root, body > [role="dialog"]) :is(img, video, .ec-interruptor, [data-preserve-optic]) {
+  filter: invert(1) hue-rotate(180deg) grayscale(0%) contrast(0.88) !important;
 }
 
 /* En Noir Claro: eliminar la atmósfera de fondo para que el papel sea blanco puro impecable sin manchas */
@@ -217,8 +241,7 @@ html.optic-eink .scifi-empty-radial {
 }
 
 /* Erradicar halos de desenfoque que se transforman en manchones negros */
-html.optic-eink #app-optical-canvas .blur-3xl,
-html.optic-eink #app-optical-canvas .blur-2xl {
+html.optic-eink :is(#app-optical-canvas, .portal-modal-root, body > [role="dialog"]) :is(.blur-3xl, .blur-2xl, .blur-xl, [class*="blur-["]) {
   opacity: 0 !important;
   visibility: hidden !important;
 }
@@ -227,7 +250,7 @@ html.optic-eink #app-optical-canvas .blur-2xl {
 html.optic-cobalt #app-optical-canvas,
 html.optic-cobalt body > .fixed.inset-0:not(#kai-sovereign-portal),
 html.optic-cobalt body > [role="dialog"],
-html.optic-cobalt .portal-modal-root {
+html.optic-cobalt body > .portal-modal-root {
   filter: sepia(100%) hue-rotate(170deg) saturate(320%) contrast(1.22) !important;
   transition: filter 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
@@ -270,6 +293,34 @@ html.optic-eink {
 #kai-sovereign-portal {
   filter: none !important;
   isolation: isolate !important;
+}
+
+/* En Modo Barra (SidebarHUD): la barra adopta el filtro óptico mientras el holograma KAI se preserva en color */
+html.optic-noir #kai-sovereign-portal aside.sidebar-hud-optic,
+html.optic-noir #kai-sovereign-portal .sidebar-hud-tab-optic {
+  filter: grayscale(100%) contrast(1.18) brightness(0.98) !important;
+}
+html.optic-cobalt #kai-sovereign-portal aside.sidebar-hud-optic,
+html.optic-cobalt #kai-sovereign-portal .sidebar-hud-tab-optic {
+  filter: sepia(100%) hue-rotate(170deg) saturate(320%) contrast(1.22) !important;
+}
+html.optic-eink #kai-sovereign-portal aside.sidebar-hud-optic,
+html.optic-eink #kai-sovereign-portal .sidebar-hud-tab-optic {
+  filter: invert(1) hue-rotate(180deg) grayscale(100%) contrast(1.45) brightness(1.02) !important;
+}
+html.optic-eink #kai-sovereign-portal aside.sidebar-hud-optic [data-preserve-optic],
+html.optic-eink #kai-sovereign-portal .sidebar-hud-tab-optic [data-preserve-optic] {
+  filter: invert(1) hue-rotate(180deg) grayscale(0%) contrast(0.88) !important;
+}
+
+/* En Modo Noir Claro: asegurar contraste nítido en etiquetas y anillos del menú orbital de KAI sobre papel blanco */
+html.optic-eink #kai-sovereign-portal .satellite-orbit-ring {
+  stroke: rgba(3, 7, 18, 0.25) !important;
+}
+html.optic-eink #kai-sovereign-portal .satellite-orbit-label {
+  color: #030712 !important;
+  text-shadow: 0 1px 4px rgba(255, 255, 255, 0.95) !important;
+  font-weight: 700 !important;
 }
 
 /* Resalte natural para KAI sobre el papel blanco en Modo Noir Claro (sin auras de color sucias) */

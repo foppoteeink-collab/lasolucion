@@ -58,17 +58,19 @@ export const DailyScheduleStrip: React.FC<DailyScheduleStripProps> = ({
   const activeTask = scheduledTasks.find((t) => checkBlockStatus(t.timeBlock).isActive);
 
   return (
-    <div className="scifi-glass-panel rounded-2xl p-3.5 sm:p-4 font-sans transition-all text-white border border-cyan-500/40 shadow-[0_0_25px_rgba(0,240,255,0.18)]">
+    <div className="scifi-glass-panel relative isolate rounded-2xl p-3.5 sm:p-4 font-sans transition-all text-white border border-white/10 overflow-hidden">
+      <span className="vi-grano opacity-5" aria-hidden="true" />
+      <div className="absolute top-0 inset-x-0 h-px aura-top-filament pointer-events-none" aria-hidden="true" />
       
       {/* Top Bar: Live Clock + Date + Day Rhythm + Close Button */}
-      <div className="flex items-center justify-between gap-2">
+      <div className="relative z-10 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#000a14] border border-cyan-400/60 text-xs font-black shadow-[0_0_10px_rgba(0,240,255,0.25)]">
-            <Clock className="w-3.5 h-3.5 text-cyan-400" />
-            <span className="font-mono text-xs sm:text-sm text-cyan-300 tabular-nums">{formattedTimeStr}</span>
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-black/50 border aura-border-subtle text-xs font-black">
+            <Clock className="w-3.5 h-3.5 aura-text-primary" />
+            <span className="font-mono text-xs sm:text-sm aura-text-soft tabular-nums">{formattedTimeStr}</span>
           </div>
           <span className="text-xs font-anton tracking-wide text-slate-300 flex items-center gap-1.5">
-            <Calendar className="w-3.5 h-3.5 text-cyan-400" />
+            <Calendar className="w-3.5 h-3.5 aura-text-primary" />
             <span>{formattedDateStr}</span>
           </span>
 
@@ -79,11 +81,11 @@ export const DailyScheduleStrip: React.FC<DailyScheduleStripProps> = ({
               soundFX.playClick();
               setModalState('isDayRhythmOpen', true);
             }}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#00142b] hover:bg-cyan-950/70 border border-cyan-500/40 hover:border-cyan-400 text-[11px] font-bold text-cyan-200 hover:text-white transition-all cursor-pointer shadow-[0_0_10px_rgba(0,240,255,0.15)] active:scale-95"
+            className="chicle-btn flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-black/40 hover:bg-white/[0.08] border border-white/10 hover:border-white/25 text-[11px] font-bold text-slate-200 hover:text-white transition-all cursor-pointer"
             title="Personalizar a qué hora inicia tu jornada diaria"
           >
             <span>Jornada: {rhythmLabel}</span>
-            <Settings className="w-3 h-3 text-cyan-400/80" />
+            <Settings className="w-3 h-3 aura-text-primary" />
           </button>
         </div>
 
@@ -91,7 +93,8 @@ export const DailyScheduleStrip: React.FC<DailyScheduleStripProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-cyan-500/20 transition-colors cursor-pointer"
+            aria-label="Cerrar horarios"
+            className="w-8 h-8 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 text-slate-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
             title="Cerrar horarios"
           >
             <X className="w-4 h-4" />
@@ -100,13 +103,13 @@ export const DailyScheduleStrip: React.FC<DailyScheduleStripProps> = ({
       </div>
 
       {/* Middle Status Banner: Dedicated Active Task or Free Transition */}
-      <div className="mt-2.5 pt-2 border-t border-cyan-500/20">
+      <div className="relative z-10 mt-2.5 pt-2.5 border-t border-white/10">
         {activeTask ? (
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-[#002244]/80 px-3 py-2 rounded-xl border border-cyan-400/60 shadow-[0_0_12px_rgba(0,240,255,0.25)]">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-black/45 px-3 py-2 rounded-xl border aura-border-subtle optic-active-card">
             <div className="flex items-center gap-2 min-w-0">
-              <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping shrink-0" />
+              <span className="w-2.5 h-2.5 rounded-full aura-bg-primary animate-ping shrink-0" />
               <div className="flex items-center gap-1.5 flex-wrap min-w-0">
-                <span className="text-[10px] uppercase tracking-wider font-mono font-black text-cyan-300 bg-[#001020] px-1.5 py-0.5 rounded border border-cyan-500/40">
+                <span className="text-[10px] uppercase tracking-wider font-mono font-bold aura-bg-soft px-1.5 py-0.5 rounded border tabular-nums">
                   En curso ({activeTask?.timeBlock || ''})
                 </span>
                 <span className="text-xs sm:text-sm font-bold text-white truncate">
@@ -122,16 +125,16 @@ export const DailyScheduleStrip: React.FC<DailyScheduleStripProps> = ({
                   onOpenPomodoroForTask(activeTask.title, activeTask.category);
                 }
               }}
-              className="self-end sm:self-auto min-h-[36px] px-3 py-1.5 bg-cyan-400 text-black hover:bg-cyan-300 rounded-lg border border-cyan-300 font-anton tracking-wider uppercase cursor-pointer text-xs shadow-[0_0_10px_rgba(0,240,255,0.4)] shrink-0 flex items-center gap-1.5 active:scale-95"
+              className="chicle-btn self-end sm:self-auto min-h-[36px] px-3 py-1.5 aura-btn-gradient optic-active-card rounded-xl font-anton tracking-wider uppercase cursor-pointer text-xs shrink-0 flex items-center gap-1.5"
               title="Enfocar en Pomodoro"
             >
-              <Timer className="w-3.5 h-3.5 text-black" />
+              <Timer className="w-3.5 h-3.5" />
               <span>Pomodoro</span>
             </button>
           </div>
         ) : (
           <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400 py-1 font-mono">
-            <Sparkles className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+            <Sparkles className="w-3.5 h-3.5 aura-text-primary shrink-0" />
             <span>Tiempo libre o transición entre bloques de tu agenda</span>
           </div>
         )}
@@ -139,8 +142,8 @@ export const DailyScheduleStrip: React.FC<DailyScheduleStripProps> = ({
 
       {/* Timeline Chips of All Scheduled Blocks */}
       {scheduledTasks.length > 0 && (
-        <div className="mt-3 pt-3 border-t border-dashed border-cyan-500/30">
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
+        <div className="relative z-10 mt-3 pt-3 border-t border-dashed border-white/10">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 custom-scrollbar">
             {scheduledTasks.filter(t => t && t.title).map((t, idx) => {
               const status = checkBlockStatus(t.timeBlock);
               return (
@@ -148,15 +151,15 @@ export const DailyScheduleStrip: React.FC<DailyScheduleStripProps> = ({
                   key={t.id ? `sched-strip-${t.id}-${idx}` : `sched-strip-${idx}`}
                   className={`shrink-0 px-2.5 py-1.5 rounded-xl border text-xs font-sans flex items-center gap-2 transition-all ${
                     status.isActive
-                      ? 'bg-cyan-950/80 text-white border-cyan-400 font-bold shadow-[0_0_12px_rgba(0,240,255,0.3)]'
+                      ? 'aura-bg-soft font-bold optic-active-card'
                       : t.completed
-                      ? 'bg-[#000a14]/60 text-slate-500 border-cyan-900/30 line-through'
-                      : 'bg-[#000a14] border-cyan-500/30 text-slate-200'
+                      ? 'bg-black/30 text-slate-500 border-white/5 line-through'
+                      : 'bg-black/45 border-white/10 text-slate-200'
                   }`}
                 >
-                  <span className="font-mono font-bold text-[11px] text-cyan-300 tabular-nums">{t.timeBlock}</span>
+                  <span className="font-mono font-bold text-[11px] aura-text-soft tabular-nums">{t.timeBlock}</span>
                   <span className="font-bold truncate max-w-[140px]">{t.title}</span>
-                  {t.completed && <CheckCircle2 className="w-3 h-3 text-cyan-400" />}
+                  {t.completed && <CheckCircle2 className="w-3 h-3 text-emerald-400" />}
                 </div>
               );
             })}

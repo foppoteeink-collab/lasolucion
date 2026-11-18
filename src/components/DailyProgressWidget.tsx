@@ -107,32 +107,33 @@ export const DailyProgressWidget: React.FC<DailyProgressWidgetProps> = ({
     <div
       role="region"
       aria-label="Resumen de Progreso Diario"
-      className="px-3 sm:px-4 py-2 rounded-xl scifi-glass-panel relative overflow-hidden text-left text-white space-y-1.5 border border-cyan-500/30 shadow-[0_4px_20px_rgba(0,0,0,0.4)]"
+      className="px-3 sm:px-4 py-2.5 rounded-2xl scifi-glass-panel relative isolate overflow-hidden text-left text-white space-y-2 border border-white/10"
     >
       {/* Grano esmerilado táctil */}
       <span className="vi-grano opacity-5" aria-hidden="true" />
+      <div className="absolute top-0 inset-x-0 h-px aura-top-filament pointer-events-none" aria-hidden="true" />
 
       <div className="flex items-center justify-between gap-2 relative z-10">
         {/* Left: Progress label + compact inline bar */}
         <div className="flex items-center gap-1.5 sm:gap-2.5 min-w-0 flex-1">
-          <Zap className="w-4 h-4 fill-cyan-400 text-cyan-400 shrink-0" />
+          <Zap className="w-4 h-4 aura-text-primary shrink-0" />
           <span className="text-xs font-black text-white uppercase tracking-wider font-anton shrink-0">
             Progreso
           </span>
-          <span className="text-xs text-cyan-300 font-mono font-bold shrink-0 tabular-nums">
+          <span className="text-xs aura-text-soft font-mono font-bold shrink-0 tabular-nums">
             {completed}/{total} ({percent}%)
           </span>
           <div className="w-16 xs:w-24 sm:w-36 shrink-0">
             <MoxenRayas
               progress={percent}
               variant="compact"
-              theme="cyan"
+              theme="aura"
               mode="reactive"
             />
           </div>
         </div>
 
-        {/* Right Action Cluster: Tesorería (Ingresos/Gastos) + Horarios + XP */}
+        {/* Right Action Cluster: Ritmo + Horarios + XP */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {/* Botón Calibración de Ritmo de Jornada */}
           <button
@@ -142,12 +143,12 @@ export const DailyProgressWidget: React.FC<DailyProgressWidgetProps> = ({
               triggerHaptic(15);
               setModalState('isDayRhythmOpen', true);
             }}
-            className="h-8 sm:h-9 px-2 sm:px-2.5 rounded-xl bg-surface-card hover:bg-cyan-950/40 border border-cyan-400/30 hover:border-cyan-400 text-cyan-300 hover:text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95 shadow-[0_0_8px_rgba(0,240,255,0.1)]"
+            className="chicle-btn h-8 sm:h-9 px-2 sm:px-2.5 rounded-xl bg-black/40 hover:bg-white/[0.08] border border-white/10 hover:border-white/25 aura-text-soft hover:text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
             title="Calibrar a qué hora inicia tu jornada diaria (24h continuas)"
             aria-label="Calibrar inicio de jornada"
           >
-            <Clock className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-            <span className="hidden sm:inline text-[11px] font-mono">{rhythmLabel}</span>
+            <Clock className="w-3.5 h-3.5 aura-text-primary shrink-0" />
+            <span className="hidden sm:inline text-[11px] font-mono tabular-nums">{rhythmLabel}</span>
           </button>
 
           {/* Botón Horarios del Día */}
@@ -161,20 +162,20 @@ export const DailyProgressWidget: React.FC<DailyProgressWidgetProps> = ({
               }}
               aria-expanded={showSchedule}
               aria-label={showSchedule ? 'Ocultar horarios del día' : 'Ver horarios del día'}
-              className={`h-8 sm:h-9 min-w-[36px] px-2 sm:px-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1 transition-all cursor-pointer active:scale-95 ${
+              className={`chicle-btn h-8 sm:h-9 min-w-[36px] px-2 sm:px-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1 transition-all cursor-pointer ${
                 showSchedule
-                  ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400 shadow-[0_0_8px_rgba(0,240,255,0.25)]'
-                  : 'bg-surface-card hover:bg-cyan-950/40 text-slate-300 hover:text-white border-white/10'
+                  ? 'aura-bg-soft optic-active-card'
+                  : 'bg-black/40 hover:bg-white/[0.08] text-slate-300 hover:text-white border-white/10'
               }`}
               title="Ver línea de tiempo de horarios del día"
             >
-              {showSchedule ? <ChevronUp className="w-5 h-5 text-cyan-300 shrink-0" /> : <ChevronDown className="w-5 h-5 text-slate-400 shrink-0" />}
+              {showSchedule ? <ChevronUp className="w-4 h-4 aura-text-primary shrink-0" /> : <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" />}
             </button>
           )}
 
           {/* XP del día en pantallas medianas y grandes */}
-          <div className="hidden md:flex h-8 sm:h-9 px-2.5 rounded-xl bg-surface-card border border-cyan-400/30 text-cyan-300 text-xs font-mono font-bold items-center gap-1.5 tabular-nums">
-            <Sparkles className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+          <div className="hidden md:flex h-8 sm:h-9 px-2.5 rounded-xl bg-black/40 border border-white/10 aura-text-soft text-xs font-mono font-bold items-center gap-1.5 tabular-nums">
+            <Sparkles className="w-3.5 h-3.5 aura-text-primary shrink-0" />
             <span>+{xpEarned}/{xpTotal} XP</span>
           </div>
         </div>
@@ -182,10 +183,10 @@ export const DailyProgressWidget: React.FC<DailyProgressWidgetProps> = ({
 
       {/* Integrated Active Mission / Creative Block inside the Progress Card */}
       {!showSchedule && activeTask && (
-        <div className="flex items-center justify-between gap-2 bg-[#001c38]/95 px-3 py-2 rounded-xl border border-cyan-400/50 relative z-10 shadow-[0_0_15px_rgba(0,240,255,0.2)]">
+        <div className="flex items-center justify-between gap-2 bg-[#040a1a]/[0.96] px-3 py-2 rounded-xl border aura-border-subtle relative z-10 aura-glow-subtle">
           <div className="flex items-center gap-2 min-w-0">
-            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shrink-0" />
-            <span className="text-[10px] uppercase font-mono font-bold text-cyan-300 shrink-0">
+            <span className="w-2 h-2 rounded-full aura-bg-primary animate-pulse shrink-0" />
+            <span className="text-[10px] uppercase font-mono font-bold aura-text-primary shrink-0 tabular-nums">
               {activeTask.timeBlock ? activeTask.timeBlock.split('-')[0].trim() : 'AHORA'}:
             </span>
             <span className="font-bold text-white truncate text-xs sm:text-sm">
@@ -201,7 +202,7 @@ export const DailyProgressWidget: React.FC<DailyProgressWidgetProps> = ({
                 onOpenPomodoroForTask(activeTask.title, activeTask.category);
               }}
               aria-label={`Iniciar temporizador de foco para: ${activeTask.title}`}
-              className="px-2.5 py-1 bg-cyan-400 text-black hover:bg-cyan-300 rounded-lg font-anton uppercase text-[11px] shrink-0 flex items-center gap-1 shadow-[0_0_10px_rgba(0,240,255,0.4)] cursor-pointer"
+              className="chicle-btn px-2.5 py-1.5 aura-btn-gradient optic-active-card rounded-xl font-anton uppercase text-[11px] shrink-0 flex items-center gap-1 cursor-pointer"
             >
               <Timer className="w-3.5 h-3.5" />
               <span>Foco</span>
@@ -221,9 +222,9 @@ export const DailyProgressWidget: React.FC<DailyProgressWidgetProps> = ({
             onClaimDailyBonus(25, 10);
           }}
           aria-label="Reclamar bono de día completado: 25 XP y 10 monedas"
-          className="w-full py-1.5 px-3 bg-[#d6f421] hover:bg-yellow-300 text-black rounded-lg font-anton tracking-wider uppercase text-[11px] transition-all flex items-center justify-center gap-1.5 cursor-pointer relative z-10"
+          className="chicle-btn w-full py-2 px-3 bg-amber-400 hover:bg-amber-300 text-[#030712] optic-active-card rounded-xl font-anton tracking-wider uppercase text-[11px] transition-all flex items-center justify-center gap-1.5 cursor-pointer relative z-10"
         >
-          <Trophy className="w-3.5 h-3.5 text-black" />
+          <Trophy className="w-3.5 h-3.5 text-[#030712]" />
           <span>¡Día Completado! Reclamar Bono (+25 XP • +10 🪙)</span>
         </button>
       )}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useId } from 'react';
 import { motion } from 'motion/react';
 import { KaiCustomForm, KaiMultiverseStyle, KaiShapeKey } from '../types';
 import { KaiVectorGraphics } from './KaiVectorGraphics';
@@ -20,6 +20,7 @@ export interface KAICompanionProps {
   eyeOffset?: { x: number; y: number };
   isTrackingMouse?: boolean;
   isSpeaking?: boolean;
+  scale?: number;
 }
 
 /**
@@ -286,11 +287,18 @@ export const KAICompanion: React.FC<KAICompanionProps> = ({
   interactive = true,
   onClick,
   auraState = 'normal',
+  glowFilterId,
   eyeOffset: propEyeOffset,
   isTrackingMouse: propIsTrackingMouse,
   isSpeaking: propIsSpeaking,
+  scale,
 }) => {
   const stats = usePlayerStore((s) => s.stats);
+  const rawReactId = useId();
+  const sanitizedReactId = rawReactId.replace(/[^a-zA-Z0-9_-]/g, '_');
+  const resolvedGlowFilterId = glowFilterId
+    ? `${glowFilterId}_${sanitizedReactId}`
+    : `kai-companion-${sanitizedReactId}`;
 
   const [internalEyeOffset, setInternalEyeOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [internalIsTracking, setInternalIsTracking] = useState(false);
@@ -409,6 +417,14 @@ export const KAICompanion: React.FC<KAICompanionProps> = ({
     }
   }, [size]);
 
+  // Escala proporcional para efectos cosméticos y reliquias
+  const cosmeticScale = useMemo(() => {
+    if (typeof scale === 'number' && Number.isFinite(scale) && scale > 0) {
+      return scale;
+    }
+    return Number(Math.max(0.28, Math.min(2.2, widthPx / 152)).toFixed(2));
+  }, [scale, widthPx]);
+
   // Obtener URL de imagen si es una rama de ilustración real (o hidratar de localStorage)
   const effectiveImageUrl = useMemo(() => {
     if (effectiveShape !== 'custom' || !effectiveCustomForm) return null;
@@ -439,6 +455,7 @@ export const KAICompanion: React.FC<KAICompanionProps> = ({
   return (
     <motion.div
       ref={containerRef}
+      data-preserve-optic="true"
       style={
         {
           '--color-aura-activa': effectiveAuraColor,
@@ -514,7 +531,7 @@ export const KAICompanion: React.FC<KAICompanionProps> = ({
             activeColor={effectiveAuraColor}
             secondaryColor={effectiveAuraColor}
             customForm={effectiveCustomForm}
-            glowFilterId="kai-companion-aura-glow"
+            glowFilterId={resolvedGlowFilterId}
             eyeOffset={effectiveEyeOffset}
             isTrackingMouse={effectiveIsTracking}
             justClicked={effectiveIsSpeaking}
@@ -526,6 +543,7 @@ export const KAICompanion: React.FC<KAICompanionProps> = ({
       <KaiCosmeticEffects
         effectId={stats?.kaiParticleEffect || 'none'}
         activeColor={effectiveAuraColor}
+        scale={cosmeticScale}
       />
     </motion.div>
   );

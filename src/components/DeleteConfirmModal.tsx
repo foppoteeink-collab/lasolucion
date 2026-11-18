@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { AlertTriangle, Trash2, X, Calendar } from 'lucide-react';
 import { TaskItem } from '../types';
 import { useTaskStore } from '../store/useTaskStore';
@@ -13,6 +14,7 @@ interface DeleteConfirmModalProps {
 
 export function DeleteConfirmModal({ task, onClose, onConfirm }: DeleteConfirmModalProps) {
   useEffect(() => {
+    document.body.classList.add('modal-open-hide-floating');
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         soundFX.playClick();
@@ -21,7 +23,10 @@ export function DeleteConfirmModal({ task, onClose, onConfirm }: DeleteConfirmMo
       }
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.classList.remove('modal-open-hide-floating');
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, [onClose]);
 
   const customHabits = useTaskStore.getState().customHabits || [];
@@ -54,73 +59,84 @@ export function DeleteConfirmModal({ task, onClose, onConfirm }: DeleteConfirmMo
     onClose();
   };
 
-  return (
+  const modalContent = (
     <div 
-      className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/88 animate-in fade-in"
+      className="fixed inset-0 z-[185] portal-modal-root bg-black/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-in fade-in"
       onClick={handleCloseAction}
     >
       <div 
         role="dialog"
         aria-modal="true"
         aria-labelledby="delete-confirm-modal-title"
-        className="w-full max-w-md max-h-[88dvh] sm:max-h-[84vh] flex flex-col bg-[#001830] border border-red-500/50 rounded-3xl shadow-[0_0_40px_rgba(239,68,68,0.2)] overflow-hidden relative"
+        className="relative isolate w-full max-w-md max-h-[88dvh] sm:max-h-[84vh] flex flex-col bg-[#030712]/[0.98] border border-rose-500/40 rounded-2xl sm:rounded-3xl shadow-[0_24px_64px_rgba(0,0,0,0.75)] overflow-hidden text-left"
         onClick={(e) => e.stopPropagation()}
       >
+        <span className="vi-grano opacity-5" aria-hidden="true" />
+        <div className="absolute top-0 inset-x-0 h-px pointer-events-none bg-gradient-to-r from-transparent via-rose-500/60 to-transparent" aria-hidden="true" />
+
         <button
+          type="button"
           onClick={handleCloseAction}
-          className="absolute top-4 right-4 p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer z-10"
-          title="Cerrar (Volver atrás)"
+          className="chicle-btn w-9 h-9 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 text-slate-300 hover:text-white flex items-center justify-center cursor-pointer absolute top-4 right-4 z-20"
+          title="Cerrar (Esc)"
           aria-label="Cerrar confirmación de eliminación"
         >
           <X className="w-5 h-5" />
         </button>
 
-        <div className="flex-1 overflow-y-auto p-5 sm:p-6">
-          <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center mx-auto mb-4">
-            <AlertTriangle className="w-8 h-8 text-red-500" />
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-5 sm:p-6 relative z-10">
+          <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/35 flex items-center justify-center mx-auto mb-4">
+            <AlertTriangle className="w-8 h-8 text-rose-400" />
           </div>
           
-          <h2 id="delete-confirm-modal-title" className="text-xl font-black text-white text-center mb-2">¿Eliminar Tarea?</h2>
+          <h2 id="delete-confirm-modal-title" className="text-xl font-anton uppercase tracking-wider text-white text-center mb-2">¿Eliminar Tarea?</h2>
           <p className="text-center text-slate-300 text-sm mb-6">
             Estás a punto de eliminar <strong className="text-white">"{task.title}"</strong>.
           </p>
 
           {isHabit && (
-            <div className="bg-orange-950/40 border border-orange-500/30 rounded-xl p-4 mb-6">
-              <h3 className="text-orange-400 font-black text-sm mb-1 flex items-center justify-center gap-2">
+            <div className="bg-amber-950/35 border border-amber-500/35 rounded-2xl p-4 mb-6">
+              <h3 className="text-amber-400 font-anton uppercase tracking-wider text-xs mb-1 flex items-center justify-center gap-2">
                 <Calendar className="w-4 h-4" /> Regla 21/66 Días
               </h3>
-              <p className="text-orange-200/80 text-xs text-center">
+              <p className="text-amber-200/85 text-xs text-center">
                 ⚠️ Vinculado a la regla 21/66d. Eliminarlo pausará el avance de racha de este hábito.
               </p>
             </div>
           )}
 
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {isHabit && (
               <button
+                type="button"
                 onClick={() => handleConfirmAction(true)}
                 aria-label={`Eliminar hábito ${task.title} permanentemente`}
-                className="w-full py-3 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 font-black border border-red-500/30 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                className="chicle-btn optic-active-card w-full py-3 px-4 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-anton uppercase tracking-wider text-xs shadow-[0_0_20px_rgba(225,29,72,0.35)] flex items-center justify-center gap-2 cursor-pointer"
               >
-                <Trash2 className="w-5 h-5" />
+                <Trash2 className="w-4 h-4" />
                 Eliminar Hábito Permanentemente
               </button>
             )}
             
             <button
+              type="button"
               onClick={() => handleConfirmAction(false)}
               aria-label={isHabit ? `Eliminar ${task.title} solo por hoy` : `Eliminar tarea ${task.title}`}
-              className={`w-full py-3 rounded-xl ${isHabit ? 'bg-slate-800/50 hover:bg-slate-700/50 text-slate-300 border border-slate-700' : 'bg-red-500/10 hover:bg-red-500/20 text-red-400 font-black border border-red-500/30'} transition-all flex items-center justify-center gap-2 cursor-pointer`}
+              className={`chicle-btn w-full py-3 px-4 rounded-xl font-anton uppercase tracking-wider text-xs flex items-center justify-center gap-2 cursor-pointer ${
+                isHabit
+                  ? 'bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/40'
+                  : 'optic-active-card bg-rose-600 hover:bg-rose-500 text-white shadow-[0_0_20px_rgba(225,29,72,0.35)]'
+              }`}
             >
-              <Trash2 className="w-5 h-5" />
+              <Trash2 className="w-4 h-4" />
               {isHabit ? 'Eliminar SOLO por HOY' : 'Eliminar Tarea'}
             </button>
 
             <button
+              type="button"
               onClick={handleCloseAction}
               aria-label="Cancelar eliminación y volver atrás"
-              className="w-full py-3 rounded-xl bg-blue-900/20 hover:bg-blue-800/40 text-blue-300 font-black border border-blue-500/30 transition-all cursor-pointer"
+              className="chicle-btn w-full py-3 px-4 rounded-xl bg-white/[0.05] hover:bg-white/[0.12] border border-white/15 text-slate-200 hover:text-white font-anton uppercase tracking-wider text-xs cursor-pointer"
             >
               Cancelar (Volver)
             </button>
@@ -129,4 +145,10 @@ export function DeleteConfirmModal({ task, onClose, onConfirm }: DeleteConfirmMo
       </div>
     </div>
   );
+
+  if (typeof document !== 'undefined') {
+    return createPortal(modalContent, document.body);
+  }
+
+  return modalContent;
 }

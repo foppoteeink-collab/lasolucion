@@ -73,7 +73,7 @@ export function getSystemPalette(
       c1, c2, c3, c4,
       glow: `color-mix(in srgb, ${uiAccent1} 60%, transparent)`,
       glowSecondary: `color-mix(in srgb, ${uiAccent2} 50%, transparent)`,
-      textColor: 'text-cyan-300',
+      textColor: 'aura-text-primary',
       gradient: `linear-gradient(to right, ${c1} 0%, ${c2} 20%, ${c3} 40%, ${c4} 60%, ${c2} 80%, ${c1} 100%)`,
     };
   }
@@ -88,7 +88,7 @@ export function getSystemPalette(
     c1, c2, c3, c4,
     glow: 'rgba(0, 240, 255, 0.45)', // Resplandor Cian Neón
     glowSecondary: 'rgba(138, 43, 226, 0.35)', // Resplandor Púrpura
-    textColor: 'text-cyan-300',
+    textColor: 'aura-text-primary',
     gradient: `linear-gradient(to right, ${c1} 0%, ${c2} 20%, ${c3} 40%, ${c4} 60%, ${c2} 80%, ${c1} 100%)`,
   };
 }

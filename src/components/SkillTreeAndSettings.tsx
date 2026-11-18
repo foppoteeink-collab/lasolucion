@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { Network, ShieldAlert, BrainCircuit, Activity, Lock, Unlock, Zap, Gem, Layers } from 'lucide-react';
+import { ShieldAlert, BrainCircuit, Activity, Lock, Unlock, Zap, Coins, Layers } from 'lucide-react';
 import { SkillNode, PlayerStats } from '../types';
 import { soundFX } from '../utils/audio';
 import { triggerHaptic } from '../utils/haptics';
+import { TabHeader } from './common/TabHeader';
 
 interface SkillTreeAndSettingsProps {
   skillTree: SkillNode[];
@@ -54,11 +55,21 @@ export const SkillTreeAndSettings: React.FC<SkillTreeAndSettingsProps> = ({
 
   return (
     <div className="space-y-5 pb-20 text-white">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 scifi-glass-panel p-4 rounded-2xl">
-        <h2 className="text-white font-anton text-lg sm:text-xl px-1 flex items-center gap-2 uppercase tracking-wide">
-          <BrainCircuit className="w-5 h-5 text-cyan-400 drop-shadow-[0_0_8px_rgba(0,240,255,0.7)]" /> Laboratorio de Maestría & Habilidades
-        </h2>
-
+      <TabHeader
+        title="Laboratorio de Maestría & Habilidades"
+        subtitle="Usa tus Monedas para desbloquear talentos y mejoras pasivas de tu perfil táctico."
+        icon={<BrainCircuit className="w-5 h-5" />}
+        rightSlot={
+          <div
+            className="flex items-center gap-2 bg-[#040814]/80 px-3.5 py-1.5 rounded-xl border border-amber-400/50"
+            title="Monedas disponibles para investigar"
+          >
+            <Coins className="w-4 h-4 text-amber-400 stroke-[2.5]" />
+            <span className="text-base sm:text-lg font-anton text-amber-300 font-mono tabular-nums">{stats.coins}</span>
+            <span className="text-[10px] font-sans font-bold text-amber-400/80 hidden sm:inline">Monedas</span>
+          </div>
+        }
+      >
         {/* Moxen Chip Menu Group for Lab Filtering */}
         <div
           className="mf-8-menu-chip-group mf-chip-group mf-chip-group--compact"
@@ -70,13 +81,13 @@ export const SkillTreeAndSettings: React.FC<SkillTreeAndSettingsProps> = ({
             role="option"
             aria-selected={activeFilter === 'todos'}
             onClick={() => { soundFX.playClick(); setActiveFilter('todos'); }}
-            className={`mf-8-menu-chip-group__chip mf-chip mf-chip--sm ${
-              activeFilter === 'todos' ? 'mf-8-menu-chip-group__chip--active mf-chip--active' : ''
+            className={`chicle-btn mf-8-menu-chip-group__chip mf-chip mf-chip--sm ${
+              activeFilter === 'todos' ? 'mf-8-menu-chip-group__chip--active mf-chip--active aura-bg-soft aura-border-primary aura-text-primary optic-active-card' : ''
             }`}
           >
-            <Layers className="w-3.5 h-3.5 text-cyan-400" />
+            <Layers className={`w-3.5 h-3.5 ${activeFilter === 'todos' ? 'aura-text-primary' : 'aura-text-soft'}`} />
             <span>Todos</span>
-            <span className="mf-chip__badge">{skillTree.length}</span>
+            <span className="mf-chip__badge font-mono tabular-nums">{skillTree.length}</span>
           </button>
 
           <button
@@ -84,13 +95,13 @@ export const SkillTreeAndSettings: React.FC<SkillTreeAndSettingsProps> = ({
             role="option"
             aria-selected={activeFilter === 'desbloqueados'}
             onClick={() => { soundFX.playClick(); setActiveFilter('desbloqueados'); }}
-            className={`mf-8-menu-chip-group__chip mf-chip mf-chip--sm ${
-              activeFilter === 'desbloqueados' ? 'mf-8-menu-chip-group__chip--active mf-chip--active' : ''
+            className={`chicle-btn mf-8-menu-chip-group__chip mf-chip mf-chip--sm ${
+              activeFilter === 'desbloqueados' ? 'mf-8-menu-chip-group__chip--active mf-chip--active aura-bg-soft aura-border-primary aura-text-primary optic-active-card' : ''
             }`}
           >
             <Unlock className="w-3.5 h-3.5 text-emerald-400" />
             <span>Activos</span>
-            <span className="mf-chip__badge">{unlockedCount}</span>
+            <span className="mf-chip__badge font-mono tabular-nums">{unlockedCount}</span>
           </button>
 
           <button
@@ -98,101 +109,103 @@ export const SkillTreeAndSettings: React.FC<SkillTreeAndSettingsProps> = ({
             role="option"
             aria-selected={activeFilter === 'pendientes'}
             onClick={() => { soundFX.playClick(); setActiveFilter('pendientes'); }}
-            className={`mf-8-menu-chip-group__chip mf-chip mf-chip--sm ${
-              activeFilter === 'pendientes' ? 'mf-8-menu-chip-group__chip--active mf-chip--active' : ''
+            className={`chicle-btn mf-8-menu-chip-group__chip mf-chip mf-chip--sm ${
+              activeFilter === 'pendientes' ? 'mf-8-menu-chip-group__chip--active mf-chip--active aura-bg-soft aura-border-primary aura-text-primary optic-active-card' : ''
             }`}
           >
             <Lock className="w-3.5 h-3.5 text-amber-400" />
             <span>Por Investigar</span>
-            <span className="mf-chip__badge">{pendingCount}</span>
+            <span className="mf-chip__badge font-mono tabular-nums">{pendingCount}</span>
           </button>
         </div>
-      </div>
+      </TabHeader>
 
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row items-center justify-between scifi-glass-panel p-4.5 rounded-2xl gap-4">
-           <div className="text-center sm:text-left">
-             <p className="text-cyan-300 font-anton text-base tracking-wide uppercase">Puntos de Investigación Disponibles</p>
-             <p className="text-[11px] text-cyan-300/80 font-medium">Usa tus Monedas para desbloquear talentos y mejoras pasivas de tu perfil táctico.</p>
-           </div>
-           <div className="flex items-center gap-2 bg-[#04020e] px-4 py-2 rounded-xl border border-amber-400/60 shadow-[0_0_12px_rgba(245,158,11,0.25)]">
-             <Gem className="w-5 h-5 text-amber-400" />
-             <span className="text-2xl font-anton text-amber-300 font-mono tabular-nums">{stats.coins}</span>
-           </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filteredSkills.map(skill => (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+        {filteredSkills.map((skill) => {
+          const canAfford = stats.coins >= skill.costCoins;
+          return (
             <div 
               key={skill.id} 
-              className={`relative p-5 rounded-2xl border transition-all overflow-hidden group ${
+              className={`relative isolate p-5 rounded-2xl bg-[#040a1a]/[0.94] border shadow-[0_8px_30px_rgba(0,0,0,0.45)] transition-all overflow-hidden group flex flex-col justify-between ${
                 skill.isUnlocked 
-                  ? 'scifi-glass-panel border-cyan-400 shadow-[0_0_25px_rgba(0,240,255,0.25)]' 
-                  : 'bg-[#04020e]/90 border-cyan-500/30 hover:border-cyan-400/60 hover:shadow-[0_0_15px_rgba(0,240,255,0.15)]'
+                  ? 'aura-border-primary aura-glow-subtle' 
+                  : 'border-white/10 hover:border-white/25'
               }`}
             >
-              {skill.isUnlocked && (
-                <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/10 blur-3xl rounded-full pointer-events-none"></div>
-              )}
+              <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
               
-              <div className="flex items-start justify-between mb-4 relative z-10">
-                <div className={`p-3 rounded-2xl ${skill.isUnlocked ? 'bg-cyan-950/80 text-cyan-300 border border-cyan-400/60' : 'bg-[#04020e] text-slate-400 border border-cyan-500/30'}`}>
-                  {skill.effectType === 'streak_shield' ? <ShieldAlert className="w-6 h-6 text-amber-400" /> : 
-                   skill.effectType === 'xp_multiplier' ? <Zap className="w-6 h-6 text-cyan-300" /> : 
-                   <Activity className="w-6 h-6 text-cyan-400" />}
+              <div>
+                <div className="flex items-start justify-between mb-4 relative z-10">
+                  <div className={`p-3 rounded-2xl border ${
+                    skill.isUnlocked
+                      ? 'aura-bg-soft aura-border-primary aura-text-primary'
+                      : 'bg-[#040814]/80 text-slate-400 border-white/10'
+                  }`}>
+                    {skill.effectType === 'streak_shield' ? <ShieldAlert className="w-6 h-6 text-amber-400" /> : 
+                     skill.effectType === 'xp_multiplier' ? <Zap className="w-6 h-6 aura-text-primary" /> : 
+                     <Activity className="w-6 h-6 aura-text-primary" />}
+                  </div>
+                  <div className="text-right">
+                    {skill.isUnlocked ? (
+                       <span className="inline-flex items-center gap-1 text-[10px] font-anton text-emerald-300 uppercase tracking-wider bg-emerald-500/15 px-2.5 py-1 rounded-lg border border-emerald-400/40">
+                         <Unlock className="w-3 h-3" /> Desbloqueado
+                       </span>
+                    ) : (
+                       <span className="inline-flex items-center gap-1 text-[10px] font-anton text-slate-400 uppercase tracking-wider bg-[#040814]/80 px-2.5 py-1 rounded-lg border border-white/10">
+                         <Lock className="w-3 h-3" /> Bloqueado
+                       </span>
+                    )}
+                  </div>
                 </div>
-                <div className="text-right">
-                  {skill.isUnlocked ? (
-                     <span className="inline-flex items-center gap-1 text-[10px] font-anton text-cyan-300 uppercase tracking-wider bg-cyan-950/80 px-2.5 py-1 rounded-md border border-cyan-400/60">
-                       <Unlock className="w-3 h-3" /> Desbloqueado
-                     </span>
-                  ) : (
-                     <span className="inline-flex items-center gap-1 text-[10px] font-anton text-slate-400 uppercase tracking-wider bg-[#04020e] px-2.5 py-1 rounded-md border border-cyan-500/30">
-                       <Lock className="w-3 h-3" /> Bloqueado
-                     </span>
-                  )}
-                </div>
-              </div>
 
-              <div className="relative z-10">
-                <h3 className="text-base font-anton uppercase tracking-wide mb-1 text-white">{skill.title}</h3>
-                <p className="text-xs text-cyan-300/80 leading-relaxed mb-4 min-h-[40px]">{skill.description}</p>
+                <div className="relative z-10">
+                  <h3 className="text-base font-anton uppercase tracking-wide mb-1.5 text-white">{skill.title}</h3>
+                  <p className="text-xs text-slate-300 leading-relaxed mb-4 min-h-[40px]">{skill.description}</p>
+                </div>
               </div>
 
               {!skill.isUnlocked && (
                 <button 
+                  type="button"
                   onClick={() => handlePurchaseSkill(skill)}
-                  disabled={stats.coins < skill.costCoins}
-                  className={`w-full py-2.5 rounded-xl text-xs font-anton flex items-center justify-center gap-2 uppercase tracking-wider transition-all cursor-pointer ${
-                    stats.coins >= skill.costCoins
-                      ? 'bg-amber-400 hover:bg-amber-300 text-black shadow-[0_0_15px_rgba(245,158,11,0.4)] active:scale-95'
-                      : 'bg-[#04020e] text-slate-500 border border-cyan-500/20 cursor-not-allowed'
+                  disabled={!canAfford}
+                  className={`relative z-10 chicle-btn w-full py-2.5 rounded-xl text-xs font-anton flex items-center justify-center gap-2 uppercase tracking-wider transition-all ${
+                    canAfford
+                      ? 'aura-btn-gradient optic-active-card cursor-pointer'
+                      : 'bg-black/40 text-slate-500 border border-white/10 cursor-not-allowed'
                   }`}
                 >
-                  Investigar <Gem className="w-3.5 h-3.5" /> {skill.costCoins}
+                  <span>Investigar</span>
+                  <Coins className={`w-3.5 h-3.5 ${canAfford ? '' : 'text-amber-400/60'}`} />
+                  <span className="font-mono tabular-nums">{skill.costCoins}</span>
                 </button>
               )}
 
               {skill.isUnlocked && (
-                <div className="w-full py-2.5 rounded-xl text-xs font-anton text-center text-cyan-300 bg-cyan-950/80 border border-cyan-400/60 uppercase tracking-wider">
+                <div className="relative z-10 w-full py-2.5 rounded-xl text-xs font-anton text-center aura-bg-soft aura-border-subtle border uppercase tracking-wider optic-active-card">
                   Activo Permanentemente
                 </div>
               )}
             </div>
-          ))}
+          );
+        })}
 
-          {filteredSkills.length === 0 && (
-            <div className="col-span-full py-12 text-center text-slate-400 border border-dashed border-cyan-500/30 rounded-2xl bg-[#04020e]/60 p-6">
-              <BrainCircuit className="w-10 h-10 text-cyan-400/60 mx-auto mb-2" />
-              <p className="text-sm font-bold text-cyan-300">No hay habilidades en esta categoría</p>
+        {filteredSkills.length === 0 && (
+          <div className="relative isolate col-span-full py-12 text-center text-slate-400 border border-dashed border-white/15 rounded-2xl bg-[#040a1a]/[0.94] overflow-hidden p-6">
+            <span className="vi-grano opacity-5" aria-hidden="true" />
+            <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
+            <div className="relative z-10">
+              <BrainCircuit className="w-10 h-10 aura-text-primary opacity-60 mx-auto mb-2" />
+              <p className="text-sm font-anton uppercase tracking-wider text-white">No hay habilidades en esta categoría</p>
               <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
                 {activeFilter === 'desbloqueados'
                   ? 'Aún no has investigado ninguna habilidad. ¡Usa tus monedas acumuladas para desbloquear talentos pasivos!'
                   : '¡Has completado todas las investigaciones de esta rama!'}
               </p>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

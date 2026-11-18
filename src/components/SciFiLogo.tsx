@@ -4,12 +4,13 @@ import { MainLogo } from './MainLogo';
 export const SciFiLogo: React.FC<{ className?: string; textClassName?: string; showText?: boolean }> = ({ className = "w-12 h-12", textClassName = "", showText = true }) => {
   return (
     <div className={`flex flex-col items-center justify-center gap-3 ${className}`}>
-      {/* SVG Container */}
+      {/* SVG Container sincronizado con Aura */}
       <svg 
         viewBox="0 0 200 280" 
-        className="w-full h-full drop-shadow-[0_0_8px_rgba(100,150,255,0.8)]"
+        className="w-full h-full aura-text-primary"
+        style={{ filter: 'drop-shadow(0 0 8px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.7))' }}
         fill="none" 
-        stroke="#8ca9ff" 
+        stroke="currentColor" 
         strokeWidth="1.5" 
         strokeLinecap="round" 
         strokeLinejoin="round"
@@ -23,15 +24,15 @@ export const SciFiLogo: React.FC<{ className?: string; textClassName?: string; s
         <path d="M 80,30 L 120,30 L 80,50 L 120,50" />
         <path d="M 80,70 L 120,70 L 80,90 L 120,90" />
         {/* Left side node structure */}
-        <circle cx="65" cy="40" r="3" fill="#8ca9ff" />
-        <circle cx="65" cy="70" r="3" fill="#8ca9ff" />
-        <circle cx="45" cy="55" r="3" fill="#8ca9ff" />
+        <circle cx="65" cy="40" r="3" fill="currentColor" />
+        <circle cx="65" cy="70" r="3" fill="currentColor" />
+        <circle cx="45" cy="55" r="3" fill="currentColor" />
         <path d="M 80,40 L 65,40 L 45,55 L 65,70 L 80,70" />
         <path d="M 65,40 L 65,70" />
         {/* Right side node structure */}
-        <circle cx="135" cy="40" r="3" fill="#8ca9ff" />
-        <circle cx="135" cy="70" r="3" fill="#8ca9ff" />
-        <circle cx="155" cy="55" r="3" fill="#8ca9ff" />
+        <circle cx="135" cy="40" r="3" fill="currentColor" />
+        <circle cx="135" cy="70" r="3" fill="currentColor" />
+        <circle cx="155" cy="55" r="3" fill="currentColor" />
         <path d="M 120,40 L 135,40 L 155,55 L 135,70 L 120,70" />
         <path d="M 135,40 L 135,70" />
 
@@ -43,13 +44,13 @@ export const SciFiLogo: React.FC<{ className?: string; textClassName?: string; s
 
         {/* Icosahedron (Center Hexagon with inner triangles) */}
         <polygon points="100,105 130,125 130,165 100,185 70,165 70,125" />
-        <circle cx="100" cy="145" r="3" fill="#8ca9ff" />
-        <circle cx="100" cy="105" r="3" fill="#8ca9ff" />
-        <circle cx="130" cy="125" r="3" fill="#8ca9ff" />
-        <circle cx="130" cy="165" r="3" fill="#8ca9ff" />
-        <circle cx="100" cy="185" r="3" fill="#8ca9ff" />
-        <circle cx="70" cy="165" r="3" fill="#8ca9ff" />
-        <circle cx="70" cy="125" r="3" fill="#8ca9ff" />
+        <circle cx="100" cy="145" r="3" fill="currentColor" />
+        <circle cx="100" cy="105" r="3" fill="currentColor" />
+        <circle cx="130" cy="125" r="3" fill="currentColor" />
+        <circle cx="130" cy="165" r="3" fill="currentColor" />
+        <circle cx="100" cy="185" r="3" fill="currentColor" />
+        <circle cx="70" cy="165" r="3" fill="currentColor" />
+        <circle cx="70" cy="125" r="3" fill="currentColor" />
         {/* Inner lines connecting to center */}
         <path d="M 100,105 L 100,145" />
         <path d="M 130,125 L 100,145" />
@@ -68,7 +69,7 @@ export const SciFiLogo: React.FC<{ className?: string; textClassName?: string; s
         {/* Bottom Hexagon System */}
         <polygon points="100,195 125,210 125,240 100,255 75,240 75,210" />
         <polygon points="100,205 115,215 115,235 100,245 85,235 85,215" opacity="0.6" />
-        <circle cx="100" cy="225" r="5" fill="#8ca9ff" />
+        <circle cx="100" cy="225" r="5" fill="currentColor" />
         <circle cx="100" cy="225" r="12" strokeWidth="1" opacity="0.4" />
       </svg>
       {showText && (

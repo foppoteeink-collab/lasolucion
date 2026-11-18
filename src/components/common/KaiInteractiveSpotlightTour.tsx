@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Sparkles,
@@ -141,20 +142,35 @@ export const KaiInteractiveSpotlightTour: React.FC = () => {
     };
   }, [isTacticalGuideOpen, stepIndex, updateTargetRect]);
 
-  // Global window listeners for resize & scroll
+  const handleSkip = useCallback(() => {
+    soundFX.playClick();
+    markTutorialGuideSeen('introWalkthrough');
+    closeTacticalGuide();
+  }, [markTutorialGuideSeen, closeTacticalGuide]);
+
+  // Global window listeners for resize, scroll, Escape & floating UI suppression
   useEffect(() => {
     if (!isTacticalGuideOpen) return;
+    document.body.classList.add('modal-open-hide-floating');
     const handleRecalc = () => updateTargetRect();
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleSkip();
+      }
+    };
     window.addEventListener('resize', handleRecalc);
     window.addEventListener('scroll', handleRecalc, true);
+    window.addEventListener('keydown', handleKeyDown);
 
     return () => {
+      document.body.classList.remove('modal-open-hide-floating');
       window.removeEventListener('resize', handleRecalc);
       window.removeEventListener('scroll', handleRecalc, true);
+      window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isTacticalGuideOpen, updateTargetRect]);
+  }, [isTacticalGuideOpen, updateTargetRect, handleSkip]);
 
-  if (!isTacticalGuideOpen) return null;
+  if (!isTacticalGuideOpen || typeof document === 'undefined') return null;
 
   const currentStep = steps[stepIndex];
   const padding = 8;
@@ -174,12 +190,6 @@ export const KaiInteractiveSpotlightTour: React.FC = () => {
     if (stepIndex > 0) {
       setStepIndex((prev) => prev - 1);
     }
-  };
-
-  const handleSkip = () => {
-    soundFX.playClick();
-    markTutorialGuideSeen('introWalkthrough');
-    closeTacticalGuide();
   };
 
   const handleComplete = () => {
@@ -223,7 +233,7 @@ export const KaiInteractiveSpotlightTour: React.FC = () => {
         right: '12px',
         margin: '0 auto',
         maxWidth: '400px',
-        zIndex: 60
+        zIndex: 182
       };
     } else {
       return {
@@ -233,16 +243,17 @@ export const KaiInteractiveSpotlightTour: React.FC = () => {
         right: '12px',
         margin: '0 auto',
         maxWidth: '400px',
-        zIndex: 60
+        zIndex: 182
       };
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 overflow-hidden pointer-events-auto">
-      {/* ── 1. SPOTLIGHT HOLE CUTOUT (Foco de Luz con Halo de Neón) ── */}
+  return createPortal(
+    <div className="fixed inset-0 z-[180] portal-modal-root overflow-hidden pointer-events-auto">
+      {/* ── 1. SPOTLIGHT HOLE CUTOUT (Foco de Luz con Halo de Aura, protegido en optic-eink) ── */}
       {hasTarget && targetRect && (
         <motion.div
+          data-preserve-optic="true"
           initial={{ opacity: 0, scale: 0.85 }}
           animate={{
             opacity: 1,
@@ -255,46 +266,50 @@ export const KaiInteractiveSpotlightTour: React.FC = () => {
           transition={{ type: 'spring', damping: 28, stiffness: 320 }}
           style={{
             position: 'fixed',
-            boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.84)',
+            boxShadow: '0 0 0 9999px rgba(3, 7, 18, 0.78)',
             pointerEvents: 'none',
-            zIndex: 51
+            zIndex: 181
           }}
-          className="rounded-2xl border-2 border-cyan-400 ring-4 ring-cyan-500/40 shadow-[0_0_25px_rgba(0,240,255,0.85)]"
-        >
-          {/* Animated pulsing beacon halo */}
-          <span className="absolute -inset-1.5 rounded-2xl bg-cyan-400/25 animate-ping pointer-events-none" />
-        </motion.div>
+          className="rounded-2xl border-2 aura-border-primary aura-glow"
+        />
       )}
 
       {/* Fallback backdrop when target is not yet located on DOM */}
       {!hasTarget && (
         <div
-          className="fixed inset-0 bg-black/88 z-50 pointer-events-auto"
+          data-preserve-optic="true"
+          className="fixed inset-0 bg-black/85 backdrop-blur-sm z-[181] pointer-events-auto"
           onClick={handleSkip}
         />
       )}
 
-      {/* ── 2. TACTICAL TOOLTIP SPEECH BUBBLE (Anti-Desbordamiento Total) ── */}
+      {/* ── 2. TACTICAL TOOLTIP SPEECH BUBBLE (Obsidian Glass + Aura) ── */}
       <motion.div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="kai-tour-title"
         key={currentStep.id}
         initial={{ opacity: 0, y: isTargetInTopHalf ? 15 : -15, scale: 0.96 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, scale: 0.96 }}
         transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
         style={getTooltipStyle()}
-        className="scifi-glass-modal rounded-2xl p-3.5 sm:p-4 border border-cyan-500/60 shadow-[0_0_35px_rgba(0,240,255,0.35)] text-white space-y-2.5 pointer-events-auto"
+        className="relative isolate bg-[#030712]/[0.98] rounded-2xl p-3.5 sm:p-4 border border-white/10 shadow-[0_24px_64px_rgba(0,0,0,0.75)] overflow-hidden text-white space-y-2.5 pointer-events-auto text-left"
       >
+        <span className="vi-grano opacity-5" aria-hidden="true" />
+        <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
+
         {/* Directional Beacon Pointer */}
         {hasTarget && (
-          <div className="flex items-center justify-center -mt-1 text-cyan-400">
+          <div className="flex items-center justify-center -mt-1 aura-text-primary relative z-10">
             {isTargetInTopHalf ? (
-              <div className="flex items-center gap-1 text-[10px] font-mono font-bold uppercase tracking-wider text-cyan-300">
-                <ArrowUp className="w-3.5 h-3.5 animate-bounce text-cyan-400" />
+              <div className="flex items-center gap-1 text-[10px] font-mono font-bold uppercase tracking-wider aura-text-soft">
+                <ArrowUp className="w-3.5 h-3.5 animate-bounce aura-text-primary" />
                 <span>Elemento resaltado arriba</span>
               </div>
             ) : (
-              <div className="flex items-center gap-1 text-[10px] font-mono font-bold uppercase tracking-wider text-cyan-300">
-                <ArrowDown className="w-3.5 h-3.5 animate-bounce text-cyan-400" />
+              <div className="flex items-center gap-1 text-[10px] font-mono font-bold uppercase tracking-wider aura-text-soft">
+                <ArrowDown className="w-3.5 h-3.5 animate-bounce aura-text-primary" />
                 <span>Elemento resaltado abajo</span>
               </div>
             )}
@@ -302,10 +317,10 @@ export const KaiInteractiveSpotlightTour: React.FC = () => {
         )}
 
         {/* Header: KAI Badge + Step Counter + Close */}
-        <div className="flex items-center justify-between gap-2 border-b border-cyan-500/30 pb-2">
+        <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-2 relative z-10">
           <div className="flex items-center gap-1.5 min-w-0">
-            <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(0,240,255,1)] animate-pulse shrink-0" />
-            <span className="text-[10px] font-mono font-black text-cyan-300 uppercase tracking-widest truncate">
+            <span className="w-2 h-2 rounded-full aura-bg-primary aura-glow-subtle animate-pulse shrink-0" />
+            <span className="text-[10px] font-mono font-black aura-text-soft uppercase tracking-widest truncate">
               {currentStep.badge}
             </span>
           </div>
@@ -313,22 +328,22 @@ export const KaiInteractiveSpotlightTour: React.FC = () => {
           <button
             type="button"
             onClick={handleSkip}
-            className="flex items-center gap-1 text-cyan-300 hover:text-white text-[11px] font-mono uppercase px-2 py-0.5 rounded-lg bg-cyan-950/60 border border-cyan-400/40 hover:bg-cyan-900/60 transition-all cursor-pointer shrink-0"
-            title="Saltar tour e ir directo a mis tareas"
+            className="chicle-btn flex items-center gap-1 aura-text-soft hover:text-white text-[11px] font-mono uppercase px-2 py-0.5 rounded-lg aura-bg-soft border aura-border-subtle cursor-pointer shrink-0"
+            title="Saltar tour e ir directo a mis tareas (Esc)"
           >
-            <Zap className="w-3 h-3 text-cyan-400" />
-            <span className="hidden sm:inline">Saltar / Ir directo a mis tareas</span>
+            <Zap className="w-3 h-3 aura-text-primary" />
+            <span className="hidden sm:inline">Saltar / Ir directo</span>
             <span className="sm:hidden">Saltar</span>
           </button>
         </div>
 
         {/* Title & Concise Instruction */}
-        <div className="space-y-1">
+        <div className="space-y-1 relative z-10">
           <div className="flex items-center gap-2">
-            <span className="p-1 rounded-lg bg-cyan-950/80 border border-cyan-400/50 shrink-0">
+            <span className="p-1.5 rounded-lg bg-[#040814]/80 border border-white/10 shrink-0">
               {currentStep.fallbackIcon}
             </span>
-            <h4 className="text-xs sm:text-sm font-anton uppercase tracking-wide text-white leading-tight">
+            <h4 id="kai-tour-title" className="text-xs sm:text-sm font-anton uppercase tracking-wider text-white leading-tight">
               {currentStep.title}
             </h4>
           </div>
@@ -342,22 +357,22 @@ export const KaiInteractiveSpotlightTour: React.FC = () => {
           <button
             type="button"
             onClick={currentStep.interactiveAction.onClick}
-            className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-cyan-500/20 to-amber-500/20 border border-cyan-400 text-cyan-200 hover:text-white text-xs font-anton tracking-wider uppercase flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-[0_0_15px_rgba(0,240,255,0.2)] active:scale-95"
+            className="chicle-btn w-full py-2 px-3 rounded-xl aura-bg-soft border aura-border-subtle aura-text-soft hover:text-white text-xs font-anton tracking-wider uppercase flex items-center justify-center gap-1.5 cursor-pointer relative z-10"
           >
-            <Zap className="w-3.5 h-3.5 text-cyan-400 fill-cyan-400" />
+            <Zap className="w-3.5 h-3.5 aura-text-primary" />
             <span>{currentStep.interactiveAction.label}</span>
           </button>
         )}
 
         {/* Stepper Dots & Navigation Buttons */}
-        <div className="flex items-center justify-between pt-1 border-t border-cyan-500/20">
+        <div className="flex items-center justify-between pt-2 border-t border-white/10 relative z-10">
           <div className="flex items-center gap-1">
             {steps.map((_, i) => (
               <span
                 key={i}
                 className={`h-1.5 rounded-full transition-all ${
                   i === stepIndex
-                    ? 'w-4 bg-cyan-400 shadow-[0_0_6px_rgba(0,240,255,0.8)]'
+                    ? 'w-4 aura-bg-primary optic-active-card'
                     : i < stepIndex
                     ? 'w-1.5 bg-emerald-400'
                     : 'w-1.5 bg-white/20'
@@ -370,7 +385,7 @@ export const KaiInteractiveSpotlightTour: React.FC = () => {
             <button
               type="button"
               onClick={handleSkip}
-              className="px-2 py-1.5 rounded-lg text-slate-400 hover:text-cyan-300 text-[11px] font-mono transition-colors cursor-pointer"
+              className="px-2 py-1.5 rounded-lg text-slate-400 hover:text-white text-[11px] font-mono transition-colors cursor-pointer"
             >
               Saltar
             </button>
@@ -378,7 +393,7 @@ export const KaiInteractiveSpotlightTour: React.FC = () => {
               <button
                 type="button"
                 onClick={handlePrev}
-                className="px-2.5 py-1.5 rounded-lg bg-surface-card border border-white/10 text-slate-300 hover:text-white text-xs font-mono font-bold transition-all cursor-pointer active:scale-95 flex items-center gap-1"
+                className="chicle-btn px-2.5 py-1.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.12] border border-white/15 text-slate-200 hover:text-white text-xs font-mono font-bold cursor-pointer flex items-center gap-1"
               >
                 <ArrowLeft className="w-3 h-3" />
                 <span className="hidden sm:inline">Atrás</span>
@@ -388,7 +403,7 @@ export const KaiInteractiveSpotlightTour: React.FC = () => {
             <button
               type="button"
               onClick={handleNext}
-              className="px-3 py-1.5 rounded-lg bg-cyan-400 hover:bg-cyan-300 text-black font-anton text-xs uppercase tracking-wider transition-all cursor-pointer shadow-[0_0_12px_rgba(0,240,255,0.4)] active:scale-95 flex items-center gap-1 font-bold"
+              className="chicle-btn aura-btn-gradient optic-active-card px-3.5 py-1.5 rounded-xl font-anton text-xs uppercase tracking-wider cursor-pointer flex items-center gap-1"
             >
               <span>{stepIndex === steps.length - 1 ? '¡Finalizar!' : 'Siguiente'}</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -396,6 +411,7 @@ export const KaiInteractiveSpotlightTour: React.FC = () => {
           </div>
         </div>
       </motion.div>
-    </div>
+    </div>,
+    document.body
   );
 };

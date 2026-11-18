@@ -144,7 +144,7 @@ export const TaskActionsDropdown: React.FC<TaskActionsDropdownProps> = ({
             animate={{ opacity: 1, x: 0, scale: 1 }}
             exit={{ opacity: 0, x: 20, scale: 0.9 }}
             transition={{ type: 'spring', damping: 25, stiffness: 380 }}
-            className="absolute right-9 top-1/2 -translate-y-1/2 z-40 flex items-center gap-1.5 px-2 py-1 rounded-full bg-[#070514]/[0.98] border border-cyan-500/40 shadow-[0_0_22px_rgba(0,0,0,0.9),0_0_14px_rgba(0,240,255,0.25)]"
+            className="absolute right-10 top-1/2 -translate-y-1/2 z-40 flex items-center gap-1.5 px-2 py-1 rounded-full bg-[#040a1a]/[0.98] border border-white/15 shadow-[0_10px_28px_rgba(0,0,0,0.85)]"
             onClick={(e) => e.stopPropagation()}
           >
             {actions.map((act, idx) => (
@@ -159,13 +159,13 @@ export const TaskActionsDropdown: React.FC<TaskActionsDropdownProps> = ({
                   damping: 24,
                   delay: idx * 0.025,
                 }}
-                whileHover={{ scale: 1.15 }}
+                whileHover={{ scale: 1.12 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={(e) => {
                   e.stopPropagation();
                   act.action();
                 }}
-                className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border flex items-center justify-center transition-all cursor-pointer relative ${act.bg} ${act.border} ${act.text} ${act.glow}`}
+                className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border flex items-center justify-center transition-all cursor-pointer relative ${act.bg} ${act.border} ${act.text}`}
                 title={act.label}
                 aria-label={act.label}
               >
@@ -173,7 +173,7 @@ export const TaskActionsDropdown: React.FC<TaskActionsDropdownProps> = ({
 
                 {/* Badge indicador si tiene notas */}
                 {act.hasBadge && (
-                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-cyan-400 ring-2 ring-black shadow-[0_0_6px_rgba(0,240,255,0.9)]" />
+                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full aura-bg-primary ring-2 ring-[#030712]" />
                 )}
               </motion.button>
             ))}
@@ -184,19 +184,19 @@ export const TaskActionsDropdown: React.FC<TaskActionsDropdownProps> = ({
       {/* Botón Disparador Central / Cerrar */}
       <motion.button
         type="button"
-        whileTap={{ scale: 1.0 }}
+        whileTap={{ scale: 0.95 }}
         onClick={handleToggle}
-        className={`touch-target-44 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all cursor-pointer relative z-40 before:absolute before:-inset-2 before:content-[''] ${
+        className={`w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer relative z-40 before:absolute before:-inset-1.5 before:content-[''] ${
           isMenuOpen
-            ? 'bg-cyan-950 border border-cyan-400 text-cyan-300 shadow-[0_0_15px_rgba(0,240,255,0.4)] rotate-90'
-            : 'bg-[#080515] border text-cyan-400 hover:border-cyan-400 hover:text-cyan-200 hover:bg-[#0c0a20] shadow-[0_0_8px_rgba(0,240,255,0.1)]'
+            ? 'aura-bg-soft border rotate-90 optic-active-card'
+            : 'bg-[#040a1a]/90 border text-slate-200 hover:bg-white/[0.08]'
         }`}
         style={{ borderColor: isMenuOpen ? undefined : color }}
         title={isMenuOpen ? 'Cerrar acciones' : 'Acciones de tarea'}
         aria-label={isMenuOpen ? 'Cerrar acciones' : `Acciones para: ${task.title}`}
       >
         {isMenuOpen ? (
-          <X className="w-3.5 h-3.5 text-cyan-300 stroke-[2.5]" />
+          <X className="w-3.5 h-3.5 aura-text-primary stroke-[2.5]" />
         ) : (
           <Menu className="w-4 h-4" style={{ color: color }} />
         )}

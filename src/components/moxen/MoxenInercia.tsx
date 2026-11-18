@@ -26,7 +26,7 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
   loop = true,
   className = '',
   showNavigationControls = true,
-  accentColor = '#00f0ff',
+  accentColor = 'var(--aura-color-1, #00f0ff)',
 }) => {
   const ventanaRef = useRef<HTMLDivElement>(null);
   const pistaRef = useRef<HTMLDivElement>(null);
@@ -402,7 +402,7 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
             <span className="text-xs font-mono text-slate-400 uppercase tracking-widest font-bold">
               Arquetipo
             </span>
-            <div className="flex items-center text-xs font-mono font-black text-cyan-300 bg-black/80 px-2 py-0.5 rounded-lg border border-cyan-500/30">
+            <div className="flex items-center text-xs font-mono tabular-nums font-black aura-text-soft bg-[#040814]/80 px-2 py-0.5 rounded-lg border aura-border-subtle">
               <span className="in-rodillo-box">
                 <b ref={rodilloActualRef} className="in-rodillo-strip">
                   {Array.from({ length: totalItems }).map((_, i) => {
@@ -424,7 +424,12 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
               <span
                 ref={barraFillRef}
                 className="in-pista-barra-fill"
-                style={{ backgroundColor: accentColor }}
+                style={{
+                  backgroundColor: accentColor,
+                  boxShadow: accentColor.startsWith('var(')
+                    ? '0 0 8px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.65)'
+                    : `0 0 8px ${accentColor}`,
+                }}
               />
             </div>
 
@@ -435,7 +440,7 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
                 type="button"
                 onClick={() => handleStep(-1)}
                 disabled={loop ? false : initialIndex === 0}
-                className="p-1.5 rounded-lg bg-black/80 border border-white/10 hover:border-cyan-400/60 text-slate-300 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+                className="p-1.5 rounded-lg bg-[#040814]/80 border border-white/10 hover:border-[var(--aura-color-1,#00f0ff)]/60 text-slate-300 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
                 title="Arquetipo anterior"
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -445,7 +450,7 @@ export const MoxenInercia: React.FC<MoxenInerciaProps> = ({
                 type="button"
                 onClick={() => handleStep(1)}
                 disabled={loop ? false : initialIndex >= totalItems - 1}
-                className="p-1.5 rounded-lg bg-black/80 border border-white/10 hover:border-cyan-400/60 text-slate-300 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+                className="p-1.5 rounded-lg bg-[#040814]/80 border border-white/10 hover:border-[var(--aura-color-1,#00f0ff)]/60 text-slate-300 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
                 title="Siguiente arquetipo"
               >
                 <ChevronRight className="w-4 h-4" />

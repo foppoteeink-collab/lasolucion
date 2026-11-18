@@ -45,7 +45,6 @@ export const MainLogo: React.FC<MainLogoProps> = ({
   return (
     <div
       onClick={onClick}
-      role="banner"
       aria-label="La Solución"
       className={`relative inline-flex items-center justify-center select-none shrink-0 group transition-all duration-200 hover:scale-[1.03] ${
         onClick ? 'cursor-pointer' : ''
@@ -54,6 +53,7 @@ export const MainLogo: React.FC<MainLogoProps> = ({
     >
       {/* Resplandor ambiental de plasma orgánico sincronizado con la paleta de Ajustes (Malla Aurora) */}
       <motion.div
+        data-ambient-glow="true"
         className="absolute -inset-x-1 -inset-y-1 -z-10 rounded-full pointer-events-none"
         animate={{
           opacity: [0.32, 0.58, 0.32],
@@ -73,7 +73,7 @@ export const MainLogo: React.FC<MainLogoProps> = ({
 
       {/* Tipografía oficial pura de La Solución bañada en el flujo cromático dinámico */}
       {!imageError ? (
-        <div className="relative w-full h-full flex items-center justify-center">
+        <div className="relative w-full h-full flex items-center justify-center" data-preserve-optic="true">
           {/* Capa 1: Flujo cromático dinámico enmascarado exactamente con las letras */}
           <div
             className="w-full h-full main-logo-aurora-fill pointer-events-none"

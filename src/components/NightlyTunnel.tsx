@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { motion } from 'motion/react';
 import { Mic, MicOff, Volume2, Sparkles, Plus, Check } from 'lucide-react';
 import { Icon } from './common/Icon';
+import { ChicleToggle } from './ChicleToggle';
 import { triggerShockwave } from '../utils/celebration';
 import { soundFX } from '../utils/audio';
 import { getTodayDateString, formatDateFullSpanish, addDaysToDateString } from '../utils/date';
@@ -98,16 +100,21 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
   }, [isOpen]);
 
   useEffect(() => {
+    if (!isOpen) return;
+    document.body.classList.add('modal-open-hide-floating');
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
+      if (e.key === 'Escape') {
         onClose();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.classList.remove('modal-open-hide-floating');
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen || typeof document === 'undefined') return null;
 
   // ── STATS & COMPUTED VALUES ────────────────────────────────
   const todayStr = getTodayDateString();
@@ -229,35 +236,35 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
     }, 500);
   };
 
-  return (
+  return createPortal(
     <div 
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="nightly-tunnel-title"
-      className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4 bg-black/88"
+      className="fixed inset-0 z-[170] portal-modal-root bg-black/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4"
+      onClick={() => { if (!isConsolidating) onClose(); }}
     >
-      <div className="relative w-full max-w-xl flex flex-col bg-[#030712]/[0.98] border border-cyan-500/35 rounded-2xl sm:rounded-3xl shadow-[0_0_50px_rgba(0,240,255,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] text-white overflow-hidden max-h-[92dvh] text-left">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="nightly-tunnel-title"
+        className="relative isolate w-full max-w-xl flex flex-col bg-[#030712]/[0.98] border border-white/10 rounded-2xl sm:rounded-3xl shadow-[0_24px_64px_rgba(0,0,0,0.75)] text-white overflow-hidden max-h-[92dvh] text-left"
+        onClick={(e) => e.stopPropagation()}
+      >
 
         {/* Micrograno táctil */}
         <span className="vi-grano opacity-5" aria-hidden="true" />
 
         {/* Filamento especular superior */}
-        <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent pointer-events-none" />
-
-        {/* Ambient Glows */}
-        <div className="absolute -top-24 -right-24 w-60 h-60 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-24 -left-24 w-60 h-60 bg-cyan-600/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
 
         {/* ── HEADER ────────────────────────────────────────── */}
-        <div className="shrink-0 px-4 sm:px-6 pt-4 pb-3.5 border-b border-white/10 bg-[#040814]/90 relative z-10 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(0,240,255,0.8)] animate-pulse" />
-            <span id="nightly-tunnel-title" className="text-[11px] font-anton uppercase tracking-widest text-cyan-300">
+        <div className="shrink-0 px-4 sm:px-6 pt-4 pb-3.5 border-b border-white/10 bg-[#040814]/[0.96] relative z-10 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="w-2 h-2 rounded-full aura-bg-primary aura-glow-subtle animate-pulse shrink-0" />
+            <span id="nightly-tunnel-title" className="text-[11px] font-anton uppercase tracking-widest aura-text-soft truncate">
               {copy.nightlyHeaderBadge} · {formattedFullDate}
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <div className={`px-2.5 py-0.5 rounded-lg border text-xs font-anton font-black ${gradeBadgeColor}`}>
               {copy.nightlyRankLabel} {grade}
             </div>
@@ -266,8 +273,8 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
               onClick={onClose}
               disabled={isConsolidating}
               aria-label="Cerrar túnel nocturno"
-              className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-all cursor-pointer"
-              title="Cerrar modal"
+              className="chicle-btn w-9 h-9 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 text-slate-300 hover:text-white flex items-center justify-center cursor-pointer"
+              title="Cerrar modal (Esc)"
             >
               <Icon name="x" className="w-4 h-4" />
             </button>
@@ -275,22 +282,22 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
         </div>
 
         {/* ── BODY (Single-View Scrollable Dashboard) ──────── */}
-        <div className="flex-1 overflow-y-auto overscroll-contain scrollbar-thin scrollbar-thumb-cyan-600 p-4 sm:p-5 space-y-3.5">
+        <div className="flex-1 overflow-y-auto overscroll-contain custom-scrollbar p-4 sm:p-5 space-y-3.5 relative z-10">
           {/* Grade Title Banner */}
-          <div className="text-center bg-cyan-950/40 border border-cyan-800/40 py-2 px-3 rounded-xl flex items-center justify-center gap-2">
+          <div className="text-center aura-bg-soft border aura-border-subtle py-2 px-3 rounded-xl flex items-center justify-center gap-2">
             <Icon name="star" className="w-4 h-4 text-amber-400" />
-            <span className="text-xs font-bold text-cyan-300 uppercase tracking-wider">{gradeTitle}</span>
+            <span className="text-xs font-anton uppercase tracking-wider aura-text-soft">{gradeTitle}</span>
           </div>
 
           {/* KAI Companion Transmission Card */}
-          <div className="bg-[#000a14]/90 border border-cyan-500/30 rounded-2xl p-3 sm:p-3.5 flex items-center gap-3">
-            <div className="shrink-0">
+          <div className="bg-[#040814]/80 border border-white/10 rounded-2xl p-3 sm:p-3.5 flex items-center gap-3">
+            <div className="shrink-0" data-preserve-optic="true">
               <HoloCompanion archetype={stats.characterClass} size="sm" showHUD={false} />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-2 mb-1">
                 <span className="text-xs font-bold text-white truncate">{evolution.title}</span>
-                <span className="text-[9px] bg-cyan-950 text-cyan-300 border border-cyan-800 px-2 py-0.5 rounded-full font-bold">
+                <span className="text-[9px] aura-bg-soft aura-text-soft border aura-border-subtle px-2 py-0.5 rounded-full font-bold shrink-0">
                   {evolution.stageLabel}
                 </span>
               </div>
@@ -306,25 +313,25 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
           {/* 4-KPI Tactical Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {[
-              { label: 'Cumplimiento', value: `${completionRate}%`, sub: `${completedToday.length}/${totalTasks} tareas`, icon: 'checkCircle2', color: 'text-cyan-400' },
+              { label: 'Cumplimiento', value: `${completionRate}%`, sub: `${completedToday.length}/${totalTasks} tareas`, icon: 'checkCircle', color: 'aura-text-primary' },
               { label: 'Total XP', value: `+${xpEarnedToday + totalBonusXp}`, sub: `+${totalBonusXp} Bonus`, icon: 'zap', color: 'text-amber-400' },
-              { label: 'Monedas', value: `+${coinsEarnedToday + totalBonusCoins}`, sub: `+${totalBonusCoins} Bonus`, icon: 'coins', color: 'text-yellow-400' },
+              { label: 'Monedas', value: `+${coinsEarnedToday + totalBonusCoins}`, sub: `+${totalBonusCoins} Bonus`, icon: 'coins', color: 'text-amber-300' },
               { label: 'Foco Total', value: `${todayFocusMinutes}m`, sub: 'Concentración', icon: 'clock', color: 'text-indigo-400' },
             ].map(({ label, value, sub, icon, color }) => (
-              <div key={label} className="bg-[#000a14]/70 border border-cyan-900/40 rounded-xl p-2.5 text-center">
+              <div key={label} className="bg-[#040814]/80 border border-white/10 rounded-xl p-2.5 text-center">
                 <div className={`flex items-center justify-center gap-1 ${color} text-[10.5px] font-bold mb-0.5`}>
                   <Icon name={icon} className="w-3.5 h-3.5" /> {label}
                 </div>
-                <div className="text-base font-black text-white">{value}</div>
-                <div className="text-[9.5px] text-slate-400 font-mono">{sub}</div>
+                <div className="text-base font-mono tabular-nums font-black text-white">{value}</div>
+                <div className="text-[9.5px] text-slate-400 font-mono tabular-nums">{sub}</div>
               </div>
             ))}
           </div>
 
           {/* Daily Streak & Reward Strip */}
-          <div className="bg-[#000a14]/90 border border-amber-500/30 rounded-2xl p-3 flex flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+          <div className="bg-[#040814]/80 border border-amber-500/30 rounded-2xl p-3 flex flex-col gap-2">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-bold text-amber-300 flex items-center gap-1.5 font-mono tabular-nums">
                 <Icon name="gift" className="w-4 h-4 text-amber-400" />
                 Racha: {stats.streakDays} días
               </span>
@@ -343,15 +350,15 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
                     key={reward.day}
                     className={`py-1.5 px-1 rounded-lg border text-center transition-all ${
                       isToday
-                        ? 'bg-amber-500/25 border-amber-400 text-amber-200 shadow-[0_0_10px_rgba(245,158,11,0.3)] ring-1 ring-amber-400'
+                        ? 'bg-amber-500/25 border-amber-400 text-amber-200 ring-1 ring-amber-400 optic-active-card'
                         : isClaimed
                         ? 'bg-emerald-950/40 border-emerald-600/40 text-emerald-300'
                         : 'bg-white/[0.02] border-white/10 text-slate-500'
                     }`}
                   >
-                    <div className="text-[8.5px] font-mono font-bold uppercase">D{reward.day}</div>
+                    <div className="text-[8.5px] font-mono tabular-nums font-bold uppercase">D{reward.day}</div>
                     <div className="text-xs my-0.5">{reward.day === 7 ? '👑' : isClaimed ? '✓' : '🪙'}</div>
-                    <div className="text-[8px] font-mono font-bold text-amber-300">+{reward.coins}</div>
+                    <div className="text-[8px] font-mono tabular-nums font-bold text-amber-300">+{reward.coins}</div>
                   </div>
                 );
               })}
@@ -363,8 +370,8 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
             {/* Rest Day Toggle */}
             <div className={`p-2.5 rounded-xl border transition-all flex items-center justify-between gap-2 ${
               Boolean(stats.restDays?.[todayStr])
-                ? 'bg-emerald-950/40 border-emerald-500/60 shadow-[0_0_15px_rgba(16,185,129,0.2)]'
-                : 'bg-[#000a14]/90 border-cyan-500/30'
+                ? 'bg-emerald-950/40 border-emerald-500/60'
+                : 'bg-[#040814]/80 border-white/10'
             }`}>
               <div className="flex items-center gap-2 min-w-0">
                 <span className="text-base shrink-0">{Boolean(stats.restDays?.[todayStr]) ? '🌿' : '🛡️'}</span>
@@ -377,23 +384,23 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
                   </span>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => usePlayerStore.getState().toggleRestDay(todayStr)}
-                className={`px-2.5 py-1 rounded-lg text-[10.5px] font-bold font-mono transition-all cursor-pointer shrink-0 ${
-                  Boolean(stats.restDays?.[todayStr])
-                    ? 'bg-emerald-400 text-black shadow-[0_0_10px_rgba(16,185,129,0.5)]'
-                    : 'bg-cyan-950/80 text-cyan-300 border border-cyan-800 hover:border-cyan-500'
-                }`}
-              >
-                {Boolean(stats.restDays?.[todayStr]) ? 'Activo ✓' : 'Activar'}
-              </button>
+              <ChicleToggle
+                checked={Boolean(stats.restDays?.[todayStr])}
+                onChange={() => {
+                  soundFX.playClick();
+                  usePlayerStore.getState().toggleRestDay(todayStr);
+                }}
+                color="emerald"
+                size="sm"
+                ariaLabel="Activar o desactivar Modo Descanso para hoy"
+                title="Proteger HP en día de descanso"
+              />
             </div>
 
             {/* Bedtime Override */}
-            <div className="bg-[#000a14]/90 border border-cyan-500/30 rounded-xl p-2.5 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-xs text-cyan-200">
-                <Icon name="moon" className="w-3.5 h-3.5 text-cyan-400" />
+            <div className="bg-[#040814]/80 border border-white/10 rounded-xl p-2.5 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs aura-text-soft">
+                <Icon name="moon" className="w-3.5 h-3.5 aura-text-primary" />
                 <span className="font-bold">Hora de dormir:</span>
               </div>
               <input
@@ -401,7 +408,7 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
                 value={customBedtime}
                 aria-label="Hora de dormir"
                 onChange={e => setCustomBedtime(e.target.value)}
-                className="bg-black/50 border border-cyan-800 rounded-lg px-2.5 py-1 text-white font-mono text-xs outline-none focus:border-cyan-400 transition-all cursor-pointer"
+                className="bg-black/50 border border-white/15 rounded-lg px-2.5 py-1 text-white font-mono tabular-nums text-xs outline-none focus:aura-border-primary transition-all cursor-pointer"
               />
             </div>
           </div>
@@ -410,9 +417,9 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
           {contractEval.hasActiveContract && (
             <div className={`rounded-xl p-2.5 text-center border text-xs font-mono font-bold ${
               contractEval.succeeded
-                ? 'bg-amber-950/50 border-amber-400/70 text-amber-300 shadow-[0_0_15px_rgba(251,191,36,0.2)]'
+                ? 'bg-amber-950/50 border-amber-400/70 text-amber-300'
                 : contractEval.contractCancelledReason === 'INSUFFICIENT_TASKS'
-                  ? 'bg-cyan-950/60 border-cyan-400/70 text-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.25)]'
+                  ? 'aura-bg-soft border aura-border-subtle aura-text-soft'
                   : 'bg-rose-950/50 border-rose-500/60 text-rose-300'
             }`}>
               {contractEval.succeeded
@@ -426,7 +433,7 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
           {/* Journal / Reflection Note */}
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-2 flex-wrap">
-              <label className="text-[11px] font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1.5">
+              <label className="text-[11px] font-anton uppercase tracking-wider aura-text-primary flex items-center gap-1.5">
                 <Icon name="bookOpen" className="w-3 h-3 text-indigo-400" /> Mi Bitácora del Día (Reflexión)
               </label>
               <div className="flex items-center gap-1.5">
@@ -494,10 +501,10 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
                         rec.start();
                       }
                     }}
-                    className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold border flex items-center gap-1 transition-all cursor-pointer active:scale-95 ${
+                    className={`chicle-btn px-2 py-0.5 rounded-full text-[10px] font-mono font-bold border flex items-center gap-1 transition-all cursor-pointer ${
                       isDictating
-                        ? 'bg-rose-500/25 border-rose-400 text-rose-200 animate-pulse'
-                        : 'bg-fuchsia-950/60 hover:bg-fuchsia-900/70 border-fuchsia-400/50 text-fuchsia-200'
+                        ? 'bg-rose-500/25 border-rose-400 text-rose-200 animate-pulse optic-active-card'
+                        : 'bg-white/[0.04] hover:bg-white/[0.1] border-white/15 text-slate-200'
                     }`}
                     title={isDictating ? 'Detener dictado y analizar con KAI' : 'Dictar tu reflexión nocturna por voz'}
                   >
@@ -530,7 +537,7 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
                         setIsAnalyzingReflection(false);
                       }
                     }}
-                    className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-cyan-950/70 hover:bg-cyan-900/80 border border-cyan-400/50 text-cyan-200 flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                    className="chicle-btn px-2 py-0.5 rounded-full text-[10px] font-mono font-bold aura-bg-soft border aura-border-subtle aura-text-soft flex items-center gap-1 cursor-pointer disabled:opacity-50"
                     title="Pedir a KAI un resumen y extraer pendientes para mañana"
                   >
                     <Sparkles className={`w-3 h-3 ${isAnalyzingReflection ? 'animate-spin' : ''}`} />
@@ -538,15 +545,15 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
                   </button>
                 )}
 
-                <span className={`text-[10px] font-mono ${
+                <span className={`text-[10px] font-mono tabular-nums ${
                   hasValidReflection ? 'text-emerald-400 font-bold' : 'text-slate-400'
                 }`}>
                   {reflectionText.trim().length} / 15
                 </span>
-                <span className={`text-[9.5px] font-mono font-bold px-2 py-0.5 rounded-full border transition-all ${
+                <span className={`text-[9.5px] font-mono tabular-nums font-bold px-2 py-0.5 rounded-full border transition-all ${
                   hasValidReflection
-                    ? 'bg-emerald-950/70 border-emerald-500/60 text-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.25)]'
-                    : 'bg-cyan-950/50 border-cyan-800/60 text-cyan-300/80'
+                    ? 'bg-emerald-950/70 border-emerald-500/60 text-emerald-300'
+                    : 'bg-white/[0.03] border-white/10 text-slate-300'
                 }`}>
                   {hasValidReflection ? '✨ +15 XP / +5🪙' : '+15 XP / +5🪙'}
                 </span>
@@ -557,7 +564,7 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
               onChange={e => setReflectionText(e.target.value)}
               aria-label="Reflexión de la jornada diaria"
               placeholder='¿Qué lograste hoy o qué quieres dejar listo para mañana? (También puedes pulsar "Dictar")...'
-              className="w-full bg-[#000a14] border border-cyan-900/70 rounded-xl p-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 resize-none h-16"
+              className="w-full bg-black/50 border border-white/15 rounded-xl p-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:aura-border-primary resize-none h-16"
             />
             {dictationError && (
               <p className="text-[11px] text-rose-300 font-mono">{dictationError}</p>
@@ -565,10 +572,10 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
 
             {/* Devolución de KAI + Pendientes detectados para mañana */}
             {nightlyAnalysis && (
-              <div className="p-2.5 rounded-xl bg-cyan-950/35 border border-cyan-400/35 space-y-2">
+              <div className="p-2.5 rounded-xl bg-[#040814]/80 border aura-border-subtle space-y-2">
                 <div className="flex items-start gap-2">
-                  <Sparkles className="w-3.5 h-3.5 text-cyan-300 shrink-0 mt-0.5" />
-                  <p className="text-[11.5px] text-cyan-100 flex-1 leading-snug">
+                  <Sparkles className="w-3.5 h-3.5 aura-text-primary shrink-0 mt-0.5" />
+                  <p className="text-[11.5px] text-slate-100 flex-1 leading-snug">
                     “{nightlyAnalysis.kaiFeedback}”
                   </p>
                   <button
@@ -578,7 +585,7 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
                       setIsSpeakingFeedback(true);
                       speakKaiDialogue(nightlyAnalysis.kaiFeedback, stats.kaiCustomForm?.mood || 'zen', () => setIsSpeakingFeedback(false));
                     }}
-                    className="p-1 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/30 text-cyan-300 cursor-pointer shrink-0"
+                    className="chicle-btn p-1 rounded-lg aura-bg-soft aura-text-primary cursor-pointer shrink-0"
                     title="Escuchar a KAI"
                   >
                     <Volume2 className={`w-3.5 h-3.5 ${isSpeakingFeedback ? 'animate-bounce text-white' : ''}`} />
@@ -586,7 +593,7 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
                 </div>
 
                 {nightlyAnalysis.tomorrowTasks.length > 0 && (
-                  <div className="pt-1.5 border-t border-cyan-500/20 space-y-1.5">
+                  <div className="pt-1.5 border-t border-white/10 space-y-1.5">
                     <span className="text-[10px] font-mono uppercase tracking-wider text-amber-300 block">
                       🌅 Pendientes detectados para mañana:
                     </span>
@@ -603,7 +610,7 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
                                 {t.title}
                               </span>
                               {t.timeBlock && (
-                                <span className="text-[10px] font-mono text-sky-300">{t.timeBlock}</span>
+                                <span className="text-[10px] font-mono tabular-nums aura-text-soft">{t.timeBlock}</span>
                               )}
                             </div>
                             <button
@@ -629,7 +636,7 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
                                 });
                                 setScheduledTomorrowIds((prev) => ({ ...prev, [t.id]: true }));
                               }}
-                              className={`px-2 py-1 rounded-lg text-[10px] font-mono font-bold flex items-center gap-1 shrink-0 transition-all cursor-pointer ${
+                              className={`chicle-btn px-2 py-1 rounded-lg text-[10px] font-mono font-bold flex items-center gap-1 shrink-0 transition-all cursor-pointer ${
                                 isScheduled
                                   ? 'bg-emerald-500/25 border border-emerald-400/50 text-emerald-200 cursor-default'
                                   : 'bg-amber-400/20 hover:bg-amber-400/35 border border-amber-400/50 text-amber-200'
@@ -650,7 +657,7 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
         </div>
 
         {/* ── FOOTER: 1-Tap Consolidated Action Bar ─────────── */}
-        <div className="shrink-0 px-4 py-3 sm:px-6 sm:py-3.5 border-t border-cyan-900/50 bg-[#000e1c] flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+        <div className="shrink-0 px-4 py-3 sm:px-6 sm:py-3.5 border-t border-white/10 bg-[#040814]/[0.96] flex flex-col sm:flex-row items-stretch sm:items-center gap-2 relative z-10">
           {/* Share Card Button */}
           <button
             type="button"
@@ -664,9 +671,9 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
                 grade,
               });
             }}
-            className="py-2.5 px-3.5 rounded-xl font-bold uppercase tracking-wider text-[11px] flex items-center justify-center gap-1.5 bg-cyan-950/70 hover:bg-cyan-900/80 text-cyan-200 border border-cyan-500/40 transition-all cursor-pointer active:scale-[0.98]"
+            className="chicle-btn py-2.5 px-3.5 rounded-xl font-anton uppercase tracking-wider text-xs flex items-center justify-center gap-1.5 bg-white/[0.05] hover:bg-white/[0.12] text-slate-200 hover:text-white border border-white/15 cursor-pointer"
           >
-            <Icon name="sparkles" className="w-3.5 h-3.5 text-cyan-400" />
+            <Icon name="sparkles" className="w-3.5 h-3.5 aura-text-primary" />
             <span>Compartir</span>
           </button>
 
@@ -675,10 +682,10 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
             type="button"
             onClick={handleConsolidateAndSealAll}
             disabled={isConsolidating}
-            className={`flex-1 py-3 px-4 rounded-xl font-black uppercase tracking-wider text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
+            className={`chicle-btn optic-active-card flex-1 py-3 px-4 rounded-xl font-anton uppercase tracking-wider text-xs flex items-center justify-center gap-2 cursor-pointer ${
               isConsolidating
-                ? 'bg-emerald-600 text-white shadow-[0_0_25px_rgba(16,185,129,0.6)]'
-                : 'bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white shadow-[0_0_25px_rgba(0,240,255,0.35)] active:scale-[0.98]'
+                ? 'bg-emerald-500 text-slate-950 shadow-[0_0_24px_rgba(16,185,129,0.5)]'
+                : 'aura-btn-gradient'
             }`}
           >
             {isConsolidating ? (
@@ -688,13 +695,14 @@ export const NightlyTunnel: React.FC<NightlyTunnelProps> = ({
               </>
             ) : (
               <>
-                <Icon name="moon" className="w-4 h-4 text-cyan-200" />
+                <Icon name="moon" className="w-4 h-4" />
                 <span>{copy.nightlyConsolidatePrefix} (+{totalBonusXp} XP / +{totalBonusCoins}🪙)</span>
               </>
             )}
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

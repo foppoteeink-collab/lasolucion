@@ -88,6 +88,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = (props) => {
   if (!task || !task.title) return null;
   const isTogglingRef = React.useRef(false);
   const timeFormat = useUIStore(state => state.timeFormat);
+  const zenMode = useUIStore(state => state.zenMode);
   const isCompleted = task.completed;
   const handleEdit = onEdit || onOpenEditModal;
   const handleDelete = onDelete || onDeleteTask;
@@ -105,10 +106,10 @@ const TaskCardComponent: React.FC<TaskCardProps> = (props) => {
     return "rgba(" + r + ", " + g + ", " + b + ", " + alpha + ")";
   };
   const activeLineColor = isCompleted ? '#10b981' : catStyle.color;
-  const lineStyle: React.CSSProperties = { background: "linear-gradient(180deg, " + activeLineColor + ", " + hexToRgba(activeLineColor, 0.55) + ")", boxShadow: "0 0 12px " + hexToRgba(activeLineColor, isCompleted ? 0.55 : 0.45) };
+  const lineStyle: React.CSSProperties = { background: "linear-gradient(180deg, " + activeLineColor + ", " + hexToRgba(activeLineColor, 0.55) + ")", boxShadow: zenMode ? 'none' : "0 0 12px " + hexToRgba(activeLineColor, isCompleted ? 0.5 : 0.4) };
   const infoBoxStyle: React.CSSProperties = isCompleted
-    ? { background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.10) 0%, rgba(22, 38, 52, 0.65) 50%, rgba(8, 17, 27, 0.90) 100%)', borderColor: 'rgba(16, 185, 129, 0.32)', boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 4px 14px -4px rgba(0, 0, 0, 0.45)' }
-    : { background: "linear-gradient(135deg, " + hexToRgba(catStyle.color, 0.11) + " 0%, rgba(34, 56, 74, 0.62) 45%, rgba(8, 17, 27, 0.92) 100%)", borderColor: hexToRgba(catStyle.color, 0.32), boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.10), 0 6px 20px -8px rgba(0, 0, 0, 0.55)' };
+    ? { background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.10) 0%, rgba(4, 10, 26, 0.92) 55%, rgba(3, 7, 18, 0.96) 100%)', borderColor: 'rgba(16, 185, 129, 0.32)', boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 4px 14px -4px rgba(0, 0, 0, 0.45)' }
+    : { background: "linear-gradient(135deg, " + hexToRgba(catStyle.color, 0.11) + " 0%, rgba(4, 10, 26, 0.92) 50%, rgba(3, 7, 18, 0.96) 100%)", borderColor: hexToRgba(catStyle.color, 0.30), boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 6px 20px -8px rgba(0, 0, 0, 0.55)' };
 
   return (
     <div
@@ -124,22 +125,22 @@ const TaskCardComponent: React.FC<TaskCardProps> = (props) => {
             handleEdit && handleEdit(task);
           }
         }}
-        className="les-time w-[58px] sm:w-[68px] text-right flex flex-col items-end justify-center shrink-0 select-none cursor-pointer py-0.5 focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400 rounded-lg" 
+        className="les-time w-[58px] sm:w-[68px] text-right flex flex-col items-end justify-center shrink-0 select-none cursor-pointer py-0.5 focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--aura-color-1,#00f0ff)] rounded-lg" 
         title="Asignar horario"
         aria-label={`Asignar horario a: ${task.title}`}
       >
-        <span className={isCompleted ? "font-bold text-[11px] sm:text-[12px] leading-tight tracking-tight font-mono transition-colors text-emerald-400/90" : "font-bold text-[11px] sm:text-[12px] leading-tight tracking-tight font-mono transition-colors text-[#f1f5f9] group-hover:text-cyan-300"}>
+        <span className={isCompleted ? "font-bold text-[11px] sm:text-[12px] leading-tight tracking-tight font-mono tabular-nums transition-colors text-emerald-400/90" : "font-bold text-[11px] sm:text-[12px] leading-tight tracking-tight font-mono tabular-nums transition-colors text-[#f1f5f9] group-hover:aura-text-primary"}>
           {mainTime} {subPeriod}
         </span>
         {rangeSubtitle && rangeSubtitle.includes('-') && (
-          <span className="les-range text-[#94a3b8] text-[9px] sm:text-[10px] font-semibold tracking-wider font-mono mt-0.5">
+          <span className="les-range text-[#94a3b8] text-[9px] sm:text-[10px] font-semibold tracking-wider font-mono tabular-nums mt-0.5">
             {rangeSubtitle.split('-')[1].trim()}
           </span>
         )}
       </div>
       <div style={lineStyle} className="les-line w-[3.5px] rounded-full shrink-0 my-0.5 transition-all duration-300" />
-      <div style={infoBoxStyle} className={"flex-1 min-w-0 px-2.5 py-2 sm:px-3.5 sm:py-2.5 flex items-center justify-between gap-2 sm:gap-3 relative isolate rounded-xl border group-hover:brightness-110 " + (isMenuOpen ? "ring-1 ring-cyan-500/40 shadow-[0_0_15px_rgba(0,240,255,0.25)] " : "") + (isCompleted ? "opacity-90" : "")}>
-        <span className="vi-grano" aria-hidden="true" />
+      <div style={infoBoxStyle} className={"flex-1 min-w-0 px-2.5 py-2 sm:px-3.5 sm:py-2.5 flex items-center justify-between gap-2 sm:gap-3 relative isolate rounded-xl border group-hover:brightness-110 " + (zenMode ? "zen-task-card " : "") + (isMenuOpen ? "ring-1 aura-border-primary aura-glow-subtle " : "") + (isCompleted ? "opacity-90" : "")}>
+        <span className="vi-grano opacity-5" aria-hidden="true" />
         <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
           <button
             type="button"
@@ -159,8 +160,8 @@ const TaskCardComponent: React.FC<TaskCardProps> = (props) => {
               }
             }}
             disabled={isDayEnded}
-            style={isCompleted ? undefined : { borderColor: hexToRgba(activeLineColor, 0.40), boxShadow: '0 0 10px ' + hexToRgba(activeLineColor, 0.18) }}
-            className={"w-9 h-9 sm:w-10 sm:h-10 border flex items-center justify-center transition-all cursor-pointer shrink-0 relative select-none " + (isCompleted ? "bg-gradient-to-br from-emerald-400 to-emerald-500 border-emerald-300 text-slate-950 shadow-[0_0_14px_rgba(16,185,129,0.55)] rounded-xl" : isFutureDay ? "bg-black/40 text-cyan-400/60 hover:bg-white/[0.04] rounded-xl" : "bg-black/30 hover:bg-emerald-950/40 ring-1 ring-white/10 hover:ring-emerald-400/50 rounded-xl")}
+            style={isCompleted ? undefined : { borderColor: hexToRgba(activeLineColor, 0.40), boxShadow: zenMode ? 'none' : '0 0 10px ' + hexToRgba(activeLineColor, 0.18) }}
+            className={"chicle-btn w-9 h-9 sm:w-10 sm:h-10 border flex items-center justify-center transition-all cursor-pointer shrink-0 relative select-none " + (isCompleted ? "bg-gradient-to-br from-emerald-400 to-emerald-500 border-emerald-300 text-slate-950 shadow-[0_0_14px_rgba(16,185,129,0.55)] rounded-xl optic-active-card" : isFutureDay ? "bg-black/40 aura-text-soft hover:bg-white/[0.04] rounded-xl" : "bg-black/30 hover:bg-emerald-950/40 ring-1 ring-white/10 hover:ring-emerald-400/50 rounded-xl")}
             title={isFutureDay ? 'Día futuro: modo planificación' : isCounterHabit ? (isCompleted ? `${task.title} - Completado hoy` : `${task.title} - Toca para sumar +1 (${task.currentCount || 0}/${task.targetCount})`) : isCompleted ? 'Desmarcar tarea' : '✅ Toca para marcar como completada'}
             aria-label={isCompleted ? "Desmarcar tarea: " + task.title : isCounterHabit ? "Sumar +1 a " + task.title : "Completar tarea: " + task.title}
           >
@@ -169,14 +170,14 @@ const TaskCardComponent: React.FC<TaskCardProps> = (props) => {
                 <Icon name="check" className="w-5 h-5 stroke-[3] text-black" />
               </div>
             ) : isCounterHabit ? (
-              <div className="flex flex-col items-center justify-center leading-none">
-                <span className="text-[11px] font-mono font-black text-cyan-300">{task.currentCount || 0}</span>
-                <span className="text-[8px] font-mono text-cyan-400/60 leading-none">/{task.targetCount}</span>
+              <div className="flex flex-col items-center justify-center leading-none tabular-nums">
+                <span className="text-[11px] font-mono font-black aura-text-primary">{task.currentCount || 0}</span>
+                <span className="text-[8px] font-mono aura-text-soft leading-none">/{task.targetCount}</span>
               </div>
             ) : (
               <div className="flex items-center justify-center">
                 <Icon name="check" className="w-5 h-5 stroke-[2.5] text-slate-600 group-hover:text-slate-400 transition-colors duration-150" />
-                {isFutureDay && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-cyan-400 ring-2 ring-black" />}
+                {isFutureDay && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full aura-bg-primary ring-2 ring-black" />}
               </div>
             )}
           </button>
@@ -210,7 +211,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = (props) => {
                 }
               }}
               aria-label={isCounterHabit ? (isCompleted ? `${task.title} (completado)` : `Sumar +1 a ${task.title}`) : `Configurar tarea ${task.title}`}
-              className={"text-[14px] sm:text-[15.5px] font-semibold leading-snug truncate m-0 transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400 rounded " + (isCounterHabit && !isCompleted ? "cursor-pointer hover:text-cyan-300" : isCounterHabit ? "text-slate-300" : "cursor-pointer hover:text-cyan-300 text-[#f1f5f9]")} 
+              className={"text-[14px] sm:text-[15.5px] font-semibold leading-snug truncate m-0 transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--aura-color-1,#00f0ff)] rounded " + (isCounterHabit && !isCompleted ? "cursor-pointer hover:aura-text-primary" : isCounterHabit ? "text-slate-300" : "cursor-pointer hover:aura-text-primary text-[#f1f5f9]")} 
               title={isCounterHabit ? (isCompleted ? `${task.title} - Completado hoy` : `${task.title} - Toca para sumar +1 (${task.currentCount || 0}/${task.targetCount})`) : `${task.title} - Toca para configurar`}
             >
               <SlashText text={task.title} isCompleted={isCompleted} className={isCompleted ? 'text-slate-300' : 'text-[#f1f5f9]'} slashColor={catStyle.slashColor} />
@@ -220,15 +221,15 @@ const TaskCardComponent: React.FC<TaskCardProps> = (props) => {
               <span className="text-slate-600 shrink-0">&bull;</span>
               {isCompleted && task.completedAt && (
                 <>
-                  <span className="inline-flex items-center gap-0.5 font-mono text-emerald-400 shrink-0">{new Date(task.completedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                  <span className="inline-flex items-center gap-0.5 font-mono tabular-nums text-emerald-400 shrink-0">{new Date(task.completedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                   <span className="text-slate-600 shrink-0">&bull;</span>
                 </>
               )}
-              <span className="inline-flex items-center gap-0.5 font-mono text-cyan-300/90 shrink-0"><Icon name="zap" className="w-2.5 h-2.5 text-cyan-400" />+{task.xpReward || 10} XP</span>
+              <span className="inline-flex items-center gap-0.5 font-mono tabular-nums aura-text-primary shrink-0"><Icon name="zap" className="w-2.5 h-2.5 aura-text-primary" />+{task.xpReward || 10} XP</span>
               {task.coinReward && (
                 <>
                   <span className="text-slate-600 shrink-0">&bull;</span>
-                  <span className="inline-flex items-center gap-0.5 font-mono text-amber-400 shrink-0"><Icon name="coins" className="w-2.5 h-2.5 text-amber-400" />+{task.coinReward}</span>
+                  <span className="inline-flex items-center gap-0.5 font-mono tabular-nums text-amber-400 shrink-0"><Icon name="coins" className="w-2.5 h-2.5 text-amber-400" />+{task.coinReward}</span>
                 </>
               )}
               {rarity.label && (
@@ -254,12 +255,12 @@ const TaskCardComponent: React.FC<TaskCardProps> = (props) => {
                     }
                   }}
                   disabled={isDayEnded || isFutureDay}
-                  className={"inline-flex items-center gap-1.5 ml-1 shrink-0 px-2 py-0.5 rounded-md border font-mono text-[10.5px] font-bold transition-all cursor-pointer active:scale-95 " + (isCompleted ? "bg-emerald-950/70 border-emerald-500/40 text-emerald-300" : "bg-[#040e1b] border-cyan-500/40 text-cyan-200 hover:border-cyan-300 hover:bg-cyan-950/80 shadow-[0_0_8px_rgba(0,240,255,0.15)]")}
+                  className={"chicle-btn inline-flex items-center gap-1.5 ml-1 shrink-0 px-2 py-0.5 rounded-lg border font-mono tabular-nums text-[10.5px] font-bold transition-all cursor-pointer " + (isCompleted ? "bg-emerald-950/70 border-emerald-500/40 text-emerald-300 optic-active-card" : "bg-[#040814]/90 aura-border-subtle aura-text-primary hover:aura-border-primary")}
                   title={isCompleted ? "Meta cumplida hoy" : "Toca para sumar +1"}
                 >
                   <span className={catStyle.textIcon}>{task.currentCount || 0}/{task.targetCount} {task.unit || 'veces'}</span>
                   {!isDayEnded && !isFutureDay && !isCompleted && onIncrementHabit && (
-                    <span className={"px-1 py-0.2 rounded text-black text-[9px] font-bold uppercase " + catStyle.checkboxBorder.split(' ')[0]}>+1</span>
+                    <span className="px-1.5 py-0.5 rounded aura-btn-gradient optic-active-card text-[9px] font-bold uppercase">+1</span>
                   )}
                 </button>
               )}
@@ -276,10 +277,10 @@ const TaskCardComponent: React.FC<TaskCardProps> = (props) => {
                     }
                     onOpenPomodoro(task.title, task.category);
                   }}
-                  className="inline-flex items-center gap-1 ml-auto shrink-0 px-2 py-0.5 rounded-lg bg-cyan-950/60 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-900 hover:border-cyan-400 text-[10.5px] font-mono font-bold transition-all cursor-pointer active:scale-95"
+                  className="chicle-btn inline-flex items-center gap-1 ml-auto shrink-0 px-2 py-0.5 rounded-lg aura-bg-soft border aura-border-subtle aura-text-primary hover:text-white text-[10.5px] font-mono font-bold transition-all cursor-pointer"
                   title="Iniciar modo foco (Pomodoro)"
                 >
-                  <Icon name="timer" className="w-3 h-3 text-cyan-400" />
+                  <Icon name="timer" className="w-3 h-3 aura-text-primary" />
                   <span>Foco</span>
                 </button>
               )}

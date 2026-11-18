@@ -3,6 +3,8 @@ import './moxen.css';
 import { Check, Flame, Clock, Target, Award, Info } from 'lucide-react';
 import { soundFX } from '../../utils/audio';
 import { triggerHaptic } from '../../utils/haptics';
+import { useUIStore, hexToRgb } from '../../store/useUIStore';
+import { useSystemPalette } from '../../utils/systemPalette';
 
 export interface DayPerformance {
   dayLabel: string;
@@ -51,6 +53,9 @@ export const MoxenConstancia: React.FC<MoxenConstanciaProps> = ({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const chispasRef = useRef<HTMLCanvasElement | null>(null);
 
+  const palette = useSystemPalette();
+  const zenMode = useUIStore((s) => s.zenMode);
+
   // Find index of today or default to last day
   const todayIdx = useMemo(() => {
     const idx = days.findIndex(d => d.isToday);
@@ -73,14 +78,14 @@ export const MoxenConstancia: React.FC<MoxenConstanciaProps> = ({
       id: 'focus',
       nombre: 'Minutos Foco',
       desc: 'Tiempo en concentración profunda',
-      icon: <Clock className="w-4 h-4 text-cyan-400" />,
+      icon: <Clock className="w-4 h-4 aura-text-primary" />,
       meta: focusGoal,
       val: selectedDay.focusMinutes,
       unit: 'min',
-      colorName: 'cyan',
-      base: '#00f0ff',
-      c0: '#0284c7',
-      c1: '#38bdf8'
+      colorName: 'aura',
+      base: palette.c1,
+      c0: palette.c2,
+      c1: palette.c1
     },
     {
       id: 'tasks',
@@ -108,7 +113,7 @@ export const MoxenConstancia: React.FC<MoxenConstanciaProps> = ({
       c0: '#6b21a8',
       c1: '#c084fc'
     }
-  ], [selectedDay, focusGoal, tasksGoal, habitsGoal]);
+  ], [selectedDay, focusGoal, tasksGoal, habitsGoal, palette.c1, palette.c2]);
 
   const allThreeClosed = METAS.every(m => m.val >= m.meta);
 
@@ -210,7 +215,9 @@ const createParticlePool = (): SparkParticle[] => {
       glowSpring.current.meta = 1;
       if (prevCelebratedDay.current !== selectedDayIdx) {
         prevCelebratedDay.current = selectedDayIdx;
-        triggerCelebration(!isInitialMount);
+        if (!zenMode) {
+          triggerCelebration(!isInitialMount);
+        }
       }
     } else {
       glowSpring.current.meta = 0;
@@ -218,7 +225,7 @@ const createParticlePool = (): SparkParticle[] => {
         prevCelebratedDay.current = null;
       }
     }
-  }, [selectedDayIdx, METAS, allThreeClosed]);
+  }, [selectedDayIdx, METAS, allThreeClosed, zenMode]);
 
   // Main Canvas Render Loop with True Dynamic Responsive Sizing
   useEffect(() => {
@@ -231,8 +238,129 @@ const createParticlePool = (): SparkParticle[] => {
     const cg = chispasCanvas.getContext('2d');
     if (!g || !cg) return;
 
+    const auraRgb1 = hexToRgb(palette.c1);
+    const auraRgb2 = hexToRgb(palette.c2);
+
     let raf = 0;
     let lastTime = performance.now();
+
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+
+    // Responsive scaling based on container clientWidth
+    const measureAndResize = () => {
+      const containerWidth = Math.min(300, Math.max(220, container.clientWidth || L_LOGICAL));
+      const k = containerWidth / L_LOGICAL;
+      const displaySize = LT_LOGICAL * k;
+
+      canvas.width = Math.round(displaySize * dpr);
+      canvas.height = Math.round(displaySize * dpr);
+      canvas.style.width = `${displaySize}px`;
+      canvas.style.height = `${displaySize}px`;
+
+      chispasCanvas.width = Math.round(displaySize * dpr);
+      chispasCanvas.height = Math.round(displaySize * dpr);
+      chispasCanvas.style.width = `${displaySize}px`;
+      chispasCanvas.style.height = `${displaySize}px`;
+
+      return { k, displaySize };
+    };
+
+    const { k } = measureAndResize();
+
+    const drawRingsFrame = (S: number, C: number, glowAmt: number) => {
+      // Clear main canvas
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      g.clearRect(0, 0, canvas.width, canvas.height);
+      g.setTransform(S, 0, 0, S, 0, 0);
+
+      // Draw Rings
+      for (let i = 0; i < 3; i++) {
+        const r = RADIOS_LOGICAL[i];
+        const p = limita(springVals.current[i].x, 0, 1.15);
+        const meta = METAS[i];
+
+        // Track background
+        g.lineWidth = GROSOR_LOGICAL;
+        g.lineCap = 'butt';
+        g.strokeStyle = 'rgba(255, 255, 255, 0.06)';
+        g.beginPath();
+        g.arc(C, C, r, 0, 6.2832);
+        g.stroke();
+
+        if (p < 0.003) continue;
+
+        const a0 = -Math.PI / 2;
+        const f = Math.min(p, 1);
+        const a1 = a0 + 6.2832 * f;
+        const aCab = a0 + 6.2832 * p;
+
+        // Conic gradient arc
+        const grad = g.createConicGradient(a0, C, C);
+        grad.addColorStop(0, meta.c0);
+        grad.addColorStop(Math.max(0.002, Math.min(0.999, f)), meta.c1);
+        grad.addColorStop(1, meta.c1);
+
+        g.save();
+        g.shadowColor = meta.base;
+        g.shadowBlur = (12 + glowAmt * 10) * S;
+        g.lineWidth = GROSOR_LOGICAL;
+        g.lineCap = 'butt';
+        g.strokeStyle = grad;
+        g.beginPath();
+        g.arc(C, C, r, a0, f >= 0.9995 ? a0 + 6.2832 : a1);
+        g.stroke();
+        g.restore();
+
+        // Round start cap
+        g.fillStyle = meta.c0;
+        g.beginPath();
+        g.arc(C + r * Math.cos(a0), C + r * Math.sin(a0), GROSOR_LOGICAL / 2, 0, 6.2832);
+        g.fill();
+
+        // Round head cap
+        const hx = C + r * Math.cos(aCab);
+        const hy = C + r * Math.sin(aCab);
+        g.save();
+        if (p > 0.94) {
+          g.shadowColor = 'rgba(0, 0, 0, 0.7)';
+          g.shadowBlur = 8 * S;
+          g.shadowOffsetX = Math.cos(aCab + Math.PI / 2) * 3 * S;
+          g.shadowOffsetY = Math.sin(aCab + Math.PI / 2) * 3 * S;
+        } else {
+          g.shadowColor = meta.base;
+          g.shadowBlur = (8 + glowAmt * 6) * S;
+        }
+        g.fillStyle = meta.c1;
+        g.beginPath();
+        g.arc(hx, hy, GROSOR_LOGICAL / 2, 0, 6.2832);
+        g.fill();
+        g.restore();
+
+        // Specular highlight on head
+        g.fillStyle = 'rgba(255, 255, 255, 0.28)';
+        g.beginPath();
+        g.arc(hx - 2, hy - 2, GROSOR_LOGICAL * 0.22, 0, 6.2832);
+        g.fill();
+      }
+    };
+
+    // En Modo Zen pausamos cualquier loop requestAnimationFrame y dibujamos un fotograma estático limpio
+    if (zenMode) {
+      METAS.forEach((m, i) => {
+        const targetVal = Math.min(1.12, m.val / Math.max(1, m.meta));
+        springVals.current[i].meta = targetVal;
+        springVals.current[i].x = targetVal;
+        springVals.current[i].v = 0;
+      });
+      glowSpring.current.meta = allThreeClosed ? 1 : 0;
+      glowSpring.current.x = glowSpring.current.meta;
+      glowSpring.current.v = 0;
+      destello.current = null;
+      cg.setTransform(1, 0, 0, 1, 0, 0);
+      cg.clearRect(0, 0, chispasCanvas.width, chispasCanvas.height);
+      drawRingsFrame(dpr * k, LT_LOGICAL / 2, glowSpring.current.x);
+      return;
+    }
 
     // ── P0 Power Guards ──────────────────────────────────────────────
     // 20 FPS cap (50 ms/frame) to eliminate thermal throttling on mobile SoCs
@@ -273,29 +401,6 @@ const createParticlePool = (): SparkParticle[] => {
     );
     intersectionObserver.observe(canvas);
 
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
-
-    // Responsive scaling based on container clientWidth
-    const measureAndResize = () => {
-      const containerWidth = Math.min(300, Math.max(220, container.clientWidth || L_LOGICAL));
-      const k = containerWidth / L_LOGICAL;
-      const displaySize = LT_LOGICAL * k;
-
-      canvas.width = Math.round(displaySize * dpr);
-      canvas.height = Math.round(displaySize * dpr);
-      canvas.style.width = `${displaySize}px`;
-      canvas.style.height = `${displaySize}px`;
-
-      chispasCanvas.width = Math.round(displaySize * dpr);
-      chispasCanvas.height = Math.round(displaySize * dpr);
-      chispasCanvas.style.width = `${displaySize}px`;
-      chispasCanvas.style.height = `${displaySize}px`;
-
-      return { k, displaySize };
-    };
-
-    let { k } = measureAndResize();
-
     const render = (now: number) => {
       // 20 FPS cap
       const elapsed = now - lastFrameTime;
@@ -317,83 +422,9 @@ const createParticlePool = (): SparkParticle[] => {
       gr.v += (RES.glow.k * (gr.meta - gr.x) - RES.glow.c * gr.v) * dt;
       gr.x += gr.v * dt;
 
-      // Clear main canvas
-      g.setTransform(1, 0, 0, 1, 0, 0);
-      g.clearRect(0, 0, canvas.width, canvas.height);
-
       const S = dpr * k;
       const C = LT_LOGICAL / 2;
-      g.setTransform(S, 0, 0, S, 0, 0);
-
-      // Draw Rings
-      for (let i = 0; i < 3; i++) {
-        const r = RADIOS_LOGICAL[i];
-        const p = limita(springVals.current[i].x, 0, 1.15);
-        const meta = METAS[i];
-
-        // Track background
-        g.lineWidth = GROSOR_LOGICAL;
-        g.lineCap = 'butt';
-        g.strokeStyle = 'rgba(255, 255, 255, 0.06)';
-        g.beginPath();
-        g.arc(C, C, r, 0, 6.2832);
-        g.stroke();
-
-        if (p < 0.003) continue;
-
-        const a0 = -Math.PI / 2;
-        const f = Math.min(p, 1);
-        const a1 = a0 + 6.2832 * f;
-        const aCab = a0 + 6.2832 * p;
-
-        // Conic gradient arc
-        const grad = g.createConicGradient(a0, C, C);
-        grad.addColorStop(0, meta.c0);
-        grad.addColorStop(Math.max(0.002, Math.min(0.999, f)), meta.c1);
-        grad.addColorStop(1, meta.c1);
-
-        g.save();
-        g.shadowColor = meta.base;
-        g.shadowBlur = (12 + gr.x * 10) * S;
-        g.lineWidth = GROSOR_LOGICAL;
-        g.lineCap = 'butt';
-        g.strokeStyle = grad;
-        g.beginPath();
-        g.arc(C, C, r, a0, f >= 0.9995 ? a0 + 6.2832 : a1);
-        g.stroke();
-        g.restore();
-
-        // Round start cap
-        g.fillStyle = meta.c0;
-        g.beginPath();
-        g.arc(C + r * Math.cos(a0), C + r * Math.sin(a0), GROSOR_LOGICAL / 2, 0, 6.2832);
-        g.fill();
-
-        // Round head cap
-        const hx = C + r * Math.cos(aCab);
-        const hy = C + r * Math.sin(aCab);
-        g.save();
-        if (p > 0.94) {
-          g.shadowColor = 'rgba(0, 0, 0, 0.7)';
-          g.shadowBlur = 8 * S;
-          g.shadowOffsetX = Math.cos(aCab + Math.PI / 2) * 3 * S;
-          g.shadowOffsetY = Math.sin(aCab + Math.PI / 2) * 3 * S;
-        } else {
-          g.shadowColor = meta.base;
-          g.shadowBlur = (8 + gr.x * 6) * S;
-        }
-        g.fillStyle = meta.c1;
-        g.beginPath();
-        g.arc(hx, hy, GROSOR_LOGICAL / 2, 0, 6.2832);
-        g.fill();
-        g.restore();
-
-        // Specular highlight on head
-        g.fillStyle = 'rgba(255, 255, 255, 0.28)';
-        g.beginPath();
-        g.arc(hx - 2, hy - 2, GROSOR_LOGICAL * 0.22, 0, 6.2832);
-        g.fill();
-      }
+      drawRingsFrame(S, C, gr.x);
 
       // Render Chispas / Sparks Canvas
       cg.setTransform(1, 0, 0, 1, 0, 0);
@@ -408,8 +439,8 @@ const createParticlePool = (): SparkParticle[] => {
           const t = destello.current.t;
           const radial = cg.createRadialGradient(C, C, 0, C, C, 80 + t * 200);
           const alpha = Math.pow(1 - t, 2) * 0.5;
-          radial.addColorStop(0, `rgba(0, 240, 255, ${alpha})`);
-          radial.addColorStop(0.6, `rgba(168, 85, 247, ${alpha * 0.3})`);
+          radial.addColorStop(0, `rgba(${auraRgb1}, ${alpha})`);
+          radial.addColorStop(0.6, `rgba(${auraRgb2}, ${alpha * 0.35})`);
           radial.addColorStop(1, 'rgba(0, 0, 0, 0)');
           cg.fillStyle = radial;
           cg.fillRect(0, 0, LT_LOGICAL, LT_LOGICAL);
@@ -457,40 +488,46 @@ const createParticlePool = (): SparkParticle[] => {
       intersectionObserver.disconnect();
       document.removeEventListener('visibilitychange', onVisibilityChange);
     };
-  }, [METAS]);
+  }, [METAS, zenMode, allThreeClosed, palette.c1, palette.c2]);
 
   return (
-    <div className="moxen-constancia-root p-3.5 sm:p-6 rounded-2xl sm:rounded-3xl bg-gradient-to-b from-[#080e1e] to-[#02050e] border border-cyan-500/30 shadow-[0_10px_35px_rgba(0,240,255,0.1)] relative overflow-hidden">
+    <div className="moxen-constancia-root relative isolate p-3.5 sm:p-6 rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.94] border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.45)] overflow-hidden">
+      <span className="vi-grano opacity-5" aria-hidden="true" />
+      <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
+
       {/* Header with clear explanatory context */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 relative z-10">
         <div>
-          <div className="flex items-center gap-1.5 text-cyan-400 text-[10px] sm:text-xs font-mono font-bold uppercase tracking-widest">
-            <Award className="w-3.5 h-3.5 text-cyan-400" />
+          <div className="flex items-center gap-1.5 aura-text-primary text-[10px] sm:text-xs font-mono font-bold uppercase tracking-widest">
+            <Award className="w-3.5 h-3.5 aura-text-primary" />
             Consistencia Diaria
           </div>
-          <h3 className="text-sm sm:text-base font-anton uppercase tracking-wide text-white mt-0.5">
+          <h3 className="text-sm sm:text-base font-anton uppercase tracking-wider text-white mt-0.5">
             Los 3 Anillos de Rendimiento
           </h3>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-mono text-slate-400 bg-white/5 px-2.5 py-1 rounded-lg border border-white/5">
-            Día: <strong className="text-cyan-300">{selectedDay.name}</strong>
+          <span className="text-[10px] font-mono text-slate-400 bg-white/[0.04] px-2.5 py-1 rounded-lg border border-white/10">
+            Día: <strong className="aura-text-soft">{selectedDay.name}</strong>
           </span>
         </div>
       </div>
 
       {/* Guide explanation box */}
-      <div className="p-2 sm:p-2.5 rounded-xl bg-cyan-950/40 border border-cyan-500/30 text-[10px] sm:text-[11px] text-slate-300 font-mono mb-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 relative z-10">
+      <div className="p-2 sm:p-2.5 rounded-xl bg-[#040814]/80 border aura-border-subtle text-[10px] sm:text-[11px] text-slate-300 font-mono mb-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 relative z-10">
         <div className="flex items-center gap-2">
-          <Info className="w-4 h-4 text-cyan-400 shrink-0" />
+          <Info className="w-4 h-4 aura-text-primary shrink-0" />
           <span className="leading-tight">
-            <strong>¿Cómo leer tus 3 anillos?</strong> Cada anillo representa una dimensión de tu constancia diaria:
+            <strong className="text-white">¿Cómo leer tus 3 anillos?</strong> Cada anillo representa una dimensión de tu constancia diaria:
           </span>
         </div>
         <div className="flex items-center gap-2.5 text-[9px] sm:text-[10px] flex-wrap">
-          <span className="flex items-center gap-1 text-cyan-300 font-bold">
-            <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_6px_#00f0ff]" /> Foco (Ext.)
+          <span className="flex items-center gap-1 aura-text-soft font-bold">
+            <span
+              className="w-2 h-2 rounded-full"
+              style={{ backgroundColor: palette.c1, boxShadow: `0 0 6px ${palette.c1}` }}
+            /> Foco (Ext.)
           </span>
           <span className="flex items-center gap-1 text-amber-300 font-bold">
             <span className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_6px_#f59e0b]" /> Tareas (Med.)
@@ -505,11 +542,11 @@ const createParticlePool = (): SparkParticle[] => {
         {/* Canvas Rings Center */}
         <div className="w-full md:col-span-6 flex justify-center items-center py-1">
           <div ref={containerRef} className="co-anillos">
-            <canvas ref={canvasRef} className="co-lienzo" />
-            <canvas ref={chispasRef} className="co-chispas" />
+            <canvas ref={canvasRef} className="co-lienzo" data-preserve-optic="true" />
+            <canvas ref={chispasRef} className="co-chispas" data-preserve-optic="true" />
 
             <div className="co-centro">
-              <div className="co-pct">
+              <div className="co-pct tabular-nums">
                 <span>{overallPercent}</span>
                 <b>%</b>
               </div>
@@ -550,7 +587,7 @@ const createParticlePool = (): SparkParticle[] => {
                       {m.icon}
                       <span>{m.nombre}</span>
                     </span>
-                    <span className="text-xs font-mono font-bold text-cyan-300">
+                    <span className="text-xs font-mono tabular-nums font-bold aura-text-soft">
                       {m.val} / {m.meta} {m.unit}
                     </span>
                   </div>
@@ -579,7 +616,7 @@ const createParticlePool = (): SparkParticle[] => {
       </div>
 
       {/* Weekly Day Selector with Mini-Rings (Fluid on mobile) */}
-      <div className="pt-3 border-t border-cyan-500/20 relative z-10 flex flex-col items-center">
+      <div className="pt-3 border-t border-white/10 relative z-10 flex flex-col items-center">
         <span className="text-[9px] sm:text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest mb-2.5 text-center">
           Historial de la Semana (Toca un día para inspeccionar)
         </span>
@@ -600,7 +637,7 @@ const createParticlePool = (): SparkParticle[] => {
                 key={d.fullDate || `day-${idx}`}
                 type="button"
                 role="tab"
-                className="co-dia"
+                className={`co-dia ${isSelected ? 'optic-active-card' : ''}`}
                 aria-selected={isSelected}
                 aria-label={`Día ${d.name || d.dayLabel}: Foco ${d.focusMinutes}m, ${d.tasksDone} tareas, ${d.habitsDone} hábitos`}
                 onClick={() => {
@@ -610,12 +647,12 @@ const createParticlePool = (): SparkParticle[] => {
               >
                 <div className="co-mini">
                   <svg viewBox="0 0 34 34">
-                    <circle cx="17" cy="17" r="13" stroke="#00f0ff" strokeOpacity="0.2" />
+                    <circle cx="17" cy="17" r="13" stroke={palette.c1} strokeOpacity="0.2" />
                     <circle
                       cx="17"
                       cy="17"
                       r="13"
-                      stroke="#00f0ff"
+                      stroke={palette.c1}
                       strokeDasharray={c1}
                       strokeDashoffset={c1 * (1 - p1)}
                     />

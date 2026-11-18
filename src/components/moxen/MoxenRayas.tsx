@@ -3,7 +3,7 @@ import './moxenRayas.css';
 import { Check } from 'lucide-react';
 
 export type MoxenRayasVariant = 'hero' | 'compact' | 'slim';
-export type MoxenRayasTheme = 'cyan' | 'purple' | 'amber' | 'emerald' | 'rose';
+export type MoxenRayasTheme = 'aura' | 'cyan' | 'purple' | 'amber' | 'emerald' | 'rose';
 export type MoxenRayasMode = 'active' | 'reactive';
 
 export interface MoxenRayasProps {
@@ -421,7 +421,7 @@ export const MoxenRayas: React.FC<MoxenRayasProps> = ({
         {/* Checkmark animado al completar */}
         {variant !== 'slim' && (
           <div className="ry-check-icon">
-            <div className="w-5 h-5 rounded-full bg-white flex items-center justify-center shadow-lg">
+            <div className="w-5 h-5 rounded-full bg-white optic-active-card flex items-center justify-center shadow-lg">
               <Check className="w-3.5 h-3.5 text-black stroke-[3]" />
             </div>
           </div>

@@ -351,7 +351,7 @@ export const Header: React.FC<HeaderProps> = ({
           const archetypeTitle = getArchetypeDisplayName(stats.characterClass);
 
           return (
-            <div className="px-2.5 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-[#030712] via-[#050f24] to-[#030712] relative z-10 border-b border-white/[0.06]">
+        <div className="px-2.5 sm:px-5 py-2 sm:py-2.5 bg-[#030712]/60 relative z-10 border-b border-white/[0.06]">
               {/* Contenedor Principal: Avatar + Saludo VIP + Racha */}
               <div className="flex items-center justify-between gap-2.5">
                 {/* Bloque Izquierdo: Avatar Arquetípico + Saludo Personalizado Prominente */}
@@ -362,7 +362,7 @@ export const Header: React.FC<HeaderProps> = ({
                 >
                   {/* Avatar con aura de prestigio */}
                   <div 
-                    className="relative w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-b from-cyan-950/60 to-black/80 border flex items-center justify-center group-hover:scale-105 transition-all overflow-hidden shrink-0 shadow-lg"
+                    className="relative w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-[#040a1a] border flex items-center justify-center group-hover:scale-105 transition-all overflow-hidden shrink-0 shadow-lg"
                     style={{
                       borderColor: 'rgba(var(--aura-glow-rgb, 0, 240, 255), 0.5)',
                       boxShadow: '0 0 14px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.25)'
@@ -381,7 +381,7 @@ export const Header: React.FC<HeaderProps> = ({
 
                     {/* Subtítulo Unificado: Nivel, Ascensión, Rango y Racha */}
                     <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-slate-300 font-medium truncate">
-                      <span className="text-cyan-300 font-mono font-bold shrink-0">NV. {stats.level}</span>
+                      <span className="aura-text-primary font-mono font-bold shrink-0 tabular-nums">NV. {stats.level}</span>
                       {(stats.ascensionTier || 0) > 0 && (
                         <span
                           className="text-amber-300 font-mono font-bold shrink-0"
@@ -403,20 +403,20 @@ export const Header: React.FC<HeaderProps> = ({
                 {/* Bloque Derecho: Racha y Escudos Tácticos */}
                 <div className="flex items-center gap-1.5 shrink-0">
                   <div 
-                    className="flex items-center gap-1 px-2 py-1 rounded-xl bg-amber-950/40 border border-amber-500/50 text-amber-300 text-xs font-anton tracking-wider shadow-[0_0_10px_rgba(245,158,11,0.25)] shrink-0"
+                    className="flex items-center gap-1 px-2 py-1 rounded-xl bg-amber-950/40 border border-amber-500/45 text-amber-300 text-xs font-mono font-bold tracking-wider shadow-[0_0_10px_rgba(245,158,11,0.2)] shrink-0 tabular-nums"
                     title={`Racha Activa: ${stats.streakDays || 0} Días continuos`}
                   >
                     <Flame className="w-3.5 h-3.5 text-amber-400 fill-amber-400/60" />
                     <span><AnimatedNumber value={stats.streakDays} /></span>
-                    <span className="text-[9px] font-mono text-amber-400/80 ml-0.5">DÍAS</span>
+                    <span className="text-[10px] font-mono text-amber-400/80 ml-0.5">DÍAS</span>
                   </div>
 
                   {stats.streakShields !== undefined && stats.streakShields > 0 && (
                     <div
-                      className="hidden xs:flex items-center gap-1 px-1.5 py-1 rounded-xl bg-cyan-950/40 border border-cyan-400/60 text-cyan-300 text-[10px] font-anton tracking-wider shrink-0"
+                      className="hidden sm:flex items-center gap-1 px-2 py-1 rounded-xl aura-bg-soft border text-[10px] font-mono font-bold tracking-wider shrink-0 tabular-nums"
                       title={`Escudos Cuánticos: ${stats.streakShields}`}
                     >
-                      <Shield className="w-3 h-3 text-cyan-400 fill-cyan-400/30" />
+                      <Shield className="w-3 h-3 aura-text-primary" />
                       <span>{stats.streakShields}</span>
                     </div>
                   )}
@@ -431,14 +431,21 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 {/* EXP Micro-gauge */}
                 <div className="flex-1 flex items-center gap-2 min-w-0">
-                  <span className="text-[10px] font-mono font-bold text-cyan-400 shrink-0">EXP</span>
-                  <div className="flex-1 h-2 bg-black/80 rounded-full border border-cyan-500/30 p-[0.5px] overflow-hidden">
+                  <span className="text-[10px] font-mono font-bold aura-text-primary shrink-0">EXP</span>
+                  <div
+                    className="flex-1 h-2 bg-black/80 rounded-full border p-[0.5px] overflow-hidden"
+                    style={{ borderColor: 'rgba(var(--aura-glow-rgb, 0, 240, 255), 0.35)' }}
+                  >
                     <div
-                      className="h-full rounded-full transition-all duration-500 bg-gradient-to-r from-cyan-400 via-sky-400 to-indigo-500 shadow-[0_0_6px_rgba(0,240,255,0.7)]"
-                      style={{ width: `${xpPercent}%` }}
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{
+                        width: `${xpPercent}%`,
+                        background: 'linear-gradient(90deg, var(--aura-color-1, #00f0ff) 0%, var(--aura-color-2, #8a2be2) 100%)',
+                        boxShadow: '0 0 8px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.65)',
+                      }}
                     />
                   </div>
-                  <span className="text-[10.5px] font-mono tabular-nums text-cyan-300 shrink-0">{Math.round(xpPercent)}%</span>
+                  <span className="text-[10.5px] font-mono tabular-nums aura-text-soft shrink-0">{Math.round(xpPercent)}%</span>
                 </div>
 
                 {/* HP Micro-gauge */}

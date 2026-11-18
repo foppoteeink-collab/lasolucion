@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { DAILY_REWARDS } from '../data/defaults';
 import { PlayerStats } from '../types';
 import { Gift, Check, Flame, X, Lock, Sparkles, Coins, Zap } from 'lucide-react';
@@ -28,19 +29,23 @@ export const DailyRewardsModal: React.FC<DailyRewardsModalProps> = ({
   // Calculate current streak day (1 to 7 cycle)
   const currentStreakDay = ((stats.streakDays - (isAlreadyClaimedToday ? 1 : 0)) % 7) + 1;
 
-  // Cerrar con Escape
+  // Cerrar con Escape y ocultar flotantes
   useEffect(() => {
     if (!isOpen) return;
+    document.body.classList.add('modal-open-hide-floating');
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         onClose();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.classList.remove('modal-open-hide-floating');
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen || typeof document === 'undefined') return null;
 
   const handleClaim = (day: number, xp: number, coins: number, bonusItem?: string) => {
     soundFX.playLevelUp();
@@ -49,38 +54,36 @@ export const DailyRewardsModal: React.FC<DailyRewardsModalProps> = ({
     onClaimReward(day, xp, coins, bonusItem);
   };
 
-  return (
+  return createPortal(
     <div 
-      className="fixed inset-0 z-[150] flex items-center justify-center p-3 sm:p-4 bg-black/88 animate-fade-in font-sans"
+      className="fixed inset-0 z-[170] portal-modal-root bg-black/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-fade-in font-sans"
       onClick={onClose}
     >
       <div 
         role="dialog"
         aria-modal="true"
         aria-labelledby="daily-rewards-modal-title"
-        className="w-full max-w-lg max-h-[90dvh] flex flex-col bg-[#030712]/[0.98] border border-amber-500/40 rounded-2xl sm:rounded-3xl shadow-[0_0_50px_rgba(245,158,11,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] relative text-left overflow-hidden"
+        className="w-full max-w-lg max-h-[90dvh] flex flex-col relative isolate bg-[#030712]/[0.98] border border-white/10 rounded-2xl sm:rounded-3xl shadow-[0_24px_64px_rgba(0,0,0,0.75)] text-left overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Micrograno táctil Moxen Vidrio */}
         <span className="vi-grano opacity-5" aria-hidden="true" />
 
-        {/* Luces de ambiente cyberpunk */}
-        <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-amber-400/50 to-transparent pointer-events-none" />
+        {/* Filamento especular superior */}
+        <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
 
         {/* ============================================================== */}
         {/* MODAL HEADER: IDENTIDAD COCKPIT                                */}
         {/* ============================================================== */}
-        <div className="flex items-center justify-between p-4 sm:p-5 pb-3 border-b border-white/10 bg-[#010810]/80 shrink-0 relative z-10">
+        <div className="flex items-center justify-between p-4 sm:p-5 pb-3 border-b border-white/10 bg-[#040814]/[0.96] shrink-0 relative z-10">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-950 to-[#1c1202] border border-amber-400/50 flex items-center justify-center text-amber-300 shadow-[0_0_15px_rgba(245,158,11,0.35)] shrink-0">
-              <Gift className="w-5 h-5 drop-shadow-[0_0_8px_rgba(245,158,11,0.6)]" />
+            <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-400/50 flex items-center justify-center text-amber-300 shrink-0">
+              <Gift className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <h3 id="daily-rewards-modal-title" className="text-sm sm:text-base font-anton tracking-wide text-white uppercase truncate flex items-center gap-2">
+              <h3 id="daily-rewards-modal-title" className="text-sm sm:text-base font-anton tracking-wider text-white uppercase truncate flex items-center gap-2">
                 <span>Recompensas Diarias</span>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-950/80 text-amber-300 border border-amber-400/50 font-bold shrink-0 shadow-[0_0_8px_rgba(245,158,11,0.3)]">
+                <span className="text-[10px] font-mono tabular-nums px-2 py-0.5 rounded-full bg-amber-950/80 text-amber-300 border border-amber-400/50 font-bold shrink-0">
                   Día {currentStreakDay} / 7
                 </span>
               </h3>
@@ -96,7 +99,7 @@ export const DailyRewardsModal: React.FC<DailyRewardsModalProps> = ({
               onClose();
             }}
             aria-label="Cerrar modal de recompensas diarias"
-            className="w-8 h-8 rounded-xl bg-white/[0.04] hover:bg-white/10 border border-white/10 hover:border-amber-400/40 text-slate-400 hover:text-white flex items-center justify-center transition-all cursor-pointer shrink-0 ml-2 active:scale-95"
+            className="chicle-btn w-9 h-9 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 text-slate-300 hover:text-white flex items-center justify-center cursor-pointer shrink-0 ml-2"
             title="Cerrar modal (Esc)"
           >
             <X className="w-4 h-4" />
@@ -109,21 +112,21 @@ export const DailyRewardsModal: React.FC<DailyRewardsModalProps> = ({
         <div className="p-4 sm:p-5 overflow-y-auto space-y-4 relative z-10 custom-scrollbar">
           
           {/* STREAK STATUS BANNER */}
-          <div className="p-3.5 rounded-2xl bg-[#08051a]/90 border border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.12)] flex items-center justify-between">
+          <div className="p-3.5 rounded-2xl bg-[#040814]/80 border border-amber-500/30 flex items-center justify-between gap-2">
             <div className="flex items-center gap-2.5">
               <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-400/40 flex items-center justify-center text-amber-400 shrink-0">
-                <Flame className="w-5 h-5 fill-amber-400/40 animate-pulse drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]" />
+                <Flame className="w-5 h-5 fill-amber-400/40 animate-pulse" />
               </div>
               <div>
                 <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 block">Racha Activa</span>
-                <span className="text-sm sm:text-base font-anton text-amber-300 tracking-wide uppercase drop-shadow-[0_0_8px_rgba(245,158,11,0.4)]">
+                <span className="text-sm sm:text-base font-anton text-amber-300 tracking-wide uppercase tabular-nums">
                   {stats.streakDays} {stats.streakDays === 1 ? 'Día Consecutivo' : 'Días Consecutivos'}
                 </span>
               </div>
             </div>
             <div className="text-right">
               <span className="text-[9px] font-mono uppercase tracking-wider text-slate-400 block">Ciclo de Lealtad</span>
-              <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-lg bg-black/60 text-cyan-300 border border-cyan-500/30 inline-block mt-0.5">
+              <span className="text-xs font-mono tabular-nums font-bold px-2.5 py-1 rounded-lg bg-black/50 aura-text-soft border aura-border-subtle inline-block mt-0.5">
                 Paso {currentStreakDay} de 7
               </span>
             </div>
@@ -134,7 +137,6 @@ export const DailyRewardsModal: React.FC<DailyRewardsModalProps> = ({
             {DAILY_REWARDS.map((reward) => {
               const isClaimed = reward.day < currentStreakDay || (reward.day === currentStreakDay && isAlreadyClaimedToday);
               const isToday = reward.day === currentStreakDay && !isAlreadyClaimedToday;
-              const isLocked = reward.day > currentStreakDay;
               const isGrandPrize = reward.day === 7;
 
               return (
@@ -144,12 +146,12 @@ export const DailyRewardsModal: React.FC<DailyRewardsModalProps> = ({
                     isGrandPrize ? 'col-span-2 sm:col-span-2' : ''
                   } ${
                     isToday
-                      ? 'bg-gradient-to-b from-[#1c1202] via-[#0d0901] to-[#040e1b] border border-amber-400 text-white shadow-[0_0_25px_rgba(245,158,11,0.35),inset_0_1px_0_rgba(255,255,255,0.2)] ring-1 ring-amber-400/50 scale-[1.02]'
+                      ? 'bg-[#040814]/90 border border-amber-400 text-white ring-1 ring-amber-400/50 scale-[1.02]'
                       : isClaimed
-                      ? 'bg-[#021008]/80 border border-emerald-500/30 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.1)]'
+                      ? 'bg-emerald-950/30 border border-emerald-500/30 text-emerald-300'
                       : isGrandPrize
-                      ? 'bg-[#0a0518]/80 border border-purple-500/30 text-slate-300 opacity-80'
-                      : 'bg-[#02050f]/80 border border-white/5 text-slate-400 opacity-60'
+                      ? 'bg-[#040814]/80 border border-purple-500/30 text-slate-300 opacity-85'
+                      : 'bg-white/[0.02] border border-white/10 text-slate-400 opacity-65'
                   }`}
                 >
                   {/* Top Day Header */}
@@ -158,11 +160,11 @@ export const DailyRewardsModal: React.FC<DailyRewardsModalProps> = ({
                       Día {reward.day}
                     </span>
                     {isClaimed ? (
-                      <span className="px-1.5 py-0.5 rounded-md bg-emerald-950/90 border border-emerald-400/50 text-emerald-300 text-[9px] font-mono font-bold flex items-center gap-1 shadow-[0_0_6px_rgba(16,185,129,0.3)]">
+                      <span className="px-1.5 py-0.5 rounded-md bg-emerald-950/90 border border-emerald-400/50 text-emerald-300 text-[9px] font-mono font-bold flex items-center gap-1">
                         <Check className="w-2.5 h-2.5 stroke-[3]" /> Listo
                       </span>
                     ) : isToday ? (
-                      <span className="px-1.5 py-0.5 rounded-md bg-amber-400 text-black text-[9px] font-anton tracking-wider uppercase font-bold shadow-[0_0_8px_rgba(245,158,11,0.5)]">
+                      <span className="px-1.5 py-0.5 rounded-md bg-amber-400 text-black text-[9px] font-anton tracking-wider uppercase font-bold optic-active-card">
                         ¡Hoy!
                       </span>
                     ) : (
@@ -176,12 +178,12 @@ export const DailyRewardsModal: React.FC<DailyRewardsModalProps> = ({
                   <div className="my-1.5 flex items-center justify-center">
                     <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-2xl transition-transform ${
                       isToday 
-                        ? 'bg-amber-500/20 border border-amber-400/60 shadow-[0_0_15px_rgba(245,158,11,0.4)] scale-110' 
+                        ? 'bg-amber-500/20 border border-amber-400/60 scale-110' 
                         : isGrandPrize
-                        ? 'bg-purple-950/60 border border-purple-400/40 text-2xl shadow-[0_0_12px_rgba(168,85,247,0.3)]'
+                        ? 'bg-purple-950/60 border border-purple-400/40 text-2xl'
                         : isClaimed
                         ? 'bg-emerald-950/40 border border-emerald-500/30'
-                        : 'bg-black/40 border border-white/5'
+                        : 'bg-black/40 border border-white/10'
                     }`}>
                       {isGrandPrize ? '👑' : reward.day === 5 ? '🔮' : reward.day === 3 ? '⚡' : '🎁'}
                     </div>
@@ -189,12 +191,12 @@ export const DailyRewardsModal: React.FC<DailyRewardsModalProps> = ({
 
                   {/* Reward Metrics */}
                   <div className="space-y-1 my-1">
-                    <div className="flex items-center justify-center gap-1 text-xs font-anton tracking-wide text-amber-300">
+                    <div className="flex items-center justify-center gap-1 text-xs font-mono tabular-nums font-bold text-amber-300">
                       <Coins className="w-3.5 h-3.5 text-amber-400" />
                       <span>+{reward.coins}</span>
                     </div>
-                    <div className="flex items-center justify-center gap-1 text-[11px] font-anton tracking-wide text-cyan-300">
-                      <Zap className="w-3 h-3 text-cyan-400" />
+                    <div className="flex items-center justify-center gap-1 text-[11px] font-mono tabular-nums font-bold aura-text-soft">
+                      <Zap className="w-3 h-3 aura-text-primary" />
                       <span>+{reward.xp} XP</span>
                     </div>
                     {reward.bonusItem && (
@@ -212,7 +214,7 @@ export const DailyRewardsModal: React.FC<DailyRewardsModalProps> = ({
                     <button
                       type="button"
                       onClick={() => handleClaim(reward.day, reward.xp, reward.coins, reward.bonusItem)}
-                      className="btn-neon-hunter w-full mt-2.5 py-2.5 px-2.5 text-xs tracking-widest uppercase rounded-xl shadow-lg active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                      className="chicle-btn aura-btn-gradient optic-active-card w-full mt-2.5 py-2.5 px-2.5 text-xs font-anton tracking-wider uppercase rounded-xl cursor-pointer flex items-center justify-center gap-1.5"
                     >
                       <Sparkles className="w-3.5 h-3.5" />
                       <span>¡Reclamar!</span>
@@ -226,7 +228,7 @@ export const DailyRewardsModal: React.FC<DailyRewardsModalProps> = ({
           {/* Feedback Info Box */}
           <div className="pt-1">
             {isAlreadyClaimedToday ? (
-              <div className="p-3 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 text-xs font-mono flex items-center justify-center gap-2 shadow-[0_0_10px_rgba(16,185,129,0.15)] text-center">
+              <div className="p-3 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 text-xs font-mono flex items-center justify-center gap-2 text-center">
                 <Check className="w-4 h-4 text-emerald-400 shrink-0 stroke-[2.5]" />
                 <span>¡Suministro de hoy reclamado! Vuelve mañana para continuar tu ciclo.</span>
               </div>
@@ -243,7 +245,7 @@ export const DailyRewardsModal: React.FC<DailyRewardsModalProps> = ({
         {/* ============================================================== */}
         {/* PINNED STICKY FOOTER (ERGONOMÍA DEL PULGAR)                    */}
         {/* ============================================================== */}
-        <div className="p-3 sm:p-4 border-t border-white/10 bg-[#010810]/80 shrink-0 flex items-center justify-between gap-3 relative z-10">
+        <div className="p-3 sm:p-4 border-t border-white/10 bg-[#040814]/[0.96] shrink-0 flex items-center justify-between gap-3 relative z-10">
           <div className="hidden sm:flex items-center gap-1.5 text-[11px] font-mono text-slate-400">
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
             <span>Completar misiones diarias alimenta tu racha de lealtad.</span>
@@ -254,13 +256,14 @@ export const DailyRewardsModal: React.FC<DailyRewardsModalProps> = ({
               soundFX.playClick();
               onClose();
             }}
-            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/10 border border-white/15 text-slate-300 hover:text-white font-anton uppercase text-xs tracking-wider transition-all cursor-pointer active:scale-95 flex items-center justify-center gap-1.5 ml-auto"
+            className="chicle-btn w-full sm:w-auto px-5 py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.12] border border-white/15 text-slate-200 hover:text-white font-anton uppercase text-xs tracking-wider cursor-pointer flex items-center justify-center gap-1.5 ml-auto"
           >
             <span>{copy.backToDashboardCta}</span>
           </button>
         </div>
 
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

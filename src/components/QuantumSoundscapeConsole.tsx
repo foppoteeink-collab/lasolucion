@@ -103,15 +103,15 @@ export const QuantumSoundscapeConsole: React.FC<QuantumSoundscapeConsoleProps> =
   return (
     <div className="w-full space-y-2.5 text-white font-sans">
       {/* Quick Tactical Sound Formulas Bar */}
-      <div className="space-y-1">
+      <div className="space-y-1.5">
         <div className="flex items-center justify-between px-1">
           <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 flex items-center gap-1">
-            <Sparkles className="w-3 h-3 text-cyan-400" />
+            <Sparkles className="w-3 h-3 aura-text-primary" />
             <span>Fórmulas Psicoacústicas:</span>
           </span>
-          <span className="text-[9px] font-mono text-cyan-400/80">1-Clic Instantáneo</span>
+          <span className="text-[10px] font-mono aura-text-soft">1-Clic Instantáneo</span>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5" role="toolbar" aria-label="Fórmulas de Paisaje Sonoro">
+        <div className={`grid ${compact ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-4'} gap-1.5`} role="toolbar" aria-label="Fórmulas de Paisaje Sonoro">
           {(Object.keys(SOUND_FORMULAS) as SoundFormula[]).map((fKey) => {
             const f = SOUND_FORMULAS[fKey];
             const isSelected = state.activeFormula === fKey && state.isPlaying;
@@ -129,20 +129,20 @@ export const QuantumSoundscapeConsole: React.FC<QuantumSoundscapeConsoleProps> =
                 onMouseLeave={() => setFocusedInfo(null)}
                 aria-pressed={isSelected}
                 aria-label={`Activar fórmula ${f.name}: ${f.subtitle}`}
-                className={`px-2 py-1.5 rounded-xl border transition-all cursor-pointer text-left flex items-center justify-between gap-1.5 ${
+                className={`px-2.5 py-2 rounded-xl border transition-all cursor-pointer text-left flex items-center justify-between gap-1.5 ${
                   isSelected
-                    ? 'bg-cyan-950/80 border-cyan-400 text-cyan-200 shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1 ring-cyan-400/50'
-                    : 'bg-black/40 border-white/10 text-slate-300 hover:border-cyan-500/40 hover:bg-black/60 hover:text-white'
+                    ? 'aura-bg-soft optic-active-card'
+                    : 'bg-black/40 border-white/10 text-slate-300 hover:border-white/25 hover:bg-black/60 hover:text-white'
                 }`}
               >
                 <div className="flex items-center gap-1.5 min-w-0">
                   <span className="text-sm shrink-0 leading-none">{f.icon}</span>
                   <div className="truncate">
                     <p className="text-[11px] font-bold truncate leading-tight">{f.name}</p>
-                    <p className="text-[9px] font-mono text-slate-400 truncate leading-none">{f.subtitle}</p>
+                    <p className="text-[10px] font-mono text-slate-400 truncate leading-none">{f.subtitle}</p>
                   </div>
                 </div>
-                {isSelected && <Check className="w-3 h-3 text-cyan-300 shrink-0" />}
+                {isSelected && <Check className="w-3 h-3 aura-text-primary shrink-0" />}
               </button>
             );
           })}
@@ -150,7 +150,7 @@ export const QuantumSoundscapeConsole: React.FC<QuantumSoundscapeConsoleProps> =
       </div>
 
       {/* 3 Minimalist Channel Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+      <div className={`grid ${compact ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-3'} gap-2`}>
         {/* CHANNEL 1: Noise Masking */}
         <div
           onMouseEnter={() => setFocusedInfo({ title: `Canal 1 • ${activeNoise.name}`, desc: activeNoise.desc })}
@@ -158,16 +158,16 @@ export const QuantumSoundscapeConsole: React.FC<QuantumSoundscapeConsoleProps> =
           className={`p-2.5 rounded-xl border transition-all space-y-2 ${
             state.channel1Muted
               ? 'bg-black/30 border-white/5 opacity-55'
-              : 'bg-black/50 border-cyan-500/30 hover:border-cyan-400/60'
+              : 'bg-black/45 border-white/10 hover:border-white/20'
           }`}
         >
           <div className="flex items-center justify-between gap-1">
             <div className="flex items-center gap-1.5">
-              <Waves className="w-3.5 h-3.5 text-cyan-400" />
+              <Waves className="w-3.5 h-3.5 aura-text-primary" />
               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-200">1. Aislamiento</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] font-mono text-slate-400">
+              <span className="text-[10px] font-mono tabular-nums text-slate-400">
                 {state.channel1Muted ? 'OFF' : `${Math.round(state.channel1Volume * 100)}%`}
               </span>
               <button
@@ -179,8 +179,8 @@ export const QuantumSoundscapeConsole: React.FC<QuantumSoundscapeConsoleProps> =
                 }}
                 aria-pressed={state.channel1Muted}
                 aria-label={state.channel1Muted ? 'Reactivar volumen Canal 1 Aislamiento' : 'Silenciar Canal 1 Aislamiento'}
-                className={`p-1 rounded-md transition cursor-pointer ${
-                  state.channel1Muted ? 'bg-rose-950/80 text-rose-400' : 'bg-white/5 text-cyan-300 hover:text-white'
+                className={`p-1 rounded-lg transition cursor-pointer ${
+                  state.channel1Muted ? 'bg-rose-950/80 text-rose-400' : 'bg-white/5 aura-text-soft hover:text-white'
                 }`}
                 title="Silenciar / Activar Canal 1"
               >
@@ -203,9 +203,9 @@ export const QuantumSoundscapeConsole: React.FC<QuantumSoundscapeConsoleProps> =
                 }}
                 aria-pressed={state.noiseType === t}
                 aria-label={`Seleccionar Ruido ${t === 'brown' ? 'Marrón' : t === 'pink' ? 'Rosa' : 'Blanco'}`}
-                className={`py-1 rounded-lg font-bold uppercase transition cursor-pointer text-center ${
+                className={`py-1.5 rounded-lg font-bold uppercase transition cursor-pointer text-center ${
                   state.noiseType === t
-                    ? 'bg-cyan-400 text-black shadow-[0_0_8px_rgba(34,211,238,0.4)]'
+                    ? 'aura-bg-primary optic-active-card'
                     : 'bg-black/60 text-slate-400 hover:text-white border border-white/10'
                 }`}
               >
@@ -226,7 +226,8 @@ export const QuantumSoundscapeConsole: React.FC<QuantumSoundscapeConsoleProps> =
             aria-valuemax={100}
             aria-valuenow={Math.round(state.channel1Volume * 100)}
             aria-valuetext={`${Math.round(state.channel1Volume * 100)}%`}
-            className="w-full accent-cyan-400 cursor-pointer h-1.5 bg-white/10 rounded-lg block"
+            className="w-full cursor-pointer h-1.5 bg-white/10 rounded-lg block"
+            style={{ accentColor: 'var(--aura-color-1, #00f0ff)' }}
           />
         </div>
 
@@ -237,22 +238,22 @@ export const QuantumSoundscapeConsole: React.FC<QuantumSoundscapeConsoleProps> =
           className={`p-2.5 rounded-xl border transition-all space-y-2 ${
             state.channel2Muted
               ? 'bg-black/30 border-white/5 opacity-55'
-              : 'bg-black/50 border-purple-500/30 hover:border-purple-400/60'
+              : 'bg-black/45 border-white/10 hover:border-white/20'
           }`}
         >
           <div className="flex items-center justify-between gap-1">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <Headphones className="w-3.5 h-3.5 text-[#d6f421]" />
+              <Headphones className="w-3.5 h-3.5 text-purple-400" />
               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-200">2. Binaural</span>
               <span
-                className="text-[8px] font-mono px-1 py-0.2 rounded bg-[#d6f421]/15 text-[#d6f421] border border-[#d6f421]/30 tracking-tight"
+                className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-300 border border-purple-500/30 tracking-tight"
                 title="Los pulsos binaurales requieren audífonos estéreo para sincronizar los hemisferios cerebrales"
               >
                 Audífonos L/R
               </span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] font-mono text-slate-400">
+              <span className="text-[10px] font-mono tabular-nums text-slate-400">
                 {state.channel2Muted ? 'OFF' : `${Math.round(state.channel2Volume * 100)}%`}
               </span>
               <button
@@ -264,7 +265,7 @@ export const QuantumSoundscapeConsole: React.FC<QuantumSoundscapeConsoleProps> =
                 }}
                 aria-pressed={state.channel2Muted}
                 aria-label={state.channel2Muted ? 'Reactivar volumen Canal 2 Binaural' : 'Silenciar Canal 2 Binaural'}
-                className={`p-1 rounded-md transition cursor-pointer ${
+                className={`p-1 rounded-lg transition cursor-pointer ${
                   state.channel2Muted ? 'bg-rose-950/80 text-rose-400' : 'bg-white/5 text-purple-300 hover:text-white'
                 }`}
                 title="Silenciar / Activar Canal 2"
@@ -288,9 +289,9 @@ export const QuantumSoundscapeConsole: React.FC<QuantumSoundscapeConsoleProps> =
                 }}
                 aria-pressed={state.binauralMode === m}
                 aria-label={`Frecuencia binaural ${BINAURAL_CONFIGS[m].name}`}
-                className={`py-1 rounded-lg font-bold uppercase transition cursor-pointer text-center ${
+                className={`py-1.5 rounded-lg font-bold uppercase transition cursor-pointer text-center ${
                   state.binauralMode === m
-                    ? 'bg-[#d6f421] text-black shadow-[0_0_8px_rgba(214,244,33,0.4)]'
+                    ? 'aura-bg-primary optic-active-card'
                     : 'bg-black/60 text-slate-400 hover:text-white border border-white/10'
                 }`}
               >
@@ -311,7 +312,8 @@ export const QuantumSoundscapeConsole: React.FC<QuantumSoundscapeConsoleProps> =
             aria-valuemax={100}
             aria-valuenow={Math.round(state.channel2Volume * 100)}
             aria-valuetext={`${Math.round(state.channel2Volume * 100)}%`}
-            className="w-full accent-[#d6f421] cursor-pointer h-1.5 bg-white/10 rounded-lg block"
+            className="w-full cursor-pointer h-1.5 bg-white/10 rounded-lg block"
+            style={{ accentColor: 'var(--aura-color-2, #a855f7)' }}
           />
         </div>
 
@@ -322,7 +324,7 @@ export const QuantumSoundscapeConsole: React.FC<QuantumSoundscapeConsoleProps> =
           className={`p-2.5 rounded-xl border transition-all space-y-2 ${
             state.channel3Muted
               ? 'bg-black/30 border-white/5 opacity-55'
-              : 'bg-black/50 border-amber-500/30 hover:border-amber-400/60'
+              : 'bg-black/45 border-white/10 hover:border-white/20'
           }`}
         >
           <div className="flex items-center justify-between gap-1">
@@ -331,7 +333,7 @@ export const QuantumSoundscapeConsole: React.FC<QuantumSoundscapeConsoleProps> =
               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-200">3. Drone Espacial</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] font-mono text-slate-400">
+              <span className="text-[10px] font-mono tabular-nums text-slate-400">
                 {state.channel3Muted ? 'OFF' : `${Math.round(state.channel3Volume * 100)}%`}
               </span>
               <button
@@ -343,7 +345,7 @@ export const QuantumSoundscapeConsole: React.FC<QuantumSoundscapeConsoleProps> =
                 }}
                 aria-pressed={state.channel3Muted}
                 aria-label={state.channel3Muted ? 'Reactivar volumen Canal 3 Drone' : 'Silenciar Canal 3 Drone'}
-                className={`p-1 rounded-md transition cursor-pointer ${
+                className={`p-1 rounded-lg transition cursor-pointer ${
                   state.channel3Muted ? 'bg-rose-950/80 text-rose-400' : 'bg-white/5 text-amber-300 hover:text-white'
                 }`}
                 title="Silenciar / Activar Canal 3"
@@ -367,9 +369,9 @@ export const QuantumSoundscapeConsole: React.FC<QuantumSoundscapeConsoleProps> =
                 }}
                 aria-pressed={state.dronePreset === p}
                 aria-label={`Preset de Drone ${droneDescriptions[p].name}`}
-                className={`py-1 rounded-lg font-bold uppercase transition cursor-pointer text-center ${
+                className={`py-1.5 rounded-lg font-bold uppercase transition cursor-pointer text-center ${
                   state.dronePreset === p
-                    ? 'bg-amber-400 text-black shadow-[0_0_8px_rgba(251,191,36,0.4)]'
+                    ? 'aura-bg-primary optic-active-card'
                     : 'bg-black/60 text-slate-400 hover:text-white border border-white/10'
                 }`}
               >
@@ -390,16 +392,17 @@ export const QuantumSoundscapeConsole: React.FC<QuantumSoundscapeConsoleProps> =
             aria-valuemax={100}
             aria-valuenow={Math.round(state.channel3Volume * 100)}
             aria-valuetext={`${Math.round(state.channel3Volume * 100)}%`}
-            className="w-full accent-amber-400 cursor-pointer h-1.5 bg-white/10 rounded-lg block"
+            className="w-full cursor-pointer h-1.5 bg-white/10 rounded-lg block"
+            style={{ accentColor: 'var(--aura-color-1, #00f0ff)' }}
           />
         </div>
       </div>
 
       {/* Guide Info Banner */}
       <div className="px-3 py-1.5 rounded-xl bg-black/40 border border-white/10 flex items-center gap-2 text-[11px] font-mono" role="status">
-        <Info className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+        <Info className="w-3.5 h-3.5 aura-text-primary shrink-0" />
         <p className="text-slate-300 truncate">
-          <strong className="text-cyan-300">{currentGuide.title}:</strong>{' '}
+          <strong className="aura-text-soft">{currentGuide.title}:</strong>{' '}
           <span className="text-slate-400">{currentGuide.desc}</span>
         </p>
       </div>
@@ -407,7 +410,7 @@ export const QuantumSoundscapeConsole: React.FC<QuantumSoundscapeConsoleProps> =
       {/* Footer Controls: Master Volume, 432Hz Chime, Auto-sync & Master Play/Pause */}
       <div className="flex flex-wrap items-center justify-between gap-2 px-1 text-[11px] font-mono">
         <div className="flex items-center gap-2">
-          <Sliders className="w-3.5 h-3.5 text-cyan-400" />
+          <Sliders className="w-3.5 h-3.5 aura-text-primary" />
           <span className="text-slate-400 uppercase">Master:</span>
           <input
             type="range"
@@ -421,9 +424,10 @@ export const QuantumSoundscapeConsole: React.FC<QuantumSoundscapeConsoleProps> =
             aria-valuemax={100}
             aria-valuenow={Math.round(state.masterVolume * 100)}
             aria-valuetext={`${Math.round(state.masterVolume * 100)}%`}
-            className="w-24 accent-cyan-400 cursor-pointer h-1.5 bg-white/10 rounded-lg"
+            className="w-24 cursor-pointer h-1.5 bg-white/10 rounded-lg"
+            style={{ accentColor: 'var(--aura-color-1, #00f0ff)' }}
           />
-          <span className="text-cyan-300 font-bold w-8">{Math.round(state.masterVolume * 100)}%</span>
+          <span className="aura-text-soft font-bold w-8 tabular-nums">{Math.round(state.masterVolume * 100)}%</span>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -438,13 +442,13 @@ export const QuantumSoundscapeConsole: React.FC<QuantumSoundscapeConsoleProps> =
             aria-pressed={state.autoSyncPomodoro}
             aria-label="Sincronización automática de audio con Pomodoro"
             title="Activa o silencia el paisaje sonoro automáticamente al arrancar o pausar el Pomodoro"
-            className={`px-2 py-1 rounded-lg text-[10px] font-mono border transition flex items-center gap-1 cursor-pointer ${
+            className={`px-2.5 py-1 rounded-xl text-[10px] font-mono border transition flex items-center gap-1 cursor-pointer ${
               state.autoSyncPomodoro
-                ? 'bg-cyan-950/60 border-cyan-500/50 text-cyan-300'
+                ? 'aura-bg-soft optic-active-card'
                 : 'bg-black/40 border-white/10 text-slate-400 hover:text-white'
             }`}
           >
-            <Sparkles className="w-3 h-3 text-cyan-400" />
+            <Sparkles className="w-3 h-3 aura-text-primary" />
             <span>Auto-Pomodoro: {state.autoSyncPomodoro ? 'ON' : 'OFF'}</span>
           </button>
 
@@ -453,9 +457,9 @@ export const QuantumSoundscapeConsole: React.FC<QuantumSoundscapeConsoleProps> =
             type="button"
             onClick={handleChime}
             aria-label="Tocar campana armónica cuántica 432Hz"
-            className="px-2.5 py-1 rounded-lg bg-black/40 hover:bg-cyan-950/60 border border-white/10 hover:border-cyan-400/50 text-slate-300 hover:text-cyan-300 text-[10px] transition cursor-pointer flex items-center gap-1"
+            className="px-2.5 py-1 rounded-xl bg-black/40 hover:bg-white/[0.08] border border-white/10 hover:border-white/25 text-slate-300 hover:text-white text-[10px] transition cursor-pointer flex items-center gap-1"
           >
-            <Bell className="w-3 h-3 text-cyan-400" />
+            <Bell className="w-3 h-3 aura-text-primary" />
             <span>432Hz</span>
           </button>
 
@@ -465,10 +469,10 @@ export const QuantumSoundscapeConsole: React.FC<QuantumSoundscapeConsoleProps> =
             onClick={handleTogglePlay}
             aria-pressed={state.isPlaying}
             aria-label={state.isPlaying ? 'Silenciar paisaje sonoro' : 'Activar paisaje sonoro'}
-            className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase transition cursor-pointer flex items-center gap-1 ${
+            className={`chicle-btn px-3 py-1 rounded-xl text-[10px] font-bold uppercase transition cursor-pointer flex items-center gap-1 ${
               state.isPlaying
                 ? 'bg-rose-500/20 border border-rose-500/60 text-rose-300 hover:bg-rose-500/30'
-                : 'bg-cyan-400 text-black hover:bg-cyan-300'
+                : 'aura-btn-gradient optic-active-card'
             }`}
           >
             {state.isPlaying ? (

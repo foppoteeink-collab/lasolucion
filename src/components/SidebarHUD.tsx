@@ -403,7 +403,7 @@ export const SidebarHUD: React.FC<SidebarHUDProps> = ({
       {/* + Botón inteligente de Jornada acoplado justo debajo de KAI        */}
       {/* ================================================================== */}
       <div
-        className={`lg:hidden fixed ${handDominance === 'right' ? 'right-0 items-end' : 'left-0 items-start'} z-[82] flex flex-col gap-1 select-none ${
+        className={`sidebar-hud-tab-optic lg:hidden fixed ${handDominance === 'right' ? 'right-0 items-end' : 'left-0 items-start'} z-[82] flex flex-col gap-1 select-none ${
           isMobileOpen
             ? handDominance === 'right'
               ? 'translate-x-full opacity-0 pointer-events-none'
@@ -477,7 +477,7 @@ export const SidebarHUD: React.FC<SidebarHUDProps> = ({
           >
             {handDominance === 'right' ? (
               <>
-                <div className="relative w-[44px] h-[44px] flex items-center justify-center shrink-0 pointer-events-none">
+                <div className="relative w-[44px] h-[44px] flex items-center justify-center shrink-0 pointer-events-none" data-preserve-optic="true">
                   <HoloCompanion
                     archetype={archetype}
                     auraState={auraState}
@@ -496,7 +496,7 @@ export const SidebarHUD: React.FC<SidebarHUDProps> = ({
                   className="w-[2.5px] h-5 rounded-full mr-1.5 opacity-65 pointer-events-none"
                   style={{ background: 'var(--aura-color-1, #00f0ff)' }}
                 />
-                <div className="relative w-[44px] h-[44px] flex items-center justify-center shrink-0 pointer-events-none">
+                <div className="relative w-[44px] h-[44px] flex items-center justify-center shrink-0 pointer-events-none" data-preserve-optic="true">
                   <HoloCompanion
                     archetype={archetype}
                     auraState={auraState}
@@ -598,11 +598,11 @@ export const SidebarHUD: React.FC<SidebarHUDProps> = ({
           transition:
             'width 0.38s cubic-bezier(0.16, 1, 0.3, 1), transform 0.38s cubic-bezier(0.16, 1, 0.3, 1)',
         }}
-        className={`fixed ${
+        className={`sidebar-hud-optic fixed ${
           handDominance === 'right'
             ? 'right-0 border-l shadow-[-12px_0_40px_rgba(0,0,0,0.75)]'
             : 'left-0 border-r shadow-[12px_0_40px_rgba(0,0,0,0.75)]'
-        } top-0 bottom-0 z-[86] flex flex-col bg-[#060919]/[0.97] border-white/10 select-none overflow-hidden py-3 px-3 ${
+        } top-0 bottom-0 z-[86] flex flex-col bg-[#040a1a]/[0.97] border-white/10 select-none overflow-hidden py-3 px-3 ${
           isMobileOpen
             ? 'translate-x-0'
             : handDominance === 'right'
@@ -653,12 +653,13 @@ export const SidebarHUD: React.FC<SidebarHUDProps> = ({
         >
           <div className="flex items-center gap-3 w-full">
             {/* Holograma Vivo de KAI: Contenedor de ancho fijo 52px para 0 desplazamiento */}
-            <div className="relative w-[52px] h-[52px] flex items-center justify-center shrink-0">
+            <div className="relative w-[52px] h-[52px] flex items-center justify-center shrink-0" data-preserve-optic="true">
               <div
+                data-ambient-glow="true"
                 className="absolute inset-0 rounded-2xl transition-opacity duration-300 pointer-events-none"
                 style={{
                   background:
-                    'radial-gradient(circle, rgba(0,240,255,0.22) 0%, transparent 72%)',
+                    'radial-gradient(circle, rgba(var(--aura-glow-rgb, 0, 240, 255), 0.22) 0%, transparent 72%)',
                   opacity: isExpanded ? 1 : 0.65,
                 }}
               />
@@ -778,7 +779,7 @@ export const SidebarHUD: React.FC<SidebarHUDProps> = ({
         {/* ================================================================ */}
         {/* 2. LISTA DE NAVEGACIÓN (.nav-list): 6 PESTAÑAS + 4 GADGETS       */}
         {/* ================================================================ */}
-        <div className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden scrollbar-none mt-2.5 space-y-1">
+        <div className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden no-scrollbar mt-2.5 space-y-1">
           {/* Etiqueta de sección sutil de altura constante para 0 saltos verticales al pasar el puntero */}
           <div
             className={`px-2.5 h-4 mb-0.5 flex items-center text-[9px] font-mono uppercase tracking-[0.2em] text-slate-400 transition-opacity duration-200 shrink-0 ${
@@ -797,25 +798,22 @@ export const SidebarHUD: React.FC<SidebarHUDProps> = ({
                     type="button"
                     onClick={item.onClick}
                     title={!isExpanded ? item.label : undefined}
-                    className={`group w-full h-[44px] rounded-xl flex items-center transition-all duration-200 cursor-pointer relative overflow-hidden ${
+                    className={`group w-full h-[44px] rounded-xl flex items-center transition-all duration-200 cursor-pointer relative overflow-hidden border ${
                       active
-                        ? 'bg-white text-[#060919] font-bold shadow-[0_0_20px_rgba(0,240,255,0.35)]'
-                        : 'bg-transparent text-slate-300 hover:bg-white hover:text-[#060919]'
+                        ? 'aura-bg-soft font-bold optic-active-card'
+                        : 'bg-transparent border-transparent text-slate-300 hover:bg-white/[0.08] hover:border-white/10 hover:text-white'
                     }`}
                   >
-                    {/* Contenedor fijo de 52px para que el icono esté siempre centrado en modo compacto (78px - 24px padding = 54px) */}
+                    {/* Contenedor fijo de 52px para que el icono esté siempre centrado en modo compacto */}
                     <span
                       className="w-[52px] shrink-0 flex items-center justify-center transition-transform duration-200 group-hover:scale-105"
-                      style={{
-                        color: active ? '#060919' : undefined,
-                      }}
                     >
                       <Icon
                         name={item.icon}
                         className={`w-5 h-5 transition-colors duration-200 ${
                           active
-                            ? 'text-[#060919]'
-                            : 'text-slate-200 group-hover:text-[#060919]'
+                            ? 'aura-text-primary'
+                            : 'text-slate-300 group-hover:text-white'
                         }`}
                       />
                     </span>
@@ -836,8 +834,8 @@ export const SidebarHUD: React.FC<SidebarHUDProps> = ({
                       <span
                         className={`ml-auto mr-3 text-[10px] font-mono tabular-nums font-bold transition-colors ${
                           active
-                            ? 'text-[#060919]/80'
-                            : 'text-cyan-300 group-hover:text-[#060919]/80'
+                            ? 'aura-text-primary'
+                            : 'text-slate-400 group-hover:text-white'
                         }`}
                       >
                         {item.badgeText}
@@ -855,7 +853,7 @@ export const SidebarHUD: React.FC<SidebarHUDProps> = ({
           </div>
 
           <div
-            className={`px-2.5 h-4 mb-0.5 flex items-center text-[9px] font-mono uppercase tracking-[0.2em] text-fuchsia-300/80 transition-opacity duration-200 shrink-0 ${
+            className={`px-2.5 h-4 mb-0.5 flex items-center text-[9px] font-mono uppercase tracking-[0.2em] aura-text-soft transition-opacity duration-200 shrink-0 ${
               isExpanded ? 'opacity-90' : 'opacity-0 pointer-events-none'
             }`}
           >
@@ -869,7 +867,7 @@ export const SidebarHUD: React.FC<SidebarHUDProps> = ({
                   type="button"
                   onClick={item.onClick}
                   title={!isExpanded ? item.label : undefined}
-                  className="group w-full h-[42px] rounded-xl flex items-center text-slate-300 hover:bg-white hover:text-[#060919] transition-all duration-200 cursor-pointer relative overflow-hidden"
+                  className="group w-full h-[44px] rounded-xl flex items-center border border-transparent text-slate-300 hover:bg-white/[0.08] hover:border-white/10 hover:text-white transition-all duration-200 cursor-pointer relative overflow-hidden"
                 >
                   <span
                     className="w-[52px] shrink-0 flex items-center justify-center transition-transform duration-200 group-hover:scale-105"
@@ -877,12 +875,12 @@ export const SidebarHUD: React.FC<SidebarHUDProps> = ({
                   >
                     <Icon
                       name={item.icon}
-                      className="w-5 h-5 transition-colors duration-200 group-hover:text-[#060919]"
+                      className="w-5 h-5 transition-colors duration-200"
                     />
                   </span>
 
                   <span
-                    className={`links_name text-[13.5px] font-medium tracking-wide whitespace-nowrap transition-all duration-200 ${
+                    className={`links_name text-[14px] font-medium tracking-wide whitespace-nowrap transition-all duration-200 ${
                       isExpanded
                         ? 'opacity-100 translate-x-0'
                         : 'opacity-0 -translate-x-2 pointer-events-none'
@@ -892,7 +890,7 @@ export const SidebarHUD: React.FC<SidebarHUDProps> = ({
                   </span>
 
                   {item.badgeText && isExpanded && (
-                    <span className="ml-auto mr-3 text-[10px] font-mono tabular-nums font-bold text-rose-400 group-hover:text-[#060919]">
+                    <span className="ml-auto mr-3 text-[10px] font-mono tabular-nums font-bold aura-text-primary">
                       {item.badgeText}
                     </span>
                   )}
@@ -909,14 +907,20 @@ export const SidebarHUD: React.FC<SidebarHUDProps> = ({
           >
             {/* EXP */}
             <div className="flex items-center gap-2 text-[9px] font-mono tabular-nums mb-1 px-1">
-              <span className="text-cyan-400 font-bold w-6 shrink-0">EXP</span>
-              <div className="flex-1 h-1.5 bg-black/80 rounded-full border border-cyan-500/30 overflow-hidden">
+              <span className="aura-text-primary font-bold w-6 shrink-0">EXP</span>
+              <div
+                className="flex-1 h-1.5 bg-black/80 rounded-full border overflow-hidden"
+                style={{ borderColor: 'rgba(var(--aura-glow-rgb, 0, 240, 255), 0.35)' }}
+              >
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-indigo-500 transition-all duration-500"
-                  style={{ width: `${xpPercent}%` }}
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{
+                    width: `${xpPercent}%`,
+                    background: 'linear-gradient(90deg, var(--aura-color-1, #00f0ff) 0%, var(--aura-color-2, #8a2be2) 100%)',
+                  }}
                 />
               </div>
-              <span className="text-cyan-200 w-7 text-right shrink-0">{Math.round(xpPercent)}%</span>
+              <span className="aura-text-soft w-7 text-right shrink-0">{Math.round(xpPercent)}%</span>
             </div>
 
             {/* HP */}

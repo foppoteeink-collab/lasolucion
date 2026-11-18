@@ -84,7 +84,7 @@ function renderDiagnosticMarkdown(text: string): React.ReactNode[] {
     if (!trimmed) return <div key={idx} className="h-1.5" />;
     if (/^#{1,3}\s+/.test(trimmed)) {
       return (
-        <p key={idx} className="text-[11px] font-semibold uppercase tracking-wider text-cyan-300 mt-2.5 mb-1">
+        <p key={idx} className="text-[11px] font-semibold uppercase tracking-wider aura-text-primary mt-2.5 mb-1">
           {trimmed.replace(/^#{1,3}\s+/, '').replace(/\*\*/g, '')}
         </p>
       );
@@ -92,7 +92,7 @@ function renderDiagnosticMarkdown(text: string): React.ReactNode[] {
     if (/^[-*•]\s+/.test(trimmed)) {
       return (
         <div key={idx} className="flex items-start gap-2 text-xs text-slate-200/95 leading-relaxed">
-          <span className="text-cyan-400 mt-0.5">·</span>
+          <span className="aura-text-primary mt-0.5">·</span>
           <span>{trimmed.replace(/^[-*•]\s+/, '').replace(/\*\*/g, '')}</span>
         </div>
       );
@@ -628,8 +628,6 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({
     }
   };
 
-  if (!isOpen) return null;
-
   const hasAnyOutput =
     Boolean(kaiReply) ||
     parsedItems.length > 0 ||
@@ -638,20 +636,27 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({
     Boolean(diagnosticReport) ||
     showPlannerActions;
 
+  if (typeof document === 'undefined') return null;
+
   const modalContent = (
     <AnimatePresence>
+      {isOpen && (
       <motion.div
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Háblame con ${kaiName}`}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        transition={{ duration: 0.22 }}
-        className="fixed inset-0 z-[175] flex flex-col items-center justify-between p-4 sm:p-6 bg-[#020612]/78 backdrop-blur-2xl overflow-hidden font-sans portal-modal-root text-white"
+        transition={{ duration: 0.2 }}
+        className="fixed inset-0 z-[175] flex flex-col items-center justify-between p-4 sm:p-6 bg-[#030712]/84 backdrop-blur-xl overflow-hidden font-sans portal-modal-root text-white"
         onClick={(e) => {
           if (e.target === e.currentTarget) handleClose();
         }}
       >
         {/* Resplandor ambiental ultra sutil */}
         <div
+          data-ambient-glow="true"
           className="pointer-events-none fixed inset-0 opacity-35"
           style={{
             background:
@@ -667,7 +672,7 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({
                 isListening
                   ? 'bg-fuchsia-400 animate-pulse'
                   : isAnalyzing
-                    ? 'bg-cyan-400 animate-ping'
+                    ? 'aura-bg-primary animate-ping'
                     : 'bg-white/30'
               }`}
             />
@@ -681,7 +686,7 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({
           <button
             type="button"
             onClick={handleClose}
-            className="w-9 h-9 rounded-full bg-white/[0.06] hover:bg-white/[0.14] border border-white/10 text-slate-300 hover:text-white flex items-center justify-center transition-all cursor-pointer active:scale-95"
+            className="w-9 h-9 rounded-xl bg-white/[0.05] hover:bg-white/[0.12] border border-white/10 text-slate-300 hover:text-white flex items-center justify-center transition-all cursor-pointer active:scale-95"
             aria-label="Cerrar Háblame"
             title="Cerrar (Esc)"
           >
@@ -720,9 +725,11 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({
 
               {isSpeakingReply && !isListening && (
                 <motion.span
+                  data-ambient-glow="true"
                   animate={{ scale: [1, 1.25, 1], opacity: [0.28, 0.08, 0.28] }}
                   transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
-                  className="absolute w-32 h-32 rounded-full bg-cyan-400/20 blur-xl pointer-events-none"
+                  className="absolute w-32 h-32 rounded-full blur-xl pointer-events-none"
+                  style={{ backgroundColor: 'rgba(var(--aura-glow-rgb, 0, 240, 255), 0.22)' }}
                 />
               )}
 
@@ -739,22 +746,24 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({
                     ? { duration: 1.8, repeat: Infinity, ease: 'easeInOut' }
                     : { duration: 0.2 }
                 }
-                className="relative z-10 p-3 rounded-full cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60"
+                className="relative z-10 p-3 rounded-full cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-white/60"
                 aria-label={isListening ? 'Tocar a KAI para enviar lo que dijiste' : 'Tocar a KAI para hablar'}
                 title={isListening ? 'Toca a KAI al terminar de hablar' : 'Toca a KAI para volver a hablar'}
               >
-                <HoloCompanion
-                  archetype={archetype}
-                  size={hasAnyOutput ? 86 : 114}
-                  interactive={false}
-                  auraState={
-                    injectedSuccess
-                      ? 'victory'
-                      : isListening || isAnalyzing
-                        ? 'focus_trance'
-                        : 'normal'
-                  }
-                />
+                <div data-preserve-optic="true">
+                  <HoloCompanion
+                    archetype={archetype}
+                    size={hasAnyOutput ? 86 : 114}
+                    interactive={false}
+                    auraState={
+                      injectedSuccess
+                        ? 'victory'
+                        : isListening || isAnalyzing
+                          ? 'focus_trance'
+                          : 'normal'
+                    }
+                  />
+                </div>
               </motion.button>
             </div>
 
@@ -780,7 +789,7 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({
                   </span>
                 </div>
               ) : isAnalyzing ? (
-                <div className="flex items-center gap-1.5 text-xs text-cyan-300/90">
+                <div className="flex items-center gap-1.5 text-xs aura-text-primary">
                   <Sparkles className="w-3.5 h-3.5 animate-spin" />
                   <span>{kaiName} está pensando...</span>
                 </div>
@@ -848,7 +857,7 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="w-full max-w-md px-4 py-3 rounded-2xl bg-[#070e1d]/85 border border-white/12 shadow-[0_12px_36px_rgba(0,0,0,0.45)] backdrop-blur-2xl flex items-start gap-3"
+              className="w-full max-w-md px-4 py-3 rounded-2xl bg-[#040a1a]/[0.94] border border-white/10 shadow-[0_12px_36px_rgba(0,0,0,0.45)] flex items-start gap-3"
             >
               <span
                 className="w-[2px] self-stretch rounded-full shrink-0"
@@ -863,7 +872,7 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({
                   soundFX.playClick();
                   speakResponse(kaiReply);
                 }}
-                className="w-7 h-7 rounded-full bg-white/[0.06] hover:bg-white/[0.14] text-cyan-300 flex items-center justify-center cursor-pointer shrink-0 transition-colors"
+                className="w-7 h-7 rounded-full bg-white/[0.06] hover:bg-white/[0.14] aura-text-primary flex items-center justify-center cursor-pointer shrink-0 transition-colors"
                 title="Volver a escuchar"
                 aria-label="Volver a escuchar a KAI"
               >
@@ -877,10 +886,10 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="w-full max-w-md p-4 rounded-2xl bg-[#060c1a]/88 border border-white/12 backdrop-blur-2xl space-y-2.5 max-h-[34vh] overflow-y-auto custom-scrollbar"
+              className="w-full max-w-md p-4 rounded-2xl bg-[#040a1a]/[0.94] border border-white/10 space-y-2.5 max-h-[34vh] overflow-y-auto custom-scrollbar"
             >
               <div className="flex items-center justify-between gap-2 pb-2 border-b border-white/10">
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-cyan-300">
+                <div className="flex items-center gap-1.5 text-xs font-semibold aura-text-primary">
                   <Activity className="w-3.5 h-3.5" />
                   <span>Diagnóstico de tu progreso</span>
                 </div>
@@ -914,7 +923,7 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({
                     onClose();
                     onOpenOracleWithPrompt(p || undefined);
                   }}
-                  className="px-4 py-2 rounded-full bg-cyan-400/20 hover:bg-cyan-400/30 border border-cyan-400/50 text-cyan-100 text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-all"
+                  className="chicle-btn px-4 py-2 rounded-xl aura-bg-soft border text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-all"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
                   <span>Abrir Planificador Visual</span>
@@ -928,7 +937,7 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({
                     onClose();
                     onOpenTemplates();
                   }}
-                  className="px-4 py-2 rounded-full bg-white/[0.06] hover:bg-white/[0.14] border border-white/15 text-slate-200 text-xs font-medium cursor-pointer transition-all"
+                  className="px-4 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.14] border border-white/10 text-slate-200 text-xs font-medium cursor-pointer transition-all"
                 >
                   Ver Plantillas de Rutina
                 </button>
@@ -938,9 +947,9 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({
 
           {/* COMANDO DE FOCO / POMODORO */}
           {detectedFocus && (
-            <div className="w-full max-w-md p-3.5 rounded-2xl bg-[#071020]/88 border border-cyan-400/40 backdrop-blur-2xl flex items-center justify-between gap-3">
+            <div className="w-full max-w-md p-3.5 rounded-2xl bg-[#040a1a]/[0.94] border aura-border-subtle flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <span className="text-[10.5px] text-cyan-300 font-medium block">
+                <span className="text-[10.5px] aura-text-primary font-medium block font-mono tabular-nums">
                   Bloque de foco · {detectedFocus.durationMinutes} min
                 </span>
                 <p className="text-sm font-semibold text-white truncate">{detectedFocus.title}</p>
@@ -957,7 +966,7 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({
                   );
                   onClose();
                 }}
-                className="px-3.5 py-2 rounded-full bg-cyan-400 hover:bg-cyan-300 text-[#020612] text-xs font-bold flex items-center gap-1.5 shrink-0 cursor-pointer active:scale-95"
+                className="chicle-btn px-3.5 py-2 rounded-xl aura-btn-gradient optic-active-card text-xs font-bold flex items-center gap-1.5 shrink-0 cursor-pointer"
               >
                 <Play className="w-3.5 h-3.5 fill-current" />
                 <span>Iniciar</span>
@@ -967,7 +976,7 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({
 
           {/* MOVIMIENTOS FINANCIEROS DETECTADOS */}
           {detectedFinance.length > 0 && (
-            <div className="w-full max-w-md p-3.5 rounded-2xl bg-[#061218]/88 border border-emerald-400/35 backdrop-blur-2xl space-y-2.5">
+            <div className="w-full max-w-md p-3.5 rounded-2xl bg-[#040a1a]/[0.94] border border-emerald-400/35 space-y-2.5">
               <div className="flex items-center gap-1.5 text-[11px] font-medium text-emerald-300">
                 <Wallet className="w-3.5 h-3.5" />
                 <span>Tesorería ({detectedFinance.length})</span>
@@ -1055,7 +1064,7 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({
                 return (
                   <div
                     key={item.id}
-                    className="p-3 rounded-2xl bg-[#070e1d]/85 border border-white/12 backdrop-blur-2xl space-y-2"
+                    className="p-3 rounded-2xl bg-[#040a1a]/[0.94] border border-white/10 space-y-2"
                   >
                     <div className="flex items-center gap-2">
                       <span className="text-sm leading-none shrink-0" aria-hidden="true">
@@ -1065,7 +1074,7 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({
                         type="text"
                         value={item.title}
                         onChange={(e) => handleUpdateTitle(item.id, e.target.value)}
-                        className="flex-1 min-w-0 bg-transparent text-xs sm:text-sm font-medium text-white border-b border-transparent focus:border-cyan-400/50 outline-none py-0.5"
+                        className="flex-1 min-w-0 bg-transparent text-xs sm:text-sm font-medium text-white border-b border-transparent focus:border-white/40 outline-none py-0.5"
                         aria-label="Título de la misión"
                       />
                       <button
@@ -1085,7 +1094,7 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({
                         className={`px-2 py-0.5 rounded-full border font-medium flex items-center gap-1 cursor-pointer transition-all ${
                           isHabit
                             ? 'bg-purple-500/20 border-purple-400/45 text-purple-200'
-                            : 'bg-cyan-500/15 border-cyan-400/40 text-cyan-200'
+                            : 'aura-bg-soft'
                         }`}
                         title="Toca para alternar entre Tarea y Hábito 21/66"
                       >
@@ -1098,7 +1107,7 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({
                       </span>
 
                       {item.timeBlock && (
-                        <span className="px-2 py-0.5 rounded-full bg-white/[0.06] text-sky-200 flex items-center gap-1">
+                        <span className="px-2 py-0.5 rounded-full bg-white/[0.06] text-sky-200 flex items-center gap-1 font-mono tabular-nums">
                           <Clock className="w-2.5 h-2.5" />
                           <span>{item.timeBlock}</span>
                         </span>
@@ -1112,7 +1121,7 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({
                       )}
 
                       {isHabit && item.targetCount && item.targetCount > 1 && (
-                        <span className="px-2 py-0.5 rounded-full bg-white/[0.06] text-emerald-200">
+                        <span className="px-2 py-0.5 rounded-full bg-white/[0.06] text-emerald-200 font-mono tabular-nums">
                           {item.targetCount} {item.unit || 'veces'}
                         </span>
                       )}
@@ -1124,7 +1133,7 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({
               <button
                 type="button"
                 onClick={handleInjectToAgenda}
-                className="w-full py-2.5 rounded-full bg-cyan-400 hover:bg-cyan-300 text-[#020612] text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 shadow-[0_8px_24px_rgba(0,240,255,0.28)] cursor-pointer active:scale-[0.98]"
+                className="chicle-btn w-full py-2.5 rounded-xl aura-btn-gradient optic-active-card text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <Check className="w-4 h-4 stroke-[3]" />
                 <span>
@@ -1149,7 +1158,7 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({
                   void runAnalysis(transcript);
                 }
               }}
-              className="w-full flex items-center gap-2 px-3.5 py-2 rounded-full bg-[#070f1f]/90 border border-white/15 focus-within:border-cyan-400/60 backdrop-blur-2xl shadow-[0_8px_28px_rgba(0,0,0,0.45)]"
+              className="w-full flex items-center gap-2 px-3.5 py-2 rounded-full bg-[#040a1a]/[0.95] border border-white/15 focus-within:border-white/35 shadow-[0_8px_28px_rgba(0,0,0,0.45)]"
             >
               <input
                 ref={inputRef}
@@ -1165,7 +1174,7 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({
               <button
                 type="submit"
                 disabled={isAnalyzing || !transcript.trim()}
-                className="w-8 h-8 rounded-full bg-cyan-400 hover:bg-cyan-300 disabled:bg-white/10 disabled:text-slate-500 text-[#020612] flex items-center justify-center transition-all cursor-pointer active:scale-95 shrink-0"
+                className="w-8 h-8 rounded-full aura-bg-primary disabled:bg-white/10 disabled:text-slate-500 flex items-center justify-center transition-all cursor-pointer active:scale-95 shrink-0"
                 aria-label="Enviar a KAI"
               >
                 <Send className="w-3.5 h-3.5" />
@@ -1179,13 +1188,13 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({
                 type="button"
                 onClick={handleTapKai}
                 disabled={isAnalyzing}
-                className={`h-11 px-5 rounded-full border text-xs font-medium flex items-center gap-2 transition-all cursor-pointer active:scale-95 backdrop-blur-xl ${
+                className={`h-11 px-5 rounded-full border text-xs font-medium flex items-center gap-2 transition-all cursor-pointer active:scale-95 ${
                   isListening
-                    ? 'bg-rose-500/20 border-rose-400/60 text-rose-200'
-                    : 'bg-white/[0.08] hover:bg-white/[0.14] border-white/15 text-white'
+                    ? 'bg-rose-500/20 border-rose-400/60 text-rose-200 optic-active-card'
+                    : 'bg-[#040a1a]/90 hover:bg-white/[0.12] border-white/15 text-white'
                 }`}
               >
-                {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4 text-cyan-300" />}
+                {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4 aura-text-primary" />}
                 <span>{isListening ? 'Listo, responder' : 'Hablar'}</span>
               </button>
             )}
@@ -1201,10 +1210,10 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({
                   return next;
                 });
               }}
-              className={`h-11 px-4 rounded-full border text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 backdrop-blur-xl ${
+              className={`h-11 px-4 rounded-full border text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 ${
                 showKeyboardInput
-                  ? 'bg-cyan-500/15 border-cyan-400/45 text-cyan-200'
-                  : 'bg-white/[0.06] hover:bg-white/[0.12] border-white/12 text-slate-300 hover:text-white'
+                  ? 'aura-bg-soft optic-active-card'
+                  : 'bg-[#040a1a]/90 hover:bg-white/[0.12] border-white/10 text-slate-300 hover:text-white'
               }`}
               aria-label="Escribir en lugar de hablar"
             >
@@ -1214,6 +1223,7 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({
           </div>
         </div>
       </motion.div>
+      )}
     </AnimatePresence>
   );
 

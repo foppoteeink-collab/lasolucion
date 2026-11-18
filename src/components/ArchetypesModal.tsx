@@ -123,6 +123,7 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
     if (!isOpen) return;
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+    document.body.classList.add('modal-open-hide-floating');
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -130,6 +131,7 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
     window.addEventListener('keydown', handleKeyDown);
     return () => {
       document.body.style.overflow = originalOverflow;
+      document.body.classList.remove('modal-open-hide-floating');
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [isOpen, onClose]);
@@ -153,7 +155,7 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
         text: `⚡ ARQUETIPO SINTONIZADO: ${arch.name.toUpperCase()}`,
         type: 'custom',
         isCrit: true,
-        colorClass: 'text-cyan-300 bg-[#001830]/95 border-cyan-400 shadow-[0_0_25px_rgba(34,211,238,0.9)]',
+        colorClass: 'aura-text-soft bg-[#040a1a]/95 aura-border-primary aura-glow',
       });
     } catch (_) {}
     onSelectArchetype(arch);
@@ -168,32 +170,28 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-2 sm:p-4 bg-black/88 animate-fade-in font-sans portal-modal-root select-none pointer-events-auto"
+      className="fixed inset-0 z-[170] portal-modal-root bg-black/85 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 animate-fade-in font-sans select-none pointer-events-auto"
       onClick={onClose}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="archetypes-modal-title"
-        className="w-full max-w-xl md:max-w-2xl max-h-[92dvh] sm:max-h-[88vh] flex flex-col rounded-2xl sm:rounded-3xl bg-[#030712]/[0.98] border border-cyan-500/35 shadow-[0_0_50px_rgba(0,240,255,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] relative overflow-hidden text-white text-left m-auto shrink-0"
+        className="relative isolate w-full max-w-xl md:max-w-2xl max-h-[92dvh] sm:max-h-[88vh] flex flex-col rounded-2xl sm:rounded-3xl bg-[#030712]/[0.98] border border-white/10 shadow-[0_24px_64px_rgba(0,0,0,0.75)] overflow-hidden text-white text-left m-auto shrink-0"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Micrograno táctil Moxen Vidrio */}
+        {/* Micrograno táctil Moxen Vidrio + Filamento superior Aura */}
         <span className="vi-grano opacity-5" aria-hidden="true" />
-
-        {/* Luces de ambiente cyberpunk */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent pointer-events-none" />
+        <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
 
         {/* Header compacto con título y botón de cierre */}
-        <div className="px-3.5 py-2 sm:px-5 sm:py-2.5 border-b border-white/10 flex items-center justify-between bg-[#010810]/90 shrink-0 relative z-10">
-          <div className="flex items-center gap-2.5 sm:gap-3">
-            <div className="w-8 h-8 rounded-xl bg-cyan-950/80 border border-cyan-400 flex items-center justify-center shadow-[0_0_12px_rgba(0,240,255,0.4)]">
-              <Sparkles className="w-4 h-4 text-cyan-300" />
+        <div className="px-3.5 py-2.5 sm:px-5 sm:py-3 border-b border-white/10 flex items-center justify-between bg-[#040814]/[0.96] shrink-0 relative z-10">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-xl aura-bg-soft border aura-border-subtle flex items-center justify-center aura-glow-subtle shrink-0">
+              <Sparkles className="w-4 h-4 aura-text-primary" />
             </div>
-            <div>
-              <h3 id="archetypes-modal-title" className="font-anton text-cyan-300 uppercase tracking-wide text-xs sm:text-sm">
+            <div className="min-w-0">
+              <h3 id="archetypes-modal-title" className="font-anton aura-text-soft uppercase tracking-wider text-xs sm:text-sm truncate">
                 Los 12 Arquetipos Jungianos & KAI
               </h3>
               <p className="text-[10px] text-slate-400 font-mono hidden sm:block">
@@ -202,27 +200,28 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0 ml-2">
             <button
+              type="button"
               onClick={onClose}
               aria-label="Cerrar modal de arquetipos"
-              className="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
+              className="chicle-btn w-9 h-9 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 text-slate-300 hover:text-white flex items-center justify-center cursor-pointer"
               title="Cerrar modal"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>
 
         {/* Contenido: Carrusel Cinético (Moxen Inercia) con Ficha Holográfica de Élite */}
-        <div className="flex-1 overflow-hidden flex flex-col justify-center py-1 min-h-0">
+        <div className="flex-1 overflow-hidden flex flex-col justify-center py-1 min-h-0 relative z-10">
           <MoxenInercia
             initialIndex={initialIndex}
             friccion={4}
             goma={0.3}
             iman={true}
             loop={true}
-            accentColor="#00f0ff"
+            accentColor={currentSlideTheme.accent}
             onIndexChange={(idx) => {
               if (idx !== currentSlideIndex) {
                 triggerHaptic(15);
@@ -240,7 +239,7 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
                   key={arch.id}
                   className={`relative w-full h-full p-2.5 sm:p-3.5 flex flex-col justify-between overflow-hidden rounded-[16px] sm:rounded-[18px] border select-none transition-all duration-300 ${
                     isSelected
-                      ? 'border-2'
+                      ? 'border-2 optic-active-card'
                       : 'border-white/15'
                   }`}
                   style={{
@@ -251,10 +250,12 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
                 >
                   {/* Aura lumínica adaptativa de fondo según el color del arquetipo */}
                   <div
+                    data-ambient-glow="true"
                     className="absolute -top-16 -right-16 w-36 h-36 rounded-full blur-3xl pointer-events-none opacity-25"
                     style={{ backgroundColor: theme.accent }}
                   />
                   <div
+                    data-ambient-glow="true"
                     className="absolute -bottom-16 -left-16 w-32 h-32 rounded-full blur-2xl pointer-events-none opacity-20"
                     style={{ backgroundColor: theme.accent }}
                   />
@@ -264,7 +265,7 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
 
                   {/* 1. Header de Telemetría: Número de Arquetipo + Chip de Bonificación */}
                   <div className="relative z-10 flex items-center justify-between gap-2 shrink-0">
-                    <div className="flex items-center gap-1.5 font-mono text-[9.5px] sm:text-[10px] font-bold tracking-widest text-slate-300">
+                    <div className="flex items-center gap-1.5 font-mono tabular-nums text-[9.5px] sm:text-[10px] font-bold tracking-widest text-slate-300">
                       <span
                         className="w-1.5 h-1.5 rounded-full animate-pulse shadow-sm"
                         style={{
@@ -276,7 +277,7 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
                     </div>
 
                     <span
-                      className={`text-[9px] sm:text-[9.5px] font-mono px-2 py-0.5 rounded-full font-bold border flex items-center gap-1 ${theme.statPill}`}
+                      className={`text-[9px] sm:text-[9.5px] font-mono tabular-nums px-2 py-0.5 rounded-full font-bold border flex items-center gap-1 ${theme.statPill}`}
                     >
                       <Sparkles className="w-2.5 h-2.5" style={{ color: theme.accent }} />
                       {arch.statBonus}
@@ -287,6 +288,7 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
                   <div className="relative z-10 flex items-center gap-2.5 my-1 shrink-0">
                     {/* Medallón Elemental Flotante */}
                     <div
+                      data-preserve-optic="true"
                       className="in-forma w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center text-xl sm:text-2xl shrink-0 transition-transform"
                       style={{
                         background: `radial-gradient(circle, ${theme.accent}33 0%, rgba(3,7,18,0.85) 80%)`,
@@ -363,7 +365,7 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
 
                     {isSelected ? (
                       <span
-                        className="py-1 px-2.5 flex items-center justify-center gap-1 text-[9.5px] font-mono font-bold uppercase rounded-lg border"
+                        className="py-1 px-2.5 flex items-center justify-center gap-1 text-[9.5px] font-mono font-bold uppercase rounded-lg border optic-active-card"
                         style={{
                           backgroundColor: `${theme.accent}20`,
                           borderColor: theme.accent,
@@ -383,7 +385,7 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
                           e.stopPropagation();
                           handleActivate(arch);
                         }}
-                        className="py-1 px-3 font-anton uppercase text-[10px] sm:text-[10.5px] rounded-lg cursor-pointer transition-all active:scale-95 flex items-center gap-1 font-bold tracking-wide"
+                        className="chicle-btn optic-active-card py-1 px-3 font-anton uppercase text-[10px] sm:text-[10.5px] rounded-lg cursor-pointer flex items-center gap-1 tracking-wider"
                         style={{
                           background: `linear-gradient(135deg, ${theme.accent}, ${theme.accent}cc)`,
                           color: '#030712',
@@ -403,12 +405,12 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
         </div>
 
         {/* Pinned Footer Ergonómico (Doble acción: Activar arquetipo centrado + Volver) */}
-        <div className="py-2.5 px-3 sm:px-4 border-t border-white/10 bg-[#010810]/95 flex items-center justify-between gap-2 shrink-0 relative z-10">
+        <div className="py-2.5 px-3 sm:px-4 border-t border-white/10 bg-[#040814]/[0.96] flex items-center justify-between gap-2 shrink-0 relative z-10">
           {/* Botón de activación directa del arquetipo que está a la vista */}
           {isCurrentSlideActive ? (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cyan-950/40 border border-cyan-500/30 text-cyan-300 font-mono text-xs font-bold">
-              <Check className="w-3.5 h-3.5 text-cyan-400 stroke-[3]" />
-              <span>Arquetipo Activo: <strong className="text-white font-anton uppercase">{currentSlideArch.name}</strong></span>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl aura-bg-soft border aura-border-subtle optic-active-card font-mono text-xs font-bold">
+              <Check className="w-3.5 h-3.5 aura-text-primary stroke-[3]" />
+              <span>Arquetipo Activo: <strong className="text-white font-anton uppercase tracking-wider">{currentSlideArch.name}</strong></span>
             </div>
           ) : (
             <button
@@ -416,7 +418,7 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
               data-interactive="true"
               onClick={() => handleActivate(currentSlideArch)}
               aria-label={`Activar arquetipo ${currentSlideArch.name}`}
-              className="px-3.5 py-1.5 rounded-xl font-anton uppercase text-xs flex items-center gap-1.5 font-bold cursor-pointer transition-all active:scale-95 shadow-md"
+              className="chicle-btn optic-active-card px-3.5 py-1.5 rounded-xl font-anton uppercase tracking-wider text-xs flex items-center gap-1.5 cursor-pointer shadow-md"
               style={{
                 background: `linear-gradient(135deg, ${currentSlideTheme.accent}, ${currentSlideTheme.accent}cc)`,
                 color: '#030712',
@@ -436,7 +438,7 @@ export const ArchetypesModal: React.FC<ArchetypesModalProps> = ({
               onClose();
             }}
             aria-label="Volver y cerrar modal de arquetipos"
-            className="px-3.5 py-1.5 bg-white/[0.05] hover:bg-white/10 text-slate-300 hover:text-white font-anton uppercase text-xs rounded-xl cursor-pointer transition-all border border-white/15 active:scale-95"
+            className="chicle-btn px-3.5 py-1.5 bg-white/[0.05] hover:bg-white/[0.12] text-slate-200 hover:text-white font-anton uppercase tracking-wider text-xs rounded-xl cursor-pointer border border-white/15"
           >
             Volver
           </button>

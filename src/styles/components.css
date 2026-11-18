@@ -1,17 +1,17 @@
 /* ========================================================================== */
-/* DESIGN TOKENS SISTÉMICOS TÁCTICOS (FASE 2)                                 */
+/* DESIGN TOKENS SISTÉMICOS TÁCTICOS (OBSIDIAN GLASS + AURA DINÁMICA)         */
 /* ========================================================================== */
 :root {
-  --tactical-cyan: #00f0ff;
-  --tactical-cyan-glow: rgba(0, 240, 255, 0.25);
+  --tactical-cyan: var(--aura-color-1, #00f0ff);
+  --tactical-cyan-glow: rgba(var(--aura-glow-rgb, 0, 240, 255), 0.25);
   --tactical-surface-dark: #030712;
-  --tactical-surface-card: #040d1a;
+  --tactical-surface-card: #040a1a;
   --tactical-border-dim: rgba(255, 255, 255, 0.1);
-  --tactical-border-cyan: rgba(0, 240, 255, 0.3);
+  --tactical-border-cyan: rgba(var(--aura-glow-rgb, 0, 240, 255), 0.3);
 }
 
 .shadow-tactical-glow {
-  box-shadow: 0 0 10px rgba(0, 240, 255, 0.25);
+  box-shadow: 0 0 10px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.25);
 }
 
 .shadow-tactical-card {
@@ -36,7 +36,7 @@
   min-width: 0;
 }
 
-/* --- Componente MoxenChipGroup Styles --- */
+/* --- Componente MoxenChipGroup Styles (Sincronizado con Aura Obsidian) --- */
 .mf-chip-group {
   display: flex;
   gap: 8px;
@@ -56,16 +56,18 @@
   gap: 6px;
   padding: 6px 12px;
   border-radius: 9999px;
-  background: rgba(1, 20, 32, 0.8);
+  background: rgba(4, 10, 26, 0.85);
   cursor: pointer;
-  transition: all 0.2s;
-  border: 1px solid rgba(0, 240, 255, 0.25);
-  color: #f1f5f9;
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
   font-size: 12px;
   white-space: nowrap;
 }
 .mf-chip:hover {
-  background: rgba(0, 240, 255, 0.1);
+  background: rgba(var(--aura-glow-rgb, 0, 240, 255), 0.10);
+  border-color: rgba(var(--aura-glow-rgb, 0, 240, 255), 0.35);
+  color: #ffffff;
 }
 .mf-chip--sm {
   padding: 4px 10px;
@@ -73,22 +75,24 @@
 }
 
 .mf-chip--active {
-  background: rgba(0, 240, 255, 0.2);
-  border-color: rgba(0, 240, 255, 0.6);
+  background: rgba(var(--aura-glow-rgb, 0, 240, 255), 0.18);
+  border-color: rgba(var(--aura-glow-rgb, 0, 240, 255), 0.65);
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.22);
 }
 
 .mf-chip__badge {
   margin-left: 4px;
-  background: rgba(0, 240, 255, 0.2);
-  color: #bae6fd;
+  background: rgba(var(--aura-glow-rgb, 0, 240, 255), 0.2);
+  color: color-mix(in srgb, var(--aura-color-1, #00f0ff) 80%, #ffffff);
   padding: 0 6px;
   border-radius: 10px;
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 /* ========================================================================== */
-/* BOTONES PRINCIPALES CON ANIMACIÓN DE ATENCIÓN (CALL-TO-ACTION NEON)       */
+/* BOTONES PRINCIPALES CON ANIMACIÓN DE ATENCIÓN (CALL-TO-ACTION AURA)        */
 /* ========================================================================== */
 @layer components {
   .btn-neon-hunter {
@@ -98,7 +102,18 @@
     align-items: center;
     justify-content: center;
     font-weight: 800;
+    background: var(--aura-gradient, linear-gradient(135deg, #00f0ff 0%, #8a2be2 100%));
+    color: #030712;
+    border: 1px solid rgba(var(--aura-glow-rgb, 0, 240, 255), 0.55);
+    box-shadow: 0 0 16px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.32);
     transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .btn-neon-hunter:hover {
+    filter: brightness(1.1);
+    box-shadow: 0 0 24px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.5);
+  }
+  .btn-neon-hunter:active {
+    transform: scale(0.97);
   }
 }
 
@@ -130,11 +145,11 @@
 @keyframes hunter-callout-glow {
   0%, 100% {
     transform: scale(1);
-    box-shadow: 0 0 10px rgba(0, 240, 255, 0.3), 0 4px 14px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 0 10px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.3), 0 4px 14px rgba(0, 0, 0, 0.6);
   }
   50% {
     transform: scale(1.02);
-    box-shadow: 0 0 18px rgba(0, 240, 255, 0.55), 0 6px 18px rgba(0, 0, 0, 0.7);
+    box-shadow: 0 0 18px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.55), 0 6px 18px rgba(0, 0, 0, 0.7);
   }
 }
 
@@ -184,13 +199,13 @@
 }
 
 .tactical-border-idle {
-  border-color: rgba(6, 182, 212, 0.18);
+  border-color: rgba(var(--aura-glow-rgb, 0, 240, 255), 0.18);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .tactical-border-idle:hover {
-  border-color: rgba(6, 182, 212, 0.45);
-  box-shadow: 0 0 8px rgba(6, 182, 212, 0.2);
+  border-color: rgba(var(--aura-glow-rgb, 0, 240, 255), 0.45);
+  box-shadow: 0 0 8px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.2);
 }
 
 /* ========================================================================== */
@@ -205,14 +220,17 @@ html[data-glow="off"] * {
   text-shadow: none !important;
   filter: none !important;
 }
+html[data-glow="off"] [data-ambient-glow="true"] {
+  opacity: 0 !important;
+}
 
 html[data-glow="tactical"] {
-  --tactical-cyan-glow: rgba(0, 240, 255, 0.18);
+  --tactical-cyan-glow: rgba(var(--aura-glow-rgb, 0, 240, 255), 0.18);
   --glow-opacity: 0.35;
 }
 
 html[data-glow="neon"] {
-  --tactical-cyan-glow: rgba(0, 240, 255, 0.45);
+  --tactical-cyan-glow: rgba(var(--aura-glow-rgb, 0, 240, 255), 0.45);
   --glow-opacity: 0.8;
 }
 

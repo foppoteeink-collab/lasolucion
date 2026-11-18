@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion } from 'motion/react';
 import {
   Zap,
@@ -478,8 +479,25 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
   const [completedShockwaveId, setCompletedShockwaveId] = useState<string | null>(null);
   const systemPalette = useSystemPalette();
   const opticMode = useUIStore((s) => s.opticMode);
+  const zenMode = useUIStore((s) => s.zenMode);
   const isEink = opticMode === 'eink';
   const togglingOrbsRef = React.useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (!selectedHabitForProtocol) return;
+    document.body.classList.add('modal-open-hide-floating');
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        soundFX.playClick();
+        setSelectedHabitForProtocol(null);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.classList.remove('modal-open-hide-floating');
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [selectedHabitForProtocol]);
 
   // Strictly select dedicated quick/discipline habits for 21/66 day tracking,
   // reconcile any stripped counter metadata from customHabits, and merge duplicates cleanly
@@ -643,20 +661,21 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
   };
 
   return (
-    <div className="scifi-glass-panel rounded-2xl p-2 sm:p-3 space-y-1 border border-cyan-500/30 shadow-[0_2px_15px_rgba(0,0,0,0.45)] relative overflow-hidden font-sans text-white">
+    <div className="relative isolate rounded-2xl p-2 sm:p-3 space-y-1 bg-[#040a1a]/[0.94] border border-white/10 shadow-[0_8px_28px_rgba(0,0,0,0.45)] overflow-hidden font-sans text-white">
       {/* Grano esmerilado táctil */}
       <span className="vi-grano opacity-5" aria-hidden="true" />
+      <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
       {/* Header with Title and Ratio Summary (Clean, Sin solapamiento en mobile) */}
-      <div className="flex items-center justify-between gap-1.5 sm:gap-2 px-0.5 flex-nowrap">
+      <div className="relative z-10 flex items-center justify-between gap-1.5 sm:gap-2 px-0.5 flex-nowrap">
         {/* Lado Izquierdo: Título y Guía */}
         <div className="flex items-center gap-1.5 min-w-0 shrink-0">
-          <div className="p-1 rounded-md bg-[#04020e] border border-cyan-500/60 text-cyan-400 shrink-0">
-            <Zap className="w-3 h-3 fill-cyan-400" />
+          <div className="p-1 rounded-lg aura-bg-soft border aura-border-subtle aura-text-primary shrink-0">
+            <Zap className="w-3 h-3" />
           </div>
-          <h3 className="text-xs font-bold font-anton text-cyan-300 uppercase tracking-wider whitespace-nowrap">
+          <h3 className="text-xs font-bold font-anton aura-text-primary uppercase tracking-wider whitespace-nowrap">
             Hábitos
           </h3>
-          <span className="hidden sm:inline-block text-[10px] font-mono text-cyan-400/60 tabular-nums">
+          <span className="hidden sm:inline-block text-[10px] font-mono aura-text-soft tabular-nums">
             (21/66)
           </span>
         </div>
@@ -670,16 +689,16 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                 soundFX.playClick();
                 onOpenHabitManager();
               }}
-              className="text-[10px] sm:text-[11px] font-mono font-bold text-cyan-300 hover:text-white bg-cyan-950/80 hover:bg-cyan-900/90 px-1.5 sm:px-2 py-0.5 rounded-md border border-cyan-500/40 hover:border-cyan-400 flex items-center gap-1 transition-all cursor-pointer shadow-[0_0_8px_rgba(0,240,255,0.2)] active:scale-95 whitespace-nowrap"
+              className="chicle-btn text-[10px] sm:text-[11px] font-mono font-bold aura-text-primary hover:text-white aura-bg-soft px-2 py-0.5 rounded-lg border aura-border-subtle hover:aura-border-primary flex items-center gap-1 transition-all cursor-pointer whitespace-nowrap"
               title="Gestionar, editar o eliminar hábitos y rutinas"
             >
-              <SlidersHorizontal className="w-3 h-3 text-cyan-400" />
+              <SlidersHorizontal className="w-3 h-3 aura-text-primary" />
               <span>Gestionar</span>
             </button>
           )}
 
           {quickHabits.length > 0 && (
-            <div className="text-[10px] sm:text-[11px] font-mono text-cyan-300 font-bold bg-cyan-950/60 px-1.5 sm:px-2 py-0.5 rounded-md border border-cyan-500/30 whitespace-nowrap tabular-nums">
+            <div className="text-[10px] sm:text-[11px] font-mono aura-text-primary font-bold aura-bg-soft px-2 py-0.5 rounded-lg border aura-border-subtle whitespace-nowrap tabular-nums">
               <span>{completedHabitsCount}/{quickHabits.length}</span>
               <span className="hidden sm:inline ml-1">{completedHabitsCount === 1 ? 'Listo' : 'Listos'}</span>
             </div>
@@ -688,11 +707,11 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
           <button
             type="button"
             onClick={toggleCollapsed}
-            className="p-1 rounded-md hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer"
+            className="chicle-btn p-1 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer"
             title={isCollapsed ? 'Desplegar orbes de hábitos' : 'Colapsar orbes de hábitos'}
             aria-label={isCollapsed ? 'Desplegar hábitos' : 'Colapsar hábitos'}
           >
-            {isCollapsed ? <ChevronDown className="w-3.5 h-3.5 text-cyan-300" /> : <ChevronUp className="w-3.5 h-3.5 text-slate-400" />}
+            {isCollapsed ? <ChevronDown className="w-3.5 h-3.5 aura-text-primary" /> : <ChevronUp className="w-3.5 h-3.5 text-slate-400" />}
           </button>
         </div>
       </div>
@@ -789,7 +808,7 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                 {...(idx === 0 ? { 'data-tour': 'habit-orb' } : {})}
                 whileHover={{ scale: 1.05 }}
                 animate={{
-                  boxShadow: isEink
+                  boxShadow: isEink || zenMode
                     ? 'none'
                     : isFinished
                       ? [
@@ -801,7 +820,7 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                         : '0 0 0px rgba(0, 0, 0, 0)',
                 }}
                 transition={{
-                  boxShadow: isFinished && !isEink
+                  boxShadow: isFinished && !isEink && !zenMode
                     ? {
                         repeat: Infinity,
                         repeatType: "reverse",
@@ -1174,12 +1193,12 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
               soundFX.playClick();
               onOpenAddModal(true);
             }}
-            className="w-12 h-12 rounded-full border border-dashed border-cyan-500/40 hover:border-cyan-400 bg-white/[0.02] hover:bg-cyan-950/40 flex items-center justify-center transition-all cursor-pointer group active:scale-95 shadow-[0_0_8px_rgba(0,240,255,0.1)]"
+            className="chicle-btn w-12 h-12 rounded-full border border-dashed aura-border-subtle hover:aura-border-primary bg-white/[0.02] hover:aura-bg-soft flex items-center justify-center transition-all cursor-pointer group"
             title="Crear un nuevo hábito (Ley 21/66)"
           >
-            <Icon name="plus" className="w-4 h-4 text-cyan-400 group-hover:scale-110 transition-transform" />
+            <Icon name="plus" className="w-4 h-4 aura-text-primary group-hover:scale-110 transition-transform" />
           </button>
-          <span className="text-[10px] text-slate-400 group-hover:text-cyan-200 font-medium text-center mt-2 select-none leading-tight">
+          <span className="text-[10px] text-slate-400 group-hover:aura-text-primary font-medium text-center mt-2 select-none leading-tight">
             Nuevo
           </span>
         </div>
@@ -1187,7 +1206,7 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
         </>
       )}
 
-      {/* PROTOCOLO LEY 21/66 & AURAS DE KAI MODAL (ENFOCADO EN EL HÁBITO SELECCIONADO) */}
+      {/* PROTOCOLO LEY 21/66 & AURAS DE KAI MODAL (PORTALIZADO) */}
       {selectedHabitForProtocol && (() => {
         const qh = quickHabits.find(h => h.id === selectedHabitForProtocol.id) || selectedHabitForProtocol;
         const baseId = getHabitBaseId(qh);
@@ -1206,26 +1225,32 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
         const has21 = streak >= 21 || mastery?.isMaltzReached;
         const has66 = streak >= 66 || mastery?.isMastered;
 
-        return (
+        const protocolModal = (
           <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/88 animate-in fade-in"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Protocolo 21/66: ${qh.title}`}
+            className="fixed inset-0 z-[170] portal-modal-root flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-sm animate-fade-in"
             onClick={() => setSelectedHabitForProtocol(null)}
           >
             <div
-              className="w-full max-w-lg rounded-2xl bg-[#001426] border border-cyan-500/50 p-5 sm:p-6 shadow-[0_0_40px_rgba(0,240,255,0.25)] text-white max-h-[90vh] flex flex-col overflow-hidden font-sans"
+              className="relative isolate w-full max-w-lg rounded-2xl sm:rounded-3xl bg-[#030712]/[0.98] border border-white/10 shadow-[0_24px_64px_rgba(0,0,0,0.75)] text-white max-h-[90vh] flex flex-col overflow-hidden font-sans"
               onClick={(e) => e.stopPropagation()}
             >
+              <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
+
               {/* Header */}
-              <div className="flex items-start justify-between border-b border-cyan-900/60 pb-3 shrink-0">
+              <div className="flex items-start justify-between border-b border-white/10 bg-[#040814]/[0.96] p-4 sm:p-5 shrink-0 relative z-10">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-cyan-950 border border-cyan-500/60 flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 rounded-xl aura-bg-soft border aura-border-subtle flex items-center justify-center shrink-0">
                     {renderDisplayIcon(qh.quickIcon, qh.title, 'text-2xl')}
                   </div>
                   <div>
-                    <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                    <h3 className="text-base sm:text-lg font-anton uppercase tracking-wider text-white flex items-center gap-2">
                       <span>{qh.title}</span>
                     </h3>
-                    <p className="text-xs text-cyan-300 font-mono flex items-center gap-1.5 mt-0.5">
+                    <p className="text-xs aura-text-primary font-mono tabular-nums flex items-center gap-1.5 mt-0.5">
                       <Flame className="w-3.5 h-3.5 text-amber-400 fill-amber-400/30" />
                       <span>Racha actual: <strong className="text-white">{streak} días</strong></span>
                     </p>
@@ -1235,25 +1260,26 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                 <button
                   type="button"
                   onClick={() => setSelectedHabitForProtocol(null)}
-                  className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                  aria-label="Cerrar protocolo"
+                  className="chicle-btn w-9 h-9 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 text-slate-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-4 h-4" />
                 </button>
               </div>
 
               {/* Body */}
-              <div className="flex-1 overflow-y-auto py-4 space-y-4 pr-1 scrollbar-thin scrollbar-thumb-cyan-800">
+              <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 custom-scrollbar relative z-10">
                 {/* Control Manual para Hoy (Ajuste rápido -1 y Reiniciar) */}
-                <div className="p-3 rounded-xl bg-surface-card border border-cyan-500/30 flex items-center justify-between gap-3">
+                <div className="p-3.5 rounded-xl bg-[#040814]/80 border border-white/10 flex items-center justify-between gap-3">
                   <div>
                     <span className="text-[11px] font-bold text-slate-300 block">Progreso de hoy</span>
-                    <div className="text-xs font-mono text-cyan-300 flex items-center gap-1.5 mt-0.5">
+                    <div className="text-xs font-mono tabular-nums aura-text-primary flex items-center gap-1.5 mt-0.5">
                       <span>
                         {qh.currentCount || 0} / {qh.targetCount || 1} {qh.unit || 'veces'}
                       </span>
                       {(qh.completed || (qh.currentCount || 0) >= (qh.targetCount || 1)) && (
                         <span
-                          className="text-[10px] font-bold px-1.5 py-0.5 rounded border"
+                          className="optic-active-card text-[10px] font-bold px-1.5 py-0.5 rounded border"
                           style={
                             isEink
                               ? {
@@ -1279,7 +1305,7 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                       type="button"
                       onClick={() => handleDecrementHabit(qh)}
                       disabled={(qh.currentCount || 0) <= 0 && !qh.completed}
-                      className="min-h-[36px] min-w-[36px] px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/20 text-slate-200 text-xs font-mono font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer active:scale-95 flex items-center justify-center"
+                      className="chicle-btn min-h-[36px] min-w-[36px] px-3 py-1.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.12] border border-white/15 text-slate-200 text-xs font-mono font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center"
                       title="Restar 1 al contador de hoy"
                     >
                       -1
@@ -1289,7 +1315,7 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                       type="button"
                       onClick={(e) => handleResetHabitToday(qh, e)}
                       disabled={(qh.currentCount || 0) === 0 && !qh.completed}
-                      className="min-h-[36px] px-3 py-1.5 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 border border-rose-500/40 text-rose-300 text-xs font-bold transition-all flex items-center gap-1.5 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer active:scale-95"
+                      className="chicle-btn min-h-[36px] px-3 py-1.5 rounded-xl bg-rose-950/40 hover:bg-rose-900/60 border border-rose-500/40 text-rose-300 text-xs font-bold transition-all flex items-center gap-1.5 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
                       title="Reiniciar contador a 0 para hoy"
                     >
                       <RotateCcw className="w-3.5 h-3.5" />
@@ -1302,14 +1328,14 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                 <div className={`p-3.5 rounded-xl border space-y-2 transition-all ${
                   has21 
                     ? 'bg-purple-950/40 border-purple-500/60 shadow-[0_0_15px_rgba(168,85,247,0.2)]'
-                    : 'bg-black/40 border-white/10'
+                    : 'bg-[#040814]/80 border-white/10'
                 }`}>
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-bold text-purple-300 flex items-center gap-1.5">
                       <Zap className="w-3.5 h-3.5 text-purple-400" />
                       <span>Meta 21 Días · {energyDetail.auraName21}</span>
                     </span>
-                    <span className="font-mono font-bold text-purple-200">
+                    <span className="font-mono font-bold tabular-nums text-purple-200">
                       {streak}/21d ({p21}%)
                     </span>
                   </div>
@@ -1334,14 +1360,14 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                 <div className={`p-3.5 rounded-xl border space-y-2 transition-all ${
                   has66 
                     ? 'bg-amber-950/40 border-amber-500/60 shadow-[0_0_15px_rgba(245,158,11,0.2)]'
-                    : 'bg-black/40 border-white/10'
+                    : 'bg-[#040814]/80 border-white/10'
                 }`}>
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-bold text-amber-300 flex items-center gap-1.5">
                       <Trophy className="w-3.5 h-3.5 text-amber-400" />
                       <span>Meta 66 Días · {energyDetail.masterForm66}</span>
                     </span>
-                    <span className="font-mono font-bold text-amber-200">
+                    <span className="font-mono font-bold tabular-nums text-amber-200">
                       {streak}/66d ({p66}%)
                     </span>
                   </div>
@@ -1364,7 +1390,7 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
               </div>
 
               {/* Footer Actions */}
-              <div className="pt-3 border-t border-cyan-900/60 flex items-center justify-between gap-2 shrink-0">
+              <div className="p-4 sm:p-5 border-t border-white/10 bg-[#040814]/[0.96] flex items-center justify-between gap-2 shrink-0 relative z-10">
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <button
                     type="button"
@@ -1373,7 +1399,7 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                       setSelectedHabitForProtocol(null);
                       onOpenEditModal(target);
                     }}
-                    className="px-3 py-1.5 rounded-xl bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-600/60 hover:border-cyan-400 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
+                    className="chicle-btn px-3 py-2 rounded-xl aura-bg-soft hover:text-white aura-text-primary border aura-border-subtle text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
                   >
                     <Edit3 className="w-3.5 h-3.5" />
                     <span>Configurar</span>
@@ -1386,10 +1412,10 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                       setSelectedHabitForProtocol(null);
                       if (target) onDeleteTask(target.id);
                     }}
-                    className="px-2.5 py-1.5 rounded-xl bg-red-950/60 hover:bg-red-900/80 text-red-300 border border-red-500/40 hover:border-red-400 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95"
+                    className="chicle-btn px-2.5 py-2 rounded-xl bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 border border-rose-500/40 hover:border-rose-400 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
                     title="Eliminar este hábito permanentemente"
                   >
-                    <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                    <Trash2 className="w-3.5 h-3.5 text-rose-400" />
                     <span>Eliminar</span>
                   </button>
                 </div>
@@ -1397,7 +1423,7 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
                 <button
                   type="button"
                   onClick={() => setSelectedHabitForProtocol(null)}
-                  className="px-4 py-1.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-black text-xs font-bold transition-all cursor-pointer"
+                  className="chicle-btn aura-btn-gradient optic-active-card px-4 py-2 rounded-xl font-anton uppercase tracking-wider text-xs font-bold transition-all cursor-pointer"
                 >
                   Cerrar
                 </button>
@@ -1405,6 +1431,8 @@ export const QuickHabitsWidget: React.FC<QuickHabitsWidgetProps> = ({
             </div>
           </div>
         );
+
+        return typeof document !== 'undefined' ? createPortal(protocolModal, document.body) : protocolModal;
       })()}
     </div>
   );

@@ -71,14 +71,18 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
     });
   }, [customHabits, activeFilter, searchTerm]);
 
-  // Cerrar con Escape
+  // Cerrar con Escape + ocultar flotantes
   useEffect(() => {
     if (!isOpen) return;
+    document.body.classList.add('modal-open-hide-floating');
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.classList.remove('modal-open-hide-floating');
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
@@ -145,7 +149,7 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
   const modalContent = (
     <AnimatePresence>
       <div 
-        className="fixed inset-0 z-[180] flex items-center justify-center p-3 sm:p-4 bg-black/88 animate-fade-in font-sans portal-modal-root"
+        className="fixed inset-0 z-[170] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-sm animate-fade-in font-sans portal-modal-root"
         onClick={onClose}
       >
         <motion.div
@@ -155,27 +159,23 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
-          className="relative w-full max-w-2xl flex flex-col rounded-2xl sm:rounded-3xl bg-[#030712]/[0.98] border border-cyan-500/35 shadow-[0_0_50px_rgba(0,240,255,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] max-h-[90vh] overflow-hidden text-white text-left"
+          className="relative isolate w-full max-w-2xl flex flex-col rounded-2xl sm:rounded-3xl bg-[#030712]/[0.98] border border-white/10 shadow-[0_24px_64px_rgba(0,0,0,0.75)] max-h-[90vh] overflow-hidden text-white text-left"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Micrograno táctil Moxen Vidrio */}
           <span className="vi-grano opacity-5" aria-hidden="true" />
-
-          {/* Luces de ambiente cyberpunk */}
-          <div className="absolute top-0 right-0 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent pointer-events-none" />
+          <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
 
           {/* Modal Header */}
-          <div className="flex items-center justify-between p-4 sm:p-5 pb-3 border-b border-white/10 bg-[#010810]/80 shrink-0 relative z-10">
+          <div className="flex items-center justify-between p-4 sm:p-5 pb-3 border-b border-white/10 bg-[#040814]/[0.96] shrink-0 relative z-10">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-950 to-[#021824] border border-cyan-400/50 flex items-center justify-center text-cyan-300 shadow-[0_0_15px_rgba(0,240,255,0.35)] shrink-0">
-                <Zap className="w-5 h-5 drop-shadow-[0_0_8px_rgba(0,240,255,0.6)]" />
+              <div className="w-10 h-10 rounded-xl aura-bg-soft border aura-border-subtle flex items-center justify-center aura-text-primary aura-glow-subtle shrink-0">
+                <Zap className="w-5 h-5" />
               </div>
               <div className="min-w-0">
-                <h3 id="habit-manager-modal-title" className="text-sm sm:text-base font-anton uppercase tracking-wide text-white truncate flex items-center gap-2">
+                <h3 id="habit-manager-modal-title" className="text-sm sm:text-base font-anton uppercase tracking-wider text-white truncate flex items-center gap-2">
                   <span>Rutinas y Hábitos</span>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-950/80 text-cyan-300 border border-cyan-400/50 font-bold shrink-0">
+                  <span className="text-[10px] font-mono tabular-nums px-2 py-0.5 rounded-full aura-bg-soft aura-text-primary border aura-border-subtle font-bold shrink-0">
                     {customHabits.length} Activas
                   </span>
                 </h3>
@@ -190,7 +190,7 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                 soundFX.playClick();
                 onClose();
               }}
-              className="w-8 h-8 rounded-xl bg-white/[0.04] hover:bg-white/10 border border-white/10 hover:border-cyan-400/40 text-slate-400 hover:text-white flex items-center justify-center transition-all cursor-pointer shrink-0 ml-2 active:scale-95"
+              className="chicle-btn w-9 h-9 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 text-slate-300 hover:text-white flex items-center justify-center transition-all cursor-pointer shrink-0 ml-2"
               title="Cerrar modal (Esc)"
               aria-label="Cerrar modal de hábitos"
             >
@@ -219,17 +219,17 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                     setActiveFilter('habits2166');
                   }
                 }}
-                className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
+                className={`chicle-btn p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
                   activeFilter === 'habits2166' 
-                    ? 'bg-amber-950/40 border-amber-500/60 shadow-[0_0_15px_rgba(245,158,11,0.2)]' 
-                    : 'bg-[#020712]/80 border-white/10 hover:border-white/20'
+                    ? 'bg-amber-950/40 border-amber-500/60 shadow-[0_0_15px_rgba(245,158,11,0.2)] optic-active-card' 
+                    : 'bg-[#040814]/80 border-white/10 hover:border-white/20'
                 }`}
               >
                 <div className="flex items-center gap-2">
                   <Flame className="w-4 h-4 text-amber-400" />
                   <span className="text-xs font-anton uppercase tracking-wide text-amber-300">Hábitos 21/66d</span>
                 </div>
-                <span className="text-sm font-mono font-black text-amber-200 bg-amber-950/80 px-2.5 py-0.5 rounded-lg border border-amber-500/40">
+                <span className="text-sm font-mono font-black tabular-nums text-amber-200 bg-amber-950/80 px-2.5 py-0.5 rounded-lg border border-amber-500/40">
                   {habits2166Count}
                 </span>
               </div>
@@ -251,17 +251,17 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                     setActiveFilter('agenda');
                   }
                 }}
-                className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
+                className={`chicle-btn p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
                   activeFilter === 'agenda' 
-                    ? 'bg-indigo-950/40 border-indigo-500/60 shadow-[0_0_15px_rgba(99,102,241,0.2)]' 
-                    : 'bg-[#020712]/80 border-white/10 hover:border-white/20'
+                    ? 'bg-indigo-950/40 border-indigo-500/60 shadow-[0_0_15px_rgba(99,102,241,0.2)] optic-active-card' 
+                    : 'bg-[#040814]/80 border-white/10 hover:border-white/20'
                 }`}
               >
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-indigo-400" />
                   <span className="text-xs font-anton uppercase tracking-wide text-indigo-300">Recordatorios Agenda</span>
                 </div>
-                <span className="text-sm font-mono font-black text-indigo-200 bg-indigo-950/80 px-2.5 py-0.5 rounded-lg border border-indigo-500/40">
+                <span className="text-sm font-mono font-black tabular-nums text-indigo-200 bg-indigo-950/80 px-2.5 py-0.5 rounded-lg border border-indigo-500/40">
                   {agendaCount}
                 </span>
               </div>
@@ -277,11 +277,11 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                   aria-label="Buscar rutina o hábito"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 rounded-xl bg-[#020712]/90 border border-white/15 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 transition-colors shadow-inner font-mono"
+                  className="w-full pl-9 pr-3 py-2 rounded-xl bg-[#040814]/90 border border-white/15 text-xs text-white placeholder-slate-500 focus:outline-none focus:aura-border-primary transition-colors shadow-inner font-mono"
                 />
               </div>
 
-              <div role="tablist" aria-label="Filtros de rutinas y hábitos" className="flex items-center gap-1 bg-black/60 p-1 rounded-xl border border-white/10 shrink-0 w-full sm:w-auto">
+              <div role="tablist" aria-label="Filtros de rutinas y hábitos" className="flex items-center gap-1 bg-[#040814]/90 p-1 rounded-xl border border-white/10 shrink-0 w-full sm:w-auto">
                 <button
                   type="button"
                   role="tab"
@@ -291,9 +291,9 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                     triggerHaptic(15);
                     setActiveFilter('all');
                   }}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-anton uppercase tracking-wider transition-all cursor-pointer ${
+                  className={`chicle-btn px-2.5 py-1 rounded-lg text-xs font-anton uppercase tracking-wider transition-all cursor-pointer tabular-nums ${
                     activeFilter === 'all'
-                      ? 'bg-cyan-400 text-black font-bold shadow-[0_0_10px_rgba(0,240,255,0.4)]'
+                      ? 'aura-btn-gradient optic-active-card font-bold'
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >
@@ -308,9 +308,9 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                     triggerHaptic(15);
                     setActiveFilter('habits2166');
                   }}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-anton uppercase tracking-wider transition-all cursor-pointer ${
+                  className={`chicle-btn px-2.5 py-1 rounded-lg text-xs font-anton uppercase tracking-wider transition-all cursor-pointer tabular-nums ${
                     activeFilter === 'habits2166'
-                      ? 'bg-amber-400 text-black font-bold shadow-[0_0_10px_rgba(245,158,11,0.4)]'
+                      ? 'bg-amber-400 text-black font-bold shadow-[0_0_10px_rgba(245,158,11,0.4)] optic-active-card'
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >
@@ -325,9 +325,9 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                     triggerHaptic(15);
                     setActiveFilter('agenda');
                   }}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-anton uppercase tracking-wider transition-all cursor-pointer ${
+                  className={`chicle-btn px-2.5 py-1 rounded-lg text-xs font-anton uppercase tracking-wider transition-all cursor-pointer tabular-nums ${
                     activeFilter === 'agenda'
-                      ? 'bg-indigo-500 text-white font-bold shadow-[0_0_10px_rgba(99,102,241,0.4)]'
+                      ? 'bg-indigo-500 text-white font-bold shadow-[0_0_10px_rgba(99,102,241,0.4)] optic-active-card'
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >
@@ -339,7 +339,7 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
             {/* Scrollable Habits / Routines List */}
             <div className="space-y-2.5 my-2 pr-1">
               {filteredHabits.length === 0 ? (
-                <div className="text-center py-10 text-slate-500 text-xs italic bg-[#020712]/40 rounded-2xl border border-dashed border-white/10 font-mono">
+                <div className="text-center py-10 text-slate-500 text-xs italic bg-[#040814]/60 rounded-2xl border border-dashed border-white/10 font-mono">
                   {searchTerm
                     ? 'No se encontraron rutinas o hábitos coincidentes.'
                     : activeFilter === 'habits2166'
@@ -358,17 +358,17 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                       key={habit.id}
                       className={`p-3.5 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative overflow-hidden ${
                         is2166
-                          ? 'bg-gradient-to-r from-[#0d0901] via-[#150e02] to-[#040e1b] border-amber-500/35 hover:border-amber-400/60 shadow-[0_0_15px_rgba(245,158,11,0.1)]'
-                          : 'bg-[#020712]/80 border-white/10 hover:border-indigo-500/40'
+                          ? 'bg-[#040a1a]/[0.94] border-amber-500/35 hover:border-amber-400/60 shadow-[0_6px_20px_rgba(245,158,11,0.1)]'
+                          : 'bg-[#040814]/80 border-white/10 hover:border-white/25'
                       }`}
                     >
                       {/* Inline Cascade Deletion Confirmation Safeguard */}
                       {deletingHabitId === habit.id && (
                         <div 
-                          className="absolute inset-0 bg-red-950/[0.98] border border-red-500/60 rounded-2xl flex items-center justify-between px-3.5 py-2 z-20 animate-in fade-in duration-150"
+                          className="absolute inset-0 bg-rose-950/[0.98] border border-rose-500/60 rounded-2xl flex items-center justify-between px-3.5 py-2 z-20 animate-fade-in"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          <span className="text-[11px] font-bold text-red-200 truncate pr-2">
+                          <span className="text-[11px] font-bold text-rose-200 truncate pr-2">
                             ¿Eliminar hábito y sus tareas asociadas en agenda?
                           </span>
                           <div className="flex items-center gap-1.5 shrink-0">
@@ -379,7 +379,7 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                                 soundFX.playClick();
                                 setDeletingHabitId(null);
                               }}
-                              className="px-2.5 py-1 rounded-lg text-[10px] font-bold text-slate-300 hover:text-white bg-white/10 cursor-pointer"
+                              className="chicle-btn px-2.5 py-1 rounded-lg text-[10px] font-bold text-slate-200 hover:text-white bg-white/10 border border-white/15 cursor-pointer"
                             >
                               Cancelar
                             </button>
@@ -389,7 +389,7 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                                 e.stopPropagation();
                                 handleDeleteHabit(habit.id);
                               }}
-                              className="px-2.5 py-1 rounded-lg text-[10px] font-bold text-white bg-red-600 hover:bg-red-500 shadow-md cursor-pointer"
+                              className="chicle-btn optic-active-card px-2.5 py-1 rounded-lg text-[10px] font-bold text-white bg-rose-600 hover:bg-rose-500 shadow-md cursor-pointer"
                             >
                               Eliminar
                             </button>
@@ -399,7 +399,7 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
 
                       {/* Left: Icon & Details */}
                       <div className="flex items-start gap-3 min-w-0 flex-1">
-                        <span className="text-xl p-2 rounded-xl bg-black/70 border border-white/10 shrink-0">
+                        <span className="text-xl p-2 rounded-xl bg-black/50 border border-white/10 shrink-0">
                           {habit.quickIcon || (is2166 ? '⚡' : '📅')}
                         </span>
                         <div className="min-w-0">
@@ -415,20 +415,20 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                           </div>
 
                           <div className="flex items-center gap-3 text-xs text-slate-400 font-mono mt-1 flex-wrap">
-                            <span className="flex items-center gap-1 text-cyan-300">
-                              <Calendar className="w-3 h-3 text-cyan-400" />
+                            <span className="flex items-center gap-1 aura-text-primary">
+                              <Calendar className="w-3 h-3 aura-text-primary" />
                               {daysText}
                             </span>
                             
                             {habit.timeBlock && (
-                              <span className="flex items-center gap-1 text-indigo-300">
+                              <span className="flex items-center gap-1 text-indigo-300 tabular-nums">
                                 <Clock className="w-3 h-3 text-indigo-400" />
                                 {habit.timeBlock}
                               </span>
                             )}
 
                             {habit.targetCount && habit.targetCount > 1 ? (
-                              <span className="text-amber-400 font-bold">
+                              <span className="text-amber-400 font-bold tabular-nums">
                                 Meta: {habit.targetCount} {habit.unit || 'veces'}
                               </span>
                             ) : null}
@@ -442,9 +442,9 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                         <button
                           type="button"
                           onClick={() => handleToggle2166(habit)}
-                          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer border active:scale-95 ${
+                          className={`chicle-btn flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer border ${
                             is2166
-                              ? 'bg-amber-500/20 text-amber-300 border-amber-500/60 shadow-[0_0_10px_rgba(245,158,11,0.25)] hover:bg-amber-500/30'
+                              ? 'bg-amber-500/20 text-amber-300 border-amber-500/60 shadow-[0_0_10px_rgba(245,158,11,0.25)] hover:bg-amber-500/30 optic-active-card'
                               : 'bg-white/[0.04] text-slate-400 border-white/10 hover:text-slate-200 hover:border-white/25'
                           }`}
                           title={
@@ -476,7 +476,7 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                                 onClose();
                                 onEditHabit(habit);
                               }}
-                              className="p-1.5 text-cyan-400 hover:text-white rounded-lg hover:bg-cyan-950/60 border border-cyan-500/30 transition-colors cursor-pointer"
+                              className="chicle-btn p-1.5 aura-text-primary hover:text-white rounded-xl hover:bg-white/[0.08] border aura-border-subtle transition-colors cursor-pointer"
                               title={`Editar detalles de ${habit.title}`}
                               aria-label={`Editar detalles de ${habit.title}`}
                             >
@@ -490,7 +490,7 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                               triggerHaptic(20);
                               setDeletingHabitId(habit.id);
                             }}
-                            className="p-1.5 text-slate-500 hover:text-red-400 rounded-lg hover:bg-red-950/40 border border-transparent hover:border-red-500/40 transition-colors cursor-pointer"
+                            className="chicle-btn p-1.5 text-slate-400 hover:text-rose-400 rounded-xl hover:bg-rose-950/40 border border-transparent hover:border-rose-500/40 transition-colors cursor-pointer"
                             title={`Eliminar rutina ${habit.title}`}
                             aria-label={`Eliminar rutina ${habit.title}`}
                           >
@@ -506,7 +506,7 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
           </div>
 
           {/* Sticky Footer Controls (Ergonomía del Pulgar) */}
-          <div className="p-3 sm:p-4 border-t border-white/10 bg-[#010810]/90 shrink-0 flex items-center gap-2.5 relative z-10">
+          <div className="p-3 sm:p-4 border-t border-white/10 bg-[#040814]/[0.96] shrink-0 flex items-center gap-2.5 relative z-10">
             <button
               type="button"
               onClick={() => {
@@ -514,7 +514,7 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                 onClose();
               }}
               aria-label="Volver y cerrar modal de hábitos"
-              className="flex-1 sm:flex-none sm:px-6 py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/10 text-slate-300 hover:text-white font-anton uppercase text-xs tracking-wider transition-all border border-white/15 cursor-pointer active:scale-95 text-center"
+              className="chicle-btn flex-1 sm:flex-none sm:px-6 py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.12] text-slate-200 hover:text-white font-anton uppercase text-xs tracking-wider transition-all border border-white/15 cursor-pointer text-center"
             >
               Volver
             </button>
@@ -527,7 +527,7 @@ export const HabitManagerModal: React.FC<HabitManagerModalProps> = ({
                 onOpenAddModal(activeFilter === 'agenda' ? ('weekly_reminder' as any) : true);
               }}
               aria-label="Crear nueva rutina o hábito"
-              className="flex-[2] py-2.5 px-4 rounded-xl bg-gradient-to-r from-cyan-400 via-cyan-300 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950 font-anton uppercase tracking-wider text-xs sm:text-sm font-bold shadow-[0_0_20px_rgba(0,240,255,0.4)] flex items-center justify-center gap-2 cursor-pointer active:scale-95 chicle-btn text-center"
+              className="chicle-btn aura-btn-gradient optic-active-card flex-[2] py-2.5 px-4 rounded-xl font-anton uppercase tracking-wider text-xs sm:text-sm font-bold flex items-center justify-center gap-2 cursor-pointer text-center"
             >
               <Plus className="w-4 h-4" />
               <span>{activeFilter === 'agenda' ? '+ Nuevo Recordatorio Semanal' : '+ Nueva Rutina / Hábito'}</span>

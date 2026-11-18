@@ -25,9 +25,7 @@
 }
 .ec-interruptor:focus-visible { outline: 2px solid var(--ec-suave); outline-offset: .1em; }
 .ec-cielo { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; isolation: isolate; }
-/* el cielo de noche va encima del de día; eclipse.js le da la opacidad
-   cuadro a cuadro, al paso del astro */
-.ec-cielo-noche { position: absolute; inset: 0; opacity: 0; background: radial-gradient(120% 140% at 80% 0%, #262626, transparent 60%), linear-gradient(var(--ec-noche-1), var(--ec-noche-2)); }
+/* El cielo de noche se define más abajo con transición suave */
 
 /* El canto: la sombra de dentro y un filo de luz abajo, encima de todo,
    para que el riel parezca hundido. */
@@ -194,7 +192,7 @@
 }
 .ec-interruptor.fase-aurora .ec-cielo-noche {
   opacity: 0.9 !important;
-  background: radial-gradient(circle at 25% 40%, rgba(0, 240, 255, 0.45), transparent 70%), linear-gradient(135deg, #1e1b4b, #030712) !important;
+  background: radial-gradient(circle at 25% 40%, rgba(var(--aura-glow-rgb, 0, 240, 255), 0.45), transparent 70%), linear-gradient(135deg, #1e1b4b, #030712) !important;
 }
 .ec-interruptor.fase-aurora .ec-luna {
   transform: translateX(110%) !important;

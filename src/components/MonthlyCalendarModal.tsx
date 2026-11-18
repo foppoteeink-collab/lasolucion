@@ -43,14 +43,18 @@ export const MonthlyCalendarModal: React.FC<MonthlyCalendarModalProps> = ({
     }
   }, [currentDate]);
 
-  // ESC key listener to close
+  // ESC key listener + ocultar flotantes
   useEffect(() => {
     if (!isOpen) return;
+    document.body.classList.add('modal-open-hide-floating');
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.classList.remove('modal-open-hide-floating');
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, [isOpen, onClose]);
 
   const monthNames = [
@@ -117,42 +121,42 @@ export const MonthlyCalendarModal: React.FC<MonthlyCalendarModalProps> = ({
 
   const modalContent = (
     <div
-      className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-4 bg-black/88 animate-fade-in portal-modal-root"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Calendario mensual"
+      className="fixed inset-0 z-[170] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-sm animate-fade-in portal-modal-root"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md max-h-[92dvh] overflow-y-auto scrollbar-none flex flex-col bg-[#030712]/[0.98] border border-cyan-500/40 rounded-2xl sm:rounded-3xl shadow-[0_0_50px_rgba(0,240,255,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] relative text-left"
+        className="w-full max-w-md max-h-[92dvh] overflow-y-auto no-scrollbar flex flex-col bg-[#030712]/[0.98] border border-white/10 rounded-2xl sm:rounded-3xl shadow-[0_24px_64px_rgba(0,0,0,0.75)] relative isolate text-left overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Grano esmerilado táctil Moxen Vidrio */}
         <span className="vi-grano opacity-5" aria-hidden="true" />
-
-        {/* Ambient Corner Glows */}
-        <div className="absolute top-0 right-0 w-44 h-44 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-44 h-44 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
 
         {/* ====================================================================
             ENCABEZADO UNIFICADO LIMPIO (SIN DOBLE HEADER)
             ==================================================================== */}
-        <div className="flex items-center justify-between p-3.5 sm:p-4 border-b border-white/10 bg-[#010810]/80 shrink-0 relative z-10">
+        <div className="flex items-center justify-between p-3.5 sm:p-4 border-b border-white/10 bg-[#040814]/[0.96] shrink-0 relative z-10">
           <div className="flex items-center gap-2">
             <button 
               type="button"
               onClick={prevMonth} 
-              className="w-8 h-8 rounded-lg bg-white/[0.04] hover:bg-cyan-950/60 border border-white/10 hover:border-cyan-400/50 text-slate-300 hover:text-cyan-300 flex items-center justify-center transition-all cursor-pointer active:scale-95"
+              className="chicle-btn w-8 h-8 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 hover:aura-border-subtle text-slate-300 hover:text-white flex items-center justify-center transition-all cursor-pointer"
               title="Mes anterior"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
 
-            <h3 className="text-sm sm:text-base font-anton tracking-wide text-white uppercase truncate">
+            <h3 className="text-sm sm:text-base font-anton tracking-wide text-white uppercase truncate tabular-nums">
               {monthNames[viewMonth.getMonth()]} {viewMonth.getFullYear()}
             </h3>
 
             <button 
               type="button"
               onClick={nextMonth} 
-              className="w-8 h-8 rounded-lg bg-white/[0.04] hover:bg-cyan-950/60 border border-white/10 hover:border-cyan-400/50 text-slate-300 hover:text-cyan-300 flex items-center justify-center transition-all cursor-pointer active:scale-95"
+              className="chicle-btn w-8 h-8 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 hover:aura-border-subtle text-slate-300 hover:text-white flex items-center justify-center transition-all cursor-pointer"
               title="Mes siguiente"
             >
               <ChevronRight className="w-4 h-4" />
@@ -163,7 +167,7 @@ export const MonthlyCalendarModal: React.FC<MonthlyCalendarModalProps> = ({
             <button
               type="button"
               onClick={() => setViewMonth(new Date())}
-              className="px-2 py-1 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-400/40 text-cyan-300 text-[10px] font-anton tracking-wider uppercase transition-all cursor-pointer shadow-[0_0_8px_rgba(0,240,255,0.2)] active:scale-95"
+              className="chicle-btn px-2.5 py-1.5 rounded-xl aura-bg-soft border aura-border-subtle aura-text-primary text-[10px] font-anton tracking-wider uppercase transition-all cursor-pointer"
             >
               Hoy
             </button>
@@ -172,7 +176,7 @@ export const MonthlyCalendarModal: React.FC<MonthlyCalendarModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="w-8 h-8 rounded-xl bg-white/[0.04] hover:bg-white/10 border border-white/10 hover:border-cyan-400/50 text-slate-400 hover:text-white flex items-center justify-center transition-all cursor-pointer active:scale-95"
+              className="chicle-btn w-9 h-9 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 text-slate-300 hover:text-white flex items-center justify-center transition-all cursor-pointer"
               title="Cerrar calendario (Esc)"
               aria-label="Cerrar calendario"
             >
@@ -221,21 +225,21 @@ export const MonthlyCalendarModal: React.FC<MonthlyCalendarModalProps> = ({
                     onChangeDate(day.date);
                     onClose();
                   }}
-                  className={`relative flex flex-col items-center justify-center h-10 sm:h-11 rounded-xl transition-all cursor-pointer active:scale-90 ${
+                  className={`chicle-btn relative flex flex-col items-center justify-center h-10 sm:h-11 rounded-xl transition-all cursor-pointer ${
                     !day.isCurrentMonth
                       ? 'opacity-25 hover:opacity-70 bg-transparent text-slate-500'
                       : isSelected
-                      ? 'bg-cyan-400 text-black font-anton shadow-[0_0_15px_rgba(0,240,255,0.7)] ring-2 ring-cyan-300 font-bold z-10'
+                      ? 'aura-btn-gradient optic-active-card font-anton font-bold z-10'
                       : isDayToday
-                      ? 'bg-yellow-400/15 border border-yellow-400/80 text-yellow-300 shadow-[0_0_10px_rgba(250,204,21,0.25)]'
+                      ? 'bg-amber-400/15 border border-amber-400/75 text-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.22)]'
                       : isRest
                       ? 'bg-emerald-950/40 border border-emerald-500/30 text-emerald-300'
-                      : 'bg-white/[0.03] hover:bg-cyan-950/40 border border-white/5 hover:border-cyan-400/40 text-slate-200'
+                      : 'bg-white/[0.03] hover:bg-white/[0.08] border border-white/10 text-slate-200'
                   }`}
                   title={`${day.date}${isFullyDone ? ' • ¡Completado!' : hasPending ? ` • ${completedCount}/${totalCount} misiones` : ''}`}
                 >
-                  <span className={`text-xs sm:text-sm leading-none ${
-                    isSelected ? 'font-anton text-black' : 'font-anton'
+                  <span className={`text-xs sm:text-sm leading-none font-anton tabular-nums ${
+                    isSelected ? 'text-slate-950' : ''
                   }`}>
                     {dayNum}
                   </span>
@@ -248,7 +252,7 @@ export const MonthlyCalendarModal: React.FC<MonthlyCalendarModalProps> = ({
                       }`} />
                     ) : hasPending ? (
                       <span className={`w-1.5 h-1.5 rounded-full ${
-                        isSelected ? 'bg-black/60' : 'bg-cyan-400 shadow-[0_0_6px_rgba(0,240,255,0.7)]'
+                        isSelected ? 'bg-black/60' : 'aura-bg-primary'
                       }`} />
                     ) : isRest ? (
                       <span className="text-[8px] leading-none">🌿</span>
@@ -266,7 +270,7 @@ export const MonthlyCalendarModal: React.FC<MonthlyCalendarModalProps> = ({
               <span>Completado</span>
             </span>
             <span className="flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_rgba(0,240,255,0.8)]" />
+              <span className="w-1.5 h-1.5 rounded-full aura-bg-primary" />
               <span>Pendiente</span>
             </span>
             <span className="flex items-center gap-1">
@@ -279,12 +283,12 @@ export const MonthlyCalendarModal: React.FC<MonthlyCalendarModalProps> = ({
         {/* ====================================================================
             FOOTER: SALIDA GARANTIZADA AL ALCANCE DEL PULGAR (THUMB ZONE)
             ==================================================================== */}
-        <div className="p-3 sm:p-4 pt-2 border-t border-white/10 bg-[#010810]/80 shrink-0 relative z-10 flex items-center gap-2">
+        <div className="p-3 sm:p-4 border-t border-white/10 bg-[#040814]/[0.96] shrink-0 relative z-10 flex items-center gap-2">
           {currentDate !== todayStr && (
             <button
               type="button"
               onClick={handleGoToday}
-              className="chicle-btn flex-1 py-2.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/50 text-cyan-300 font-anton text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95 shadow-[0_0_12px_rgba(0,240,255,0.25)]"
+              className="chicle-btn aura-btn-gradient optic-active-card flex-1 py-2.5 rounded-xl font-anton text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span>Ir a Hoy</span>
@@ -294,7 +298,7 @@ export const MonthlyCalendarModal: React.FC<MonthlyCalendarModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="chicle-btn flex-1 py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/10 border border-white/15 text-slate-200 hover:text-white font-anton text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95"
+            className="chicle-btn flex-1 py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.12] border border-white/15 text-slate-200 hover:text-white font-anton text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer"
           >
             <X className="w-3.5 h-3.5" />
             <span>Volver a Misiones</span>

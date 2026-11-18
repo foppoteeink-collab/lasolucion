@@ -54,13 +54,30 @@
 
 /* --- Suspensión visual de efectos pesados en Modo Zen (Ahorro Batería y Máxima Concentración) --- */
 .zen-mode .ambient-glow,
+.zen-mode [data-ambient-glow="true"],
 .zen-mode .animate-pulse,
 .zen-mode .animate-bounce,
+.zen-mode .animate-ping,
+.zen-mode .animate-spin,
 .zen-mode .animate-float,
 .zen-mode .animate-spin-slow,
+.zen-mode .main-logo-aurora-fill,
+.zen-mode .main-logo-aurora-text,
+.zen-mode .ry-rayas-pattern,
+.zen-mode .ec-corona,
+.zen-mode .ec-estrellas i,
+.zen-mode .nv-cometa,
 .zen-mode [data-zen-hide="true"] {
   animation: none !important;
   box-shadow: none !important;
+}
+
+.zen-mode [data-ambient-glow="true"],
+.zen-mode [data-zen-hide="true"],
+.zen-mode .blur-3xl,
+.zen-mode .blur-2xl {
+  opacity: 0 !important;
+  pointer-events: none !important;
 }
 
 .zen-mode * {

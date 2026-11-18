@@ -21,7 +21,7 @@ export interface CategoryColorDef {
  * - Limpieza: Esmeralda (#10b981)
  * - Clientes / Personal: Azul Accesible (#60a5fa)
  * - Creativo: Fucsia / Orquídea (#d946ef)
- * - Comida / Nutrición: Ámbar (#f59e0b)
+ * - Comida / Nutrición: Turquesa Fresco (#14b8a6)
  * - Hábito / Disciplina: Ámbar / Oro (#f59e0b)
  * - Pomodoro: Rosa Furia (#f43f5e)
  */
@@ -99,12 +99,12 @@ export const CATEGORY_COLORS: Record<string, CategoryColorDef> = {
   comida: {
     id: 'comida',
     name: 'Alimentación & Salud',
-    color: '#f59e0b',
-    textColor: '#fbbf24',
-    bgBadge: 'bg-amber-500/10 border-amber-500/30 text-amber-300',
-    textIcon: 'text-amber-400',
-    slashColor: '#f59e0b',
-    checkboxBorder: 'bg-amber-500 border-amber-400 text-black'
+    color: '#14b8a6',
+    textColor: '#2dd4bf',
+    bgBadge: 'bg-teal-500/10 border-teal-500/30 text-teal-300',
+    textIcon: 'text-teal-400',
+    slashColor: '#14b8a6',
+    checkboxBorder: 'bg-teal-500 border-teal-400 text-black'
   },
   habito: {
     id: 'habito',

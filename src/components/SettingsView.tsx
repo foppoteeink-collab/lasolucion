@@ -49,6 +49,8 @@ import { MoxenEclipseToggle } from './moxen/MoxenEclipseToggle';
 import { QuantumCubeLoader } from './QuantumCubeLoader';
 import { useNarrativeCopy } from '../hooks/useNarrativeCopy';
 import { AUTH_SECURITY_MICROCOPY, NARRATIVE_MODE_OPTIONS } from '../data/narrativeCopy';
+import { TabHeader } from './common/TabHeader';
+import { useSystemPalette } from '../utils/systemPalette';
 
 interface SettingsViewProps {
   settings: GameSettings;
@@ -128,6 +130,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     setModalState
   } = useUIStore();
   const copy = useNarrativeCopy();
+  const palette = useSystemPalette();
   
   const [activeSubTab, setActiveSubTab] = useState<SettingsSubTab>('preferences');
   const [currentCurrency, setCurrentCurrency] = useState<string>(getSavedCurrencySymbol);
@@ -487,8 +490,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   };
 
   const tabsConfig = [
-    { id: 'preferences' as SettingsSubTab, label: 'Sistema & Audio', icon: Volume2, color: 'text-cyan-400' },
-    { id: 'atmosphere' as SettingsSubTab, label: 'Apariencia & Visión', icon: Palette, color: 'text-cyan-400' },
+    { id: 'preferences' as SettingsSubTab, label: 'Sistema & Audio', icon: Volume2, color: 'aura-text-primary' },
+    { id: 'atmosphere' as SettingsSubTab, label: 'Apariencia & Visión', icon: Palette, color: 'aura-text-primary' },
     { id: 'gameplay' as SettingsSubTab, label: copy.settingsTabGameplay, icon: Sparkles, color: 'text-purple-400' },
     { id: 'finances' as SettingsSubTab, label: copy.settingsTabFinances, icon: Coins, color: 'text-amber-400' },
     { id: 'data' as SettingsSubTab, label: 'Nube & Datos', icon: Database, color: 'text-emerald-400' }
@@ -496,37 +499,29 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
   return (
     <div ref={chicleContainerRef} className="space-y-6 pb-36 sm:pb-32">
-      {/* HEADER & SUB-TABS NAVIGATION */}
-      <div className="w-full rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.94] border border-white/10 p-3 sm:p-5 shadow-[0_12px_40px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.12)] relative overflow-hidden space-y-3">
-        {/* Micrograno táctil Moxen Vidrio */}
-        <span className="vi-grano opacity-5" aria-hidden="true" />
-        
-        {/* Filo de luz superior especular */}
-        <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-cyan-400/40 to-transparent pointer-events-none" />
-
-        <div className="flex items-center justify-between px-1 relative z-10">
-          <h2 className="text-white font-anton text-base sm:text-lg flex items-center gap-2 uppercase tracking-wider">
-            <Settings className="w-5 h-5 text-cyan-400" />
-            <span>{copy.settingsHeaderTitle}</span>
-          </h2>
-          {activeSubTab === 'simulator' && (
+      {/* HEADER & SUB-TABS NAVIGATION (CANONICAL TABHEADER) */}
+      <TabHeader
+        title={copy.settingsHeaderTitle}
+        icon={<Settings className="w-5 h-5" />}
+        rightSlot={
+          activeSubTab === 'simulator' ? (
             <button
               type="button"
               onClick={() => {
                 soundFX.playClick();
                 setActiveSubTab('gameplay');
               }}
-              className="chicle-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase bg-fuchsia-950/80 hover:bg-fuchsia-900 border border-fuchsia-500/50 text-fuchsia-300 transition-all cursor-pointer active:scale-95"
+              className="chicle-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase aura-bg-soft border aura-border-subtle hover:brightness-110 transition-all cursor-pointer"
             >
               <ChevronLeft className="w-3.5 h-3.5" />
               <span>Volver a Configuración</span>
             </button>
-          )}
-        </div>
-
+          ) : undefined
+        }
+      >
         {/* SUB-TABS NAV BAR: Moxen Chip Menu Group (mf-8-menu-chip-group) */}
         <div
-          className="mf-8-menu-chip-group mf-chip-group relative z-10 justify-start sm:justify-center"
+          className="mf-8-menu-chip-group mf-chip-group justify-start sm:justify-center"
           role="listbox"
           aria-label="Secciones de configuración"
         >
@@ -543,17 +538,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   soundFX.playClick();
                   setActiveSubTab(tab.id);
                 }}
-                className={`mf-8-menu-chip-group__chip mf-chip ${
-                  isActive ? 'mf-8-menu-chip-group__chip--active mf-chip--active' : ''
+                className={`chicle-btn mf-8-menu-chip-group__chip mf-chip ${
+                  isActive ? 'mf-8-menu-chip-group__chip--active mf-chip--active aura-bg-soft aura-border-primary aura-text-primary optic-active-card' : ''
                 }`}
               >
-                <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-black' : tab.color}`} />
+                <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'aura-text-primary' : tab.color}`} />
                 <span>{tab.label}</span>
               </button>
             );
           })}
         </div>
-      </div>
+      </TabHeader>
 
       {/* NOTIFICACIÓN REACTIVA GLOBAL */}
       {currencyChangedToast && (
@@ -572,19 +567,20 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         {activeSubTab === 'preferences' && (
           <div className="space-y-6 animate-fade-in">
             {/* AUDIO & FEEDBACK TÁCTICO */}
-            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.93] p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-5">
+            <div className="w-full relative isolate rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.94] p-5 sm:p-6 border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.45)] overflow-hidden space-y-5">
               {/* Micrograno táctil Moxen Vidrio */}
               <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
 
-              <h3 className="text-xs font-anton text-cyan-400 uppercase tracking-wider flex items-center gap-2 relative z-10">
+              <h3 className="text-xs font-anton aura-text-primary uppercase tracking-wider flex items-center gap-2 relative z-10">
                 <Volume2 className="w-4 h-4" /> Audio & Efectos del Sistema
               </h3>
 
               {/* SONIDO */}
-              <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center justify-between gap-4 relative z-10">
                 <div>
                   <h4 className="text-sm font-black text-white flex items-center gap-2 mb-1">
-                    {soundEnabled ? <Volume2 className="w-4 h-4 text-cyan-400" /> : <VolumeX className="w-4 h-4 text-slate-500" />}
+                    {soundEnabled ? <Volume2 className="w-4 h-4 aura-text-primary" /> : <VolumeX className="w-4 h-4 text-slate-500" />}
                     Efectos Sonoros Sintéticos
                   </h4>
                   <p className="text-xs text-slate-400">
@@ -596,12 +592,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     type="button"
                     onClick={handleTestAudio}
                     disabled={!soundEnabled}
-                    className={`chicle-btn px-3.5 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all border active:scale-95 ${
+                    className={`chicle-btn px-3.5 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all border ${
                       !soundEnabled
                         ? 'opacity-40 cursor-not-allowed border-white/10 text-slate-500'
                         : audioTesting
-                        ? 'bg-cyan-500 text-black border-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.5)]'
-                        : 'bg-white/[0.05] border-white/15 text-cyan-300 hover:bg-white/10 hover:text-white cursor-pointer'
+                        ? 'aura-btn-gradient optic-active-card'
+                        : 'bg-white/[0.04] border-white/15 aura-text-soft hover:bg-white/10 hover:text-white cursor-pointer'
                     }`}
                     title="Probar sonido"
                   >
@@ -618,7 +614,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
 
               {/* ═══ CENTRO DE NOTIFICACIONES KAI ═══ */}
-              <div className="pt-4 border-t border-white/10 space-y-4">
+              <div className="pt-4 border-t border-white/10 space-y-4 relative z-10">
                 {/* Cabecera con estado y botón de permiso */}
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                   <div>
@@ -635,7 +631,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       notificationPermission === 'granted'
                         ? 'text-emerald-400 border-emerald-500/40 bg-emerald-950/50'
                         : notificationPermission === 'denied'
-                        ? 'text-red-400 border-red-500/40 bg-red-950/50'
+                        ? 'text-rose-400 border-rose-500/40 bg-rose-950/50'
                         : 'text-amber-400 border-amber-500/40 bg-amber-950/50'
                     }`}>
                       {notificationPermission === 'granted' ? '● Activas' : notificationPermission === 'denied' ? '✕ Bloqueadas' : '○ Pendiente'}
@@ -646,10 +642,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         type="button"
                         onClick={handleRequestNotifications}
                         disabled={!notificationService.isSupported()}
-                        className={`chicle-btn px-3 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all border active:scale-95 ${
+                        className={`chicle-btn px-3 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all border ${
                           !notificationService.isSupported()
                             ? 'opacity-40 cursor-not-allowed border-white/10 text-slate-500'
-                            : 'bg-emerald-950 border-emerald-500/60 text-emerald-300 hover:bg-emerald-900/60 hover:text-white cursor-pointer shadow-[0_0_12px_rgba(52,211,153,0.2)]'
+                            : 'bg-emerald-500/15 border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/25 hover:text-white cursor-pointer'
                         }`}
                       >
                         <Bell className="w-3 h-3 inline mr-1" /> Activar Permisos
@@ -660,7 +656,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       <button
                         type="button"
                         onClick={handleTestNotification}
-                        className="chicle-btn px-3 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all border bg-white/[0.05] border-white/15 text-cyan-300 hover:bg-white/10 cursor-pointer active:scale-95"
+                        className="chicle-btn px-3 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all border bg-white/[0.04] border-white/15 aura-text-soft hover:bg-white/10 cursor-pointer"
                       >
                         <BellRing className="w-3 h-3 inline mr-1" /> Probar
                       </button>
@@ -685,13 +681,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
                 {/* Toggles individuales — solo si hay permisos */}
                 {notificationPermission === 'granted' && (
-                  <div className="space-y-2 bg-black/40 rounded-2xl p-3 border border-white/10">
+                  <div className="space-y-2 bg-[#040814]/80 rounded-2xl p-3 border border-white/10">
                     <p className="text-[10px] font-anton text-slate-400 uppercase tracking-widest mb-3">Tipos de Recordatorio</p>
 
                     {/* Hábitos por timeBlock */}
                     <div className="flex items-center justify-between gap-3 py-2 border-b border-white/[0.08]">
                       <div className="flex items-center gap-2">
-                        <Timer className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                        <Timer className="w-3.5 h-3.5 aura-text-primary shrink-0" />
                         <div>
                           <p className="text-xs font-bold text-white">Recordatorios por hora</p>
                           <p className="text-[10px] text-slate-400">Avisa 2 min antes de cada tarea con horario</p>
@@ -738,7 +734,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                           <select
                             value={notifSettings.nightlyHour}
                             onChange={e => handleToggleNotifSetting('nightlyHour', parseInt(e.target.value))}
-                            className="bg-[#010810] border border-white/15 text-indigo-300 text-[10px] font-mono rounded-xl px-2 py-1 cursor-pointer focus:outline-none focus:border-indigo-400"
+                            className="bg-[#040814]/80 border border-white/15 text-indigo-300 text-[10px] font-mono tabular-nums rounded-xl px-2 py-1 cursor-pointer focus:outline-none focus:border-indigo-400"
                           >
                             {[19, 20, 21, 22, 23].map(h => (
                               <option key={h} value={h}>{String(h).padStart(2, '0')}:00</option>
@@ -758,7 +754,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     {/* Alerta de Boss */}
                     <div className="flex items-center justify-between gap-3 py-2 border-b border-white/[0.08]">
                       <div className="flex items-center gap-2">
-                        <Zap className="w-3.5 h-3.5 text-red-400 shrink-0" />
+                        <Zap className="w-3.5 h-3.5 text-rose-400 shrink-0" />
                         <div>
                           <p className="text-xs font-bold text-white">Alerta de Boss</p>
                           <p className="text-[10px] text-slate-400">Avisa a las 20:00 si el Boss del día sigue vivo</p>
@@ -776,7 +772,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     {/* Racha en peligro */}
                     <div className="flex items-center justify-between gap-3 py-2 border-b border-white/[0.08]">
                       <div className="flex items-center gap-2">
-                        <Flame className="w-3.5 h-3.5 text-orange-400 shrink-0" />
+                        <Flame className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                         <div>
                           <p className="text-xs font-bold text-white">Racha en peligro</p>
                           <p className="text-[10px] text-slate-400">Alerta si llevas horas sin completar ninguna misión</p>
@@ -813,13 +809,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
 
               {/* RITMO DE JORNADA Y CORTE DIARIO PERSONALIZADO */}
-              <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
                 <div>
                   <h4 className="text-sm font-anton tracking-wider uppercase text-white flex items-center gap-2 mb-1">
-                    <Clock className="w-4 h-4 text-cyan-400" /> Ritmo de Jornada y Ciclo Diario
+                    <Clock className="w-4 h-4 aura-text-primary" /> Ritmo de Jornada y Ciclo Diario
                   </h4>
                   <p className="text-xs text-slate-400 max-w-md">
-                    Hora de inicio de tus 24h de actividades ({formatHourToHuman(stats.dayStartHour !== undefined ? stats.dayStartHour : getGlobalDayStartHour())}). Mantiene tus tareas unidas sin dividirse en turnos nocturnos, vespertinos o diurnos.
+                    Hora de inicio de tus 24h de actividades (<span className="font-mono tabular-nums">{formatHourToHuman(stats.dayStartHour !== undefined ? stats.dayStartHour : getGlobalDayStartHour())}</span>). Mantiene tus tareas unidas sin dividirse en turnos nocturnos, vespertinos o diurnos.
                   </p>
                 </div>
                 <button
@@ -828,24 +824,24 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     soundFX.playClick();
                     setModalState('isDayRhythmOpen', true);
                   }}
-                  className="px-3.5 py-2 rounded-xl bg-cyan-950/60 hover:bg-cyan-900/60 border border-cyan-500/40 text-cyan-300 hover:text-white text-xs font-bold transition-all cursor-pointer flex items-center gap-2 shrink-0 self-start sm:self-auto shadow-[0_0_12px_rgba(0,240,255,0.15)] active:scale-95"
+                  className="chicle-btn px-3.5 py-2 rounded-xl aura-bg-soft hover:brightness-110 border aura-border-subtle text-xs font-anton uppercase tracking-wider transition-all cursor-pointer flex items-center gap-2 shrink-0 self-start sm:self-auto"
                 >
-                  <Settings className="w-3.5 h-3.5 text-cyan-400" />
+                  <Settings className="w-3.5 h-3.5 aura-text-primary" />
                   <span>Calibrar Horario</span>
                 </button>
               </div>
 
               {/* FORMATO DE HORA EN AGENDA (12H AM/PM VS 24H MILITAR) */}
-              <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
                 <div>
                   <h4 className="text-sm font-anton tracking-wider uppercase text-white flex items-center gap-2 mb-1">
-                    <Timer className="w-4 h-4 text-cyan-400" /> Formato de Hora en Agenda
+                    <Timer className="w-4 h-4 aura-text-primary" /> Formato de Hora en Agenda
                   </h4>
                   <p className="text-xs text-slate-400">
                     Elige cómo visualizar la columna de horarios de tus tareas (12h con AM/PM o 24h).
                   </p>
                 </div>
-                <div className="flex items-center gap-1.5 bg-black/40 p-1 rounded-2xl border border-white/10 self-start sm:self-auto">
+                <div className="flex items-center gap-1.5 bg-[#040814]/80 p-1 rounded-2xl border border-white/10 self-start sm:self-auto">
                   <button
                     type="button"
                     onClick={() => {
@@ -854,7 +850,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     }}
                     className={`chicle-btn flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all cursor-pointer ${
                       timeFormat === '12h'
-                        ? 'bg-cyan-400 text-black font-bold shadow-[0_0_14px_rgba(0,240,255,0.6)]'
+                        ? 'aura-btn-gradient optic-active-card font-bold'
                         : 'text-slate-400 hover:text-white'
                     }`}
                   >
@@ -868,7 +864,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     }}
                     className={`chicle-btn flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all cursor-pointer ${
                       timeFormat === '24h'
-                        ? 'bg-cyan-400 text-black font-bold shadow-[0_0_14px_rgba(0,240,255,0.6)]'
+                        ? 'aura-btn-gradient optic-active-card font-bold'
                         : 'text-slate-400 hover:text-white'
                     }`}
                   >
@@ -886,21 +882,22 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
 
             {/* HERO CARD COMPACTA: SISTEMA ÓPTICO TÁCTICO & CONTROL ECLIPSE MOXEN */}
-            <div className="w-full rounded-2xl bg-[#040a1a]/[0.93] p-4 sm:p-5 border border-white/10 shadow-[0_8px_25px_rgba(0,0,0,0.35)] relative overflow-hidden space-y-3">
+            <div className="w-full relative isolate rounded-2xl bg-[#040a1a]/[0.94] p-4 sm:p-5 border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.45)] overflow-hidden space-y-3">
               <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
               
               {/* CABECERA INTEGRADA: Título + Interruptor Eclipse alineados horizontalmente */}
               <div className="flex items-center justify-between gap-3 relative z-10">
                 <div className="min-w-0">
-                  <div className="flex items-center gap-1.5 text-cyan-400 text-[10px] font-mono font-bold uppercase tracking-widest mb-0.5">
-                    <Eye className="w-3.5 h-3.5 text-cyan-400 shrink-0" /> Sistema Óptico
+                  <div className="flex items-center gap-1.5 aura-text-primary text-[10px] font-mono font-bold uppercase tracking-widest mb-0.5">
+                    <Eye className="w-3.5 h-3.5 aura-text-primary shrink-0" /> Sistema Óptico
                   </div>
                   <h3 className="text-sm sm:text-base font-anton uppercase tracking-wide text-white truncate">
                     MODO DE VISIÓN
                   </h3>
                   <p className="text-[11px] text-slate-400 truncate">
                     Fase activa:{' '}
-                    <span className="text-cyan-300 font-bold uppercase">
+                    <span className="aura-text-soft font-bold uppercase">
                       {opticMode === 'aurora' && '🌌 Aurora Neón'}
                       {opticMode === 'noir' && '🌑 Noir Oscuro'}
                       {opticMode === 'eink' && '☀️ Noir Claro'}
@@ -910,7 +907,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 </div>
 
                 {/* INTERRUPTOR KINÉTICO DEL ECLIPSE COMPACTO */}
-                <div className="flex items-center gap-2 bg-black/50 p-1.5 sm:p-2 rounded-xl border border-white/10 shrink-0">
+                <div className="flex items-center gap-2 bg-[#040814]/80 p-1.5 sm:p-2 rounded-xl border border-white/10 shrink-0">
                   <MoxenEclipseToggle
                     opticMode={opticMode}
                     onSelectMode={(mode) => {
@@ -922,7 +919,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
 
               {/* SELECTOR DE 4 MODOS EN BARRA DE PÍLDORAS COMPACTA Y SIMÉTRICA */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 p-1 bg-black/40 rounded-xl border border-white/10 relative z-10">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 p-1 bg-[#040814]/80 rounded-xl border border-white/10 relative z-10">
                 {/* MODO 1: AURORA NEÓN */}
                 <button
                   type="button"
@@ -932,11 +929,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   }}
                   className={`chicle-btn h-10 px-3 rounded-lg border flex items-center justify-center gap-2 transition-all cursor-pointer ${
                     opticMode === 'aurora'
-                      ? 'bg-cyan-500/25 border-cyan-400 text-white shadow-[0_0_12px_rgba(0,240,255,0.35)] ring-1 ring-cyan-400 font-bold optic-active-card'
+                      ? 'aura-bg-soft aura-border-primary text-white aura-glow-subtle ring-1 font-bold optic-active-card'
                       : 'bg-transparent border-transparent text-slate-400 hover:text-white hover:bg-white/[0.05]'
                   }`}
                 >
-                  <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                  <Sparkles className={`w-3.5 h-3.5 shrink-0 ${opticMode === 'aurora' ? 'aura-text-primary' : ''}`} />
                   <span className="text-xs font-anton tracking-wider uppercase">Aurora</span>
                 </button>
 
@@ -994,10 +991,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* PERSONALIZADOR DE FONDO & COLOR */}
-            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.93] p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
+            <div className="w-full relative isolate rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.94] p-5 sm:p-6 border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.45)] overflow-hidden space-y-4">
               <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
               <div className="relative z-10">
-                <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-widest mb-1 transition-colors" style={{ color: 'var(--aura-color-1, #00f0ff)' }}>
+                <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-widest mb-1 transition-colors aura-text-primary">
                   <Palette className="w-4 h-4" /> Personalizador Visual
                 </div>
                 <h3 className="text-base sm:text-lg font-anton uppercase tracking-wide text-white">
@@ -1009,9 +1007,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
 
               {opticMode !== 'aurora' ? (
-                <div className="relative z-10 p-4 rounded-xl bg-black/40 border border-white/10 flex items-center justify-between gap-3">
+                <div className="relative z-10 p-4 rounded-xl bg-[#040814]/80 border border-white/10 flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                    <div className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/10 flex items-center justify-center shrink-0">
                       <Lock className="w-4 h-4 text-slate-400" />
                     </div>
                     <div>
@@ -1029,7 +1027,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       soundFX.playClick();
                       setOpticMode('aurora');
                     }}
-                    className="chicle-btn px-3 py-1.5 rounded-lg border border-cyan-400/40 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 text-xs font-anton uppercase tracking-wider shrink-0 cursor-pointer"
+                    className="chicle-btn px-3 py-1.5 rounded-xl border aura-bg-soft aura-border-subtle hover:brightness-110 text-xs font-anton uppercase tracking-wider shrink-0 cursor-pointer"
                   >
                     Activar Aurora
                   </button>
@@ -1050,14 +1048,15 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* ILUMINACIÓN, HUD, TIPOGRAFÍA & RENDIMIENTO VISUAL */}
-            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.93] p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-5">
+            <div className="w-full relative isolate rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.94] p-5 sm:p-6 border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.45)] overflow-hidden space-y-5">
               <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
               
               <div className="flex items-center justify-between border-b border-white/10 pb-3 relative z-10">
-                <h3 className="text-xs font-anton text-cyan-400 uppercase tracking-wider flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-cyan-400" /> Iluminación, HUD & Tipografía
+                <h3 className="text-xs font-anton aura-text-primary uppercase tracking-wider flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 aura-text-primary" /> Iluminación, HUD & Tipografía
                 </h3>
-                <span className="text-[10px] font-mono text-cyan-300 bg-cyan-950/80 px-2 py-0.5 rounded-full border border-cyan-700/60 font-bold uppercase">
+                <span className="text-[10px] font-mono aura-bg-soft px-2 py-0.5 rounded-full border aura-border-subtle font-bold uppercase">
                   Ajustes Visuales
                 </span>
               </div>
@@ -1072,7 +1071,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     Regula la emisión luminosa de halos y sombras para confort visual en sesiones nocturnas.
                   </p>
                 </div>
-                <div className="flex items-center gap-1.5 bg-black/40 p-1 rounded-2xl border border-white/10 self-start sm:self-auto">
+                <div className="flex items-center gap-1.5 bg-[#040814]/80 p-1 rounded-2xl border border-white/10 self-start sm:self-auto">
                   <button
                     type="button"
                     onClick={() => {
@@ -1081,7 +1080,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     }}
                     className={`chicle-btn px-3 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all cursor-pointer ${
                       glowIntensity === 'off'
-                        ? 'bg-white text-black font-bold shadow-[0_0_10px_rgba(255,255,255,0.5)]'
+                        ? 'bg-white text-black font-bold shadow-[0_0_10px_rgba(255,255,255,0.4)] optic-active-card'
                         : 'text-slate-400 hover:text-white'
                     }`}
                   >
@@ -1095,7 +1094,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     }}
                     className={`chicle-btn px-3 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all cursor-pointer ${
                       glowIntensity === 'tactical'
-                        ? 'bg-cyan-400 text-black font-bold shadow-[0_0_12px_rgba(0,240,255,0.5)]'
+                        ? 'aura-btn-gradient optic-active-card font-bold'
                         : 'text-slate-400 hover:text-white'
                     }`}
                   >
@@ -1109,7 +1108,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     }}
                     className={`chicle-btn px-3 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all cursor-pointer ${
                       glowIntensity === 'neon'
-                        ? 'bg-cyan-300 text-black font-bold shadow-[0_0_18px_rgba(0,240,255,0.9)]'
+                        ? 'aura-btn-gradient optic-active-card font-bold'
                         : 'text-slate-400 hover:text-white'
                     }`}
                   >
@@ -1122,13 +1121,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
                 <div>
                   <h4 className="text-sm font-anton tracking-wider uppercase text-white flex items-center gap-2 mb-1">
-                    <Compass className="w-4 h-4 text-cyan-400" /> Modo de Navegación HUD
+                    <Compass className="w-4 h-4 aura-text-primary" /> Modo de Navegación HUD
                   </h4>
                   <p className="text-xs text-slate-400">
                     Elige entre el orbe flotante de KAI con menú orbital o la Barra Lateral expandible con KAI integrado en su cabecera.
                   </p>
                 </div>
-                <div className="flex items-center gap-1.5 bg-black/40 p-1 rounded-2xl border border-white/10 self-start sm:self-auto">
+                <div className="flex items-center gap-1.5 bg-[#040814]/80 p-1 rounded-2xl border border-white/10 self-start sm:self-auto">
                   <button
                     type="button"
                     onClick={() => {
@@ -1137,7 +1136,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     }}
                     className={`chicle-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all cursor-pointer ${
                       navigationMode === 'nexus'
-                        ? 'bg-cyan-400 text-black font-bold shadow-[0_0_14px_rgba(0,240,255,0.6)]'
+                        ? 'aura-btn-gradient optic-active-card font-bold'
                         : 'text-slate-400 hover:text-white'
                     }`}
                     title="KAI Nexus: Orbe flotante con menú orbital"
@@ -1153,7 +1152,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     }}
                     className={`chicle-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all cursor-pointer ${
                       navigationMode === 'classic'
-                        ? 'bg-cyan-400 text-black font-bold shadow-[0_0_14px_rgba(0,240,255,0.6)]'
+                        ? 'aura-btn-gradient optic-active-card font-bold'
                         : 'text-slate-400 hover:text-white'
                     }`}
                     title="Barra Lateral: Menú expandible con KAI en la cabecera"
@@ -1168,7 +1167,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
                 <div>
                   <h4 className="text-sm font-anton tracking-wider uppercase text-white flex items-center gap-2 mb-1">
-                    <Hand className="w-4 h-4 text-cyan-400" /> Posición de Navegación & Barra (Izquierda / Derecha)
+                    <Hand className="w-4 h-4 aura-text-primary" /> Posición de Navegación & Barra (Izquierda / Derecha)
                   </h4>
                   <p className="text-xs text-slate-400">
                     {navigationMode === 'classic'
@@ -1176,7 +1175,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       : 'Posiciona el orbe flotante de KAI en el arco izquierdo o derecho según tu mano preferida.'}
                   </p>
                 </div>
-                <div className="flex items-center gap-1.5 bg-black/40 p-1 rounded-2xl border border-white/10 self-start sm:self-auto">
+                <div className="flex items-center gap-1.5 bg-[#040814]/80 p-1 rounded-2xl border border-white/10 self-start sm:self-auto">
                   <button
                     type="button"
                     onClick={() => {
@@ -1185,7 +1184,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     }}
                     className={`chicle-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all cursor-pointer ${
                       handDominance === 'left'
-                        ? 'bg-cyan-400 text-black font-bold shadow-[0_0_14px_rgba(0,240,255,0.6)]'
+                        ? 'aura-btn-gradient optic-active-card font-bold'
                         : 'text-slate-400 hover:text-white'
                     }`}
                     title="Mover barra lateral y controles a la izquierda (Zurda)"
@@ -1201,7 +1200,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     }}
                     className={`chicle-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all cursor-pointer ${
                       handDominance === 'right'
-                        ? 'bg-cyan-400 text-black font-bold shadow-[0_0_14px_rgba(0,240,255,0.6)]'
+                        ? 'aura-btn-gradient optic-active-card font-bold'
                         : 'text-slate-400 hover:text-white'
                     }`}
                     title="Mover barra lateral y controles a la derecha (Diestra)"
@@ -1222,7 +1221,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     Alterna entre vocabulario épico de misión o textos claros orientados a productividad pura.
                   </p>
                 </div>
-                <div className="flex items-center gap-1.5 bg-black/40 p-1 rounded-2xl border border-white/10 self-start sm:self-auto">
+                <div className="flex items-center gap-1.5 bg-[#040814]/80 p-1 rounded-2xl border border-white/10 self-start sm:self-auto">
                   {(['tactical', 'minimal'] as const).map((modeKey) => {
                     const option = NARRATIVE_MODE_OPTIONS[modeKey];
                     const isSelected = narrativeMode === modeKey;
@@ -1236,7 +1235,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         }}
                         className={`chicle-btn px-3 py-1.5 rounded-xl text-[11px] font-anton tracking-wider uppercase transition-all cursor-pointer ${
                           isSelected
-                            ? 'bg-cyan-400 text-black font-bold shadow-[0_0_12px_rgba(0,240,255,0.5)]'
+                            ? 'aura-btn-gradient optic-active-card font-bold'
                             : 'text-slate-400 hover:text-white'
                         }`}
                         title={option.description}
@@ -1252,7 +1251,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <div className="pt-4 border-t border-white/10 flex items-center justify-between gap-4 relative z-10">
                 <div>
                   <h4 className="text-sm font-anton tracking-wider uppercase text-white flex items-center gap-2 mb-1">
-                    <Type className="w-4 h-4 text-cyan-400" /> Densidad de Texto Compacta
+                    <Type className="w-4 h-4 aura-text-primary" /> Densidad de Texto Compacta
                   </h4>
                   <p className="text-xs text-slate-400">
                     Reduce el tamaño de las fuentes y minimiza párrafos para una lectura rápida sin saturar la pantalla.
@@ -1293,12 +1292,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* VISTA PREVIA DEL NÚCLEO CUÁNTICO DE CARGA (SINCRONIZADO EN TIEMPO REAL) */}
-            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.93] p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
+            <div className="w-full relative isolate rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.94] p-5 sm:p-6 border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.45)] overflow-hidden space-y-4">
               <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
               <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <div className="flex items-center gap-2 text-cyan-400 text-xs font-mono font-bold uppercase tracking-widest mb-1">
-                    <Sparkles className="w-4 h-4 text-cyan-400" /> Núcleo Cuántico de Carga
+                  <div className="flex items-center gap-2 aura-text-primary text-xs font-mono font-bold uppercase tracking-widest mb-1">
+                    <Sparkles className="w-4 h-4 aura-text-primary" /> Núcleo Cuántico de Carga
                   </div>
                   <h3 className="text-base sm:text-lg font-anton uppercase tracking-wide text-white">
                     Sincronización de Animación de Carga
@@ -1313,14 +1313,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     soundFX.playClick();
                     triggerTransition(1800);
                   }}
-                  className="chicle-btn px-4 py-2 rounded-xl border border-cyan-400/50 bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 text-xs font-anton uppercase tracking-wider shrink-0 cursor-pointer shadow-[0_0_15px_rgba(0,240,255,0.25)] flex items-center justify-center gap-2"
+                  className="chicle-btn px-4 py-2 rounded-xl border aura-bg-soft aura-border-subtle hover:brightness-110 text-xs font-anton uppercase tracking-wider shrink-0 cursor-pointer flex items-center justify-center gap-2"
                 >
-                  <Zap className="w-3.5 h-3.5 text-cyan-300" />
+                  <Zap className="w-3.5 h-3.5 aura-text-primary" />
                   <span>Probar Transición Pantalla Completa</span>
                 </button>
               </div>
 
-              <div className="relative z-10 py-5 rounded-2xl bg-black/50 border border-white/10 flex flex-col items-center justify-center">
+              <div className="relative z-10 py-5 rounded-2xl bg-[#040814]/80 border border-white/10 flex flex-col items-center justify-center">
                 <QuantumCubeLoader size="md" speed="slow" showLabel={true} label="NÚCLEO SINCRONIZADO CON ESTA APARIENCIA" />
               </div>
             </div>
@@ -1331,19 +1331,20 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         {activeSubTab === 'gameplay' && (
           <div className="space-y-6 animate-fade-in">
             {/* SELECTOR DE DENSIDAD NARRATIVA (ROLE 5 CRO/COPY) */}
-            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.93] p-5 sm:p-6 border border-cyan-500/35 shadow-[0_12px_35px_rgba(0,0,0,0.4),0_0_20px_rgba(0,240,255,0.12)] relative overflow-hidden space-y-4">
+            <div className="w-full relative isolate rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.94] p-5 sm:p-6 border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.45)] overflow-hidden space-y-4">
               <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
 
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 relative z-10">
                 <div>
-                  <div className="flex items-center gap-2 text-cyan-400 text-xs font-mono font-bold uppercase tracking-widest mb-1">
-                    <Type className="w-4 h-4 text-cyan-400" /> Lenguaje y Claridad de Interfaz
+                  <div className="flex items-center gap-2 aura-text-primary text-xs font-mono font-bold uppercase tracking-widest mb-1">
+                    <Type className="w-4 h-4 aura-text-primary" /> Lenguaje y Claridad de Interfaz
                   </div>
                   <h3 className="text-sm sm:text-base font-anton uppercase tracking-wide text-white">
                     Selector de Densidad Narrativa
                   </h3>
                 </div>
-                <span className="text-[10px] font-mono font-bold text-cyan-300 bg-cyan-950/70 border border-cyan-500/40 px-2.5 py-0.5 rounded-full self-start sm:self-auto">
+                <span className="text-[10px] font-mono font-bold aura-bg-soft border aura-border-subtle px-2.5 py-0.5 rounded-full self-start sm:self-auto">
                   Activo: {NARRATIVE_MODE_OPTIONS[narrativeMode].shortLabel}
                 </span>
               </div>
@@ -1370,10 +1371,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         soundFX.playClick();
                         setNarrativeMode(modeKey);
                       }}
-                      className={`p-4 rounded-2xl border text-left transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between gap-3 ${
+                      className={`chicle-btn p-4 rounded-2xl border text-left transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between gap-3 ${
                         isSelected
-                          ? 'bg-cyan-950/60 border-cyan-400/80 shadow-[0_0_20px_rgba(0,240,255,0.25)] ring-1 ring-cyan-400/50'
-                          : 'bg-white/[0.02] border-white/10 hover:border-white/25 hover:bg-white/[0.05]'
+                          ? 'aura-bg-soft aura-border-primary aura-glow-subtle ring-1 optic-active-card'
+                          : 'bg-white/[0.03] border-white/10 hover:border-white/25 hover:bg-white/[0.06]'
                       }`}
                     >
                       <div className="space-y-1.5">
@@ -1384,8 +1385,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                           <span
                             className={`text-[9.5px] font-mono px-2 py-0.5 rounded-full border shrink-0 font-bold ${
                               isSelected
-                                ? 'bg-cyan-400 text-black border-cyan-300'
-                                : 'bg-white/5 text-slate-400 border-white/10'
+                                ? 'aura-bg-primary aura-border-primary'
+                                : 'bg-white/[0.05] text-slate-400 border-white/10'
                             }`}
                           >
                             {isSelected ? 'Activo' : opt.badge}
@@ -1400,7 +1401,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         {opt.examples.map((ex) => (
                           <span
                             key={ex}
-                            className="text-[10px] font-mono px-2 py-0.5 rounded-lg bg-black/50 border border-white/10 text-cyan-300"
+                            className="text-[10px] font-mono px-2 py-0.5 rounded-lg bg-[#040814]/80 border border-white/10 aura-text-soft"
                           >
                             {ex}
                           </span>
@@ -1413,12 +1414,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* GUÍA DE BIENVENIDA & INDUCCIÓN DE KAI */}
-            <div className="w-full rounded-2xl sm:rounded-3xl bg-gradient-to-r from-cyan-950/60 via-[#040a1a]/95 to-blue-950/50 p-5 sm:p-6 border border-cyan-500/30 shadow-[0_12px_35px_rgba(0,0,0,0.4),0_0_20px_rgba(0,240,255,0.1)] relative overflow-hidden space-y-3">
+            <div className="w-full relative isolate rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.94] p-5 sm:p-6 border aura-border-subtle shadow-[0_8px_30px_rgba(0,0,0,0.45)] overflow-hidden space-y-3">
               <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
                 <div className="space-y-1">
-                  <div className="flex items-center gap-2 text-cyan-400 text-xs font-mono font-bold uppercase tracking-widest">
-                    <Sparkles className="w-4 h-4 text-cyan-400" /> Inducción y Bienvenida
+                  <div className="flex items-center gap-2 aura-text-primary text-xs font-mono font-bold uppercase tracking-widest">
+                    <Sparkles className="w-4 h-4 aura-text-primary" /> Inducción y Bienvenida
                   </div>
                   <h3 className="text-sm sm:text-base font-anton uppercase tracking-wide text-white">
                     Guía de Bienvenida KAI
@@ -1437,7 +1439,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       window.dispatchEvent(new CustomEvent('lasolucion:open-onboarding'));
                     }
                   }}
-                  className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-400 to-sky-400 hover:from-cyan-300 hover:to-sky-300 text-black font-anton text-xs uppercase tracking-wider transition-all cursor-pointer shadow-[0_0_15px_rgba(0,240,255,0.4)] flex items-center gap-2 active:scale-95 shrink-0 self-start sm:self-auto font-bold"
+                  className="chicle-btn aura-btn-gradient optic-active-card px-4 py-2.5 rounded-xl font-anton text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center gap-2 shrink-0 self-start sm:self-auto font-bold"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
                   <span>Abrir Guía KAI</span>
@@ -1446,12 +1448,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* PERSONALIDAD & VOZ DE KAI */}
-            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.93] p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
+            <div className="w-full relative isolate rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.94] p-5 sm:p-6 border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.45)] overflow-hidden space-y-4">
               <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
 
               <div className="flex items-center justify-between relative z-10">
-                <h3 className="text-xs font-anton text-cyan-400 uppercase tracking-wider flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-cyan-400" /> Personalidad de KAI (Copiloto)
+                <h3 className="text-xs font-anton aura-text-primary uppercase tracking-wider flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 aura-text-primary" /> Personalidad de KAI (Copiloto)
                 </h3>
                 <span className="text-[11px] font-mono text-slate-400">8-12 palabras por aviso</span>
               </div>
@@ -1472,10 +1475,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         soundFX.playClick();
                         usePlayerStore.getState().setKaiVoiceTone(toneKey);
                       }}
-                      className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between gap-2 ${
+                      className={`chicle-btn p-3.5 rounded-xl border text-left transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between gap-2 ${
                         isSelected
-                          ? 'bg-cyan-950/60 border-cyan-400/80 shadow-[0_0_16px_rgba(0,240,255,0.25)] ring-1 ring-cyan-400/50'
-                          : 'bg-white/[0.02] border-white/10 hover:border-white/20 hover:bg-white/[0.04]'
+                          ? 'aura-bg-soft aura-border-primary aura-glow-subtle ring-1 optic-active-card'
+                          : 'bg-white/[0.03] border-white/10 hover:border-white/20 hover:bg-white/[0.05]'
                       }`}
                     >
                       <div className="flex items-center justify-between">
@@ -1483,13 +1486,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                           {config.label}
                         </span>
                         {isSelected && (
-                          <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_6px_rgba(0,240,255,0.8)]" />
+                          <span
+                            className="w-2 h-2 rounded-full"
+                            style={{ backgroundColor: palette.c1, boxShadow: `0 0 8px ${palette.glow}` }}
+                          />
                         )}
                       </div>
                       <p className="text-[11px] text-slate-400 leading-snug">
                         {config.description}
                       </p>
-                      <div className="pt-2 border-t border-white/[0.08] text-[10.5px] italic text-cyan-300/90 font-mono">
+                      <div className="pt-2 border-t border-white/[0.08] text-[10.5px] italic aura-text-soft font-mono">
                         "{config.preview}"
                       </div>
                     </button>
@@ -1499,8 +1505,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* MECÁNICAS RPG */}
-            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.93] p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
+            <div className="w-full relative isolate rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.94] p-5 sm:p-6 border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.45)] overflow-hidden space-y-4">
               <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
 
               <h3 className="text-xs font-anton text-purple-400 uppercase tracking-wider flex items-center gap-2 relative z-10">
                 <Sparkles className="w-4 h-4" /> Mecánicas RPG & Gamificación
@@ -1510,7 +1517,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <div className="flex items-center justify-between gap-4 py-2 border-b border-white/[0.08] relative z-10">
                 <div>
                   <h4 className="text-sm font-anton tracking-wider uppercase text-white flex items-center gap-2 mb-0.5">
-                    <Sparkles className="w-4 h-4 text-cyan-400"/> Tareas Sugeridas
+                    <Sparkles className="w-4 h-4 aura-text-primary"/> Tareas Sugeridas
                   </h4>
                   <p className="text-xs text-slate-400">
                     Sugerencias automáticas para ganar puntos extra en hábitos rezagados.
@@ -1548,7 +1555,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <div className="flex items-center justify-between gap-4 py-2 relative z-10">
                 <div>
                   <h4 className="text-sm font-anton tracking-wider uppercase text-white flex items-center gap-2 mb-0.5">
-                    <ShieldAlert className="w-4 h-4 text-red-400"/> Modo Exigente
+                    <ShieldAlert className="w-4 h-4 text-rose-400"/> Modo Exigente
                   </h4>
                   <p className="text-xs text-slate-400">
                     Aplica mayor descuento de puntos si dejas hábitos pendientes.
@@ -1565,26 +1572,31 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* COMPAÑERO CUÁNTICO KAI: SELECCIÓN Y FORJA */}
-            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.93] p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
+            <div className="w-full relative isolate rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.94] p-5 sm:p-6 border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.45)] overflow-hidden space-y-4">
               <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
               <div className="flex items-center justify-between gap-3 relative z-10">
                 <div className="flex items-center gap-2">
-                  <Palette className="w-4 h-4 text-cyan-400" />
-                  <h3 className="text-xs font-anton text-cyan-400 uppercase tracking-wider">
+                  <Palette className="w-4 h-4 aura-text-primary" />
+                  <h3 className="text-xs font-anton aura-text-primary uppercase tracking-wider">
                     Compañero Holográfico KAI
                   </h3>
                 </div>
-                <span className="text-[10px] font-mono font-bold text-cyan-300 bg-cyan-950/70 border border-cyan-500/40 px-2 py-0.5 rounded-full">
+                <span className="text-[10px] font-mono font-bold aura-bg-soft border aura-border-subtle px-2 py-0.5 rounded-full">
                   {stats.kaiShape === 'custom' ? copy.settingsAiEquippedTag : '6 Formas Día 0'}
                 </span>
               </div>
 
-              <div className="flex items-center justify-between gap-4 p-3.5 rounded-2xl bg-black/40 border border-white/10 relative z-10">
+              <div className="flex items-center justify-between gap-4 p-3.5 rounded-2xl bg-[#040814]/80 border border-white/10 relative z-10">
                 <div className="flex items-center gap-3">
-                  <div className="w-14 h-14 rounded-xl bg-cyan-950/40 border border-cyan-400/40 p-1 flex items-center justify-center shrink-0">
+                  <div
+                    data-preserve-optic="true"
+                    className="w-14 h-14 rounded-xl bg-black/40 border aura-border-subtle p-1 flex items-center justify-center shrink-0"
+                  >
                     <KaiVectorGraphics
                       shapeId={stats.kaiShape || 'prism'}
-                      activeColor="#00f0ff"
+                      activeColor={palette.c1}
+                      secondaryColor={palette.c2}
                       customForm={stats.kaiCustomForm}
                     />
                   </div>
@@ -1606,7 +1618,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       soundFX.playClick();
                       onOpenKaiWorkshop();
                     }}
-                    className="chicle-btn px-4 py-2.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-black font-anton text-xs uppercase tracking-wider transition-all cursor-pointer shadow-[0_0_12px_rgba(0,240,255,0.4)] flex items-center gap-1.5 shrink-0 active:scale-95"
+                    className="chicle-btn aura-btn-gradient optic-active-card px-4 py-2.5 rounded-xl font-anton text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
                   >
                     <Palette className="w-3.5 h-3.5" />
                     <span>{copy.settingsWorkshopBtn}</span>
@@ -1616,16 +1628,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* PROTOCOLO DE INDUCCIÓN Y GUÍA TÁCTICA DE KAI */}
-            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.93] p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
+            <div className="w-full relative isolate rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.94] p-5 sm:p-6 border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.45)] overflow-hidden space-y-4">
               <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
               <div className="flex items-center justify-between gap-3 relative z-10">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-cyan-400" />
-                  <h3 className="text-xs font-anton text-cyan-400 uppercase tracking-wider">
+                  <Sparkles className="w-4 h-4 aura-text-primary" />
+                  <h3 className="text-xs font-anton aura-text-primary uppercase tracking-wider">
                     Bienvenida y Tutorial Guiado de KAI
                   </h3>
                 </div>
-                <span className="text-[10px] font-mono font-bold text-cyan-300 bg-cyan-950/70 border border-cyan-500/40 px-2 py-0.5 rounded-full">
+                <span className="text-[10px] font-mono font-bold aura-bg-soft border aura-border-subtle px-2 py-0.5 rounded-full">
                   5 Pasos
                 </span>
               </div>
@@ -1641,7 +1654,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     soundFX.playClick();
                     useUIStore.getState().openTacticalGuide(1);
                   }}
-                  className="chicle-btn px-4 py-2 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-black font-anton text-xs uppercase tracking-wider transition-all cursor-pointer shadow-[0_0_12px_rgba(0,240,255,0.4)] flex items-center gap-1.5 active:scale-95"
+                  className="chicle-btn aura-btn-gradient optic-active-card px-4 py-2 rounded-xl font-anton text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
                   <span>Repasar Tutorial de KAI</span>
@@ -1658,9 +1671,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       '🔄'
                     );
                   }}
-                  className="chicle-btn px-3.5 py-2 rounded-xl bg-white/[0.05] hover:bg-white/10 border border-white/15 text-slate-300 hover:text-white font-anton uppercase text-xs tracking-wider transition-all cursor-pointer flex items-center gap-1.5 active:scale-95"
+                  className="chicle-btn px-3.5 py-2 rounded-xl bg-white/[0.04] hover:bg-white/10 border border-white/15 text-slate-300 hover:text-white font-anton uppercase text-xs tracking-wider transition-all cursor-pointer flex items-center gap-1.5"
                 >
-                  <RefreshCw className="w-3.5 h-3.5 text-cyan-400" />
+                  <RefreshCw className="w-3.5 h-3.5 aura-text-primary" />
                   <span>Restablecer Avisos</span>
                 </button>
               </div>
@@ -1669,13 +1682,15 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             {/* LABORATORIO & HERRAMIENTAS TÁCTICAS */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Simulador */}
-              <div className="w-full rounded-2xl bg-[#020712]/90 border border-white/10 p-5 space-y-3 shadow-lg flex flex-col justify-between">
-                <div className="space-y-2">
+              <div className="w-full relative isolate rounded-2xl bg-[#040a1a]/[0.94] border border-white/10 p-5 space-y-3 shadow-[0_8px_30px_rgba(0,0,0,0.45)] overflow-hidden flex flex-col justify-between">
+                <span className="vi-grano opacity-5" aria-hidden="true" />
+                <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
+                <div className="space-y-2 relative z-10">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-anton text-fuchsia-400 uppercase tracking-wider flex items-center gap-1.5">
                       <FlaskConical className="w-4 h-4 text-fuchsia-400" /> Simulador Táctico
                     </span>
-                    <span className="text-[10px] font-mono text-fuchsia-300 bg-fuchsia-950/70 border border-fuchsia-500/40 px-2 py-0.5 rounded-full uppercase">
+                    <span className="text-[10px] font-mono text-fuchsia-300 bg-fuchsia-500/15 border border-fuchsia-400/40 px-2 py-0.5 rounded-full uppercase">
                       Modo Prueba
                     </span>
                   </div>
@@ -1689,7 +1704,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     soundFX.playClick();
                     setActiveSubTab('simulator');
                   }}
-                  className="chicle-btn w-full py-2.5 px-4 bg-fuchsia-950/80 hover:bg-fuchsia-900 border border-fuchsia-500/60 text-fuchsia-200 rounded-xl text-xs font-anton uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-95"
+                  className="relative z-10 chicle-btn w-full py-2.5 px-4 bg-fuchsia-500/15 hover:bg-fuchsia-500/25 border border-fuchsia-400/50 text-fuchsia-200 rounded-xl text-xs font-anton uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer"
                 >
                   <FlaskConical className="w-3.5 h-3.5 text-fuchsia-400" />
                   <span>Abrir Simulador</span>
@@ -1697,13 +1712,15 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
 
               {/* Oráculo IA */}
-              <div className="w-full rounded-2xl bg-[#020712]/90 border border-white/10 p-5 space-y-3 shadow-lg flex flex-col justify-between">
-                <div className="space-y-2">
+              <div className="w-full relative isolate rounded-2xl bg-[#040a1a]/[0.94] border border-white/10 p-5 space-y-3 shadow-[0_8px_30px_rgba(0,0,0,0.45)] overflow-hidden flex flex-col justify-between">
+                <span className="vi-grano opacity-5" aria-hidden="true" />
+                <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
+                <div className="space-y-2 relative z-10">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-anton text-cyan-400 uppercase tracking-wider flex items-center gap-1.5">
-                      <Cpu className="w-4 h-4 text-cyan-400 animate-pulse" /> Oráculo IA
+                    <span className="text-xs font-anton aura-text-primary uppercase tracking-wider flex items-center gap-1.5">
+                      <Cpu className="w-4 h-4 aura-text-primary animate-pulse" /> Oráculo IA
                     </span>
-                    <span className="text-[10px] font-mono text-cyan-300 bg-cyan-950/70 border border-cyan-500/40 px-2 py-0.5 rounded-full uppercase">
+                    <span className="text-[10px] font-mono aura-bg-soft border aura-border-subtle px-2 py-0.5 rounded-full uppercase">
                       KAI
                     </span>
                   </div>
@@ -1717,9 +1734,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     soundFX.playClick();
                     setIsOracleOpen(true);
                   }}
-                  className="chicle-btn w-full py-2.5 px-4 bg-cyan-950 hover:bg-cyan-900 border border-cyan-500/60 text-cyan-200 rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer"
+                  className="relative z-10 chicle-btn w-full py-2.5 px-4 aura-bg-soft hover:brightness-110 border aura-border-subtle rounded-xl text-xs font-anton uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer"
                 >
-                  <Cpu className="w-3.5 h-3.5 text-cyan-400" />
+                  <Cpu className="w-3.5 h-3.5 aura-text-primary" />
                   <span>Consultar Oráculo</span>
                 </button>
               </div>
@@ -1727,11 +1744,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </div>
         )}
 
-        {/* ===================== TAB 2: TESORERÍA ===================== */}
+        {/* ===================== TAB 3: TESORERÍA ===================== */}
         {activeSubTab === 'finances' && (
           <div className="space-y-6 animate-fade-in">
-            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.93] p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-6">
+            <div className="w-full relative isolate rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.94] p-5 sm:p-6 border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.45)] overflow-hidden space-y-6">
               <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
 
               {/* HEADER DE TESORERÍA */}
               <div className="flex items-center justify-between border-b border-white/10 pb-4 relative z-10">
@@ -1743,13 +1761,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     Configura la divisa base para registros diarios, balances y análisis temporal.
                   </p>
                 </div>
-                <span className="px-3 py-1 rounded-xl bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 font-mono font-black text-xs">
+                <span className="px-3 py-1 rounded-xl bg-emerald-500/15 border border-emerald-400/50 text-emerald-300 font-mono font-black text-xs">
                   {currentCurrency} Activo
                 </span>
               </div>
 
               {/* TOGGLE MODULAR: TESORERÍA EN MISIONES */}
-              <div className="flex items-center justify-between p-4 rounded-2xl bg-black/40 border border-white/10 relative z-10">
+              <div className="flex items-center justify-between p-4 rounded-2xl bg-[#040814]/80 border border-white/10 relative z-10">
                 <div className="space-y-0.5 pr-4">
                   <div className="text-xs font-anton tracking-wider text-white uppercase flex items-center gap-2">
                     <Wallet className="w-4 h-4 text-emerald-400" />
@@ -1784,16 +1802,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         key={c.code}
                         type="button"
                         onClick={() => handleSelectCurrency(c.symbol, c.name)}
-                        className={`p-3 rounded-2xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+                        className={`chicle-btn p-3 rounded-2xl border text-left flex items-center justify-between transition-all cursor-pointer ${
                           isSelected
-                            ? 'bg-emerald-950/80 border-emerald-400 text-white shadow-[0_0_12px_rgba(52,211,153,0.3)] ring-1 ring-emerald-400'
+                            ? 'bg-emerald-500/15 border-emerald-400 text-white shadow-[0_0_12px_rgba(52,211,153,0.28)] ring-1 ring-emerald-400 optic-active-card'
                             : 'bg-white/[0.04] border-white/10 text-slate-300 hover:border-white/20 hover:text-white hover:bg-white/[0.08]'
                         }`}
                       >
                         <div>
                           <div className="flex items-center gap-1.5">
                             <span className="text-base font-mono font-black text-amber-300">{c.symbol}</span>
-                            <span className="text-xs font-anton tracking-wider uppercase text-cyan-300">{c.code}</span>
+                            <span className="text-xs font-anton tracking-wider uppercase aura-text-soft">{c.code}</span>
                           </div>
                           <div className="text-[11px] text-slate-400 truncate max-w-[120px]">{c.name}</div>
                         </div>
@@ -1809,13 +1827,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
                   <div>
                     <h4 className="text-xs font-anton text-slate-300 uppercase tracking-wider flex items-center gap-2">
-                      <Target className="w-4 h-4 text-cyan-400" /> Objetivo Sugerido de Tasa de Ahorro
+                      <Target className="w-4 h-4 aura-text-primary" /> Objetivo Sugerido de Tasa de Ahorro
                     </h4>
                     <p className="text-xs text-slate-400">
                       Porcentaje de referencia sobre tus ingresos para medir tu superávit en Estadísticas.
                     </p>
                   </div>
-                  <span className="text-xs font-mono font-black text-emerald-400 px-3 py-1 rounded-xl bg-emerald-950/80 border border-emerald-700/60 self-start sm:self-auto">
+                  <span className="text-xs font-mono tabular-nums font-black text-emerald-400 px-3 py-1 rounded-xl bg-emerald-500/15 border border-emerald-500/40 self-start sm:self-auto">
                     {savingsTarget}% sugerido
                   </span>
                 </div>
@@ -1826,10 +1844,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       key={rate}
                       type="button"
                       onClick={() => handleSelectSavingsTarget(rate)}
-                      className={`chicle-btn px-3.5 py-1.5 rounded-xl text-xs font-anton tracking-wider transition-all cursor-pointer ${
+                      className={`chicle-btn px-3.5 py-1.5 rounded-xl text-xs font-mono tabular-nums font-bold tracking-wider transition-all cursor-pointer ${
                         savingsTarget === rate
-                          ? 'bg-cyan-500 text-black shadow-[0_0_12px_rgba(6,182,212,0.4)]'
-                          : 'bg-white/[0.05] border border-white/15 text-slate-300 hover:text-white hover:border-white/30'
+                          ? 'aura-btn-gradient optic-active-card'
+                          : 'bg-white/[0.04] border border-white/15 text-slate-300 hover:text-white hover:border-white/30'
                       }`}
                     >
                       {rate}%
@@ -1839,8 +1857,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
 
               {/* INTEGRACIÓN MISIONES */}
-              <div className="p-3.5 rounded-2xl bg-black/40 border border-white/10 flex items-start gap-3 relative z-10">
-                <div className="p-2 rounded-xl bg-emerald-950/70 border border-emerald-700/40 text-emerald-400 shrink-0 mt-0.5">
+              <div className="p-3.5 rounded-2xl bg-[#040814]/80 border border-white/10 flex items-start gap-3 relative z-10">
+                <div className="p-2 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 shrink-0 mt-0.5">
                   <ArrowUpRight className="w-4 h-4" />
                 </div>
                 <div className="text-xs space-y-1">
@@ -1859,30 +1877,31 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           <div className="space-y-6 animate-fade-in">
             {/* FEEDBACK REACTIVO DE DATOS */}
             {exportFeedback && (
-              <div className="p-3.5 bg-cyan-950/90 border border-cyan-500/80 text-cyan-300 rounded-xl text-xs font-black flex items-center gap-2 shadow-[0_0_15px_rgba(0,240,255,0.2)]">
-                <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0" />
+              <div className="p-3.5 aura-bg-soft border aura-border-primary rounded-xl text-xs font-black flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 aura-text-primary shrink-0" />
                 <span>{exportFeedback}</span>
               </div>
             )}
 
             {importStatus && (
-              <div className="p-3.5 bg-emerald-950/90 border border-emerald-500/80 text-emerald-300 rounded-xl text-xs font-black flex items-center gap-2 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
+              <div className="p-3.5 bg-emerald-500/15 border border-emerald-500/60 text-emerald-300 rounded-xl text-xs font-black flex items-center gap-2">
                 <Check className="w-4 h-4 text-emerald-400 shrink-0" />
                 <span>{importStatus}</span>
               </div>
             )}
 
             {/* 1. PUENTE DIRECTO TABLET ↔ TELÉFONO */}
-            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.93] p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
+            <div className="w-full relative isolate rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.94] p-5 sm:p-6 border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.45)] overflow-hidden space-y-4">
               <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
               <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-3 relative z-10">
                 <div className="flex items-center gap-2">
-                  <Cloud className="w-4 h-4 text-cyan-400 shrink-0" />
+                  <Cloud className="w-4 h-4 aura-text-primary shrink-0" />
                   <h3 className="text-xs font-anton text-white uppercase tracking-wider">
                     Puente Directo Tablet ↔ Teléfono
                   </h3>
                 </div>
-                <span className="text-[10px] font-mono font-bold text-cyan-300 bg-cyan-950/80 px-2.5 py-0.5 rounded-full border border-cyan-700/60">
+                <span className="text-[10px] font-mono font-bold aura-bg-soft px-2.5 py-0.5 rounded-full border aura-border-subtle">
                   SINCRONIZACIÓN RÁPIDA
                 </span>
               </div>
@@ -1896,7 +1915,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   type="button"
                   onClick={handleForceSync}
                   disabled={isForceSyncing || isPullingCloud}
-                  className="chicle-btn min-h-[44px] flex items-center justify-center gap-2 px-4 py-2.5 bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-400/70 text-cyan-200 rounded-xl text-xs font-anton uppercase tracking-wider transition-all cursor-pointer disabled:opacity-50 shadow-sm active:scale-95"
+                  className="chicle-btn min-h-[44px] flex items-center justify-center gap-2 px-4 py-2.5 aura-bg-soft hover:brightness-110 border aura-border-subtle rounded-xl text-xs font-anton uppercase tracking-wider transition-all cursor-pointer disabled:opacity-50"
                 >
                   <Upload className={`w-4 h-4 ${isForceSyncing ? 'animate-bounce' : ''}`} />
                   <span>{isForceSyncing ? 'Subiendo datos...' : 'Subir datos a la nube'}</span>
@@ -1905,7 +1924,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   type="button"
                   onClick={handlePullFromCloud}
                   disabled={isPullingCloud || isForceSyncing}
-                  className="chicle-btn min-h-[44px] flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-400/70 text-emerald-200 rounded-xl text-xs font-anton uppercase tracking-wider transition-all cursor-pointer disabled:opacity-50 shadow-sm active:scale-95"
+                  className="chicle-btn min-h-[44px] flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-400/60 text-emerald-200 rounded-xl text-xs font-anton uppercase tracking-wider transition-all cursor-pointer disabled:opacity-50"
                 >
                   <Download className={`w-4 h-4 ${isPullingCloud ? 'animate-bounce' : ''}`} />
                   <span>{isPullingCloud ? 'Cargando datos...' : 'Traer datos a este equipo'}</span>
@@ -1913,7 +1932,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
 
               {cloudActionToast && (
-                <div className="p-3 rounded-xl bg-emerald-950/90 border border-emerald-500/60 text-emerald-300 text-xs font-bold flex items-center gap-2 animate-fade-in relative z-10">
+                <div className="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/50 text-emerald-300 text-xs font-bold flex items-center gap-2 animate-fade-in relative z-10">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                   <span>{cloudActionToast}</span>
                 </div>
@@ -1921,23 +1940,24 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* 2. ESTADO DE FIRESTORE & USUARIO */}
-            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.93] p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-5">
+            <div className="w-full relative isolate rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.94] p-5 sm:p-6 border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.45)] overflow-hidden space-y-5">
               <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
               <div className="flex items-center justify-between border-b border-white/10 pb-4 relative z-10">
                 <h3 className="text-sm font-anton text-white uppercase tracking-wider flex items-center gap-2">
-                  <Cloud className="w-4 h-4 text-cyan-400" /> Sincronización en la Nube
+                  <Cloud className="w-4 h-4 aura-text-primary" /> Sincronización en la Nube
                 </h3>
                 {user && (
-                  <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5 ${
+                  <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5 border ${
                     cloudSync?.syncStatus === 'synced'
-                      ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-500/40'
+                      ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/40'
                       : cloudSync?.syncStatus === 'saving'
-                      ? 'bg-blue-950/80 text-cyan-400 border border-cyan-500/40'
-                      : 'bg-amber-950/80 text-amber-400 border border-amber-500/40'
+                      ? 'aura-bg-soft aura-border-subtle'
+                      : 'bg-amber-500/15 text-amber-400 border-amber-500/40'
                   }`}>
                     <span className={`w-1.5 h-1.5 rounded-full ${
                       cloudSync?.syncStatus === 'synced' ? 'bg-emerald-400 animate-pulse' :
-                      cloudSync?.syncStatus === 'saving' ? 'bg-cyan-400 animate-ping' : 'bg-amber-400'
+                      cloudSync?.syncStatus === 'saving' ? 'aura-bg-primary animate-ping' : 'bg-amber-400'
                     }`} />
                     {cloudSync?.syncStatus === 'synced' ? 'En Línea & Sincronizado' :
                      cloudSync?.syncStatus === 'saving' ? 'Guardando en la Nube...' : 'Guardado Local'}
@@ -1946,14 +1966,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
 
               {/* INFO DE USUARIO */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/[0.03] p-4 rounded-2xl border border-white/10 relative z-10">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#040814]/80 p-4 rounded-2xl border border-white/10 relative z-10">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl bg-white/[0.05] border border-white/15 flex items-center justify-center shrink-0">
+                  <div className="w-12 h-12 rounded-2xl bg-white/[0.04] border border-white/15 flex items-center justify-center shrink-0">
                     {user ? (
                       user.photoURL ? (
                         <img src={user.photoURL} alt="Avatar" className="w-12 h-12 rounded-2xl object-cover" />
                       ) : (
-                        <User className="w-6 h-6 text-cyan-400" />
+                        <User className="w-6 h-6 aura-text-primary" />
                       )
                     ) : (
                       <CloudOff className="w-6 h-6 text-amber-400" />
@@ -1974,16 +1994,18 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 <div className="flex items-center gap-2 shrink-0">
                   {user ? (
                     <button 
+                      type="button"
                       onClick={() => signOut()}
-                      className="chicle-btn flex items-center justify-center gap-1.5 px-4 py-2 bg-white/[0.05] hover:bg-white/10 text-slate-200 rounded-xl text-xs font-anton uppercase tracking-wider border border-white/15 transition-colors cursor-pointer active:scale-95"
+                      className="chicle-btn flex items-center justify-center gap-1.5 px-4 py-2 bg-white/[0.05] hover:bg-white/10 text-slate-200 rounded-xl text-xs font-anton uppercase tracking-wider border border-white/15 transition-colors cursor-pointer"
                     >
                       <LogOut className="w-3.5 h-3.5" />
                       <span>Salir</span>
                     </button>
                   ) : (
                     <button 
+                      type="button"
                       onClick={() => signInWithGoogle()}
-                      className="chicle-btn flex items-center justify-center gap-1.5 px-4 py-2 bg-cyan-400 hover:bg-cyan-300 text-black rounded-xl text-xs font-anton uppercase tracking-wider transition-all cursor-pointer shadow-[0_0_12px_rgba(0,240,255,0.4)] active:scale-95 font-bold"
+                      className="chicle-btn aura-btn-gradient optic-active-card flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-anton uppercase tracking-wider transition-all cursor-pointer font-bold"
                     >
                       <LogIn className="w-3.5 h-3.5" />
                       <span>Conectar Google</span>
@@ -1993,14 +2015,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
 
               {/* RESUMEN CONCISO DE PROTECCIÓN + PIE DE PRIVACIDAD BLINDADA */}
-              <div className="p-3.5 rounded-2xl bg-black/40 border border-white/10 text-xs text-slate-300 space-y-2 relative z-10">
+              <div className="p-3.5 rounded-2xl bg-[#040814]/80 border border-white/10 text-xs text-slate-300 space-y-2 relative z-10">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2.5">
                     <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
                     <span>Protección en tiempo real: Nivel, XP, Tareas, Hábitos, Bitácora y Finanzas.</span>
                   </div>
                   {user && cloudSync?.lastSyncTime && (
-                    <span className="text-[11px] font-mono text-slate-400 whitespace-nowrap">
+                    <span className="text-[11px] font-mono tabular-nums text-slate-400 whitespace-nowrap">
                       Última sinc: {cloudSync.lastSyncTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   )}
@@ -2012,10 +2034,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* 3. RESPALDO LOCAL JSON & CSV */}
-            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.93] p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
+            <div className="w-full relative isolate rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.94] p-5 sm:p-6 border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.45)] overflow-hidden space-y-4">
               <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
               <div className="flex items-start gap-3 relative z-10">
-                <div className="p-2.5 rounded-2xl bg-white/[0.05] border border-white/15 text-cyan-300 shrink-0">
+                <div className="p-2.5 rounded-2xl bg-white/[0.04] border border-white/15 aura-text-primary shrink-0">
                   <HardDrive className="w-5 h-5" />
                 </div>
                 <div>
@@ -2030,22 +2053,22 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 <button
                   type="button"
                   onClick={handleExportBackup}
-                  className="chicle-btn min-h-[44px] px-4 py-2.5 bg-white/[0.05] hover:bg-white/10 text-cyan-300 hover:text-white font-anton text-xs uppercase tracking-wider rounded-xl border border-white/15 hover:border-cyan-400 flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm active:scale-95"
+                  className="chicle-btn min-h-[44px] px-4 py-2.5 bg-white/[0.04] hover:bg-white/10 aura-text-soft hover:text-white font-anton text-xs uppercase tracking-wider rounded-xl border border-white/15 hover:aura-border-primary flex items-center justify-center gap-2 transition-all cursor-pointer"
                 >
-                  <Download className="w-4 h-4 text-cyan-400" />
+                  <Download className="w-4 h-4 aura-text-primary" />
                   <span>Descargar Copia</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={handleExportCSV}
-                  className="chicle-btn min-h-[44px] px-4 py-2.5 bg-white/[0.05] hover:bg-white/10 text-blue-300 hover:text-white font-anton text-xs uppercase tracking-wider rounded-xl border border-white/15 hover:border-blue-400 flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm active:scale-95"
+                  className="chicle-btn min-h-[44px] px-4 py-2.5 bg-white/[0.04] hover:bg-white/10 text-blue-300 hover:text-white font-anton text-xs uppercase tracking-wider rounded-xl border border-white/15 hover:border-blue-400 flex items-center justify-center gap-2 transition-all cursor-pointer"
                 >
                   <FileSpreadsheet className="w-4 h-4 text-blue-400" />
                   <span>Exportar Bitácora</span>
                 </button>
 
-                <label className="chicle-btn min-h-[44px] px-4 py-2.5 bg-white/[0.05] hover:bg-white/10 text-slate-300 hover:text-white font-anton text-xs uppercase tracking-wider rounded-xl border border-white/15 hover:border-white/30 flex items-center justify-center gap-2 transition-all cursor-pointer text-center active:scale-95">
+                <label className="chicle-btn min-h-[44px] px-4 py-2.5 bg-white/[0.04] hover:bg-white/10 text-slate-300 hover:text-white font-anton text-xs uppercase tracking-wider rounded-xl border border-white/15 hover:border-white/30 flex items-center justify-center gap-2 transition-all cursor-pointer text-center">
                   <Upload className="w-4 h-4 text-slate-400" />
                   <span>Restaurar Copia</span>
                   <input
@@ -2059,10 +2082,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* 4. PLANTILLAS DE HORARIOS */}
-            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.93] p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
+            <div className="w-full relative isolate rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.94] p-5 sm:p-6 border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.45)] overflow-hidden space-y-4">
               <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
               <div className="flex items-start gap-3 relative z-10">
-                <div className="p-2.5 rounded-2xl bg-emerald-950/80 border border-emerald-500/40 text-emerald-400 shrink-0">
+                <div className="p-2.5 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 shrink-0">
                   <FileSpreadsheet className="w-5 h-5" />
                 </div>
                 <div>
@@ -2077,13 +2101,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 <button
                   type="button"
                   onClick={handleExportSchedule}
-                  className="chicle-btn min-h-[44px] px-4 py-2.5 bg-emerald-950/60 hover:bg-emerald-900 border border-emerald-500/40 text-emerald-300 hover:text-white font-anton text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-95"
+                  className="chicle-btn min-h-[44px] px-4 py-2.5 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-emerald-300 hover:text-white font-anton text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer"
                 >
                   <Download className="w-4 h-4 text-emerald-400" />
                   <span>Bajar Horarios (CSV)</span>
                 </button>
 
-                <label className="chicle-btn min-h-[44px] px-4 py-2.5 bg-emerald-950/60 hover:bg-emerald-900 border border-emerald-500/40 text-emerald-200 hover:text-white font-anton text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer text-center active:scale-95">
+                <label className="chicle-btn min-h-[44px] px-4 py-2.5 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-emerald-200 hover:text-white font-anton text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer text-center">
                   <Upload className="w-4 h-4 text-emerald-400" />
                   <span>Subir Horarios (CSV)</span>
                   <input
@@ -2100,28 +2124,29 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <GoogleDriveSyncCard />
 
             {/* 6. APLICACIÓN INSTALABLE PWA */}
-            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.93] p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
+            <div className="w-full relative isolate rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.94] p-5 sm:p-6 border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.45)] overflow-hidden space-y-4">
               <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
               <div className="flex items-center justify-between relative z-10">
                 <div className="flex items-center gap-2">
-                  <Smartphone className="w-4 h-4 text-cyan-400" />
+                  <Smartphone className="w-4 h-4 aura-text-primary" />
                   <h4 className="text-xs font-anton text-white uppercase tracking-wider">
                     Aplicación Instalable PWA (Offline Ready)
                   </h4>
                 </div>
                 {pwa.isInstalled ? (
-                  <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 flex items-center gap-1">
+                  <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/40 flex items-center gap-1">
                     <CheckCircle2 className="w-3 h-3 text-emerald-400" />
                     App Instalada
                   </span>
                 ) : (
-                  <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-cyan-950/80 text-cyan-300 border border-cyan-500/40">
+                  <span className="text-[10px] font-bold px-2.5 py-1 rounded-full aura-bg-soft border aura-border-subtle">
                     Instalable en Móvil
                   </span>
                 )}
               </div>
 
-              <div className="bg-black/40 border border-white/10 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+              <div className="bg-[#040814]/80 border border-white/10 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
                 <div className="space-y-1">
                   <p className="text-xs font-bold text-slate-100">
                     Instala La Solución en tu teléfono, tablet o escritorio
@@ -2132,49 +2157,51 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 </div>
 
                 {pwa.isInstalled ? (
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 text-xs font-bold shrink-0">
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-xs font-bold shrink-0">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                     <span>Ejecutando como App Nativa</span>
                   </div>
                 ) : pwa.isInstallable ? (
                   <button
+                    type="button"
                     onClick={async () => {
                       soundFX.playClick();
                       const ok = await pwa.install();
                       if (ok) soundFX.playLevelUp();
                     }}
-                    className="chicle-btn flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-anton text-xs uppercase tracking-wider rounded-xl shadow-[0_0_15px_rgba(0,240,255,0.3)] transition-all cursor-pointer shrink-0 active:scale-95"
+                    className="chicle-btn aura-btn-gradient optic-active-card flex items-center justify-center gap-2 px-4 py-2 font-anton text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shrink-0"
                   >
                     <Download className="w-4 h-4" />
                     Instalar Ahora
                   </button>
                 ) : pwa.isIOS ? (
                   <button
+                    type="button"
                     onClick={() => {
                       soundFX.playClick();
                       setShowIOSInstructions(!showIOSInstructions);
                     }}
-                    className="chicle-btn flex items-center justify-center gap-2 px-4 py-2 bg-blue-900/80 hover:bg-blue-800 text-cyan-300 border border-cyan-500/40 text-xs font-anton uppercase tracking-wider rounded-xl transition-all cursor-pointer shrink-0 active:scale-95"
+                    className="chicle-btn flex items-center justify-center gap-2 px-4 py-2 aura-bg-soft hover:brightness-110 border aura-border-subtle text-xs font-anton uppercase tracking-wider rounded-xl transition-all cursor-pointer shrink-0"
                   >
                     <Share className="w-3.5 h-3.5" />
                     Instrucciones iOS
                   </button>
                 ) : (
-                  <div className="text-[11px] font-mono text-slate-400 bg-black/60 px-3 py-1.5 rounded-xl border border-white/10 shrink-0">
+                  <div className="text-[11px] font-mono text-slate-400 bg-black/40 px-3 py-1.5 rounded-xl border border-white/10 shrink-0">
                     Usa el menú del navegador → "Agregar a pantalla de inicio"
                   </div>
                 )}
               </div>
 
               {showIOSInstructions && (
-                <div className="p-4 rounded-2xl bg-black/60 border border-cyan-500/40 text-xs text-slate-300 space-y-2.5 animate-in fade-in relative z-10">
-                  <p className="font-bold text-cyan-300 flex items-center gap-1.5">
+                <div className="p-4 rounded-2xl bg-[#040814]/80 border aura-border-subtle text-xs text-slate-300 space-y-2.5 animate-in fade-in relative z-10">
+                  <p className="font-bold aura-text-soft flex items-center gap-1.5">
                     <Smartphone className="w-4 h-4" /> Pasos para instalar en Safari iOS:
                   </p>
                   <ol className="list-decimal list-inside space-y-1.5 text-[11px] text-slate-300">
-                    <li>Toca el botón <strong className="text-white">Compartir</strong> <Share className="w-3.5 h-3.5 inline text-cyan-400" /> en la barra inferior de Safari.</li>
-                    <li>Desplázate hacia abajo y presiona <strong className="text-white">"Agregar a inicio"</strong> <PlusSquare className="w-3.5 h-3.5 inline text-cyan-400" />.</li>
-                    <li>Presiona <strong className="text-cyan-300">"Agregar"</strong> en la esquina superior derecha.</li>
+                    <li>Toca el botón <strong className="text-white">Compartir</strong> <Share className="w-3.5 h-3.5 inline aura-text-primary" /> en la barra inferior de Safari.</li>
+                    <li>Desplázate hacia abajo y presiona <strong className="text-white">"Agregar a inicio"</strong> <PlusSquare className="w-3.5 h-3.5 inline aura-text-primary" />.</li>
+                    <li>Presiona <strong className="aura-text-soft">"Agregar"</strong> en la esquina superior derecha.</li>
                   </ol>
                 </div>
               )}
@@ -2184,22 +2211,22 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="text-[11px] font-anton uppercase tracking-wider text-slate-300">Caché & Actualizaciones en Vivo</p>
                     {pwaBuildInfo.checking ? (
-                      <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-white/10">
+                      <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-white/[0.06] text-slate-400 border border-white/10">
                         Verificando versión...
                       </span>
                     ) : !pwaBuildInfo.serverRev || pwaBuildInfo.serverRev === pwaBuildInfo.localRev ? (
-                      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 flex items-center gap-1">
+                      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/40 flex items-center gap-1">
                         <CheckCircle2 className="w-2.5 h-2.5 text-emerald-400" />
                         Última actualización activa
                       </span>
                     ) : (
-                      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-950/80 text-amber-300 border border-amber-500/40">
+                      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/40">
                         Nueva versión disponible
                       </span>
                     )}
                   </div>
                   <p className="text-[10px] text-slate-400 font-mono">
-                    Build activo: <span className="text-cyan-300">{pwaBuildInfo.localRev}</span>
+                    Build activo: <span className="aura-text-soft">{pwaBuildInfo.localRev}</span>
                   </p>
                   <p className="text-[10px] text-slate-500">Si no ves los cambios más recientes o la app muestra una versión vieja en tu equipo.</p>
                 </div>
@@ -2213,7 +2240,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       window.location.reload();
                     }
                   }}
-                  className="chicle-btn flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.05] hover:bg-white/10 border border-white/15 hover:border-cyan-400 text-[11px] font-anton uppercase tracking-wider text-cyan-300 transition-colors cursor-pointer shrink-0 active:scale-95"
+                  className="chicle-btn flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/10 border border-white/15 hover:aura-border-primary text-[11px] font-anton uppercase tracking-wider aura-text-soft transition-colors cursor-pointer shrink-0"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
                   Vaciar Caché y Actualizar
@@ -2222,16 +2249,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* 6. CREDENCIALES DE IA (GEMINI) */}
-            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.93] p-5 sm:p-6 border border-white/10 shadow-[0_12px_35px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] relative overflow-hidden space-y-4">
+            <div className="w-full relative isolate rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.94] p-5 sm:p-6 border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.45)] overflow-hidden space-y-4">
               <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
               <div className="flex items-center justify-between border-b border-white/10 pb-3 relative z-10">
                 <div className="flex items-center gap-2">
-                  <Key className="w-4 h-4 text-cyan-400" />
+                  <Key className="w-4 h-4 aura-text-primary" />
                   <h3 className="text-xs font-anton text-white uppercase tracking-wider">
                     Clave de Inteligencia Artificial (Gemini API)
                   </h3>
                 </div>
-                <span className="text-[10px] font-mono text-cyan-300 bg-cyan-950/80 px-2 py-0.5 rounded-full border border-cyan-700/60 font-bold">
+                <span className="text-[10px] font-mono aura-bg-soft px-2 py-0.5 rounded-full border aura-border-subtle font-bold">
                   LOCAL & PRIVADA
                 </span>
               </div>
@@ -2247,19 +2275,19 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     value={geminiApiKey}
                     onChange={(e) => setGeminiApiKey(e.target.value)}
                     placeholder="AIzaSy... (Opcional)"
-                    className="w-full bg-[#010810] border border-white/15 focus:border-cyan-400 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none font-mono"
+                    className="w-full bg-[#040814]/80 border border-white/15 focus:border-[var(--aura-color-1,#00f0ff)] rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none font-mono transition-colors"
                   />
                   <button
                     type="button"
                     onClick={() => setShowApiKey(!showApiKey)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-cyan-400 hover:text-cyan-300 cursor-pointer"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono aura-text-primary hover:text-white cursor-pointer"
                   >
                     {showApiKey ? 'Ocultar' : 'Ver'}
                   </button>
                 </div>
 
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-[10px] text-slate-500 font-mono">
+                  <span className="text-[10px] text-slate-400 font-mono">
                     {geminiApiKey ? '● Clave personalizada activa' : '○ Usando Firebase AI Logic / Modo Offline Inteligente'}
                   </span>
                   <div className="flex gap-2">
@@ -2272,7 +2300,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                           setApiKeyToast('Clave eliminada con éxito.');
                           setTimeout(() => setApiKeyToast(null), 3000);
                         }}
-                        className="px-3 py-1.5 rounded-xl text-xs font-anton uppercase text-slate-400 hover:text-red-400 bg-white/[0.05] border border-white/10 active:scale-95"
+                        className="chicle-btn px-3 py-1.5 rounded-xl text-xs font-anton uppercase text-slate-300 hover:text-rose-400 bg-white/[0.04] border border-white/10 cursor-pointer"
                       >
                         Limpiar
                       </button>
@@ -2280,7 +2308,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     <button
                       type="button"
                       onClick={handleSaveApiKey}
-                      className="px-4 py-1.5 rounded-xl text-xs font-anton uppercase tracking-wider bg-cyan-400 hover:bg-cyan-300 text-black transition-all shadow-[0_0_10px_rgba(0,240,255,0.4)] active:scale-95"
+                      className="chicle-btn aura-btn-gradient optic-active-card px-4 py-1.5 rounded-xl text-xs font-anton uppercase tracking-wider transition-all cursor-pointer"
                     >
                       Guardar Clave
                     </button>
@@ -2288,7 +2316,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 </div>
 
                 {apiKeyToast && (
-                  <div className="p-2.5 rounded-xl bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 text-xs font-bold flex items-center gap-2 animate-fade-in">
+                  <div className="p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/50 text-emerald-300 text-xs font-bold flex items-center gap-2 animate-fade-in">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                     <span>{apiKeyToast}</span>
                   </div>
@@ -2297,28 +2325,30 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* 7. ZONA CRÍTICA */}
-            <div className="w-full rounded-2xl sm:rounded-3xl bg-[#140205]/[0.95] p-6 border border-red-500/30 shadow-[0_12px_35px_rgba(239,68,68,0.1),inset_0_1px_0_rgba(255,255,255,0.06)] relative overflow-hidden space-y-4">
+            <div className="w-full relative isolate rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.94] p-6 border border-rose-500/35 shadow-[0_8px_30px_rgba(244,63,94,0.12)] overflow-hidden space-y-4">
               <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-rose-500/55 to-transparent pointer-events-none" aria-hidden="true" />
               <div className="flex items-start gap-3 relative z-10">
-                <div className="p-3 rounded-2xl bg-red-950/80 border border-red-700/60 text-red-400 shrink-0">
+                <div className="p-3 rounded-2xl bg-rose-500/15 border border-rose-500/40 text-rose-400 shrink-0">
                   <ShieldAlert className="w-6 h-6" />
                 </div>
                 <div>
-                  <h4 className="text-base font-anton text-red-400 uppercase tracking-wider">
+                  <h4 className="text-base font-anton text-rose-400 uppercase tracking-wider">
                     Reinicio Total de Partida
                   </h4>
-                  <p className="text-xs text-red-300/80 mt-1 leading-relaxed">
+                  <p className="text-xs text-rose-200/80 mt-1 leading-relaxed">
                     Restablece tu progreso local y en la nube al Nivel 1 inicial. Acción irreversible.
                   </p>
                 </div>
               </div>
 
-              <div className="pt-3 border-t border-red-950/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
-                <p className="text-[11px] text-red-400/60 font-mono">
+              <div className="pt-3 border-t border-rose-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+                <p className="text-[11px] text-rose-300/70 font-mono">
                   Confirmación de seguridad activa (Protección de doble clic).
                 </p>
 
                 <button 
+                  type="button"
                   onClick={() => {
                     if (!confirmReset) {
                       setConfirmReset(true);
@@ -2327,10 +2357,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       onResetAccount();
                     }
                   }}
-                  className={`chicle-btn px-5 py-2.5 rounded-xl text-xs font-anton uppercase tracking-wider transition-all border cursor-pointer active:scale-95 ${
+                  className={`chicle-btn px-5 py-2.5 rounded-xl text-xs font-anton uppercase tracking-wider transition-all border cursor-pointer ${
                     confirmReset 
-                      ? 'bg-red-600 text-white border-red-500 animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.5)]' 
-                      : 'bg-red-950/60 text-red-400 hover:text-white hover:bg-red-700 border-red-800/80'
+                      ? 'bg-rose-600 text-white border-rose-400 animate-pulse shadow-[0_0_15px_rgba(244,63,94,0.5)] optic-active-card' 
+                      : 'bg-rose-500/15 text-rose-300 hover:text-white hover:bg-rose-600 border-rose-500/50'
                   }`}
                 >
                   {confirmReset ? '¿ESTÁS SEGURO? CLIC DE NUEVO' : 'Reiniciar Cuenta'}
@@ -2345,7 +2375,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           <div className="animate-fade-in space-y-4">
             <Suspense fallback={
               <div className="p-8 text-center text-slate-400 font-mono text-xs flex items-center justify-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
+                <span className="w-2 h-2 rounded-full aura-bg-primary animate-ping" />
                 Cargando simulador táctico...
               </div>
             }>

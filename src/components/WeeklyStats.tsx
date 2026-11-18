@@ -25,6 +25,8 @@ import { CHARACTER_CLASSES, getRankForLevel } from '../data/defaults';
 import { getArchetypeDisplayName } from '../data/archetypes';
 import { soundFX } from '../utils/audio';
 import { useTaskStore } from '../store/useTaskStore';
+import { useSystemPalette } from '../utils/systemPalette';
+import { TabHeader } from './common/TabHeader';
 import {
   ResponsiveContainer,
   BarChart,
@@ -117,6 +119,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
 }) => {
   const storeTasksByDate = useTaskStore((s) => s.tasksByDate);
   const tasksByDate = propTasksByDate || storeTasksByDate;
+  const palette = useSystemPalette();
   const [activeSubTab, setActiveSubTab] = useState<StatsSubTab>('hero');
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isRanksModalOpen, setIsRanksModalOpen] = useState(false);
@@ -415,6 +418,20 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
     });
   }, [trackedHabits, habitMastery]);
 
+  // --- DYNAMIC PIE COLORS (Connected to System Aura Palette) ---
+  const dynamicPieColors = useMemo(
+    () => [
+      palette.c1,
+      palette.c2,
+      palette.c3,
+      PIE_GRADIENTS[3].start,
+      PIE_GRADIENTS[4].start,
+      PIE_GRADIENTS[5].start,
+      PIE_GRADIENTS[6].start,
+    ],
+    [palette.c1, palette.c2, palette.c3]
+  );
+
   // --- HABIT RACE DATA (For MoxenCarrera) ---
   const habitRaceData: HabitRaceItem[] = useMemo(() => {
     const stepsCount = 7;
@@ -427,7 +444,7 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
       });
 
       const colors = [
-        'linear-gradient(90deg, #00f0ff, #3b82f6)',
+        `linear-gradient(90deg, ${palette.c1}, ${palette.c2})`,
         'linear-gradient(90deg, #a855f7, #d946ef)',
         'linear-gradient(90deg, #f59e0b, #fbbf24)',
         'linear-gradient(90deg, #10b981, #14b8a6)',
@@ -442,7 +459,7 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
         color: colors[idx % colors.length]
       };
     });
-  }, [trackedHabits]);
+  }, [trackedHabits, palette.c1, palette.c2]);
 
   // --- WEEK PERFORMANCE DAYS (For MoxenConstancia) ---
   const weekPerformanceDays: DayPerformance[] = useMemo(() => {
@@ -505,14 +522,17 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
     });
   }, [stats.phaseHistory]);
 
-  // --- CUSTOM TOOLTIPS ---
+  // --- CUSTOM TOOLTIPS (Obsidian Glass + Dynamic Aura) ---
   const CustomTooltipBar = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-[#001830]/[0.97] border border-cyan-500/50 p-2.5 rounded-xl shadow-[0_0_20px_rgba(0,240,255,0.25)]">
-          <p className="text-white text-[10px] uppercase tracking-wider font-bold mb-1">{label}</p>
-          <p className="text-white text-sm font-mono font-black flex items-center gap-1.5">
-            <Icon name="timer" className="w-3.5 h-3.5 text-cyan-400" />
+        <div
+          className="bg-[#030712]/[0.97] border border-white/10 p-2.5 rounded-xl shadow-[0_12px_30px_rgba(0,0,0,0.65)]"
+          style={{ borderColor: palette.glow }}
+        >
+          <p className="text-slate-300 text-[10px] uppercase tracking-wider font-bold mb-1">{label}</p>
+          <p className="text-white text-sm font-mono tabular-nums font-black flex items-center gap-1.5">
+            <Icon name="timer" className="w-3.5 h-3.5 aura-text-primary" />
             {payload[0].value} min
           </p>
         </div>
@@ -524,10 +544,13 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
   const CustomTooltipPie = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-[#001830]/[0.97] border border-fuchsia-500/50 p-2.5 rounded-xl shadow-[0_0_20px_rgba(217,70,239,0.25)] z-30">
-          <p className="text-fuchsia-300 text-[10px] uppercase tracking-wider font-bold mb-1">{payload[0].name}</p>
-          <p className="text-white text-sm font-mono font-black flex items-center gap-1.5">
-            <Icon name="checkCircle" className="w-3.5 h-3.5 text-fuchsia-400" />
+        <div
+          className="bg-[#030712]/[0.97] border border-white/10 p-2.5 rounded-xl shadow-[0_12px_30px_rgba(0,0,0,0.65)] z-30"
+          style={{ borderColor: palette.glow }}
+        >
+          <p className="aura-text-soft text-[10px] uppercase tracking-wider font-bold mb-1">{payload[0].name}</p>
+          <p className="text-white text-sm font-mono tabular-nums font-black flex items-center gap-1.5">
+            <Icon name="checkCircle" className="w-3.5 h-3.5 aura-text-primary" />
             {payload[0].value} tareas
           </p>
         </div>
@@ -540,22 +563,25 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-[#001830]/[0.97] border border-purple-500/50 p-3 rounded-xl shadow-[0_0_20px_rgba(168,85,247,0.3)] text-white text-xs max-w-xs space-y-1.5">
-          <p className="font-anton uppercase tracking-wider text-purple-300 text-sm flex items-center gap-1.5">
-            <Icon name="brain" className="w-3.5 h-3.5 text-purple-400" />
+        <div
+          className="bg-[#030712]/[0.97] border border-white/10 p-3 rounded-xl shadow-[0_12px_30px_rgba(0,0,0,0.7)] text-white text-xs max-w-xs space-y-1.5"
+          style={{ borderColor: palette.glow }}
+        >
+          <p className="font-anton uppercase tracking-wider aura-text-soft text-sm flex items-center gap-1.5">
+            <Icon name="brain" className="w-3.5 h-3.5 aura-text-primary" />
             {data.fullName}
           </p>
-          <div className="flex items-center justify-between font-mono">
+          <div className="flex items-center justify-between font-mono tabular-nums">
             <span className="text-slate-400">Racha Actual:</span>
-            <span className="font-bold text-cyan-300">{data.currentStreak} días</span>
+            <span className="font-bold aura-text-primary">{data.currentStreak} días</span>
           </div>
-          <div className="flex items-center justify-between font-mono">
+          <div className="flex items-center justify-between font-mono tabular-nums">
             <span className="text-slate-400">Récord Máximo:</span>
             <span className="font-bold text-amber-300">{data.highestStreak} días</span>
           </div>
-          <div className="pt-1 border-t border-purple-500/30 text-[11px]">
+          <div className="pt-1 border-t border-white/10 text-[11px]">
             {data.isMastered ? (
-              <p className="text-yellow-400 font-bold flex items-center gap-1">
+              <p className="text-amber-300 font-bold flex items-center gap-1">
                 <span>👑</span> ¡Maestría Cuántica Consolidada (66d+)!
               </p>
             ) : data.isMaltzReached ? (
@@ -563,7 +589,7 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
                 <span>⚡</span> Hábito Formado (21d). Faltan {66 - data.currentStreak}d para Maestría.
               </p>
             ) : (
-              <p className="text-cyan-300 flex items-center gap-1">
+              <p className="aura-text-soft flex items-center gap-1">
                 <span>🌱</span> Faltan {21 - data.currentStreak}d para la Barrera de Maltz.
               </p>
             )}
@@ -614,11 +640,23 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
         />
       </Suspense>
 
+      {/* CANONICAL TAB HEADER */}
+      <TabHeader
+        title="Centro de Estadísticas"
+        subtitle="Ficha de héroe, hábitos 21/66, energía, foco y tesorería"
+        icon={<Icon name="activity" className="w-5 h-5" />}
+        badge={
+          <span className="text-[10px] font-mono tabular-nums font-bold px-2 py-0.5 rounded-lg aura-bg-soft border aura-border-subtle aura-text-primary uppercase">
+            Nv. {stats.level} • {displayRankTitle}
+          </span>
+        }
+      />
+
       {/* ─────────────────────────────────────────────────────────────────── */}
       {/* 4 MASTER SUB-TABS SELECTOR (MOXEN CHIP MENU GROUP)                 */}
       {/* ─────────────────────────────────────────────────────────────────── */}
       <div
-        className="sticky top-0 z-30 mb-4 mf-8-menu-chip-group mf-chip-group justify-start sm:justify-center bg-[#030712]/[0.94] rounded-2xl p-1.5 border border-white/10 shadow-lg"
+        className="sticky top-0 z-30 mb-4 mf-8-menu-chip-group mf-chip-group justify-start sm:justify-center bg-[#040a1a]/[0.95] backdrop-blur-md rounded-2xl p-1.5 border border-white/10 shadow-[0_8px_24px_rgba(0,0,0,0.45)]"
         role="listbox"
         aria-label="Secciones de Perfil y Estadísticas"
       >
@@ -630,8 +668,8 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
             soundFX.playClick();
             setActiveSubTab('hero');
           }}
-          className={`mf-8-menu-chip-group__chip mf-chip flex-1 sm:flex-initial ${
-            activeSubTab === 'hero' ? 'mf-8-menu-chip-group__chip--active mf-chip--active' : ''
+          className={`chicle-btn mf-8-menu-chip-group__chip mf-chip flex-1 sm:flex-initial ${
+            activeSubTab === 'hero' ? 'mf-8-menu-chip-group__chip--active mf-chip--active optic-active-card' : ''
           }`}
         >
           <Icon name="shield" className="w-3.5 h-3.5 shrink-0" />
@@ -646,15 +684,15 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
             soundFX.playClick();
             setActiveSubTab('neuro');
           }}
-          className={`mf-8-menu-chip-group__chip mf-chip flex-1 sm:flex-initial ${
-            activeSubTab === 'neuro' ? 'mf-8-menu-chip-group__chip--active mf-chip--active' : ''
+          className={`chicle-btn mf-8-menu-chip-group__chip mf-chip flex-1 sm:flex-initial ${
+            activeSubTab === 'neuro' ? 'mf-8-menu-chip-group__chip--active mf-chip--active optic-active-card' : ''
           }`}
         >
           <Icon name="brain" className="w-3.5 h-3.5 shrink-0" />
           <span className="sm:hidden">Hábitos</span>
           <span className="hidden sm:inline">Hábitos 21/66</span>
           {trackedHabits.length > 0 && (
-            <span className="mf-chip__badge">{trackedHabits.length}</span>
+            <span className="mf-chip__badge font-mono tabular-nums">{trackedHabits.length}</span>
           )}
         </button>
 
@@ -666,8 +704,8 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
             soundFX.playClick();
             setActiveSubTab('energy');
           }}
-          className={`mf-8-menu-chip-group__chip mf-chip flex-1 sm:flex-initial ${
-            activeSubTab === 'energy' ? 'mf-8-menu-chip-group__chip--active mf-chip--active' : ''
+          className={`chicle-btn mf-8-menu-chip-group__chip mf-chip flex-1 sm:flex-initial ${
+            activeSubTab === 'energy' ? 'mf-8-menu-chip-group__chip--active mf-chip--active optic-active-card' : ''
           }`}
         >
           <Icon name="zap" className="w-3.5 h-3.5 shrink-0" />
@@ -683,8 +721,8 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
             soundFX.playClick();
             setActiveSubTab('finance');
           }}
-          className={`mf-8-menu-chip-group__chip mf-chip flex-1 sm:flex-initial ${
-            activeSubTab === 'finance' ? 'mf-8-menu-chip-group__chip--active mf-chip--active' : ''
+          className={`chicle-btn mf-8-menu-chip-group__chip mf-chip flex-1 sm:flex-initial ${
+            activeSubTab === 'finance' ? 'mf-8-menu-chip-group__chip--active mf-chip--active optic-active-card' : ''
           }`}
         >
           <Icon name="coins" className="w-3.5 h-3.5 shrink-0" />
@@ -698,27 +736,31 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
       {activeSubTab === 'hero' && (
         <div className="space-y-4 sm:space-y-6 animate-fadeIn">
           {/* Full Width Hero RPG Character Card */}
-          <div className="rounded-[22px] sm:rounded-[24px] scifi-glass-panel border-2 border-cyan-400 p-3.5 sm:p-6 shadow-[0_0_25px_rgba(0,240,255,0.25)] flex flex-col justify-between relative overflow-hidden text-white">
+          <div className="relative isolate rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.94] border border-white/10 p-4 sm:p-6 shadow-[0_12px_36px_rgba(0,0,0,0.5)] flex flex-col justify-between overflow-hidden text-white">
+            <span className="vi-grano opacity-5" aria-hidden="true" />
+            <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
+
             {onUpdateStats && (
               <button
+                type="button"
                 onClick={() => {
                   soundFX.playClick();
                   setIsEditingProfile(true);
                 }}
-                className="absolute top-4 right-4 z-20 p-2 bg-[#04020e] rounded-xl border border-cyan-500/60 text-cyan-300 hover:bg-cyan-950/60 hover:text-white transition-colors cursor-pointer shadow-[0_0_10px_rgba(0,240,255,0.2)]"
+                className="chicle-btn absolute top-4 right-4 z-20 w-9 h-9 bg-white/[0.04] hover:bg-white/[0.1] rounded-xl border border-white/10 hover:aura-border-subtle aura-text-soft hover:text-white flex items-center justify-center transition-colors cursor-pointer"
                 title="Editar tu Perfil"
               >
                 <Icon name="edit" className="w-4 h-4" />
               </button>
             )}
 
-            <div>
-              <div className="flex items-center justify-between mb-3 pb-2.5 border-b border-cyan-500/30 pr-12">
-                <h3 className="text-xs font-anton uppercase tracking-wider text-white flex items-center gap-1.5">
-                  <Icon name="shield" className="w-3.5 h-3.5 text-cyan-400" />
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/10 pr-12">
+                <h3 className="text-xs sm:text-sm font-anton uppercase tracking-wider text-white flex items-center gap-1.5">
+                  <Icon name="shield" className="w-4 h-4 aura-text-primary" />
                   Ficha de Héroe del Sistema
                 </h3>
-                <span className="text-xs font-anton px-2.5 py-0.5 rounded-lg bg-cyan-400 text-black border border-cyan-300 shadow-[0_0_10px_rgba(0,240,255,0.5)] uppercase">
+                <span className="text-xs font-anton px-2.5 py-0.5 rounded-lg aura-bg-primary optic-active-card uppercase font-mono tabular-nums">
                   Nivel {stats.level}
                 </span>
               </div>
@@ -727,26 +769,26 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                 <div className="flex items-center gap-3.5">
                   <div className="relative">
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-[#04020e] border-2 border-cyan-400 flex items-center justify-center text-3xl sm:text-4xl shadow-[0_0_15px_rgba(0,240,255,0.35)]">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-[#040814]/80 border-2 aura-border-primary flex items-center justify-center text-3xl sm:text-4xl aura-glow-subtle">
                       {stats.avatarIcon || '👤'}
                     </div>
-                    <div className="absolute -bottom-1.5 -right-1 px-1.5 py-0.5 rounded-md bg-black text-amber-300 text-[10px] font-anton border border-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.5)]">
+                    <div className="absolute -bottom-1.5 -right-1 px-1.5 py-0.5 rounded-md bg-[#030712] text-amber-300 text-[10px] font-mono tabular-nums font-bold border border-amber-400/70 shadow-[0_0_8px_rgba(245,158,11,0.35)]">
                       Nv.{stats.level}
                     </div>
                   </div>
 
                   <div className="min-w-0 flex-1">
                     {stats.username && (
-                      <p className="text-cyan-300 font-mono text-[10px] mb-0.5 tracking-wider truncate">
+                      <p className="aura-text-soft font-mono text-[10px] mb-0.5 tracking-wider truncate">
                         @{stats.username} {stats.fullName && <span className="text-slate-400 ml-1">| {stats.fullName}</span>}
                       </p>
                     )}
-                    <h2 className="text-base sm:text-lg font-anton uppercase text-white tracking-wide truncate">
+                    <h2 className="text-base sm:text-lg font-anton uppercase text-white tracking-wider truncate">
                       {getArchetypeDisplayName(stats.characterClass)}
                     </h2>
                     <div className="flex flex-wrap items-center gap-2 mt-0.5">
-                      <p className="text-xs text-cyan-300/90 font-bold flex items-center gap-1">
-                        <Icon name="award" className="w-3.5 h-3.5 text-cyan-400" />
+                      <p className="text-xs aura-text-soft font-bold flex items-center gap-1">
+                        <Icon name="award" className="w-3.5 h-3.5 aura-text-primary" />
                         {displayRankTitle}
                       </p>
                       <button
@@ -755,7 +797,7 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
                           soundFX.playClick();
                           setIsRanksModalOpen(true);
                         }}
-                        className="px-2 py-0.5 rounded-lg bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-500/50 hover:border-cyan-300 text-[10px] font-mono font-bold text-cyan-300 hover:text-white transition-all cursor-pointer shadow-[0_0_8px_rgba(0,240,255,0.2)] active:scale-95"
+                        className="chicle-btn px-2.5 py-0.5 rounded-lg aura-bg-soft hover:brightness-110 border aura-border-subtle text-[10px] font-mono font-bold aura-text-soft hover:text-white transition-all cursor-pointer"
                       >
                         Ver 100 Rangos
                       </button>
@@ -772,7 +814,7 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
                           soundFX.playClick();
                           setIsArchetypesModalOpen(true);
                         }}
-                        className="px-2 py-0.5 rounded-lg bg-indigo-950/80 hover:bg-indigo-900 border border-indigo-500/50 hover:border-indigo-300 text-[10px] font-mono font-bold text-indigo-300 hover:text-white transition-all cursor-pointer shadow-[0_0_8px_rgba(99,102,241,0.2)] active:scale-95"
+                        className="chicle-btn px-2.5 py-0.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.1] border border-white/15 hover:aura-border-subtle text-[10px] font-mono font-bold text-slate-200 hover:text-white transition-all cursor-pointer"
                       >
                         Ver 12 Arquetipos
                       </button>
@@ -780,11 +822,11 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
 
                     {/* Quick Badges */}
                     <div className="flex items-center gap-2 mt-2">
-                      <span className="flex items-center gap-1 text-[11px] font-anton text-amber-300 bg-[#04020e] px-2.5 py-0.5 rounded-lg border border-amber-500/50">
+                      <span className="flex items-center gap-1 text-[11px] font-mono tabular-nums font-bold text-amber-300 bg-[#040814]/80 px-2.5 py-0.5 rounded-lg border border-amber-500/40">
                         <Icon name="coins" className="w-3 h-3 text-amber-400" />
                         {stats.coins}
                       </span>
-                      <span className="flex items-center gap-1 text-[11px] font-anton text-amber-400 bg-[#04020e] px-2.5 py-0.5 rounded-lg border border-amber-500/50">
+                      <span className="flex items-center gap-1 text-[11px] font-mono tabular-nums font-bold text-amber-300 bg-[#040814]/80 px-2.5 py-0.5 rounded-lg border border-amber-500/40">
                         <Icon name="flame" className="w-3 h-3 text-amber-400" />
                         {stats.streakDays}d
                       </span>
@@ -802,19 +844,19 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
                       setIsArchetypesModalOpen(true);
                     }
                   }}
-                  className="p-3 rounded-2xl bg-[#04020e] border border-cyan-500/50 hover:border-cyan-300 transition-all cursor-pointer flex items-center gap-3 shrink-0 shadow-[0_0_15px_rgba(0,240,255,0.15)] group"
+                  className="chicle-btn p-3 rounded-2xl bg-[#040814]/80 border border-white/10 hover:aura-border-subtle transition-all cursor-pointer flex items-center gap-3 shrink-0 group"
                   title="Haz clic para abrir el Taller Cuántico de KAI"
                 >
-                  <div className="shrink-0">
+                  <div className="shrink-0" data-preserve-optic="true">
                     <HoloCompanion archetype={stats.characterClass || 'Espíritu Heroico'} size="sm" showHUD={false} />
                   </div>
                   <div className="min-w-0 pr-2">
-                    <div className="text-[9px] font-mono text-cyan-300 uppercase tracking-wider font-bold">Compañero Guía</div>
-                    <div className="text-xs font-anton text-white truncate group-hover:text-cyan-300 transition-colors">
-                      KAI • Nv. {stats.level || 1}
+                    <div className="text-[9px] font-mono aura-text-soft uppercase tracking-wider font-bold">Compañero Guía</div>
+                    <div className="text-xs font-anton text-white truncate group-hover:aura-text-primary transition-colors">
+                      KAI • Nv. <span className="font-mono tabular-nums">{stats.level || 1}</span>
                     </div>
-                    <div className="text-[10px] text-cyan-300/80 flex items-center gap-1 mt-0.5">
-                      <span className="text-cyan-400 font-bold underline">Taller KAI 🎨</span>
+                    <div className="text-[10px] aura-text-soft flex items-center gap-1 mt-0.5">
+                      <span className="aura-text-primary font-bold underline">Taller KAI 🎨</span>
                       <Icon name="sparkles" className="w-3 h-3 text-amber-300" />
                     </div>
                   </div>
@@ -824,31 +866,31 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
               {/* Personal Details Row (Including previously omitted Profession & Mantra) */}
               <div className="flex flex-wrap items-center gap-2 mb-3">
                 {stats.profession && (
-                  <span className="text-[10px] bg-[#04020e] text-cyan-300 px-2.5 py-1 rounded-lg border border-cyan-500/40 font-mono flex items-center gap-1">
-                    <Icon name="briefcase" className="w-3 h-3 text-cyan-400" /> {stats.profession}
+                  <span className="text-[10px] bg-[#040814]/80 aura-text-soft px-2.5 py-1 rounded-lg border border-white/10 font-mono flex items-center gap-1">
+                    <Icon name="briefcase" className="w-3 h-3 aura-text-primary" /> {stats.profession}
                   </span>
                 )}
                 {stats.age && (
-                  <span className="text-[10px] bg-[#04020e] text-slate-300 px-2.5 py-1 rounded-lg border border-cyan-500/30 font-mono">
+                  <span className="text-[10px] bg-[#040814]/80 text-slate-300 px-2.5 py-1 rounded-lg border border-white/10 font-mono tabular-nums">
                     Edad: {stats.age}
                   </span>
                 )}
                 {stats.mainGoal && (
-                  <span className="text-[10px] bg-[#04020e] text-amber-300 px-2.5 py-1 rounded-lg border border-amber-500/40 font-mono flex items-center gap-1">
+                  <span className="text-[10px] bg-[#040814]/80 text-amber-300 px-2.5 py-1 rounded-lg border border-amber-500/35 font-mono flex items-center gap-1">
                     <Icon name="target" className="w-3 h-3 text-amber-400" /> Meta: {stats.mainGoal}
                   </span>
                 )}
               </div>
 
               {stats.mantra && (
-                <div className="w-full mb-3 p-2.5 rounded-xl bg-cyan-950/30 border border-cyan-500/30 text-xs font-mono text-cyan-200 italic flex items-center gap-2">
+                <div className="w-full mb-3 p-2.5 rounded-xl bg-[#040814]/80 border aura-border-subtle text-xs font-mono aura-text-soft italic flex items-center gap-2">
                   <Icon name="quote" className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                   <span>"{stats.mantra}"</span>
                 </div>
               )}
 
               {stats.bio && (
-                <p className="text-cyan-300/80 text-xs italic border-l-2 border-cyan-400 pl-2 mb-4 leading-tight">
+                <p className="text-slate-300 text-xs italic border-l-2 aura-border-primary pl-2.5 mb-4 leading-tight">
                   "{stats.bio}"
                 </p>
               )}
@@ -875,29 +917,30 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
 
           {/* Historical RPG Phase Journey (Cleanly re-anchored to Hero tab) */}
           {phaseProgressionData.length > 0 && (
-            <div className="p-3.5 sm:p-6 rounded-3xl bg-gradient-to-b from-[#0a0f25] to-[#030612] border border-emerald-900/40 shadow-[0_10px_30px_rgba(16,185,129,0.08)] flex flex-col relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 blur-3xl rounded-full pointer-events-none" />
+            <div className="relative isolate p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.94] border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.45)] flex flex-col overflow-hidden">
+              <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
 
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 relative z-10">
                 <div>
-                  <div className="flex items-center gap-1.5 text-emerald-400 text-[10px] sm:text-xs font-mono font-bold uppercase tracking-widest">
-                    <Icon name="trendingUp" className="w-3.5 h-3.5 text-emerald-400" />
+                  <div className="flex items-center gap-1.5 aura-text-primary text-[10px] sm:text-xs font-mono font-bold uppercase tracking-widest">
+                    <Icon name="trendingUp" className="w-3.5 h-3.5 aura-text-primary" />
                     Tu Evolución
                   </div>
-                  <h3 className="text-sm sm:text-lg font-anton uppercase tracking-wide text-white mt-0.5">
+                  <h3 className="text-sm sm:text-lg font-anton uppercase tracking-wider text-white mt-0.5">
                     Diario de Fases del Sistema (1 a 10)
                   </h3>
                 </div>
-                <span className="self-start sm:self-auto text-[10px] font-mono text-emerald-300 bg-emerald-950/60 px-2.5 py-1 rounded-lg border border-emerald-500/30">
+                <span className="self-start sm:self-auto text-[10px] font-mono tabular-nums aura-text-soft aura-bg-soft px-2.5 py-1 rounded-lg border aura-border-subtle">
                   Fase Actual: {activeRank.phase || 1}
                 </span>
               </div>
 
               {/* Guide box */}
-              <div className="p-2 sm:p-2.5 rounded-xl bg-emerald-950/30 border border-emerald-500/20 text-[10px] sm:text-[11px] text-emerald-200 font-mono mb-3 flex items-center gap-2 relative z-10">
-                <Icon name="sparkles" className="w-4 h-4 text-emerald-400 shrink-0" />
+              <div className="p-2.5 rounded-xl bg-[#040814]/80 border border-white/10 text-[10px] sm:text-[11px] text-slate-300 font-mono mb-3 flex items-center gap-2 relative z-10">
+                <Icon name="sparkles" className="w-4 h-4 aura-text-primary shrink-0" />
                 <span className="leading-tight">
-                  <strong>Cronología:</strong> Registro histórico con la fecha exacta en la que alcanzaste cada una de las 10 fases.
+                  <strong className="text-white">Cronología:</strong> Registro histórico con la fecha exacta en la que alcanzaste cada una de las 10 fases.
                 </span>
               </div>
 
@@ -906,11 +949,11 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
                   <LineChart data={phaseProgressionData} margin={{ top: 15, right: 15, left: -25, bottom: 0 }}>
                     <defs>
                       <linearGradient id="lineGradHero" x1="0" y1="0" x2="1" y2="0">
-                        <stop offset="0%" stopColor="#10b981" />
-                        <stop offset="100%" stopColor="#0ea5e9" />
+                        <stop offset="0%" stopColor={palette.c1} />
+                        <stop offset="100%" stopColor={palette.c2} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" vertical={false} />
                     <XAxis
                       dataKey="phase"
                       stroke="#ffffff"
@@ -925,10 +968,13 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
                         if (active && payload && payload.length) {
                           const data = payload[0].payload;
                           return (
-                            <div className="bg-[#001830] border border-emerald-900/50 rounded-xl p-3 shadow-xl">
-                              <p className="font-bold text-emerald-300 text-xs tracking-wider mb-1 uppercase">{data.phase}</p>
-                              <p className="font-black text-white text-sm mb-1">{data.name}</p>
-                              <p className="text-white text-xs font-semibold">Alcanzado: {data.date}</p>
+                            <div
+                              className="bg-[#030712]/[0.97] border border-white/10 rounded-xl p-3 shadow-[0_12px_30px_rgba(0,0,0,0.65)]"
+                              style={{ borderColor: palette.glow }}
+                            >
+                              <p className="font-bold aura-text-primary text-xs tracking-wider mb-1 uppercase">{data.phase}</p>
+                              <p className="font-anton uppercase tracking-wider text-white text-sm mb-1">{data.name}</p>
+                              <p className="text-slate-300 text-xs font-mono tabular-nums font-semibold">Alcanzado: {data.date}</p>
                             </div>
                           );
                         }
@@ -940,8 +986,8 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
                       dataKey="level"
                       stroke="url(#lineGradHero)"
                       strokeWidth={3}
-                      dot={{ fill: '#050a18', stroke: '#10b981', strokeWidth: 2, r: 5 }}
-                      activeDot={{ fill: '#10b981', stroke: '#fff', strokeWidth: 2, r: 7 }}
+                      dot={{ fill: '#030712', stroke: palette.c1, strokeWidth: 2, r: 5 }}
+                      activeDot={{ fill: palette.c1, stroke: '#fff', strokeWidth: 2, r: 7 }}
                       animationDuration={1500}
                     />
                   </LineChart>
@@ -952,39 +998,42 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
 
           {/* Récords de Leyenda */}
           <div className="space-y-3">
-            <div className="flex items-center gap-2 text-yellow-400">
-              <Icon name="trophy" className="w-4 h-4 text-yellow-400" />
-              <h3 className="text-xs sm:text-sm font-black uppercase tracking-widest">Tus Récords de Leyenda</h3>
+            <div className="flex items-center gap-2 text-amber-400">
+              <Icon name="trophy" className="w-4 h-4 text-amber-400" />
+              <h3 className="text-xs sm:text-sm font-anton uppercase tracking-wider text-white">Tus Récords de Leyenda</h3>
             </div>
 
-            <div className="bg-gradient-to-br from-[#120a00] to-[#0a0500] p-3 sm:p-4 rounded-2xl border border-yellow-900/50 shadow-[0_4px_20px_rgba(234,179,8,0.05)]">
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
-                <div className="flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-xl bg-black/40 border border-yellow-900/40">
-                  <div className="p-2 sm:p-2.5 bg-yellow-500/20 rounded-xl text-yellow-400 shrink-0"><Icon name="zap" className="w-4 h-4 sm:w-5 sm:h-5" /></div>
+            <div className="relative isolate bg-[#040a1a]/[0.94] p-3.5 sm:p-4 rounded-2xl border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.45)] overflow-hidden">
+              <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
+
+              <div className="relative z-10 grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+                <div className="flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-xl bg-[#040814]/80 border border-white/10">
+                  <div className="p-2 sm:p-2.5 bg-amber-500/15 border border-amber-500/30 rounded-xl text-amber-400 shrink-0"><Icon name="zap" className="w-4 h-4 sm:w-5 sm:h-5" /></div>
                   <div className="min-w-0">
                     <p className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-wider truncate">Máximo XP / Día</p>
-                    <p className="text-base sm:text-xl font-black text-yellow-400 truncate">{maxDailyXp} <span className="text-[10px] text-yellow-600">XP</span></p>
+                    <p className="text-base sm:text-xl font-black font-mono tabular-nums text-amber-300 truncate">{maxDailyXp} <span className="text-[10px] text-amber-400/80">XP</span></p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-xl bg-black/40 border border-purple-900/40">
-                  <div className="p-2 sm:p-2.5 bg-purple-500/20 rounded-xl text-purple-400 shrink-0"><Icon name="timer" className="w-4 h-4 sm:w-5 sm:h-5" /></div>
+                <div className="flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-xl bg-[#040814]/80 border border-white/10">
+                  <div className="p-2 sm:p-2.5 aura-bg-soft border aura-border-subtle rounded-xl aura-text-primary shrink-0"><Icon name="timer" className="w-4 h-4 sm:w-5 sm:h-5" /></div>
                   <div className="min-w-0">
                     <p className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-wider truncate">Deep Work Máx.</p>
-                    <p className="text-base sm:text-xl font-black text-purple-300 truncate">{maxPomodoro} <span className="text-[10px] text-purple-400 font-bold">MIN</span></p>
+                    <p className="text-base sm:text-xl font-black font-mono tabular-nums aura-text-soft truncate">{maxPomodoro} <span className="text-[10px] text-slate-400 font-bold">MIN</span></p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-xl bg-black/40 border border-orange-900/40">
-                  <div className="p-2 sm:p-2.5 bg-orange-500/20 rounded-xl text-orange-400 shrink-0"><Icon name="flame" className="w-4 h-4 sm:w-5 sm:h-5" /></div>
+                <div className="flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-xl bg-[#040814]/80 border border-white/10">
+                  <div className="p-2 sm:p-2.5 bg-amber-500/15 border border-amber-500/30 rounded-xl text-amber-400 shrink-0"><Icon name="flame" className="w-4 h-4 sm:w-5 sm:h-5" /></div>
                   <div className="min-w-0">
                     <p className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-wider truncate">Racha Récord</p>
-                    <p className="text-base sm:text-xl font-black text-orange-400 truncate">{maxHabitStreak} <span className="text-[10px] text-orange-400 font-bold">DÍAS</span></p>
+                    <p className="text-base sm:text-xl font-black font-mono tabular-nums text-amber-400 truncate">{maxHabitStreak} <span className="text-[10px] text-amber-400/80 font-bold">DÍAS</span></p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-xl bg-black/40 border border-cyan-900/40">
-                  <div className="p-2 sm:p-2.5 bg-cyan-500/20 rounded-xl text-cyan-400 shrink-0"><Icon name="target" className="w-4 h-4 sm:w-5 sm:h-5" /></div>
+                <div className="flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-xl bg-[#040814]/80 border border-white/10">
+                  <div className="p-2 sm:p-2.5 aura-bg-soft border aura-border-subtle rounded-xl aura-text-primary shrink-0"><Icon name="target" className="w-4 h-4 sm:w-5 sm:h-5" /></div>
                   <div className="min-w-0">
                     <p className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-wider truncate">Tareas Totales</p>
-                    <p className="text-base sm:text-xl font-black text-cyan-400 truncate">{totalTasksDone} <span className="text-[10px] text-cyan-600">TAR.</span></p>
+                    <p className="text-base sm:text-xl font-black font-mono tabular-nums text-white truncate">{totalTasksDone} <span className="text-[10px] text-slate-400">TAR.</span></p>
                   </div>
                 </div>
               </div>
@@ -999,13 +1048,14 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
       {activeSubTab === 'neuro' && (
         <div className="space-y-4 sm:space-y-6 animate-fadeIn">
           {/* Neuroplasticity Scientific Overview Banner */}
-          <div className="p-3.5 sm:p-6 rounded-3xl bg-gradient-to-r from-[#12081f] via-[#080d24] to-[#040817] border border-purple-500/50 shadow-[0_0_30px_rgba(168,85,247,0.15)] relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-80 h-full bg-purple-600/10 blur-3xl pointer-events-none" />
+          <div className="relative isolate p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.94] border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.45)] overflow-hidden">
+            <span className="vi-grano opacity-5" aria-hidden="true" />
+            <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
 
             <div className="relative z-10">
               <div className="flex items-center gap-2 mb-1.5">
-                <Icon name="brain" className="w-5 h-5 text-purple-400" />
-                <h2 className="text-base font-bold text-white">
+                <Icon name="brain" className="w-5 h-5 aura-text-primary" />
+                <h2 className="text-base font-anton uppercase tracking-wider text-white">
                   Ley 21 / 66 Días: Automatización de Hábitos
                 </h2>
               </div>
@@ -1014,13 +1064,13 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="p-3 sm:p-3.5 rounded-xl bg-black/40 border border-purple-500/30 space-y-1.5">
+                <div className="p-3 sm:p-3.5 rounded-xl bg-[#040814]/80 border border-white/10 space-y-1.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-purple-300 flex items-center gap-1.5">
                       <Icon name="zap" className="w-3.5 h-3.5 text-purple-400" />
                       Fase 1: 1 a 21 Días
                     </span>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-900/60 text-purple-200 border border-purple-500/40">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-200 border border-purple-500/35">
                       Aura KAI
                     </span>
                   </div>
@@ -1029,13 +1079,13 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
                   </p>
                 </div>
 
-                <div className="p-3 sm:p-3.5 rounded-xl bg-black/40 border border-amber-500/30 space-y-1.5">
+                <div className="p-3 sm:p-3.5 rounded-xl bg-[#040814]/80 border border-white/10 space-y-1.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
                       <Icon name="award" className="w-3.5 h-3.5 text-amber-400" />
                       Fase 2: 22 a 66 Días
                     </span>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-900/60 text-amber-200 border border-amber-500/40">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-200 border border-amber-500/35">
                       Forma Maestra
                     </span>
                   </div>
@@ -1053,11 +1103,14 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
           )}
 
           {/* Dedicated 21/66 Neuroplasticity Progression Curve */}
-          <div className="p-3.5 sm:p-6 rounded-3xl bg-gradient-to-b from-[#0a0f25] to-[#030612] border border-purple-900/60 shadow-[0_10px_30px_rgba(168,85,247,0.1)] flex flex-col relative overflow-hidden">
+          <div className="relative isolate p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.94] border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.45)] flex flex-col overflow-hidden">
+            <span className="vi-grano opacity-5" aria-hidden="true" />
+            <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
+
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-4 relative z-10">
               <div>
-                <h3 className="text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-300 via-fuchsia-300 to-amber-300 flex items-center gap-2 uppercase tracking-widest">
-                  <Icon name="activity" className="w-4 h-4 text-purple-400" />
+                <h3 className="text-sm sm:text-base font-anton text-white flex items-center gap-2 uppercase tracking-wider">
+                  <Icon name="activity" className="w-4 h-4 aura-text-primary" />
                   Curva Cuántica de Neuroplasticidad
                 </h3>
                 <p className="text-xs text-slate-400 mt-0.5">
@@ -1065,7 +1118,7 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
                 </p>
               </div>
 
-              <div className="flex items-center gap-3 text-[10px] sm:text-[11px] font-mono">
+              <div className="flex items-center gap-3 text-[10px] sm:text-[11px] font-mono tabular-nums">
                 <div className="flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-purple-400 shadow-[0_0_8px_rgba(192,132,252,0.8)]" />
                   <span className="text-purple-300 font-bold">21d Maltz</span>
@@ -1078,17 +1131,17 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
             </div>
 
             {/* Guide box */}
-            <div className="p-2 sm:p-2.5 rounded-xl bg-purple-950/30 border border-purple-500/20 text-[10px] sm:text-[11px] text-purple-200 font-mono mb-3 flex items-center gap-2 relative z-10">
-              <Icon name="brain" className="w-4 h-4 text-purple-400 shrink-0" />
+            <div className="p-2.5 rounded-xl bg-[#040814]/80 border border-white/10 text-[10px] sm:text-[11px] text-slate-300 font-mono mb-3 flex items-center gap-2 relative z-10">
+              <Icon name="brain" className="w-4 h-4 aura-text-primary shrink-0" />
               <span className="leading-tight">
-                <strong>Curva de hábito:</strong> 21 días supera la resistencia inicial; 66 días automatiza la conducta.
+                <strong className="text-white">Curva de hábito:</strong> 21 días supera la resistencia inicial; 66 días automatiza la conducta.
               </span>
             </div>
 
             {neuroChartData.length === 0 ? (
-              <div className="py-12 text-center text-slate-400 border border-dashed border-purple-900/40 rounded-2xl bg-black/20">
-                <Icon name="brain" className="w-10 h-10 text-purple-400 mx-auto mb-2 opacity-60" />
-                <p className="text-sm font-bold text-purple-200">No hay hábitos en seguimiento activo</p>
+              <div className="py-12 text-center text-slate-400 border border-dashed border-white/15 rounded-2xl bg-[#040814]/60 relative z-10">
+                <Icon name="brain" className="w-10 h-10 aura-text-primary mx-auto mb-2 opacity-60" />
+                <p className="text-sm font-bold text-white">No hay hábitos en seguimiento activo</p>
                 <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
                   Crea tu primer hábito desde la pestaña de Tareas Diarias para ver tu curva de neuroplasticidad.
                 </p>
@@ -1099,8 +1152,8 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
                   <BarChart data={neuroChartData} margin={{ top: 25, right: 10, left: -20, bottom: 25 }}>
                     <defs>
                       <linearGradient id="streakGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#00f0ff" stopOpacity={1} />
-                        <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.3} />
+                        <stop offset="0%" stopColor={palette.c1} stopOpacity={1} />
+                        <stop offset="100%" stopColor={palette.c2} stopOpacity={0.35} />
                       </linearGradient>
                       <linearGradient id="formedGrad" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="#c084fc" stopOpacity={1} />
@@ -1111,7 +1164,7 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
                         <stop offset="100%" stopColor="#ca8a04" stopOpacity={0.4} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" vertical={false} />
                     <XAxis
                       dataKey="name"
                       stroke="#ffffff"
@@ -1124,7 +1177,7 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
                       domain={[0, (dataMax: number) => Math.max(80, Math.ceil((dataMax + 10) / 10) * 10)]}
                       tick={{ fill: '#64748b', fontSize: 10 }}
                     />
-                    <RechartsTooltip content={<CustomTooltipNeuro />} cursor={{ fill: 'rgba(168, 85, 247, 0.08)' }} />
+                    <RechartsTooltip content={<CustomTooltipNeuro />} cursor={{ fill: 'rgba(255, 255, 255, 0.04)' }} />
                     <ReferenceLine
                       y={21}
                       stroke="#c084fc"
@@ -1161,11 +1214,11 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
           {/* Habit Mastery Showcase Cards */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-fuchsia-400">
+              <div className="flex items-center gap-2 aura-text-primary">
                 <Icon name="award" className="w-5 h-5" />
-                <h3 className="text-sm font-black uppercase tracking-widest">Vitrina de Hábitos Activos</h3>
+                <h3 className="text-sm font-anton uppercase tracking-wider text-white">Vitrina de Hábitos Activos</h3>
               </div>
-              <span className="text-xs font-mono text-slate-400">
+              <span className="text-xs font-mono tabular-nums text-slate-400">
                 {trackedHabits.length} hábitos en seguimiento
               </span>
             </div>
@@ -1186,29 +1239,32 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
                 return (
                   <div
                     key={habit.baseId}
-                    className={`p-4 rounded-2xl border relative overflow-hidden flex flex-col gap-3 transition-all hover:scale-[1.01] ${
+                    className={`relative isolate p-4 rounded-2xl bg-[#040a1a]/[0.94] border shadow-[0_8px_24px_rgba(0,0,0,0.45)] overflow-hidden flex flex-col gap-3 transition-all hover:scale-[1.01] ${
                       isMastered
-                        ? 'bg-gradient-to-r from-[#18150d] to-[#0a0805] border-yellow-500/50 shadow-[0_0_15px_rgba(250,204,21,0.2)]'
+                        ? 'border-amber-400/50'
                         : isFormed
-                        ? 'bg-gradient-to-r from-[#12081f] to-[#05020a] border-purple-500/50 shadow-[0_0_15px_rgba(168,85,247,0.2)]'
-                        : 'bg-gradient-to-r from-[#001a33] to-[#000a14] border-slate-700/50'
+                        ? 'border-purple-400/50'
+                        : 'border-white/10'
                     }`}
                   >
+                    <span className="vi-grano opacity-5" aria-hidden="true" />
+                    <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
+
                     <div className="flex items-start justify-between relative z-10 gap-2">
                       <div className="flex items-center gap-3">
                         <div className={`w-11 h-11 rounded-xl flex items-center justify-center border shrink-0 text-xl relative ${
                           isMastered
-                            ? 'bg-yellow-950/80 border-yellow-400 text-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.6)]'
+                            ? 'bg-amber-500/15 border-amber-400/60 text-amber-300'
                             : isFormed
-                            ? 'bg-purple-950/80 border-purple-400 text-purple-300 shadow-[0_0_10px_rgba(168,85,247,0.4)]'
-                            : 'bg-slate-900 border-slate-700 text-slate-300'
+                            ? 'bg-purple-500/15 border-purple-400/60 text-purple-300'
+                            : 'bg-[#040814]/80 border-white/10 text-slate-200'
                         }`}>
                           {energyDetail.icon}
                         </div>
                         <div>
                           <p className="text-sm font-bold text-white line-clamp-1">{title}</p>
                           <div className="flex items-center gap-2 mt-0.5">
-                            <span className={`text-[10px] font-black uppercase tracking-wider ${isMastered ? 'text-yellow-400' : (isFormed ? 'text-purple-300' : 'text-cyan-400')}`}>
+                            <span className={`text-[10px] font-black uppercase tracking-wider ${isMastered ? 'text-amber-300' : (isFormed ? 'text-purple-300' : 'aura-text-primary')}`}>
                               {isMastered ? '👑 66d Automatizado' : (isFormed ? '⚡ 21d Formado' : '🌱 En Construcción')}
                             </span>
                             <span className="text-[10px] font-mono text-slate-400">• {energyDetail.label}</span>
@@ -1217,12 +1273,12 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
                       </div>
 
                       <div className="text-right shrink-0">
-                        <p className="text-xl font-black text-white font-mono">{currentStreak} <span className="text-xs text-slate-400 font-sans font-bold">Días</span></p>
+                        <p className="text-xl font-black text-white font-mono tabular-nums">{currentStreak} <span className="text-xs text-slate-400 font-sans font-bold">Días</span></p>
                       </div>
                     </div>
 
                     {/* Kai Rewards Status */}
-                    <div className="relative z-10 p-2.5 rounded-xl bg-black/40 border border-white/10 space-y-1.5 text-xs font-mono">
+                    <div className="relative z-10 p-2.5 rounded-xl bg-[#040814]/80 border border-white/10 space-y-1.5 text-xs font-mono tabular-nums">
                       <div className="flex items-center justify-between">
                         <span className="text-slate-400 text-[10px] uppercase font-bold flex items-center gap-1">
                           <Icon name="sparkles" className="w-3 h-3 text-purple-400" /> Aura 21d Kai:
@@ -1232,7 +1288,7 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
                         </span>
                       </div>
 
-                      <div className="flex items-center justify-between border-t border-white/5 pt-1">
+                      <div className="flex items-center justify-between border-t border-white/10 pt-1">
                         <span className="text-slate-400 text-[10px] uppercase font-bold flex items-center gap-1">
                           <Icon name="award" className="w-3 h-3 text-amber-400" /> Maestría 66d Kai:
                         </span>
@@ -1244,14 +1300,17 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
 
                     {/* Progress Bar */}
                     <div className="relative z-10 mt-1">
-                      <div className="flex justify-between text-[10px] font-bold text-slate-400 mb-1">
+                      <div className="flex justify-between text-[10px] font-mono tabular-nums font-bold text-slate-400 mb-1">
                         <span>Progreso de Neuroplasticidad</span>
                         <span>{currentStreak} / {target} Días</span>
                       </div>
-                      <div className="w-full h-2 bg-black rounded-full overflow-hidden border border-slate-800">
+                      <div className="w-full h-2 bg-[#040814]/80 rounded-full overflow-hidden border border-white/10">
                         <div
-                          className={`h-full relative transition-all duration-1000 ${isMastered ? 'bg-yellow-400' : (isFormed ? 'bg-purple-400' : 'bg-cyan-400')}`}
-                          style={{ width: `${progress}%` }}
+                          className={`h-full relative transition-all duration-1000 ${isMastered ? 'bg-amber-400' : (isFormed ? 'bg-purple-400' : '')}`}
+                          style={{
+                            width: `${progress}%`,
+                            ...(!isMastered && !isFormed ? { backgroundColor: palette.c1 } : {}),
+                          }}
                         />
                       </div>
                     </div>
@@ -1277,12 +1336,15 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
           />
 
           {/* Time Range Selector */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-gradient-to-r from-[#0a0f25] to-[#050a18] p-3 rounded-2xl border border-cyan-900/50 shadow-[0_4px_20px_rgba(0,240,255,0.05)] gap-3">
-            <h2 className="text-cyan-400 font-black text-sm px-2 flex items-center gap-2 uppercase tracking-widest">
+          <div className="relative isolate flex flex-col sm:flex-row sm:items-center justify-between bg-[#040a1a]/[0.94] p-3.5 rounded-2xl border border-white/10 shadow-[0_8px_24px_rgba(0,0,0,0.45)] gap-3 overflow-hidden">
+            <span className="vi-grano opacity-5" aria-hidden="true" />
+            <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
+
+            <h2 className="relative z-10 aura-text-primary font-anton text-sm px-2 flex items-center gap-2 uppercase tracking-wider">
               <Icon name="trendingUp" className="w-4 h-4" /> Periodo Operativo de Foco
             </h2>
             <div
-              className="mf-8-menu-chip-group mf-chip-group mf-chip-group--compact mf-chip-group--nowrap mx-auto sm:mx-0 w-full sm:w-auto justify-center"
+              className="relative z-10 mf-8-menu-chip-group mf-chip-group mf-chip-group--compact mf-chip-group--nowrap mx-auto sm:mx-0 w-full sm:w-auto justify-center"
               role="listbox"
               aria-label="Periodo operativo de foco"
             >
@@ -1294,8 +1356,8 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
                   soundFX.playClick();
                   setTimeRange('semanal');
                 }}
-                className={`mf-8-menu-chip-group__chip mf-chip mf-chip--sm flex-1 sm:flex-none ${
-                  timeRange === 'semanal' ? 'mf-8-menu-chip-group__chip--active mf-chip--active' : ''
+                className={`chicle-btn mf-8-menu-chip-group__chip mf-chip mf-chip--sm flex-1 sm:flex-none ${
+                  timeRange === 'semanal' ? 'mf-8-menu-chip-group__chip--active mf-chip--active optic-active-card' : ''
                 }`}
               >
                 <Icon name="calendar" className="w-3.5 h-3.5" />
@@ -1309,8 +1371,8 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
                   soundFX.playClick();
                   setTimeRange('mensual');
                 }}
-                className={`mf-8-menu-chip-group__chip mf-chip mf-chip--sm flex-1 sm:flex-none ${
-                  timeRange === 'mensual' ? 'mf-8-menu-chip-group__chip--active mf-chip--active' : ''
+                className={`chicle-btn mf-8-menu-chip-group__chip mf-chip mf-chip--sm flex-1 sm:flex-none ${
+                  timeRange === 'mensual' ? 'mf-8-menu-chip-group__chip--active mf-chip--active optic-active-card' : ''
                 }`}
               >
                 <Icon name="calendarDays" className="w-3.5 h-3.5" />
@@ -1324,8 +1386,8 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
                   soundFX.playClick();
                   setTimeRange('anual');
                 }}
-                className={`mf-8-menu-chip-group__chip mf-chip mf-chip--sm flex-1 sm:flex-none ${
-                  timeRange === 'anual' ? 'mf-8-menu-chip-group__chip--active mf-chip--active' : ''
+                className={`chicle-btn mf-8-menu-chip-group__chip mf-chip mf-chip--sm flex-1 sm:flex-none ${
+                  timeRange === 'anual' ? 'mf-8-menu-chip-group__chip--active mf-chip--active optic-active-card' : ''
                 }`}
               >
                 <Icon name="award" className="w-3.5 h-3.5" />
@@ -1336,71 +1398,90 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
 
           {/* Quick Metrics in Current Period */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <div className="p-4 rounded-2xl bg-gradient-to-br from-[#0c072b] to-[#050a18] border border-cyan-800/50 shadow-[0_8px_20px_rgba(0,240,255,0.1)] text-white relative overflow-hidden">
-              <div className="flex items-center gap-2 text-white text-[11px] uppercase tracking-wider font-black mb-1">
-                <Icon name="checkCircle" className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Tareas</span>
-              </div>
-              <span className="text-3xl font-black text-cyan-300 font-mono">
-                <AnimatedCounter value={completedTasksCount} />
-              </span>
-              <span className="text-[10px] text-slate-400 mt-1 block font-semibold">EN ESTE PERIODO</span>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-gradient-to-br from-[#0c072b] to-[#050a18] border border-orange-800/50 shadow-[0_8px_20px_rgba(249,115,22,0.1)] text-white relative overflow-hidden">
-              <div className="flex items-center gap-2 text-orange-300 text-[11px] uppercase tracking-wider font-black mb-1">
-                <Icon name="flame" className="w-3.5 h-3.5 text-orange-400" />
-                <span>Racha</span>
-              </div>
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-3xl font-black text-orange-400 font-mono">
-                  <AnimatedCounter value={stats.streakDays} />
+            <div className="relative isolate p-4 rounded-2xl bg-[#040a1a]/[0.94] border border-white/10 shadow-[0_8px_24px_rgba(0,0,0,0.45)] text-white overflow-hidden">
+              <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
+              <div className="relative z-10">
+                <div className="flex items-center gap-2 text-slate-300 text-[11px] font-anton uppercase tracking-wider mb-1">
+                  <Icon name="checkCircle" className="w-3.5 h-3.5 aura-text-primary" />
+                  <span>Tareas</span>
+                </div>
+                <span className="text-3xl font-black aura-text-primary font-mono tabular-nums">
+                  <AnimatedCounter value={completedTasksCount} />
                 </span>
-                <span className="text-xs text-orange-400 font-bold uppercase">días</span>
+                <span className="text-[10px] text-slate-400 mt-1 block font-semibold">EN ESTE PERIODO</span>
               </div>
-              <span className="text-[10px] text-slate-400 mt-1 block font-semibold">ACTIVIDAD CONTINUA</span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-gradient-to-br from-[#0c072b] to-[#050a18] border border-purple-800/50 shadow-[0_8px_20px_rgba(168,85,247,0.1)] text-white relative overflow-hidden">
-              <div className="flex items-center gap-2 text-purple-300 text-[11px] uppercase tracking-wider font-black mb-1">
-                <Icon name="zap" className="w-3.5 h-3.5 text-purple-400" />
-                <span>Nivel</span>
+            <div className="relative isolate p-4 rounded-2xl bg-[#040a1a]/[0.94] border border-white/10 shadow-[0_8px_24px_rgba(0,0,0,0.45)] text-white overflow-hidden">
+              <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
+              <div className="relative z-10">
+                <div className="flex items-center gap-2 text-amber-300 text-[11px] font-anton uppercase tracking-wider mb-1">
+                  <Icon name="flame" className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Racha</span>
+                </div>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-3xl font-black text-amber-400 font-mono tabular-nums">
+                    <AnimatedCounter value={stats.streakDays} />
+                  </span>
+                  <span className="text-xs text-amber-400/90 font-bold uppercase">días</span>
+                </div>
+                <span className="text-[10px] text-slate-400 mt-1 block font-semibold">ACTIVIDAD CONTINUA</span>
               </div>
-              <span className="text-3xl font-black text-purple-400 font-mono">
-                Nv. <AnimatedCounter value={stats.level} />
-              </span>
-              <span className="text-[10px] text-slate-400 mt-1 block font-semibold truncate">{displayRankTitle}</span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-gradient-to-br from-[#0c072b] to-[#050a18] border border-blue-800/50 shadow-[0_8px_20px_rgba(59,130,246,0.1)] text-white relative overflow-hidden">
-              <div className="flex items-center gap-2 text-white text-[11px] uppercase tracking-wider font-black mb-1">
-                <Icon name="timer" className="w-3.5 h-3.5 text-blue-400" />
-                <span>Minutos Foco</span>
-              </div>
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-3xl font-black text-blue-400 font-mono">
-                  <AnimatedCounter value={totalFocusMinutes} />
+            <div className="relative isolate p-4 rounded-2xl bg-[#040a1a]/[0.94] border border-white/10 shadow-[0_8px_24px_rgba(0,0,0,0.45)] text-white overflow-hidden">
+              <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
+              <div className="relative z-10">
+                <div className="flex items-center gap-2 text-slate-300 text-[11px] font-anton uppercase tracking-wider mb-1">
+                  <Icon name="zap" className="w-3.5 h-3.5 aura-text-primary" />
+                  <span>Nivel</span>
+                </div>
+                <span className="text-3xl font-black text-white font-mono tabular-nums">
+                  Nv. <AnimatedCounter value={stats.level} />
                 </span>
-                <span className="text-xs text-blue-400 font-bold uppercase">min</span>
+                <span className="text-[10px] text-slate-400 mt-1 block font-semibold truncate">{displayRankTitle}</span>
               </div>
-              <span className="text-[10px] text-slate-400 mt-1 block font-semibold">TOTAL EN PERIODO</span>
+            </div>
+
+            <div className="relative isolate p-4 rounded-2xl bg-[#040a1a]/[0.94] border border-white/10 shadow-[0_8px_24px_rgba(0,0,0,0.45)] text-white overflow-hidden">
+              <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
+              <div className="relative z-10">
+                <div className="flex items-center gap-2 text-slate-300 text-[11px] font-anton uppercase tracking-wider mb-1">
+                  <Icon name="timer" className="w-3.5 h-3.5 aura-text-primary" />
+                  <span>Minutos Foco</span>
+                </div>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-3xl font-black aura-text-soft font-mono tabular-nums">
+                    <AnimatedCounter value={totalFocusMinutes} />
+                  </span>
+                  <span className="text-xs aura-text-soft font-bold uppercase">min</span>
+                </div>
+                <span className="text-[10px] text-slate-400 mt-1 block font-semibold">TOTAL EN PERIODO</span>
+              </div>
             </div>
           </div>
 
           {/* Focus Flow BarChart */}
-          <div className="p-3.5 sm:p-6 rounded-3xl bg-gradient-to-b from-[#0a0f25] to-[#030612] border border-cyan-900/50 shadow-[0_10px_30px_rgba(0,240,255,0.08)] flex flex-col relative overflow-hidden">
+          <div className="relative isolate p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.94] border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.45)] flex flex-col overflow-hidden">
+            <span className="vi-grano opacity-5" aria-hidden="true" />
+            <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
+
             <div className="flex items-center justify-between mb-3 relative z-10">
-              <h3 className="text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-400 flex items-center gap-2 uppercase tracking-widest">
-                <Icon name="trendingUp" className="w-4 h-4 text-cyan-400" />
+              <h3 className="text-sm sm:text-base font-anton text-white flex items-center gap-2 uppercase tracking-wider">
+                <Icon name="trendingUp" className="w-4 h-4 aura-text-primary" />
                 Flujo de Foco ({timeRange === 'semanal' ? '7 Días' : timeRange === 'mensual' ? '30 Días' : '12 Meses'})
               </h3>
             </div>
 
             {/* Guide box */}
-            <div className="p-2 sm:p-2.5 rounded-xl bg-cyan-950/30 border border-cyan-500/20 text-[10px] sm:text-[11px] text-cyan-200 font-mono mb-3 flex items-center gap-2 relative z-10">
-              <Icon name="timer" className="w-4 h-4 text-cyan-400 shrink-0" />
+            <div className="p-2.5 rounded-xl bg-[#040814]/80 border border-white/10 text-[10px] sm:text-[11px] text-slate-300 font-mono mb-3 flex items-center gap-2 relative z-10">
+              <Icon name="timer" className="w-4 h-4 aura-text-primary shrink-0" />
               <span className="leading-tight">
-                <strong>¿Cómo interpretarlo?</strong> Muestra tus minutos de concentración profunda acumulados por día. La línea discontinua naranja marca tu objetivo de 60 min.
+                <strong className="text-white">¿Cómo interpretarlo?</strong> Muestra tus minutos de concentración profunda acumulados por día. La línea discontinua naranja marca tu objetivo de 60 min.
               </span>
             </div>
 
@@ -1409,12 +1490,12 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
                 <BarChart data={chartData} margin={{ top: 15, right: 10, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="barGradientFlow" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#00f0ff" stopOpacity={1} />
-                      <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.3} />
+                      <stop offset="0%" stopColor={palette.c1} stopOpacity={1} />
+                      <stop offset="100%" stopColor={palette.c2} stopOpacity={0.35} />
                     </linearGradient>
                     <linearGradient id="barGradientFlowToday" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#39ff14" stopOpacity={1} />
-                      <stop offset="100%" stopColor="#10b981" stopOpacity={0.3} />
+                      <stop offset="0%" stopColor="#34d399" stopOpacity={1} />
+                      <stop offset="100%" stopColor="#10b981" stopOpacity={0.35} />
                     </linearGradient>
                   </defs>
                   <XAxis
@@ -1425,12 +1506,12 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
                     tickLine={false}
                     dy={10}
                   />
-                  <RechartsTooltip content={<CustomTooltipBar />} cursor={{ fill: 'rgba(59, 130, 246, 0.1)' }} />
+                  <RechartsTooltip content={<CustomTooltipBar />} cursor={{ fill: 'rgba(255, 255, 255, 0.04)' }} />
                   <ReferenceLine
                     y={60}
                     stroke="#f97316"
                     strokeDasharray="3 3"
-                    strokeOpacity={0.6}
+                    strokeOpacity={0.7}
                     strokeWidth={2}
                     label={{ position: 'insideTopLeft', value: 'META: 60M', fill: '#f97316', fontSize: 10, fontWeight: 900, dy: -10 }}
                   />
@@ -1479,71 +1560,79 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
           {/* Productivity Pie Chart & Filtered Time Audit */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Pie Chart */}
-            <div className="p-3.5 sm:p-5 rounded-3xl bg-gradient-to-b from-[#0a0f25] to-[#030612] border border-pink-900/40 shadow-[0_10px_30px_rgba(236,72,153,0.08)] flex flex-col items-center">
-              <h3 className="text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-rose-500 uppercase tracking-widest mb-1 self-start flex items-center gap-2">
-                <Icon name="pieChart" className="w-4 h-4 text-pink-400" />
-                Distribución de Productividad
-              </h3>
-              <p className="text-[10px] text-slate-400 mb-2 self-start font-mono">
-                Tareas completadas según su categoría ({timeRange}).
-              </p>
+            <div className="relative isolate p-4 sm:p-5 rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.94] border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.45)] flex flex-col items-center overflow-hidden">
+              <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
 
-              {pieData.length === 0 ? (
-                <div className="py-12 text-center text-slate-400">
-                  <p className="text-xs">No hay tareas completadas en este periodo ({timeRange}).</p>
-                </div>
-              ) : (
-                <div className="w-full h-[200px] sm:h-[220px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={pieData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={45}
-                        outerRadius={75}
-                        paddingAngle={5}
-                        dataKey="value"
-                      >
-                        {pieData.map((_, index) => (
-                          <Cell
-                            key={`pie-cell-${index}`}
-                            fill={PIE_GRADIENTS[index % PIE_GRADIENTS.length].start}
-                          />
-                        ))}
-                      </Pie>
-                      <RechartsTooltip content={<CustomTooltipPie />} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
+              <div className="relative z-10 w-full flex flex-col items-center">
+                <h3 className="text-sm font-anton text-white uppercase tracking-wider mb-1 self-start flex items-center gap-2">
+                  <Icon name="pieChart" className="w-4 h-4 aura-text-primary" />
+                  Distribución de Productividad
+                </h3>
+                <p className="text-[10px] text-slate-400 mb-2 self-start font-mono">
+                  Tareas completadas según su categoría ({timeRange}).
+                </p>
+
+                {pieData.length === 0 ? (
+                  <div className="py-12 text-center text-slate-400">
+                    <p className="text-xs">No hay tareas completadas en este periodo ({timeRange}).</p>
+                  </div>
+                ) : (
+                  <div className="w-full h-[200px] sm:h-[220px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={pieData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={45}
+                          outerRadius={75}
+                          paddingAngle={5}
+                          dataKey="value"
+                        >
+                          {pieData.map((_, index) => (
+                            <Cell
+                              key={`pie-cell-${index}`}
+                              fill={dynamicPieColors[index % dynamicPieColors.length]}
+                            />
+                          ))}
+                        </Pie>
+                        <RechartsTooltip content={<CustomTooltipPie />} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Filtered Deep Work Time Audit */}
-            <div className="p-3.5 sm:p-5 rounded-3xl bg-[#001830] border border-cyan-900/40 flex flex-col justify-between">
-              <div>
-                <h3 className="text-sm font-black text-cyan-400 uppercase tracking-widest mb-1 flex items-center gap-2">
-                  <Icon name="timer" className="w-4 h-4 text-cyan-400" />
+            <div className="relative isolate p-4 sm:p-5 rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.94] border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.45)] flex flex-col justify-between overflow-hidden">
+              <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
+
+              <div className="relative z-10">
+                <h3 className="text-sm font-anton text-white uppercase tracking-wider mb-1 flex items-center gap-2">
+                  <Icon name="timer" className="w-4 h-4 aura-text-primary" />
                   Auditoría Deep Work ({timeRange})
                 </h3>
                 <p className="text-[10px] text-slate-400 mb-2 font-mono">
                   Minutos totales de concentración por proyecto o categoría.
                 </p>
-                <p className="text-xl sm:text-2xl font-black text-white font-mono mb-3">
+                <p className="text-xl sm:text-2xl font-black text-white font-mono tabular-nums mb-3">
                   {Math.floor(filteredTimeAudit.totalMinutes / 60)}h {filteredTimeAudit.totalMinutes % 60}m
                 </p>
               </div>
 
-              <div className="space-y-2 max-h-36 overflow-y-auto">
+              <div className="relative z-10 space-y-2 max-h-36 overflow-y-auto scrollbar-thin">
                 {Object.entries(filteredTimeAudit.audit).length === 0 ? (
                   <p className="text-xs text-slate-400">Sin sesiones de foco en este periodo.</p>
                 ) : (
                   Object.entries(filteredTimeAudit.audit).map(([cat, mins]) => {
                     const pct = filteredTimeAudit.totalMinutes > 0 ? Math.round((mins / filteredTimeAudit.totalMinutes) * 100) : 0;
                     return (
-                      <div key={cat} className="flex items-center justify-between text-xs font-mono">
+                      <div key={cat} className="flex items-center justify-between text-xs font-mono tabular-nums px-2.5 py-1.5 rounded-xl bg-[#040814]/80 border border-white/10">
                         <span className="text-slate-300 uppercase truncate">{cat}</span>
-                        <span className="text-cyan-300 font-bold">{mins}m ({pct}%)</span>
+                        <span className="aura-text-soft font-bold">{mins}m ({pct}%)</span>
                       </div>
                     );
                   })
@@ -1553,32 +1642,37 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
           </div>
 
           {/* COLLAPSIBLE 365-DAY ANNUAL HEATMAP ACCORDION */}
-          <div className="p-4 rounded-3xl bg-[#030712] border border-cyan-500/30">
-            <button
-              type="button"
-              onClick={() => {
-                soundFX.playClick();
-                setIsAnnualHeatmapOpen(!isAnnualHeatmapOpen);
-              }}
-              className="w-full flex items-center justify-between text-xs font-anton uppercase tracking-wider text-cyan-300 hover:text-white transition-colors cursor-pointer"
-            >
-              <span className="flex items-center gap-2">
-                <Icon name="activity" className="w-4 h-4 text-cyan-400" />
-                Radiografía Anual de Consistencia Cuántica (Heatmap 365 Días)
-              </span>
-              {isAnnualHeatmapOpen ? <Icon name="chevronUp" className="w-4 h-4" /> : <Icon name="chevronDown" className="w-4 h-4" />}
-            </button>
+          <div className="relative isolate p-4 rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.94] border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.45)] overflow-hidden">
+            <span className="vi-grano opacity-5" aria-hidden="true" />
+            <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
 
-            {isAnnualHeatmapOpen && (
-              <div className="mt-4 pt-4 border-t border-cyan-500/20 animate-fadeIn">
-                <IntelligenceOverlay
-                  stats={stats}
-                  onUpdateStats={onUpdateStats}
-                  tasksByDate={tasksByDate}
-                  pomodoroSessions={pomodoroSessions}
-                />
-              </div>
-            )}
+            <div className="relative z-10">
+              <button
+                type="button"
+                onClick={() => {
+                  soundFX.playClick();
+                  setIsAnnualHeatmapOpen(!isAnnualHeatmapOpen);
+                }}
+                className="chicle-btn w-full flex items-center justify-between text-xs font-anton uppercase tracking-wider aura-text-soft hover:text-white transition-colors cursor-pointer"
+              >
+                <span className="flex items-center gap-2">
+                  <Icon name="activity" className="w-4 h-4 aura-text-primary" />
+                  Radiografía Anual de Consistencia Cuántica (Heatmap 365 Días)
+                </span>
+                {isAnnualHeatmapOpen ? <Icon name="chevronUp" className="w-4 h-4" /> : <Icon name="chevronDown" className="w-4 h-4" />}
+              </button>
+
+              {isAnnualHeatmapOpen && (
+                <div className="mt-4 pt-4 border-t border-white/10 animate-fadeIn">
+                  <IntelligenceOverlay
+                    stats={stats}
+                    onUpdateStats={onUpdateStats}
+                    tasksByDate={tasksByDate}
+                    pomodoroSessions={pomodoroSessions}
+                  />
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -1588,7 +1682,7 @@ interface TrackedHabitRecord extends Partial<HabitMasteryRecord> {
       {/* ================================================================= */}
       {activeSubTab === 'finance' && (
         <div className="space-y-4 sm:space-y-6 animate-fadeIn">
-          <Suspense fallback={<div className="p-8 text-center text-xs font-mono text-cyan-400">Cargando panel financiero...</div>}>
+          <Suspense fallback={<div className="p-8 text-center text-xs font-mono aura-text-primary">Cargando panel financiero...</div>}>
             <FinanceDashboard expenses={expenses} setExpenses={setExpenses} tasksByDate={tasksByDate} />
           </Suspense>
         </div>

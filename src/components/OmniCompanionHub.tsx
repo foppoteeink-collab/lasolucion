@@ -45,11 +45,11 @@ const OmniPomodoroBadge: React.FC<{
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
-      className="mb-1 px-2.5 py-1 rounded-full bg-cyan-950/95 border border-cyan-400 text-[9px] font-mono font-bold text-cyan-300 shadow-[0_0_10px_rgba(0,240,255,0.4)] hover:bg-cyan-900/90 hover:border-cyan-300 hover:text-white flex items-center gap-1.5 shrink-0 cursor-pointer transition"
+      className="mb-1 px-2.5 py-1 rounded-full bg-[#040a1a]/[0.96] border aura-border-primary text-[9px] font-mono font-bold aura-text-primary aura-glow-subtle hover:text-white flex items-center gap-1.5 shrink-0 cursor-pointer transition"
       title={isOpen ? 'Minimizar temporizador' : 'Abrir temporizador de foco'}
     >
-      <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping shrink-0" />
-      <span>FOCO: {formattedTime}</span>
+      <span className="w-1.5 h-1.5 rounded-full aura-bg-primary animate-ping shrink-0" />
+      <span className="tabular-nums">FOCO: {formattedTime}</span>
     </motion.button>
   );
 });

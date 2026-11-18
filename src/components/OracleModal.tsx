@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Icon } from './common/Icon';
 import { CustomHabit, TaskItem, TaskCategory } from '../types';
@@ -150,13 +151,18 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
   };
 
   useEffect(() => {
+    if (!isOpen) return;
+    document.body.classList.add('modal-open-hide-floating');
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
+      if (e.key === 'Escape') {
         onClose();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.classList.remove('modal-open-hide-floating');
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, [isOpen, onClose]);
 
   const handleAutoOrganizeCurrentDay = async () => {
@@ -677,36 +683,39 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
     return diagnostic.conflicts.find(c => c.idA === habitId || c.idB === habitId);
   };
 
-  if (!isOpen) return null;
+  if (typeof document === 'undefined') return null;
 
-  return (
+  return createPortal(
     <AnimatePresence>
+      {isOpen && (
       <motion.div 
-        className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/88"
+        className="fixed inset-0 z-[170] portal-modal-root bg-black/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
+        onClick={onClose}
       >
         <motion.div 
           role="dialog"
           aria-modal="true"
           aria-labelledby="oracle-modal-title"
-          className="bg-[#030712]/[0.98] border border-cyan-500/35 w-full max-w-2xl rounded-2xl sm:rounded-3xl shadow-[0_0_50px_rgba(0,240,255,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] overflow-hidden flex flex-col max-h-[90dvh] sm:max-h-[88vh] relative text-left"
+          className="relative isolate bg-[#030712]/[0.98] border border-white/10 w-full max-w-2xl rounded-2xl sm:rounded-3xl shadow-[0_24px_64px_rgba(0,0,0,0.75)] overflow-hidden flex flex-col max-h-[90dvh] sm:max-h-[88vh] text-left"
           initial={{ scale: 0.95, y: 15 }}
           animate={{ scale: 1, y: 0 }}
           exit={{ scale: 0.95, y: 15 }}
+          onClick={(e) => e.stopPropagation()}
         >
           {/* Micrograno táctil Moxen Vidrio */}
           <span className="vi-grano opacity-5" aria-hidden="true" />
 
           {/* Filamento especular superior */}
-          <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent pointer-events-none" />
+          <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
 
           {/* Header limpio y directo */}
-          <div className="bg-[#040814]/90 p-4 sm:p-5 border-b border-white/10 flex justify-between items-center gap-3 relative z-10">
+          <div className="bg-[#040814]/[0.96] p-4 sm:p-5 border-b border-white/10 flex justify-between items-center gap-3 relative z-10">
             <div className="flex items-center gap-3 flex-wrap min-w-0">
-              <div className="p-2 rounded-xl bg-cyan-500/15 border border-cyan-400/40 text-cyan-300 shadow-[0_0_14px_rgba(0,240,255,0.3)] shrink-0">
-                <Icon name="brain" className="w-5 h-5 text-cyan-300" />
+              <div className="p-2 rounded-xl aura-bg-soft border aura-border-subtle aura-text-primary aura-glow-subtle shrink-0">
+                <Icon name="brain" className="w-5 h-5 aura-text-primary" />
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -719,10 +728,10 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                       soundFX.playClick();
                       setShowKeyInput(!showKeyInput);
                     }}
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-[10px] font-mono font-bold cursor-pointer transition-all active:scale-95 ${
+                    className={`chicle-btn inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-[10px] font-mono font-bold cursor-pointer transition-all ${
                       isKeyConfigured
                         ? 'bg-emerald-950/80 border-emerald-500/50 text-emerald-300 hover:bg-emerald-900/60'
-                        : 'bg-slate-900 border-white/15 text-slate-300 hover:border-cyan-400/50 hover:text-cyan-300'
+                        : 'bg-white/[0.04] border-white/15 text-slate-300 hover:aura-border-subtle hover:text-white'
                     }`}
                     title={isKeyConfigured ? 'Cambiar o quitar tu clave de Gemini' : 'Conecta tu clave gratuita de Gemini para usar IA'}
                   >
@@ -743,7 +752,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                 onClose();
               }}
               aria-label="Cerrar Oráculo Neural KAI"
-              className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 border border-transparent hover:border-white/10 transition-all cursor-pointer active:scale-95 shrink-0"
+              className="chicle-btn w-9 h-9 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 text-slate-300 hover:text-white flex items-center justify-center cursor-pointer shrink-0"
               title="Cerrar (Esc)"
             >
               <Icon name="x" className="w-5 h-5" />
@@ -754,11 +763,11 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
           <div className="p-4 sm:p-5 overflow-y-auto custom-scrollbar relative z-10 flex-1 space-y-4">
             {/* Panel desplegable de Clave Gemini (solo visible si el usuario lo abre) */}
             {showKeyInput && (
-              <div className="bg-[#030e1d] border border-cyan-500/50 rounded-2xl p-4 shadow-[0_0_25px_rgba(0,240,255,0.18)] relative">
+              <div className="bg-[#040814]/80 border aura-border-subtle rounded-2xl p-4 aura-glow-subtle relative">
                 <div className="flex items-start justify-between gap-3 mb-2">
                   <div className="flex items-center gap-2">
-                    <div className="p-1.5 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-400/40">
-                      <Icon name="sparkles" className="w-4 h-4 text-cyan-300" />
+                    <div className="p-1.5 rounded-lg aura-bg-soft aura-text-primary border aura-border-subtle">
+                      <Icon name="sparkles" className="w-4 h-4 aura-text-primary" />
                     </div>
                     <div>
                       <h4 className="text-xs sm:text-sm font-bold text-white">
@@ -786,12 +795,12 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                       value={inputKey}
                       onChange={(e) => setInputKey(e.target.value)}
                       placeholder="AIzaSy... (Pega tu clave de Google Gemini aquí)"
-                      className="w-full bg-black/80 border border-white/20 focus:border-cyan-400 rounded-xl px-3 py-2 text-xs text-white font-mono placeholder:text-slate-500 outline-none pr-14"
+                      className="w-full bg-black/60 border border-white/15 focus:aura-border-primary rounded-xl px-3 py-2 text-xs text-white font-mono placeholder:text-slate-500 outline-none pr-14"
                     />
                     <button
                       type="button"
                       onClick={() => setShowKeyText(!showKeyText)}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-cyan-400 font-mono hover:text-cyan-300 cursor-pointer"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] aura-text-primary font-mono hover:underline cursor-pointer"
                     >
                       {showKeyText ? 'Ocultar' : 'Ver'}
                     </button>
@@ -817,7 +826,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                         setTimeout(() => setKeySavedToast(null), 2000);
                       }
                     }}
-                    className="px-4 py-2 bg-gradient-to-r from-cyan-400 to-emerald-400 text-slate-950 font-anton text-xs uppercase tracking-wider rounded-xl hover:opacity-95 cursor-pointer shadow-[0_0_12px_rgba(0,240,255,0.35)] active:scale-95 shrink-0"
+                    className="chicle-btn aura-btn-gradient optic-active-card px-4 py-2 font-anton text-xs uppercase tracking-wider rounded-xl cursor-pointer shrink-0"
                   >
                     Guardar
                   </button>
@@ -835,7 +844,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                     href="https://aistudio.google.com/app/apikey"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-cyan-400 hover:text-cyan-300 hover:underline inline-flex items-center gap-1 font-medium"
+                    className="aura-text-primary hover:underline inline-flex items-center gap-1 font-medium"
                   >
                     ↗ Consigue una clave gratuita en Google AI Studio
                   </a>
@@ -858,7 +867,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                     <button
                       type="button"
                       onClick={handleUndoInjection}
-                      className="w-full sm:w-auto shrink-0 px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl text-xs font-mono font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-95"
+                      className="chicle-btn optic-active-card w-full sm:w-auto shrink-0 px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl text-xs font-mono font-bold flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                       <Icon name="rotateCcw" className="w-3.5 h-3.5" />
                       <span>Restaurar anterior</span>
@@ -867,11 +876,11 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                 )}
 
                 {/* Acción rápida en 1 línea + Switch visible IA Gemini / Motor Local */}
-                <div className="bg-[#020712]/90 border border-white/10 rounded-2xl p-3 space-y-2.5">
+                <div className="bg-[#040814]/80 border border-white/10 rounded-2xl p-3 space-y-2.5">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-white/10">
                     <div className="text-xs text-slate-300 font-sans">
                       {currentDayAgendaTasks.length > 0 ? (
-                        <span>Tienes <strong className="text-cyan-300">{currentDayAgendaTasks.length} tareas hoy</strong>: acomódalas sin cruces en 1 clic.</span>
+                        <span>Tienes <strong className="aura-text-soft font-mono tabular-nums">{currentDayAgendaTasks.length} tareas hoy</strong>: acomódalas sin cruces en 1 clic.</span>
                       ) : (
                         <span>¿Sin ganas de escribir? Genera un día equilibrado al instante.</span>
                       )}
@@ -879,9 +888,9 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                     <button
                       type="button"
                       onClick={handleAutoOrganizeCurrentDay}
-                      className="shrink-0 px-3.5 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-emerald-400 hover:opacity-95 text-slate-950 font-anton text-xs uppercase tracking-wider shadow-[0_0_16px_rgba(0,240,255,0.28)] flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-95"
+                      className="chicle-btn aura-btn-gradient optic-active-card shrink-0 px-3.5 py-2 rounded-xl font-anton text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer"
                     >
-                      <Icon name="sparkles" className="w-3.5 h-3.5 text-slate-950" />
+                      <Icon name="sparkles" className="w-3.5 h-3.5" />
                       <span>Acomodar tareas de hoy</span>
                     </button>
                   </div>
@@ -894,7 +903,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                     <div
                       role="group"
                       aria-label="Elegir motor de inteligencia para crear la agenda"
-                      className="flex items-center gap-1 bg-black/60 p-1 rounded-xl border border-white/10"
+                      className="flex items-center gap-1 bg-black/50 p-1 rounded-xl border border-white/10"
                     >
                       <button
                         type="button"
@@ -908,9 +917,9 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                             setShowKeyInput(true);
                           }
                         }}
-                        className={`flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                        className={`chicle-btn flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                           enginePreference === 'ai'
-                            ? 'bg-purple-500 text-white shadow-[0_0_12px_rgba(168,85,247,0.45)]'
+                            ? 'aura-bg-primary optic-active-card'
                             : 'text-slate-400 hover:text-white'
                         }`}
                       >
@@ -932,9 +941,9 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                           setEnginePreference('local');
                           try { localStorage.setItem('kai_oracle_engine_preference', 'local'); } catch {}
                         }}
-                        className={`flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                        className={`chicle-btn flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                           enginePreference === 'local'
-                            ? 'bg-emerald-500 text-slate-950 shadow-[0_0_12px_rgba(16,185,129,0.4)]'
+                            ? 'bg-emerald-500 text-slate-950 optic-active-card shadow-[0_0_12px_rgba(16,185,129,0.4)]'
                             : 'text-slate-400 hover:text-white'
                         }`}
                       >
@@ -961,10 +970,10 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                       setError(null);
                       setActiveTab('wizard');
                     }}
-                    className={`flex-1 min-w-[100px] py-2 px-3 rounded-xl text-xs font-anton uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 ${
+                    className={`chicle-btn flex-1 min-w-[100px] py-2 px-3 rounded-xl text-xs font-anton uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                       activeTab === 'wizard'
-                        ? 'bg-gradient-to-r from-cyan-400 to-emerald-400 text-slate-950 font-bold shadow-[0_0_15px_rgba(0,240,255,0.35)]'
-                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                        ? 'aura-btn-gradient optic-active-card'
+                        : 'text-slate-400 hover:text-white hover:bg-white/[0.05]'
                     }`}
                   >
                     <Icon name="sparkles" className="w-3.5 h-3.5" />
@@ -981,10 +990,10 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                       setError(null);
                       setActiveTab('prompt');
                     }}
-                    className={`flex-1 min-w-[100px] py-2 px-3 rounded-xl text-xs font-anton uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 ${
+                    className={`chicle-btn flex-1 min-w-[100px] py-2 px-3 rounded-xl text-xs font-anton uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                       activeTab === 'prompt'
-                        ? 'bg-cyan-400 text-slate-950 font-bold shadow-[0_0_15px_rgba(0,240,255,0.35)]'
-                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                        ? 'aura-btn-gradient optic-active-card'
+                        : 'text-slate-400 hover:text-white hover:bg-white/[0.05]'
                     }`}
                   >
                     <Icon name="edit" className="w-3.5 h-3.5" />
@@ -1001,10 +1010,10 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                       setError(null);
                       setActiveTab('templates');
                     }}
-                    className={`flex-1 min-w-[100px] py-2 px-3 rounded-xl text-xs font-anton uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 ${
+                    className={`chicle-btn flex-1 min-w-[100px] py-2 px-3 rounded-xl text-xs font-anton uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                       activeTab === 'templates'
-                        ? 'bg-cyan-400 text-slate-950 font-bold shadow-[0_0_15px_rgba(0,240,255,0.35)]'
-                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                        ? 'aura-btn-gradient optic-active-card'
+                        : 'text-slate-400 hover:text-white hover:bg-white/[0.05]'
                     }`}
                   >
                     <Icon name="zap" className="w-3.5 h-3.5" />
@@ -1066,7 +1075,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                                   setShowPromptHelp(!showPromptHelp);
                                 }}
                                 aria-expanded={showPromptHelp}
-                                className="px-2 py-0.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 text-[11px] font-sans transition-colors cursor-pointer"
+                                className="chicle-btn px-2 py-0.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 text-slate-300 text-[11px] font-sans transition-colors cursor-pointer"
                               >
                                 {showPromptHelp ? 'Ocultar ayuda' : '? Cómo escribirlo'}
                               </button>
@@ -1079,12 +1088,12 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                                     `LUNES A VIERNES:\n07:00 a 08:00: Desayuno y preparación\n08:30 a 13:00: Trabajo principal\n13:00 a 14:00: Almuerzo y descanso\n14:00 a 17:30: Proyectos y pendientes\n18:30 a 19:30: Entrenamiento\n20:30 a 22:00: Lectura y tiempo libre\n\nSÁBADOS:\n09:30 a 11:30: Deporte al aire libre\n12:00 a 14:00: Limpieza y compras`
                                   );
                                 }}
-                                className="px-2.5 py-0.5 rounded-lg bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-500/40 text-cyan-300 text-[11px] font-mono font-bold transition-all cursor-pointer active:scale-95"
+                                className="chicle-btn px-2.5 py-0.5 rounded-lg aura-bg-soft border aura-border-subtle aura-text-soft text-[11px] font-mono font-bold transition-all cursor-pointer"
                               >
                                 Cargar ejemplo
                               </button>
                               <span
-                                className={`text-[11px] font-mono ${
+                                className={`text-[11px] font-mono tabular-nums ${
                                   prompt.length >= 10000
                                     ? 'text-rose-400 font-bold'
                                     : prompt.length >= 8500
@@ -1099,12 +1108,12 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
 
                           {/* Ayuda breve colapsable (cerrada por defecto para no saturar) */}
                           {showPromptHelp && (
-                            <div className="bg-[#050d1a] border border-cyan-500/30 rounded-xl p-3 text-xs text-slate-300 space-y-1.5 font-sans leading-relaxed">
+                            <div className="bg-[#040814]/80 border aura-border-subtle rounded-xl p-3 text-xs text-slate-300 space-y-1.5 font-sans leading-relaxed">
                               <p>
-                                • <strong className="text-cyan-300">Con horas:</strong> escribe por ejemplo <code className="text-cyan-300">Lunes a viernes 09:00 a 17:00 trabajo</code>.
+                                • <strong className="aura-text-soft">Con horas:</strong> escribe por ejemplo <code className="aura-text-soft">Lunes a viernes 09:00 a 17:00 trabajo</code>.
                               </p>
                               <p>
-                                • <strong className="text-cyan-300">Si cambias de días:</strong> separa por títulos como <code className="text-cyan-300">LUNES</code>, <code className="text-cyan-300">SÁBADOS</code> o <code className="text-cyan-300">DOMINGOS</code>.
+                                • <strong className="aura-text-soft">Si cambias de días:</strong> separa por títulos como <code className="aura-text-soft">LUNES</code>, <code className="aura-text-soft">SÁBADOS</code> o <code className="aura-text-soft">DOMINGOS</code>.
                               </p>
                               <p>
                                 • <strong className="text-purple-300">IA Gemini vs Local:</strong> usa <strong>IA Gemini</strong> si pegas notas largas o párrafos en texto corrido; usa <strong>Motor Local</strong> si ya está en lista por hora y lo quieres al instante.
@@ -1121,12 +1130,12 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                             }}
                             maxLength={10000}
                             placeholder="Ejemplo: De lunes a viernes me levanto a las 07:00, trabajo de 09:00 a 17:00 con almuerzo a la 13:00. Entreno de 18:30 a 19:30. Los sábados limpio de 10:00 a 12:00 y descanso en la tarde..."
-                            className="w-full h-48 min-h-[11rem] max-h-[24rem] bg-[#03070d] border border-cyan-950 focus:border-cyan-400 rounded-xl p-3.5 text-sm text-slate-100 placeholder-slate-500 resize-y outline-none transition-colors font-sans leading-relaxed"
+                            className="w-full h-48 min-h-[11rem] max-h-[24rem] bg-black/50 border border-white/15 focus:aura-border-primary rounded-xl p-3.5 text-sm text-white placeholder-slate-500 resize-y outline-none transition-colors font-sans leading-relaxed"
                           />
                         </div>
 
                         {/* Nivel de detalle en 1 línea compacta */}
-                        <div className="flex flex-wrap items-center justify-between gap-2 bg-[#03070d] border border-white/10 rounded-xl px-3 py-2">
+                        <div className="flex flex-wrap items-center justify-between gap-2 bg-[#040814]/80 border border-white/10 rounded-xl px-3 py-2">
                           <span className="text-xs text-slate-400 font-sans">
                             ¿Cómo prefieres organizarlo?
                           </span>
@@ -1138,10 +1147,10 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                                 soundFX.playClick();
                                 setScheduleMode('master_blocks');
                               }}
-                              className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
+                              className={`chicle-btn px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
                                 scheduleMode === 'master_blocks'
-                                  ? 'bg-cyan-500 text-slate-950'
-                                  : 'bg-white/5 text-slate-400 hover:text-white'
+                                  ? 'aura-bg-primary optic-active-card'
+                                  : 'bg-white/[0.04] text-slate-400 hover:text-white border border-white/10'
                               }`}
                             >
                               Resumido (4–6 bloques)
@@ -1153,10 +1162,10 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                                 soundFX.playClick();
                                 setScheduleMode('detailed');
                               }}
-                              className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
+                              className={`chicle-btn px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
                                 scheduleMode === 'detailed'
-                                  ? 'bg-cyan-500 text-slate-950'
-                                  : 'bg-white/5 text-slate-400 hover:text-white'
+                                  ? 'aura-bg-primary optic-active-card'
+                                  : 'bg-white/[0.04] text-slate-400 hover:text-white border border-white/10'
                               }`}
                             >
                               Detallado (cada tarea)
@@ -1168,11 +1177,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                           type="button"
                           onClick={() => handleGenerate()}
                           disabled={isLoading}
-                          className={`w-full py-3.5 text-slate-950 font-anton uppercase tracking-widest rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer disabled:bg-slate-800 disabled:text-slate-500 ${
-                            enginePreference === 'ai'
-                              ? 'bg-gradient-to-r from-purple-400 via-cyan-400 to-emerald-400 hover:opacity-95 shadow-[0_0_24px_rgba(168,85,247,0.3)]'
-                              : 'bg-gradient-to-r from-cyan-400 to-emerald-400 hover:opacity-95 shadow-[0_0_24px_rgba(6,182,212,0.3)]'
-                          }`}
+                          className="chicle-btn aura-btn-gradient optic-active-card w-full py-3.5 font-anton uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40"
                         >
                           <Icon name={enginePreference === 'ai' ? 'brain' : 'zap'} className="w-5 h-5" />
                           <span>
@@ -1187,16 +1192,16 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                 )}
 
                 {error && (
-                  <div className="bg-red-950/50 border border-red-500/50 rounded-xl p-3 space-y-2">
+                  <div className="bg-rose-950/50 border border-rose-500/50 rounded-xl p-3 space-y-2">
                     <div className="flex items-start gap-2.5">
-                      <Icon name="alertTriangle" className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
-                      <p className="text-xs text-red-200 font-sans leading-relaxed">{error}</p>
+                      <Icon name="alertTriangle" className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                      <p className="text-xs text-rose-200 font-sans leading-relaxed">{error}</p>
                     </div>
                     {prompt.trim().length > 0 && (
                       <button
                         type="button"
                         onClick={() => handleGenerate()}
-                        className="w-full py-2 bg-red-900/60 hover:bg-red-800/80 border border-red-500/40 text-red-200 text-xs font-mono font-bold rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                        className="chicle-btn w-full py-2 bg-rose-900/60 hover:bg-rose-800/80 border border-rose-500/40 text-rose-200 text-xs font-mono font-bold rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer"
                       >
                         <Icon name="rotateCcw" className="w-3.5 h-3.5" />
                         <span>Reintentar ahora</span>
@@ -1233,7 +1238,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                         <Icon name="checkCircle" className="w-4 h-4 text-emerald-400" />
                         Tu borrador de agenda
                       </h4>
-                      <span className="px-2 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 text-[11px] font-mono font-bold">
+                      <span className="px-2 py-0.5 rounded-full aura-bg-soft border aura-border-subtle aura-text-soft text-[11px] font-mono tabular-nums font-bold">
                         {suggestedHabits.length} bloques
                       </span>
                       <span className={`px-2 py-0.5 rounded-full border text-[10px] font-mono font-bold flex items-center gap-1 ${
@@ -1264,7 +1269,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                       type="button"
                       onClick={handleAddNewManualBlock}
                       aria-label="Añadir un bloque de horario manualmente"
-                      className="px-2.5 py-1 bg-cyan-500 hover:bg-cyan-400 text-slate-950 rounded-lg text-xs font-mono font-bold flex items-center gap-1 cursor-pointer transition-all active:scale-95"
+                      className="chicle-btn aura-bg-primary optic-active-card px-2.5 py-1 rounded-lg text-xs font-mono font-bold flex items-center gap-1 cursor-pointer"
                       title="Añadir una tarea manual"
                     >
                       <Icon name="plus" className="w-3.5 h-3.5" />
@@ -1275,10 +1280,10 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                         type="button"
                         onClick={handleSynthesizeExisting}
                         aria-label="Agrupar tareas repetidas o cortas en menos bloques"
-                        className="px-2.5 py-1 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white rounded-lg text-xs font-mono flex items-center gap-1 cursor-pointer transition-all active:scale-95"
+                        className="chicle-btn px-2.5 py-1 bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 text-slate-300 hover:text-white rounded-lg text-xs font-mono flex items-center gap-1 cursor-pointer"
                         title="Agrupar tareas en menos bloques"
                       >
-                        <Icon name="layers" className="w-3.5 h-3.5 text-cyan-400" />
+                        <Icon name="layers" className="w-3.5 h-3.5 aura-text-primary" />
                         <span>Agrupar bloques</span>
                       </button>
                     )}
@@ -1298,7 +1303,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
 
                 <div className="space-y-3">
                   {/* Selector de días con contador de bloques por día */}
-                  <div className="flex bg-[#03070d] border border-white/10 rounded-xl p-1 overflow-x-auto custom-scrollbar gap-1">
+                  <div className="flex bg-[#040814]/80 border border-white/10 rounded-xl p-1 overflow-x-auto no-scrollbar gap-1">
                     {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map((label, idx) => {
                       const dayNum = idx === 6 ? 0 : idx + 1;
                       const dayCount = suggestedHabits.filter(habit => {
@@ -1314,18 +1319,19 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                       return (
                         <button
                           key={dayNum}
+                          type="button"
                           onClick={() => setPreviewDay(dayNum)}
-                          className={`flex-1 min-w-[46px] px-2 py-1.5 rounded-lg text-[11px] font-mono font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1 ${
+                          className={`chicle-btn flex-1 min-w-[46px] px-2 py-1.5 rounded-lg text-[11px] font-mono tabular-nums font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1 ${
                             previewDay === dayNum
-                              ? 'bg-cyan-500 text-slate-950 shadow-[0_0_10px_rgba(6,182,212,0.4)]'
+                              ? 'aura-bg-primary optic-active-card'
                               : dayCount > 0
-                              ? 'text-slate-200 hover:text-white bg-white/5'
+                              ? 'text-slate-200 hover:text-white bg-white/[0.04]'
                               : 'text-slate-600 hover:text-slate-400'
                           }`}
                         >
                           <span>{label}</span>
                           {dayCount > 0 && (
-                            <span className={`text-[9px] px-1 rounded ${previewDay === dayNum ? 'bg-slate-950/25 text-slate-950' : 'bg-cyan-500/20 text-cyan-300'}`}>
+                            <span className={`text-[9px] px-1 rounded tabular-nums ${previewDay === dayNum ? 'bg-black/25 text-current' : 'aura-bg-soft aura-text-soft'}`}>
                               {dayCount}
                             </span>
                           )}
@@ -1333,8 +1339,9 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                       );
                     })}
                     <button
+                      type="button"
                       onClick={() => setPreviewDay('all')}
-                      className={`flex-shrink-0 px-2.5 py-1.5 rounded-lg text-[11px] font-mono font-bold uppercase tracking-wider transition-all cursor-pointer ${previewDay === 'all' ? 'bg-cyan-500 text-slate-950 shadow-[0_0_10px_rgba(6,182,212,0.4)]' : 'text-slate-400 hover:text-white'}`}
+                      className={`chicle-btn flex-shrink-0 px-2.5 py-1.5 rounded-lg text-[11px] font-mono tabular-nums font-bold uppercase tracking-wider transition-all cursor-pointer ${previewDay === 'all' ? 'aura-bg-primary optic-active-card' : 'text-slate-400 hover:text-white'}`}
                     >
                       Todos ({suggestedHabits.length})
                     </button>
@@ -1366,17 +1373,17 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
 
                         if (isEditing) {
                           return (
-                            <div key={habit.id ? `${habit.id}-${idx}` : `sugg-edit-${idx}`} className="bg-[#0b1625] border-2 border-cyan-400 p-3.5 rounded-2xl space-y-3 shadow-[0_0_20px_rgba(6,182,212,0.25)]">
+                            <div key={habit.id ? `${habit.id}-${idx}` : `sugg-edit-${idx}`} className="bg-[#040814]/90 border-2 aura-border-primary p-3.5 rounded-2xl space-y-3 aura-glow-subtle">
                               <div className="flex items-center justify-between">
-                                <span className="text-xs font-mono font-bold text-cyan-300 uppercase tracking-wider flex items-center gap-1.5">
-                                  <Icon name="edit" className="w-3.5 h-3.5 text-cyan-400" />
+                                <span className="text-xs font-mono font-bold aura-text-soft uppercase tracking-wider flex items-center gap-1.5">
+                                  <Icon name="edit" className="w-3.5 h-3.5 aura-text-primary" />
                                   Editar Bloque
                                 </span>
                                 <div className="flex items-center gap-2">
                                   <button
                                     type="button"
                                     onClick={() => handleRemoveHabit(habit.id)}
-                                    className="text-red-400 hover:text-red-300 text-xs font-mono flex items-center gap-1 cursor-pointer hover:bg-red-950/40 px-2 py-1 rounded"
+                                    className="text-rose-400 hover:text-rose-300 text-xs font-mono flex items-center gap-1 cursor-pointer hover:bg-rose-950/40 px-2 py-1 rounded-lg"
                                     title="Eliminar este bloque"
                                   >
                                     <Icon name="trash" className="w-3 h-3" />
@@ -1398,7 +1405,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                                   type="text"
                                   value={editTitle}
                                   onChange={(e) => setEditTitle(e.target.value)}
-                                  className="w-full bg-[#03070d] border border-cyan-800 focus:border-cyan-400 rounded-lg px-3 py-1.5 text-sm text-slate-100 outline-none font-sans"
+                                  className="w-full bg-black/60 border border-white/15 focus:aura-border-primary rounded-lg px-3 py-1.5 text-sm text-white outline-none font-sans"
                                 />
                               </div>
 
@@ -1421,10 +1428,10 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                                         setEditCategory(cat.id);
                                         setEditIcon(cat.icon);
                                       }}
-                                      className={`py-1.5 px-1 rounded-lg text-[10px] font-mono font-bold flex flex-col items-center gap-0.5 cursor-pointer transition-all ${
+                                      className={`chicle-btn !flex-col py-1.5 px-1 rounded-lg text-[10px] font-mono font-bold gap-0.5 cursor-pointer transition-all ${
                                         editCategory === cat.id
-                                          ? 'bg-cyan-500 text-slate-950 font-bold shadow-sm'
-                                          : 'bg-black/50 text-slate-400 border border-slate-800 hover:text-white'
+                                          ? 'aura-bg-primary optic-active-card'
+                                          : 'bg-black/50 text-slate-400 border border-white/10 hover:text-white'
                                       }`}
                                     >
                                       <span className="text-sm">{cat.icon}</span>
@@ -1435,9 +1442,9 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                               </div>
 
                               {/* Time Selection */}
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-black/40 border border-slate-800/80 p-2.5 rounded-xl">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-black/40 border border-white/10 p-2.5 rounded-xl">
                                 <div>
-                                  <label className="text-[10px] font-mono text-cyan-300 block mb-1">Franja Horaria:</label>
+                                  <label className="text-[10px] font-mono aura-text-soft block mb-1">Franja Horaria:</label>
                                   <div className="flex items-center gap-2">
                                     <input
                                       type="time"
@@ -1446,7 +1453,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                                         setEditStartTime(e.target.value);
                                         setEditTimeBlock(`${e.target.value} - ${editEndTime}`);
                                       }}
-                                      className="bg-[#03070d] border border-cyan-800 rounded-lg px-2.5 py-1 text-xs text-cyan-200 font-mono outline-none flex-1"
+                                      className="bg-black/60 border border-white/15 rounded-lg px-2.5 py-1 text-xs text-white font-mono tabular-nums outline-none flex-1"
                                     />
                                     <span className="text-slate-500 text-xs font-mono">a</span>
                                     <input
@@ -1456,7 +1463,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                                         setEditEndTime(e.target.value);
                                         setEditTimeBlock(`${editStartTime} - ${e.target.value}`);
                                       }}
-                                      className="bg-[#03070d] border border-cyan-800 rounded-lg px-2.5 py-1 text-xs text-cyan-200 font-mono outline-none flex-1"
+                                      className="bg-black/60 border border-white/15 rounded-lg px-2.5 py-1 text-xs text-white font-mono tabular-nums outline-none flex-1"
                                     />
                                   </div>
                                 </div>
@@ -1470,10 +1477,10 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                                         setEditFreq('specific_days');
                                         setEditDays([1, 2, 3, 4, 5]);
                                       }}
-                                      className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
+                                      className={`chicle-btn flex-1 py-1.5 px-2 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
                                         editFreq === 'specific_days' && editDays.length === 5 && !editDays.includes(0) && !editDays.includes(6)
-                                          ? 'bg-cyan-500 text-slate-950 font-bold'
-                                          : 'bg-black/50 border border-slate-800 text-slate-300'
+                                          ? 'aura-bg-primary optic-active-card'
+                                          : 'bg-black/50 border border-white/10 text-slate-300'
                                       }`}
                                     >
                                       L-V
@@ -1484,10 +1491,10 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                                         setEditFreq('daily');
                                         setEditDays([0, 1, 2, 3, 4, 5, 6]);
                                       }}
-                                      className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
+                                      className={`chicle-btn flex-1 py-1.5 px-2 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
                                         editFreq === 'daily'
-                                          ? 'bg-cyan-500 text-slate-950 font-bold'
-                                          : 'bg-black/50 border border-slate-800 text-slate-300'
+                                          ? 'aura-bg-primary optic-active-card'
+                                          : 'bg-black/50 border border-white/10 text-slate-300'
                                       }`}
                                     >
                                       Diario
@@ -1511,10 +1518,10 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                                           setEditFreq('specific_days');
                                           toggleEditDay(dNum);
                                         }}
-                                        className={`flex-1 py-1 rounded text-[11px] font-mono font-bold cursor-pointer transition-colors ${
+                                        className={`chicle-btn flex-1 py-1 rounded-lg text-[11px] font-mono font-bold cursor-pointer transition-colors ${
                                           isSel
-                                            ? 'bg-cyan-600 text-slate-950'
-                                            : 'bg-black/60 text-slate-500 border border-slate-800'
+                                            ? 'aura-bg-primary optic-active-card'
+                                            : 'bg-black/50 text-slate-400 border border-white/10'
                                         }`}
                                       >
                                         {dName}
@@ -1528,7 +1535,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                                 <button
                                   type="button"
                                   onClick={saveEditingHabit}
-                                  className="px-4 py-2 bg-gradient-to-r from-cyan-400 to-emerald-400 hover:from-cyan-300 hover:to-emerald-300 text-slate-950 font-bold text-xs rounded-lg font-mono cursor-pointer flex items-center gap-1.5 shadow-[0_0_12px_rgba(6,182,212,0.4)]"
+                                  className="chicle-btn aura-btn-gradient optic-active-card px-4 py-2 font-anton uppercase tracking-wider text-xs rounded-xl cursor-pointer flex items-center gap-1.5"
                                 >
                                   <Icon name="check" className="w-3.5 h-3.5" />
                                   <span>Guardar Cambios</span>
@@ -1541,7 +1548,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                         return (
                           <div 
                             key={habit.id ? `${habit.id}-${idx}` : `sugg-${idx}`} 
-                            className={`bg-[#060b14]/90 border p-2.5 sm:p-3 rounded-2xl flex items-center justify-between gap-3 group transition-all hover:border-cyan-500/40 hover:bg-[#081220] ${
+                            className={`bg-[#040814]/80 border p-2.5 sm:p-3 rounded-2xl flex items-center justify-between gap-3 group transition-all hover:aura-border-subtle hover:bg-white/[0.04] ${
                               conflict ? 'border-amber-500/60 bg-amber-950/20' : 'border-white/10'
                             }`}
                           >
@@ -1551,20 +1558,20 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                               title="Toca para editar horario o nombre"
                             >
                               {/* Franja horaria limpia */}
-                              <div className="shrink-0 px-2.5 py-1 rounded-xl bg-cyan-950/70 border border-cyan-500/30 text-cyan-300 font-mono text-xs font-bold shadow-[0_0_8px_rgba(0,240,255,0.15)] flex items-center gap-1.5">
-                                <Icon name="timer" className="w-3 h-3 text-cyan-400" />
+                              <div className="shrink-0 px-2.5 py-1 rounded-xl aura-bg-soft border aura-border-subtle aura-text-soft font-mono tabular-nums text-xs font-bold flex items-center gap-1.5">
+                                <Icon name="timer" className="w-3 h-3 aura-text-primary" />
                                 <span>{habit.timeBlock || 'Sin hora'}</span>
                               </div>
 
                               {/* Icono de la tarea */}
-                              <div className="w-7 h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                              <div className="w-7 h-7 rounded-lg bg-white/[0.04] border border-white/10 flex items-center justify-center shrink-0">
                                 {renderHabitIcon(habit.quickIcon, habit.title, 'w-4 h-4')}
                               </div>
 
                               {/* Título y frecuencia */}
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
-                                  <p className="text-xs sm:text-sm font-bold text-slate-100 truncate group-hover:text-cyan-200 transition-colors">
+                                  <p className="text-xs sm:text-sm font-bold text-slate-100 truncate group-hover:text-white transition-colors">
                                     {habit.title}
                                   </p>
                                   {conflict && (
@@ -1588,7 +1595,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                                   type="button"
                                   onClick={() => handleQuickFixConflict(relatedConflict)}
                                   aria-label="Resolver choque de horario automáticamente"
-                                  className="px-2 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/50 text-amber-300 font-mono text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-all active:scale-95"
+                                  className="chicle-btn px-2 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/50 text-amber-300 font-mono text-[10px] font-bold flex items-center gap-1 cursor-pointer"
                                   title="Resolver choque automáticamente"
                                 >
                                   <Icon name="zap" className="w-3 h-3 text-amber-400" />
@@ -1600,7 +1607,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                                 type="button"
                                 onClick={() => startEditingHabit(habit)}
                                 aria-label={`Editar bloque ${habit.title}`}
-                                className="p-1.5 text-slate-400 hover:text-cyan-300 hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
+                                className="p-1.5 text-slate-400 hover:aura-text-primary hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
                                 title="Editar bloque"
                               >
                                 <Icon name="edit" className="w-4 h-4" />
@@ -1610,7 +1617,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                                 type="button"
                                 onClick={() => handleRemoveHabit(habit.id)}
                                 aria-label={`Descartar ${habit.title} de la lista`}
-                                className="text-slate-500 hover:text-red-400 p-1.5 hover:bg-red-950/30 rounded-lg transition-colors cursor-pointer"
+                                className="text-slate-500 hover:text-rose-400 p-1.5 hover:bg-rose-950/30 rounded-lg transition-colors cursor-pointer"
                                 title="Descartar de la lista"
                               >
                                 <Icon name="trash" className="w-4 h-4" />
@@ -1637,9 +1644,9 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                           soundFX.playClick();
                           setInjectMode('replace_pending');
                         }}
-                        className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer ${
+                        className={`chicle-btn px-2.5 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer ${
                           injectMode === 'replace_pending'
-                            ? 'bg-cyan-500 text-slate-950 shadow-sm'
+                            ? 'aura-bg-primary optic-active-card'
                             : 'text-slate-400 hover:text-white'
                         }`}
                       >
@@ -1651,9 +1658,9 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                           soundFX.playClick();
                           setInjectMode('merge');
                         }}
-                        className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer ${
+                        className={`chicle-btn px-2.5 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer ${
                           injectMode === 'merge'
-                            ? 'bg-cyan-500 text-slate-950 shadow-sm'
+                            ? 'aura-bg-primary optic-active-card'
                             : 'text-slate-400 hover:text-white'
                         }`}
                       >
@@ -1670,7 +1677,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                         setSuggestedHabits(null);
                         setEditingId(null);
                       }}
-                      className="px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 font-anton uppercase tracking-wider text-xs rounded-xl transition-all cursor-pointer active:scale-95"
+                      className="chicle-btn px-4 py-3 bg-white/[0.05] hover:bg-white/[0.12] border border-white/15 text-slate-200 hover:text-white font-anton uppercase tracking-wider text-xs rounded-xl cursor-pointer"
                     >
                       Volver
                     </button>
@@ -1678,10 +1685,10 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
                       type="button"
                       onClick={handleAcceptSchedule}
                       disabled={suggestedHabits.length === 0}
-                      className="flex-1 py-3 bg-gradient-to-r from-cyan-400 via-teal-400 to-emerald-400 hover:opacity-95 disabled:opacity-40 text-slate-950 font-anton uppercase tracking-wider text-xs rounded-xl transition-all shadow-[0_0_25px_rgba(0,240,255,0.35)] flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
+                      className="chicle-btn aura-btn-gradient optic-active-card flex-1 py-3 disabled:opacity-40 font-anton uppercase tracking-wider text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer"
                     >
                       <span>Guardar agenda en mi calendario ({suggestedHabits.length})</span>
-                      <Icon name="chevronRight" className="w-4 h-4 text-slate-950" />
+                      <Icon name="chevronRight" className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
@@ -1690,7 +1697,9 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
           </div>
         </motion.div>
       </motion.div>
-    </AnimatePresence>
+      )}
+    </AnimatePresence>,
+    document.body
   );
 };
 

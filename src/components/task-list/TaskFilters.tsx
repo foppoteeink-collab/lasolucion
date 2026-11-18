@@ -74,50 +74,47 @@ export const TaskFilters: React.FC<TaskFiltersProps> = ({
     }
   }, [isSearchExpanded]);
 
-  const filterTabs: { id: TaskFilterType; label: string; count: number; icon: React.ReactNode; color: string; activeStyle: string }[] = [
+  const filterTabs: { id: TaskFilterType; label: string; count: number; icon: React.ReactNode; activeStyle: string }[] = [
     { 
       id: 'todos', 
       label: 'Todas', 
       count: counts.total, 
       icon: <Layers className="w-3 h-3" />, 
-      color: '#00f0ff',
-      activeStyle: 'bg-cyan-500/20 text-cyan-200 border-cyan-400/60 shadow-[0_0_12px_rgba(0,240,255,0.3)]'
+      activeStyle: 'aura-bg-soft aura-text-primary aura-border-primary aura-glow-subtle optic-active-card'
     },
     { 
       id: 'pendientes', 
       label: 'Pendientes', 
       count: counts.pending, 
       icon: <Hourglass className="w-3 h-3" />, 
-      color: '#f59e0b',
-      activeStyle: 'bg-amber-500/20 text-amber-200 border-amber-400/60 shadow-[0_0_12px_rgba(245,158,11,0.3)]'
+      activeStyle: 'bg-amber-500/20 text-amber-200 border-amber-400/60 shadow-[0_0_12px_rgba(245,158,11,0.3)] optic-active-card'
     },
     { 
       id: 'completados', 
       label: 'Hechas', 
       count: counts.completed, 
       icon: <CheckCircle2 className="w-3 h-3" />, 
-      color: '#10b981',
-      activeStyle: 'bg-emerald-500/20 text-emerald-200 border-emerald-400/60 shadow-[0_0_12px_rgba(16,185,129,0.3)]'
+      activeStyle: 'bg-emerald-500/20 text-emerald-200 border-emerald-400/60 shadow-[0_0_12px_rgba(16,185,129,0.3)] optic-active-card'
     },
     { 
       id: 'rutina', 
       label: 'Horario', 
       count: counts.routine, 
       icon: <Clock className="w-3 h-3" />, 
-      color: '#818cf8',
-      activeStyle: 'bg-indigo-500/20 text-indigo-200 border-indigo-400/60 shadow-[0_0_12px_rgba(99,102,241,0.3)]'
+      activeStyle: 'bg-indigo-500/20 text-indigo-200 border-indigo-400/60 shadow-[0_0_12px_rgba(99,102,241,0.3)] optic-active-card'
     },
   ];
 
   return (
-    <div className="scifi-glass-panel rounded-xl px-2 py-1.5 space-y-1.5 border border-cyan-500/25 shadow-[0_2px_15px_rgba(0,0,0,0.45)] relative overflow-hidden bg-[#020712]/[0.95]">
+    <div className="relative isolate rounded-2xl px-2 py-1.5 space-y-1.5 bg-[#040a1a]/[0.94] border border-white/10 shadow-[0_6px_24px_rgba(0,0,0,0.45)] overflow-hidden">
       <span className="vi-grano opacity-5" aria-hidden="true" />
+      <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
 
       {/* Main Single-Row Tactical HUD (Ultra-Compact) */}
-      <div className="flex items-center justify-between gap-1.5 overflow-x-auto no-scrollbar py-0.5 px-0.5">
+      <div className="relative z-10 flex items-center justify-between gap-1.5 overflow-x-auto no-scrollbar py-0.5 px-0.5">
         
         {/* Left: Micro Segmented HUD Tabs */}
-        <div className="flex items-center gap-1 bg-[#010a14]/80 p-0.5 rounded-lg border border-white/10 shrink-0">
+        <div className="flex items-center gap-1 bg-[#040814]/80 p-0.5 rounded-xl border border-white/10 shrink-0">
           {filterTabs.map((tab) => {
             const isActive = activeFilter === tab.id;
             return (
@@ -128,7 +125,7 @@ export const TaskFilters: React.FC<TaskFiltersProps> = ({
                   soundFX.playClick();
                   onFilterChange(tab.id);
                 }}
-                className={`relative h-7 px-2 sm:px-2.5 rounded-md flex items-center gap-1.5 text-xs font-mono font-bold transition-all cursor-pointer select-none active:scale-95 whitespace-nowrap shrink-0 ${
+                className={`chicle-btn relative h-7 px-2 sm:px-2.5 rounded-lg flex items-center gap-1.5 text-xs font-mono font-bold transition-all cursor-pointer select-none whitespace-nowrap shrink-0 ${
                   isActive
                     ? tab.activeStyle + ' border'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] border border-transparent'
@@ -137,7 +134,7 @@ export const TaskFilters: React.FC<TaskFiltersProps> = ({
               >
                 <span className="shrink-0 leading-none">{tab.icon}</span>
                 <span className="tracking-tight">{tab.label}</span>
-                <span className={`text-[10.5px] px-1 py-0.2 rounded font-mono tabular-nums leading-none ${
+                <span className={`text-[10.5px] px-1 py-0.5 rounded font-mono tabular-nums leading-none ${
                   isActive
                     ? 'bg-black/40 text-white font-black'
                     : 'bg-white/5 text-slate-400'
@@ -156,19 +153,19 @@ export const TaskFilters: React.FC<TaskFiltersProps> = ({
             {isSearchExpanded ? (
               <motion.div
                 initial={{ width: 0, opacity: 0 }}
-                animate={{ width: 140, opacity: 1 }}
+                animate={{ width: 148, opacity: 1 }}
                 exit={{ width: 0, opacity: 0 }}
                 transition={{ duration: 0.15, ease: 'easeOut' }}
                 className="relative flex items-center"
               >
-                <Search className="w-3 h-3 text-cyan-400 absolute left-2 pointer-events-none" />
+                <Search className="w-3 h-3 aura-text-primary absolute left-2 pointer-events-none" />
                 <input
                   ref={searchInputRef}
                   type="text"
                   value={searchTerm}
                   onChange={(e) => onSearchChange(e.target.value)}
                   placeholder="Buscar..."
-                  className="w-full h-7 pl-6 pr-6 bg-[#030e1a] border border-cyan-400/50 rounded-lg text-xs text-white placeholder-slate-500 font-mono focus:outline-none focus:ring-1 focus:ring-cyan-400/60 shadow-inner"
+                  className="w-full h-7 pl-6 pr-6 bg-[#040814]/90 border aura-border-subtle rounded-xl text-xs text-white placeholder-slate-500 font-mono focus:outline-none focus:aura-border-primary shadow-inner"
                 />
                 {searchTerm ? (
                   <button
@@ -200,10 +197,10 @@ export const TaskFilters: React.FC<TaskFiltersProps> = ({
                   soundFX.playClick();
                   setIsSearchExpanded(true);
                 }}
-                className={`h-7 w-7 rounded-lg border flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
+                className={`chicle-btn h-7 w-7 rounded-xl border flex items-center justify-center transition-all cursor-pointer ${
                   searchTerm
-                    ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 shadow-[0_0_8px_rgba(0,240,255,0.3)]'
-                    : 'bg-[#010a14]/80 border-white/10 text-slate-400 hover:text-cyan-300 hover:border-cyan-500/40'
+                    ? 'aura-bg-soft aura-border-primary aura-text-primary aura-glow-subtle optic-active-card'
+                    : 'bg-[#040814]/80 border-white/10 text-slate-400 hover:text-white hover:border-white/25'
                 }`}
                 title="Buscar tareas"
               >
@@ -219,14 +216,14 @@ export const TaskFilters: React.FC<TaskFiltersProps> = ({
               soundFX.playClick();
               setShowCategories(!showCategories);
             }}
-            className={`h-7 px-2 rounded-lg border flex items-center gap-1 text-xs font-mono font-bold transition-all cursor-pointer active:scale-95 ${
+            className={`chicle-btn h-7 px-2.5 rounded-xl border flex items-center gap-1 text-xs font-mono font-bold transition-all cursor-pointer ${
               showCategories || selectedCategory !== 'todos'
-                ? 'bg-cyan-500/20 text-cyan-200 border-cyan-400/60 shadow-[0_0_10px_rgba(0,240,255,0.25)]'
-                : 'bg-[#010a14]/80 border-white/10 text-slate-400 hover:text-slate-200 hover:border-cyan-500/40'
+                ? 'aura-bg-soft aura-text-primary aura-border-primary aura-glow-subtle optic-active-card'
+                : 'bg-[#040814]/80 border-white/10 text-slate-400 hover:text-slate-200 hover:border-white/25'
             }`}
             title="Filtrar por área o categoría"
           >
-            <Filter className="w-3 h-3 text-cyan-400" />
+            <Filter className="w-3 h-3 aura-text-primary" />
             <span className="text-[11px] uppercase tracking-wide">
               {selectedCategory !== 'todos' ? selectedCategory.slice(0, 5) : 'Área'}
             </span>
@@ -242,7 +239,7 @@ export const TaskFilters: React.FC<TaskFiltersProps> = ({
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
-            className="overflow-hidden pt-1 border-t border-white/5"
+            className="relative z-10 overflow-hidden pt-1 border-t border-white/[0.08]"
           >
             <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5 px-0.5">
               {CATEGORIES.map((cat) => {
@@ -255,10 +252,10 @@ export const TaskFilters: React.FC<TaskFiltersProps> = ({
                       soundFX.playClick();
                       onSelectCategory(cat.id);
                     }}
-                    className={`h-6 px-2 rounded-md flex items-center gap-1 text-[10.5px] font-mono font-bold transition-all cursor-pointer shrink-0 active:scale-95 border ${
+                    className={`chicle-btn h-7 px-2.5 rounded-lg flex items-center gap-1 text-[10.5px] font-mono font-bold transition-all cursor-pointer shrink-0 border ${
                       isCatActive
-                        ? 'bg-cyan-950/90 text-cyan-200 border-cyan-400 shadow-[0_0_8px_rgba(0,240,255,0.2)]'
-                        : 'bg-black/40 text-slate-400 border-white/5 hover:border-white/20 hover:text-white'
+                        ? 'aura-bg-soft aura-text-primary aura-border-primary aura-glow-subtle optic-active-card'
+                        : 'bg-[#040814]/70 text-slate-400 border-white/10 hover:border-white/20 hover:text-white'
                     }`}
                   >
                     <span className="shrink-0">{cat.icon}</span>

@@ -11,16 +11,13 @@ import {
   Flame, 
   Sparkles, 
   Heart, 
-  Zap, 
-  Check, 
   Lock,
-  Gift,
   Coffee,
-  Gamepad2,
   Package,
-  Layers,
-  Bot
+  Bot,
+  ShoppingBag
 } from 'lucide-react';
+import { TabHeader } from './common/TabHeader';
 import { soundFX } from '../utils/audio';
 import { triggerShockwave } from '../utils/celebration';
 import { useAppStore } from '../store/useAppStore';
@@ -68,6 +65,14 @@ export const RewardShop: React.FC = () => {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isAddModalOpen]);
+
+  useEffect(() => {
+    if (!isAddModalOpen) return;
+    document.body.classList.add('modal-open-hide-floating');
+    return () => {
+      document.body.classList.remove('modal-open-hide-floating');
+    };
   }, [isAddModalOpen]);
 
   const getDiscountedCost = (reward: ShopReward) => {
@@ -281,170 +286,161 @@ export const RewardShop: React.FC = () => {
   return (
     <div className="space-y-4 font-sans tracking-wide pb-20 text-white">
       
-      {/* ─── 1. BÓVEDA HEADER HUD (MINIMALISTA & CYBERPUNK) ─── */}
-      <div className="relative overflow-hidden rounded-2xl bg-[#030614]/[0.96] border border-purple-500/35 p-3.5 sm:p-4.5 flex flex-wrap items-center justify-between gap-3 shadow-[0_0_30px_rgba(168,85,247,0.15)]">
-        <div className="absolute -top-12 -right-12 w-36 h-36 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-12 -left-12 w-36 h-36 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+      {/* ─── 1. BÓVEDA HEADER HUD (CANONICAL TABHEADER) ─── */}
+      <TabHeader
+        title={copy.shopTitle}
+        subtitle={copy.shopSubtitle}
+        icon={<ShoppingBag className="w-5 h-5" />}
+        badge={
+          <span className="text-[10px] px-2 py-0.5 rounded-full aura-bg-soft border aura-border-subtle uppercase font-mono hidden sm:inline">
+            Canje Directo
+          </span>
+        }
+        rightSlot={
+          <>
+            <div 
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#040814]/80 text-amber-300 font-bold font-mono text-xs sm:text-sm border border-amber-400/50"
+              title="Monedas acumuladas"
+            >
+              <Coins className="w-4 h-4 text-amber-400 stroke-[2.5]" />
+              <span className="font-mono tabular-nums">{coins}</span>
+              <span className="text-[10px] font-sans font-bold text-amber-400/80 hidden sm:inline">Monedas</span>
+            </div>
 
-        <div className="flex items-center gap-3 relative z-10">
-          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-[#090518] border border-purple-400/80 flex items-center justify-center text-xl shadow-[0_0_15px_rgba(168,85,247,0.4)] shrink-0">
-            💎
-          </div>
-          <div>
-            <h2 className="text-base sm:text-lg font-black font-anton text-white tracking-wide uppercase flex items-center gap-2">
-              {copy.shopTitle}
-              <span className="text-[10px] px-2 py-0.2 rounded bg-purple-950/80 text-purple-300 border border-purple-500/50 uppercase font-mono hidden sm:inline">
-                Canje Directo
-              </span>
-            </h2>
-            <p className="text-[11px] text-slate-400 font-medium leading-none mt-1">
-              {copy.shopSubtitle}
-            </p>
-          </div>
-        </div>
-
-        {/* Coins Pill + Add Custom Reward Button */}
-        <div className="flex items-center gap-2 relative z-10 ml-auto">
-          <div 
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#08051a] text-amber-300 font-bold font-mono text-xs sm:text-sm border border-amber-400/60 shadow-[0_0_15px_rgba(245,158,11,0.25)]"
-            title="Monedas acumuladas"
+            <button
+              type="button"
+              onClick={() => {
+                soundFX.playClick();
+                setIsAddModalOpen(true);
+              }}
+              className="chicle-btn aura-btn-gradient optic-active-card flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-anton text-xs uppercase tracking-wider transition-all cursor-pointer shrink-0"
+              title="Crear recompensa personalizada"
+            >
+              <Plus className="w-3.5 h-3.5 stroke-[3]" />
+              <span>{copy.shopCreateCta}</span>
+            </button>
+          </>
+        }
+      >
+        {/* ─── 2. FAST FILTER TABS (MOXEN CHIP MENU GROUP) ─── */}
+        <div
+          className="mf-8-menu-chip-group mf-chip-group mf-chip-group--compact"
+          role="listbox"
+          aria-label="Filtro por categoría de tienda"
+        >
+          <button
+            type="button"
+            role="option"
+            aria-selected={activeTab === 'todos'}
+            onClick={() => { soundFX.playClick(); setActiveTab('todos'); }}
+            className={`chicle-btn mf-8-menu-chip-group__chip mf-chip mf-chip--sm ${
+              activeTab === 'todos' ? 'mf-8-menu-chip-group__chip--active mf-chip--active aura-bg-soft aura-border-primary aura-text-primary optic-active-card' : ''
+            }`}
           >
-            <Coins className="w-4 h-4 text-amber-400 stroke-[2.5]" />
-            <span className="tabular-nums">{coins}</span>
-            <span className="text-[10px] font-sans font-bold text-amber-400/80 hidden sm:inline">Monedas</span>
-          </div>
+            <Sparkles className={`w-3.5 h-3.5 ${activeTab === 'todos' ? 'aura-text-primary' : 'text-slate-300'}`} />
+            <span>Todos</span>
+            <span className="mf-chip__badge font-mono tabular-nums">{rewards.length}</span>
+          </button>
 
           <button
             type="button"
-            onClick={() => {
-              soundFX.playClick();
-              setIsAddModalOpen(true);
-            }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-anton text-xs uppercase tracking-wider border border-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.4)] transition-all active:scale-95 cursor-pointer shrink-0"
-            title="Crear recompensa personalizada"
+            role="option"
+            aria-selected={activeTab === 'vida_real'}
+            onClick={() => { soundFX.playClick(); setActiveTab('vida_real'); }}
+            className={`chicle-btn mf-8-menu-chip-group__chip mf-chip mf-chip--sm ${
+              activeTab === 'vida_real' ? 'mf-8-menu-chip-group__chip--active mf-chip--active aura-bg-soft aura-border-primary aura-text-primary optic-active-card' : ''
+            }`}
           >
-            <Plus className="w-3.5 h-3.5 stroke-[3]" />
-            <span>{copy.shopCreateCta}</span>
+            <Coffee className="w-3.5 h-3.5 text-amber-400" />
+            <span>Vida Real</span>
+          </button>
+
+          <button
+            type="button"
+            role="option"
+            aria-selected={activeTab === 'perks'}
+            onClick={() => { soundFX.playClick(); setActiveTab('perks'); }}
+            className={`chicle-btn mf-8-menu-chip-group__chip mf-chip mf-chip--sm ${
+              activeTab === 'perks' ? 'mf-8-menu-chip-group__chip--active mf-chip--active aura-bg-soft aura-border-primary aura-text-primary optic-active-card' : ''
+            }`}
+          >
+            <Shield className={`w-3.5 h-3.5 ${activeTab === 'perks' ? 'aura-text-primary' : 'aura-text-soft'}`} />
+            <span>Potenciadores</span>
+          </button>
+
+          <button
+            type="button"
+            role="option"
+            aria-selected={activeTab === 'kai'}
+            onClick={() => { soundFX.playClick(); setActiveTab('kai'); }}
+            className={`chicle-btn mf-8-menu-chip-group__chip mf-chip mf-chip--sm ${
+              activeTab === 'kai' ? 'mf-8-menu-chip-group__chip--active mf-chip--active aura-bg-soft aura-border-primary aura-text-primary optic-active-card' : ''
+            }`}
+          >
+            <Bot className={`w-3.5 h-3.5 ${activeTab === 'kai' ? 'aura-text-primary' : 'text-slate-300'}`} />
+            <span>KAI & Hábitos</span>
+          </button>
+
+          <button
+            type="button"
+            role="option"
+            aria-selected={activeTab === 'descanso'}
+            onClick={() => { soundFX.playClick(); setActiveTab('descanso'); }}
+            className={`chicle-btn mf-8-menu-chip-group__chip mf-chip mf-chip--sm ${
+              activeTab === 'descanso' ? 'mf-8-menu-chip-group__chip--active mf-chip--active aura-bg-soft aura-border-primary aura-text-primary optic-active-card' : ''
+            }`}
+          >
+            <Heart className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Descanso</span>
+          </button>
+
+          <button
+            type="button"
+            role="option"
+            aria-selected={activeTab === 'personalizados'}
+            onClick={() => { soundFX.playClick(); setActiveTab('personalizados'); }}
+            className={`chicle-btn mf-8-menu-chip-group__chip mf-chip mf-chip--sm ${
+              activeTab === 'personalizados' ? 'mf-8-menu-chip-group__chip--active mf-chip--active aura-bg-soft aura-border-primary aura-text-primary optic-active-card' : ''
+            }`}
+          >
+            <Flame className="w-3.5 h-3.5 text-amber-400" />
+            <span>Deseos</span>
+          </button>
+
+          <button
+            type="button"
+            role="option"
+            aria-selected={activeTab === 'mochila'}
+            onClick={() => { soundFX.playClick(); setActiveTab('mochila'); }}
+            className={`chicle-btn mf-8-menu-chip-group__chip mf-chip mf-chip--sm md:ml-auto ${
+              activeTab === 'mochila' ? 'mf-8-menu-chip-group__chip--active mf-chip--active aura-bg-soft aura-border-primary aura-text-primary optic-active-card' : ''
+            }`}
+          >
+            <Package className={`w-3.5 h-3.5 ${activeTab === 'mochila' ? 'aura-text-primary' : 'aura-text-soft'}`} />
+            <span>Mochila</span>
+            <span className="mf-chip__badge font-mono tabular-nums">{inventory.length + (unopenedBoxes > 0 ? 1 : 0)}</span>
           </button>
         </div>
-      </div>
-
-      {/* ─── 2. FAST FILTER TABS (MOXEN CHIP MENU GROUP) ─── */}
-      <div
-        className="mf-8-menu-chip-group mf-chip-group mf-chip-group--compact"
-        role="listbox"
-        aria-label="Filtro por categoría de tienda"
-      >
-        <button
-          type="button"
-          role="option"
-          aria-selected={activeTab === 'todos'}
-          onClick={() => { soundFX.playClick(); setActiveTab('todos'); }}
-          className={`mf-8-menu-chip-group__chip mf-chip mf-chip--sm ${
-            activeTab === 'todos' ? 'mf-8-menu-chip-group__chip--active mf-chip--active' : ''
-          }`}
-        >
-          <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-          <span>Todos</span>
-          <span className="mf-chip__badge">{rewards.length}</span>
-        </button>
-
-        <button
-          type="button"
-          role="option"
-          aria-selected={activeTab === 'vida_real'}
-          onClick={() => { soundFX.playClick(); setActiveTab('vida_real'); }}
-          className={`mf-8-menu-chip-group__chip mf-chip mf-chip--sm ${
-            activeTab === 'vida_real' ? 'mf-8-menu-chip-group__chip--active mf-chip--active' : ''
-          }`}
-        >
-          <Coffee className="w-3.5 h-3.5 text-amber-400" />
-          <span>Vida Real</span>
-        </button>
-
-        <button
-          type="button"
-          role="option"
-          aria-selected={activeTab === 'perks'}
-          onClick={() => { soundFX.playClick(); setActiveTab('perks'); }}
-          className={`mf-8-menu-chip-group__chip mf-chip mf-chip--sm ${
-            activeTab === 'perks' ? 'mf-8-menu-chip-group__chip--active mf-chip--active' : ''
-          }`}
-        >
-          <Shield className="w-3.5 h-3.5 text-cyan-400" />
-          <span>Potenciadores</span>
-        </button>
-
-        <button
-          type="button"
-          role="option"
-          aria-selected={activeTab === 'kai'}
-          onClick={() => { soundFX.playClick(); setActiveTab('kai'); }}
-          className={`mf-8-menu-chip-group__chip mf-chip mf-chip--sm ${
-            activeTab === 'kai' ? 'mf-8-menu-chip-group__chip--active mf-chip--active' : ''
-          }`}
-        >
-          <Bot className="w-3.5 h-3.5 text-fuchsia-400" />
-          <span>KAI & Hábitos</span>
-        </button>
-
-        <button
-          type="button"
-          role="option"
-          aria-selected={activeTab === 'descanso'}
-          onClick={() => { soundFX.playClick(); setActiveTab('descanso'); }}
-          className={`mf-8-menu-chip-group__chip mf-chip mf-chip--sm ${
-            activeTab === 'descanso' ? 'mf-8-menu-chip-group__chip--active mf-chip--active' : ''
-          }`}
-        >
-          <Heart className="w-3.5 h-3.5 text-emerald-400" />
-          <span>Descanso</span>
-        </button>
-
-        <button
-          type="button"
-          role="option"
-          aria-selected={activeTab === 'personalizados'}
-          onClick={() => { soundFX.playClick(); setActiveTab('personalizados'); }}
-          className={`mf-8-menu-chip-group__chip mf-chip mf-chip--sm ${
-            activeTab === 'personalizados' ? 'mf-8-menu-chip-group__chip--active mf-chip--active' : ''
-          }`}
-        >
-          <Flame className="w-3.5 h-3.5 text-rose-400" />
-          <span>Deseos</span>
-        </button>
-
-        <button
-          type="button"
-          role="option"
-          aria-selected={activeTab === 'mochila'}
-          onClick={() => { soundFX.playClick(); setActiveTab('mochila'); }}
-          className={`mf-8-menu-chip-group__chip mf-chip mf-chip--sm md:ml-auto ${
-            activeTab === 'mochila' ? 'mf-8-menu-chip-group__chip--active mf-chip--active' : ''
-          }`}
-        >
-          <Package className="w-3.5 h-3.5 text-blue-400" />
-          <span>Mochila</span>
-          <span className="mf-chip__badge">{inventory.length + (unopenedBoxes > 0 ? 1 : 0)}</span>
-        </button>
-      </div>
+      </TabHeader>
 
       {/* ─── 3. LOOT BOX ALERT (IF UNOPENED BOXES EXIST) ─── */}
       {unopenedBoxes > 0 && (
         <motion.div 
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-950/70 to-yellow-950/40 border border-amber-500/60 shadow-[0_0_20px_rgba(245,158,11,0.25)] flex items-center justify-between gap-3"
+          className="relative isolate p-3.5 rounded-2xl bg-[#040a1a]/[0.94] border border-amber-400/50 shadow-[0_8px_30px_rgba(245,158,11,0.18)] overflow-hidden flex items-center justify-between gap-3"
         >
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-amber-500/20 border border-amber-400 flex items-center justify-center text-2xl animate-bounce shrink-0">
+          <span className="vi-grano opacity-5" aria-hidden="true" />
+          <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
+          <div className="relative z-10 flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-amber-500/15 border border-amber-400/60 flex items-center justify-center text-2xl animate-bounce shrink-0">
               🎁
             </div>
             <div>
-              <h4 className="text-xs sm:text-sm font-black font-anton text-amber-300 uppercase tracking-wide">
-                ¡Tienes {unopenedBoxes} Cofre{unopenedBoxes !== 1 ? 's' : ''} de Botín!
-              </h4>
-              <p className="text-[11px] text-amber-200/80">
+              <h3 className="text-xs sm:text-sm font-black font-anton text-amber-300 uppercase tracking-wide">
+                ¡Tienes <span className="font-mono tabular-nums">{unopenedBoxes}</span> Cofre{unopenedBoxes !== 1 ? 's' : ''} de Botín!
+              </h3>
+              <p className="text-[11px] text-slate-300">
                 Ganadas por consistencia. Ábrelas para reclamar ítems legendarios.
               </p>
             </div>
@@ -460,7 +456,7 @@ export const RewardShop: React.FC = () => {
                 notificationService.triggerNotification(`¡Encontraste: ${item.name}!`, item.description, item.icon);
               }
             }}
-            className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-black font-anton text-xs uppercase tracking-wider shadow-[0_0_15px_rgba(245,158,11,0.5)] active:scale-95 cursor-pointer shrink-0"
+            className="relative z-10 chicle-btn aura-btn-gradient optic-active-card px-4 py-2 rounded-xl font-anton text-xs uppercase tracking-wider cursor-pointer shrink-0"
           >
             Abrir
           </button>
@@ -471,26 +467,32 @@ export const RewardShop: React.FC = () => {
       {activeTab === 'mochila' ? (
         <div className="space-y-3">
           {inventory.length === 0 ? (
-            <div className="p-8 rounded-2xl border border-white/10 bg-[#030614]/70 text-center space-y-2">
-              <Package className="w-8 h-8 text-slate-600 mx-auto" />
-              <p className="text-xs font-anton text-slate-400 uppercase tracking-wider">Tu mochila está vacía</p>
-              <p className="text-[11px] text-slate-500 max-w-xs mx-auto">
-                Completa rachas perfectas o abre cajas de botín para almacenar pociones y pergaminos.
-              </p>
+            <div className="relative isolate p-8 rounded-2xl border border-white/10 bg-[#040a1a]/[0.94] shadow-[0_8px_30px_rgba(0,0,0,0.45)] overflow-hidden text-center space-y-2">
+              <span className="vi-grano opacity-5" aria-hidden="true" />
+              <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
+              <div className="relative z-10 space-y-2">
+                <Package className="w-8 h-8 text-slate-500 mx-auto" />
+                <p className="text-xs font-anton text-slate-300 uppercase tracking-wider">Tu mochila está vacía</p>
+                <p className="text-[11px] text-slate-400 max-w-xs mx-auto">
+                  Completa rachas perfectas o abre cajas de botín para almacenar pociones y pergaminos.
+                </p>
+              </div>
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
               {inventory.map((item) => (
                 <div 
                   key={item.id}
-                  className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.08] hover:border-cyan-500/30 flex flex-col items-center text-center gap-1.5 relative group transition-colors shadow-sm"
+                  className="relative isolate p-3.5 rounded-2xl bg-[#040a1a]/[0.94] border border-white/10 hover:border-white/25 overflow-hidden flex flex-col items-center text-center gap-1.5 group transition-colors shadow-[0_8px_24px_rgba(0,0,0,0.4)]"
                 >
-                  <span className="absolute top-2 right-2 text-[10px] font-mono font-bold bg-white/[0.06] text-cyan-300 px-2 py-0.5 rounded-full border border-white/[0.1] tabular-nums">
+                  <span className="vi-grano opacity-5" aria-hidden="true" />
+                  <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
+                  <span className="relative z-10 self-end text-[10px] font-mono font-bold bg-[#040814]/80 aura-text-primary px-2 py-0.5 rounded-full border border-white/10 tabular-nums">
                     x{item.quantity}
                   </span>
-                  <div className="text-3xl my-1">{item.icon}</div>
-                  <h4 className="text-xs font-semibold text-slate-100 uppercase tracking-wide truncate w-full">{item.name}</h4>
-                  <p className="text-xs text-slate-400 leading-snug line-clamp-2">{item.description}</p>
+                  <div className="relative z-10 text-3xl my-1">{item.icon}</div>
+                  <h4 className="relative z-10 text-xs font-semibold text-slate-100 uppercase tracking-wide truncate w-full">{item.name}</h4>
+                  <p className="relative z-10 text-xs text-slate-400 leading-snug line-clamp-2">{item.description}</p>
                   <button
                     type="button"
                     onClick={() => {
@@ -502,7 +504,7 @@ export const RewardShop: React.FC = () => {
                         notificationService.triggerNotification(`¡Usaste ${item.name}!`, 'El efecto ha sido activado.', item.icon);
                       }
                     }}
-                    className="w-full mt-2 min-h-[36px] py-1.5 px-3 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-200 border border-cyan-400/40 text-xs font-medium uppercase tracking-wider transition-all cursor-pointer active:scale-95 flex items-center justify-center"
+                    className="relative z-10 chicle-btn aura-btn-gradient optic-active-card w-full mt-2 min-h-[36px] py-1.5 px-3 rounded-xl text-xs font-anton uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center"
                   >
                     Usar Ítem
                   </button>
@@ -512,7 +514,7 @@ export const RewardShop: React.FC = () => {
           )}
         </div>
       ) : (
-        /* ─── 5. ORBITAL REWARDS GRID (CÁPSULAS ORBITALES ESTILO KAI) ─── */
+        /* ─── 5. ORBITAL REWARDS GRID (CÁPSULAS OBSIDIAN GLASS + AURA) ─── */
         <div
           className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"
         >
@@ -522,35 +524,38 @@ export const RewardShop: React.FC = () => {
               const canAfford = !isShieldCapped && coins >= discountedCost;
               const isCustom = reward.id.startsWith('custom-');
 
-              // Categorization theme
-              let auraBorder = 'border-purple-500/35 hover:border-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.12)]';
-              let orbGlow = 'bg-purple-950/50 border-purple-500/40 text-purple-200 shadow-[0_0_15px_rgba(168,85,247,0.3)]';
+              // Categorization accent border (Obsidian Glass + Aura / semantic emerald for rest)
+              let auraBorder = 'border-white/10 hover:border-white/25';
+              let orbGlow = 'bg-[#040814]/80 aura-border-subtle aura-text-soft aura-glow-subtle';
               
               if (reward.category === 'kai' || reward.id.startsWith('kai-')) {
-                auraBorder = 'border-fuchsia-500/40 hover:border-cyan-400 shadow-[0_0_18px_rgba(217,70,239,0.25)]';
-                orbGlow = 'bg-gradient-to-br from-fuchsia-950/70 to-cyan-950/70 border-fuchsia-400/60 text-cyan-200 shadow-[0_0_18px_rgba(0,240,255,0.35)]';
+                auraBorder = 'aura-border-subtle hover:aura-border-primary';
+                orbGlow = 'bg-[#040814]/80 aura-border-primary aura-text-primary aura-glow-subtle';
               } else if (reward.category === 'perk') {
-                auraBorder = 'border-cyan-500/35 hover:border-cyan-400 shadow-[0_0_15px_rgba(0,240,255,0.12)]';
-                orbGlow = 'bg-cyan-950/50 border-cyan-500/40 text-cyan-200 shadow-[0_0_15px_rgba(0,240,255,0.3)]';
+                auraBorder = 'aura-border-subtle hover:aura-border-primary';
+                orbGlow = 'bg-[#040814]/80 aura-border-subtle aura-text-primary aura-glow-subtle';
               } else if (reward.category === 'descanso') {
-                auraBorder = 'border-emerald-500/35 hover:border-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.12)]';
-                orbGlow = 'bg-emerald-950/50 border-emerald-500/40 text-emerald-200 shadow-[0_0_15px_rgba(52,211,153,0.3)]';
+                auraBorder = 'border-emerald-500/35 hover:border-emerald-400';
+                orbGlow = 'bg-[#040814]/80 border-emerald-400/50 text-emerald-200';
               } else if (reward.category === 'ocio' || isCustom) {
-                auraBorder = 'border-amber-500/35 hover:border-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.12)]';
-                orbGlow = 'bg-amber-950/50 border-amber-500/40 text-amber-200 shadow-[0_0_15px_rgba(245,158,11,0.3)]';
+                auraBorder = 'border-amber-500/30 hover:border-amber-400/70';
+                orbGlow = 'bg-[#040814]/80 border-amber-400/45 text-amber-200';
               }
 
               return (
                 <div
                   key={reward.id}
-                  className={`relative p-3 rounded-2xl bg-[#060414]/90 border flex flex-col items-center justify-between text-center overflow-hidden transition-all group ${
+                  className={`relative isolate p-3 rounded-2xl bg-[#040a1a]/[0.94] border shadow-[0_8px_24px_rgba(0,0,0,0.45)] flex flex-col items-center justify-between text-center overflow-hidden transition-all group ${
                     canAfford ? auraBorder : 'border-white/10 opacity-75'
                   }`}
                 >
+                  <span className="vi-grano opacity-5" aria-hidden="true" />
+                  <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
+
                   {/* Top Badges: Unlocked Counter & Delete (if custom) */}
-                  <div className="w-full flex items-center justify-between text-[10px] font-mono mb-1">
+                  <div className="relative z-10 w-full flex items-center justify-between text-[10px] font-mono mb-1">
                     {reward.unlockedCount && reward.unlockedCount > 0 ? (
-                      <span className="text-emerald-400 font-bold bg-emerald-950/70 border border-emerald-500/30 px-1.5 py-0.2 rounded-full">
+                      <span className="text-emerald-300 font-bold bg-emerald-500/15 border border-emerald-400/40 px-1.5 py-0.5 rounded-full tabular-nums">
                         ✓ {reward.unlockedCount}
                       </span>
                     ) : <span />}
@@ -559,7 +564,7 @@ export const RewardShop: React.FC = () => {
                       <button
                         type="button"
                         onClick={(e) => handleDeleteCustom(e, reward.id)}
-                        className="p-1 rounded-md text-slate-500 hover:text-rose-400 hover:bg-rose-950/40 transition-colors cursor-pointer"
+                        className="p-1 rounded-md text-slate-400 hover:text-rose-400 hover:bg-rose-500/15 transition-colors cursor-pointer"
                         title="Eliminar deseo personalizado"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -567,9 +572,9 @@ export const RewardShop: React.FC = () => {
                     )}
                   </div>
 
-                  {/* Glowing Central Orb (Estilo Orbe de Kai) */}
+                  {/* Glowing Central Orb (Obsidian Inset) */}
                   <div
-                    className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 flex items-center justify-center text-2xl sm:text-3xl my-1 relative cursor-pointer transition-transform duration-150 hover:scale-105 active:scale-95 ${orbGlow}`}
+                    className={`relative z-10 w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 flex items-center justify-center text-2xl sm:text-3xl my-1 cursor-pointer transition-transform duration-150 hover:scale-105 active:scale-95 ${orbGlow}`}
                     onClick={() => {
                       if (canAfford) handleRedeem(reward);
                       else soundFX.playClick();
@@ -580,8 +585,8 @@ export const RewardShop: React.FC = () => {
                   </div>
 
                   {/* Title & Micro-Description */}
-                  <div className="w-full px-0.5 mt-1">
-                    <h4 className="text-xs font-semibold text-white uppercase tracking-wide truncate group-hover:text-cyan-300 transition-colors">
+                  <div className="relative z-10 w-full px-0.5 mt-1">
+                    <h4 className="text-xs font-semibold text-white uppercase tracking-wide truncate transition-colors">
                       {reward.title}
                     </h4>
                     <p className="text-xs text-slate-400 font-medium line-clamp-1 mt-0.5 leading-tight">
@@ -594,15 +599,15 @@ export const RewardShop: React.FC = () => {
                     type="button"
                     onClick={() => handleRedeem(reward)}
                     disabled={!canAfford}
-                    className={`w-full mt-2.5 min-h-[36px] py-1.5 px-2 rounded-xl text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                    className={`relative z-10 chicle-btn w-full mt-2.5 min-h-[36px] py-1.5 px-2 rounded-xl text-xs font-anton uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all ${
                       canAfford
-                        ? 'bg-amber-400 hover:bg-amber-300 text-black shadow-[0_0_12px_rgba(245,158,11,0.35)] active:scale-95'
-                        : 'bg-black/60 border border-white/10 text-slate-500 cursor-not-allowed'
+                        ? 'aura-btn-gradient optic-active-card cursor-pointer'
+                        : 'bg-black/40 border border-white/10 text-slate-500 cursor-not-allowed'
                     }`}
                   >
                     {canAfford ? (
                       <>
-                        <Coins className="w-3.5 h-3.5 fill-current text-black" />
+                        <Coins className="w-3.5 h-3.5 shrink-0" />
                         <span className="tabular-nums font-mono font-bold">{discountedCost}</span>
                       </>
                     ) : isShieldCapped ? (
@@ -613,7 +618,7 @@ export const RewardShop: React.FC = () => {
                     ) : (
                       <>
                         <Lock className="w-3 h-3 text-slate-500" />
-                        <span className="tabular-nums font-mono">{discountedCost}</span>
+                        <span className="tabular-nums font-mono text-amber-400/70">{discountedCost}</span>
                       </>
                     )}
                   </button>
@@ -624,120 +629,132 @@ export const RewardShop: React.FC = () => {
       )}
 
       {/* ─── 6. MODAL PARA FORJAR DESEO PERSONALIZADO (PORTAL AISLADO) ─── */}
-      <AnimatePresence>
-        {isAddModalOpen && typeof document !== 'undefined' && createPortal(
-          <div 
-            className="fixed inset-0 z-[180] flex items-center justify-center p-4 bg-black/88 animate-fade-in font-sans portal-modal-root"
-            onClick={() => setIsAddModalOpen(false)}
-          >
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="w-full max-w-sm bg-[#030712]/[0.98] border border-cyan-500/35 rounded-2xl sm:rounded-3xl shadow-[0_0_50px_rgba(0,240,255,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] overflow-hidden relative text-left"
-              onClick={(e) => e.stopPropagation()}
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {isAddModalOpen && (
+            <div 
+              className="fixed inset-0 z-[170] portal-modal-root bg-black/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 font-sans"
+              onClick={() => setIsAddModalOpen(false)}
             >
-              {/* Micrograno táctil Moxen Vidrio */}
-              <span className="vi-grano opacity-5" aria-hidden="true" />
+              <motion.div 
+                role="dialog"
+                aria-modal="true"
+                initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                className="relative isolate w-full max-w-sm bg-[#030712]/[0.98] border border-white/10 rounded-2xl sm:rounded-3xl shadow-[0_24px_64px_rgba(0,0,0,0.75)] overflow-hidden text-left"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Micrograno táctil Moxen Vidrio */}
+                <span className="vi-grano opacity-5" aria-hidden="true" />
 
-              {/* Filamento especular superior */}
-              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent pointer-events-none" />
+                {/* Filamento especular superior */}
+                <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
 
-              <div className="flex items-center justify-between p-4 border-b border-white/10 bg-[#040814]/90 relative z-10">
-                <h3 className="text-sm font-anton uppercase tracking-wider text-white flex items-center gap-2">
-                  <Flame className="w-4 h-4 text-amber-400" /> {copy.shopModalCreateTitle}
-                </h3>
-                <button
-                  type="button"
-                  onClick={() => setIsAddModalOpen(false)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
-                  title="Cerrar (Esc)"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              <form onSubmit={handleCreate} className="p-4 sm:p-5 space-y-3.5 relative z-10">
-                <div>
-                  <label className="block text-[11px] font-anton uppercase tracking-wider text-slate-300 mb-1">
-                    Nombre del Premio
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    maxLength={60}
-                    placeholder="Ej. Tarde de videojuegos, postre..."
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="w-full px-3.5 py-2 text-xs font-medium rounded-xl bg-black/60 border border-white/10 text-white focus:outline-none focus:border-cyan-400/80 transition-all placeholder:text-slate-500"
-                  />
+                <div className="flex items-center justify-between p-4 border-b border-white/10 bg-[#040814]/[0.96] relative z-10">
+                  <h3 className="text-sm font-anton uppercase tracking-wider text-white flex items-center gap-2">
+                    <Flame className="w-4 h-4 text-amber-400" /> {copy.shopModalCreateTitle}
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setIsAddModalOpen(false)}
+                    className="chicle-btn w-9 h-9 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 text-slate-300 hover:text-white flex items-center justify-center cursor-pointer"
+                    title="Cerrar (Esc)"
+                    aria-label="Cerrar"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2.5">
+                <form onSubmit={handleCreate} className="p-4 sm:p-5 space-y-3.5 relative z-10">
                   <div>
-                    <label className="block text-[11px] font-anton uppercase tracking-wider text-slate-300 mb-1 flex items-center gap-1">
-                      Costo <Coins className="w-3.5 h-3.5 text-amber-400" />
+                    <label className="block text-[11px] font-anton uppercase tracking-wider text-slate-300 mb-1">
+                      Nombre del Premio
                     </label>
                     <input
-                      type="number"
-                      min="5"
-                      max="5000"
-                      value={cost}
-                      onChange={(e) => setCost(Number(e.target.value))}
-                      className="w-full px-3.5 py-2 text-xs font-mono font-bold rounded-xl bg-black/60 border border-white/10 text-amber-300 focus:outline-none focus:border-amber-400 transition-all"
+                      type="text"
+                      required
+                      maxLength={60}
+                      placeholder="Ej. Tarde de videojuegos, postre..."
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      className="w-full px-3.5 py-2 text-xs font-medium rounded-xl bg-black/40 border border-white/10 text-white focus:outline-none focus:border-[var(--aura-color-1,#00f0ff)] transition-all placeholder:text-slate-500"
                     />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div>
+                      <label className="block text-[11px] font-anton uppercase tracking-wider text-slate-300 mb-1 flex items-center gap-1">
+                        Costo <Coins className="w-3.5 h-3.5 text-amber-400" />
+                      </label>
+                      <input
+                        type="number"
+                        min="5"
+                        max="5000"
+                        value={cost}
+                        onChange={(e) => setCost(Number(e.target.value))}
+                        className="w-full px-3.5 py-2 text-xs font-mono tabular-nums font-bold rounded-xl bg-black/40 border border-white/10 text-amber-300 focus:outline-none focus:border-amber-400 transition-all"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-anton uppercase tracking-wider text-slate-300 mb-1">
+                        Icono
+                      </label>
+                      <select
+                        value={icon}
+                        onChange={(e) => setIcon(e.target.value)}
+                        className="w-full px-3 py-2 text-xs font-medium rounded-xl bg-black/40 border border-white/10 text-white focus:outline-none focus:border-[var(--aura-color-1,#00f0ff)] transition-all cursor-pointer"
+                      >
+                        <option value="🎁">🎁 Regalo</option>
+                        <option value="☕">☕ Café Especial</option>
+                        <option value="🎮">🎮 Videojuegos</option>
+                        <option value="🍿">🍿 Cine / Serie</option>
+                        <option value="🍕">🍕 Comida Libre</option>
+                        <option value="🛋️">🛋️ Siesta / Tarde Libre</option>
+                        <option value="🎧">🎧 Música / Audio</option>
+                        <option value="📚">📚 Lectura</option>
+                        <option value="🏖️">🏖️ Día Libre</option>
+                      </select>
+                    </div>
                   </div>
 
                   <div>
                     <label className="block text-[11px] font-anton uppercase tracking-wider text-slate-300 mb-1">
-                      Icono
+                      Motivación / Detalle (Opcional)
                     </label>
-                    <select
-                      value={icon}
-                      onChange={(e) => setIcon(e.target.value)}
-                      className="w-full px-3 py-2 text-xs font-medium rounded-xl bg-black/60 border border-white/10 text-white focus:outline-none focus:border-cyan-400/80 transition-all cursor-pointer"
-                    >
-                      <option value="🎁">🎁 Regalo</option>
-                      <option value="☕">☕ Café Especial</option>
-                      <option value="🎮">🎮 Videojuegos</option>
-                      <option value="🍿">🍿 Cine / Serie</option>
-                      <option value="🍕">🍕 Comida Libre</option>
-                      <option value="🛋️">🛋️ Siesta / Tarde Libre</option>
-                      <option value="🎧">🎧 Música / Audio</option>
-                      <option value="📚">📚 Lectura</option>
-                      <option value="🏖️">🏖️ Día Libre</option>
-                    </select>
+                    <input
+                      type="text"
+                      maxLength={140}
+                      placeholder="Ej. Premio merecido por 7 días de racha."
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      className="w-full px-3.5 py-2 text-xs font-medium rounded-xl bg-black/40 border border-white/10 text-white focus:outline-none focus:border-[var(--aura-color-1,#00f0ff)] transition-all placeholder:text-slate-500"
+                    />
                   </div>
-                </div>
 
-                <div>
-                  <label className="block text-[11px] font-anton uppercase tracking-wider text-slate-300 mb-1">
-                    Motivación / Detalle (Opcional)
-                  </label>
-                  <input
-                    type="text"
-                    maxLength={140}
-                    placeholder="Ej. Premio merecido por 7 días de racha."
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    className="w-full px-3.5 py-2 text-xs font-medium rounded-xl bg-black/60 border border-white/10 text-white focus:outline-none focus:border-cyan-400/80 transition-all placeholder:text-slate-500"
-                  />
-                </div>
-
-                <div className="pt-2">
-                  <button
-                    type="submit"
-                    className="chicle-btn w-full py-2.5 bg-gradient-to-r from-cyan-500 to-purple-600 hover:opacity-95 text-white text-xs font-anton uppercase tracking-wider rounded-xl shadow-[0_0_15px_rgba(0,240,255,0.35)] transition-all cursor-pointer active:scale-95"
-                  >
-                    Guardar Recompensa
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          </div>,
-          document.body
-        )}
-      </AnimatePresence>
+                  <div className="pt-2 flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsAddModalOpen(false)}
+                      className="chicle-btn px-4 py-2.5 bg-white/[0.05] hover:bg-white/[0.12] border border-white/15 text-slate-200 hover:text-white text-xs font-anton uppercase tracking-wider rounded-xl transition-all cursor-pointer"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      className="chicle-btn aura-btn-gradient optic-active-card flex-1 py-2.5 text-xs font-anton uppercase tracking-wider rounded-xl transition-all cursor-pointer"
+                    >
+                      Guardar Recompensa
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
     </div>
   );

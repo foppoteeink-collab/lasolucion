@@ -79,9 +79,10 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   const monthNameShort = dateObj.toLocaleDateString('es-ES', { month: 'short' }).replace('.', '');
 
   return (
-    <div className="relative isolate rounded-2xl bg-[#040a1a]/[0.94] border border-white/10 p-2 sm:p-2.5 text-white transition-all shadow-[0_4px_20px_rgba(0,0,0,0.4)]">
+    <div className="relative isolate rounded-2xl bg-[#040a1a]/[0.94] border border-white/10 p-2 sm:p-2.5 text-white transition-all shadow-[0_8px_28px_rgba(0,0,0,0.45)] overflow-hidden">
       {/* Grano esmerilado táctil */}
       <span className="vi-grano opacity-5" aria-hidden="true" />
+      <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
 
       {/* ====================================================================
           FILA PRINCIPAL RESPONSIVE (MÓVIL EN 2 NIVELES / DESKTOP EN 1 LÍNEA)
@@ -93,7 +94,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           <button 
             type="button"
             onClick={handlePrevDay} 
-            className="w-7 h-7 rounded-lg bg-white/[0.04] hover:bg-cyan-950/50 border border-white/10 hover:border-cyan-400/50 text-slate-300 hover:text-cyan-300 flex items-center justify-center transition-all cursor-pointer active:scale-90 shrink-0"
+            className="chicle-btn w-8 h-8 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 hover:aura-border-subtle text-slate-300 hover:text-white flex items-center justify-center transition-all cursor-pointer shrink-0"
             title="Día anterior"
             aria-label="Día anterior"
           >
@@ -101,18 +102,18 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           </button>
 
           {/* Fecha Actual */}
-          <div className="flex items-center gap-1.5 min-w-0 px-2 py-0.5 rounded-lg bg-black/40 border border-white/10">
-            <span className="text-xs sm:text-[13px] font-anton uppercase tracking-wide text-white truncate capitalize">
+          <div className="flex items-center gap-1.5 min-w-0 h-8 px-2.5 rounded-xl bg-[#040814]/80 border border-white/10">
+            <span className="text-xs sm:text-[13px] font-anton uppercase tracking-wide text-white truncate capitalize tabular-nums">
               {dayNameShort}, {dayNumber} {monthNameShort}
             </span>
 
             {isToday ? (
               <span 
-                className="px-1.5 py-0.5 rounded-md text-[9px] font-anton tracking-wider uppercase font-bold shrink-0"
+                className="optic-active-card px-1.5 py-0.5 rounded-md text-[9.5px] font-anton tracking-wider uppercase font-bold shrink-0"
                 style={{
                   background: 'var(--aura-color-1, #00f0ff)',
                   color: '#030712',
-                  boxShadow: '0 0 8px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.6)'
+                  boxShadow: '0 0 8px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.5)'
                 }}
               >
                 Hoy
@@ -121,7 +122,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               <button
                 type="button"
                 onClick={handleGoToday}
-                className="px-1.5 py-0.5 rounded-md bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-400/50 text-cyan-300 text-[9px] font-anton tracking-wider uppercase transition-colors cursor-pointer shrink-0 flex items-center gap-0.5"
+                className="chicle-btn px-1.5 py-0.5 rounded-md aura-bg-soft aura-border-subtle aura-text-primary text-[9.5px] font-anton tracking-wider uppercase transition-colors cursor-pointer shrink-0 flex items-center gap-0.5 border"
                 title="Volver a la fecha de hoy"
               >
                 <Icon name="rotateCcw" className="w-2.5 h-2.5" />
@@ -133,7 +134,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           <button 
             type="button"
             onClick={handleNextDay} 
-            className="w-7 h-7 rounded-lg bg-white/[0.04] hover:bg-cyan-950/50 border border-white/10 hover:border-cyan-400/50 text-slate-300 hover:text-cyan-300 flex items-center justify-center transition-all cursor-pointer active:scale-90 shrink-0"
+            className="chicle-btn w-8 h-8 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 hover:aura-border-subtle text-slate-300 hover:text-white flex items-center justify-center transition-all cursor-pointer shrink-0"
             title="Día siguiente"
             aria-label="Día siguiente"
           >
@@ -144,9 +145,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           <button
             type="button"
             onClick={toggleWeekStrip}
-            className={`h-7 px-2 rounded-lg border text-[10.5px] font-mono font-bold flex items-center gap-1 transition-all cursor-pointer active:scale-90 shrink-0 ${
+            className={`chicle-btn h-8 px-2.5 rounded-xl border text-[10.5px] font-mono font-bold flex items-center gap-1 transition-all cursor-pointer shrink-0 ${
               showWeekStrip
-                ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400/60 shadow-[0_0_8px_rgba(0,240,255,0.25)]'
+                ? 'aura-bg-soft aura-text-primary aura-border-primary optic-active-card aura-glow-subtle'
                 : 'bg-white/[0.03] hover:bg-white/[0.08] text-slate-400 hover:text-slate-200 border-white/10'
             }`}
             title={showWeekStrip ? 'Ocultar tira semanal' : 'Ver semana en micro-píldoras'}
@@ -158,7 +159,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         </div>
 
         {/* BLOQUE DERECHO: Acciones Tácticas (Descanso, Datepicker, + Tarea) */}
-        <div className="flex items-center gap-1 shrink-0 ml-auto">
+        <div className="flex items-center gap-1.5 shrink-0 ml-auto">
           {/* Modo Descanso */}
           <button
             type="button"
@@ -170,9 +171,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               }
             }}
             data-tour="rest-mode-btn"
-            className={`h-7 px-2 rounded-lg border transition-all cursor-pointer flex items-center gap-1 active:scale-90 text-xs font-mono font-bold ${
+            className={`chicle-btn h-8 px-2.5 rounded-xl border transition-all cursor-pointer flex items-center gap-1 text-xs font-mono font-bold ${
               isCurrentDateRest
-                ? 'bg-emerald-950/80 text-emerald-300 border-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.35)] ring-1 ring-emerald-400'
+                ? 'bg-emerald-950/80 text-emerald-300 border-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.35)] ring-1 ring-emerald-400 optic-active-card'
                 : 'bg-white/[0.03] text-slate-400 border-white/10 hover:border-emerald-500/50 hover:text-emerald-300'
             }`}
             title={isCurrentDateRest ? 'Día de descanso activo: sin daño de HP y hábitos protegidos' : 'Activar día de descanso para esta fecha'}
@@ -190,11 +191,11 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               soundFX.playClick();
               setIsMonthlyModalOpen(true);
             }}
-            className="w-7 h-7 rounded-lg bg-white/[0.04] hover:bg-cyan-950/50 border border-white/10 hover:border-cyan-400/50 text-slate-300 hover:text-cyan-300 flex items-center justify-center transition-all cursor-pointer active:scale-95"
+            className="chicle-btn w-8 h-8 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 hover:aura-border-subtle aura-text-primary flex items-center justify-center transition-all cursor-pointer"
             title="Abrir Planificador Mensual Completo"
             aria-label="Abrir Planificador Mensual"
           >
-            <Icon name="calendar" className="w-3.5 h-3.5 text-cyan-300" />
+            <Icon name="calendar" className="w-3.5 h-3.5" />
           </button>
 
           {/* Botón Dictado por Voz con KAI */}
@@ -204,7 +205,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               soundFX.playClick();
               openVoiceDictation();
             }}
-            className="w-7 h-7 rounded-lg bg-fuchsia-950/60 hover:bg-fuchsia-900/70 border border-fuchsia-400/50 hover:border-fuchsia-300 text-fuchsia-300 hover:text-white flex items-center justify-center transition-all cursor-pointer active:scale-95 shadow-[0_0_10px_rgba(217,70,239,0.25)]"
+            className="chicle-btn w-8 h-8 rounded-xl aura-bg-soft aura-border-subtle aura-text-primary hover:text-white flex items-center justify-center transition-all cursor-pointer border"
             title="Dictar tareas o hábitos por voz con KAI"
             aria-label="Dictar tareas o hábitos por voz con KAI"
           >
@@ -219,10 +220,10 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 soundFX.playClick();
                 onOpenAddModal();
               }}
-              className="btn-neon-hunter h-7 px-2.5 rounded-lg text-[11px] uppercase tracking-wider flex items-center gap-1 shadow-lg cursor-pointer"
+              className="chicle-btn aura-btn-gradient optic-active-card h-8 px-3 rounded-xl text-[11px] font-anton uppercase tracking-wider flex items-center gap-1 shadow-lg cursor-pointer"
               title="Nueva Tarea, Hábito o Planificación"
             >
-              <Icon name="plus" className="w-3 h-3 stroke-[3]" />
+              <Icon name="plus" className="w-3.5 h-3.5 stroke-[3]" />
               <span>Tarea</span>
             </button>
           )}
@@ -236,7 +237,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           <button 
             type="button"
             onClick={handlePrevDay} 
-            className="w-7 h-7 rounded-lg bg-white/[0.04] hover:bg-cyan-950/50 border border-white/10 text-slate-300 flex items-center justify-center transition-all cursor-pointer active:scale-90 shrink-0"
+            className="chicle-btn w-8 h-8 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 text-slate-300 flex items-center justify-center transition-all cursor-pointer shrink-0"
             title="Día anterior"
             aria-label="Día anterior"
           >
@@ -244,14 +245,14 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           </button>
 
           {/* Fecha Actual */}
-          <div className="flex-1 flex items-center justify-center gap-1 px-1.5 py-0.5 rounded-lg bg-black/50 border border-white/10 min-w-0">
-            <span className="text-[11px] font-anton uppercase tracking-wide text-white truncate capitalize">
+          <div className="flex-1 flex items-center justify-center gap-1 h-8 px-1.5 rounded-xl bg-[#040814]/80 border border-white/10 min-w-0">
+            <span className="text-[11px] font-anton uppercase tracking-wide text-white truncate capitalize tabular-nums">
               {dayNameShort}, {dayNumber} {monthNameShort}
             </span>
 
             {isToday ? (
               <span 
-                className="px-1 py-0.2 rounded text-[8px] font-anton tracking-wider uppercase font-bold shrink-0"
+                className="optic-active-card px-1.5 py-0.5 rounded text-[9px] font-anton tracking-wider uppercase font-bold shrink-0"
                 style={{
                   background: 'var(--aura-color-1, #00f0ff)',
                   color: '#030712'
@@ -263,7 +264,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               <button
                 type="button"
                 onClick={handleGoToday}
-                className="px-1 py-0.2 rounded bg-cyan-950 border border-cyan-400/50 text-cyan-300 text-[8px] font-anton uppercase tracking-wider cursor-pointer shrink-0"
+                className="px-1.5 py-0.5 rounded aura-bg-soft border aura-border-subtle aura-text-primary text-[9px] font-anton uppercase tracking-wider cursor-pointer shrink-0"
                 title="Volver a la fecha de hoy"
               >
                 Hoy
@@ -274,7 +275,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           <button 
             type="button"
             onClick={handleNextDay} 
-            className="w-7 h-7 rounded-lg bg-white/[0.04] hover:bg-cyan-950/50 border border-white/10 text-slate-300 flex items-center justify-center transition-all cursor-pointer active:scale-90 shrink-0"
+            className="chicle-btn w-8 h-8 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 text-slate-300 flex items-center justify-center transition-all cursor-pointer shrink-0"
             title="Día siguiente"
             aria-label="Día siguiente"
           >
@@ -282,7 +283,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           </button>
         </div>
 
-        {/* ACCIONES COMPACTAS: Pausa, Mes, + Tarea */}
+        {/* ACCIONES COMPACTAS: Pausa, Mes, Voz, + Tarea */}
         <div className="flex items-center gap-1 shrink-0">
           <button
             type="button"
@@ -291,9 +292,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               const wasActivated = toggleRestDay(currentDate);
               if (wasActivated) soundFX.playItemEquip();
             }}
-            className={`w-7 h-7 rounded-lg border flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
+            className={`chicle-btn w-8 h-8 rounded-xl border flex items-center justify-center transition-all cursor-pointer ${
               isCurrentDateRest
-                ? 'bg-emerald-950/80 text-emerald-300 border-emerald-400'
+                ? 'bg-emerald-950/80 text-emerald-300 border-emerald-400 optic-active-card'
                 : 'bg-white/[0.03] text-slate-400 border-white/10'
             }`}
             title={isCurrentDateRest ? 'En Descanso' : 'Pausa / Descanso'}
@@ -308,11 +309,11 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               soundFX.playClick();
               setIsMonthlyModalOpen(true);
             }}
-            className="w-7 h-7 rounded-lg bg-white/[0.03] hover:bg-white/[0.08] border border-white/10 text-slate-300 flex items-center justify-center transition-all cursor-pointer active:scale-95"
+            className="chicle-btn w-8 h-8 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 aura-text-primary flex items-center justify-center transition-all cursor-pointer"
             title="Calendario Mensual"
             aria-label="Abrir calendario mensual"
           >
-            <Icon name="calendar" className="w-3.5 h-3.5 text-cyan-300" />
+            <Icon name="calendar" className="w-3.5 h-3.5" />
           </button>
 
           {/* Botón Dictado por Voz Móvil */}
@@ -322,7 +323,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               soundFX.playClick();
               openVoiceDictation();
             }}
-            className="w-7 h-7 rounded-lg bg-fuchsia-950/60 hover:bg-fuchsia-900/70 border border-fuchsia-400/50 text-fuchsia-300 flex items-center justify-center transition-all cursor-pointer active:scale-95 shrink-0"
+            className="chicle-btn w-8 h-8 rounded-xl aura-bg-soft border aura-border-subtle aura-text-primary flex items-center justify-center transition-all cursor-pointer shrink-0"
             title="Dictar por voz con KAI"
             aria-label="Dictar tareas o hábitos por voz"
           >
@@ -337,7 +338,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 soundFX.playClick();
                 onOpenAddModal();
               }}
-              className="btn-neon-hunter h-7 px-2 rounded-lg text-[10px] uppercase tracking-wider flex items-center gap-1 shadow-md cursor-pointer shrink-0"
+              className="chicle-btn aura-btn-gradient optic-active-card h-8 px-2.5 rounded-xl text-[10px] font-anton uppercase tracking-wider flex items-center gap-1 shadow-md cursor-pointer shrink-0"
               title="Nueva Tarea o Hábito"
             >
               <Icon name="plus" className="w-3 h-3" strokeWidth={3} />
@@ -359,7 +360,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
             className="overflow-hidden"
           >
-            <div className="grid grid-cols-7 gap-1 sm:gap-1.5 pt-1 border-t border-white/10">
+            <div className="grid grid-cols-7 gap-1 sm:gap-1.5 pt-1.5 border-t border-white/10">
               {weekDays.map((dateStr) => {
                 const isSelected = dateStr === currentDate;
                 const isDayToday = dateStr === todayStr;
@@ -376,32 +377,27 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                       soundFX.playClick();
                       onChangeDate(dateStr);
                     }}
-                    className={`relative py-1 px-0.5 rounded-lg border text-center transition-all cursor-pointer flex flex-col items-center justify-center min-h-[34px] ${
+                    className={`chicle-btn relative py-1.5 px-0.5 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center min-h-[38px] ${
                       isSelected
-                        ? 'text-white'
+                        ? 'text-white aura-bg-soft aura-border-primary optic-active-card aura-glow-subtle'
                         : isDayToday
-                        ? 'bg-yellow-400/10 border-yellow-400/50 text-yellow-300'
+                        ? 'bg-amber-400/10 border-amber-400/50 text-amber-300'
                         : isRest
                         ? 'bg-emerald-950/30 border-emerald-500/30 text-emerald-300'
-                        : 'bg-black/30 border-white/5 hover:border-white/20 text-slate-400 hover:text-white'
+                        : 'bg-[#040814]/70 border-white/10 hover:border-white/20 text-slate-400 hover:text-white'
                     }`}
-                    style={isSelected ? {
-                      background: 'color-mix(in srgb, var(--aura-color-1, #00f0ff) 25%, transparent)',
-                      borderColor: 'var(--aura-color-1, #00f0ff)',
-                      boxShadow: '0 0 10px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.45)'
-                    } : undefined}
                   >
-                    <span className="text-[9px] font-mono leading-none opacity-80">
+                    <span className="text-[9.5px] font-mono leading-none opacity-80">
                       {dName}
                     </span>
-                    <span className="text-xs font-anton leading-tight mt-0.5">
+                    <span className="text-xs font-anton leading-tight mt-0.5 tabular-nums">
                       {dNum}
                     </span>
                     {isDayToday && !isSelected && (
-                      <span className="w-1 h-1 rounded-full bg-yellow-400 absolute bottom-0.5" />
+                      <span className="w-1 h-1 rounded-full bg-amber-400 absolute bottom-0.5" />
                     )}
                     {isRest && (
-                      <span className="text-[7px] leading-none absolute -top-1 right-0.5">🌿</span>
+                      <span className="text-[9px] leading-none absolute -top-1 right-0.5">🌿</span>
                     )}
                   </button>
                 );

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { simplex3 } from '../utils/perlinNoise';
 import { useUIStore } from '../store/useUIStore';
+import { useSystemPalette } from '../utils/systemPalette';
 
 interface Particle {
   x: number;
@@ -16,15 +17,6 @@ interface Particle {
   maxLife: number;
 }
 
-// Brand palette: Cyan Cuántico (#00f0ff), Magia Púrpura (#9600ff), Lima Energía (#d6f421)
-const BRAND_COLORS = [
-  '#00f0ff', // Cian Cuántico (Primary)
-  '#00f0ff',
-  '#9600ff', // Magia Púrpura (Accent)
-  '#a855f7', // Orquídea Púrpura suave
-  '#d6f421', // Lima Energía Neón (Vibrance)
-];
-
 // P0 Target FPS: 20 FPS (50ms interval) to eliminate GPU/CPU thermal throttling on mobile SoCs
 const TARGET_FPS = 20;
 const TARGET_FRAME_MS = 1000 / TARGET_FPS; // 50.0 ms
@@ -32,10 +24,13 @@ const TARGET_FRAME_MS = 1000 / TARGET_FPS; // 50.0 ms
 export const QuantumNoiseCanvas: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const zenMode = useUIStore((s) => s.zenMode);
+  const glowIntensity = useUIStore((s) => s.glowIntensity);
+  const palette = useSystemPalette();
 
   useEffect(() => {
-    // Si el usuario activa el Modo Zen / Ahorro Máximo, suspendemos el canvas de inmediato
-    if (zenMode) return;
+    // Si el usuario activa el Modo Zen o apaga la emisión lumínica, suspendemos el canvas
+    if (zenMode || glowIntensity === 'off') return;
+    const dynamicColors = [palette.c1, palette.c1, palette.c2, palette.c3, palette.c4];
 
     // Detectar si el usuario prefiere movimiento reducido en el sistema operativo
     const prefersReducedMotion =
@@ -95,7 +90,7 @@ export const QuantumNoiseCanvas: React.FC = () => {
     const createParticle = (initRandom = false): Particle => {
       const x = initRandom ? Math.random() * width : (Math.random() < 0.5 ? 0 : Math.random() * width);
       const y = initRandom ? Math.random() * height : (Math.random() < 0.5 ? 0 : Math.random() * height);
-      const color = BRAND_COLORS[Math.floor(Math.random() * BRAND_COLORS.length)];
+      const color = dynamicColors[Math.floor(Math.random() * dynamicColors.length)];
       const maxLife = 220 + Math.random() * 280;
 
       return {
@@ -321,14 +316,14 @@ export const QuantumNoiseCanvas: React.FC = () => {
       window.removeEventListener('scroll', handleScroll);
       document.removeEventListener('visibilitychange', onVisibilityChange);
     };
-  }, [zenMode]);
+  }, [zenMode, glowIntensity, palette.c1, palette.c2, palette.c3, palette.c4]);
 
-  if (zenMode) return null;
+  if (zenMode || glowIntensity === 'off') return null;
 
   return (
     <canvas
       ref={canvasRef}
-      className="absolute inset-0 pointer-events-none z-0 opacity-90"
+      className="ambient-canvas absolute inset-0 pointer-events-none z-0 opacity-90"
       aria-hidden="true"
     />
   );
