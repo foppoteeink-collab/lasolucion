@@ -28,7 +28,7 @@ import { usePlayerStore } from '../store/usePlayerStore';
 import { useUIStore } from '../store/useUIStore';
 import { getRankForLevel, getCategoryColor } from '../data/defaults';
 import { CloudSyncResult } from '../hooks/useCloudSync';
-import { ArchetypeGlyph } from './ArchetypeGlyph';
+import { KaiProfileOrb } from './KaiProfileOrb';
 import { getArchetypeDisplayName } from '../data/archetypes';
 
 interface HeaderProps {
@@ -373,21 +373,8 @@ export const Header: React.FC<HeaderProps> = ({
                   className="flex items-center gap-2.5 sm:gap-3.5 group flex-1 min-w-0 cursor-pointer text-left focus:outline-none"
                   title={`Perfil de ${rawName} - Nivel ${stats.level} (${displayRankTitle})`}
                 >
-                  {/* Avatar con aura de prestigio */}
-                  <div 
-                    className="relative w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-[#040a1a] border flex items-center justify-center group-hover:scale-105 transition-all overflow-hidden shrink-0 shadow-lg"
-                    style={{
-                      borderColor: 'rgba(var(--aura-glow-rgb, 0, 240, 255), 0.5)',
-                      boxShadow: '0 0 14px rgba(var(--aura-glow-rgb, 0, 240, 255), 0.25)'
-                    }}
-                  >
-                    <ArchetypeGlyph
-                      archetypeNameOrId={stats.characterClass || 'heroe'}
-                      size={22}
-                      className="border-none bg-transparent p-0 shadow-none"
-                      glow={false}
-                    />
-                  </div>
+                  {/* Micro-Holo KAI con Anillo de Progreso XP y Oleaje Cromático Aurora */}
+                  <KaiProfileOrb size={38} className="sm:!w-[44px] sm:!h-[44px] shrink-0" />
 
                   {/* Estatus Táctico */}
                   <div className="flex flex-col min-w-0 flex-1 justify-center">

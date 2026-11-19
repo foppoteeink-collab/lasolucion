@@ -705,6 +705,30 @@ body.modal-open-hide-floating .omni-companion-hub-root {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
+   KAI PROFILE ORB - MICRO-FORJA VIVA & ANILLO AURORA DINÁMICO
+   ═══════════════════════════════════════════════════════════════════════ */
+.kai-orb-aurora-glow {
+  background: linear-gradient(135deg, #00f0ff 0%, #a855f7 35%, #ec4899 70%, #f59e0b 100%);
+  background-size: 300% 300% !important;
+  animation: logo-aurora-flow 7s ease-in-out infinite;
+  will-change: background-position;
+}
+
+@keyframes kai-micro-float {
+  0%, 100% {
+    transform: translateY(0px) scale(1);
+  }
+  50% {
+    transform: translateY(-1.5px) scale(1.02);
+  }
+}
+
+.animate-kai-micro-float {
+  animation: kai-micro-float 3.6s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
    MOXEN CONSTANCIA - HÁBITOS 3D & SHOCKWAVE DE CELEBRACIÓN
    Sincronizado con el Personalizador de Fondo y Color (Aura / Moxen Malla)
    ═══════════════════════════════════════════════════════════════════════ */
