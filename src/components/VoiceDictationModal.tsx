@@ -138,6 +138,7 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({
   const stats = usePlayerStore((s) => s.stats);
   const setStats = usePlayerStore((s) => s.setStats);
   const addXpAndCoins = usePlayerStore((s) => s.addXpAndCoins);
+  const markTutorialGuideSeen = usePlayerStore((s) => s.markTutorialGuideSeen);
   const currentViewDate = useTaskStore((s) => s.currentViewDate);
   const tasksByDate = useTaskStore((s) => s.tasksByDate);
   const customHabits = useTaskStore((s) => s.customHabits);
@@ -182,6 +183,31 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({
   const [kaiReply, setKaiReply] = useState<string | null>(null);
   const [isSpeakingReply, setIsSpeakingReply] = useState(false);
   const [injectedSuccess, setInjectedSuccess] = useState<string | null>(null);
+
+  // Mini-guía descartable: sólo para nuevos usuarios o hasta tocar [X]
+  const [showFirstTimeGuide, setShowFirstTimeGuide] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const isSeenInLocal = localStorage.getItem('kai_voice_modal_guide_seen') === 'true';
+    return !isSeenInLocal;
+  });
+
+  useEffect(() => {
+    if (stats?.seenTutorialGuides?.kaiVoiceModalGuide) {
+      setShowFirstTimeGuide(false);
+    }
+  }, [stats?.seenTutorialGuides]);
+
+  const handleDismissGuide = useCallback((e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    soundFX.playClick();
+    setShowFirstTimeGuide(false);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('kai_voice_modal_guide_seen', 'true');
+      } catch {}
+    }
+    markTutorialGuideSeen('kaiVoiceModalGuide');
+  }, [markTutorialGuideSeen]);
 
   const currencySymbol = getSavedCurrencySymbol();
   const recognizerRef = useRef<VoiceRecognizerController | null>(null);
@@ -934,50 +960,49 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({
           className="flex-1 w-full max-w-xl flex flex-col items-center justify-center gap-4 overflow-y-auto py-3 px-1 custom-scrollbar relative z-10"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Avatar Holográfico en Lente Óptico de Precisión */}
-          <div className="relative flex flex-col items-center justify-center shrink-0 mt-1">
-            <div className="relative w-36 h-36 flex items-center justify-center mb-2">
-              {/* Halo cuántico pulsante */}
+          {/* Avatar Holográfico Soberano en Primer Plano (Libre de cajas y marcos rígidos) */}
+          <div className="relative flex flex-col items-center justify-center shrink-0 mt-1 z-30">
+            <div className="relative w-44 h-44 flex items-center justify-center mb-1">
+              {/* Resplandor cuántico orgánico de fondo detrás del avatar */}
               <div
-                className="absolute inset-0 rounded-full pointer-events-none"
+                className="absolute inset-0 rounded-full pointer-events-none -z-10 blur-2xl opacity-75"
                 style={{
-                  boxShadow: '0 0 70px 10px rgba(6, 182, 212, 0.35), 0 0 120px 30px rgba(147, 51, 234, 0.2)',
-                  background: 'radial-gradient(circle, rgba(6, 182, 212, 0.25) 0%, rgba(147, 51, 234) 60%, transparent 100%)',
+                  background: 'radial-gradient(circle, rgba(6, 182, 212, 0.4) 0%, rgba(147, 51, 234, 0.22) 50%, transparent 80%)',
                 }}
               />
 
-              {/* Precision Glass Lens */}
-              <div className="w-32 h-32 rounded-full p-1 bg-gradient-to-b from-white/20 via-transparent to-white/5 border border-white/15 relative flex items-center justify-center overflow-hidden z-10 shadow-2xl">
-                <motion.button
-                  type="button"
-                  onClick={handleTapKai}
-                  whileHover={{ scale: 1.04 }}
-                  whileTap={{ scale: 0.94 }}
-                  className="w-full h-full rounded-full cursor-pointer flex items-center justify-center outline-none"
-                  aria-label={isListening ? 'Tocar a KAI para enviar' : 'Tocar a KAI para hablar'}
-                  title={isListening ? 'Toca a KAI al terminar de hablar' : 'Toca a KAI para volver a hablar'}
-                >
-                  <div data-preserve-optic="true">
-                    <HoloCompanion
-                      archetype={archetype}
-                      size={hasAnyOutput ? 86 : 108}
-                      interactive={false}
-                      isProjecting={true}
-                      isSpeaking={isSpeakingReply}
-                      auraState={
-                        injectedSuccess
-                          ? 'victory'
-                          : isListening || isAnalyzing
-                            ? 'focus_trance'
-                            : 'normal'
-                      }
-                    />
-                  </div>
-                </motion.button>
-              </div>
+              {/* Botón táctil directo sin marco contenedor que encierre a KAI */}
+              <motion.button
+                type="button"
+                onClick={handleTapKai}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.94 }}
+                className="relative z-30 cursor-pointer flex items-center justify-center outline-none bg-transparent border-0 p-0 overflow-visible filter drop-shadow-[0_12px_36px_rgba(6,182,212,0.5)] active:drop-shadow-[0_4px_16px_rgba(6,182,212,0.7)]"
+                aria-label={isListening ? 'Tocar a KAI para enviar' : 'Tocar a KAI para hablar'}
+                title={isListening ? 'Toca a KAI al terminar de hablar' : 'Toca a KAI para volver a hablar'}
+              >
+                <div data-preserve-optic="true" className="relative z-30 transform-gpu">
+                  <HoloCompanion
+                    archetype={archetype}
+                    size={hasAnyOutput ? 102 : 134}
+                    interactive={false}
+                    isProjecting={true}
+                    isSpeaking={isSpeakingReply}
+                    auraState={
+                      injectedSuccess
+                        ? 'victory'
+                        : isListening || isAnalyzing
+                          ? 'focus_trance'
+                          : 'normal'
+                    }
+                  />
+                </div>
+              </motion.button>
 
-              {/* Anillo de respiración cuántica */}
-              <div className={`absolute -inset-2 rounded-full border border-cyan-400/30 pointer-events-none ${isListening ? 'animate-pulse' : ''}`} />
+              {/* Anillo de respiración sutil exterior sólo cuando escucha */}
+              {isListening && (
+                <div className="absolute -inset-2 rounded-full border border-cyan-400/40 pointer-events-none animate-pulse" />
+              )}
             </div>
 
             {/* Espectro acústico de ondas vivas (Líneas finas de luz) */}
@@ -1016,25 +1041,86 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({
             </motion.p>
           )}
 
-          {/* Sugerencias discretas solo cuando no hay texto ni resultado aún */}
+          {/* Mini-Guía de bienvenida descartable (Sólo para el primer usuario o hasta dar clic en [X]) */}
           {!transcript && !hasAnyOutput && !isAnalyzing && (
-            <div className="flex flex-wrap items-center justify-center gap-2 max-w-md pt-1">
-              {QUICK_SUGGESTIONS.map((sample, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => {
-                    stopListening();
-                    setTranscript(sample);
-                    transcriptRef.current = sample;
-                    void runAnalysis(sample);
-                  }}
-                  className="px-3.5 py-1.5 rounded-full bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 text-[11.5px] text-slate-300 hover:text-white transition-all cursor-pointer active:scale-95"
+            <AnimatePresence>
+              {showFirstTimeGuide ? (
+                <motion.div
+                  key="first-time-guide"
+                  initial={{ opacity: 0, y: 12, scale: 0.97 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                  transition={{ duration: 0.22 }}
+                  className="w-full max-w-sm rounded-2xl bg-white/[0.04] border border-cyan-500/30 p-3.5 backdrop-blur-xl relative shadow-2xl mt-1 text-left"
                 >
-                  {sample}
-                </button>
-              ))}
-            </div>
+                  {/* Botón X para cerrar y borrar para siempre la guía */}
+                  <button
+                    type="button"
+                    onClick={handleDismissGuide}
+                    className="absolute top-2.5 right-2.5 w-6 h-6 rounded-full bg-white/[0.06] hover:bg-white/[0.15] text-slate-400 hover:text-white flex items-center justify-center transition-all cursor-pointer"
+                    title="No volver a mostrar esta guía"
+                    aria-label="Cerrar guía"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+
+                  <div className="flex items-center gap-2 mb-1.5 pr-6">
+                    <Sparkles className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                    <span className="text-[11px] font-semibold text-cyan-300 uppercase tracking-wider">Mini-Guía de Enlace</span>
+                  </div>
+
+                  <p className="text-[12px] text-slate-300 font-light leading-relaxed mb-2.5">
+                    Háblale libremente a {kaiName}. La inteligencia detecta automáticamente tus intenciones:
+                  </p>
+
+                  <div className="space-y-1.5">
+                    {[
+                      { label: '“Hazme un diagnóstico”', desc: 'Evalúa tu día y productividad' },
+                      { label: '“Entrenar 45 min hoy”', desc: 'Registra o crea un hábito' },
+                      { label: '“Gasté 150 en almuerzo”', desc: 'Registra finanzas' },
+                      { label: '“Hoy me sentí muy motivado”', desc: 'Guarda en tu Bitácora' },
+                    ].map((item, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          const prompt = item.label.replace(/[“”]/g, '');
+                          handleDismissGuide();
+                          stopListening();
+                          setTranscript(prompt);
+                          transcriptRef.current = prompt;
+                          void runAnalysis(prompt);
+                        }}
+                        className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-white/[0.03] hover:bg-cyan-500/10 border border-white/5 hover:border-cyan-500/30 transition-all text-left group cursor-pointer"
+                      >
+                        <span className="text-xs text-slate-200 group-hover:text-cyan-300 font-medium">{item.label}</span>
+                        <span className="text-[10.5px] text-slate-400 group-hover:text-slate-300">{item.desc}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between text-[11px] text-slate-400">
+                    <span>Toca una o habla en voz alta</span>
+                    <button
+                      type="button"
+                      onClick={handleDismissGuide}
+                      className="text-cyan-400 hover:text-cyan-300 font-medium cursor-pointer transition-colors"
+                    >
+                      No volver a mostrar
+                    </button>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.p
+                  key="zen-prompt"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-[11px] text-slate-400/60 font-light tracking-wide text-center pt-2"
+                >
+                  {isListening ? 'Te escucho atentamente...' : 'Toca el micrófono para comenzar'}
+                </motion.p>
+              )}
+            </AnimatePresence>
           )}
 
           {/* Error discreto */}
