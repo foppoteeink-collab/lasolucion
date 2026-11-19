@@ -602,6 +602,7 @@ export const usePlayerStore = create<PlayerState>()(
             kaiShape: data.kaiShape || state.stats.kaiShape || 'prism',
             mantra: data.mantra?.trim() || state.stats.mantra,
             hasCompletedAwakening: true,
+            streakShields: Math.max(state.stats.streakShields || 0, 1),
             currentXp: (state.stats.currentXp || 0) + 50,
             totalXpEarned: (state.stats.totalXpEarned || 0) + 50,
             coins: (state.stats.coins || 0) + 25,

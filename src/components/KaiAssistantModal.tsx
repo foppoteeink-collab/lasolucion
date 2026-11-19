@@ -36,13 +36,15 @@ import {
 import { useUIStore } from '../store/useUIStore';
 import { safeLogEvent } from '../firebase';
 
-interface OracleModalProps {
+export interface KaiAssistantModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialPrompt?: string;
 }
 
-export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initialPrompt }) => {
+export type OracleModalProps = KaiAssistantModalProps;
+
+export const KaiAssistantModal: React.FC<KaiAssistantModalProps> = ({ isOpen, onClose, initialPrompt }) => {
   const [activeTab, setActiveTab] = useState<'wizard' | 'prompt' | 'templates'>('wizard');
   const [prompt, setPrompt] = useState('');
   const [scheduleMode, setScheduleMode] = useState<'master_blocks' | 'detailed'>('master_blocks');
@@ -1703,4 +1705,7 @@ export const OracleModal: React.FC<OracleModalProps> = ({ isOpen, onClose, initi
     document.body
   );
 };
+
+export const OracleModal = KaiAssistantModal;
+export default KaiAssistantModal;
 

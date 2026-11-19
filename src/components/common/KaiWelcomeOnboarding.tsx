@@ -5,7 +5,6 @@ import {
   Sparkles,
   Zap,
   CheckCircle2,
-  Target,
   ArrowRight,
   ArrowLeft,
   X,
@@ -15,17 +14,23 @@ import {
   Plus,
   Minus,
   Bell,
-  BookOpen,
-  Calendar,
-  ShieldCheck
+  Shield,
+  ShieldCheck,
+  Mail,
+  Lock,
+  LogIn,
+  KeyRound,
+  AlertCircle
 } from 'lucide-react';
 import { safeLogEvent } from '../../firebase';
 import { KAICompanion } from '../KAICompanion';
 import { soundFX } from '../../utils/audio';
 import { triggerShockwave } from '../../utils/celebration';
+import { triggerHaptic } from '../../utils/haptics';
 import { usePlayerStore } from '../../store/usePlayerStore';
 import { useUIStore } from '../../store/useUIStore';
 import { useTaskStore } from '../../store/useTaskStore';
+import { useAuth } from '../../context/AuthContext';
 import { getTodayDateString, getGlobalDayStartHour, setGlobalDayStartHour } from '../../utils/date';
 import { formatHourToHuman } from '../../utils/timeUtils';
 import { PlayerStats, TaskItem, TaskCategory } from '../../types';
@@ -226,6 +231,7 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
   const { completeAwakening, claimTutorialReward, markTutorialGuideSeen } = usePlayerStore();
   const { addTask } = useTaskStore();
   const copy = useNarrativeCopy();
+  const { user, signInWithGoogle, signUpWithEmail, signInWithEmail, error: authError, clearError: clearAuthError } = useAuth();
 
   const [step, setStep] = useState<number>(initialStep);
 
@@ -233,7 +239,6 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
   const [username, setUsername] = useState(
     stats.username && stats.username !== 'CazadorDelSistema' && stats.username !== 'UsuarioDelSistema' && stats.username.toLowerCase() !== 'cazador' ? stats.username : ''
   );
-  const [selectedDesire, setSelectedDesire] = useState<string>('procrastination');
   const [selectedArchId, setSelectedArchId] = useState<string>(() => {
     const currentClass = stats.characterClass?.toLowerCase() || '';
     const match = WELCOME_ARCHETYPES.find(a => currentClass.includes(a.id) || a.name.toLowerCase() === currentClass);
@@ -243,18 +248,27 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
     return stats.dayStartHour !== undefined ? stats.dayStartHour : getGlobalDayStartHour();
   });
 
-  // Estado para la micro-misión interactiva (Paso 3)
+  // Estados para autenticación opcional en Paso 1
+  const [showEmailForm, setShowEmailForm] = useState(false);
+  const [isRegisterMode, setIsRegisterMode] = useState(true);
+  const [emailInput, setEmailInput] = useState('');
+  const [passwordInput, setPasswordInput] = useState('');
+  const [authSubmitting, setAuthSubmitting] = useState(false);
+  const [authLocalMessage, setAuthLocalMessage] = useState<string | null>(null);
+
+  // Estado para la micro-misión interactiva (Paso 4)
   const [createdTaskId, setCreatedTaskId] = useState<string | null>(null);
   const [customTaskTitle, setCustomTaskTitle] = useState('');
   const [isTaskCompletedInModal, setIsTaskCompletedInModal] = useState(false);
 
-  // Estado y solicitud de Notificaciones (Paso 2)
+  // Estado y solicitud de Notificaciones (Paso 3)
   const [notifsStatus, setNotifsStatus] = useState<NotificationPermission>(() => {
     return notificationService.getPermission();
   });
 
   const handleEnableNotifs = async () => {
     soundFX.playClick();
+    triggerHaptic(20);
     const granted = await notificationService.requestPermission();
     setNotifsStatus(notificationService.getPermission());
     if (granted) {
@@ -288,13 +302,13 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
   if (!isOpen || typeof document === 'undefined') return null;
 
   const currentArchetype = WELCOME_ARCHETYPES.find(a => a.id === selectedArchId) || WELCOME_ARCHETYPES[0];
-  const currentDesire = CORE_DESIRES.find(d => d.id === selectedDesire) || CORE_DESIRES[0];
   const circadian = getCircadianPhase(dayStartHour);
 
   // Manejo de cambio de hora (sincroniza store inmediatamente)
   const handleHourChange = (newHour: number) => {
     const normalized = ((newHour % 24) + 24) % 24;
     soundFX.playClick();
+    triggerHaptic(15);
     setDayStartHour(normalized);
     setGlobalDayStartHour(normalized);
     usePlayerStore.getState().setStats((prev) => ({
@@ -303,9 +317,72 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
     }));
   };
 
-  // Crear una micro-misión en el store
+  // Manejo de autenticación con Google
+  const handleGoogleAuth = async () => {
+    soundFX.playClick();
+    triggerHaptic(20);
+    setAuthLocalMessage(null);
+    clearAuthError();
+    const res = await signInWithGoogle();
+    if (res?.user) {
+      soundFX.playLevelUp();
+      setAuthLocalMessage('¡Cuenta vinculada con éxito con Google!');
+      if (!username && res.user.displayName) {
+        setUsername(res.user.displayName.split(' ')[0]);
+      }
+    }
+  };
+
+  // Manejo de autenticación con Correo/Contraseña
+  const handleEmailAuthSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!emailInput.trim() || !passwordInput.trim()) {
+      setAuthLocalMessage('Por favor ingresa un correo y contraseña.');
+      return;
+    }
+    if (passwordInput.length < 6) {
+      setAuthLocalMessage('La contraseña debe tener al menos 6 caracteres.');
+      return;
+    }
+
+    soundFX.playClick();
+    triggerHaptic(20);
+    setAuthSubmitting(true);
+    setAuthLocalMessage(null);
+    clearAuthError();
+
+    try {
+      if (isRegisterMode) {
+        const res = await signUpWithEmail(emailInput, passwordInput, username.trim() || undefined);
+        if (res.user) {
+          soundFX.playLevelUp();
+          setAuthLocalMessage('¡Cuenta creada y protegida con éxito!');
+          setShowEmailForm(false);
+        } else if (res.error) {
+          setAuthLocalMessage(res.error);
+        }
+      } else {
+        const res = await signInWithEmail(emailInput, passwordInput);
+        if (res.user) {
+          soundFX.playLevelUp();
+          setAuthLocalMessage('¡Sesión iniciada con éxito!');
+          setShowEmailForm(false);
+          if (res.user.displayName && !username) {
+            setUsername(res.user.displayName.split(' ')[0]);
+          }
+        } else if (res.error) {
+          setAuthLocalMessage(res.error);
+        }
+      }
+    } finally {
+      setAuthSubmitting(false);
+    }
+  };
+
+  // Crear una micro-misión en el store (Paso 4)
   const handleCreateSampleTask = (taskConfig: { title: string; category: TaskCategory; xpReward: number; coinReward: number }) => {
     soundFX.playClick();
+    triggerHaptic(15);
     const newId = `welcome-task-${Date.now()}`;
     const newTask: TaskItem = {
       id: newId,
@@ -327,6 +404,7 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
     if (isTaskCompletedInModal) return;
 
     soundFX.playFanfare();
+    triggerHaptic([30, 40, 20]);
     try {
       triggerShockwave({ color: 'cyan', intensity: 'epic' });
     } catch (_) {}
@@ -352,12 +430,13 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
   // Finalizar onboarding y guardar estado
   const handleFinishOnboarding = () => {
     soundFX.playFanfare();
+    triggerHaptic([40, 50, 40]);
 
     try {
       triggerShockwave({ color: 'violet', intensity: 'epic' });
     } catch (_) {}
 
-    const chosenName = username.trim() || 'Compañero';
+    const chosenName = username.trim() || (user?.displayName ? user.displayName.split(' ')[0] : 'Compañero');
 
     // 1. Guardar despertar y hora de inicio de jornada
     setGlobalDayStartHour(dayStartHour);
@@ -372,13 +451,18 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
     usePlayerStore.getState().setStats((prev) => ({
       ...prev,
       dayStartHour,
+      kaiAuraColor: currentArchetype.accent,
     }));
 
     // 2. Recompensar
     claimTutorialReward();
     markTutorialGuideSeen('introWalkthrough');
     markTutorialGuideSeen('welcomeOnboarding');
-    safeLogEvent('onboarding_completed');
+    safeLogEvent('onboarding_completed', {
+      archetype: currentArchetype.id,
+      dayStartHour,
+      hasAuth: Boolean(user)
+    });
 
     // 3. Sincronizar nube si disponible
     if (cloudSync?.forceSyncNow) {
@@ -391,8 +475,9 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
 
   const handleNextStep = () => {
     soundFX.playClick();
-    // Guardar calibración circadiana al avanzar desde paso 2
-    if (step === 2) {
+    triggerHaptic(15);
+    // Guardar calibración circadiana al avanzar desde paso 3
+    if (step === 3) {
       setGlobalDayStartHour(dayStartHour);
       usePlayerStore.getState().setStats((prev) => ({
         ...prev,
@@ -417,24 +502,40 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
         {/* Micrograno táctil */}
         <span className="vi-grano opacity-5" aria-hidden="true" />
 
-        {/* Filamento especular superior */}
-        <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
+        {/* Filamento especular superior con color dinámico del arquetipo */}
+        <div
+          className="absolute top-0 inset-x-0 h-[2px] pointer-events-none transition-colors duration-500"
+          style={{
+            background: `linear-gradient(90deg, transparent, ${currentArchetype.accent}, transparent)`
+          }}
+          aria-hidden="true"
+        />
 
-        {/* ── CABECERA CON INDICADOR DE PASOS (1 PREGUNTA POR VENTANA) ── */}
+        {/* ── CABECERA CON INDICADOR DE PASOS ── */}
         <div className="p-3.5 sm:p-4 border-b border-white/10 bg-[#040814]/[0.96] shrink-0 relative z-10 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-xl aura-bg-soft border aura-border-subtle flex items-center justify-center aura-glow-subtle shrink-0">
-              <Sparkles className="w-4 h-4 aura-text-primary" />
+            <div
+              className="w-8 h-8 rounded-xl border flex items-center justify-center shrink-0 transition-colors duration-300"
+              style={{
+                backgroundColor: `${currentArchetype.accent}15`,
+                borderColor: `${currentArchetype.accent}40`,
+                boxShadow: `0 0 12px ${currentArchetype.accent}25`
+              }}
+            >
+              <Sparkles className="w-4 h-4" style={{ color: currentArchetype.accent }} />
             </div>
             <div className="min-w-0">
-              <div className="text-[10px] font-mono tabular-nums font-bold tracking-wider uppercase aura-text-primary truncate">
+              <div
+                className="text-[10px] font-mono tabular-nums font-bold tracking-wider uppercase truncate"
+                style={{ color: currentArchetype.accent }}
+              >
                 Paso {step} de {TOTAL_STEPS}
               </div>
               <h2 id="kai-welcome-title" className="text-xs sm:text-sm font-anton uppercase tracking-wider text-white truncate">
-                {step === 1 && '¿Cómo te llamas y a qué hora arrancas?'}
-                {step === 2 && 'Recordatorios y Notificaciones'}
-                {step === 3 && 'Tu Primera Tarea en Vivo'}
-                {step === 4 && 'Tu Rutina de la Primera Semana'}
+                {step === 1 && '1. Identidad y Acceso a tu Cuenta'}
+                {step === 2 && '2. Elige tu Arquetipo Interior'}
+                {step === 3 && '3. Tu Ritmo de Vida y Avisos'}
+                {step === 4 && '4. Tu Primera Victoria en Vivo'}
               </h2>
             </div>
           </div>
@@ -444,7 +545,7 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
               type="button"
               onClick={handleFinishOnboarding}
               className="chicle-btn flex items-center gap-1 px-2.5 py-1.5 aura-bg-soft hover:text-white border aura-border-subtle rounded-xl text-[11px] font-bold cursor-pointer"
-              title="Saltar tutorial e ir directo a tus tareas"
+              title="Saltar configuración e ir directo a tus tareas"
             >
               <Zap className="w-3 h-3 aura-text-primary animate-pulse" />
               <span>Saltar</span>
@@ -468,19 +569,21 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
         {/* ── BARRA DE PROGRESO ── */}
         <div className="w-full bg-white/5 h-1 relative overflow-hidden shrink-0">
           <motion.div
-            className="h-full aura-btn-gradient"
-            initial={false}
-            animate={{ width: `${(step / TOTAL_STEPS) * 100}%` }}
-            transition={{ duration: 0.25 }}
+            className="h-full transition-all duration-300"
+            style={{
+              width: `${(step / TOTAL_STEPS) * 100}%`,
+              backgroundColor: currentArchetype.accent,
+              boxShadow: `0 0 10px ${currentArchetype.accent}`
+            }}
           />
         </div>
 
-        {/* ── CONTENIDO: 1 PREGUNTA POR PANTALLA (CERO SCROLL TRAP) ── */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-5 custom-scrollbar relative z-10 flex flex-col justify-start sm:justify-center my-auto">
+        {/* ── CONTENIDO: 1 FASE CLARA POR PANTALLA ── */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-5 custom-scrollbar relative z-10 flex flex-col justify-start">
           <AnimatePresence mode="wait">
 
             {/* ============================================================== */}
-            {/* PASO 1: NOMBRE / IDENTIDAD + PROPUESTA ÚNICA DE VALOR (UVP)    */}
+            {/* PASO 1: IDENTIDAD, ESTILO NARRATIVO & ACCESO / SEGURIDAD        */}
             {/* ============================================================== */}
             {step === 1 && (
               <motion.div
@@ -489,9 +592,9 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.2 }}
-                className="space-y-3.5"
+                className="space-y-4"
               >
-                {/* Propuesta Única de Valor (UVP) explícita + Mitigación de objeciones */}
+                {/* Propuesta Única de Valor (UVP) explícita */}
                 <div className="p-3.5 rounded-2xl bg-[#040814]/80 border aura-border-subtle space-y-2">
                   <span className="text-[9.5px] font-mono font-bold uppercase tracking-widest aura-text-soft block">
                     {WELCOME_UVP.badge}
@@ -515,55 +618,11 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
                   </div>
                 </div>
 
-                {/* Diálogo breve con KAI */}
-                <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/[0.03] border border-white/10">
-                  <div className="shrink-0 w-10 h-10 flex items-center justify-center" data-preserve-optic="true">
-                    <KAICompanion shapeId="prism" size={40} interactive={false} auraState="normal" />
-                  </div>
-                  <div className="space-y-0.5">
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider aura-text-soft block">
-                      KAI · Asistente de Enfoque
-                    </span>
-                    <p className="text-[11px] text-slate-200 leading-snug">
-                      Configura tu ritmo en 30 segundos y elige el estilo de lenguaje que prefieras.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Selector rápido de Densidad Narrativa desde el primer ingreso */}
-                <div className="grid grid-cols-2 gap-2">
-                  {(['minimal', 'tactical'] as const).map((modeKey) => {
-                    const opt = NARRATIVE_MODE_OPTIONS[modeKey];
-                    const active = copy.narrativeMode === modeKey;
-                    return (
-                      <button
-                        key={modeKey}
-                        type="button"
-                        onClick={() => {
-                          soundFX.playClick();
-                          copy.setNarrativeMode(modeKey);
-                        }}
-                        className={`chicle-btn !flex-col !items-start p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
-                          active
-                            ? 'aura-bg-soft aura-border-primary aura-glow-subtle optic-active-card'
-                            : 'bg-white/[0.03] border-white/10 text-slate-300 hover:border-white/25'
-                        }`}
-                      >
-                        <span className="text-[10.5px] font-bold block leading-tight text-white">
-                          {opt.label}
-                        </span>
-                        <span className="text-[9.5px] text-slate-400 block mt-0.5 leading-snug">
-                          {modeKey === 'minimal' ? 'Claro y directo, cero jerga' : 'Misiones, rangos y lore RPG'}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-
+                {/* 1. Nombre de usuario */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-white flex items-center gap-1.5">
                     <User className="w-3.5 h-3.5 aura-text-primary" />
-                    <span>¿Cómo te gustaría que te llame?</span>
+                    <span>¿Cómo te gustaría que te llame KAI?</span>
                   </label>
                   <input
                     type="text"
@@ -584,7 +643,313 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
                   />
                 </div>
 
-                {/* Selector rápido de inicio de jornada habitual */}
+                {/* 2. Selector rápido de Densidad Narrativa */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-300 block">
+                    Estilo de lenguaje de la plataforma:
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {(['minimal', 'tactical'] as const).map((modeKey) => {
+                      const opt = NARRATIVE_MODE_OPTIONS[modeKey];
+                      const active = copy.narrativeMode === modeKey;
+                      return (
+                        <button
+                          key={modeKey}
+                          type="button"
+                          onClick={() => {
+                            soundFX.playClick();
+                            triggerHaptic(15);
+                            copy.setNarrativeMode(modeKey);
+                          }}
+                          className={`chicle-btn !flex-col !items-start p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                            active
+                              ? 'aura-bg-soft aura-border-primary aura-glow-subtle optic-active-card'
+                              : 'bg-white/[0.03] border-white/10 text-slate-300 hover:border-white/25'
+                          }`}
+                        >
+                          <span className="text-[10.5px] font-bold block leading-tight text-white">
+                            {opt.label}
+                          </span>
+                          <span className="text-[9.5px] text-slate-400 block mt-0.5 leading-snug">
+                            {modeKey === 'minimal' ? 'Claro y directo, sin jerga' : 'Misiones, rangos y rol'}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 3. Selección de Acceso y Seguridad de tu Cuenta */}
+                <div className="p-3.5 rounded-2xl bg-[#040814]/80 border border-white/10 space-y-2.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-white flex items-center gap-1.5">
+                      <Shield className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Seguridad y respaldo de tu cuenta</span>
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      Opcional
+                    </span>
+                  </div>
+
+                  {user ? (
+                    <div className="p-2.5 rounded-xl bg-emerald-950/40 border border-emerald-500/40 flex items-center justify-between gap-2 text-xs">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <div className="min-w-0">
+                          <span className="text-[10px] text-emerald-300/80 font-mono uppercase block">Cuenta Protegida</span>
+                          <p className="text-white font-medium truncate text-xs">{user.email || user.displayName || 'Sesión Iniciada'}</p>
+                        </div>
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold shrink-0">
+                        Activa
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <p className="text-[11px] text-slate-300 leading-snug">
+                        Elige cómo prefieres entrar. Puedes sincronizar en la nube o probar en modo local sin registro:
+                      </p>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {/* Botón 1: Google 1-Tap */}
+                        <button
+                          type="button"
+                          onClick={handleGoogleAuth}
+                          className="chicle-btn flex items-center justify-center gap-2 p-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/15 hover:border-white/30 text-white text-xs font-bold transition-all cursor-pointer"
+                        >
+                          <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                          </svg>
+                          <span>Acceder con Google</span>
+                        </button>
+
+                        {/* Botón 2: Correo y Contraseña */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            soundFX.playClick();
+                            setShowEmailForm(!showEmailForm);
+                          }}
+                          className={`chicle-btn flex items-center justify-center gap-2 p-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                            showEmailForm
+                              ? 'aura-bg-soft aura-border-primary text-white'
+                              : 'bg-white/[0.05] hover:bg-white/[0.1] border-white/15 text-white'
+                          }`}
+                        >
+                          <Mail className="w-4 h-4 text-amber-300 shrink-0" />
+                          <span>{showEmailForm ? 'Cerrar formulario' : 'Correo y Contraseña'}</span>
+                        </button>
+                      </div>
+
+                      {/* Formulario desplegable para Correo y Contraseña */}
+                      {showEmailForm && (
+                        <motion.form
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          onSubmit={handleEmailAuthSubmit}
+                          className="pt-2 space-y-2"
+                        >
+                          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-black/40 border border-white/10 text-[11px]">
+                            <button
+                              type="button"
+                              onClick={() => { soundFX.playClick(); setIsRegisterMode(true); }}
+                              className={`flex-1 py-1 px-2 rounded-lg font-bold transition-all ${
+                                isRegisterMode ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' : 'text-slate-400 hover:text-white'
+                              }`}
+                            >
+                              Crear Cuenta
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => { soundFX.playClick(); setIsRegisterMode(false); }}
+                              className={`flex-1 py-1 px-2 rounded-lg font-bold transition-all ${
+                                !isRegisterMode ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' : 'text-slate-400 hover:text-white'
+                              }`}
+                            >
+                              Ya tengo cuenta
+                            </button>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <div className="relative">
+                              <Mail className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-400 pointer-events-none" />
+                              <input
+                                type="email"
+                                value={emailInput}
+                                onChange={(e) => setEmailInput(e.target.value)}
+                                placeholder="tu@correo.com"
+                                autoComplete="email"
+                                className="w-full pl-9 pr-3 py-2 rounded-xl bg-black/60 border border-white/15 text-white placeholder-slate-500 text-xs focus:outline-none focus:aura-border-primary"
+                              />
+                            </div>
+                            <div className="relative">
+                              <Lock className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-400 pointer-events-none" />
+                              <input
+                                type="password"
+                                value={passwordInput}
+                                onChange={(e) => setPasswordInput(e.target.value)}
+                                placeholder="Contraseña (mínimo 6 caracteres)"
+                                autoComplete={isRegisterMode ? 'new-password' : 'current-password'}
+                                className="w-full pl-9 pr-3 py-2 rounded-xl bg-black/60 border border-white/15 text-white placeholder-slate-500 text-xs focus:outline-none focus:aura-border-primary"
+                              />
+                            </div>
+                          </div>
+
+                          <button
+                            type="submit"
+                            disabled={authSubmitting}
+                            className="chicle-btn optic-active-card w-full py-2 px-3 rounded-xl aura-btn-gradient text-xs font-anton uppercase tracking-wider text-white flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                          >
+                            <KeyRound className="w-3.5 h-3.5" />
+                            <span>{authSubmitting ? 'Procesando...' : (isRegisterMode ? 'Crear y Proteger Cuenta' : 'Iniciar Sesión')}</span>
+                          </button>
+                        </motion.form>
+                      )}
+
+                      {/* Notificación / Mensajes de autenticación */}
+                      {(authLocalMessage || authError) && (
+                        <div className="p-2 rounded-xl bg-amber-500/15 border border-amber-400/30 text-amber-200 text-[11px] flex items-center gap-2">
+                          <AlertCircle className="w-3.5 h-3.5 shrink-0 text-amber-300" />
+                          <span>{authLocalMessage || authError}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+
+            {/* ============================================================== */}
+            {/* PASO 2: EL RITUAL DEL ARQUETIPO INTERIOR (EL ANCLA PSICOLÓGICA) */}
+            {/* ============================================================== */}
+            {step === 2 && (
+              <motion.div
+                key="step-2"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-3.5"
+              >
+                {/* Diálogo reactivo con KAI que cambia de color según el arquetipo */}
+                <div
+                  className="flex items-center gap-3 p-3 rounded-2xl border transition-all duration-300"
+                  style={{
+                    backgroundColor: `${currentArchetype.accent}0D`,
+                    borderColor: `${currentArchetype.accent}33`,
+                    boxShadow: `0 0 16px ${currentArchetype.accent}15`
+                  }}
+                >
+                  <div className="shrink-0 w-11 h-11 flex items-center justify-center" data-preserve-optic="true">
+                    <KAICompanion
+                      shapeId="prism"
+                      size={44}
+                      interactive={false}
+                      auraColor={currentArchetype.accent}
+                      auraState="normal"
+                    />
+                  </div>
+                  <div className="space-y-0.5 min-w-0">
+                    <span
+                      className="text-[10px] font-mono font-bold uppercase tracking-wider block"
+                      style={{ color: currentArchetype.accent }}
+                    >
+                      KAI · Energía {currentArchetype.name}
+                    </span>
+                    <p className="text-[11.5px] text-slate-200 leading-snug">
+                      Elige el arquetipo que mejor resuene con tu identidad actual para sintonizar tu enfoque.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Cuadrícula interactiva de los 12 Arquetipos Jungianos */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[38dvh] overflow-y-auto custom-scrollbar pr-0.5">
+                  {WELCOME_ARCHETYPES.map((arch) => {
+                    const isSelected = selectedArchId === arch.id;
+                    return (
+                      <button
+                        key={arch.id}
+                        type="button"
+                        onClick={() => {
+                          soundFX.playClick();
+                          triggerHaptic(20);
+                          setSelectedArchId(arch.id);
+                        }}
+                        className={`chicle-btn !flex-col !items-start p-2.5 rounded-xl border text-left transition-all duration-200 cursor-pointer relative ${
+                          isSelected
+                            ? 'optic-active-card scale-[1.01]'
+                            : 'bg-white/[0.02] border-white/10 hover:border-white/20 hover:bg-white/[0.04]'
+                        }`}
+                        style={{
+                          borderColor: isSelected ? arch.accent : undefined,
+                          backgroundColor: isSelected ? `${arch.accent}18` : undefined,
+                          boxShadow: isSelected ? `0 0 16px ${arch.accent}35` : undefined
+                        }}
+                      >
+                        <div className="flex items-center justify-between w-full mb-1">
+                          <span className="text-lg">{arch.icon}</span>
+                          {isSelected && (
+                            <span
+                              className="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold text-black"
+                              style={{ backgroundColor: arch.accent }}
+                            >
+                              ✓
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[11px] font-bold text-white block leading-tight truncate w-full">
+                          {arch.name}
+                        </span>
+                        <span className="text-[9.5px] text-slate-300 block mt-0.5 leading-snug line-clamp-2">
+                          {arch.description}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Caja iluminada con el Mantra del Arquetipo Activo */}
+                <div
+                  className="p-3 rounded-2xl border transition-all duration-300"
+                  style={{
+                    backgroundColor: `${currentArchetype.accent}12`,
+                    borderColor: `${currentArchetype.accent}40`,
+                    boxShadow: `0 0 12px ${currentArchetype.accent}20`
+                  }}
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <Sparkles className="w-3.5 h-3.5" style={{ color: currentArchetype.accent }} />
+                    <span
+                      className="text-[10px] font-mono font-bold uppercase tracking-wider"
+                      style={{ color: currentArchetype.accent }}
+                    >
+                      Mantra Personal del {currentArchetype.name}
+                    </span>
+                  </div>
+                  <p className="text-xs font-semibold text-white italic leading-snug">
+                    "{currentArchetype.mantra}"
+                  </p>
+                </div>
+              </motion.div>
+            )}
+
+            {/* ============================================================== */}
+            {/* PASO 3: RITMO CIRCADIANO (HORA DE TRABAJO) Y NOTIFICACIONES     */}
+            {/* ============================================================== */}
+            {step === 3 && (
+              <motion.div
+                key="step-3"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-3.5"
+              >
+                {/* 1. Selector de hora de inicio de jornada habitual */}
                 <div className="p-3.5 rounded-2xl bg-[#040814]/80 border border-white/10 space-y-2.5">
                   <div className="flex items-center justify-between text-xs gap-2">
                     <span className="font-bold text-white flex items-center gap-1.5">
@@ -596,8 +961,10 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
                     </span>
                   </div>
                   <p className="text-[11px] text-slate-300 leading-snug">
-                    Tus misiones y ciclo de turno se sincronizarán a esta hora para adaptarse a tu ritmo de trabajo o estudio.
+                    Tus misiones y ciclo de turno se sincronizarán a esta hora para adaptarse a tu ritmo real de trabajo o estudio.
                   </p>
+
+                  {/* Presets rápidos */}
                   <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 pt-0.5">
                     {QUICK_HOUR_PRESETS.map((preset) => (
                       <button
@@ -615,120 +982,133 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
                       </button>
                     ))}
                   </div>
-                </div>
-              </motion.div>
-            )}
 
-            {/* ============================================================== */}
-            {/* PASO 2: RECORDATORIOS Y NOTIFICACIONES INTELIGENTES             */}
-            {/* ============================================================== */}
-            {step === 2 && (
-              <motion.div
-                key="step-2"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.2 }}
-                className="space-y-3.5"
-              >
-                <div className="space-y-1">
-                  <h3 className="text-sm font-anton uppercase tracking-wider text-white flex items-center gap-1.5">
-                    <Bell className="w-4 h-4 text-amber-400 animate-bounce" />
-                    <span>Avisos Clave: Que nunca se te olvide nada</span>
-                  </h3>
-                  <p className="text-[11.5px] text-slate-300 leading-snug">
-                    Para acompañarte durante la semana, La Solución te envía recordatorios discretos en los 3 momentos esenciales:
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="p-3 rounded-xl bg-[#040814]/80 border border-white/10 flex items-start gap-3">
-                    <div className="w-7 h-7 rounded-lg aura-bg-soft border aura-border-subtle flex items-center justify-center shrink-0 mt-0.5 text-sm">
-                      🌅
-                    </div>
-                    <div>
-                      <strong className="text-white text-xs block">1. Inicio de Jornada</strong>
-                      <p className="text-[11px] text-slate-300 mt-0.5">
-                        Aviso a tu hora de arranque (<span className="font-mono tabular-nums">{formatHourToHuman(dayStartHour)}</span>) para pulsar "Iniciar Jornada" y activar tus tareas del día.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="p-3 rounded-xl bg-[#040814]/80 border border-white/10 flex items-start gap-3">
-                    <div className="w-7 h-7 rounded-lg aura-bg-soft border aura-border-subtle flex items-center justify-center shrink-0 mt-0.5 text-sm">
-                      ⚡
-                    </div>
-                    <div>
-                      <strong className="text-white text-xs block">2. Recordatorios de Tareas</strong>
-                      <p className="text-[11px] text-slate-300 mt-0.5">
-                        Avisos si tienes tareas pendientes para que no se te pase darles check / X y registrar tus avances.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="p-3 rounded-xl bg-[#040814]/80 border border-white/10 flex items-start gap-3">
-                    <div className="w-7 h-7 rounded-lg aura-bg-soft border aura-border-subtle flex items-center justify-center shrink-0 mt-0.5 text-sm">
-                      📓
-                    </div>
-                    <div>
-                      <strong className="text-white text-xs block">3. Cierre de Jornada y Bitácora</strong>
-                      <p className="text-[11px] text-slate-300 mt-0.5">
-                        Al terminar tu turno, una alerta para cerrar el día, llenar tu bitácora de reflexión y proteger tu racha.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Botón de solicitud de permisos con estado visual */}
-                <div className="p-3.5 rounded-2xl bg-[#040814]/80 border aura-border-subtle text-center space-y-2">
-                  {notifsStatus === 'granted' ? (
-                    <div className="flex items-center justify-center gap-2 text-emerald-300 text-xs font-bold py-1">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>¡Recordatorios activados correctamente en este equipo!</span>
-                    </div>
-                  ) : (
-                    <>
-                      <p className="text-[11px] text-slate-200">
-                        Pulsa el botón para autorizar los avisos en tu navegador:
-                      </p>
+                  {/* Ajustador fino + y - */}
+                  <div className="flex items-center justify-between pt-1 border-t border-white/10">
+                    <span className="text-[10.5px] text-slate-400">
+                      Fase: <strong className="text-white">{circadian.icon} {circadian.label}</strong>
+                    </span>
+                    <div className="flex items-center gap-1">
                       <button
                         type="button"
-                        onClick={handleEnableNotifs}
-                        className="chicle-btn optic-active-card w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:from-amber-300 hover:to-yellow-300 text-slate-950 font-anton uppercase text-xs tracking-wider flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(245,158,11,0.35)] cursor-pointer"
+                        onClick={() => handleHourChange(dayStartHour - 1)}
+                        className="chicle-btn px-2 py-1 rounded-lg bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 text-xs font-mono text-slate-300"
+                        title="Restar 1 hora"
                       >
-                        <Bell className="w-4 h-4 text-slate-950" />
-                        <span>Activar Recordatorios en mi Dispositivo</span>
+                        <Minus className="w-3 h-3" />
                       </button>
-                    </>
-                  )}
+                      <button
+                        type="button"
+                        onClick={() => handleHourChange(dayStartHour + 1)}
+                        className="chicle-btn px-2 py-1 rounded-lg bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 text-xs font-mono text-slate-300"
+                        title="Sumar 1 hora"
+                      >
+                        <Plus className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Recordatorios inteligentes */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-white">
+                    <Bell className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Avisos Clave: Los 3 momentos diarios de KAI</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-left">
+                    <div className="p-2.5 rounded-xl bg-[#040814]/80 border border-white/10 space-y-1">
+                      <div className="text-xs font-bold text-amber-300 flex items-center gap-1">
+                        <span>🌅</span>
+                        <span>1. Inicio</span>
+                      </div>
+                      <p className="text-[10px] text-slate-300 leading-snug">
+                        A las <span className="font-mono">{formatHourToHuman(dayStartHour)}</span> para abrir tus metas.
+                      </p>
+                    </div>
+
+                    <div className="p-2.5 rounded-xl bg-[#040814]/80 border border-white/10 space-y-1">
+                      <div className="text-xs font-bold text-cyan-300 flex items-center gap-1">
+                        <span>⚡</span>
+                        <span>2. Avances</span>
+                      </div>
+                      <p className="text-[10px] text-slate-300 leading-snug">
+                        Avisos si tienes tareas pendientes durante el día.
+                      </p>
+                    </div>
+
+                    <div className="p-2.5 rounded-xl bg-[#040814]/80 border border-white/10 space-y-1">
+                      <div className="text-xs font-bold text-emerald-300 flex items-center gap-1">
+                        <span>📓</span>
+                        <span>3. Cierre</span>
+                      </div>
+                      <p className="text-[10px] text-slate-300 leading-snug">
+                        Al terminar tu turno para reflexionar y blindar tu racha.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Botón de solicitud de permisos con estado visual */}
+                  <div className="p-3 rounded-2xl bg-[#040814]/80 border aura-border-subtle text-center space-y-2">
+                    {notifsStatus === 'granted' ? (
+                      <div className="flex items-center justify-center gap-2 text-emerald-300 text-xs font-bold py-1">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <span>¡Recordatorios activados en este dispositivo!</span>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-[11px] text-slate-200">
+                          Pulsa para autorizar los avisos en tu navegador:
+                        </p>
+                        <button
+                          type="button"
+                          onClick={handleEnableNotifs}
+                          className="chicle-btn optic-active-card w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:from-amber-300 hover:to-yellow-300 text-slate-950 font-anton uppercase text-xs tracking-wider flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(245,158,11,0.35)] cursor-pointer"
+                        >
+                          <Bell className="w-4 h-4 text-slate-950" />
+                          <span>Activar Recordatorios en mi Dispositivo</span>
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
               </motion.div>
             )}
 
             {/* ============================================================== */}
-            {/* PASO 3: PRIMERA VICTORIA EN VIVO                               */}
+            {/* PASO 4: PRIMERA VICTORIA EN VIVO Y DESPEGUE                     */}
             {/* ============================================================== */}
-            {step === 3 && (
+            {step === 4 && (
               <motion.div
-                key="step-3"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
+                key="step-4"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.2 }}
-                className="space-y-3.5"
+                className="space-y-3.5 text-center"
               >
+                <div className="w-14 h-14 mx-auto flex items-center justify-center" data-preserve-optic="true">
+                  <KAICompanion
+                    shapeId="prism"
+                    size={56}
+                    interactive={false}
+                    auraColor={currentArchetype.accent}
+                    auraState={isTaskCompletedInModal ? 'victory' : 'normal'}
+                  />
+                </div>
+
                 <div className="space-y-1">
-                  <h3 className="text-sm font-anton uppercase tracking-wider text-white flex items-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                    <span>Tu primera tarea en 1 toque</span>
+                  <h3 className="text-base sm:text-lg font-anton uppercase tracking-wider text-white">
+                    ¡Todo listo para arrancar, {username.trim() || 'Compañero'}!
                   </h3>
-                  <p className="text-[11.5px] text-slate-300 leading-snug">
-                    En La Solución, cada objetivo es una tarea. Al completarla, tocas el botón de la casilla para marcarla (darle check/X), ganando puntos al instante:
+                  <p className="text-xs text-slate-300 leading-snug max-w-sm mx-auto">
+                    Prueba dar tu primer check en vivo para experimentar cómo se siente completar una meta en La Solución:
                   </p>
                 </div>
 
+                {/* Micro-misión interactiva */}
                 {!createdTaskId ? (
-                  <div className="space-y-2.5">
+                  <div className="space-y-2 text-left">
                     <div className="space-y-1.5">
                       {QUICK_SAMPLE_TASKS.map((sample, idx) => (
                         <button
@@ -747,13 +1127,12 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
                       ))}
                     </div>
 
-                    {/* Crear personalizada */}
-                    <div className="flex items-center gap-2 pt-1">
+                    <div className="flex items-center gap-2 pt-0.5">
                       <input
                         type="text"
                         value={customTaskTitle}
                         onChange={(e) => setCustomTaskTitle(e.target.value)}
-                        placeholder="O escribe algo que quieras hacer hoy..."
+                        placeholder="O escribe algo propio..."
                         className="flex-1 px-3 py-2 rounded-xl bg-black/50 border border-white/15 text-xs text-white placeholder-slate-500 focus:outline-none focus:aura-border-primary"
                       />
                       <button
@@ -776,7 +1155,7 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-2.5 text-left">
                     <div
                       onClick={handleCompleteSampleTask}
                       className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
@@ -800,7 +1179,7 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
                             {customTaskTitle.trim() || 'Tomar 1 vaso de agua y respirar profundo 💧'}
                           </p>
                           <span className="text-[10px] text-slate-400">
-                            {isTaskCompletedInModal ? '✅ ¡Completada con éxito!' : '👆 Toca aquí para marcar la casilla (darle check/X)'}
+                            {isTaskCompletedInModal ? '✅ ¡Completada con éxito!' : '👆 Toca aquí para marcar la casilla'}
                           </span>
                         </div>
                       </div>
@@ -814,69 +1193,21 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
                         </span>
                       </div>
                     </div>
-
-                    {isTaskCompletedInModal && (
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="p-3 rounded-xl bg-emerald-950/30 border border-emerald-500/30 flex items-center gap-2.5 text-emerald-300 text-xs"
-                      >
-                        <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-400" />
-                        <div>
-                          <strong className="block text-emerald-200">¡Así de simple funciona!</strong>
-                          Cada tarea completada te otorga XP para avanzar y monedas para tu registro de progreso.
-                        </div>
-                      </motion.div>
-                    )}
                   </div>
                 )}
-              </motion.div>
-            )}
 
-            {/* ============================================================== */}
-            {/* PASO 4: ¡TODO LISTO PARA TU PRIMERA SEMANA!                    */}
-            {/* ============================================================== */}
-            {step === 4 && (
-              <motion.div
-                key="step-4"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.2 }}
-                className="space-y-3.5 text-center py-1"
-              >
-                <div className="w-14 h-14 mx-auto flex items-center justify-center" data-preserve-optic="true">
-                  <KAICompanion shapeId="prism" size={56} interactive={false} auraState="victory" />
-                </div>
-
-                <div className="space-y-1">
-                  <h3 className="text-base sm:text-lg font-anton uppercase tracking-wider text-white">
-                    ¡Todo listo para tu Primera Semana, {username.trim() || 'Compañero'}!
-                  </h3>
-                  <p className="text-xs text-slate-300 leading-relaxed max-w-sm mx-auto">
-                    Tu rutina diaria se resume en solo 3 sencillos pasos:
-                  </p>
-                </div>
-
-                {/* Los 3 pasos diarios de la primera semana */}
-                <div className="p-3.5 rounded-2xl bg-[#040814]/80 border border-white/10 space-y-2 text-left">
-                  <div className="flex items-center gap-2.5 text-xs text-slate-200">
-                    <span className="w-6 h-6 rounded-lg bg-amber-500/20 border border-amber-400/40 text-amber-300 flex items-center justify-center font-bold font-mono tabular-nums text-[11px] shrink-0">1</span>
-                    <span><strong>En la mañana:</strong> Toca el botón <em>"Iniciar Jornada"</em> en KAI.</span>
+                {/* Escudo de Racha de Bienvenida (Psicología Conductual) */}
+                <div className="p-3 rounded-2xl bg-amber-950/30 border border-amber-400/30 flex items-center gap-3 text-left">
+                  <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-lg shrink-0">
+                    🛡️
                   </div>
-                  <div className="flex items-center gap-2.5 text-xs text-slate-200">
-                    <span className="w-6 h-6 rounded-lg aura-bg-soft border aura-border-subtle aura-text-soft flex items-center justify-center font-bold font-mono tabular-nums text-[11px] shrink-0">2</span>
-                    <span><strong>Durante el día:</strong> Revisa tus tareas y dales check al terminarlas.</span>
-                  </div>
-                  <div className="flex items-center gap-2.5 text-xs text-slate-200">
-                    <span className="w-6 h-6 rounded-lg bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 flex items-center justify-center font-bold font-mono tabular-nums text-[11px] shrink-0">3</span>
-                    <span><strong>En la noche:</strong> Toca <em>"Cerrar Jornada"</em> y llena tu bitácora diaria.</span>
+                  <div>
+                    <strong className="text-amber-200 text-xs block">1 Escudo de Racha Gratis incluido</strong>
+                    <p className="text-[10.5px] text-slate-300 leading-tight mt-0.5">
+                      Si algún día no puedes completar tus tareas, este escudo protegerá tu racha automáticamente.
+                    </p>
                   </div>
                 </div>
-
-                <p className="text-[11px] text-slate-400">
-                  KAI estará siempre flotando en tu pantalla como tu asistente oráculo. ¡Tócalo cuando quieras!
-                </p>
               </motion.div>
             )}
 
@@ -892,6 +1223,7 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
                   type="button"
                   onClick={() => {
                     soundFX.playClick();
+                    triggerHaptic(15);
                     setStep((prev) => Math.max(1, prev - 1));
                   }}
                   className="chicle-btn px-3.5 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.12] border border-white/15 text-slate-200 hover:text-white font-anton text-xs uppercase tracking-wider cursor-pointer flex items-center gap-1"
@@ -916,7 +1248,12 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
                 <button
                   type="button"
                   onClick={handleNextStep}
-                  className="chicle-btn aura-btn-gradient optic-active-card px-5 py-2 rounded-xl font-anton text-xs uppercase tracking-wider cursor-pointer flex items-center gap-1.5"
+                  className="chicle-btn optic-active-card px-5 py-2 rounded-xl font-anton text-xs uppercase tracking-wider cursor-pointer flex items-center gap-1.5 text-white"
+                  style={{
+                    backgroundColor: currentArchetype.accent,
+                    boxShadow: `0 0 16px ${currentArchetype.accent}40`,
+                    color: currentArchetype.id === 'bufon' || currentArchetype.id === 'gobernante' ? '#000000' : '#ffffff'
+                  }}
                 >
                   <span>Siguiente</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -925,10 +1262,15 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
                 <button
                   type="button"
                   onClick={handleFinishOnboarding}
-                  className="chicle-btn aura-btn-gradient optic-active-card px-5 py-2.5 rounded-xl font-anton text-xs uppercase tracking-wider cursor-pointer flex items-center gap-2"
+                  className="chicle-btn optic-active-card px-5 py-2.5 rounded-xl font-anton text-xs uppercase tracking-wider cursor-pointer flex items-center gap-2"
+                  style={{
+                    backgroundColor: currentArchetype.accent,
+                    boxShadow: `0 0 20px ${currentArchetype.accent}50`,
+                    color: currentArchetype.id === 'bufon' || currentArchetype.id === 'gobernante' ? '#000000' : '#ffffff'
+                  }}
                 >
                   <Sparkles className="w-4 h-4" />
-                  <span>{copy.onboardingWelcomeCta}</span>
+                  <span>¡Comenzar mi Primera Semana!</span>
                 </button>
               )}
             </div>

@@ -112,32 +112,26 @@ const TaskCardComponent: React.FC<TaskCardProps> = (props) => {
     : { background: "linear-gradient(135deg, " + hexToRgba(catStyle.color, 0.11) + " 0%, rgba(4, 10, 26, 0.92) 50%, rgba(3, 7, 18, 0.96) 100%)", borderColor: hexToRgba(catStyle.color, 0.30), boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 6px 20px -8px rgba(0, 0, 0, 0.55)' };
 
   return (
-    <div
+    <article
+      aria-label={`Tarea: ${task.title}`}
       className="flex items-stretch gap-2.5 sm:gap-3.5 group transition-transform duration-200 ease-out hover:translate-x-0.5 relative z-0"
     >
-      <div 
-        role="button"
-        tabIndex={0}
+      <button 
+        type="button"
         onClick={() => handleEdit && handleEdit(task)} 
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            handleEdit && handleEdit(task);
-          }
-        }}
-        className="les-time w-[58px] sm:w-[68px] text-right flex flex-col items-end justify-center shrink-0 select-none cursor-pointer py-0.5 focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--aura-color-1,#00f0ff)] rounded-lg" 
+        className="les-time w-[62px] sm:w-[72px] text-right flex flex-col items-end justify-center shrink-0 select-none cursor-pointer py-1 px-1 focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--aura-color-1,#00f0ff)] rounded-lg touch-manipulation" 
         title="Asignar horario"
         aria-label={`Asignar horario a: ${task.title}`}
       >
-        <span className={isCompleted ? "font-bold text-[11px] sm:text-[12px] leading-tight tracking-tight font-mono tabular-nums transition-colors text-emerald-400/90" : "font-bold text-[11px] sm:text-[12px] leading-tight tracking-tight font-mono tabular-nums transition-colors text-[#f1f5f9] group-hover:aura-text-primary"}>
+        <span className={isCompleted ? "font-bold text-xs sm:text-[13px] leading-tight tracking-tight font-mono tabular-nums transition-colors text-emerald-400/90" : "font-bold text-xs sm:text-[13px] leading-tight tracking-tight font-mono tabular-nums transition-colors text-[#f1f5f9] group-hover:aura-text-primary"}>
           {mainTime} {subPeriod}
         </span>
         {rangeSubtitle && rangeSubtitle.includes('-') && (
-          <span className="les-range text-[#94a3b8] text-[9px] sm:text-[10px] font-semibold tracking-wider font-mono tabular-nums mt-0.5">
+          <span className="les-range text-slate-300 text-[11px] sm:text-xs font-semibold tracking-wider font-mono tabular-nums mt-0.5">
             {rangeSubtitle.split('-')[1].trim()}
           </span>
         )}
-      </div>
+      </button>
       <div style={lineStyle} className="les-line w-[3.5px] rounded-full shrink-0 my-0.5 transition-all duration-300" />
       <div style={infoBoxStyle} className={"flex-1 min-w-0 px-2.5 py-2 sm:px-3.5 sm:py-2.5 flex items-center justify-between gap-2 sm:gap-3 relative isolate rounded-xl border group-hover:brightness-110 " + (zenMode ? "zen-task-card " : "") + (isMenuOpen ? "ring-1 aura-border-primary aura-glow-subtle " : "") + (isCompleted ? "opacity-90" : "")}>
         <span className="vi-grano opacity-5" aria-hidden="true" />
@@ -161,7 +155,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = (props) => {
             }}
             disabled={isDayEnded}
             style={isCompleted ? undefined : { borderColor: hexToRgba(activeLineColor, 0.40), boxShadow: zenMode ? 'none' : '0 0 10px ' + hexToRgba(activeLineColor, 0.18) }}
-            className={"chicle-btn w-9 h-9 sm:w-10 sm:h-10 border flex items-center justify-center transition-all cursor-pointer shrink-0 relative select-none " + (isCompleted ? "bg-gradient-to-br from-emerald-400 to-emerald-500 border-emerald-300 text-slate-950 shadow-[0_0_14px_rgba(16,185,129,0.55)] rounded-xl optic-active-card" : isFutureDay ? "bg-black/40 aura-text-soft hover:bg-white/[0.04] rounded-xl" : "bg-black/30 hover:bg-emerald-950/40 ring-1 ring-white/10 hover:ring-emerald-400/50 rounded-xl")}
+            className={"chicle-btn min-w-[44px] min-h-[44px] w-11 h-11 border flex items-center justify-center transition-all cursor-pointer shrink-0 relative select-none rounded-xl touch-manipulation " + (isCompleted ? "bg-gradient-to-br from-emerald-400 to-emerald-500 border-emerald-300 text-slate-950 shadow-[0_0_14px_rgba(16,185,129,0.55)] optic-active-card" : isFutureDay ? "bg-black/40 aura-text-soft hover:bg-white/[0.04]" : "bg-black/30 hover:bg-emerald-950/40 ring-1 ring-white/10 hover:ring-emerald-400/50")}
             title={isFutureDay ? 'Día futuro: modo planificación' : isCounterHabit ? (isCompleted ? `${task.title} - Completado hoy` : `${task.title} - Toca para sumar +1 (${task.currentCount || 0}/${task.targetCount})`) : isCompleted ? 'Desmarcar tarea' : '✅ Toca para marcar como completada'}
             aria-label={isCompleted ? "Desmarcar tarea: " + task.title : isCounterHabit ? "Sumar +1 a " + task.title : "Completar tarea: " + task.title}
           >
@@ -171,8 +165,8 @@ const TaskCardComponent: React.FC<TaskCardProps> = (props) => {
               </div>
             ) : isCounterHabit ? (
               <div className="flex flex-col items-center justify-center leading-none tabular-nums">
-                <span className="text-[11px] font-mono font-black aura-text-primary">{task.currentCount || 0}</span>
-                <span className="text-[8px] font-mono aura-text-soft leading-none">/{task.targetCount}</span>
+                <span className="text-xs font-mono font-black aura-text-primary">{task.currentCount || 0}</span>
+                <span className="text-[10.5px] sm:text-xs font-mono text-slate-300 leading-none">/{task.targetCount}</span>
               </div>
             ) : (
               <div className="flex items-center justify-center">
@@ -216,32 +210,32 @@ const TaskCardComponent: React.FC<TaskCardProps> = (props) => {
             >
               <SlashText text={task.title} isCompleted={isCompleted} className={isCompleted ? 'text-slate-300' : 'text-[#f1f5f9]'} slashColor={catStyle.slashColor} />
             </h4>
-            <div className="text-[#94a3b8] text-[10.5px] sm:text-[11.5px] mt-0.5 flex items-center gap-1.5 flex-nowrap overflow-x-auto no-scrollbar leading-tight">
+            <div className="text-slate-300 text-xs mt-0.5 flex items-center gap-1.5 flex-nowrap overflow-x-auto no-scrollbar leading-normal">
               <span style={{ color: catStyle.textColor }} className="font-medium capitalize shrink-0">{task.category || 'Rutina'}</span>
-              <span className="text-slate-600 shrink-0">&bull;</span>
+              <span className="text-slate-500 shrink-0" aria-hidden="true">&bull;</span>
               {isCompleted && task.completedAt && (
                 <>
-                  <span className="inline-flex items-center gap-0.5 font-mono tabular-nums text-emerald-400 shrink-0">{new Date(task.completedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                  <span className="text-slate-600 shrink-0">&bull;</span>
+                  <span className="inline-flex items-center gap-0.5 font-mono tabular-nums text-emerald-400 font-semibold shrink-0">{new Date(task.completedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                  <span className="text-slate-500 shrink-0" aria-hidden="true">&bull;</span>
                 </>
               )}
-              <span className="inline-flex items-center gap-0.5 font-mono tabular-nums aura-text-primary shrink-0"><Icon name="zap" className="w-2.5 h-2.5 aura-text-primary" />+{task.xpReward || 10} XP</span>
+              <span className="inline-flex items-center gap-0.5 font-mono tabular-nums aura-text-primary font-semibold shrink-0"><Icon name="zap" className="w-3 h-3 aura-text-primary" />+{task.xpReward || 10} XP</span>
               {task.coinReward && (
                 <>
-                  <span className="text-slate-600 shrink-0">&bull;</span>
-                  <span className="inline-flex items-center gap-0.5 font-mono tabular-nums text-amber-400 shrink-0"><Icon name="coins" className="w-2.5 h-2.5 text-amber-400" />+{task.coinReward}</span>
+                  <span className="text-slate-500 shrink-0" aria-hidden="true">&bull;</span>
+                  <span className="inline-flex items-center gap-0.5 font-mono tabular-nums text-amber-400 font-semibold shrink-0"><Icon name="coins" className="w-3 h-3 text-amber-400" />+{task.coinReward}</span>
                 </>
               )}
               {rarity.label && (
                 <>
-                  <span className="text-slate-600 shrink-0" aria-hidden="true">&bull;</span>
-                  <span className={"inline-flex items-center gap-0.5 shrink-0 " + rarity.badgeStyle}>{rarity.icon}<span>{rarity.label}</span></span>
+                  <span className="text-slate-500 shrink-0" aria-hidden="true">&bull;</span>
+                  <span className={"inline-flex items-center gap-0.5 shrink-0 font-semibold " + rarity.badgeStyle}>{rarity.icon}<span>{rarity.label}</span></span>
                 </>
               )}
               {task.notes && (
                 <>
-                  <span className="text-slate-600 shrink-0" aria-hidden="true">&bull;</span>
-                  <button type="button" onClick={(e) => { e.stopPropagation(); if (onOpenNoteModal) onOpenNoteModal(task); }} className="inline-flex items-center gap-1 text-purple-300 hover:text-purple-200 cursor-pointer font-mono text-[10.5px] transition-colors shrink-0" title={task.notes}><Icon name="fileText" className="w-2.5 h-2.5 text-purple-400" /><span>Nota</span></button>
+                  <span className="text-slate-500 shrink-0" aria-hidden="true">&bull;</span>
+                  <button type="button" onClick={(e) => { e.stopPropagation(); if (onOpenNoteModal) onOpenNoteModal(task); }} className="inline-flex items-center gap-1 text-purple-300 hover:text-purple-200 cursor-pointer font-mono text-xs transition-colors shrink-0 py-0.5 px-1 rounded hover:bg-white/[0.04]" title={task.notes}><Icon name="fileText" className="w-3 h-3 text-purple-400" /><span>Nota</span></button>
                 </>
               )}
               {isCounterHabit && (
@@ -255,12 +249,12 @@ const TaskCardComponent: React.FC<TaskCardProps> = (props) => {
                     }
                   }}
                   disabled={isDayEnded || isFutureDay}
-                  className={"chicle-btn inline-flex items-center gap-1.5 ml-1 shrink-0 px-2 py-0.5 rounded-lg border font-mono tabular-nums text-[10.5px] font-bold transition-all cursor-pointer " + (isCompleted ? "bg-emerald-950/70 border-emerald-500/40 text-emerald-300 optic-active-card" : "bg-[#040814]/90 aura-border-subtle aura-text-primary hover:aura-border-primary")}
+                  className={"chicle-btn inline-flex items-center gap-1.5 ml-1 shrink-0 px-2.5 py-1 rounded-lg border font-mono tabular-nums text-xs font-bold transition-all cursor-pointer touch-manipulation " + (isCompleted ? "bg-emerald-950/70 border-emerald-500/40 text-emerald-300 optic-active-card" : "bg-[#040814]/90 aura-border-subtle aura-text-primary hover:aura-border-primary")}
                   title={isCompleted ? "Meta cumplida hoy" : "Toca para sumar +1"}
                 >
                   <span className={catStyle.textIcon}>{task.currentCount || 0}/{task.targetCount} {task.unit || 'veces'}</span>
                   {!isDayEnded && !isFutureDay && !isCompleted && onIncrementHabit && (
-                    <span className="px-1.5 py-0.5 rounded aura-btn-gradient optic-active-card text-[9px] font-bold uppercase">+1</span>
+                    <span className="px-1.5 py-0.5 rounded aura-btn-gradient optic-active-card text-[10px] font-bold uppercase">+1</span>
                   )}
                 </button>
               )}
@@ -277,10 +271,10 @@ const TaskCardComponent: React.FC<TaskCardProps> = (props) => {
                     }
                     onOpenPomodoro(task.title, task.category);
                   }}
-                  className="chicle-btn inline-flex items-center gap-1 ml-auto shrink-0 px-2 py-0.5 rounded-lg aura-bg-soft border aura-border-subtle aura-text-primary hover:text-white text-[10.5px] font-mono font-bold transition-all cursor-pointer"
+                  className="chicle-btn inline-flex items-center gap-1 ml-auto shrink-0 px-2.5 py-1 rounded-lg aura-bg-soft border aura-border-subtle aura-text-primary hover:text-white text-xs font-mono font-bold transition-all cursor-pointer touch-manipulation"
                   title="Iniciar modo foco (Pomodoro)"
                 >
-                  <Icon name="timer" className="w-3 h-3 aura-text-primary" />
+                  <Icon name="timer" className="w-3.5 h-3.5 aura-text-primary" />
                   <span>Foco</span>
                 </button>
               )}
@@ -289,7 +283,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = (props) => {
         </div>
         <TaskActionsDropdown task={task} isOpen={isMenuOpen} onToggleOpen={onToggleMenu} onOpenNote={() => onOpenNoteModal && onOpenNoteModal(task)} onOpenPomodoro={() => onOpenPomodoro && onOpenPomodoro(task.title, task.category)} onOpenEdit={() => handleEdit && handleEdit(task)} onDelete={() => handleDelete && handleDelete(task.id)} isDayEnded={isDayEnded} color={activeLineColor} />
       </div>
-    </div>
+    </article>
   );
 };
 

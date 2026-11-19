@@ -114,7 +114,7 @@ export const KaiVectorGraphics: React.FC<KaiVectorGraphicsProps> = ({
       {/* ─── ANIMACIONES CSS ORGÁNICAS Y ESPECÍFICAS DE CADA ESPECIE ─── */}
       <style>
         {`
-          /* 1. PRISMA: ORÁCULO CLÁSICO */
+          /* 1. PRISMA: KAI CLÁSICO */
           @keyframes kai-prism-look {
             0%, 100% { transform: translate(0px, 0px); }
             5%, 10% { transform: translate(3.8px, -1.8px); }

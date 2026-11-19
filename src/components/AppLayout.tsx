@@ -296,7 +296,7 @@ export function AppLayout() {
       if (import.meta.env.DEV || cancelled) return;
 
       const modalImporters = [
-        () => import('./OracleModal'),
+        () => import('./KaiAssistantModal'),
         () => import('./NeuralAnalysisModal'),
         () => import('./DailyFinanceModal'),
         () => import('./KaiWorkshopModal'),

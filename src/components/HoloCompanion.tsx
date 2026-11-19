@@ -43,13 +43,13 @@ export interface CompanionConfig {
 }
 
 /**
- * REGISTRO DEL ORÁCULO PIRAMIDAL // EL OJO QUE TODO LO VE
+ * REGISTRO DE PERSONALIDADES DE KAI // EL COMPAÑERO DE ENFOQUE
  */
 export const COMPANION_REGISTRY: Record<string, CompanionConfig> = {
   heroe: {
     id: 'heroe',
     name: 'Guardián de la Voluntad',
-    codename: 'ORÁCULO // KAI',
+    codename: 'COMPAÑERO // KAI',
     symbolicAvatar: '👁️',
     primaryGlow: '#00f0ff',     // Cyan eléctrico exacto de la referencia
     secondaryGlow: '#0284c7',
@@ -59,7 +59,7 @@ export const COMPANION_REGISTRY: Record<string, CompanionConfig> = {
   },
   sabio: {
     id: 'sabio',
-    name: 'Oráculo de la Sabiduría',
+    name: 'KAI · Guía de la Sabiduría',
     codename: 'SYNAPSE // CUÁNTICO',
     symbolicAvatar: '👁️',
     primaryGlow: '#00f0ff',
@@ -71,7 +71,7 @@ export const COMPANION_REGISTRY: Record<string, CompanionConfig> = {
   guerrero: {
     id: 'guerrero',
     name: 'Observador Marcial',
-    codename: 'ORÁCULO // ÉGIDA',
+    codename: 'COMPAÑERO // ÉGIDA',
     symbolicAvatar: '🔺',
     primaryGlow: '#38bdf8',
     secondaryGlow: '#0369a1',
@@ -82,7 +82,7 @@ export const COMPANION_REGISTRY: Record<string, CompanionConfig> = {
   explorador: {
     id: 'explorador',
     name: 'Brújula Astral',
-    codename: 'ORÁCULO // HORIZONTE',
+    codename: 'COMPAÑERO // HORIZONTE',
     symbolicAvatar: '🧭',
     primaryGlow: '#22d3ee',
     secondaryGlow: '#0891b2',
@@ -93,7 +93,7 @@ export const COMPANION_REGISTRY: Record<string, CompanionConfig> = {
   creador: {
     id: 'creador',
     name: 'Geómetra Sagrado',
-    codename: 'ORÁCULO // GÉNESIS',
+    codename: 'COMPAÑERO // GÉNESIS',
     symbolicAvatar: '✨',
     primaryGlow: '#00f0ff',
     secondaryGlow: '#0284c7',
@@ -104,7 +104,7 @@ export const COMPANION_REGISTRY: Record<string, CompanionConfig> = {
   mago: {
     id: 'mago',
     name: 'Ojo Cósmico',
-    codename: 'ORÁCULO // ASTRAL',
+    codename: 'COMPAÑERO // ASTRAL',
     symbolicAvatar: '🔮',
     primaryGlow: '#00f0ff',
     secondaryGlow: '#0369a1',

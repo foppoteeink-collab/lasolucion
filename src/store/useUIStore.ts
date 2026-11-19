@@ -8,7 +8,6 @@ export type ModalName =
   | 'isDayTemplatesOpen' 
   | 'isPomodoroOpen' 
   | 'isNightlyReflectionOpen'
-  | 'isSurpriseBossOpen'
   | 'isHunterCollapseOpen'
   | 'isDayRhythmOpen';
 
@@ -61,7 +60,6 @@ interface UIState {
   isDayTemplatesOpen: boolean;
   isPomodoroOpen: boolean;
   isNightlyReflectionOpen: boolean;
-  isSurpriseBossOpen: boolean;
   isHunterCollapseOpen: boolean;
   isDayRhythmOpen: boolean;
   isTaskFormOpen: boolean;
@@ -69,7 +67,6 @@ interface UIState {
   isVoiceDictationOpen: boolean;
   isTacticalGuideOpen: boolean;
   tacticalGuideInitialStep: number;
-  surpriseBossData: { archetypeName: string; buffName: string; buffDescription: string } | null;
   deleteConfirmTask: TaskItem | null;
 
   // Orquestador FIFO de Modales
@@ -92,7 +89,6 @@ interface UIState {
   closeVoiceDictation: () => void;
   openTacticalGuide: (step?: number) => void;
   closeTacticalGuide: () => void;
-  openSurpriseBoss: (data: { archetypeName: string; buffName: string; buffDescription: string }) => void;
   setModalState: (modalName: ModalName, isOpen: boolean, data?: any) => void;
   dismissCurrentModal: (modalName?: ModalName) => void;
   clearModalQueue: () => void;
@@ -403,7 +399,6 @@ export const useUIStore = create<UIState>((set, get) => ({
   isDayTemplatesOpen: false,
   isPomodoroOpen: false,
   isNightlyReflectionOpen: false,
-  isSurpriseBossOpen: false,
   isHunterCollapseOpen: false,
   isDayRhythmOpen: false,
   isTaskFormOpen: false,
@@ -411,7 +406,6 @@ export const useUIStore = create<UIState>((set, get) => ({
   isVoiceDictationOpen: false,
   isTacticalGuideOpen: false,
   tacticalGuideInitialStep: 1,
-  surpriseBossData: null,
   deleteConfirmTask: null,
 
   openTaskForm: (tab = 'task') => set({ isTaskFormOpen: true, taskFormInitialTab: tab }),
@@ -452,7 +446,6 @@ export const useUIStore = create<UIState>((set, get) => ({
           modalQueue: remainingQueue,
           activeModal: nextModal.modalName,
           [nextModal.modalName]: true,
-          ...(nextModal.data && nextModal.modalName === 'isSurpriseBossOpen' ? { surpriseBossData: nextModal.data } : {})
         } as any);
       }
     }
@@ -543,9 +536,6 @@ export const useUIStore = create<UIState>((set, get) => ({
     if (isOpen) {
       // If modal is already active, do nothing
       if (state.activeModal === modalName) {
-        if (data && modalName === 'isSurpriseBossOpen') {
-          set({ surpriseBossData: data });
-        }
         return;
       }
 
@@ -569,7 +559,6 @@ export const useUIStore = create<UIState>((set, get) => ({
       set({
         activeModal: modalName,
         [modalName]: true,
-        ...(data && modalName === 'isSurpriseBossOpen' ? { surpriseBossData: data } : {})
       } as any);
     } else {
       // Closing a modal
@@ -599,7 +588,6 @@ export const useUIStore = create<UIState>((set, get) => ({
             modalQueue: remainingQueue,
             activeModal: nextModal.modalName,
             [nextModal.modalName]: true,
-            ...(nextModal.data && nextModal.modalName === 'isSurpriseBossOpen' ? { surpriseBossData: nextModal.data } : {})
           } as any);
           modalTransitionTimeout = null;
         }, 250);
@@ -629,17 +617,12 @@ export const useUIStore = create<UIState>((set, get) => ({
       isDayTemplatesOpen: false,
       isPomodoroOpen: false,
       isNightlyReflectionOpen: false,
-      isSurpriseBossOpen: false,
       isHunterCollapseOpen: false,
       isDayRhythmOpen: false,
     });
   },
 
   setDeleteConfirmTask: (task) => set({ deleteConfirmTask: task }),
-  
-  openSurpriseBoss: (_data) => {
-    // No-op: Bosses sorpresa eliminados
-  },
 
   triggerScreenFlash: (type) => {
     set({ screenFlash: type });

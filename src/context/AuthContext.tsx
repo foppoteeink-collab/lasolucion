@@ -1,5 +1,14 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider } from 'firebase/auth';
+import {
+  User,
+  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
+  GoogleAuthProvider,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  updateProfile
+} from 'firebase/auth';
 import { auth, googleProvider } from '../firebase';
 
 interface AuthContextType {
@@ -10,6 +19,8 @@ interface AuthContextType {
   accessToken: string | null;
   getAccessToken: () => Promise<string | null>;
   signInWithGoogle: () => Promise<{ user: User; accessToken: string | null } | null>;
+  signUpWithEmail: (email: string, pass: string, displayName?: string) => Promise<{ user: User | null; error?: string }>;
+  signInWithEmail: (email: string, pass: string) => Promise<{ user: User | null; error?: string }>;
   signOut: () => Promise<void>;
   clearError: () => void;
 }
@@ -136,6 +147,61 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const signUpWithEmail = async (email: string, pass: string, displayName?: string) => {
+    setError(null);
+    try {
+      if (!auth) throw new Error('Firebase Auth no inicializado');
+      const res = await createUserWithEmailAndPassword(auth, email.trim(), pass);
+      if (displayName && res.user) {
+        try {
+          await updateProfile(res.user, { displayName: displayName.trim() });
+        } catch (_) {}
+      }
+      setUser(res.user);
+      return { user: res.user };
+    } catch (err: any) {
+      let msg = 'No se pudo crear la cuenta.';
+      if (err?.code === 'auth/email-already-in-use') {
+        msg = 'Este correo ya está registrado. Prueba iniciando sesión.';
+      } else if (err?.code === 'auth/invalid-email') {
+        msg = 'El formato de correo no es válido.';
+      } else if (err?.code === 'auth/weak-password') {
+        msg = 'La contraseña debe tener al menos 6 caracteres.';
+      } else if (err?.message) {
+        msg = err.message;
+      }
+      setError(msg);
+      return { user: null, error: msg };
+    }
+  };
+
+  const signInWithEmail = async (email: string, pass: string) => {
+    setError(null);
+    try {
+      if (!auth) throw new Error('Firebase Auth no inicializado');
+      const res = await signInWithEmailAndPassword(auth, email.trim(), pass);
+      setUser(res.user);
+      return { user: res.user };
+    } catch (err: any) {
+      let msg = 'No se pudo iniciar sesión.';
+      if (
+        err?.code === 'auth/user-not-found' ||
+        err?.code === 'auth/wrong-password' ||
+        err?.code === 'auth/invalid-credential'
+      ) {
+        msg = 'Correo o contraseña incorrectos.';
+      } else if (err?.code === 'auth/invalid-email') {
+        msg = 'El formato de correo no es válido.';
+      } else if (err?.code === 'auth/too-many-requests') {
+        msg = 'Demasiados intentos fallidos. Intenta más tarde.';
+      } else if (err?.message) {
+        msg = err.message;
+      }
+      setError(msg);
+      return { user: null, error: msg };
+    }
+  };
+
   const signOut = async () => {
     try {
       await auth.signOut();
@@ -160,6 +226,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         accessToken,
         getAccessToken,
         signInWithGoogle,
+        signUpWithEmail,
+        signInWithEmail,
         signOut,
         clearError,
       }}

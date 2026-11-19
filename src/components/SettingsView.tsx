@@ -29,7 +29,7 @@ import { SettingsFinancesTab } from './settings/SettingsFinancesTab';
 import { SettingsDataTab } from './settings/SettingsDataTab';
 import { SettingsSimulatorTab } from './settings/SettingsSimulatorTab';
 
-const OracleModal = lazy(() => import('./OracleModal').then((m) => ({ default: m.OracleModal })));
+const KaiAssistantModal = lazy(() => import('./KaiAssistantModal').then((m) => ({ default: m.KaiAssistantModal })));
 
 export interface SettingsViewProps {
   settings: GameSettings;
@@ -237,7 +237,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
       {isOracleOpen && (
         <Suspense fallback={null}>
-          <OracleModal 
+          <KaiAssistantModal 
             isOpen={isOracleOpen}
             onClose={() => setIsOracleOpen(false)}
           />

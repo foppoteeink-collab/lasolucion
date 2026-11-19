@@ -15,7 +15,7 @@ const DayTemplatesModal = lazy(() => import('../DayTemplatesModal').then(m => ({
 const DailyRewardsModal = lazy(() => import('../DailyRewardsModal').then(m => ({ default: m.DailyRewardsModal })));
 const LevelUpModal = lazy(() => import('../LevelUpModal').then(m => ({ default: m.LevelUpModal })));
 const DeleteConfirmModal = lazy(() => import('../DeleteConfirmModal').then(m => ({ default: m.DeleteConfirmModal })));
-const OracleModal = lazy(() => import('../OracleModal').then(m => ({ default: m.OracleModal })));
+const KaiAssistantModal = lazy(() => import('../KaiAssistantModal').then(m => ({ default: m.KaiAssistantModal })));
 const NeuralAnalysisModal = lazy(() => import('../NeuralAnalysisModal').then(m => ({ default: m.NeuralAnalysisModal })));
 const DailyFinanceModal = lazy(() => import('../DailyFinanceModal').then(m => ({ default: m.DailyFinanceModal })));
 const NightlyTunnel = lazy(() => import('../NightlyTunnel').then(m => ({ default: m.NightlyTunnel })));
@@ -151,10 +151,10 @@ export const ModalPortalHost: React.FC<ModalPortalHostProps> = ({
         </Suspense>
       )}
 
-      {/* Oracle AI Wizard Modal */}
+      {/* Asistente IA de Planificación KAI */}
       {isOracleOpen && (
         <Suspense fallback={null}>
-          <OracleModal 
+          <KaiAssistantModal 
             isOpen={isOracleOpen}
             initialPrompt={oracleInitialPrompt}
             onClose={onCloseOracle}

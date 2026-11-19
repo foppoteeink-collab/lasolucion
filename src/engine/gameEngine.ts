@@ -105,7 +105,6 @@ export const getEngineContext = () => {
     isFinishDayOpen: ui.isFinishDayOpen,
     isNightlyReflectionOpen: ui.isNightlyReflectionOpen,
     isDayTemplatesOpen: ui.isDayTemplatesOpen,
-    isSurpriseBossOpen: ui.isSurpriseBossOpen,
     deleteConfirmTask: ui.deleteConfirmTask,
     setDeleteConfirmTask: ui.setDeleteConfirmTask,
     floatingEffects: ui.floatingEffects,
