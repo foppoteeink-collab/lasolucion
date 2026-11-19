@@ -22,14 +22,22 @@ export const BetaConsentModal: React.FC = () => {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
+    // Si el usuario es nuevo y aún no completa el despertar (onboarding de KAI),
+    // dejamos que KaiWelcomeOnboarding gestione el ingreso y los términos unificados
+    // para evitar la colisión de 2 modales superpuestos en pantalla.
+    if (stats.hasCompletedAwakening === false) {
+      setIsOpen(false);
+      return;
+    }
+
     const localConsent = window.localStorage.getItem(BETA_CONSENT_KEY);
     const storeConsent = stats.betaConsentAccepted;
 
-    // Solo se muestra si no existe aceptación previa ni en localStorage ni en Zustand
+    // Solo se muestra a usuarios existentes que no hayan aceptado aún el consentimiento
     if (localConsent !== 'true' && !storeConsent) {
       setIsOpen(true);
     }
-  }, [stats.betaConsentAccepted]);
+  }, [stats.betaConsentAccepted, stats.hasCompletedAwakening]);
 
   const handleAccept = () => {
     if (!hasAgreedTerms) return;

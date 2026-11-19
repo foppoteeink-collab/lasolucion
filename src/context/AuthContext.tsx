@@ -7,6 +7,7 @@ import {
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  sendPasswordResetEmail,
   updateProfile
 } from 'firebase/auth';
 import { auth, googleProvider } from '../firebase';
@@ -21,6 +22,7 @@ interface AuthContextType {
   signInWithGoogle: () => Promise<{ user: User; accessToken: string | null } | null>;
   signUpWithEmail: (email: string, pass: string, displayName?: string) => Promise<{ user: User | null; error?: string }>;
   signInWithEmail: (email: string, pass: string) => Promise<{ user: User | null; error?: string }>;
+  sendPasswordReset: (email: string) => Promise<{ success: boolean; error?: string }>;
   signOut: () => Promise<void>;
   clearError: () => void;
 }
@@ -202,6 +204,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const sendPasswordReset = async (email: string) => {
+    setError(null);
+    try {
+      if (!auth) throw new Error('Firebase Auth no inicializado');
+      if (!email.trim()) return { success: false, error: 'Ingresa tu correo para restablecer la contraseña.' };
+      await sendPasswordResetEmail(auth, email.trim());
+      return { success: true };
+    } catch (err: any) {
+      let msg = 'No se pudo enviar el correo de restablecimiento.';
+      if (err?.code === 'auth/user-not-found') {
+        msg = 'No encontramos una cuenta con ese correo.';
+      } else if (err?.code === 'auth/invalid-email') {
+        msg = 'El formato de correo no es válido.';
+      } else if (err?.message) {
+        msg = err.message;
+      }
+      setError(msg);
+      return { success: false, error: msg };
+    }
+  };
+
   const signOut = async () => {
     try {
       await auth.signOut();
@@ -228,6 +251,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signInWithGoogle,
         signUpWithEmail,
         signInWithEmail,
+        sendPasswordReset,
         signOut,
         clearError,
       }}

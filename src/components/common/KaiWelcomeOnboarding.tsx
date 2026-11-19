@@ -20,7 +20,10 @@ import {
   Lock,
   LogIn,
   KeyRound,
-  AlertCircle
+  AlertCircle,
+  Eye,
+  EyeOff,
+  HelpCircle
 } from 'lucide-react';
 import { safeLogEvent } from '../../firebase';
 import { KAICompanion } from '../KAICompanion';
@@ -231,7 +234,7 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
   const { completeAwakening, claimTutorialReward, markTutorialGuideSeen } = usePlayerStore();
   const { addTask } = useTaskStore();
   const copy = useNarrativeCopy();
-  const { user, signInWithGoogle, signUpWithEmail, signInWithEmail, error: authError, clearError: clearAuthError } = useAuth();
+  const { user, signInWithGoogle, signUpWithEmail, signInWithEmail, sendPasswordReset, error: authError, clearError: clearAuthError } = useAuth();
 
   const [step, setStep] = useState<number>(initialStep);
 
@@ -251,6 +254,8 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
   // Estados para autenticación opcional en Paso 1
   const [showEmailForm, setShowEmailForm] = useState(false);
   const [isRegisterMode, setIsRegisterMode] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showResetForm, setShowResetForm] = useState(false);
   const [emailInput, setEmailInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
   const [authSubmitting, setAuthSubmitting] = useState(false);
@@ -304,32 +309,62 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
   const currentArchetype = WELCOME_ARCHETYPES.find(a => a.id === selectedArchId) || WELCOME_ARCHETYPES[0];
   const circadian = getCircadianPhase(dayStartHour);
 
-  // Manejo de cambio de hora (sincroniza store inmediatamente)
+  // Manejo de cambio de hora (estado local ligero: no satura AppLayout ni los schedulers hasta confirmar)
   const handleHourChange = (newHour: number) => {
     const normalized = ((newHour % 24) + 24) % 24;
-    soundFX.playClick();
-    triggerHaptic(15);
+    try {
+      soundFX.playClick();
+      triggerHaptic(15);
+    } catch (_) {}
     setDayStartHour(normalized);
-    setGlobalDayStartHour(normalized);
-    usePlayerStore.getState().setStats((prev) => ({
-      ...prev,
-      dayStartHour: normalized,
-    }));
   };
 
   // Manejo de autenticación con Google
   const handleGoogleAuth = async () => {
-    soundFX.playClick();
-    triggerHaptic(20);
+    try {
+      soundFX.playClick();
+      triggerHaptic(20);
+    } catch (_) {}
     setAuthLocalMessage(null);
     clearAuthError();
     const res = await signInWithGoogle();
     if (res?.user) {
-      soundFX.playLevelUp();
+      try {
+        soundFX.playLevelUp();
+      } catch (_) {}
       setAuthLocalMessage('¡Cuenta vinculada con éxito con Google!');
       if (!username && res.user.displayName) {
         setUsername(res.user.displayName.split(' ')[0]);
       }
+    }
+  };
+
+  // Manejo de restablecimiento de contraseña
+  const handlePasswordResetSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!emailInput.trim()) {
+      setAuthLocalMessage('Por favor escribe tu correo para enviarte el enlace de restablecimiento.');
+      return;
+    }
+
+    try {
+      soundFX.playClick();
+      triggerHaptic(15);
+    } catch (_) {}
+    setAuthSubmitting(true);
+    setAuthLocalMessage(null);
+    clearAuthError();
+
+    try {
+      const res = await sendPasswordReset(emailInput.trim());
+      if (res.success) {
+        setAuthLocalMessage('¡Enlace de recuperación enviado! Revisa tu correo o carpeta de spam.');
+        setShowResetForm(false);
+      } else if (res.error) {
+        setAuthLocalMessage(res.error);
+      }
+    } finally {
+      setAuthSubmitting(false);
     }
   };
 
@@ -345,8 +380,10 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
       return;
     }
 
-    soundFX.playClick();
-    triggerHaptic(20);
+    try {
+      soundFX.playClick();
+      triggerHaptic(20);
+    } catch (_) {}
     setAuthSubmitting(true);
     setAuthLocalMessage(null);
     clearAuthError();
@@ -355,7 +392,9 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
       if (isRegisterMode) {
         const res = await signUpWithEmail(emailInput, passwordInput, username.trim() || undefined);
         if (res.user) {
-          soundFX.playLevelUp();
+          try {
+            soundFX.playLevelUp();
+          } catch (_) {}
           setAuthLocalMessage('¡Cuenta creada y protegida con éxito!');
           setShowEmailForm(false);
         } else if (res.error) {
@@ -364,7 +403,9 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
       } else {
         const res = await signInWithEmail(emailInput, passwordInput);
         if (res.user) {
-          soundFX.playLevelUp();
+          try {
+            soundFX.playLevelUp();
+          } catch (_) {}
           setAuthLocalMessage('¡Sesión iniciada con éxito!');
           setShowEmailForm(false);
           if (res.user.displayName && !username) {
@@ -448,10 +489,19 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
       kaiShape: 'prism'
     });
 
+    if (typeof window !== 'undefined') {
+      try {
+        window.localStorage.setItem('la_solucion_beta_consent_v1', 'true');
+        window.localStorage.setItem('la_solucion_ai_consent_v1', 'true');
+      } catch (_) {}
+    }
+
     usePlayerStore.getState().setStats((prev) => ({
       ...prev,
       dayStartHour,
       kaiAuraColor: currentArchetype.accent,
+      betaConsentAccepted: true,
+      betaConsentDate: new Date().toISOString(),
     }));
 
     // 2. Recompensar
@@ -474,17 +524,23 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
   };
 
   const handleNextStep = () => {
-    soundFX.playClick();
-    triggerHaptic(15);
-    // Guardar calibración circadiana al avanzar desde paso 3
-    if (step === 3) {
-      setGlobalDayStartHour(dayStartHour);
-      usePlayerStore.getState().setStats((prev) => ({
-        ...prev,
-        dayStartHour,
-      }));
-    }
-    setStep((prev) => Math.min(TOTAL_STEPS, prev + 1));
+    try {
+      soundFX.playClick();
+      triggerHaptic(15);
+    } catch (_) {}
+    React.startTransition(() => {
+      setStep((prev) => Math.min(TOTAL_STEPS, prev + 1));
+    });
+  };
+
+  const handlePrevStep = () => {
+    try {
+      soundFX.playClick();
+      triggerHaptic(15);
+    } catch (_) {}
+    React.startTransition(() => {
+      setStep((prev) => Math.max(1, prev - 1));
+    });
   };
 
   return createPortal(
@@ -580,7 +636,7 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
 
         {/* ── CONTENIDO: 1 FASE CLARA POR PANTALLA ── */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-5 custom-scrollbar relative z-10 flex flex-col justify-start">
-          <AnimatePresence mode="wait">
+          <AnimatePresence mode="sync" initial={false}>
 
             {/* ============================================================== */}
             {/* PASO 1: IDENTIDAD, ESTILO NARRATIVO & ACCESO / SEGURIDAD        */}
@@ -588,10 +644,10 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
             {step === 1 && (
               <motion.div
                 key="step-1"
-                initial={{ opacity: 0, x: 20 }}
+                initial={{ opacity: 0, x: 16 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.2 }}
+                exit={{ opacity: 0, x: -16 }}
+                transition={{ duration: 0.15, ease: 'easeOut' }}
                 className="space-y-4"
               >
                 {/* Propuesta Única de Valor (UVP) explícita */}
@@ -789,15 +845,51 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
                             <div className="relative">
                               <Lock className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-400 pointer-events-none" />
                               <input
-                                type="password"
+                                type={showPassword ? 'text' : 'password'}
                                 value={passwordInput}
                                 onChange={(e) => setPasswordInput(e.target.value)}
                                 placeholder="Contraseña (mínimo 6 caracteres)"
                                 autoComplete={isRegisterMode ? 'new-password' : 'current-password'}
-                                className="w-full pl-9 pr-3 py-2 rounded-xl bg-black/60 border border-white/15 text-white placeholder-slate-500 text-xs focus:outline-none focus:aura-border-primary"
+                                className="w-full pl-9 pr-10 py-2 rounded-xl bg-black/60 border border-white/15 text-white placeholder-slate-500 text-xs focus:outline-none focus:aura-border-primary"
                               />
+                              <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                aria-label={showPassword ? 'Ocultar contraseña' : 'Ver contraseña'}
+                                className="absolute right-2.5 top-2.5 p-0.5 rounded text-slate-400 hover:text-white cursor-pointer"
+                              >
+                                {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                              </button>
                             </div>
                           </div>
+
+                          {!isRegisterMode && (
+                            <div className="flex items-center justify-between text-[11px] px-1">
+                              <button
+                                type="button"
+                                onClick={() => setShowResetForm(!showResetForm)}
+                                className="text-amber-300 hover:text-amber-200 underline cursor-pointer"
+                              >
+                                ¿Olvidaste tu contraseña?
+                              </button>
+                            </div>
+                          )}
+
+                          {showResetForm && !isRegisterMode && (
+                            <div className="p-2.5 rounded-xl bg-amber-950/40 border border-amber-400/30 space-y-1.5 text-xs animate-fade-in">
+                              <p className="text-[11px] text-amber-200 leading-snug">
+                                Escribe tu correo arriba y pulsa aquí para recibir un enlace seguro de restablecimiento:
+                              </p>
+                              <button
+                                type="button"
+                                onClick={handlePasswordResetSubmit}
+                                disabled={authSubmitting || !emailInput.trim()}
+                                className="chicle-btn w-full py-1.5 px-3 rounded-lg bg-amber-500/25 hover:bg-amber-500/40 border border-amber-400/50 text-amber-200 text-[11px] font-bold disabled:opacity-50 cursor-pointer"
+                              >
+                                {authSubmitting ? 'Enviando...' : 'Enviar enlace de recuperación'}
+                              </button>
+                            </div>
+                          )}
 
                           <button
                             type="submit"
@@ -807,6 +899,18 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
                             <KeyRound className="w-3.5 h-3.5" />
                             <span>{authSubmitting ? 'Procesando...' : (isRegisterMode ? 'Crear y Proteger Cuenta' : 'Iniciar Sesión')}</span>
                           </button>
+
+                          <p className="text-[10px] text-slate-400 text-center leading-tight pt-0.5">
+                            Al continuar, aceptas las{' '}
+                            <button
+                              type="button"
+                              onClick={() => useUIStore.getState().openPrivacyPolicy()}
+                              className="text-amber-300 hover:text-amber-200 underline font-medium"
+                            >
+                              Condiciones y Privacidad
+                            </button>{' '}
+                            de La Solución.
+                          </p>
                         </motion.form>
                       )}
 
@@ -829,10 +933,10 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
             {step === 2 && (
               <motion.div
                 key="step-2"
-                initial={{ opacity: 0, x: 20 }}
+                initial={{ opacity: 0, x: 16 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.2 }}
+                exit={{ opacity: 0, x: -16 }}
+                transition={{ duration: 0.15, ease: 'easeOut' }}
                 className="space-y-3.5"
               >
                 {/* Diálogo reactivo con KAI que cambia de color según el arquetipo */}
@@ -943,10 +1047,10 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
             {step === 3 && (
               <motion.div
                 key="step-3"
-                initial={{ opacity: 0, x: 20 }}
+                initial={{ opacity: 0, x: 16 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.2 }}
+                exit={{ opacity: 0, x: -16 }}
+                transition={{ duration: 0.15, ease: 'easeOut' }}
                 className="space-y-3.5"
               >
                 {/* 1. Selector de hora de inicio de jornada habitual */}
@@ -1081,10 +1185,10 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
             {step === 4 && (
               <motion.div
                 key="step-4"
-                initial={{ opacity: 0, scale: 0.95 }}
+                initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.2 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.15, ease: 'easeOut' }}
                 className="space-y-3.5 text-center"
               >
                 <div className="w-14 h-14 mx-auto flex items-center justify-center" data-preserve-optic="true">
@@ -1221,11 +1325,7 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
               {step > 1 ? (
                 <button
                   type="button"
-                  onClick={() => {
-                    soundFX.playClick();
-                    triggerHaptic(15);
-                    setStep((prev) => Math.max(1, prev - 1));
-                  }}
+                  onClick={handlePrevStep}
                   className="chicle-btn px-3.5 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.12] border border-white/15 text-slate-200 hover:text-white font-anton text-xs uppercase tracking-wider cursor-pointer flex items-center gap-1"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
