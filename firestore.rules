@@ -107,25 +107,29 @@ rules_version = '2';
 //      - coinReward / goldReward: number (0 to 500)
 //      - completed: bool
 //      - status: string ('todo'|'completed'|'failed'|'cancelled')
-// 3. pomodoro_history/{sessionId}
+// 3. finance_months/{monthId}
+//      - monthId: string (e.g. "2026_10")
+//      - expenses: list (size <= 2000)
+//      - lastUpdated: string (optional, <= 50 chars)
+// 4. pomodoro_history/{sessionId}
 //      - id: string (<= 100 chars)
 //      - duration / durationMinutes: number (<= 86400 / <= 1440)
 //      - timestamp: number (>= 0)
 //      - xpEarned: number (0 to 1,000)
 //      - coinsEarned: number (0 to 500)
 //      - taskName / taskTitle: string (<= 300 chars)
-// 4. custom_habits/{habitId}
+// 5. custom_habits/{habitId}
 //      - id: string (<= 100 chars)
 //      - title: string (<= 300 chars)
 //      - xpReward: number (0 to 1,000)
 //      - coinReward / goldReward: number (0 to 500)
 //      - frequency / frequencyType: string (<= 100 chars)
-// 5. shop_rewards/{rewardId}
+// 6. shop_rewards/{rewardId}
 //      - id: string (<= 100 chars)
 //      - title: string (<= 300 chars)
 //      - cost: number (0 to 100,000, strictly non-negative)
 //      - icon, category: string (<= 100 chars)
-// 6. settings/{settingId}
+// 7. settings/{settingId}
 //      - data / value: string (<= 50000 chars) or map/number/bool
 //
 // ===============================================================
@@ -566,6 +570,15 @@ service cloud.firestore {
         && (!('lastUpdated' in data) || (data.lastUpdated is string && data.lastUpdated.size() <= 50));
     }
 
+    // Validates monthly finance shard documents under /users/{userId}/finance_months/{monthId}
+    function isValidFinanceMonth(data) {
+      return data.keys().hasAll(['expenses'])
+        && data.keys().size() <= 10
+        && data.expenses is list
+        && data.expenses.size() <= 2000
+        && (!('lastUpdated' in data) || (data.lastUpdated is string && data.lastUpdated.size() <= 50));
+    }
+
     // Validates individual tasks under /users/{userId}/tasks/{taskId}
     function isValidTaskItem(data) {
       return data.keys().hasAll(['id', 'title'])
@@ -693,6 +706,14 @@ service cloud.firestore {
         allow read: if isOwner(userId) && isValidId(userId);
         allow create: if isOwner(userId) && isValidId(userId) && isValidId(monthId) && isValidTaskMonth(incoming());
         allow update: if isOwner(userId) && isValidId(userId) && isValidId(monthId) && isValidTaskMonth(incoming());
+        allow delete: if isOwner(userId) && isValidId(userId) && isValidId(monthId);
+      }
+
+      // Monthly finance shards
+      match /finance_months/{monthId} {
+        allow read: if isOwner(userId) && isValidId(userId);
+        allow create: if isOwner(userId) && isValidId(userId) && isValidId(monthId) && isValidFinanceMonth(incoming());
+        allow update: if isOwner(userId) && isValidId(userId) && isValidId(monthId) && isValidFinanceMonth(incoming());
         allow delete: if isOwner(userId) && isValidId(userId) && isValidId(monthId);
       }
 

@@ -17,6 +17,7 @@ import {
   SkillNode,
   GameSettings,
   CustomHabit,
+  FinancialTransaction,
 } from '../types';
 import {
   saveHabitMastery,
@@ -699,7 +700,7 @@ export const useCloudSync = (
           gameSettings,
           skillTree,
           companion,
-          expenses: Array.isArray(expenses) ? expenses.slice(-100) : [],
+          expenses: Array.isArray(expenses) ? expenses.slice(-50) : [],
           activeViewDate,
           lastUpdated: new Date().toISOString(),
         };
@@ -738,6 +739,32 @@ export const useCloudSync = (
               await batch.commit();
             } catch (monthErr) {
               console.warn('[CloudSync] task_months write note:', monthErr);
+            }
+          }
+
+          // Shard finance transactions into monthly subcollections to eliminate 1MB and 100-item ceiling
+          if (Array.isArray(expenses) && expenses.length > 0) {
+            try {
+              const finBatch = writeBatch(db);
+              const expensesByMonth: Record<string, FinancialTransaction[]> = {};
+              for (const ex of expenses) {
+                if (!ex) continue;
+                const targetDate = ex.date || ex.createdAt || getTodayDateString();
+                const match = targetDate.match(/^(\d{4})[-_](\d{2})/);
+                const monthKey = match ? `${match[1]}_${match[2]}` : 'general';
+                if (!expensesByMonth[monthKey]) expensesByMonth[monthKey] = [];
+                expensesByMonth[monthKey].push(ex);
+              }
+              for (const [monthKey, monthExpenses] of Object.entries(expensesByMonth)) {
+                const monthRef = doc(db, 'users', user.uid, 'finance_months', monthKey);
+                finBatch.set(monthRef, {
+                  expenses: sanitizeForFirestore(monthExpenses),
+                  lastUpdated: new Date().toISOString(),
+                });
+              }
+              await finBatch.commit();
+            } catch (finErr) {
+              console.warn('[CloudSync] finance_months write note:', finErr);
             }
           }
 
@@ -1062,6 +1089,7 @@ export const useCloudSync = (
     );
 
     let unsubscribeTasks = () => {};
+    let unsubscribeFinance = () => {};
     if (user) {
       const taskMonthsRef = collection(db, 'users', user.uid, 'task_months');
       unsubscribeTasks = onSnapshot(
@@ -1092,11 +1120,45 @@ export const useCloudSync = (
           console.warn('[CloudSync] Firestore task_months listener error:', error?.message || error);
         }
       );
+
+      const financeMonthsRef = collection(db, 'users', user.uid, 'finance_months');
+      unsubscribeFinance = onSnapshot(
+        financeMonthsRef,
+        { includeMetadataChanges: true },
+        (snapshot) => {
+          if (snapshot.metadata.hasPendingWrites || isSavingRef.current) return;
+
+          const remoteExpensesMap = new Map<string, FinancialTransaction>();
+          snapshot.docs.forEach((d) => {
+            const data = d.data();
+            if (data.expenses && Array.isArray(data.expenses)) {
+              data.expenses.forEach((ex: FinancialTransaction) => {
+                if (ex && ex.id) remoteExpensesMap.set(ex.id, ex);
+              });
+            }
+          });
+
+          if (remoteExpensesMap.size > 0) {
+            setExpenses((prev) => {
+              const map = new Map<string, FinancialTransaction>();
+              for (const e of prev) if (e && e.id) map.set(e.id, e);
+              for (const [id, e] of remoteExpensesMap) map.set(id, e);
+              const merged = Array.from(map.values()).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+              safeSetItem('taskquest_expenses', JSON.stringify(merged));
+              return merged;
+            });
+          }
+        },
+        (error) => {
+          console.warn('[CloudSync] Firestore finance_months listener note:', error?.message || error);
+        }
+      );
     }
 
     return () => {
       unsubscribe();
       unsubscribeTasks();
+      unsubscribeFinance();
     };
   }, [user, hasMeaningfulLocalData, performSave]);
 
@@ -1241,6 +1303,32 @@ export const useCloudSync = (
           });
         } catch (subErr) {
           console.warn('[CloudSync] task_months read fallback:', subErr);
+        }
+
+        try {
+          const financeMonthsRef = collection(db, 'users', user.uid, 'finance_months');
+          const finMonthsSnap = await getDocsFromServer(financeMonthsRef).catch(() => getDocs(financeMonthsRef));
+          const loadedExpensesMap = new Map<string, FinancialTransaction>();
+          finMonthsSnap.docs.forEach((d) => {
+            const mData = d.data();
+            if (mData.expenses && Array.isArray(mData.expenses)) {
+              mData.expenses.forEach((ex: FinancialTransaction) => {
+                if (ex && ex.id) loadedExpensesMap.set(ex.id, ex);
+              });
+            }
+          });
+          if (loadedExpensesMap.size > 0) {
+            setExpenses((prev) => {
+              const map = new Map<string, FinancialTransaction>();
+              for (const e of prev) if (e && e.id) map.set(e.id, e);
+              for (const [id, e] of loadedExpensesMap) map.set(id, e);
+              const merged = Array.from(map.values()).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+              safeSetItem('taskquest_expenses', JSON.stringify(merged));
+              return merged;
+            });
+          }
+        } catch (subFinErr) {
+          console.warn('[CloudSync] finance_months read fallback note:', subFinErr);
         }
 
         try {
