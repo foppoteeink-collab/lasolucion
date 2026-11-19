@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { deduplicateTasksForDay, deduplicateHabits, isDuplicateActivity, pickMergedTargetCount, pickMergedUnit } from '../utils/taskDeduplication';
-import { doc, onSnapshot, setDoc, getDoc, getDocs, getDocFromServer, getDocsFromServer, collection, writeBatch } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, getDoc, getDocs, getDocFromServer, getDocsFromServer, collection, writeBatch, query, orderBy, limit, documentId } from 'firebase/firestore';
 import { db, auth } from '../firebase';
 import { handleFirestoreError, OperationType } from '../lib/firestoreErrors';
 import { useAuth } from '../context/AuthContext';
@@ -52,6 +52,7 @@ export interface CloudSyncResult {
   lastSyncTime: Date | null;
   forceSyncNow: () => Promise<boolean>;
   pullFromCloudNow?: () => Promise<boolean>;
+  loadHistoricalFinanceShards?: (limitMonths?: number) => Promise<FinancialTransaction[]>;
   isOnline: boolean;
   pendingOutboxCount: number;
 }
@@ -1091,9 +1092,14 @@ export const useCloudSync = (
     let unsubscribeTasks = () => {};
     let unsubscribeFinance = () => {};
     if (user) {
-      const taskMonthsRef = collection(db, 'users', user.uid, 'task_months');
+      // Arquitectura Cloud: Bounded Query de 12 meses rodantes para task_months
+      const taskMonthsQuery = query(
+        collection(db, 'users', user.uid, 'task_months'),
+        orderBy(documentId(), 'desc'),
+        limit(12)
+      );
       unsubscribeTasks = onSnapshot(
-        taskMonthsRef,
+        taskMonthsQuery,
         { includeMetadataChanges: true },
         (snapshot) => {
           if (snapshot.metadata.hasPendingWrites || isSavingRef.current) return;
@@ -1121,9 +1127,14 @@ export const useCloudSync = (
         }
       );
 
-      const financeMonthsRef = collection(db, 'users', user.uid, 'finance_months');
+      // Arquitectura Cloud: Bounded Query de 12 meses rodantes para finance_months
+      const financeMonthsQuery = query(
+        collection(db, 'users', user.uid, 'finance_months'),
+        orderBy(documentId(), 'desc'),
+        limit(12)
+      );
       unsubscribeFinance = onSnapshot(
-        financeMonthsRef,
+        financeMonthsQuery,
         { includeMetadataChanges: true },
         (snapshot) => {
           if (snapshot.metadata.hasPendingWrites || isSavingRef.current) return;
@@ -1306,8 +1317,12 @@ export const useCloudSync = (
         }
 
         try {
-          const financeMonthsRef = collection(db, 'users', user.uid, 'finance_months');
-          const finMonthsSnap = await getDocsFromServer(financeMonthsRef).catch(() => getDocs(financeMonthsRef));
+          const financeMonthsQuery = query(
+            collection(db, 'users', user.uid, 'finance_months'),
+            orderBy(documentId(), 'desc'),
+            limit(12)
+          );
+          const finMonthsSnap = await getDocsFromServer(financeMonthsQuery).catch(() => getDocs(financeMonthsQuery));
           const loadedExpensesMap = new Map<string, FinancialTransaction>();
           finMonthsSnap.docs.forEach((d) => {
             const mData = d.data();
@@ -1440,12 +1455,74 @@ export const useCloudSync = (
     setTasksByDate,
   ]);
 
+  const loadHistoricalFinanceShards = useCallback(async (limitMonths: number = 24): Promise<FinancialTransaction[]> => {
+    if (!user) return [];
+    try {
+      const financeMonthsQuery = query(
+        collection(db, 'users', user.uid, 'finance_months'),
+        orderBy(documentId(), 'desc'),
+        limit(limitMonths)
+      );
+      const snap = await getDocs(financeMonthsQuery);
+      const loadedMap = new Map<string, FinancialTransaction>();
+      snap.docs.forEach((d) => {
+        const mData = d.data();
+        if (mData.expenses && Array.isArray(mData.expenses)) {
+          mData.expenses.forEach((ex: FinancialTransaction) => {
+            if (ex && ex.id) loadedMap.set(ex.id, ex);
+          });
+        }
+      });
+      if (loadedMap.size > 0) {
+        setExpenses((prev) => {
+          const map = new Map<string, FinancialTransaction>();
+          for (const e of prev) if (e && e.id) map.set(e.id, e);
+          for (const [id, e] of loadedMap) map.set(id, e);
+          const merged = Array.from(map.values()).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+          safeSetItem('taskquest_expenses', JSON.stringify(merged));
+          return merged;
+        });
+      }
+      return Array.from(loadedMap.values());
+    } catch (err) {
+      console.warn('[CloudSync] loadHistoricalFinanceShards error:', err);
+      return [];
+    }
+  }, [user, setExpenses]);
+
   return {
     syncStatus,
     lastSyncTime,
     forceSyncNow,
     pullFromCloudNow,
+    loadHistoricalFinanceShards,
     isOnline,
     pendingOutboxCount,
   };
 };
+
+/**
+ * Helper utilitario para consultas analíticas profundas de finanzas particionadas
+ */
+export async function fetchHistoricalFinanceMonths(
+  userId: string,
+  options?: { limitMonths?: number }
+): Promise<FinancialTransaction[]> {
+  try {
+    const maxMonths = options?.limitMonths ?? 24;
+    const financeRef = collection(db, 'users', userId, 'finance_months');
+    const histQuery = query(financeRef, orderBy(documentId(), 'desc'), limit(maxMonths));
+    const snap = await getDocs(histQuery);
+    const transactions: FinancialTransaction[] = [];
+    snap.docs.forEach((d) => {
+      const data = d.data();
+      if (data.expenses && Array.isArray(data.expenses)) {
+        transactions.push(...data.expenses);
+      }
+    });
+    return transactions;
+  } catch (err) {
+    console.warn('[CloudSync] fetchHistoricalFinanceMonths failed:', err);
+    return [];
+  }
+}
