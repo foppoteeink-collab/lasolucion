@@ -7,7 +7,8 @@ import {
   Volume2, 
   Palette, 
   ChevronLeft, 
-  CheckCheck 
+  CheckCheck,
+  FlaskConical
 } from 'lucide-react';
 import { GameSettings } from '../types';
 import { soundFX } from '../utils/audio';
@@ -27,7 +28,7 @@ import { SettingsAtmosphereTab } from './settings/SettingsAtmosphereTab';
 import { SettingsGameplayTab } from './settings/SettingsGameplayTab';
 import { SettingsFinancesTab } from './settings/SettingsFinancesTab';
 import { SettingsDataTab } from './settings/SettingsDataTab';
-import { SettingsSimulatorTab } from './settings/SettingsSimulatorTab';
+import { SettingsLabBetaTab } from './settings/SettingsLabBetaTab';
 
 const KaiAssistantModal = lazy(() => import('./KaiAssistantModal').then((m) => ({ default: m.KaiAssistantModal })));
 
@@ -40,7 +41,7 @@ export interface SettingsViewProps {
   onOpenOnboarding?: () => void;
 }
 
-export type SettingsSubTab = 'preferences' | 'atmosphere' | 'gameplay' | 'finances' | 'data' | 'simulator';
+export type SettingsSubTab = 'preferences' | 'atmosphere' | 'gameplay' | 'finances' | 'data' | 'simulator' | 'lab_beta';
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
   settings,
@@ -100,7 +101,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
   // Escuchar evento para abrir pestaña de simulador
   useEffect(() => {
-    const handleOpenSim = () => setActiveSubTab('simulator');
+    const handleOpenSim = () => setActiveSubTab('lab_beta');
     window.addEventListener('taskquest:open-simulator-tab', handleOpenSim);
     return () => window.removeEventListener('taskquest:open-simulator-tab', handleOpenSim);
   }, []);
@@ -133,7 +134,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     { id: 'atmosphere' as SettingsSubTab, label: 'Apariencia & Visión', icon: Palette, color: 'aura-text-primary' },
     { id: 'gameplay' as SettingsSubTab, label: copy.settingsTabGameplay, icon: Sparkles, color: 'text-purple-400' },
     { id: 'finances' as SettingsSubTab, label: copy.settingsTabFinances, icon: Coins, color: 'text-amber-400' },
-    { id: 'data' as SettingsSubTab, label: 'Nube & Datos', icon: Database, color: 'text-emerald-400' }
+    { id: 'data' as SettingsSubTab, label: 'Nube & Datos', icon: Database, color: 'text-emerald-400' },
+    { id: 'lab_beta' as SettingsSubTab, label: '🧪 Lab Beta', icon: FlaskConical, color: 'text-fuchsia-400' }
   ];
 
   return (
@@ -232,7 +234,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           />
         )}
 
-        {activeSubTab === 'simulator' && <SettingsSimulatorTab />}
+        {(activeSubTab === 'lab_beta' || activeSubTab === 'simulator') && (
+          <SettingsLabBetaTab onOpenOracle={() => setIsOracleOpen(true)} />
+        )}
       </div>
 
       {isOracleOpen && (

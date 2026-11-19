@@ -12,7 +12,6 @@ import {
   Flame, 
   Clock, 
   Settings, 
-  Headphones,
   Smartphone 
 } from 'lucide-react';
 import { useUIStore } from '../../store/useUIStore';
@@ -20,7 +19,6 @@ import { usePlayerStore } from '../../store/usePlayerStore';
 import { useTaskStore } from '../../store/useTaskStore';
 import { useNarrativeCopy } from '../../hooks/useNarrativeCopy';
 import { ChicleToggle } from '../ChicleToggle';
-import { QuantumSoundscapeConsole } from '../QuantumSoundscapeConsole';
 import { soundFX } from '../../utils/audio';
 import { hapticPresets } from '../../utils/haptics';
 import { notificationService } from '../../utils/notifications';
@@ -509,32 +507,6 @@ export const SettingsPreferencesTab: React.FC = () => {
               <span>24 Horas (14:00)</span>
             </button>
           </div>
-        </div>
-      </div>
-
-      {/* LABORATORIO ACÚSTICO */}
-      <div className="w-full relative isolate rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.94] p-5 sm:p-6 border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.45)] overflow-hidden space-y-4">
-        <span className="vi-grano opacity-5" aria-hidden="true" />
-        <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
-
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shrink-0">
-              <Headphones className="w-4 h-4" />
-            </div>
-            <div>
-              <h3 className="text-sm font-anton uppercase tracking-wider text-white flex items-center gap-2">
-                Laboratorio Acústico & Frecuencias
-              </h3>
-              <p className="text-xs text-slate-400">
-                Paisajes sonoros generativos, ondas binaurales (Alpha/Beta), ruido marrón y frecuencias orgánicas.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="relative z-10 pt-2 border-t border-white/10">
-          <QuantumSoundscapeConsole compact={false} />
         </div>
       </div>
     </div>

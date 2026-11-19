@@ -6,8 +6,7 @@ import {
   ShieldAlert, 
   Palette, 
   RefreshCw, 
-  FlaskConical, 
-  Cpu 
+  FlaskConical 
 } from 'lucide-react';
 import { GameSettings } from '../../types';
 import { useUIStore } from '../../store/useUIStore';
@@ -411,67 +410,30 @@ export const SettingsGameplayTab: React.FC<SettingsGameplayTabProps> = ({
         </div>
       </div>
 
-      {/* LABORATORIO & HERRAMIENTAS TÁCTICAS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* Simulador */}
-        <div className="w-full relative isolate rounded-2xl bg-[#040a1a]/[0.94] border border-white/10 p-5 space-y-3 shadow-[0_8px_30px_rgba(0,0,0,0.45)] overflow-hidden flex flex-col justify-between">
-          <span className="vi-grano opacity-5" aria-hidden="true" />
-          <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
-          <div className="space-y-2 relative z-10">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-anton text-fuchsia-400 uppercase tracking-wider flex items-center gap-1.5">
-                <FlaskConical className="w-4 h-4 text-fuchsia-400" /> Simulador Táctico
-              </span>
-              <span className="text-[10px] font-mono text-fuchsia-300 bg-fuchsia-500/15 border border-fuchsia-400/40 px-2 py-0.5 rounded-full uppercase">
-                Modo Prueba
-              </span>
-            </div>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Experimenta proyecciones de nivel, evolución de rachas y batallas sin alterar tus datos reales de juego.
-            </p>
+      {/* ENLACE A SUITE EXPERIMENTAL BETA */}
+      <div className="w-full relative isolate rounded-2xl bg-[#040a1a]/[0.94] border border-fuchsia-500/30 p-5 shadow-[0_8px_30px_rgba(0,0,0,0.45)] overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-4">
+        <span className="vi-grano opacity-5" aria-hidden="true" />
+        <div className="absolute top-0 inset-x-0 h-px pointer-events-none bg-gradient-to-r from-transparent via-fuchsia-400 to-transparent" aria-hidden="true" />
+        <div className="space-y-1 relative z-10 text-center sm:text-left">
+          <div className="flex items-center justify-center sm:justify-start gap-2">
+            <FlaskConical className="w-4 h-4 text-fuchsia-400" />
+            <span className="text-xs font-anton text-fuchsia-300 uppercase tracking-wider">Suite Experimental Beta</span>
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              soundFX.playClick();
-              onOpenSimulator();
-            }}
-            className="relative z-10 chicle-btn w-full py-2.5 px-4 bg-fuchsia-500/15 hover:bg-fuchsia-500/25 border border-fuchsia-400/50 text-fuchsia-200 rounded-xl text-xs font-anton uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer"
-          >
-            <FlaskConical className="w-3.5 h-3.5 text-fuchsia-400" />
-            <span>Abrir Simulador</span>
-          </button>
+          <p className="text-xs text-slate-300">
+            El Simulador Táctico, la consola acústica, el Oráculo y las pruebas visuales se han unificado en la pestaña <strong className="text-fuchsia-300">Lab Beta</strong>.
+          </p>
         </div>
-
-        {/* Oráculo IA */}
-        <div className="w-full relative isolate rounded-2xl bg-[#040a1a]/[0.94] border border-white/10 p-5 space-y-3 shadow-[0_8px_30px_rgba(0,0,0,0.45)] overflow-hidden flex flex-col justify-between">
-          <span className="vi-grano opacity-5" aria-hidden="true" />
-          <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
-          <div className="space-y-2 relative z-10">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-anton aura-text-primary uppercase tracking-wider flex items-center gap-1.5">
-                <Cpu className="w-4 h-4 aura-text-primary animate-pulse" /> Oráculo IA
-              </span>
-              <span className="text-[10px] font-mono aura-bg-soft border aura-border-subtle px-2 py-0.5 rounded-full uppercase">
-                KAI
-              </span>
-            </div>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Asistente neural inteligente para balancear tus bloques maestros, sugerir hábitos y optimizar tu rutina.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              soundFX.playClick();
-              onOpenOracle();
-            }}
-            className="relative z-10 chicle-btn w-full py-2.5 px-4 aura-bg-soft hover:brightness-110 border aura-border-subtle rounded-xl text-xs font-anton uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer"
-          >
-            <Cpu className="w-3.5 h-3.5 aura-text-primary" />
-            <span>Consultar Oráculo</span>
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => {
+            soundFX.playClick();
+            onOpenSimulator();
+          }}
+          className="relative z-10 chicle-btn px-4 py-2 bg-fuchsia-500/20 hover:bg-fuchsia-500/30 border border-fuchsia-400/50 text-fuchsia-200 rounded-xl text-xs font-anton uppercase tracking-wider flex items-center gap-1.5 shrink-0 cursor-pointer"
+        >
+          <FlaskConical className="w-3.5 h-3.5 text-fuchsia-400" />
+          <span>Abrir Lab Beta</span>
+        </button>
       </div>
     </div>
   );

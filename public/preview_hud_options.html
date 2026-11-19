@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>KAI - Nuevas Propuestas Visuales de Alta Gama</title>
+<style>
+  body {
+    background-color: #03050c;
+    color: #f8fafc;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    margin: 0;
+    padding: 35px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  h1 {
+    color: #38bdf8;
+    margin-bottom: 6px;
+    text-align: center;
+    font-size: 26px;
+    letter-spacing: -0.02em;
+  }
+  p.subtitle {
+    color: #94a3b8;
+    font-size: 14px;
+    margin-bottom: 35px;
+    text-align: center;
+    max-width: 680px;
+    line-height: 1.5;
+  }
+  .grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 32px;
+    justify-content: center;
+    max-width: 1350px;
+  }
+  .card {
+    background: #090e1e;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 24px;
+    padding: 18px;
+    width: 370px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.7);
+    transition: transform 0.2s ease, border-color 0.2s ease;
+  }
+  .card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(56, 189, 248, 0.4);
+  }
+  .card.featured {
+    border-color: rgba(56, 189, 248, 0.5);
+    box-shadow: 0 0 35px rgba(6, 182, 212, 0.25);
+  }
+  .badge {
+    display: inline-block;
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 12px;
+  }
+  .badge.a { background: #082f49; color: #38bdf8; border: 1px solid #0284c7; }
+  .badge.b { background: #2e1065; color: #c084fc; border: 1px solid #7e22ce; }
+  .badge.c { background: #451a03; color: #fbbf24; border: 1px solid #d97706; }
+  h3 { margin: 0 0 8px 0; font-size: 18px; font-weight: 700; }
+  p.desc { font-size: 13px; color: #94a3b8; line-height: 1.5; margin-bottom: 14px; min-height: 40px; }
+  img {
+    width: 100%;
+    border-radius: 16px;
+    display: block;
+    border: 1px solid rgba(255,255,255,0.07);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  }
+  .inspiration {
+    font-size: 11px;
+    color: #64748b;
+    margin-top: 10px;
+    font-family: monospace;
+  }
+</style>
+</head>
+<body>
+  <h1>✨ Nuevas Propuestas de Diseño de Alta Gama para KAI</h1>
+  <p class="subtitle">
+    Rediseño radical inspirado en los mayores éxitos del diseño tecnológico contemporáneo (Apple Siri Edge Luminescence, OpenAI Living Voice Orb y Minimalismo Industrial Táctico). Ultra-elegante, fino y pensado para usarse todos los días.
+  </p>
+
+  <div class="grid">
+    <!-- Concepto A -->
+    <div class="card featured">
+      <span class="badge a">⭐ Concepto A · Isla Soberana</span>
+      <h3>"The Sovereign Executive Island"</h3>
+      <p class="desc">
+        Aura perimetral luminiscente en los bordes de la pantalla, espectro de ondas de luz fina viva y tarjeta de cristal biselado con tipografía editorial de revista de lujo.
+      </p>
+      <img src="/kai_luxury_concept_a_sovereign.png" alt="Concepto A">
+      <div class="inspiration">Ref: Apple Siri Glow + Linear Glass + Raycast Luxe</div>
+    </div>
+
+    <!-- Concepto B -->
+    <div class="card">
+      <span class="badge b">Concepto B · Orbe Líquido</span>
+      <h3>"The Neural Fluid Sphere"</h3>
+      <p class="desc">
+        Foco 100% en la voz viva. Una esfera orgánica de luz cuántica que respira y se deforma con el tono de voz, con subtítulos cinemáticos puros sin tarjetas toscas.
+      </p>
+      <img src="/kai_luxury_concept_b_fluid_sphere.png" alt="Concepto B">
+      <div class="inspiration">Ref: OpenAI Advanced Voice + Humane AI + Denis Villeneuve HUD</div>
+    </div>
+
+    <!-- Concepto C -->
+    <div class="card">
+      <span class="badge c">Concepto C · Obsidiana Táctica</span>
+      <h3>"Tactical Obsidian Deck"</h3>
+      <p class="desc">
+        Estética industrial de grado militar y relojería de precisión. Lente óptico con dial milimétrico, rejilla de micropuntos de titanio y despacho en oro ámbar.
+      </p>
+      <img src="/kai_luxury_concept_c_tactical_obsidian.png" alt="Concepto C">
+      <div class="inspiration">Ref: Teenage Engineering OP-1 + Nothing OS 3.0 + Leica Lens</div>
+    </div>
+  </div>
+</body>
+</html>

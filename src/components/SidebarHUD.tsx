@@ -302,19 +302,6 @@ export const SidebarHUD: React.FC<SidebarHUDProps> = ({
         },
       },
       {
-        id: 'skills',
-        label: 'Lab',
-        icon: 'flask',
-        accentColor: '#8b5cf6',
-        type: 'page',
-        isActive: activeTab === 'skills',
-        onClick: () => {
-          soundFX.playClick();
-          setActiveTab('skills');
-          setIsMobileOpen(false);
-        },
-      },
-      {
         id: 'settings',
         label: 'Ajustes',
         icon: 'settings',

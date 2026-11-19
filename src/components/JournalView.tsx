@@ -107,6 +107,9 @@ export const JournalView: React.FC<JournalViewProps> = ({
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [dateRange, setDateRange] = useState<'7' | '14' | '30' | 'all'>('7');
   const [onlyWithNotes, setOnlyWithNotes] = useState<boolean>(true);
+  const [showFilters, setShowFilters] = useState<boolean>(false);
+
+  const activeFiltersCount = (selectedCategory !== 'all' ? 1 : 0) + (dateRange !== '7' ? 1 : 0) + (!onlyWithNotes ? 1 : 0);
 
   // Inline Note Editor State
   const [editingTask, setEditingTask] = useState<{ date: string; task: TaskItem } | null>(null);
@@ -412,195 +415,224 @@ export const JournalView: React.FC<JournalViewProps> = ({
       
       {/* Top Banner & Navigation (Canonical TabHeader) */}
       <TabHeader
-        title="Bitácora de Progreso & Repaso Semanal"
-        subtitle="Apuntes, temas cubiertos y avances específicos de tus misiones diarias."
+        title="Bitácora"
+        subtitle="Reflexiones y apuntes diarios"
         icon={<BookOpen className="w-5 h-5" />}
         onBack={onBackToMissions}
         backLabel="Volver a Tareas"
         rightSlot={
           <div className="flex items-center gap-2">
-            <div className="px-3 py-1.5 rounded-xl bg-[#040814]/80 border border-amber-500/35 text-center flex items-center gap-2">
-              <span className="text-[10px] uppercase font-bold text-slate-400 font-mono">Notas</span>
-              <span className="text-sm font-black text-amber-400 font-mono tabular-nums">{totalNotesCount}</span>
-            </div>
-            <div className="px-3 py-1.5 rounded-xl bg-[#040814]/80 border aura-border-subtle text-center flex items-center gap-2">
-              <span className="text-[10px] uppercase font-bold text-slate-400 font-mono">Días</span>
-              <span className="text-sm font-black aura-text-primary font-mono tabular-nums">{daysWithNotesCount}</span>
+            <div className="px-2.5 py-1 rounded-xl bg-[#040814]/80 border border-white/10 text-xs font-mono tabular-nums text-slate-300 flex items-center gap-1.5">
+              <span className="font-bold text-amber-400">{totalNotesCount}</span>
+              <span className="text-[10px] text-slate-400 uppercase">notas</span>
+              <span className="text-slate-600">·</span>
+              <span className="font-bold aura-text-primary">{daysWithNotesCount}</span>
+              <span className="text-[10px] text-slate-400 uppercase">días</span>
             </div>
           </div>
         }
       >
-        <div className="space-y-3.5 text-left">
-          {/* Action Buttons Strip */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            {/* Botón Repaso Inteligente */}
-            <button
-              type="button"
-              onClick={() => { soundFX.playClick(); setIsRecallOpen(true); }}
-              className={`chicle-btn flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-anton tracking-wider uppercase transition-all cursor-pointer min-h-[42px] ${
-                dueRecallCount > 0
-                  ? 'bg-amber-500/20 hover:bg-amber-500/30 border-amber-400/70 text-amber-300 shadow-[0_0_15px_rgba(245,158,11,0.22)] optic-active-card'
-                  : 'bg-[#040814]/80 hover:bg-white/[0.06] border-amber-500/35 text-amber-300'
-              }`}
-              title="Iniciar sesión de repaso espaciado de misiones"
-            >
-              <Brain className="w-4 h-4 text-amber-400 animate-pulse shrink-0" />
-              <span className="whitespace-nowrap">Repaso Inteligente</span>
-              {dueRecallCount > 0 ? (
-                <span className="px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 font-black text-[11px] tabular-nums font-mono animate-bounce shrink-0">
-                  {dueRecallCount}
-                </span>
-              ) : (
-                <span className="text-[10px] text-amber-300 font-bold bg-amber-500/15 px-1.5 py-0.5 rounded border border-amber-500/40 shrink-0">
-                  Al día
-                </span>
-              )}
-            </button>
-
-            {/* Export Weekly Report Button */}
-            <button
-              type="button"
-              onClick={() => { soundFX.playClick(); setIsReportOpen(true); }}
-              className="chicle-btn flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl aura-bg-soft hover:brightness-110 border text-xs font-anton tracking-wider uppercase transition cursor-pointer min-h-[42px]"
-              title="Generar resumen semanal para Obsidian / Notion / PDF"
-            >
-              <FileDown className="w-4 h-4 aura-text-primary shrink-0" />
-              <span className="whitespace-nowrap">Exportar Reporte</span>
-            </button>
-          </div>
-
-          {/* Search & Filter Controls */}
-          <div className="pt-3 border-t border-white/[0.07] grid grid-cols-1 sm:grid-cols-12 gap-3">
+        <div className="space-y-2.5 text-left">
+          {/* Clean Toolbar: Search bar + Filter toggle + Action buttons */}
+          <div className="flex flex-wrap items-center justify-between gap-2">
             {/* Search Bar */}
-            <div className="sm:col-span-6 relative">
-              <Search className="w-4 h-4 aura-text-primary opacity-75 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <div className="flex-1 min-w-[180px] sm:min-w-[240px] relative">
+              <Search className="w-4 h-4 aura-text-primary opacity-75 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Buscar tema, palabra clave o misión repasada..."
+                placeholder="Buscar en bitácora..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-8 py-2 rounded-xl bg-[#040814]/80 border border-white/10 focus:border-[var(--aura-color-1,#00f0ff)] text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none transition-colors"
+                className="w-full pl-8 pr-7 py-1.5 rounded-xl bg-[#040814]/80 border border-white/10 focus:border-[var(--aura-color-1,#00f0ff)] text-xs text-white placeholder-slate-500 focus:outline-none transition-colors"
               />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white cursor-pointer"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white cursor-pointer"
                   aria-label="Limpiar búsqueda"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-3.5 h-3.5" />
                 </button>
               )}
             </div>
 
-            {/* Date Range Chips */}
-            <div className="sm:col-span-6 flex items-center justify-between sm:justify-end gap-1.5 overflow-x-auto no-scrollbar">
-              <div
-                className="mf-8-menu-chip-group mf-chip-group mf-chip-group--compact mf-chip-group--nowrap"
-                role="listbox"
-                aria-label="Rango de días"
+            {/* Toolbar Action Chips */}
+            <div className="flex items-center gap-1.5 shrink-0">
+              {/* Filter Toggle */}
+              <button
+                type="button"
+                onClick={() => { soundFX.playClick(); setShowFilters(!showFilters); }}
+                className={`chicle-btn px-2.5 py-1.5 rounded-xl border text-xs font-medium flex items-center gap-1.5 transition cursor-pointer ${
+                  showFilters || activeFiltersCount > 0
+                    ? 'aura-bg-soft aura-border-primary aura-text-primary optic-active-card'
+                    : 'bg-[#040814]/80 border-white/10 text-slate-300 hover:text-white hover:border-white/20'
+                }`}
+                title="Filtrar por rango o categoría"
               >
-                {(['7', '14', '30', 'all'] as const).map((range) => {
-                  const isActive = dateRange === range;
-                  const label = range === 'all' ? 'Todo' : `${range} días`;
+                <Filter className="w-3.5 h-3.5" />
+                <span>Filtros</span>
+                {activeFiltersCount > 0 && (
+                  <span className="w-4 h-4 rounded-full aura-bg-primary text-slate-950 text-[10px] font-bold flex items-center justify-center font-mono">
+                    {activeFiltersCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Repaso Inteligente (Compact) */}
+              <button
+                type="button"
+                onClick={() => { soundFX.playClick(); setIsRecallOpen(true); }}
+                className={`chicle-btn px-2.5 py-1.5 rounded-xl border text-xs font-medium flex items-center gap-1.5 transition cursor-pointer ${
+                  dueRecallCount > 0
+                    ? 'bg-amber-500/20 border-amber-400/70 text-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.2)] optic-active-card'
+                    : 'bg-[#040814]/80 border-white/10 text-slate-300 hover:text-white hover:border-white/20'
+                }`}
+                title="Repaso Inteligente"
+              >
+                <Brain className={`w-3.5 h-3.5 ${dueRecallCount > 0 ? 'text-amber-400 animate-pulse' : 'text-slate-400'}`} />
+                <span>Repaso</span>
+                {dueRecallCount > 0 ? (
+                  <span className="px-1.5 py-0.2 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black font-mono">
+                    {dueRecallCount}
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-amber-400/80 font-mono hidden sm:inline">al día</span>
+                )}
+              </button>
+
+              {/* Exportar Reporte (Compact) */}
+              <button
+                type="button"
+                onClick={() => { soundFX.playClick(); setIsReportOpen(true); }}
+                className="chicle-btn px-2.5 py-1.5 rounded-xl bg-[#040814]/80 border border-white/10 hover:border-white/20 text-slate-300 hover:text-white text-xs font-medium flex items-center gap-1.5 transition cursor-pointer"
+                title="Exportar reporte"
+              >
+                <FileDown className="w-3.5 h-3.5 aura-text-primary" />
+                <span className="hidden sm:inline">Exportar</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Collapsible Clean Filter Drawer (Only visible when toggled or active) */}
+          {(showFilters || activeFiltersCount > 0) && (
+            <div className="pt-2 border-t border-white/[0.08] space-y-2 animate-in fade-in duration-150">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                {/* Date Range Chips */}
+                <div className="flex items-center gap-1 text-xs">
+                  <span className="text-[10px] font-mono uppercase text-slate-400 mr-1">Rango:</span>
+                  {(['7', '14', '30', 'all'] as const).map((range) => {
+                    const isActive = dateRange === range;
+                    const label = range === 'all' ? 'Todo' : `${range}d`;
+                    return (
+                      <button
+                        key={range}
+                        type="button"
+                        onClick={() => { soundFX.playClick(); setDateRange(range); }}
+                        className={`chicle-btn px-2 py-0.5 rounded-lg text-[11px] font-mono font-medium border transition cursor-pointer ${
+                          isActive
+                            ? 'aura-bg-soft aura-border-primary aura-text-primary optic-active-card font-bold'
+                            : 'bg-[#040814]/60 border-white/10 text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Toggle: Solo con notas */}
+                <button
+                  type="button"
+                  onClick={() => { soundFX.playClick(); setOnlyWithNotes(!onlyWithNotes); }}
+                  className={`chicle-btn px-2 py-0.5 rounded-lg text-[11px] font-mono border flex items-center gap-1 cursor-pointer transition ${
+                    onlyWithNotes
+                      ? 'aura-bg-soft aura-border-primary aura-text-primary font-bold'
+                      : 'bg-[#040814]/60 border-white/10 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <FileText className="w-3 h-3" />
+                  <span>Solo con notas</span>
+                </button>
+
+                {activeFiltersCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFX.playClick();
+                      setSelectedCategory('all');
+                      setDateRange('7');
+                      setOnlyWithNotes(true);
+                      setSearchQuery('');
+                    }}
+                    className="text-[10px] font-mono text-amber-400 hover:text-amber-200 underline cursor-pointer ml-auto"
+                  >
+                    Restablecer
+                  </button>
+                )}
+              </div>
+
+              {/* Category Chips: Sleek horizontal scroll strip instead of a wall of 11 buttons */}
+              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+                <button
+                  type="button"
+                  onClick={() => { soundFX.playClick(); setSelectedCategory('all'); }}
+                  className={`chicle-btn px-2.5 py-1 rounded-lg text-[11px] border whitespace-nowrap cursor-pointer transition flex items-center gap-1 shrink-0 ${
+                    selectedCategory === 'all'
+                      ? 'aura-bg-soft aura-border-primary aura-text-primary font-bold optic-active-card'
+                      : 'bg-[#040814]/60 border-white/10 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <span>Todas</span>
+                </button>
+                {Object.entries(CATEGORY_LABELS).map(([cat, { label }]) => {
+                  const isActive = selectedCategory === cat;
                   return (
                     <button
-                      key={range}
+                      key={cat}
                       type="button"
-                      role="option"
-                      aria-selected={isActive}
-                      onClick={() => { soundFX.playClick(); setDateRange(range); }}
-                      className={`chicle-btn mf-8-menu-chip-group__chip mf-chip mf-chip--sm ${
-                        isActive ? 'mf-8-menu-chip-group__chip--active mf-chip--active aura-bg-soft aura-border-primary aura-text-primary optic-active-card' : ''
+                      onClick={() => { soundFX.playClick(); setSelectedCategory(cat); }}
+                      className={`chicle-btn px-2.5 py-1 rounded-lg text-[11px] border whitespace-nowrap cursor-pointer transition flex items-center gap-1 shrink-0 ${
+                        isActive
+                          ? 'aura-bg-soft aura-border-primary aura-text-primary font-bold optic-active-card'
+                          : 'bg-[#040814]/60 border-white/10 text-slate-400 hover:text-white'
                       }`}
                     >
-                      <Calendar className="w-3 h-3 shrink-0" />
+                      <Tag className="w-2.5 h-2.5 shrink-0 opacity-60" />
                       <span>{label}</span>
                     </button>
                   );
                 })}
               </div>
-
-              {/* Toggle: Only with notes */}
-              <button
-                type="button"
-                aria-selected={onlyWithNotes}
-                onClick={() => { soundFX.playClick(); setOnlyWithNotes(!onlyWithNotes); }}
-                className={`chicle-btn mf-8-menu-chip-group__chip mf-chip mf-chip--sm ${
-                  onlyWithNotes
-                    ? 'mf-8-menu-chip-group__chip--active mf-chip--active aura-bg-soft aura-border-primary aura-text-primary optic-active-card'
-                    : ''
-                }`}
-                title="Alternar entre ver solo misiones con notas o todas las misiones"
-              >
-                <FileText className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Solo con notas</span>
-              </button>
             </div>
-          </div>
-
-          {/* Category Filter Chips (mf-8-menu-chip-group) */}
-          <div
-            className="mf-8-menu-chip-group mf-chip-group mf-chip-group--compact"
-            role="listbox"
-            aria-label="Filtro por categoría de bitácora"
-          >
-            <button
-              type="button"
-              role="option"
-              aria-selected={selectedCategory === 'all'}
-              onClick={() => { soundFX.playClick(); setSelectedCategory('all'); }}
-              className={`chicle-btn mf-8-menu-chip-group__chip mf-chip mf-chip--sm ${
-                selectedCategory === 'all' ? 'mf-8-menu-chip-group__chip--active mf-chip--active aura-bg-soft aura-border-primary aura-text-primary optic-active-card' : ''
-              }`}
-            >
-              <Filter className="w-3 h-3 shrink-0" />
-              <span>Todas las Categorías</span>
-            </button>
-            {Object.entries(CATEGORY_LABELS).map(([cat, { label }]) => {
-              const isActive = selectedCategory === cat;
-              return (
-                <button
-                  key={cat}
-                  type="button"
-                  role="option"
-                  aria-selected={isActive}
-                  onClick={() => { soundFX.playClick(); setSelectedCategory(cat); }}
-                  className={`chicle-btn mf-8-menu-chip-group__chip mf-chip mf-chip--sm ${
-                    isActive ? 'mf-8-menu-chip-group__chip--active mf-chip--active aura-bg-soft aura-border-primary aura-text-primary optic-active-card' : ''
-                  }`}
-                >
-                  <Tag className="w-3 h-3 shrink-0" />
-                  <span>{label}</span>
-                </button>
-              );
-            })}
-          </div>
+          )}
         </div>
       </TabHeader>
 
       {/* Main Feed: Grouped by Date */}
       {processedDays.length === 0 ? (
-        <div className="relative isolate p-8 sm:p-12 text-center rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.94] border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.45)] overflow-hidden space-y-3">
+        <div className="relative isolate p-6 sm:p-10 text-center rounded-2xl sm:rounded-3xl bg-[#040a1a]/[0.94] border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.45)] overflow-hidden space-y-3">
           <span className="vi-grano opacity-5" aria-hidden="true" />
           <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
-          <div className="relative z-10 space-y-3">
-            <div className="w-12 h-12 rounded-2xl bg-[#040814]/80 border aura-border-subtle flex items-center justify-center aura-text-primary mx-auto aura-glow-subtle">
-              <BookOpen className="w-6 h-6" />
+          <div className="relative z-10 space-y-2.5 max-w-sm mx-auto">
+            <div className="w-10 h-10 rounded-2xl bg-[#040814]/80 border aura-border-subtle flex items-center justify-center aura-text-primary mx-auto aura-glow-subtle">
+              <BookOpen className="w-5 h-5" />
             </div>
-            <h3 className="text-base font-black text-white font-anton uppercase tracking-wide">No se encontraron notas en este rango</h3>
-            <p className="text-xs text-slate-300 max-w-md mx-auto">
+            <h3 className="text-sm font-black text-white font-anton uppercase tracking-wide">
+              {searchQuery ? 'Sin resultados' : 'Bitácora Despejada'}
+            </h3>
+            <p className="text-xs text-slate-400">
               {searchQuery 
-                ? `No hay notas ni misiones que coincidan con "${searchQuery}".` 
-                : 'Empieza a añadir notas de repaso en tus misiones usando el ícono de nota para revisarlas aquí en cualquier momento.'}
+                ? `No hay notas que coincidan con "${searchQuery}".` 
+                : 'Tus reflexiones diarias y apuntes de misiones se recopilarán aquí.'}
             </p>
             <button
               type="button"
               onClick={onBackToMissions}
-              className="chicle-btn aura-btn-gradient optic-active-card px-5 py-2.5 rounded-xl font-anton uppercase tracking-wider text-xs cursor-pointer inline-flex items-center gap-2 transition"
+              className="chicle-btn aura-btn-gradient optic-active-card px-4 py-2 rounded-xl font-anton uppercase tracking-wider text-xs cursor-pointer inline-flex items-center gap-1.5 transition mt-1"
             >
-              <span>Ir a Tareas del Día</span>
-              <ChevronRight className="w-4 h-4" />
+              <span>Ver Tareas del Día</span>
+              <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
@@ -636,7 +668,7 @@ export const JournalView: React.FC<JournalViewProps> = ({
                           )}
                         </div>
                         <span className="text-[11px] text-slate-400 font-medium font-mono tabular-nums">
-                          {notesCount} {notesCount === 1 ? 'nota de repaso' : 'notas de repaso'} registradas
+                          {notesCount} {notesCount === 1 ? 'nota' : 'notas'}
                         </span>
                       </div>
                     </div>
@@ -674,7 +706,7 @@ export const JournalView: React.FC<JournalViewProps> = ({
                           <div className="flex items-center justify-between gap-2">
                             <span className="text-xs font-black text-amber-300 flex items-center gap-1.5 font-anton uppercase tracking-wide">
                               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                              Reflexión / Aprendizaje Global del Día:
+                              Reflexión del Día:
                             </span>
                             {isSpeechRecognitionSupported() && (
                               <button
@@ -865,7 +897,7 @@ export const JournalView: React.FC<JournalViewProps> = ({
                                 className="min-h-[36px] py-2 px-3 rounded-lg border border-dashed border-white/[0.12] hover:border-amber-400/50 text-slate-400 hover:text-amber-300 text-left text-xs font-sans flex items-center gap-2 transition-colors cursor-pointer"
                               >
                                 <FileText className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                                <span>Sin notas registradas. Clic para anotar el progreso de esta misión.</span>
+                                <span>+ Anotar apunte de esta misión</span>
                               </button>
                             )}
                           </div>

@@ -638,7 +638,7 @@ export function AppLayout() {
                       cloudSync={cloudSync}
                       onOpenAwakening={() => setIsAwakeningOpen(true)}
                       onOpenKaiWorkshop={() => setIsKaiWorkshopOpen(true)}
-                      onOpenSkills={() => setActiveTab('skills')}
+                      onOpenSkills={() => setActiveTab('shop')}
                     />
                   </Suspense>
                 </motion.div>
@@ -647,12 +647,7 @@ export function AppLayout() {
               {activeTab === 'skills' && (
                 <motion.div variants={itemVariant} className="w-full">
                   <Suspense fallback={<TabLoadingSkeleton />}>
-                    <SkillTreeAndSettings 
-                      skillTree={skillTree}
-                      onUpdateSkillTree={setSkillTree}
-                      stats={stats}
-                      onUpdateStats={setStats}
-                    />
+                    <RewardShop />
                   </Suspense>
                 </motion.div>
               )}

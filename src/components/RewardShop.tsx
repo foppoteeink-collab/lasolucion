@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { ShopReward } from '../types';
+import { ShopReward, SkillNode } from '../types';
 import { 
   Coins, 
   Plus, 
@@ -12,10 +12,15 @@ import {
   Sparkles, 
   Heart, 
   Lock,
+  Unlock,
   Coffee,
   Package,
   Bot,
-  ShoppingBag
+  ShoppingBag,
+  BrainCircuit,
+  ShieldAlert,
+  Zap,
+  Activity
 } from 'lucide-react';
 import { TabHeader } from './common/TabHeader';
 import { soundFX } from '../utils/audio';
@@ -29,11 +34,12 @@ import { calculateDynamicShopCost } from '../utils/level3Systems';
 import { getTodayDateString } from '../utils/date';
 import { useNarrativeCopy } from '../hooks/useNarrativeCopy';
 
-type FilterTab = 'todos' | 'vida_real' | 'perks' | 'descanso' | 'personalizados' | 'mochila';
+type FilterTab = 'todos' | 'vida_real' | 'perks' | 'descanso' | 'talentos' | 'personalizados' | 'mochila';
 
 export const RewardShop: React.FC = () => {
   const copy = useNarrativeCopy();
   const stats = usePlayerStore((s) => s.stats);
+  const setStats = usePlayerStore((s) => s.setStats);
   const openLootBox = usePlayerStore((s) => s.openLootBox);
   const useInventoryItem = usePlayerStore((s) => s.useInventoryItem);
   const inventory = stats.inventory || [];
@@ -44,6 +50,8 @@ export const RewardShop: React.FC = () => {
   
   const rewards = useAppStore(state => state.shopRewards);
   const setShopRewards = useAppStore(state => state.setShopRewards);
+  const skillTree = useAppStore(state => state.skillTree);
+  const setSkillTree = useAppStore(state => state.setSkillTree);
   const triggerScreenFlash = useUIStore(state => state.triggerScreenFlash);
 
   // Filter State
@@ -228,6 +236,28 @@ export const RewardShop: React.FC = () => {
     setShopRewards((prev: ShopReward[]) => prev.filter(r => r.id !== id));
   };
 
+  const handlePurchaseSkill = (skill: SkillNode) => {
+    if (skill.isUnlocked || coins < skill.costCoins) return;
+
+    if (soundFX.playSuccess) {
+      soundFX.playSuccess();
+    } else {
+      soundFX.playClick();
+    }
+    triggerHaptic(50);
+    triggerShockwave({ color: 'violet', intensity: 'medium' });
+
+    setStats((prev) => ({
+      ...prev,
+      coins: Math.max(0, prev.coins - skill.costCoins),
+      streakShields: skill.effectType === 'streak_shield' ? (prev.streakShields || 0) + 1 : prev.streakShields,
+    }));
+
+    const newTree = skillTree.map(s => s.id === skill.id ? { ...s, isUnlocked: true } : s);
+    setSkillTree(newTree);
+    notificationService.triggerNotification(`¡Talento Activo! ⚡`, skill.title, '⚡');
+  };
+
   // Filter Logic
   const filteredRewards = useMemo(() => {
     return rewards.filter((r) => {
@@ -355,6 +385,20 @@ export const RewardShop: React.FC = () => {
           <button
             type="button"
             role="option"
+            aria-selected={activeTab === 'talentos'}
+            onClick={() => { soundFX.playClick(); setActiveTab('talentos'); }}
+            className={`chicle-btn mf-8-menu-chip-group__chip mf-chip mf-chip--sm ${
+              activeTab === 'talentos' ? 'mf-8-menu-chip-group__chip--active mf-chip--active aura-bg-soft aura-border-primary aura-text-primary optic-active-card' : ''
+            }`}
+          >
+            <BrainCircuit className={`w-3.5 h-3.5 ${activeTab === 'talentos' ? 'aura-text-primary' : 'aura-text-soft'}`} />
+            <span>Talentos</span>
+            <span className="mf-chip__badge font-mono tabular-nums">{skillTree.length}</span>
+          </button>
+
+          <button
+            type="button"
+            role="option"
             aria-selected={activeTab === 'mochila'}
             onClick={() => { soundFX.playClick(); setActiveTab('mochila'); }}
             className={`chicle-btn mf-8-menu-chip-group__chip mf-chip mf-chip--sm md:ml-auto ${
@@ -408,8 +452,98 @@ export const RewardShop: React.FC = () => {
         </motion.div>
       )}
 
-      {/* ─── 4. INVENTORY TAB (MOCHILA DE OBJETOS) ─── */}
-      {activeTab === 'mochila' ? (
+      {/* ─── 4. TALENTOS & INVENTORY TABS ─── */}
+      {activeTab === 'talentos' ? (
+        <div className="space-y-4 animate-fade-in">
+          <div className="relative isolate p-4 rounded-2xl bg-[#040a1a]/[0.94] border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.45)] flex items-center justify-between gap-3 overflow-hidden">
+            <span className="vi-grano opacity-5" aria-hidden="true" />
+            <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
+            <div className="relative z-10 flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 shrink-0">
+                <BrainCircuit className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-xs font-anton uppercase tracking-wider text-white">Mejoras Pasivas Permanentes</h3>
+                <p className="text-[11px] text-slate-400">Invierte tus monedas para activar talentos permanentes en tu perfil táctico.</p>
+              </div>
+            </div>
+            <div className="relative z-10 hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-xl bg-[#040814]/80 border border-amber-400/30 text-amber-300 font-anton text-xs">
+              <Coins className="w-3.5 h-3.5 text-amber-400" />
+              <span className="font-mono tabular-nums">{coins}</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {skillTree.map((skill) => {
+              const canAfford = coins >= skill.costCoins;
+              return (
+                <div
+                  key={skill.id}
+                  className={`relative isolate p-5 rounded-2xl bg-[#040a1a]/[0.94] border shadow-[0_8px_30px_rgba(0,0,0,0.45)] transition-all overflow-hidden flex flex-col justify-between ${
+                    skill.isUnlocked
+                      ? 'aura-border-primary aura-glow-subtle'
+                      : 'border-white/10 hover:border-white/25'
+                  }`}
+                >
+                  <span className="vi-grano opacity-5" aria-hidden="true" />
+                  <div className="absolute top-0 inset-x-0 h-px pointer-events-none aura-top-filament" aria-hidden="true" />
+
+                  <div>
+                    <div className="flex items-start justify-between mb-3.5 relative z-10">
+                      <div className={`p-3 rounded-2xl border ${
+                        skill.isUnlocked
+                          ? 'aura-bg-soft aura-border-primary aura-text-primary'
+                          : 'bg-[#040814]/80 text-slate-400 border-white/10'
+                      }`}>
+                        {skill.effectType === 'streak_shield' ? <ShieldAlert className="w-5 h-5 text-amber-400" /> :
+                         skill.effectType === 'xp_multiplier' ? <Zap className="w-5 h-5 aura-text-primary" /> :
+                         <Activity className="w-5 h-5 aura-text-primary" />}
+                      </div>
+                      <div className="text-right">
+                        {skill.isUnlocked ? (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-anton text-emerald-300 uppercase tracking-wider bg-emerald-500/15 px-2 py-0.5 rounded-lg border border-emerald-400/40">
+                            <Unlock className="w-3 h-3" /> Activo
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-anton text-slate-400 uppercase tracking-wider bg-[#040814]/80 px-2 py-0.5 rounded-lg border border-white/10">
+                            <Lock className="w-3 h-3" /> Bloqueado
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="relative z-10">
+                      <h4 className="text-sm font-anton uppercase tracking-wide mb-1 text-white">{skill.title}</h4>
+                      <p className="text-xs text-slate-300 leading-relaxed mb-4 min-h-[36px]">{skill.description}</p>
+                    </div>
+                  </div>
+
+                  {!skill.isUnlocked ? (
+                    <button
+                      type="button"
+                      onClick={() => handlePurchaseSkill(skill)}
+                      disabled={!canAfford}
+                      className={`relative z-10 chicle-btn w-full py-2.5 rounded-xl text-xs font-anton flex items-center justify-center gap-2 uppercase tracking-wider transition-all ${
+                        canAfford
+                          ? 'aura-btn-gradient optic-active-card cursor-pointer'
+                          : 'bg-black/40 text-slate-500 border border-white/10 cursor-not-allowed'
+                      }`}
+                    >
+                      <span>Investigar</span>
+                      <Coins className={`w-3.5 h-3.5 ${canAfford ? '' : 'text-amber-400/60'}`} />
+                      <span className="font-mono tabular-nums">{skill.costCoins}</span>
+                    </button>
+                  ) : (
+                    <div className="relative z-10 w-full py-2 rounded-xl text-xs font-anton text-center aura-bg-soft aura-border-subtle border uppercase tracking-wider optic-active-card text-slate-200">
+                      Mejora Permanente Activa
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : activeTab === 'mochila' ? (
         <div className="space-y-3">
           {inventory.length === 0 ? (
             <div className="relative isolate p-8 rounded-2xl border border-white/10 bg-[#040a1a]/[0.94] shadow-[0_8px_30px_rgba(0,0,0,0.45)] overflow-hidden text-center space-y-2">

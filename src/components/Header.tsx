@@ -45,7 +45,7 @@ interface HeaderProps {
   onRegisterWakeUp?: (dateStr?: string, customWakeTime?: string) => void;
   cloudSync?: CloudSyncResult;
   activeTab?: string;
-  onTabChange?: (tab: 'dashboard' | 'journal' | 'shop' | 'skills' | 'stats' | 'settings') => void;
+  onTabChange?: (tab: 'dashboard' | 'journal' | 'shop' | 'stats' | 'settings') => void;
 }
 
 const NAV_TABS = [
@@ -53,7 +53,6 @@ const NAV_TABS = [
   { id: 'dashboard', label: 'Tareas', icon: ListTodo },
   { id: 'journal', label: 'Bitácora', icon: BookOpen },
   { id: 'shop', label: 'Tienda', icon: ShoppingBag },
-  { id: 'skills', label: 'Lab', icon: FlaskConical },
   { id: 'settings', label: 'Ajustes', icon: SlidersHorizontal },
 ] as const;
 

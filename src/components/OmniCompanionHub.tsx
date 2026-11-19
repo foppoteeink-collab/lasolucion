@@ -313,17 +313,6 @@ export const OmniCompanionHub: React.FC<OmniCompanionHubProps> = ({
         action: () => setActiveTab('shop'),
       },
       {
-        id: 'skills',
-        label: 'Lab',
-        categoryBadge: 'MAESTRÍA',
-        type: 'page',
-        icon: <Icon name="flask" className="w-[18px] h-[18px]" />,
-        accentColor: '#8b5cf6',
-        glowColor: 'rgba(139, 92, 246, 0.45)',
-        liveStat: 'Árbol de talentos',
-        action: () => setActiveTab('skills'),
-      },
-      {
         id: 'stats',
         label: 'Perfil',
         categoryBadge: 'RANGO',

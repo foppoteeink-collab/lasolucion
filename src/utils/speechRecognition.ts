@@ -706,16 +706,123 @@ export type VoiceIntentRoute =
   | 'diagnostic'
   | 'planner'
   | 'direct_action'
+  | 'bitacora'
+  | 'habit'
   | 'conversation'
   | 'mixed_actions';
+
+export interface ParsedVoiceBitacora {
+  text: string;
+  raw: string;
+}
+
+export interface ParsedVoiceHabitAction {
+  action: 'complete_habit' | 'create_habit';
+  habitTitle: string;
+  matchedTaskId?: string;
+  matchedHabitId?: string;
+}
+
+/**
+ * Detecta si el dictado tiene como propósito explícito guardar una reflexión o nota en la Bitácora / Diario.
+ * Ej: "Anota en mi bitácora que hoy cerramos la venta y me siento aliviado" -> text: "hoy cerramos la venta y me siento aliviado"
+ */
+export function detectVoiceBitacoraIntent(transcript: string): ParsedVoiceBitacora | null {
+  const clean = (transcript || '').trim();
+  if (!clean) return null;
+
+  const bitacoraCue = /(?:^|[\s,.;:¿?])(?:(?:anota|guarda|escribe|pon|agrega|a[ñn]ade|registra)\s+(?:esto\s+)?(?:en\s+(?:mi\s+)?)?(?:bit[aá]cora|diario)|bit[aá]cora(?:\s+de\s+hoy)?|en\s+(?:mi\s+)?bit[aá]cora|diario\s+personal)(?=$|[\s,.;:!?])/i;
+  if (!bitacoraCue.test(clean)) return null;
+
+  // Extraer el texto limpio de la reflexión removiendo el disparador
+  const cleanedText = clean
+    .replace(/^(?:por\s+favor\s+)?(?:anota|guarda|escribe|pon|agrega|a[ñn]ade|registra)(?:\s+esto)?(?:\s+en)?(?:\s+mi)?(?:\s+bit[aá]cora|\s+diario)?(?:\s+que|\s*:|\s+-\s*)?/i, '')
+    .replace(/^(?:en\s+mi\s+bit[aá]cora|en\s+mi\s+diario|bit[aá]cora|diario)(?:\s+de\s+hoy)?(?:\s+pon|\s+anota|\s+guarda)?(?:\s+que|\s*:|\s+-\s*)?/i, '')
+    .trim();
+
+  return {
+    text: cleanedText || clean,
+    raw: clean,
+  };
+}
+
+/**
+ * Detecta si el dictado refiere a cumplir un hábito existente o crear un nuevo hábito recurrente.
+ * Ej: "Ya tomé agua" -> complete_habit, "agua"
+ * Ej: "Marca mi hábito de meditar" -> complete_habit, "meditar"
+ * Ej: "Crea un nuevo hábito de leer 20 minutos todos los días" -> create_habit, "leer 20 minutos"
+ */
+export function detectVoiceHabitIntent(
+  transcript: string,
+  existingHabits?: { id?: string; title?: string }[],
+  todayTasks?: { id: string; title: string; category?: string }[]
+): ParsedVoiceHabitAction | null {
+  const clean = (transcript || '').trim();
+  if (!clean) return null;
+  const lower = clean.toLowerCase();
+
+  // 1. Detección de creación de nuevo hábito
+  const createHabitMatch = clean.match(/(?:crea(?:r)?|agrega(?:r)?|nuevo)\s+(?:un\s+)?(?:nuevo\s+)?h[aá]bito(?:\s+de)?\s+([^,.;:]+)/i);
+  if (createHabitMatch && createHabitMatch[1]) {
+    const rawTitle = createHabitMatch[1].replace(/todos\s+los\s+d[ií]as|diariamente|diario/gi, '').trim();
+    if (rawTitle.length >= 3) {
+      return {
+        action: 'create_habit',
+        habitTitle: rawTitle,
+      };
+    }
+  }
+
+  // 2. Detección de completar hábito ("ya tomé agua", "marca mi hábito de meditar", "completé el hábito de lectura")
+  const completeHabitCue = /(?:^|[\s,.;:¿?])(?:ya\s+(?:hice|cumpl[ií]|tom[eé]|fui|medit[eé]|le[ií]|entren[eé]|corr[ií]|estudi[eé]|termin[eé])|marca(?:r)?\s+(?:como\s+completado\s+)?(?:mi\s+|el\s+)?h[aá]bito|complet[eé]\s+(?:el\s+)?h[aá]bito|registr(?:a|é)\s+(?:mi\s+|el\s+)?h[aá]bito)(?=$|[\s,.;:!?])/i;
+  
+  if (completeHabitCue.test(lower)) {
+    // Buscar si nombra explícitamente algún hábito o tarea de hoy
+    let target = lower
+      .replace(/^(?:por\s+favor\s+)?(?:marca(?:r)?\s+(?:como\s+completado\s+)?(?:mi\s+|el\s+)?h[aá]bito(?:\s+de)?|complet[eé]\s+(?:el\s+)?h[aá]bito(?:\s+de)?|registr(?:a|é)\s+(?:mi\s+|el\s+)?h[aá]bito(?:\s+de)?|ya\s+hice\s+(?:mi\s+|el\s+)?h[aá]bito(?:\s+de)?)/i, '')
+      .trim();
+
+    if (!target) {
+      target = clean;
+    }
+
+    // Match con todayTasks
+    const matchedTask = todayTasks?.find((t) => {
+      const taskLower = t.title.toLowerCase();
+      return (
+        taskLower.includes(target) ||
+        target.includes(taskLower) ||
+        (t.category === 'habito' && (target.includes('hábito') || target.includes('habito')))
+      );
+    });
+
+    // Match con existingHabits
+    const matchedHabit = existingHabits?.find((h) => {
+      const habitLower = (h.title || '').toLowerCase();
+      return habitLower.includes(target) || target.includes(habitLower);
+    });
+
+    return {
+      action: 'complete_habit',
+      habitTitle: matchedTask?.title || matchedHabit?.title || target,
+      matchedTaskId: matchedTask?.id,
+      matchedHabitId: matchedHabit?.id,
+    };
+  }
+
+  return null;
+}
 
 /**
  * Clasifica la intención principal de lo que el usuario le dice a KAI en "Háblame":
  * - 'focus': pidió un Pomodoro / bloque de concentración
  * - 'diagnostic': pidió diagnóstico, análisis de progreso, racha o rendimiento
  * - 'planner': pidió armar un horario completo o ver plantillas de rutina
- * - 'conversation': pregunta abierta, consejo, motivación o charla con KAI
- * - 'mixed_actions': crear tareas, hábitos 21/66 o registrar finanzas
+ * - 'bitacora': pidió guardar una nota o reflexión en la bitácora/diario
+ * - 'habit': pidió marcar o registrar un hábito
+ * - 'direct_action': pidió completar, borrar o reprogramar una tarea existente
+ * - 'conversation': (POR DEFECTO) charla, desahogo, preguntas, motivación o reflexión con KAI
+ * - 'mixed_actions': SOLAMENTE si hay un mandato explícito para crear tareas o registrar finanzas
  */
 export function classifyVoiceIntent(transcript: string): VoiceIntentRoute {
   const clean = (transcript || '').trim();
@@ -746,7 +853,12 @@ export function classifyVoiceIntent(transcript: string): VoiceIntentRoute {
     return 'planner';
   }
 
-  // 4. Acción directa sobre tarea existente (completar, borrar, mover hora)
+  // 4. Bitácora / Reflexión personal explícita
+  if (detectVoiceBitacoraIntent(clean)) {
+    return 'bitacora';
+  }
+
+  // 5. Acción directa sobre tarea existente (completar, borrar, mover hora)
   const isDirectAction =
     /(?:^|[\s,.;:])(?:marca(?:r)?\s+(?:como\s+)?(?:completada?|hecha?|lista?)|completa(?:r)?|termin[eé]|elimina(?:r)?|borra(?:r)?|quita(?:r)?|mueve(?:r)?\s+.+\s+(?:para|a|hacia)|cambia(?:r)?\s+(?:la\s+hora\s+de)?\s+.+\s+(?:para|a|hacia))(?=$|[\s,.;:])/i.test(
       lower
@@ -755,31 +867,29 @@ export function classifyVoiceIntent(transcript: string): VoiceIntentRoute {
     return 'direct_action';
   }
 
-  // 5. Si tiene acción explícita de finanzas, horario concreto, hábito o verbo imperativo de crear -> acciones
+  // 6. Hábitos / Rutinas
+  if (detectVoiceHabitIntent(clean)) {
+    return 'habit';
+  }
+
+  // 7. Finanzas explícitas (gasté, pagué, ingreso con montos numéricos)
   const { financeText } = splitMixedVoiceDictation(clean);
   if (financeText) {
     return 'mixed_actions';
   }
 
-  const hasExplicitActionCue =
-    /(?:^|[\s,.;:])(?:agrega(?:me)?|a[ñn]ade(?:me)?|crea(?:me)?|pon(?:me)?|recu[eé]rdame|recordar|tengo\s+que|debo|necesito|todos\s+los\s+d[ií]as|cada\s+d[ií]a|diariamente|diario|h[aá]bito|a\s+las?\s+\d|de\s+\d{1,2}\s+a\s+\d{1,2}|mañana\s+a\s+las?)(?=$|[\s,.;:])/i.test(
+  // 8. Mandato explícito de creación de tarea o misión
+  const hasExplicitTaskCreationCue =
+    /(?:^|[\s,.;:])(?:agrega(?:me)?\s+(?:una\s+)?(?:tarea|misi[oó]n|pendiente)|a[ñn]ade(?:me)?\s+(?:una\s+)?(?:tarea|misi[oó]n|pendiente)|crea(?:me)?\s+(?:una\s+)?(?:tarea|misi[oó]n|pendiente)|recu[eé]rdame\s+(?:a\s+las?|mañana|el|que)|recordar\s+a\s+las?|tengo\s+que\s+(?:hacer|llamar|pagar|enviar|ir|entregar)|debo\s+(?:hacer|llamar|pagar|enviar)|nueva\s+tarea|nuevo\s+pendiente)(?=$|[\s,.;:])/i.test(
       lower
     );
-  if (hasExplicitActionCue) {
+  if (hasExplicitTaskCreationCue) {
     return 'mixed_actions';
   }
 
-  // 5. Pregunta abierta, saludo, consejo, motivación o duda -> conversación viva con KAI
-  const isConversational =
-    /[?¿]/.test(clean) ||
-    /(?:^|[\s,.;:¡!])(?:hola|buenos\s+d[ií]as|buenas\s+tardes|buenas\s+noches|qu[eé]\s+me\s+recomiendas|por\s+qu[eé]\s+tarea|cu[aá]l\s+(?:debo|hago|empiezo)|dame\s+(?:motivaci[oó]n|un\s+consejo|ánimo|animo)|estoy\s+(?:cansado|bloqueado|estresado|desmotivado|perdido)|ay[uú]dame|c[oó]mo\s+(?:puedo|hago|empiezo)|qu[eé]\s+opinas|qu[eé]\s+hago|gracias|qui[eé]n\s+eres)(?=$|[\s,.;:!?])/i.test(
-      lower
-    );
-  if (isConversational) {
-    return 'conversation';
-  }
-
-  return 'mixed_actions';
+  // 9. Por defecto: Conversación libre, coaching, escucha activa y empatía.
+  // NUNCA asumir que una charla o desahogo es una tarea obligatoria.
+  return 'conversation';
 }
 
 // ─── Detección de Acciones Directas sobre Tareas Existentes ───────────────────
