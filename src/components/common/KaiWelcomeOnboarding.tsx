@@ -332,9 +332,22 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
       try {
         soundFX.playLevelUp();
       } catch (_) {}
-      setAuthLocalMessage('¡Cuenta vinculada con éxito con Google!');
+      setAuthLocalMessage('¡Sesión iniciada con Google!');
       if (!username && res.user.displayName) {
         setUsername(res.user.displayName.split(' ')[0]);
+      }
+      // Si el usuario ya tiene progreso o cuenta, llevarlo directo al Dashboard
+      const hasPrior = (stats?.level && stats.level > 1) || ((stats?.totalXpEarned || 0) > 0);
+      if (hasPrior) {
+        setTimeout(() => {
+          handleFinishOnboarding();
+        }, 500);
+      } else {
+        setTimeout(() => {
+          React.startTransition(() => {
+            setStep(2);
+          });
+        }, 400);
       }
     }
   };
@@ -369,8 +382,8 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
   };
 
   // Manejo de autenticación con Correo/Contraseña
-  const handleEmailAuthSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleEmailAuthSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!emailInput.trim() || !passwordInput.trim()) {
       setAuthLocalMessage('Por favor ingresa un correo y contraseña.');
       return;
@@ -395,8 +408,14 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
           try {
             soundFX.playLevelUp();
           } catch (_) {}
-          setAuthLocalMessage('¡Cuenta creada y protegida con éxito!');
+          setAuthLocalMessage('¡Cuenta creada con éxito! Sintonizando arquetipo...');
           setShowEmailForm(false);
+          // Avance suave automático al Paso 2
+          setTimeout(() => {
+            React.startTransition(() => {
+              setStep(2);
+            });
+          }, 450);
         } else if (res.error) {
           setAuthLocalMessage(res.error);
         }
@@ -406,11 +425,15 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
           try {
             soundFX.playLevelUp();
           } catch (_) {}
-          setAuthLocalMessage('¡Sesión iniciada con éxito!');
+          setAuthLocalMessage('¡Sesión iniciada con éxito! Entrando a tu cuenta...');
           setShowEmailForm(false);
           if (res.user.displayName && !username) {
             setUsername(res.user.displayName.split(' ')[0]);
           }
+          // Si el usuario ya tiene cuenta, entrar directo a su Dashboard sin el tutorial
+          setTimeout(() => {
+            handleFinishOnboarding();
+          }, 500);
         } else if (res.error) {
           setAuthLocalMessage(res.error);
         }
@@ -523,7 +546,22 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
     onClose();
   };
 
-  const handleNextStep = () => {
+  const handleNextStep = async () => {
+    // Si el usuario está en el paso 1, tiene el formulario abierto y escribió credenciales,
+    // procesar su acceso/registro directamente al pulsar Siguiente:
+    if (step === 1 && showEmailForm && (emailInput.trim() || passwordInput.trim())) {
+      if (!emailInput.trim() || !passwordInput.trim()) {
+        setAuthLocalMessage('Por favor completa tu correo y contraseña, o cierra el formulario para avanzar como invitado.');
+        return;
+      }
+      if (passwordInput.length < 6) {
+        setAuthLocalMessage('La contraseña debe tener al menos 6 caracteres.');
+        return;
+      }
+      await handleEmailAuthSubmit();
+      return;
+    }
+
     try {
       soundFX.playClick();
       triggerHaptic(15);
@@ -797,6 +835,23 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
                         >
                           <Mail className="w-4 h-4 text-amber-300 shrink-0" />
                           <span>{showEmailForm ? 'Cerrar formulario' : 'Correo y Contraseña'}</span>
+                        </button>
+
+                        {/* Botón 3: Modo Local / Sin Registro */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            try {
+                              soundFX.playClick();
+                              triggerHaptic(15);
+                            } catch (_) {}
+                            setShowEmailForm(false);
+                            handleFinishOnboarding();
+                          }}
+                          className="sm:col-span-2 chicle-btn flex items-center justify-center gap-1.5 p-2 rounded-xl bg-white/[0.02] hover:bg-white/[0.06] border border-dashed border-white/20 text-slate-300 hover:text-white text-[11px] font-mono cursor-pointer"
+                        >
+                          <Zap className="w-3.5 h-3.5 aura-text-primary" />
+                          <span>O entrar directo en Modo Local sin registro (datos en tu teléfono)</span>
                         </button>
                       </div>
 

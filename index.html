@@ -118,10 +118,28 @@
           return;
         }
 
-        var BUILD_REV = '2026.11.05-v61-self-healing-pwa';
+        var CURRENT_RELEASE = '2026.11.19-v101-auth-repair';
+        var BUILD_REV = CURRENT_RELEASE;
         window.__APP_BUILD_REV__ = BUILD_REV;
+
+        // Inyección extrema de invalidación PWA: Si el cliente tiene una versión vieja en caché, purgar inmediatamente
         try {
-          localStorage.setItem('app_build_rev', BUILD_REV);
+          var lastRelease = localStorage.getItem('la_solucion_release_stamp');
+          if (lastRelease !== CURRENT_RELEASE && typeof navigator !== 'undefined' && navigator.onLine) {
+            localStorage.setItem('la_solucion_release_stamp', CURRENT_RELEASE);
+            if ('caches' in window) {
+              caches.keys().then(function(names) {
+                return Promise.all(names.map(function(n) { return caches.delete(n); }));
+              }).then(function() {
+                if ('serviceWorker' in navigator) {
+                  navigator.serviceWorker.getRegistrations().then(function(regs) {
+                    regs.forEach(function(r) { r.update().catch(function() {}); });
+                  });
+                }
+                window.location.reload();
+              }).catch(function() {});
+            }
+          }
         } catch (e) {}
 
         function recoverFromStaleCache(reason) {
