@@ -1,16 +1,15 @@
 import React, { useMemo, useId } from 'react';
 import { usePlayerStore } from '../store/usePlayerStore';
-import { HoloCompanion } from './HoloCompanion';
 import { KaiShapeKey } from '../types';
 
 interface KaiProfileOrbProps {
-  size?: number; // base size in px (defaults to 42)
+  size?: number; // Tamaño base en px (por defecto 40-42)
   className?: string;
   showXpRing?: boolean;
 }
 
 export const KaiProfileOrb: React.FC<KaiProfileOrbProps> = ({
-  size = 42,
+  size = 40,
   className = '',
   showXpRing = true,
 }) => {
@@ -22,7 +21,6 @@ export const KaiProfileOrb: React.FC<KaiProfileOrbProps> = ({
   const currentXp = stats.currentXp || 0;
   const requiredXp = stats.requiredXp || 100;
   const streakDays = stats.streakDays || 0;
-  const characterClass = stats.characterClass || 'heroe';
   const kaiShape: KaiShapeKey = stats.kaiShape || 'prism';
   const customForm = stats.kaiCustomForm;
 
@@ -40,22 +38,38 @@ export const KaiProfileOrb: React.FC<KaiProfileOrbProps> = ({
     return null;
   }, [kaiShape, customForm]);
 
-  // Color de la baliza cuántica (oro para racha destacada, cian para modo activo)
+  // Detector de forma felina/mascota si no tiene imagen directa
+  const isCatForm = useMemo(() => {
+    const name = (customForm?.name || '').toLowerCase();
+    const obj = (customForm?.detectedObject || '').toLowerCase();
+    const style = (customForm?.artStyle || '').toLowerCase();
+    return (
+      name.includes('fuzz') ||
+      name.includes('gato') ||
+      name.includes('cat') ||
+      name.includes('kitty') ||
+      obj.includes('gato') ||
+      obj.includes('cat') ||
+      style.includes('fuzz')
+    );
+  }, [customForm]);
+
+  // Color de la baliza cuántica (oro si racha destacada, cian activo)
   const beaconColor = streakDays >= 7 ? '#fbbf24' : '#00f0ff';
 
   return (
     <div
-      className={`relative rounded-xl sm:rounded-2xl bg-[#030712] flex items-center justify-center select-none group-hover:scale-105 transition-transform duration-300 ${className}`}
+      className={`relative rounded-xl sm:rounded-2xl bg-[#040817] flex items-center justify-center select-none group-hover:scale-105 transition-transform duration-300 ${className}`}
       style={{
         width: `${size}px`,
         height: `${size}px`,
-        boxShadow: '0 0 16px rgba(0, 240, 255, 0.22), inset 0 1px 1px rgba(255, 255, 255, 0.1)',
+        boxShadow: '0 0 16px rgba(0, 240, 255, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.08)',
       }}
       title={`KAI • Nivel ${level} (${Math.round(xpPercent)}% hacia Nivel ${level + 1}) - Toca para abrir tu Perfil`}
     >
       {/* ─── 1. Resplandor Ambiental Aurora Dinámico (Sincronizado con el Logo) ─── */}
       <div
-        className="absolute -inset-1 rounded-2xl kai-orb-aurora-glow opacity-35 blur-md pointer-events-none group-hover:opacity-60 transition-opacity duration-300"
+        className="absolute -inset-1 rounded-2xl kai-orb-aurora-glow opacity-30 blur-md pointer-events-none group-hover:opacity-55 transition-opacity duration-300"
       />
 
       {/* ─── 2. Anillo de Progreso de XP perimetral (Opción 2) ─── */}
@@ -106,29 +120,76 @@ export const KaiProfileOrb: React.FC<KaiProfileOrbProps> = ({
         </svg>
       )}
 
-      {/* ─── 3. Micro-KAI Vivo Forjado en el Centro (Opción 1) ─── */}
-      <div className="relative z-10 flex items-center justify-center w-full h-full p-1.5 overflow-hidden">
+      {/* ─── 3. Pura Silueta Minimalista de KAI (Limpia, icónica y bañada en la Aurora) ─── */}
+      <div className="relative z-10 flex items-center justify-center w-full h-full p-2 pointer-events-none">
         {effectiveImageUrl ? (
-          /* Forja personalizada con retrato/imagen (ej. Fuzz Kitty o imagen forjada) */
-          <div className="w-full h-full flex items-center justify-center animate-kai-micro-float">
-            <img
-              src={effectiveImageUrl}
-              alt={customForm?.name || 'KAI'}
-              className="w-6 h-6 sm:w-7 sm:h-7 object-contain drop-shadow-[0_2px_8px_rgba(0,240,255,0.65)] pointer-events-none"
+          /* Silueta Pura de la Forja (Enmascarada con el flujo cromático aurora) */
+          <div
+            className="w-5 h-5 sm:w-6 sm:h-6 pointer-events-none transition-transform duration-300 group-hover:scale-110"
+            style={{
+              WebkitMaskImage: `url(${effectiveImageUrl})`,
+              maskImage: `url(${effectiveImageUrl})`,
+              WebkitMaskSize: 'contain',
+              maskSize: 'contain',
+              WebkitMaskRepeat: 'no-repeat',
+              maskRepeat: 'no-repeat',
+              WebkitMaskPosition: 'center',
+              maskPosition: 'center',
+              backgroundImage: 'linear-gradient(135deg, #00f0ff 0%, #a855f7 35%, #ec4899 70%, #f59e0b 100%)',
+              backgroundSize: '300% 300%',
+              animation: 'logo-aurora-flow 7s ease-in-out infinite',
+              filter: 'drop-shadow(0 0 6px rgba(0, 240, 255, 0.8))',
+            }}
+          />
+        ) : isCatForm ? (
+          /* Silueta Felina / Fuzz Kitty en glifo de neón aurora */
+          <svg
+            viewBox="0 0 24 24"
+            className="w-5 h-5 sm:w-6 sm:h-6 pointer-events-none group-hover:scale-110 transition-transform duration-300"
+            fill="none"
+            style={{ filter: 'drop-shadow(0 0 5px rgba(0, 240, 255, 0.8))' }}
+          >
+            <path
+              d="M4 19c0-3.5 2.5-6.5 8-6.5s8 3 8 6.5M6.5 13.5L4 6.5l5.5 3M17.5 13.5L20 6.5l-5.5 3"
+              stroke={`url(#${gradientId})`}
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             />
-          </div>
+            <circle cx="9" cy="14" r="1.3" fill={`url(#${gradientId})`} />
+            <circle cx="15" cy="14" r="1.3" fill={`url(#${gradientId})`} />
+          </svg>
         ) : (
-          /* Forja procedural, SVG o forma oficial (HoloCompanion optimizado a micro-escala) */
-          <div className="w-full h-full flex items-center justify-center animate-kai-micro-float" data-preserve-optic="true">
-            <HoloCompanion
-              archetype={characterClass}
-              shapeKey={kaiShape}
-              customForm={customForm}
-              size={20}
-              interactive={false}
-              showHUD={false}
+          /* Silueta canónica de KAI: Prisma Cuántico Sagrado */
+          <svg
+            viewBox="0 0 24 24"
+            className="w-5 h-5 sm:w-6 sm:h-6 pointer-events-none group-hover:scale-110 transition-transform duration-300"
+            fill="none"
+            style={{ filter: 'drop-shadow(0 0 5px rgba(0, 240, 255, 0.8))' }}
+          >
+            {/* Silueta pura del prisma */}
+            <path
+              d="M12 2.5L2.5 19.5h19L12 2.5z"
+              stroke={`url(#${gradientId})`}
+              strokeWidth="2"
+              strokeLinejoin="round"
             />
-          </div>
+            {/* Vértices facetados internos */}
+            <path
+              d="M12 2.5v17M2.5 19.5l9.5-6.5 9.5 6.5"
+              stroke={`url(#${gradientId})`}
+              strokeWidth="1.3"
+              strokeLinejoin="round"
+              opacity="0.85"
+            />
+            {/* Núcleo de conciencia / Ojo central */}
+            <circle
+              cx="12"
+              cy="13"
+              r="2"
+              fill={`url(#${gradientId})`}
+            />
+          </svg>
         )}
       </div>
 
