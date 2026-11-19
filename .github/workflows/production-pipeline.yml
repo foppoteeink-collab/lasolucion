@@ -38,6 +38,12 @@ jobs:
       - name: Build Production Bundle (Vite)
         run: npm run build
 
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Execute End-to-End Browser Tests (Playwright)
+        run: npm run test:e2e
+
       - name: Validate Production Artifacts & Budget
         run: |
           test -f dist/index.html || { echo "dist/index.html is missing"; exit 1; }
