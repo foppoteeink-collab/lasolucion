@@ -24,19 +24,7 @@ const JournalView = lazy(() => import('./JournalView').then(m => ({ default: m.J
 const RewardShop = lazy(() => import('./RewardShop').then(m => ({ default: m.RewardShop })));
 const SkillTreeAndSettings = lazy(() => import('./SkillTreeAndSettings').then(m => ({ default: m.SkillTreeAndSettings })));
 const SettingsView = lazy(() => import('./SettingsView').then(m => ({ default: m.SettingsView })));
-const DayTemplatesModal = lazy(() => import('./DayTemplatesModal').then(m => ({ default: m.DayTemplatesModal })));
-const OracleModal = lazy(() => import('./OracleModal').then(m => ({ default: m.OracleModal })));
-const NeuralAnalysisModal = lazy(() => import('./NeuralAnalysisModal').then(m => ({ default: m.NeuralAnalysisModal })));
-const KaiWelcomeOnboarding = lazy(() => import('./common/KaiWelcomeOnboarding').then(m => ({ default: m.KaiWelcomeOnboarding })));
-const DailyRewardsModal = lazy(() => import('./DailyRewardsModal').then(m => ({ default: m.DailyRewardsModal })));
-const LevelUpModal = lazy(() => import('./LevelUpModal').then(m => ({ default: m.LevelUpModal })));
-const NightlyTunnel = lazy(() => import('./NightlyTunnel').then(m => ({ default: m.NightlyTunnel })));
-const KaiInteractiveSpotlightTour = lazy(() => import('./common/KaiInteractiveSpotlightTour').then(m => ({ default: m.KaiInteractiveSpotlightTour })));
-const DeleteConfirmModal = lazy(() => import('./DeleteConfirmModal').then(m => ({ default: m.DeleteConfirmModal })));
-const PomodoroTimer = lazy(() => import('./PomodoroTimer').then(m => ({ default: m.PomodoroTimer })));
-const DailyFinanceModal = lazy(() => import('./DailyFinanceModal').then(m => ({ default: m.DailyFinanceModal })));
-const KaiWorkshopModal = lazy(() => import('./KaiWorkshopModal').then(m => ({ default: m.KaiWorkshopModal })));
-const VoiceDictationModal = lazy(() => import('./VoiceDictationModal').then(m => ({ default: m.VoiceDictationModal })));
+import { ModalPortalHost } from './modals/ModalPortalHost';
 
 import { DailyScheduleStrip } from './DailyScheduleStrip';
 import { SciFiGridBackground } from './SciFiGridBackground';
@@ -44,8 +32,6 @@ import { TransitionOverlay } from './TransitionOverlay';
 import { QuantumCubeLoader } from './QuantumCubeLoader';
 import { ShockwaveOverlay } from './ShockwaveOverlay';
 import { DailyProgressWidget } from './DailyProgressWidget';
-import { BetaConsentModal } from './BetaConsentModal';
-import { DayRhythmModal } from './task-list/DayRhythmModal';
 import { calculateDayFinanceTotals } from '../utils/finance';
 import { useNarrativeCopy } from '../hooks/useNarrativeCopy';
 import { ScrollReveal } from './common/ScrollReveal';
@@ -688,209 +674,36 @@ export function AppLayout() {
 
       {/* Navegación en Modo Barra delegada íntegramente a SidebarHUD */}
 
-      {/* Protocolo de Consentimiento Beta y Privacidad P0 */}
-      <BetaConsentModal />
-
-      {/* Modal de Calibración de Ritmo y Jornada Diaria */}
-      <DayRhythmModal />
-
-      {/* Day Routine Templates Modal */}
-      {isDayTemplatesOpen && (
-        <Suspense fallback={null}>
-          <DayTemplatesModal 
-            isOpen={isDayTemplatesOpen}
-            onClose={() => setIsDayTemplatesOpen(false)}
-            currentDate={currentViewDate}
-            currentTasks={tasks}
-            onApplyTemplate={handleApplyTemplate}
-          />
-        </Suspense>
-      )}
-
-      {/* Daily Rewards Modal */}
-      {isDailyRewardsOpen && (
-        <Suspense fallback={null}>
-          <DailyRewardsModal
-            isOpen={isDailyRewardsOpen}
-            onClose={() => setIsDailyRewardsOpen(false)}
-            stats={stats}
-            onClaimReward={handleClaimDailyReward}
-          />
-        </Suspense>
-      )}
-
-      {/* Level Up Celebration Modal */}
-      {isLevelUpOpen && (
-        <Suspense fallback={null}>
-          <LevelUpModal
-            isOpen={isLevelUpOpen}
-            onClose={() => setIsLevelUpOpen(false)}
-            newLevel={levelUpData?.level || 1}
-            newRankTitle={levelUpData?.rank || 'Aventurero'}
-            stats={stats}
-          />
-        </Suspense>
-      )}
-
-      {deleteConfirmTask && (
-        <Suspense fallback={null}>
-          <DeleteConfirmModal
-            task={deleteConfirmTask}
-            onClose={() => setDeleteConfirmTask(null)}
-            onConfirm={executeDeleteTask}
-          />
-        </Suspense>
-      )}
-
-      {/* Oracle AI Wizard Modal */}
-      {isOracleOpen && (
-        <Suspense fallback={null}>
-          <OracleModal 
-            isOpen={isOracleOpen}
-            initialPrompt={oracleInitialPrompt}
-            onClose={() => {
-              setIsOracleOpen(false);
-              setOracleInitialPrompt(undefined);
-            }}
-          />
-        </Suspense>
-      )}
-
-      {/* Neural Analysis Modal (Separate Diagnostic Module) */}
-      {isNeuralAnalysisOpen && (
-        <Suspense fallback={null}>
-          <NeuralAnalysisModal
-            isOpen={isNeuralAnalysisOpen}
-            onClose={() => setIsNeuralAnalysisOpen(false)}
-          />
-        </Suspense>
-      )}
-
-      {/* Daily Finance Express Modal */}
-      {isFinanceModalOpen && (
-        <Suspense fallback={null}>
-          <DailyFinanceModal
-            isOpen={isFinanceModalOpen}
-            onClose={() => setIsFinanceModalOpen(false)}
-            currentDate={currentViewDate}
-            tasks={tasks}
-            onOpenStats={() => {
-              setIsFinanceModalOpen(false);
-              setActiveTab('stats');
-            }}
-          />
-        </Suspense>
-      )}
-
-      {/* Nightly Tunnel — Sequential End-of-Day Flow (Evaluation + Reward + Seal) */}
-      {(isNightlyReflectionOpen || isFinishDayOpen) && (
-        <Suspense fallback={null}>
-          <NightlyTunnel
-            isOpen={isNightlyReflectionOpen || isFinishDayOpen}
-            onClose={() => {
-              setIsNightlyReflectionOpen(false);
-              setIsFinishDayOpen(false);
-            }}
-            stats={stats}
-            allTasks={tasks}
-            pomodoroSessions={pomodoroSessions}
-            onConfirmFinishDay={handleConfirmFinishDayLocal}
-            onClaimDailyReward={handleClaimDailyReward}
-            onAddJournalEntry={(note) => {
-              const today = getTodayDateString();
-              handleSaveReflection(today, note);
-            }}
-          />
-        </Suspense>
-      )}
-
-      {/* Onboarding y Guía de Bienvenida Cálida de KAI */}
-      {isAwakeningOpen && (
-        <Suspense fallback={null}>
-          <KaiWelcomeOnboarding
-            isOpen={isAwakeningOpen}
-            initialStep={1}
-            onClose={() => {
-              setIsAwakeningOpen(false);
-            }}
-            stats={stats}
-            cloudSync={cloudSync}
-          />
-        </Suspense>
-      )}
-
-      {/* Guía Interactiva Spotlight de KAI */}
-      {isTacticalGuideOpen && (
-        <Suspense fallback={null}>
-          <KaiInteractiveSpotlightTour />
-        </Suspense>
-      )}
-
-      {/* Cyberpunk Floating Pomodoro Pop-up Modal (Portaled above KAI & synced with Optic Modes) */}
-      {typeof document !== 'undefined' &&
-        createPortal(
-          <AnimatePresence>
-            {isPomodoroOpen && (
-              <motion.div
-                role="dialog"
-                aria-modal="true"
-                aria-label="Modo Foco Pomodoro"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[170] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-sm overflow-y-auto portal-modal-root"
-                onClick={(e) => {
-                  if (e.target === e.currentTarget) {
-                    soundFX.playClick();
-                    setModalState('isPomodoroOpen', false);
-                  }
-                }}
-              >
-                <motion.div
-                  initial={{ scale: 0.94, opacity: 0, y: 16 }}
-                  animate={{ scale: 1, opacity: 1, y: 0 }}
-                  exit={{ scale: 0.94, opacity: 0, y: 16 }}
-                  transition={{ type: 'spring', damping: 26, stiffness: 360 }}
-                  className="w-full max-w-lg my-auto"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <Suspense fallback={null}>
-                    <PomodoroTimer
-                      onSessionComplete={handlePomodoroComplete}
-                      initialTaskTitle={pomodoroPreFill.title}
-                      initialCategory={pomodoroPreFill.category}
-                      onClose={() => setModalState('isPomodoroOpen', false)}
-                    />
-                  </Suspense>
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>,
-          document.body
-        )}
-
-          {/* TALLER CUÁNTICO DE KAI (Adaptable a Modos Ópticos Noir, Cobalto y Aurora) */}
-          {isKaiWorkshopOpen && (
-            <Suspense fallback={null}>
-              <KaiWorkshopModal
-                isOpen={isKaiWorkshopOpen}
-                onClose={() => setIsKaiWorkshopOpen(false)}
-                onOpenShop={() => setActiveTab('shop')}
-              />
-            </Suspense>
-          )}
-
-          {/* HÁBLAME — CENTRO UNIFICADO DE VOZ E IA DE KAI */}
-          {isVoiceDictationOpen && (
-            <Suspense fallback={null}>
-              <VoiceDictationModal
-                isOpen={isVoiceDictationOpen}
-                onClose={closeVoiceDictation}
-                onOpenOracleWithPrompt={handleOpenOracleWithPrompt}
-                onOpenTemplates={() => setIsDayTemplatesOpen(true)}
-              />
-            </Suspense>
-          )}
+      {/* Orquestador de Modales y Portales Secundarios Desacoplado */}
+      <ModalPortalHost
+        stats={stats}
+        currentViewDate={currentViewDate}
+        tasks={tasks}
+        pomodoroSessions={pomodoroSessions}
+        cloudSync={cloudSync}
+        isOracleOpen={isOracleOpen}
+        oracleInitialPrompt={oracleInitialPrompt}
+        onCloseOracle={() => {
+          setIsOracleOpen(false);
+          setOracleInitialPrompt(undefined);
+        }}
+        isNeuralAnalysisOpen={isNeuralAnalysisOpen}
+        onCloseNeuralAnalysis={() => setIsNeuralAnalysisOpen(false)}
+        isFinanceModalOpen={isFinanceModalOpen}
+        onCloseFinanceModal={() => setIsFinanceModalOpen(false)}
+        isKaiWorkshopOpen={isKaiWorkshopOpen}
+        onCloseKaiWorkshop={() => setIsKaiWorkshopOpen(false)}
+        isAwakeningOpen={isAwakeningOpen}
+        onCloseAwakening={() => setIsAwakeningOpen(false)}
+        handleConfirmFinishDayLocal={handleConfirmFinishDayLocal}
+        handleClaimDailyReward={handleClaimDailyReward}
+        handleSaveReflection={handleSaveReflection}
+        handlePomodoroComplete={handlePomodoroComplete}
+        handleApplyTemplate={handleApplyTemplate}
+        executeDeleteTask={executeDeleteTask}
+        handleOpenOracleWithPrompt={handleOpenOracleWithPrompt}
+        setActiveTab={setActiveTab}
+      />
 
           {/* Offline Status Badge & PWA Install Banner */}
           <PWAInstallBanner />
