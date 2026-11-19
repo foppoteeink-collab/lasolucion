@@ -43,6 +43,8 @@ interface UIState {
   opticMode: OpticMode;
   navigationMode: NavigationMode;
   soundEnabled: boolean;
+  masterVolume: number;
+  hapticEnabled: boolean;
   screenFlash: 'damage' | 'heal' | 'buff' | null;
   isFocusModeActive: boolean; // INMUNIZADOR DE FLUJO
   zenMode: boolean; // MODO ZEN (REDUCCIÓN DE ESTÍMULOS / AHORRO BATERÍA)
@@ -68,6 +70,8 @@ interface UIState {
   isTacticalGuideOpen: boolean;
   tacticalGuideInitialStep: number;
   deleteConfirmTask: TaskItem | null;
+  isHelpCenterOpen: boolean;
+  isPrivacyPolicyOpen: boolean;
 
   // Orquestador FIFO de Modales
   activeModal: ModalName | null;
@@ -83,12 +87,19 @@ interface UIState {
   toggleTheme: () => void;
   setThemeMode: (mode: ThemeMode) => void;
   toggleSound: () => void;
+  setMasterVolume: (volume: number) => void;
+  toggleHaptics: () => void;
+  setHapticEnabled: (enabled: boolean) => void;
   openTaskForm: (tab?: 'task' | 'habit' | 'oracle') => void;
   closeTaskForm: () => void;
   openVoiceDictation: () => void;
   closeVoiceDictation: () => void;
   openTacticalGuide: (step?: number) => void;
   closeTacticalGuide: () => void;
+  openHelpCenter: () => void;
+  closeHelpCenter: () => void;
+  openPrivacyPolicy: () => void;
+  closePrivacyPolicy: () => void;
   setModalState: (modalName: ModalName, isOpen: boolean, data?: any) => void;
   dismissCurrentModal: (modalName?: ModalName) => void;
   clearModalQueue: () => void;
@@ -374,6 +385,29 @@ const getSavedTimeFormat = (): '12h' | '24h' => {
   return '12h';
 };
 
+const getSavedHapticEnabled = (): boolean => {
+  if (typeof window !== 'undefined') {
+    try {
+      const stored = localStorage.getItem('taskquest_haptic_enabled');
+      if (stored !== null) return stored === 'true';
+    } catch (_) {}
+  }
+  return true;
+};
+
+const getSavedMasterVolume = (): number => {
+  if (typeof window !== 'undefined') {
+    try {
+      const stored = localStorage.getItem('taskquest_master_volume');
+      if (stored !== null) {
+        const val = parseFloat(stored);
+        if (!isNaN(val) && val >= 0 && val <= 1) return val;
+      }
+    } catch (_) {}
+  }
+  return 0.7;
+};
+
 let modalTransitionTimeout: ReturnType<typeof setTimeout> | null = null;
 
 export const useUIStore = create<UIState>((set, get) => ({
@@ -383,6 +417,8 @@ export const useUIStore = create<UIState>((set, get) => ({
   opticMode: getSavedOpticMode(),
   navigationMode: getSavedNavMode(),
   soundEnabled: true,
+  masterVolume: getSavedMasterVolume(),
+  hapticEnabled: getSavedHapticEnabled(),
   screenFlash: null,
   isFocusModeActive: false,
   zenMode: getSavedZenMode(),
@@ -407,6 +443,8 @@ export const useUIStore = create<UIState>((set, get) => ({
   isTacticalGuideOpen: false,
   tacticalGuideInitialStep: 1,
   deleteConfirmTask: null,
+  isHelpCenterOpen: false,
+  isPrivacyPolicyOpen: false,
 
   openTaskForm: (tab = 'task') => set({ isTaskFormOpen: true, taskFormInitialTab: tab }),
   closeTaskForm: () => set({ isTaskFormOpen: false }),
@@ -414,6 +452,10 @@ export const useUIStore = create<UIState>((set, get) => ({
   closeVoiceDictation: () => set({ isVoiceDictationOpen: false }),
   openTacticalGuide: (step = 1) => set({ isTacticalGuideOpen: true, tacticalGuideInitialStep: step }),
   closeTacticalGuide: () => set({ isTacticalGuideOpen: false }),
+  openHelpCenter: () => set({ isHelpCenterOpen: true }),
+  closeHelpCenter: () => set({ isHelpCenterOpen: false }),
+  openPrivacyPolicy: () => set({ isPrivacyPolicyOpen: true }),
+  closePrivacyPolicy: () => set({ isPrivacyPolicyOpen: false }),
 
   // FIFO Modal Queue State
   activeModal: null,
@@ -462,6 +504,35 @@ export const useUIStore = create<UIState>((set, get) => ({
   },
 
   toggleSound: () => set((state) => ({ soundEnabled: !state.soundEnabled })),
+
+  setMasterVolume: (volume: number) => {
+    const clamped = Math.max(0, Math.min(1, volume));
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('taskquest_master_volume', String(clamped));
+      } catch (e) {}
+    }
+    set({ masterVolume: clamped });
+  },
+
+  toggleHaptics: () => {
+    const next = !get().hapticEnabled;
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('taskquest_haptic_enabled', String(next));
+      } catch (e) {}
+    }
+    set({ hapticEnabled: next });
+  },
+
+  setHapticEnabled: (enabled: boolean) => {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('taskquest_haptic_enabled', String(enabled));
+      } catch (e) {}
+    }
+    set({ hapticEnabled: enabled });
+  },
 
   setNavigationMode: (mode: NavigationMode) => {
     if (typeof window !== 'undefined') {

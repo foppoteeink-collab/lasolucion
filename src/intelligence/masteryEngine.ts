@@ -1,15 +1,9 @@
 import { HabitMasteryRecord, TaskItem, PlayerStats, AppNotification } from '../types';
-import { getTodayDateString } from '../utils/date';
+import { getTodayDateString, addDaysToDateString } from '../utils/date';
 import { usePlayerStore } from '../store/usePlayerStore';
 
 export const getAdjacentDateStr = (dateStr: string, dayOffset: number): string => {
-  const [y, m, d] = dateStr.split('-').map(Number);
-  const date = new Date(y, m - 1, d);
-  date.setDate(date.getDate() + dayOffset);
-  const nextY = date.getFullYear();
-  const nextM = String(date.getMonth() + 1).padStart(2, '0');
-  const nextD = String(date.getDate()).padStart(2, '0');
-  return `${nextY}-${nextM}-${nextD}`;
+  return addDaysToDateString(dateStr, dayOffset);
 };
 
 export const getHabitBaseId = (task: TaskItem | { id: string; title?: string; category?: string }): string => {

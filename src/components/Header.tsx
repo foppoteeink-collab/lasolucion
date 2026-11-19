@@ -14,7 +14,8 @@ import {
   FlaskConical,
   SlidersHorizontal,
   Eye,
-  EyeOff
+  EyeOff,
+  HelpCircle
 } from 'lucide-react';
 import { AppNotification } from '../types';
 import { soundFX } from '../utils/audio';
@@ -310,6 +311,19 @@ export const Header: React.FC<HeaderProps> = ({
                 ) : (
                   <VolumeX className="w-4 h-4 text-rose-300" />
                 )}
+              </button>
+
+              {/* Centro de Ayuda & FAQ */}
+              <button
+                onClick={() => {
+                  soundFX.playClick();
+                  useUIStore.getState().openHelpCenter();
+                }}
+                className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-md sm:rounded-lg text-slate-200 hover:text-cyan-300 hover:bg-white/10 transition-all cursor-pointer active:scale-95"
+                title="Centro de Ayuda, Glosario & FAQ"
+                aria-label="Abrir centro de ayuda"
+              >
+                <HelpCircle className="w-4 h-4 text-amber-400" />
               </button>
 
               {/* Separador sutil en tablets/desktops */}

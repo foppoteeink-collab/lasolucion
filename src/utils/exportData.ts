@@ -1,4 +1,4 @@
-import { TaskItem, PlayerStats, HabitMasteryRecord, CustomHabit, GameSettings } from '../types';
+import { TaskItem, PlayerStats, HabitMasteryRecord, CustomHabit, GameSettings, FinancialTransaction, PomodoroSession, ShopReward } from '../types';
 import { 
   loadSavedStats, 
   loadSavedTasks, 
@@ -11,6 +11,7 @@ import {
 import { getTodayDateString } from './date';
 import { usePlayerStore } from '../store/usePlayerStore';
 import { useTaskStore } from '../store/useTaskStore';
+import { useAppStore } from '../store/useAppStore';
 
 export interface ComprehensiveUserDataExport {
   app: string;
@@ -24,6 +25,9 @@ export interface ComprehensiveUserDataExport {
   habitMastery: Record<string, HabitMasteryRecord>;
   customHabits: CustomHabit[];
   settings: GameSettings;
+  expenses?: FinancialTransaction[];
+  pomodoroSessions?: PomodoroSession[];
+  shopRewards?: ShopReward[];
   rawLocalStorage: Record<string, any>;
 }
 
@@ -78,6 +82,11 @@ export const exportUserData = (contextData?: {
     }
   }
 
+  const appState = useAppStore.getState();
+  const expenses = appState.expenses || [];
+  const pomodoroSessions = appState.pomodoroSessions || [];
+  const shopRewards = appState.shopRewards || [];
+
   const exportPayload: ComprehensiveUserDataExport = {
     app: 'La Solución RPG',
     version: '3.5',
@@ -90,6 +99,9 @@ export const exportUserData = (contextData?: {
     habitMastery,
     customHabits,
     settings,
+    expenses,
+    pomodoroSessions,
+    shopRewards,
     rawLocalStorage,
   };
 

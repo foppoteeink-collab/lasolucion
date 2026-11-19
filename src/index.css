@@ -60,5 +60,11 @@
   .bottom-safe {
     bottom: env(safe-area-inset-bottom, 0px) !important;
   }
+
+  /* Feedback háptico visual sutil para dispositivos que no soportan Vibration API (iOS Safari) */
+  .haptic-pulse-feedback {
+    transition: filter 80ms ease-out !important;
+    filter: brightness(1.06) contrast(1.02) !important;
+  }
 }
 

@@ -17,11 +17,14 @@ import {
   RefreshCw, 
   Key, 
   ShieldAlert, 
-  Check 
+  Check,
+  HelpCircle,
+  FileText
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTaskStore } from '../../store/useTaskStore';
 import { usePlayerStore } from '../../store/usePlayerStore';
+import { useUIStore } from '../../store/useUIStore';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
 import { CloudSyncResult } from '../../hooks/useCloudSync';
 import { GoogleDriveSyncCard } from '../GoogleDriveSyncCard';
@@ -444,6 +447,37 @@ export const SettingsDataTab: React.FC<SettingsDataTabProps> = ({
             {AUTH_SECURITY_MICROCOPY}
           </p>
         </div>
+
+        {/* ENLACES LEGALES & AUTOSERVICIO */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1 relative z-10">
+          <button
+            type="button"
+            onClick={() => {
+              soundFX.playClick();
+              useUIStore.getState().openPrivacyPolicy();
+            }}
+            className="chicle-btn min-h-[40px] px-3.5 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-emerald-500/40 text-slate-300 hover:text-white flex items-center justify-between transition-colors text-xs cursor-pointer font-mono"
+          >
+            <span className="flex items-center gap-2">
+              <FileText className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Política de Privacidad (Ley 8968 / GDPR)</span>
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              soundFX.playClick();
+              useUIStore.getState().openHelpCenter();
+            }}
+            className="chicle-btn min-h-[40px] px-3.5 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-cyan-500/40 text-slate-300 hover:text-white flex items-center justify-between transition-colors text-xs cursor-pointer font-mono"
+          >
+            <span className="flex items-center gap-2">
+              <HelpCircle className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Centro de Ayuda, FAQ & Glosario</span>
+            </span>
+          </button>
+        </div>
       </div>
 
       {/* 3. RESPALDO LOCAL JSON & CSV */}
@@ -469,7 +503,7 @@ export const SettingsDataTab: React.FC<SettingsDataTabProps> = ({
             className="chicle-btn min-h-[44px] px-4 py-2.5 bg-white/[0.04] hover:bg-white/10 aura-text-soft hover:text-white font-anton text-xs uppercase tracking-wider rounded-xl border border-white/15 hover:aura-border-primary flex items-center justify-center gap-2 transition-all cursor-pointer"
           >
             <Download className="w-4 h-4 aura-text-primary" />
-            <span>Descargar Copia</span>
+            <span>Exportar Expediente (JSON)</span>
           </button>
 
           <button

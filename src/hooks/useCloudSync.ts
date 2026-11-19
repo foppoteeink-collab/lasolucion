@@ -872,15 +872,17 @@ export const useCloudSync = (
         flushSave();
       }
     };
-    const handleBeforeUnload = () => {
+    const handlePageExit = () => {
       flushSave();
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('pagehide', handlePageExit);
+    window.addEventListener('beforeunload', handlePageExit);
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('pagehide', handlePageExit);
+      window.removeEventListener('beforeunload', handlePageExit);
     };
   }, [flushSave]);
 

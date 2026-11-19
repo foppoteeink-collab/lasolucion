@@ -24,6 +24,8 @@ const KaiInteractiveSpotlightTour = lazy(() => import('../common/KaiInteractiveS
 const PomodoroTimer = lazy(() => import('../PomodoroTimer').then(m => ({ default: m.PomodoroTimer })));
 const KaiWorkshopModal = lazy(() => import('../KaiWorkshopModal').then(m => ({ default: m.KaiWorkshopModal })));
 const VoiceDictationModal = lazy(() => import('../VoiceDictationModal').then(m => ({ default: m.VoiceDictationModal })));
+const HelpCenterModal = lazy(() => import('../HelpCenterModal').then(m => ({ default: m.HelpCenterModal })));
+const PrivacyPolicyModal = lazy(() => import('../PrivacyPolicyModal').then(m => ({ default: m.PrivacyPolicyModal })));
 
 export interface ModalPortalHostProps {
   stats: PlayerStats;
@@ -90,6 +92,10 @@ export const ModalPortalHost: React.FC<ModalPortalHostProps> = ({
   const isTacticalGuideOpen = useUIStore((s) => s.isTacticalGuideOpen);
   const isVoiceDictationOpen = useUIStore((s) => s.isVoiceDictationOpen);
   const closeVoiceDictation = useUIStore((s) => s.closeVoiceDictation);
+  const isHelpCenterOpen = useUIStore((s) => s.isHelpCenterOpen);
+  const closeHelpCenter = useUIStore((s) => s.closeHelpCenter);
+  const isPrivacyPolicyOpen = useUIStore((s) => s.isPrivacyPolicyOpen);
+  const closePrivacyPolicy = useUIStore((s) => s.closePrivacyPolicy);
 
   const levelUpData = useAppStore((s) => s.levelUpData);
   const pomodoroPreFill = useAppStore((s) => s.pomodoroPreFill);
@@ -292,6 +298,27 @@ export const ModalPortalHost: React.FC<ModalPortalHostProps> = ({
             onClose={closeVoiceDictation}
             onOpenOracleWithPrompt={handleOpenOracleWithPrompt}
             onOpenTemplates={() => setModalState('isDayTemplatesOpen', true)}
+          />
+        </Suspense>
+      )}
+
+      {/* CENTRO DE AYUDA Y GLOSARIO AUTÓNOMO */}
+      {isHelpCenterOpen && (
+        <Suspense fallback={null}>
+          <HelpCenterModal
+            isOpen={isHelpCenterOpen}
+            onClose={closeHelpCenter}
+            onOpenShop={() => setActiveTab('shop')}
+          />
+        </Suspense>
+      )}
+
+      {/* POLÍTICA DE PRIVACIDAD Y DERECHOS ARCO (LEY 8968 / GDPR) */}
+      {isPrivacyPolicyOpen && (
+        <Suspense fallback={null}>
+          <PrivacyPolicyModal
+            isOpen={isPrivacyPolicyOpen}
+            onClose={closePrivacyPolicy}
           />
         </Suspense>
       )}

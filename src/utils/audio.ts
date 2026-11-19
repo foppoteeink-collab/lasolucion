@@ -26,6 +26,7 @@ const hasUserActivation = (): boolean => {
 class SoundFX {
   private ctx: AudioContext | null = null;
   private soundEnabled: boolean = true;
+  private userVolume: number = 0.7;
   private masterGain: GainNode | null = null;
   private masterFilter: BiquadFilterNode | null = null;
   private masterCompressor: DynamicsCompressorNode | null = null;
@@ -79,7 +80,8 @@ class SoundFX {
 
       // Master Bus: Calibrated for ergonomic pleasantness and high dynamic headroom
       this.masterGain = this.ctx.createGain();
-      this.masterGain.gain.value = isNight ? 0.42 : 0.55;
+      const baseGain = isNight ? 0.42 : 0.55;
+      this.masterGain.gain.value = baseGain * this.userVolume;
 
       // Gentle master lowpass filter: 9500Hz normal, 4800Hz in late night for acoustic relaxation
       this.masterFilter = this.ctx.createBiquadFilter();
@@ -161,6 +163,24 @@ class SoundFX {
 
   public isEnabled(): boolean {
     return this.soundEnabled;
+  }
+
+  public setVolume(volume: number) {
+    this.userVolume = Math.max(0, Math.min(1, volume));
+    if (this.masterGain && this.ctx) {
+      const currentHour = new Date().getHours();
+      const isNight = currentHour >= 22 || currentHour < 6;
+      const baseGain = isNight ? 0.42 : 0.55;
+      try {
+        this.masterGain.gain.setValueAtTime(baseGain * this.userVolume, this.ctx.currentTime);
+      } catch (_) {
+        this.masterGain.gain.value = baseGain * this.userVolume;
+      }
+    }
+  }
+
+  public getVolume(): number {
+    return this.userVolume;
   }
 
   // Helper for safe audio routing

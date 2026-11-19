@@ -52,6 +52,7 @@ export const safeSetItem = (key: string, value: string): void => {
 };
 
 const debounceTimers: Record<string, any> = {};
+const debouncePendingValues: Record<string, string> = {};
 
 /**
  * Pipelined debounced localStorage writer to prevent synchronous main-thread chokes during rapid bursts of updates
@@ -61,11 +62,52 @@ export const debouncedSetItem = (key: string, value: string, delayMs = 300): voi
   if (debounceTimers[key]) {
     clearTimeout(debounceTimers[key]);
   }
+  debouncePendingValues[key] = value;
   debounceTimers[key] = setTimeout(() => {
     delete debounceTimers[key];
-    safeSetItem(key, value);
+    const val = debouncePendingValues[key];
+    delete debouncePendingValues[key];
+    if (val !== undefined) {
+      safeSetItem(key, val);
+    }
   }, delayMs);
 };
+
+/**
+ * Immediately flushes any pending debounced writes to localStorage.
+ * Crucial for mobile lifecycles (visibilitychange, pagehide) to ensure zero data loss.
+ */
+export const flushAllDebouncedStorage = (): void => {
+  if (typeof window === 'undefined' || (window as any).__isResettingAccount) return;
+  const keys = Object.keys(debouncePendingValues);
+  for (const key of keys) {
+    if (debounceTimers[key]) {
+      clearTimeout(debounceTimers[key]);
+      delete debounceTimers[key];
+    }
+    const val = debouncePendingValues[key];
+    delete debouncePendingValues[key];
+    if (val !== undefined) {
+      safeSetItem(key, val);
+    }
+  }
+};
+
+// Auto-flush pending writes whenever user leaves the page or minimizes the tab/app
+if (typeof window !== 'undefined') {
+  const handleLifecycleFlush = () => {
+    flushAllDebouncedStorage();
+  };
+  window.addEventListener('pagehide', handleLifecycleFlush);
+  window.addEventListener('beforeunload', handleLifecycleFlush);
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        flushAllDebouncedStorage();
+      }
+    });
+  }
+}
 
 export const safeRemoveItem = (key: string): void => {
   try {

@@ -4,6 +4,7 @@ import { useTaskStore } from '../store/useTaskStore';
 import { useUIStore } from '../store/useUIStore';
 import { useAppStore } from '../store/useAppStore';
 import { getTodayDateString, getTrustedNow, syncNetworkTime, getGlobalDayStartHour, setGlobalDayStartHour } from '../utils/date';
+import { evaluateTimezoneDrift } from '../utils/level3Systems';
 import { parseTimeToMinutes, parseEndTimeToMinutes, isQuickMicroHabit } from '../utils/timeUtils';
 import * as gameEngine from '../engine/gameEngine';
 import { safeLogEvent } from '../firebase';
@@ -77,8 +78,33 @@ export const useDayCycle = () => {
   useEffect(() => {
     let timerCutoff: ReturnType<typeof setTimeout> | null = null;
 
-    // Sincronizar offset de hora de red inmediatamente al montar
+    // Sincronizar offset de hora de red y evaluar deriva horaria inmediatamente al montar
     void syncNetworkTime().catch(() => {});
+
+    const checkTimezoneShift = () => {
+      try {
+        const stats = usePlayerStore.getState().stats;
+        const now = getTrustedNow();
+        const currentOffset = now.getTimezoneOffset();
+        const tzEval = evaluateTimezoneDrift(
+          stats?.lastTimezoneOffset,
+          currentOffset,
+          now.getTime()
+        );
+
+        if (tzEval.drifted || stats?.lastTimezoneOffset === undefined) {
+          usePlayerStore.getState().setStats((prev) => ({
+            ...prev,
+            lastTimezoneOffset: tzEval.nextOffset,
+            timezoneShieldExpiresAt: tzEval.drifted ? tzEval.shieldExpiresAt : prev.timezoneShieldExpiresAt,
+          }));
+        }
+      } catch (err) {
+        console.debug('[DayCycle] Timezone drift check notice:', err);
+      }
+    };
+
+    checkTimezoneShift();
 
     const updateClock = () => {
       const trustedNow = getTrustedNow();
@@ -110,7 +136,11 @@ export const useDayCycle = () => {
     const handleFocusOrOnline = () => {
       if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
       updateClock();
-      void syncNetworkTime().then(() => updateClock());
+      checkTimezoneShift();
+      void syncNetworkTime().then(() => {
+        updateClock();
+        checkTimezoneShift();
+      });
     };
 
     window.addEventListener('focus', handleFocusOrOnline);

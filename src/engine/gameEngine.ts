@@ -120,37 +120,81 @@ export const getEngineContext = () => {
 export const handleResetAccount = async () => {
   const user = auth?.currentUser;
   (window as unknown as { __isResettingAccount?: boolean }).__isResettingAccount = true;
-    if (user && db) {
-      try {
-        await deleteDoc(doc(db, 'users', user.uid));
-        const taskMonthsRef = collection(db, 'users', user.uid, 'task_months');
-        const snap = await getDocs(taskMonthsRef);
-        if (!snap.empty) {
-          const batch = writeBatch(db);
-          snap.docs.forEach((d) => batch.delete(d.ref));
-          await batch.commit();
-        }
-        await new Promise(resolve => setTimeout(resolve, 500));
-      } catch (e) {
-        console.error("Error deleting doc and task_months:", e);
-      }
-    }
+
+  if (user && db) {
     try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        const keysToRemove = [];
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key && !key.startsWith('firebase')) {
-            keysToRemove.push(key);
+      // 1. Purgado en cascada de todas las subcolecciones de Firestore (GDPR / Ley 8968)
+      const subcollections = [
+        'task_months',
+        'finance_months',
+        'pomodoro_history',
+        'tasks',
+        'custom_habits',
+        'shop_rewards',
+        'settings'
+      ];
+
+      for (const sub of subcollections) {
+        try {
+          const subRef = collection(db, 'users', user.uid, sub);
+          const snap = await getDocs(subRef);
+          if (!snap.empty) {
+            const batch = writeBatch(db);
+            snap.docs.forEach((d) => batch.delete(d.ref));
+            await batch.commit();
           }
+        } catch (subErr) {
+          console.warn(`[ResetAccount] Error limpiando subcolección ${sub}:`, subErr);
         }
-        keysToRemove.forEach(key => safeRemoveItem(key));
       }
+
+      // 2. Borrado del documento raíz del usuario en Firestore
+      await deleteDoc(doc(db, 'users', user.uid));
+
+      // 3. Eliminación de credenciales en Firebase Authentication
+      try {
+        await user.delete();
+      } catch (authDelErr) {
+        console.warn('[ResetAccount] Auth user deletion notice (requires fresh login if stale):', authDelErr);
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 400));
     } catch (e) {
-      console.warn('localStorage reset failed:', e);
+      console.error('[ResetAccount] Error durante la purga de datos remotos:', e);
     }
-    window.location.reload();
-  };
+  }
+
+  // 4. Purga completa de bases de datos locales IndexedDB
+  try {
+    if (typeof window !== 'undefined' && 'indexedDB' in window) {
+      window.indexedDB.deleteDatabase('la-solucion-sync-outbox');
+      window.indexedDB.deleteDatabase('la-solucion-cold-archive');
+    }
+  } catch (idbErr) {
+    console.warn('[ResetAccount] Error purgando IndexedDB:', idbErr);
+  }
+
+  // 5. Purga de almacenamiento LocalStorage
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && !key.startsWith('firebase:authUser')) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach((key) => safeRemoveItem(key));
+      try {
+        localStorage.clear();
+      } catch (_) {}
+    }
+  } catch (e) {
+    console.warn('[ResetAccount] LocalStorage reset failed:', e);
+  }
+
+  window.location.replace('/');
+};
   
     
 

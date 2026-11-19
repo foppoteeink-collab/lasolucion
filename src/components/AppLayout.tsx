@@ -51,6 +51,7 @@ export function AppLayout() {
   const isTransitioning = useUIStore((s) => s.isTransitioning);
   const themeMode = useUIStore((s) => s.themeMode);
   const soundEnabled = useUIStore((s) => s.soundEnabled);
+  const masterVolume = useUIStore((s) => s.masterVolume);
   const navigationMode = useUIStore((s) => s.navigationMode);
   const handDominance = useUIStore((s) => s.handDominance);
   const isDailyRewardsOpen = useUIStore((s) => s.isDailyRewardsOpen);
@@ -240,6 +241,10 @@ export function AppLayout() {
   React.useEffect(() => {
     soundFX.setEnabled(soundEnabled);
   }, [soundEnabled]);
+
+  React.useEffect(() => {
+    soundFX.setVolume(masterVolume);
+  }, [masterVolume]);
 
   // Prefetch lazy secondary tab chunks sequentially during idle time without choking initial paint or dev transform queue
   React.useEffect(() => {

@@ -12,7 +12,8 @@ import {
   Flame, 
   Clock, 
   Settings, 
-  Headphones 
+  Headphones,
+  Smartphone 
 } from 'lucide-react';
 import { useUIStore } from '../../store/useUIStore';
 import { usePlayerStore } from '../../store/usePlayerStore';
@@ -21,6 +22,7 @@ import { useNarrativeCopy } from '../../hooks/useNarrativeCopy';
 import { ChicleToggle } from '../ChicleToggle';
 import { QuantumSoundscapeConsole } from '../QuantumSoundscapeConsole';
 import { soundFX } from '../../utils/audio';
+import { hapticPresets } from '../../utils/haptics';
 import { notificationService } from '../../utils/notifications';
 import { 
   getNotificationSettings, 
@@ -37,6 +39,10 @@ export const SettingsPreferencesTab: React.FC = () => {
   const { 
     soundEnabled, 
     toggleSound, 
+    masterVolume,
+    setMasterVolume,
+    hapticEnabled,
+    toggleHaptics,
     timeFormat, 
     setTimeFormat, 
     setModalState 
@@ -163,6 +169,67 @@ export const SettingsPreferencesTab: React.FC = () => {
               color="cyan"
               size="md"
               ariaLabel="Alternar efectos sonoros"
+            />
+          </div>
+        </div>
+
+        {/* CONTROL DE VOLUMEN MASTER */}
+        {soundEnabled && (
+          <div className="p-3.5 rounded-2xl bg-black/40 border border-white/10 space-y-2 relative z-10 animate-fade-in">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-slate-300 font-medium">Volumen de Efectos</span>
+              <span className="font-mono font-bold aura-text-primary tabular-nums">{Math.round(masterVolume * 100)}%</span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              value={masterVolume}
+              onChange={(e) => {
+                const val = parseFloat(e.target.value);
+                setMasterVolume(val);
+              }}
+              className="w-full accent-[var(--aura-color-1,#00f0ff)] cursor-pointer h-1.5 bg-white/10 rounded-lg"
+              aria-label="Control de volumen de efectos sonoros"
+            />
+          </div>
+        )}
+
+        {/* RESPUESTA HÁPTICA / VIBRACIÓN TÁCTIL */}
+        <div className="pt-3 border-t border-white/10 flex items-center justify-between gap-4 relative z-10">
+          <div>
+            <h4 className="text-sm font-black text-white flex items-center gap-2 mb-1">
+              <Smartphone className="w-4 h-4 text-emerald-400" />
+              Respuesta Háptica (Vibración)
+            </h4>
+            <p className="text-xs text-slate-400">
+              Vibración de confirmación al marcar hábitos, completar tareas o subir de nivel.
+            </p>
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                soundFX.playClick();
+                hapticPresets.taskComplete();
+              }}
+              disabled={!hapticEnabled}
+              className={`chicle-btn px-3.5 py-1.5 rounded-xl text-xs font-anton tracking-wider uppercase transition-all border ${
+                !hapticEnabled
+                  ? 'opacity-40 cursor-not-allowed border-white/10 text-slate-500'
+                  : 'bg-white/[0.04] border-white/15 text-emerald-300 hover:bg-white/10 hover:text-white cursor-pointer'
+              }`}
+              title="Probar vibración táctil"
+            >
+              Probar
+            </button>
+            <ChicleToggle
+              checked={hapticEnabled}
+              onChange={() => toggleHaptics()}
+              color="emerald"
+              size="md"
+              ariaLabel="Alternar vibración háptica"
             />
           </div>
         </div>
