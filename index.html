@@ -118,29 +118,8 @@
           return;
         }
 
-        var CURRENT_RELEASE = '2026.11.19-v101-auth-repair';
-        var BUILD_REV = CURRENT_RELEASE;
+        var BUILD_REV = 'rev-1793888229903';
         window.__APP_BUILD_REV__ = BUILD_REV;
-
-        // Inyección extrema de invalidación PWA: Si el cliente tiene una versión vieja en caché, purgar inmediatamente
-        try {
-          var lastRelease = localStorage.getItem('la_solucion_release_stamp');
-          if (lastRelease !== CURRENT_RELEASE && typeof navigator !== 'undefined' && navigator.onLine) {
-            localStorage.setItem('la_solucion_release_stamp', CURRENT_RELEASE);
-            if ('caches' in window) {
-              caches.keys().then(function(names) {
-                return Promise.all(names.map(function(n) { return caches.delete(n); }));
-              }).then(function() {
-                if ('serviceWorker' in navigator) {
-                  navigator.serviceWorker.getRegistrations().then(function(regs) {
-                    regs.forEach(function(r) { r.update().catch(function() {}); });
-                  });
-                }
-                window.location.reload();
-              }).catch(function() {});
-            }
-          }
-        } catch (e) {}
 
         function recoverFromStaleCache(reason) {
           if (typeof navigator !== 'undefined' && !navigator.onLine) return;
@@ -187,18 +166,6 @@
         }, 10000);
 
         if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.addEventListener('message', function(event) {
-            if (event.data && event.data.type === 'SW_ACTIVATED' && event.data.version) {
-              if (window.__APP_BUILD_REV__ && event.data.version !== window.__APP_BUILD_REV__) {
-                var reloadKey = 'sw_activated_' + event.data.version;
-                if (sessionStorage.getItem(reloadKey) !== '1') {
-                  sessionStorage.setItem(reloadKey, '1');
-                  window.location.replace(window.location.pathname + '?_v=' + event.data.version);
-                }
-              }
-            }
-          });
-
           var registerAppSW = function() {
             navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' })
               .then(function(reg) {

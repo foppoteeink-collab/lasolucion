@@ -547,6 +547,16 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
   };
 
   const handleNextStep = async () => {
+    // Si estamos en modo Iniciar Sesión, procesar login directo
+    if (step === 1 && !isRegisterMode) {
+      if (!emailInput.trim() || !passwordInput.trim()) {
+        setAuthLocalMessage('Por favor ingresa tu correo y contraseña para iniciar sesión.');
+        return;
+      }
+      await handleEmailAuthSubmit();
+      return;
+    }
+
     // Si el usuario está en el paso 1, tiene el formulario abierto y escribió credenciales,
     // procesar su acceso/registro directamente al pulsar Siguiente:
     if (step === 1 && showEmailForm && (emailInput.trim() || passwordInput.trim())) {
@@ -688,297 +698,418 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
                 transition={{ duration: 0.15, ease: 'easeOut' }}
                 className="space-y-4"
               >
-                {/* Propuesta Única de Valor (UVP) explícita */}
-                <div className="p-3.5 rounded-2xl bg-[#040814]/80 border aura-border-subtle space-y-2">
-                  <span className="text-[9.5px] font-mono font-bold uppercase tracking-widest aura-text-soft block">
-                    {WELCOME_UVP.badge}
-                  </span>
-                  <h3 className="text-sm sm:text-base font-anton uppercase tracking-wider text-white leading-snug">
-                    {WELCOME_UVP.headline}
-                  </h3>
-                  <p className="text-[11px] text-slate-200 leading-relaxed">
-                    {WELCOME_UVP.description}
-                  </p>
-                  <div className="flex flex-wrap gap-1.5 pt-0.5">
-                    {WELCOME_UVP.frictionPills.map((pill) => (
-                      <span
-                        key={pill}
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-400/40 text-emerald-300 text-[9.5px] font-bold"
-                      >
-                        <CheckCircle2 className="w-2.5 h-2.5 shrink-0" />
-                        <span>{pill}</span>
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                {/* 1. Nombre de usuario */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-white flex items-center gap-1.5">
-                    <User className="w-3.5 h-3.5 aura-text-primary" />
-                    <span>¿Cómo te gustaría que te llame KAI?</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        handleNextStep();
-                      }
+                {/* ── SELECTOR PRINCIPAL: NUEVO USUARIO vs YA TENGO CUENTA ── */}
+                <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-black/60 border border-white/15 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFX.playClick();
+                      setIsRegisterMode(true);
+                      clearAuthError();
+                      setAuthLocalMessage(null);
                     }}
-                    placeholder="Ej. Alex, Sofía, Campeón..."
-                    maxLength={24}
-                    autoFocus
-                    enterKeyHint="next"
-                    autoComplete="nickname"
-                    className="w-full px-4 py-2.5 rounded-2xl bg-black/50 border border-white/15 text-white placeholder-slate-500 text-sm focus:outline-none focus:aura-border-primary transition-all shadow-inner"
-                  />
+                    className={`flex-1 py-2 px-3 rounded-xl font-anton uppercase tracking-wider text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                      isRegisterMode
+                        ? 'aura-btn-gradient text-white shadow-[0_0_12px_rgba(6,182,212,0.4)]'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Empezar de Cero (Nuevo)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFX.playClick();
+                      setIsRegisterMode(false);
+                      setShowEmailForm(true);
+                      clearAuthError();
+                      setAuthLocalMessage(null);
+                    }}
+                    className={`flex-1 py-2 px-3 rounded-xl font-anton uppercase tracking-wider text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                      !isRegisterMode
+                        ? 'bg-amber-500/30 text-amber-300 border border-amber-400/50 shadow-[0_0_12px_rgba(245,158,11,0.4)]'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <KeyRound className="w-3.5 h-3.5 text-amber-300" />
+                    <span>Ya Tengo Cuenta (Entrar)</span>
+                  </button>
                 </div>
 
-                {/* 2. Selector rápido de Densidad Narrativa */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-300 block">
-                    Estilo de lenguaje de la plataforma:
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {(['minimal', 'tactical'] as const).map((modeKey) => {
-                      const opt = NARRATIVE_MODE_OPTIONS[modeKey];
-                      const active = copy.narrativeMode === modeKey;
-                      return (
-                        <button
-                          key={modeKey}
-                          type="button"
-                          onClick={() => {
-                            soundFX.playClick();
-                            triggerHaptic(15);
-                            copy.setNarrativeMode(modeKey);
-                          }}
-                          className={`chicle-btn !flex-col !items-start p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
-                            active
-                              ? 'aura-bg-soft aura-border-primary aura-glow-subtle optic-active-card'
-                              : 'bg-white/[0.03] border-white/10 text-slate-300 hover:border-white/25'
-                          }`}
-                        >
-                          <span className="text-[10.5px] font-bold block leading-tight text-white">
-                            {opt.label}
-                          </span>
-                          <span className="text-[9.5px] text-slate-400 block mt-0.5 leading-snug">
-                            {modeKey === 'minimal' ? 'Claro y directo, sin jerga' : 'Misiones, rangos y rol'}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
+                {!isRegisterMode ? (
+                  /* ── VISTA DIRECTA DE INICIO DE SESIÓN (SIN TRABAS NI CUESTIONARIOS) ── */
+                  <div className="p-4 rounded-2xl bg-[#040814]/90 border border-amber-500/30 space-y-3.5 shadow-2xl">
+                    <div className="space-y-1">
+                      <h3 className="text-sm font-anton uppercase tracking-wider text-white flex items-center gap-2">
+                        <KeyRound className="w-4 h-4 text-amber-400" />
+                        <span>Accede con tu Correo y Contraseña</span>
+                      </h3>
+                      <p className="text-[11px] text-slate-300 leading-snug">
+                        Ingresa tus credenciales para sincronizar tu progreso y entrar directamente sin repetir el tutorial.
+                      </p>
+                    </div>
 
-                {/* 3. Selección de Acceso y Seguridad de tu Cuenta */}
-                <div className="p-3.5 rounded-2xl bg-[#040814]/80 border border-white/10 space-y-2.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-white flex items-center gap-1.5">
-                      <Shield className="w-3.5 h-3.5 text-amber-400" />
-                      <span>Seguridad y respaldo de tu cuenta</span>
-                    </span>
-                    <span className="text-[10px] text-slate-400 font-mono">
-                      Opcional
-                    </span>
-                  </div>
-
-                  {user ? (
-                    <div className="p-2.5 rounded-xl bg-emerald-950/40 border border-emerald-500/40 flex items-center justify-between gap-2 text-xs">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                        <div className="min-w-0">
-                          <span className="text-[10px] text-emerald-300/80 font-mono uppercase block">Cuenta Protegida</span>
-                          <p className="text-white font-medium truncate text-xs">{user.email || user.displayName || 'Sesión Iniciada'}</p>
+                    <form onSubmit={handleEmailAuthSubmit} className="space-y-2.5">
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold text-slate-200 block">Correo electrónico:</label>
+                        <div className="relative">
+                          <Mail className="w-4 h-4 absolute left-3 top-3 text-slate-400 pointer-events-none" />
+                          <input
+                            type="email"
+                            value={emailInput}
+                            onChange={(e) => setEmailInput(e.target.value)}
+                            placeholder="tu@correo.com"
+                            autoComplete="email"
+                            autoFocus
+                            className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-black/60 border border-white/20 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-amber-400 transition-all"
+                          />
                         </div>
                       </div>
-                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold shrink-0">
-                        Activa
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <p className="text-[11px] text-slate-300 leading-snug">
-                        Elige cómo prefieres entrar. Puedes sincronizar en la nube o probar en modo local sin registro:
-                      </p>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {/* Botón 1: Google 1-Tap */}
-                        <button
-                          type="button"
-                          onClick={handleGoogleAuth}
-                          className="chicle-btn flex items-center justify-center gap-2 p-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/15 hover:border-white/30 text-white text-xs font-bold transition-all cursor-pointer"
-                        >
-                          <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
-                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
-                          </svg>
-                          <span>Acceder con Google</span>
-                        </button>
-
-                        {/* Botón 2: Correo y Contraseña */}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            soundFX.playClick();
-                            setShowEmailForm(!showEmailForm);
-                          }}
-                          className={`chicle-btn flex items-center justify-center gap-2 p-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
-                            showEmailForm
-                              ? 'aura-bg-soft aura-border-primary text-white'
-                              : 'bg-white/[0.05] hover:bg-white/[0.1] border-white/15 text-white'
-                          }`}
-                        >
-                          <Mail className="w-4 h-4 text-amber-300 shrink-0" />
-                          <span>{showEmailForm ? 'Cerrar formulario' : 'Correo y Contraseña'}</span>
-                        </button>
-
-                        {/* Botón 3: Modo Local / Sin Registro */}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            try {
-                              soundFX.playClick();
-                              triggerHaptic(15);
-                            } catch (_) {}
-                            setShowEmailForm(false);
-                            handleFinishOnboarding();
-                          }}
-                          className="sm:col-span-2 chicle-btn flex items-center justify-center gap-1.5 p-2 rounded-xl bg-white/[0.02] hover:bg-white/[0.06] border border-dashed border-white/20 text-slate-300 hover:text-white text-[11px] font-mono cursor-pointer"
-                        >
-                          <Zap className="w-3.5 h-3.5 aura-text-primary" />
-                          <span>O entrar directo en Modo Local sin registro (datos en tu teléfono)</span>
-                        </button>
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <label className="text-[11px] font-bold text-slate-200">Contraseña:</label>
+                          <button
+                            type="button"
+                            onClick={() => setShowResetForm(!showResetForm)}
+                            className="text-[11px] text-amber-300 hover:text-amber-200 underline cursor-pointer"
+                          >
+                            ¿Olvidaste tu contraseña?
+                          </button>
+                        </div>
+                        <div className="relative">
+                          <Lock className="w-4 h-4 absolute left-3 top-3 text-slate-400 pointer-events-none" />
+                          <input
+                            type={showPassword ? 'text' : 'password'}
+                            value={passwordInput}
+                            onChange={(e) => setPasswordInput(e.target.value)}
+                            placeholder="••••••••"
+                            autoComplete="current-password"
+                            className="w-full pl-9 pr-10 py-2.5 rounded-xl bg-black/60 border border-white/20 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-amber-400 transition-all"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            aria-label={showPassword ? 'Ocultar contraseña' : 'Ver contraseña'}
+                            className="absolute right-3 top-3 p-0.5 rounded text-slate-400 hover:text-white cursor-pointer"
+                          >
+                            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
                       </div>
 
-                      {/* Formulario desplegable para Correo y Contraseña */}
-                      {showEmailForm && (
-                        <motion.form
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: 'auto' }}
-                          exit={{ opacity: 0, height: 0 }}
-                          onSubmit={handleEmailAuthSubmit}
-                          className="pt-2 space-y-2"
-                        >
-                          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-black/40 border border-white/10 text-[11px]">
-                            <button
-                              type="button"
-                              onClick={() => { soundFX.playClick(); setIsRegisterMode(true); }}
-                              className={`flex-1 py-1 px-2 rounded-lg font-bold transition-all ${
-                                isRegisterMode ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' : 'text-slate-400 hover:text-white'
-                              }`}
-                            >
-                              Crear Cuenta
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => { soundFX.playClick(); setIsRegisterMode(false); }}
-                              className={`flex-1 py-1 px-2 rounded-lg font-bold transition-all ${
-                                !isRegisterMode ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' : 'text-slate-400 hover:text-white'
-                              }`}
-                            >
-                              Ya tengo cuenta
-                            </button>
-                          </div>
-
-                          <div className="space-y-1.5">
-                            <div className="relative">
-                              <Mail className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-400 pointer-events-none" />
-                              <input
-                                type="email"
-                                value={emailInput}
-                                onChange={(e) => setEmailInput(e.target.value)}
-                                placeholder="tu@correo.com"
-                                autoComplete="email"
-                                className="w-full pl-9 pr-3 py-2 rounded-xl bg-black/60 border border-white/15 text-white placeholder-slate-500 text-xs focus:outline-none focus:aura-border-primary"
-                              />
-                            </div>
-                            <div className="relative">
-                              <Lock className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-400 pointer-events-none" />
-                              <input
-                                type={showPassword ? 'text' : 'password'}
-                                value={passwordInput}
-                                onChange={(e) => setPasswordInput(e.target.value)}
-                                placeholder="Contraseña (mínimo 6 caracteres)"
-                                autoComplete={isRegisterMode ? 'new-password' : 'current-password'}
-                                className="w-full pl-9 pr-10 py-2 rounded-xl bg-black/60 border border-white/15 text-white placeholder-slate-500 text-xs focus:outline-none focus:aura-border-primary"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                aria-label={showPassword ? 'Ocultar contraseña' : 'Ver contraseña'}
-                                className="absolute right-2.5 top-2.5 p-0.5 rounded text-slate-400 hover:text-white cursor-pointer"
-                              >
-                                {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                              </button>
-                            </div>
-                          </div>
-
-                          {!isRegisterMode && (
-                            <div className="flex items-center justify-between text-[11px] px-1">
-                              <button
-                                type="button"
-                                onClick={() => setShowResetForm(!showResetForm)}
-                                className="text-amber-300 hover:text-amber-200 underline cursor-pointer"
-                              >
-                                ¿Olvidaste tu contraseña?
-                              </button>
-                            </div>
-                          )}
-
-                          {showResetForm && !isRegisterMode && (
-                            <div className="p-2.5 rounded-xl bg-amber-950/40 border border-amber-400/30 space-y-1.5 text-xs animate-fade-in">
-                              <p className="text-[11px] text-amber-200 leading-snug">
-                                Escribe tu correo arriba y pulsa aquí para recibir un enlace seguro de restablecimiento:
-                              </p>
-                              <button
-                                type="button"
-                                onClick={handlePasswordResetSubmit}
-                                disabled={authSubmitting || !emailInput.trim()}
-                                className="chicle-btn w-full py-1.5 px-3 rounded-lg bg-amber-500/25 hover:bg-amber-500/40 border border-amber-400/50 text-amber-200 text-[11px] font-bold disabled:opacity-50 cursor-pointer"
-                              >
-                                {authSubmitting ? 'Enviando...' : 'Enviar enlace de recuperación'}
-                              </button>
-                            </div>
-                          )}
-
-                          <button
-                            type="submit"
-                            disabled={authSubmitting}
-                            className="chicle-btn optic-active-card w-full py-2 px-3 rounded-xl aura-btn-gradient text-xs font-anton uppercase tracking-wider text-white flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
-                          >
-                            <KeyRound className="w-3.5 h-3.5" />
-                            <span>{authSubmitting ? 'Procesando...' : (isRegisterMode ? 'Crear y Proteger Cuenta' : 'Iniciar Sesión')}</span>
-                          </button>
-
-                          <p className="text-[10px] text-slate-400 text-center leading-tight pt-0.5">
-                            Al continuar, aceptas las{' '}
-                            <button
-                              type="button"
-                              onClick={() => useUIStore.getState().openPrivacyPolicy()}
-                              className="text-amber-300 hover:text-amber-200 underline font-medium"
-                            >
-                              Condiciones y Privacidad
-                            </button>{' '}
-                            de La Solución.
+                      {showResetForm && (
+                        <div className="p-3 rounded-xl bg-amber-950/40 border border-amber-400/40 space-y-2 text-xs animate-fade-in">
+                          <p className="text-[11px] text-amber-200 leading-snug">
+                            Escribe tu correo arriba y pulsa este botón para enviarte un enlace de recuperación:
                           </p>
-                        </motion.form>
+                          <button
+                            type="button"
+                            onClick={handlePasswordResetSubmit}
+                            disabled={authSubmitting || !emailInput.trim()}
+                            className="chicle-btn w-full py-2 px-3 rounded-xl bg-amber-500/25 hover:bg-amber-500/40 border border-amber-400/60 text-amber-200 text-xs font-bold disabled:opacity-50 cursor-pointer"
+                          >
+                            {authSubmitting ? 'Enviando enlace...' : 'Enviar enlace a mi correo'}
+                          </button>
+                        </div>
                       )}
 
-                      {/* Notificación / Mensajes de autenticación */}
                       {(authLocalMessage || authError) && (
-                        <div className="p-2 rounded-xl bg-amber-500/15 border border-amber-400/30 text-amber-200 text-[11px] flex items-center gap-2">
-                          <AlertCircle className="w-3.5 h-3.5 shrink-0 text-amber-300" />
+                        <div className="p-2.5 rounded-xl bg-amber-500/15 border border-amber-400/40 text-amber-200 text-xs flex items-center gap-2">
+                          <AlertCircle className="w-4 h-4 shrink-0 text-amber-300" />
                           <span>{authLocalMessage || authError}</span>
                         </div>
                       )}
+
+                      <button
+                        type="submit"
+                        disabled={authSubmitting}
+                        className="chicle-btn optic-active-card w-full py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-black text-xs font-anton uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 shadow-[0_0_16px_rgba(245,158,11,0.4)]"
+                      >
+                        <KeyRound className="w-4 h-4" />
+                        <span>{authSubmitting ? 'Verificando credenciales...' : 'INICIAR SESIÓN Y ENTRAR'}</span>
+                      </button>
+                    </form>
+
+                    <div className="pt-2 border-t border-white/10 space-y-2">
+                      <button
+                        type="button"
+                        onClick={handleGoogleAuth}
+                        className="chicle-btn w-full flex items-center justify-center gap-2 p-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/15 text-white text-xs font-bold transition-all cursor-pointer"
+                      >
+                        <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                        </svg>
+                        <span>Acceder con Google</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          try {
+                            soundFX.playClick();
+                            triggerHaptic(15);
+                          } catch (_) {}
+                          handleFinishOnboarding();
+                        }}
+                        className="chicle-btn w-full flex items-center justify-center gap-1.5 p-2 rounded-xl bg-white/[0.02] hover:bg-white/[0.06] border border-dashed border-white/20 text-slate-300 hover:text-white text-[11px] font-mono cursor-pointer"
+                      >
+                        <Zap className="w-3.5 h-3.5 aura-text-primary" />
+                        <span>O entrar directo en Modo Local sin registro</span>
+                      </button>
                     </div>
-                  )}
-                </div>
+                  </div>
+                ) : (
+                  /* ── VISTA DE NUEVO USUARIO (CREAR CUENTA + PERSONALIZACIÓN) ── */
+                  <>
+                    {/* Propuesta Única de Valor (UVP) explícita */}
+                    <div className="p-3.5 rounded-2xl bg-[#040814]/80 border aura-border-subtle space-y-2">
+                      <span className="text-[9.5px] font-mono font-bold uppercase tracking-widest aura-text-soft block">
+                        {WELCOME_UVP.badge}
+                      </span>
+                      <h3 className="text-sm sm:text-base font-anton uppercase tracking-wider text-white leading-snug">
+                        {WELCOME_UVP.headline}
+                      </h3>
+                      <p className="text-[11px] text-slate-200 leading-relaxed">
+                        {WELCOME_UVP.description}
+                      </p>
+                      <div className="flex flex-wrap gap-1.5 pt-0.5">
+                        {WELCOME_UVP.frictionPills.map((pill) => (
+                          <span
+                            key={pill}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-400/40 text-emerald-300 text-[9.5px] font-bold"
+                          >
+                            <CheckCircle2 className="w-2.5 h-2.5 shrink-0" />
+                            <span>{pill}</span>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* 1. Nombre de usuario */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-white flex items-center gap-1.5">
+                        <User className="w-3.5 h-3.5 aura-text-primary" />
+                        <span>¿Cómo te gustaría que te llame KAI?</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleNextStep();
+                          }
+                        }}
+                        placeholder="Ej. Alex, Sofía, Campeón..."
+                        maxLength={24}
+                        autoFocus
+                        enterKeyHint="next"
+                        autoComplete="nickname"
+                        className="w-full px-4 py-2.5 rounded-2xl bg-black/50 border border-white/15 text-white placeholder-slate-500 text-sm focus:outline-none focus:aura-border-primary transition-all shadow-inner"
+                      />
+                    </div>
+
+                    {/* 2. Selector rápido de Densidad Narrativa */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-300 block">
+                        Estilo de lenguaje de la plataforma:
+                      </label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {(['minimal', 'tactical'] as const).map((modeKey) => {
+                          const opt = NARRATIVE_MODE_OPTIONS[modeKey];
+                          const active = copy.narrativeMode === modeKey;
+                          return (
+                            <button
+                              key={modeKey}
+                              type="button"
+                              onClick={() => {
+                                soundFX.playClick();
+                                triggerHaptic(15);
+                                copy.setNarrativeMode(modeKey);
+                              }}
+                              className={`chicle-btn !flex-col !items-start p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                                active
+                                  ? 'aura-bg-soft aura-border-primary aura-glow-subtle optic-active-card'
+                                  : 'bg-white/[0.03] border-white/10 text-slate-300 hover:border-white/25'
+                              }`}
+                            >
+                              <span className="text-[10.5px] font-bold block leading-tight text-white">
+                                {opt.label}
+                              </span>
+                              <span className="text-[9.5px] text-slate-400 block mt-0.5 leading-snug">
+                                {modeKey === 'minimal' ? 'Claro y directo, sin jerga' : 'Misiones, rangos y rol'}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* 3. Selección de Acceso y Seguridad de tu Cuenta */}
+                    <div className="p-3.5 rounded-2xl bg-[#040814]/80 border border-white/10 space-y-2.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-bold text-white flex items-center gap-1.5">
+                          <Shield className="w-3.5 h-3.5 text-amber-400" />
+                          <span>Seguridad y respaldo de tu cuenta</span>
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-mono">
+                          Opcional
+                        </span>
+                      </div>
+
+                      {user ? (
+                        <div className="p-2.5 rounded-xl bg-emerald-950/40 border border-emerald-500/40 flex items-center justify-between gap-2 text-xs">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                            <div className="min-w-0">
+                              <span className="text-[10px] text-emerald-300/80 font-mono uppercase block">Cuenta Protegida</span>
+                              <p className="text-white font-medium truncate text-xs">{user.email || user.displayName || 'Sesión Iniciada'}</p>
+                            </div>
+                          </div>
+                          <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold shrink-0">
+                            Activa
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <p className="text-[11px] text-slate-300 leading-snug">
+                            Elige cómo prefieres entrar. Puedes sincronizar en la nube o probar en modo local sin registro:
+                          </p>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {/* Botón 1: Google 1-Tap */}
+                            <button
+                              type="button"
+                              onClick={handleGoogleAuth}
+                              className="chicle-btn flex items-center justify-center gap-2 p-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/15 hover:border-white/30 text-white text-xs font-bold transition-all cursor-pointer"
+                            >
+                              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                              </svg>
+                              <span>Acceder con Google</span>
+                            </button>
+
+                            {/* Botón 2: Correo y Contraseña */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                soundFX.playClick();
+                                setShowEmailForm(!showEmailForm);
+                              }}
+                              className={`chicle-btn flex items-center justify-center gap-2 p-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                                showEmailForm
+                                  ? 'aura-bg-soft aura-border-primary text-white'
+                                  : 'bg-white/[0.05] hover:bg-white/[0.1] border-white/15 text-white'
+                              }`}
+                            >
+                              <Mail className="w-4 h-4 text-amber-300 shrink-0" />
+                              <span>{showEmailForm ? 'Cerrar formulario' : 'Crear con Correo'}</span>
+                            </button>
+
+                            {/* Botón 3: Modo Local / Sin Registro */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                try {
+                                  soundFX.playClick();
+                                  triggerHaptic(15);
+                                } catch (_) {}
+                                setShowEmailForm(false);
+                                handleFinishOnboarding();
+                              }}
+                              className="sm:col-span-2 chicle-btn flex items-center justify-center gap-1.5 p-2 rounded-xl bg-white/[0.02] hover:bg-white/[0.06] border border-dashed border-white/20 text-slate-300 hover:text-white text-[11px] font-mono cursor-pointer"
+                            >
+                              <Zap className="w-3.5 h-3.5 aura-text-primary" />
+                              <span>O entrar directo en Modo Local sin registro (datos en tu teléfono)</span>
+                            </button>
+                          </div>
+
+                          {/* Formulario desplegable para Registro con Correo */}
+                          {showEmailForm && (
+                            <motion.form
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: 'auto' }}
+                              exit={{ opacity: 0, height: 0 }}
+                              onSubmit={handleEmailAuthSubmit}
+                              className="pt-2 space-y-2"
+                            >
+                              <div className="space-y-1.5">
+                                <div className="relative">
+                                  <Mail className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-400 pointer-events-none" />
+                                  <input
+                                    type="email"
+                                    value={emailInput}
+                                    onChange={(e) => setEmailInput(e.target.value)}
+                                    placeholder="tu@correo.com"
+                                    autoComplete="email"
+                                    className="w-full pl-9 pr-3 py-2 rounded-xl bg-black/60 border border-white/15 text-white placeholder-slate-500 text-xs focus:outline-none focus:aura-border-primary"
+                                  />
+                                </div>
+                                <div className="relative">
+                                  <Lock className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-400 pointer-events-none" />
+                                  <input
+                                    type={showPassword ? 'text' : 'password'}
+                                    value={passwordInput}
+                                    onChange={(e) => setPasswordInput(e.target.value)}
+                                    placeholder="Contraseña (mínimo 6 caracteres)"
+                                    autoComplete="new-password"
+                                    className="w-full pl-9 pr-10 py-2 rounded-xl bg-black/60 border border-white/15 text-white placeholder-slate-500 text-xs focus:outline-none focus:aura-border-primary"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    aria-label={showPassword ? 'Ocultar contraseña' : 'Ver contraseña'}
+                                    className="absolute right-2.5 top-2.5 p-0.5 rounded text-slate-400 hover:text-white cursor-pointer"
+                                  >
+                                    {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                                  </button>
+                                </div>
+                              </div>
+
+                              <button
+                                type="submit"
+                                disabled={authSubmitting}
+                                className="chicle-btn optic-active-card w-full py-2 px-3 rounded-xl aura-btn-gradient text-xs font-anton uppercase tracking-wider text-white flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                              >
+                                <KeyRound className="w-3.5 h-3.5" />
+                                <span>{authSubmitting ? 'Procesando...' : 'Crear y Proteger Cuenta'}</span>
+                              </button>
+
+                              <p className="text-[10px] text-slate-400 text-center leading-tight pt-0.5">
+                                Al continuar, aceptas las{' '}
+                                <button
+                                  type="button"
+                                  onClick={() => useUIStore.getState().openPrivacyPolicy()}
+                                  className="text-amber-300 hover:text-amber-200 underline font-medium"
+                                >
+                                  Condiciones y Privacidad
+                                </button>{' '}
+                                de La Solución.
+                              </p>
+                            </motion.form>
+                          )}
+
+                          {/* Notificación / Mensajes de autenticación */}
+                          {(authLocalMessage || authError) && (
+                            <div className="p-2 rounded-xl bg-amber-500/15 border border-amber-400/30 text-amber-200 text-[11px] flex items-center gap-2">
+                              <AlertCircle className="w-3.5 h-3.5 shrink-0 text-amber-300" />
+                              <span>{authLocalMessage || authError}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
               </motion.div>
             )}
 
@@ -1399,7 +1530,22 @@ export const KaiWelcomeOnboarding: React.FC<KaiWelcomeOnboardingProps> = ({
             </div>
 
             <div className="flex items-center gap-2">
-              {step < TOTAL_STEPS ? (
+              {step === 1 && !isRegisterMode ? (
+                <button
+                  type="button"
+                  onClick={handleEmailAuthSubmit}
+                  disabled={authSubmitting}
+                  className="chicle-btn optic-active-card px-5 py-2 rounded-xl font-anton text-xs uppercase tracking-wider cursor-pointer flex items-center gap-1.5 text-white disabled:opacity-50"
+                  style={{
+                    backgroundColor: currentArchetype.accent,
+                    boxShadow: `0 0 16px ${currentArchetype.accent}40`,
+                    color: currentArchetype.id === 'bufon' || currentArchetype.id === 'gobernante' ? '#000000' : '#ffffff'
+                  }}
+                >
+                  <KeyRound className="w-3.5 h-3.5" />
+                  <span>{authSubmitting ? 'Iniciando...' : 'Iniciar Sesión'}</span>
+                </button>
+              ) : step < TOTAL_STEPS ? (
                 <button
                   type="button"
                   onClick={handleNextStep}
