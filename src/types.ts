@@ -136,6 +136,7 @@ export interface PlayerStats {
   hasCompletedAwakening?: boolean;
   dayStartHour?: number; // 0..23, user's custom daily cycle start hour (defaults to 3 AM)
   // ─── Ecosistema Infinito de KAI ─────────────────────────────
+  kaiName?: string; // Nombre asignado a KAI (default: 'KAI')
   kaiShape?: KaiShapeKey;
   kaiAuraColor?: string;
   kaiAuraIntensity?: KaiAuraIntensity;
@@ -143,6 +144,7 @@ export interface PlayerStats {
   kaiCustomForm?: KaiCustomForm | null;
   kaiVault?: KaiCustomForm[];
   kaiNeuralForgeCharges?: number;
+  kaiMemoryLog?: KaiMemoryItem[]; // Bitácora y memoria episódica que viaja a Firestore
   ascensionCrystals?: number;
   frozenHabits?: Record<string, { frozenUntil: string; daysRemaining: number }>;
   synapticBoosters?: number;
@@ -341,6 +343,24 @@ export interface DailyReflection {
   date: string; // YYYY-MM-DD
   note: string;
   updatedAt: string;
+}
+
+export interface KaiMemoryItem {
+  id: string;
+  timestamp: string; // ISO date string
+  date: string; // YYYY-MM-DD
+  type: 'insight' | 'habit_milestone' | 'reflection' | 'task_note' | 'direct_interaction' | 'financial_summary';
+  content: string;
+  significance?: 'baja' | 'media' | 'alta' | 'critica';
+  author: 'user' | 'kai';
+  metadata?: {
+    taskId?: string;
+    taskTitle?: string;
+    category?: string;
+    amount?: number;
+    streak?: number;
+    level?: number;
+  };
 }
 
 export interface RecallItem {

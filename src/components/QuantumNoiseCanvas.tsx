@@ -57,16 +57,40 @@ export const QuantumNoiseCanvas: React.FC = () => {
     let lastTimestamp = performance.now();
     let lastFrameTime = performance.now();
 
-    // Mouse / touch subtle perturbation
+    // Mouse / touch subtle perturbation & idle detection
     const mouse = { x: -1000, y: -1000, active: false };
 
+    let startLoopIfEligible = () => {};
+
+    // Modo Reposo Ecológico: pausa el render loop tras 45s de inactividad total
+    let isIdle = false;
+    let idleTimeout: ReturnType<typeof setTimeout> | null = null;
+    const IDLE_TIME_MS = 45000;
+
+    const wakeUpAndResetIdle = () => {
+      if (isIdle) {
+        isIdle = false;
+        startLoopIfEligible();
+      }
+      if (idleTimeout) clearTimeout(idleTimeout);
+      idleTimeout = setTimeout(() => {
+        isIdle = true;
+        if (animationFrameId) {
+          cancelAnimationFrame(animationFrameId);
+          animationFrameId = 0;
+        }
+      }, IDLE_TIME_MS);
+    };
+
     const handleMouseMove = (e: MouseEvent) => {
+      wakeUpAndResetIdle();
       mouse.x = e.clientX;
       mouse.y = e.clientY;
       mouse.active = true;
     };
 
     const handleTouchMove = (e: TouchEvent) => {
+      wakeUpAndResetIdle();
       if (e.touches.length > 0) {
         mouse.x = e.touches[0].clientX;
         mouse.y = e.touches[0].clientY;
@@ -80,6 +104,7 @@ export const QuantumNoiseCanvas: React.FC = () => {
 
     // Pausar actualización durante scroll activo para priorizar 60 FPS en listas nativas
     const handleScroll = () => {
+      wakeUpAndResetIdle();
       isScrolling = true;
       if (scrollTimeout) clearTimeout(scrollTimeout);
       scrollTimeout = setTimeout(() => {
@@ -129,9 +154,9 @@ export const QuantumNoiseCanvas: React.FC = () => {
 
     resize();
 
-    // Render loop con control estricto de 20 FPS (50ms por cuadro)
+    // Render loop con control estricto de 20 FPS (50ms por cuadro) y auto-reposo inteligente
     const render = (now: number) => {
-      if (!isVisible || !isIntersecting || isBatteryThrottled) {
+      if (!isVisible || !isIntersecting || isBatteryThrottled || isIdle) {
         animationFrameId = 0;
         return;
       }
@@ -220,15 +245,15 @@ export const QuantumNoiseCanvas: React.FC = () => {
 
       ctx.globalAlpha = 1.0;
 
-      if (isVisible && isIntersecting && !isBatteryThrottled) {
+      if (isVisible && isIntersecting && !isBatteryThrottled && !isIdle) {
         animationFrameId = requestAnimationFrame(render);
       } else {
         animationFrameId = 0;
       }
     };
 
-    const startLoopIfEligible = () => {
-      if (isVisible && isIntersecting && !isBatteryThrottled && !animationFrameId) {
+    startLoopIfEligible = () => {
+      if (isVisible && isIntersecting && !isBatteryThrottled && !isIdle && !animationFrameId) {
         lastTimestamp = performance.now();
         lastFrameTime = performance.now();
         animationFrameId = requestAnimationFrame(render);
@@ -301,12 +326,16 @@ export const QuantumNoiseCanvas: React.FC = () => {
     window.addEventListener('touchmove', handleTouchMove, { passive: true });
     window.addEventListener('mouseleave', handleMouseLeave);
     window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('pointerdown', wakeUpAndResetIdle, { passive: true });
+    window.addEventListener('keydown', wakeUpAndResetIdle, { passive: true });
 
+    wakeUpAndResetIdle();
     startLoopIfEligible();
 
     return () => {
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
       if (scrollTimeout) clearTimeout(scrollTimeout);
+      if (idleTimeout) clearTimeout(idleTimeout);
       intersectionObserver.disconnect();
       batteryApiCleaners.forEach((clean) => clean());
       window.removeEventListener('resize', resize);
@@ -314,6 +343,8 @@ export const QuantumNoiseCanvas: React.FC = () => {
       window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('mouseleave', handleMouseLeave);
       window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('pointerdown', wakeUpAndResetIdle);
+      window.removeEventListener('keydown', wakeUpAndResetIdle);
       document.removeEventListener('visibilitychange', onVisibilityChange);
     };
   }, [zenMode, glowIntensity, palette.c1, palette.c2, palette.c3, palette.c4]);

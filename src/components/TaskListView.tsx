@@ -187,9 +187,36 @@ export const TaskListViewComponent: React.FC<TaskListViewProps> = ({
 
   const handleSaveTaskNote = () => {
     if (!noteTargetTask) return;
+    const finalNote = taskNoteText.trim() || undefined;
     if (onEditTask) {
-      onEditTask(noteTargetTask.id, { notes: taskNoteText.trim() });
+      onEditTask(noteTargetTask.id, { notes: finalNote });
     }
+
+    // Registrar en memoria de KAI para Firestore y contexto de conversación
+    if (finalNote && onUpdateStats) {
+      onUpdateStats((prev) => {
+        const memLog = Array.isArray(prev.kaiMemoryLog) ? [...prev.kaiMemoryLog] : [];
+        const newMem = {
+          id: `mem-task-${noteTargetTask.id}-${Date.now()}`,
+          timestamp: new Date().toISOString(),
+          date: currentDate,
+          type: 'task_note' as const,
+          content: `Apunte en [${noteTargetTask.title}]: "${finalNote}"`,
+          significance: 'media' as const,
+          author: 'user' as const,
+          metadata: {
+            taskId: noteTargetTask.id,
+            taskTitle: noteTargetTask.title,
+            category: noteTargetTask.category,
+          },
+        };
+        return {
+          ...prev,
+          kaiMemoryLog: [newMem, ...memLog.filter((m) => m.metadata?.taskId !== noteTargetTask.id)].slice(0, 60),
+        };
+      });
+    }
+
     soundFX.playClick();
     setNoteTargetTask(null);
   };

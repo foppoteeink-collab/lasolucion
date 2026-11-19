@@ -163,11 +163,12 @@ if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
         checkSWUpdate();
       }
     });
+    // Verificación periódica eficiente (cada 5 minutos en lugar de cada 15 segundos)
     setInterval(() => {
       if (document.visibilityState === 'visible') {
         checkSWUpdate();
       }
-    }, 15000);
+    }, 300000);
   }
 }
 

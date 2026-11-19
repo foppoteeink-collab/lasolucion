@@ -194,9 +194,22 @@ export function mergePlayerStats(local: PlayerStats, remote: PlayerStats): Playe
     mainGoal: pickStr(remote.mainGoal, local.mainGoal),
     characterClass: pickStr(remote.characterClass, local.characterClass, 'Aventurero'),
     // CRITICAL: Protect user's local KAI equipment & customization choices from stale remote snapshots
+    kaiName: local.kaiName || remote.kaiName || 'KAI',
     kaiShape: local.kaiShape || remote.kaiShape || 'prism',
     kaiAuraColor: local.kaiAuraColor || remote.kaiAuraColor || '#00f0ff',
     kaiAuraIntensity: local.kaiAuraIntensity || remote.kaiAuraIntensity || 'normal',
+    kaiMemoryLog: (() => {
+      // Merge memory logs from local and remote, deduplicating by id and keeping up to 60 most recent
+      const localMem = Array.isArray(local.kaiMemoryLog) ? local.kaiMemoryLog : [];
+      const remoteMem = Array.isArray(remote.kaiMemoryLog) ? remote.kaiMemoryLog : [];
+      const map = new Map<string, any>();
+      [...remoteMem, ...localMem].forEach((m) => {
+        if (m && m.id) map.set(m.id, m);
+      });
+      return Array.from(map.values())
+        .sort((a, b) => (a.timestamp > b.timestamp ? -1 : 1))
+        .slice(0, 60);
+    })(),
     kaiCustomForm: (() => {
       const merged = local.kaiCustomForm || remote.kaiCustomForm || null;
       if (merged && !merged.imageUrl && merged.storageRef && typeof window !== 'undefined') {
@@ -686,6 +699,7 @@ export const useCloudSync = (
           finalizedDays: windowDateMap(liveStats.finalizedDays),
           sleepLogs: windowDateMap(liveStats.sleepLogs),
           closedDaysLog: windowDateMap(liveStats.closedDaysLog),
+          kaiMemoryLog: Array.isArray(liveStats.kaiMemoryLog) ? liveStats.kaiMemoryLog.slice(0, 50) : [],
         };
 
         const windowedReflections = windowDateMap(reflections);

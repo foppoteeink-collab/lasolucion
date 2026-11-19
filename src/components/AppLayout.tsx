@@ -396,7 +396,8 @@ export function AppLayout() {
       }
     };
 
-    const intervalId = setInterval(checkDateChange, 15000);
+    // Verificación de cambio de día a medianoche (cada 60 segundos es óptimo y ahorra CPU)
+    const intervalId = setInterval(checkDateChange, 60000);
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         checkDateChange();

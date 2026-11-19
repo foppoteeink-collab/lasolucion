@@ -343,10 +343,16 @@ export const HoloCompanion: React.FC<HoloCompanionProps> = ({
       }
     };
 
+    let lastScheduleTime = 0;
+    const POINTER_THROTTLE_MS = 33; // Throttling a ~30 FPS para no saturar la CPU en pantallas de alta tasa de refresco (120Hz)
+
     const schedulePointerPosition = (clientX: number, clientY: number) => {
       if (typeof document !== 'undefined' && document.hidden) return;
       pendingX = clientX;
       pendingY = clientY;
+      const now = performance.now();
+      if (now - lastScheduleTime < POINTER_THROTTLE_MS) return;
+      lastScheduleTime = now;
       if (rafId === null) {
         rafId = requestAnimationFrame(flushPointerPosition);
       }

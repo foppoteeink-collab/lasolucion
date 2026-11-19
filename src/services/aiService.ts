@@ -1901,9 +1901,8 @@ ${trimmed}
 }
 
 /**
- * Conversación viva y contextual de KAI dentro de "Háblame".
- * Lee el estado real del usuario (racha, nivel, tareas de hoy) y responde
- * breve, humano y accionable listo para la Voz Viva.
+ * Conversación viva, empática y contextual de KAI dentro de "Háblame" y Bitácora.
+ * Conoce el nombre del usuario, su racha, notas de tareas, finanzas, bitácora y memorias episódicas.
  */
 export async function askKaiConversationAI(params: {
   message: string;
@@ -1911,8 +1910,22 @@ export async function askKaiConversationAI(params: {
   stats: any;
   todayTasks: any[];
   history?: Array<{ role: 'user' | 'kai'; text: string }>;
+  recentNotes?: string[];
+  recentMemories?: string[];
+  financialSummary?: string;
+  reflectionContext?: string;
 }): Promise<{ reply: string; usedRemoteAI: boolean }> {
-  const { message, kaiName = 'KAI', stats, todayTasks = [], history = [] } = params;
+  const {
+    message,
+    kaiName = 'KAI',
+    stats,
+    todayTasks = [],
+    history = [],
+    recentNotes = [],
+    recentMemories = [],
+    financialSummary,
+    reflectionContext,
+  } = params;
   const trimmed = (message || '').trim();
 
   const completed = todayTasks.filter((t) => t && t.completed);
@@ -1923,18 +1936,19 @@ export async function askKaiConversationAI(params: {
 
   const fallbackReply = (): string => {
     const lower = trimmed.toLowerCase();
+    const salutation = userName ? `, ${userName}` : '';
     if (/por\s+qu[eé]\s+tarea|cu[aá]l\s+(?:empiezo|hago)|qu[eé]\s+hago\s+primero|qu[eé]\s+me\s+recomiendas/.test(lower)) {
       if (pending.length > 0) {
         const first = pending[0];
         const timeHint = first.timeBlock ? ` (${first.timeBlock})` : '';
-        return `Empieza por "${first.title}"${timeHint}. Completar la primera pieza rompe la inercia y te quedan ${pending.length} pendientes hoy.`;
+        return `Empieza por "${first.title}"${timeHint}${salutation}. Completar la primera pieza rompe la inercia y te quedan ${pending.length} pendientes hoy.`;
       }
-      return `¡Ya completaste todo lo que tenías hoy! Aprovecha para descansar o dictarme si quieres adelantar algo para mañana.`;
+      return `¡Ya completaste todo lo que tenías hoy${salutation}! Aprovecha para descansar o dictarme si quieres adelantar algo para mañana.`;
     }
     if (/motivaci[oó]n|cansado|desmotivado|bloqueado|estresado|ánimo|animo/.test(lower)) {
       return streak > 0
-        ? `Llevas ${streak} días de racha y nivel ${level}. No necesitas hacerlo perfecto hoy, solo dar un paso pequeño de 5 minutos ahora mismo.`
-        : `Respira hondo. Elige una sola cosa pequeña de hoy y haz solo los primeros 5 minutos; yo te acompaño.`;
+        ? `Llevas ${streak} días de racha y nivel ${level}${salutation}. No necesitas hacerlo perfecto hoy, solo dar un paso de 5 minutos ahora mismo.`
+        : `Respira hondo${salutation}. Elige una sola cosa pequeña de hoy y haz solo los primeros 5 minutos; yo te acompaño.`;
     }
     if (/hola|buenos|buenas/.test(lower)) {
       const greetingName = userName ? ` ${userName}` : '';
@@ -1943,8 +1957,8 @@ export async function askKaiConversationAI(params: {
         : `¡Hola${greetingName}! Estoy aquí contigo. Puedes dictarme tareas, hábitos, gastos, pedirme un diagnóstico o iniciar foco.`;
     }
     return pending.length > 0
-      ? `Hoy llevas ${completed.length} completadas y ${pending.length} pendientes; tu siguiente foco natural es "${pending[0].title}". ¿Quieres que iniciemos un Pomodoro o ajustamos algo?`
-      : `Te escucho. Puedo agendar tus tareas o hábitos, anotar gastos, hacerte un diagnóstico real o iniciar un bloque de enfoque.`;
+      ? `Hoy llevas ${completed.length} completadas y ${pending.length} pendientes${salutation}; tu siguiente foco natural es "${pending[0].title}". ¿Quieres que iniciemos un Pomodoro o ajustamos algo?`
+      : `Te escucho${salutation}. Puedo agendar tus tareas o hábitos, anotar gastos, hacerte un diagnóstico real o iniciar un bloque de enfoque.`;
   };
 
   if (!trimmed) {
@@ -1957,21 +1971,34 @@ export async function askKaiConversationAI(params: {
     .join('; ');
 
   const recentHistory = history
-    .slice(-4)
-    .map((h) => `${h.role === 'user' ? 'Usuario' : kaiName}: ${h.text}`)
+    .slice(-6)
+    .map((h) => `${h.role === 'user' ? (userName || 'Usuario') : kaiName}: ${h.text}`)
     .join('\n');
 
-  const systemInstruction = `Eres ${kaiName}, el compañero personal de productividad en "La Solución".
-Hablas en español natural, cercano, claro y directo — como un amigo lúcido, sin jerga exagerada ni formato markdown.
-Responde en máximo 2 o 3 frases cortas (máximo 45 palabras en total) porque tu respuesta se escuchará en voz alta.
-Usa los datos reales del usuario cuando aporten valor.`;
+  // Enriquecer contexto con memorias previas de KAI y notas
+  const memoriesBlock = recentMemories.length > 0
+    ? `\nMemorias que recuerdas de ${userName || 'usuario'}:\n${recentMemories.slice(0, 5).map(m => `• ${m}`).join('\n')}`
+    : '';
+
+  const notesBlock = recentNotes.length > 0
+    ? `\nApuntes/notas recientes en tareas:\n${recentNotes.slice(0, 4).map(n => `• ${n}`).join('\n')}`
+    : '';
+
+  const financeBlock = financialSummary ? `\nContexto financiero reciente: ${financialSummary}` : '';
+  const reflBlock = reflectionContext ? `\nÚltima reflexión del usuario: "${reflectionContext}"` : '';
+
+  const systemInstruction = `Eres ${kaiName}, el compañero personal de productividad y consejero de vida en "La Solución".
+Conoces a tu usuario por su nombre (${userName || 'compañero/a'}). Eres empático, lúcido, accionable y directo.
+Hablas en español natural y humano, como un consejero de confianza que da seguimiento real.
+Responde de forma concisa (máximo 2 a 3 frases fluidas, alrededor de 45 palabras) para que se escuche excelente en voz alta.
+Menciona el nombre del usuario con naturalidad y haz referencia a sus avances, notas o racha si es relevante.`;
 
   const prompt = `Contexto real del usuario hoy:
 - Nombre: ${userName || 'Usuario'} | Nivel: ${level} | Racha: ${streak} días
 - Progreso hoy: ${completed.length}/${todayTasks.length} completadas
-- Pendientes principales: ${pendingPreview || 'Ninguna pendiente'}
+- Pendientes principales: ${pendingPreview || 'Ninguna pendiente'}${notesBlock}${memoriesBlock}${financeBlock}${reflBlock}
 ${recentHistory ? `\nConversación reciente:\n${recentHistory}\n` : ''}
-Usuario dice: "${trimmed}"`;
+${userName || 'Usuario'} dice: "${trimmed}"`;
 
   try {
     const aiText = await fetchGeminiPrompt(prompt, {
@@ -1991,3 +2018,111 @@ Usuario dice: "${trimmed}"`;
 
 
 
+
+/**
+ * Genera una reflexión o consejo profundo del día por parte de KAI
+ * para registrar en la Bitácora y orientar al usuario.
+ */
+export async function generateKaiBitacoraAdvice(params: {
+  kaiName?: string;
+  stats: any;
+  dateStr: string;
+  todayTasks: any[];
+  recentReflections?: string[];
+  recentMemories?: string[];
+}): Promise<{ advice: string; usedRemoteAI: boolean }> {
+  const {
+    kaiName = 'KAI',
+    stats,
+    dateStr,
+    todayTasks = [],
+    recentReflections = [],
+    recentMemories = [],
+  } = params;
+
+  const userName = stats?.username || stats?.fullName || '';
+  const level = stats?.level || 1;
+  const streak = stats?.streakDays || 0;
+  const completed = todayTasks.filter((t) => t && t.completed).length;
+  const total = todayTasks.length;
+
+  const fallbackAdvice = (): string => {
+    const salutation = userName ? `, ${userName}` : '';
+    if (completed === total && total > 0) {
+      return `Día completado al 100%${salutation}. La constancia construye identidad antes que resultados visibles. Descansa con la mente limpia.`;
+    }
+    if (streak >= 7) {
+      return `Llevas ${streak} días construyendo este ritmo${salutation}. Mañana no busques hacerlo perfecto; busca cumplir con el primer bloque sin titubear.`;
+    }
+    return `Cada día en la bitácora es un testimonio de tu avance${salutation}. Identifica lo que drenó tu energía hoy y simplifica tu siguiente jornada.`;
+  };
+
+  const systemInstruction = `Eres ${kaiName}, consejero sabio, táctico y empático en "La Solución".
+Escribes una entrada de consejo reflexivo para la bitácora diaria de ${userName || 'tu usuario/a'}.
+Estilo: Profundo, conciso, humano (2 a 3 oraciones reflexivas y accionables). Sin viñetas ni formato recargado.`;
+
+  const prompt = `Usuario: ${userName || 'Compañero'} | Fecha: ${dateStr}
+Nivel: ${level} | Racha: ${streak} días | Progreso hoy: ${completed}/${total} tareas completadas.
+${recentReflections.length > 0 ? `Reflexión anterior: "${recentReflections[0]}"` : ''}
+${recentMemories.length > 0 ? `Memoria clave: "${recentMemories[0]}"` : ''}
+
+Escribe tu consejo o mensaje de bitácora para hoy.`;
+
+  try {
+    const text = await fetchGeminiPrompt(prompt, {
+      systemInstruction,
+      timeoutMs: 12000,
+    });
+    if (text && text.trim()) {
+      return { advice: text.trim(), usedRemoteAI: true };
+    }
+  } catch (err) {
+    console.warn('[KaiBitacoraAdvice] Fallback local:', err);
+  }
+
+  return { advice: fallbackAdvice(), usedRemoteAI: false };
+}
+
+/**
+ * Genera una sugerencia rápida de nota o bitácora para una tarea específica
+ * basada en su categoría, título y el estado del usuario.
+ */
+export async function generateTaskNoteSuggestion(params: {
+  taskTitle: string;
+  category?: string;
+  isCompleted?: boolean;
+  kaiName?: string;
+  userName?: string;
+}): Promise<{ suggestion: string; usedRemoteAI: boolean }> {
+  const { taskTitle, category = 'rutina', isCompleted = false, kaiName = 'KAI', userName = '' } = params;
+
+  const fallbackSuggestion = (): string => {
+    if (isCompleted) {
+      if (category === 'entrenamiento') return 'Completado con buena intensidad. Buen trabajo hoy.';
+      if (category === 'estudio') return 'Sesión finalizada: conceptos clave repasados y asimilados.';
+      if (category === 'clientes' || category === 'trabajo') return 'Objetivo cumplido y entregado a tiempo.';
+      return 'Misión completada según lo planeado.';
+    }
+    return 'En progreso: primer bloque avanzado, pendiente cierre.';
+  };
+
+  const systemInstruction = `Eres ${kaiName}, asistente personal de productividad en "La Solución".
+Genera un apunte breve, claro y útil (1 sola frase de máximo 15 palabras) para que el usuario registre como nota o bitácora de su tarea "${taskTitle}".
+Debe sonar como una nota personal de progreso lista para guardarse. Sin comillas ni viñetas.`;
+
+  const prompt = `Tarea: "${taskTitle}" | Categoría: ${category} | Estado: ${isCompleted ? 'Completada' : 'Pendiente'} | Usuario: ${userName || 'Compañero'}`;
+
+  try {
+    const text = await fetchGeminiPrompt(prompt, {
+      systemInstruction,
+      timeoutMs: 8000,
+    });
+    if (text && text.trim()) {
+      return { suggestion: text.trim().replace(/^["']|["']$/g, ''), usedRemoteAI: true };
+    }
+  } catch (err) {
+    console.warn('[generateTaskNoteSuggestion] Fallback local:', err);
+  }
+
+  return { suggestion: fallbackSuggestion(), usedRemoteAI: false };
+}

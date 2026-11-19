@@ -22,6 +22,8 @@ export default function App() {
   const reflections = useAppStore(s => s.reflections);
   const sleepLogs = usePlayerStore(s => s.stats.sleepLogs);
   const hasJournalEntry = Boolean(reflections?.[todayStr] || sleepLogs?.[todayStr]);
+  const userName = usePlayerStore(s => s.stats.username || s.stats.fullName || '');
+  const kaiName = usePlayerStore(s => s.stats.kaiName || s.stats.kaiCustomForm?.name || 'KAI');
   const dayStartHour = usePlayerStore(s => s.stats.dayStartHour ?? 8);
   const scheduledRef = useRef(false);
 
@@ -69,9 +71,11 @@ export default function App() {
       isDayStarted,
       isDayFinished,
       hasJournalEntry,
-      dayStartHour
+      dayStartHour,
+      userName,
+      kaiName
     });
-  }, [todayTasks, streakDays, isDayStarted, isDayFinished, hasJournalEntry, dayStartHour]);
+  }, [todayTasks, streakDays, isDayStarted, isDayFinished, hasJournalEntry, dayStartHour, userName, kaiName]);
 
   return (
     <TimerProvider>

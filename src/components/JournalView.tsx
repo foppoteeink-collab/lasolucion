@@ -40,6 +40,8 @@ import { WeeklyReportModal } from './WeeklyReportModal';
 import { ScrollReveal } from './common/ScrollReveal';
 import { TabHeader } from './common/TabHeader';
 import { useTaskStore } from '../store/useTaskStore';
+import { usePlayerStore } from '../store/usePlayerStore';
+import { generateKaiBitacoraAdvice } from '../services/aiService';
 
 interface JournalViewProps {
   tasksByDate?: Record<string, TaskItem[]>;
@@ -113,6 +115,9 @@ export const JournalView: React.FC<JournalViewProps> = ({
   const [reflectionText, setReflectionText] = useState('');
   const [dictatingTarget, setDictatingTarget] = useState<'reflection' | 'note' | null>(null);
   const [speakingDate, setSpeakingDate] = useState<string | null>(null);
+  const [isGeneratingKaiAdvice, setIsGeneratingKaiAdvice] = useState<string | null>(null);
+  const setPlayerStats = usePlayerStore((s) => s.setStats);
+  const kaiName = activeStats?.kaiName || activeStats?.kaiCustomForm?.name || 'KAI';
   const voiceRecRef = React.useRef<VoiceRecognizerController | null>(null);
 
   const stopJournalDictation = React.useCallback(() => {
@@ -213,8 +218,67 @@ export const JournalView: React.FC<JournalViewProps> = ({
       setLocalReflections(next);
       safeSetItem('taskquest_daily_reflections', JSON.stringify(next));
     }
+
+    // Registrar memoria de reflexión en KAI para sincronización a Firestore
+    if (trimmed) {
+      setPlayerStats((prev) => {
+        const memLog = Array.isArray(prev.kaiMemoryLog) ? [...prev.kaiMemoryLog] : [];
+        const newMem = {
+          id: `mem-${date}-${Date.now()}`,
+          timestamp: new Date().toISOString(),
+          date,
+          type: 'reflection' as const,
+          content: trimmed,
+          significance: 'alta' as const,
+          author: 'user' as const,
+        };
+        return {
+          ...prev,
+          kaiMemoryLog: [newMem, ...memLog.filter((m) => m.date !== date || m.type !== 'reflection')].slice(0, 60),
+        };
+      });
+    }
+
     setEditingReflectionDate(null);
     soundFX.playClick();
+  };
+
+  const handleRequestKaiAdvice = async (date: string) => {
+    soundFX.playClick();
+    setIsGeneratingKaiAdvice(date);
+    try {
+      const dayTasks = tasksByDate[date] || [];
+      const pastReflections = Object.entries(reflections)
+        .filter(([d]) => d !== date)
+        .map(([, r]) => r);
+      const pastMemories = Array.isArray(activeStats?.kaiMemoryLog)
+        ? activeStats.kaiMemoryLog.map((m: any) => m.content)
+        : [];
+
+      const res = await generateKaiBitacoraAdvice({
+        kaiName,
+        stats: activeStats,
+        dateStr: date,
+        todayTasks: dayTasks,
+        recentReflections: pastReflections,
+        recentMemories: pastMemories,
+      });
+
+      if (res.advice) {
+        const newReflection = reflectionText.trim()
+          ? `${reflectionText.trim()}\n\n💬 ${kaiName}: "${res.advice}"`
+          : `💬 ${kaiName}: "${res.advice}"`;
+        setReflectionText(newReflection);
+        if (editingReflectionDate !== date) {
+          setEditingReflectionDate(date);
+        }
+        soundFX.playLevelUp();
+      }
+    } catch (err) {
+      console.warn('[JournalView] Error al generar consejo KAI:', err);
+    } finally {
+      setIsGeneratingKaiAdvice(null);
+    }
   };
 
   // Process and filter dates using local date calibration (no UTC drift)
@@ -311,7 +375,34 @@ export const JournalView: React.FC<JournalViewProps> = ({
 
   const handleSaveEdit = () => {
     if (!editingTask) return;
-    onUpdateTaskNote(editingTask.date, editingTask.task.id, editText.trim() || undefined);
+    const finalNote = editText.trim() || undefined;
+    onUpdateTaskNote(editingTask.date, editingTask.task.id, finalNote);
+
+    // Guardar en la memoria de KAI para que recuerde los apuntes específicos
+    if (finalNote) {
+      setPlayerStats((prev) => {
+        const memLog = Array.isArray(prev.kaiMemoryLog) ? [...prev.kaiMemoryLog] : [];
+        const newMem = {
+          id: `mem-task-${editingTask.task.id}-${Date.now()}`,
+          timestamp: new Date().toISOString(),
+          date: editingTask.date,
+          type: 'task_note' as const,
+          content: `Apunte en [${editingTask.task.title}]: "${finalNote}"`,
+          significance: 'media' as const,
+          author: 'user' as const,
+          metadata: {
+            taskId: editingTask.task.id,
+            taskTitle: editingTask.task.title,
+            category: editingTask.task.category,
+          },
+        };
+        return {
+          ...prev,
+          kaiMemoryLog: [newMem, ...memLog.filter((m) => m.metadata?.taskId !== editingTask.task.id)].slice(0, 60),
+        };
+      });
+    }
+
     soundFX.playClick();
     setEditingTask(null);
   };
@@ -609,27 +700,39 @@ export const JournalView: React.FC<JournalViewProps> = ({
                             placeholder="¿Qué aprendiste hoy? ¿Qué salió excelente y qué mejorarás mañana? (También puedes dictar con voz)"
                             className="w-full p-2.5 rounded-xl bg-black/40 border border-amber-500/40 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400"
                           />
-                          <div className="flex items-center justify-end gap-2">
+                          <div className="flex items-center justify-between gap-2 pt-1">
                             <button
                               type="button"
-                              onClick={() => {
-                                stopJournalDictation();
-                                setEditingReflectionDate(null);
-                              }}
-                              className="chicle-btn px-3 py-1.5 bg-white/[0.05] hover:bg-white/[0.12] border border-white/15 text-slate-200 hover:text-white rounded-xl text-xs font-bold cursor-pointer"
+                              onClick={() => handleRequestKaiAdvice(date)}
+                              disabled={isGeneratingKaiAdvice === date}
+                              className="chicle-btn px-3 py-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-200 border border-cyan-400/40 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
+                              title={`Pedir a ${kaiName} una reflexión personalizada basada en tus hábitos y tareas`}
                             >
-                              Cancelar
+                              <Brain className={`w-3.5 h-3.5 text-cyan-300 ${isGeneratingKaiAdvice === date ? 'animate-spin' : ''}`} />
+                              <span>{isGeneratingKaiAdvice === date ? `${kaiName} pensando...` : `Consejo de ${kaiName}`}</span>
                             </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                stopJournalDictation();
-                                handleSaveReflection(date);
-                              }}
-                              className="chicle-btn aura-btn-gradient optic-active-card px-3.5 py-1.5 text-xs font-anton uppercase tracking-wider rounded-xl cursor-pointer"
-                            >
-                              Guardar Reflexión
-                            </button>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  stopJournalDictation();
+                                  setEditingReflectionDate(null);
+                                }}
+                                className="chicle-btn px-3 py-1.5 bg-white/[0.05] hover:bg-white/[0.12] border border-white/15 text-slate-200 hover:text-white rounded-xl text-xs font-bold cursor-pointer"
+                              >
+                                Cancelar
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  stopJournalDictation();
+                                  handleSaveReflection(date);
+                                }}
+                                className="chicle-btn aura-btn-gradient optic-active-card px-3.5 py-1.5 text-xs font-anton uppercase tracking-wider rounded-xl cursor-pointer"
+                              >
+                                Guardar Reflexión
+                              </button>
+                            </div>
                           </div>
                         </div>
                       ) : (

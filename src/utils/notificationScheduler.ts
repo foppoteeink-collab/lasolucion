@@ -168,7 +168,7 @@ function scheduleHabitReminders(tasks: TaskItem[]): void {
 }
 
 /** Programa briefing matutino basado en la primera tarea del día */
-function scheduleMorningBriefing(tasks: TaskItem[]): void {
+function scheduleMorningBriefing(tasks: TaskItem[], userName = '', kaiName = 'KAI'): void {
   // Encontrar la tarea más temprana con timeBlock
   const sorted = tasks
     .filter(t => t.timeBlock && t.timeBlock.trim().length > 0)
@@ -200,10 +200,11 @@ function scheduleMorningBriefing(tasks: TaskItem[]): void {
   if (ms <= 5000) return; // Ya pasó o muy pronto
 
   const totalTasks = tasks.filter(t => !t.completed).length;
+  const salutation = userName ? ` ${userName}` : '';
 
   const id = setTimeout(async () => {
     await notificationService.pushToOS(
-      `🌅 ¡Buenos días! Tu jornada comienza`,
+      `🌅 ¡Buenos días${salutation}! (${kaiName})`,
       `Tienes ${totalTasks} misión${totalTasks !== 1 ? 'es' : ''} hoy. La primera empieza a las ${timeStr}: ${firstTask.title}`,
       { tag: 'morning-briefing', renotify: false }
     );
@@ -213,14 +214,15 @@ function scheduleMorningBriefing(tasks: TaskItem[]): void {
 }
 
 /** Programa recordatorio de reflexión nocturna */
-function scheduleNightlyReflection(nightlyHour: number): void {
+function scheduleNightlyReflection(nightlyHour: number, userName = '', kaiName = 'KAI'): void {
   const ms = msUntilHour(nightlyHour, 0);
   if (ms === null) return;
 
+  const salutation = userName ? ` ${userName}` : '';
   const id = setTimeout(async () => {
     await notificationService.pushToOS(
-      '🌙 ¿Cómo fue tu día, Héroe?',
-      'Es hora de tu reflexión nocturna. Cierra el día y mantén tu racha activa.',
+      `🌙 ¿Cómo fue tu día${salutation}? (${kaiName})`,
+      'Es hora de tu reflexión nocturna. Cierra el día en tu bitácora y mantén tu racha activa.',
       { tag: 'nightly-reflection', renotify: false }
     );
   }, ms);
@@ -251,7 +253,7 @@ function scheduleBossAlert(tasks: TaskItem[]): void {
 }
 
 /** Programa alerta de racha en peligro (4h sin completar tareas) */
-function scheduleStreakAlert(streakDays: number, tasks: TaskItem[]): void {
+function scheduleStreakAlert(streakDays: number, tasks: TaskItem[], userName = '', kaiName = 'KAI'): void {
   if (streakDays < 1) return; // Solo si tiene racha que perder
 
   const now = new Date();
@@ -270,15 +272,15 @@ function scheduleStreakAlert(streakDays: number, tasks: TaskItem[]): void {
 
       if (completedToday === 0 && totalToday > 0) {
         await notificationService.pushToOS(
-          `🔥 Racha de ${streakDays} días en peligro`,
-          `No has completado ninguna misión hoy. ¡Completa al menos 1 para proteger tu racha!`,
+          `🔥 ${kaiName}: ¡Protege tu racha de ${streakDays} días!`,
+          `${userName ? `${userName}, a` : 'A'}ún no has completado ninguna misión hoy. ¡Completa al menos 1 para proteger tu racha!`,
           { tag: 'streak-alert', renotify: true }
         );
       } else if (completedToday < Math.ceil(totalToday * 0.25) && hour >= 20) {
         // A las 8pm con menos del 25% completado
         await notificationService.pushToOS(
-          `⚠️ Día casi terminado — ${completedToday}/${totalToday} misiones`,
-          `Tu racha de ${streakDays} días podría estar en riesgo. ¡Apúrate!`,
+          `⚠️ ${kaiName}: Día casi terminado — ${completedToday}/${totalToday} misiones`,
+          `${userName ? `${userName}, tu` : 'Tu'} racha de ${streakDays} días podría estar en riesgo. ¡Apúrate!`,
           { tag: 'streak-alert-late', renotify: true }
         );
       }
@@ -289,14 +291,15 @@ function scheduleStreakAlert(streakDays: number, tasks: TaskItem[]): void {
 }
 
 /** Programa alerta para iniciar la jornada laboral si aún no se ha iniciado */
-function scheduleStartDayReminder(dayStartHour: number, isDayStarted: boolean): void {
+function scheduleStartDayReminder(dayStartHour: number, isDayStarted: boolean, userName = '', kaiName = 'KAI'): void {
   if (isDayStarted) return;
 
   const ms = msUntilHour(dayStartHour, 0);
+  const salutation = userName ? ` ${userName}` : '';
   if (ms !== null) {
     const id = setTimeout(async () => {
       await notificationService.pushToOS(
-        '🌅 ¡Tu jornada laboral comienza!',
+        `🌅 ¡Tu jornada laboral comienza${salutation}! (${kaiName})`,
         'No olvides iniciar tu turno en La Solución para activar tus tareas y objetivos del día.',
         { tag: 'start-day-reminder', renotify: true }
       );
@@ -308,8 +311,8 @@ function scheduleStartDayReminder(dayStartHour: number, isDayStarted: boolean): 
     if (nowHour >= dayStartHour && nowHour < 15) {
       const id = setTimeout(async () => {
         await notificationService.pushToOS(
-          '⏰ Recordatorio de Jornada',
-          'Aún no has iniciado tu jornada de hoy. Toca para abrir tu turno y registrar tu progreso.',
+          `⏰ ${kaiName}: Recordatorio de Jornada`,
+          `${userName ? `${userName}, a` : 'A'}ún no has iniciado tu jornada de hoy. Toca para abrir tu turno y registrar tu progreso.`,
           { tag: 'start-day-reminder-missed', renotify: true }
         );
       }, 25000);
@@ -323,17 +326,21 @@ function scheduleCloseDayAndJournalReminder(
   dayCloseHour: number,
   nightlyHour: number,
   isDayFinished: boolean,
-  hasJournalEntry: boolean
+  hasJournalEntry: boolean,
+  userName = '',
+  kaiName = 'KAI'
 ): void {
   if (isDayFinished && hasJournalEntry) return;
+
+  const salutation = userName ? `, ${userName}` : '';
 
   // Alerta de fin de turno habitual
   const msClose = msUntilHour(dayCloseHour, 0);
   if (msClose !== null) {
     const id = setTimeout(async () => {
       await notificationService.pushToOS(
-        '🏁 Cierre de Jornada Laboral',
-        'Tu turno ha terminado. Tómate 1 minuto para dar check a tus tareas y llenar tu bitácora.',
+        `🏁 Cierre de Jornada Laboral (${kaiName})`,
+        `Tu turno ha terminado${salutation}. Tómate 1 minuto para dar check a tus tareas y llenar tu bitácora.`,
         { tag: 'close-day-reminder', renotify: true }
       );
     }, msClose);
@@ -345,8 +352,8 @@ function scheduleCloseDayAndJournalReminder(
   if (msNight !== null) {
     const id = setTimeout(async () => {
       await notificationService.pushToOS(
-        '📓 Bitácora y Cierre Diario',
-        '¡No dejes tu día sin registrar! Llena tu reflexión diaria, reclama tus recompensas y protege tu racha.',
+        `📓 ${kaiName}: Bitácora y Cierre Diario`,
+        `¡No dejes tu día sin registrar${salutation}! Llena tu reflexión diaria, reclama tus recompensas y protege tu racha.`,
         { tag: 'nightly-journal-reminder', renotify: true }
       );
     }, msNight);
@@ -388,6 +395,8 @@ export interface SchedulerState {
   hasJournalEntry?: boolean;
   dayStartHour?: number;
   dayCloseHour?: number;
+  userName?: string;
+  kaiName?: string;
 }
 
 /**
@@ -410,15 +419,17 @@ export async function scheduleAll(state: SchedulerState): Promise<void> {
     isDayFinished = false, 
     hasJournalEntry = false,
     dayStartHour = settings.dayStartHour ?? 8,
-    dayCloseHour = settings.dayCloseHour ?? 18
+    dayCloseHour = settings.dayCloseHour ?? 18,
+    userName = '',
+    kaiName = 'KAI',
   } = state;
 
   if (settings.startDayReminder ?? true) {
-    scheduleStartDayReminder(dayStartHour, isDayStarted);
+    scheduleStartDayReminder(dayStartHour, isDayStarted, userName, kaiName);
   }
 
   if (settings.closeDayReminder ?? true) {
-    scheduleCloseDayAndJournalReminder(dayCloseHour, settings.nightlyHour, isDayFinished, hasJournalEntry);
+    scheduleCloseDayAndJournalReminder(dayCloseHour, settings.nightlyHour, isDayFinished, hasJournalEntry, userName, kaiName);
   }
 
   if (settings.habitReminders) {
@@ -427,11 +438,11 @@ export async function scheduleAll(state: SchedulerState): Promise<void> {
   }
 
   if (settings.morningBriefing) {
-    scheduleMorningBriefing(tasks);
+    scheduleMorningBriefing(tasks, userName, kaiName);
   }
 
   if (settings.nightlyReflection) {
-    scheduleNightlyReflection(settings.nightlyHour);
+    scheduleNightlyReflection(settings.nightlyHour, userName, kaiName);
   }
 
   if (settings.bossAlert) {
@@ -439,6 +450,6 @@ export async function scheduleAll(state: SchedulerState): Promise<void> {
   }
 
   if (settings.streakAlert) {
-    scheduleStreakAlert(streakDays, tasks);
+    scheduleStreakAlert(streakDays, tasks, userName, kaiName);
   }
 }

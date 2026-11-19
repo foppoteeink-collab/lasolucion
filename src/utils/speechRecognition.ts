@@ -705,6 +705,7 @@ export type VoiceIntentRoute =
   | 'focus'
   | 'diagnostic'
   | 'planner'
+  | 'direct_action'
   | 'conversation'
   | 'mixed_actions';
 
@@ -745,7 +746,16 @@ export function classifyVoiceIntent(transcript: string): VoiceIntentRoute {
     return 'planner';
   }
 
-  // 4. Si tiene acción explícita de finanzas, horario concreto, hábito o verbo imperativo de crear -> acciones
+  // 4. Acción directa sobre tarea existente (completar, borrar, mover hora)
+  const isDirectAction =
+    /(?:^|[\s,.;:])(?:marca(?:r)?\s+(?:como\s+)?(?:completada?|hecha?|lista?)|completa(?:r)?|termin[eé]|elimina(?:r)?|borra(?:r)?|quita(?:r)?|mueve(?:r)?\s+.+\s+(?:para|a|hacia)|cambia(?:r)?\s+(?:la\s+hora\s+de)?\s+.+\s+(?:para|a|hacia))(?=$|[\s,.;:])/i.test(
+      lower
+    );
+  if (isDirectAction) {
+    return 'direct_action';
+  }
+
+  // 5. Si tiene acción explícita de finanzas, horario concreto, hábito o verbo imperativo de crear -> acciones
   const { financeText } = splitMixedVoiceDictation(clean);
   if (financeText) {
     return 'mixed_actions';
@@ -770,4 +780,118 @@ export function classifyVoiceIntent(transcript: string): VoiceIntentRoute {
   }
 
   return 'mixed_actions';
+}
+
+// ─── Detección de Acciones Directas sobre Tareas Existentes ───────────────────
+
+export interface ParsedVoiceDirectAction {
+  type: 'complete_task' | 'delete_task' | 'reschedule_task';
+  targetQuery: string;
+  matchedTaskId?: string;
+  matchedTaskTitle?: string;
+  newTimeBlock?: string;
+  confidence: number;
+}
+
+/**
+ * Detecta si el usuario está pidiendo completar, borrar o reprogramar una tarea existente
+ * Ejemplo: "Marca como completada la tarea de gimnasio" -> complete_task, target: "gimnasio"
+ * Ejemplo: "Borra la tarea de llamar al banco" -> delete_task, target: "llamar al banco"
+ * Ejemplo: "Mueve la reunión de clientes a las 4pm" -> reschedule_task, target: "reunión de clientes", newTime: "16:00"
+ */
+export function detectVoiceDirectAction(
+  transcript: string,
+  existingTasks: Array<{ id: string; title: string; timeBlock?: string; completed?: boolean }>
+): ParsedVoiceDirectAction | null {
+  const clean = (transcript || '').trim();
+  if (!clean) return null;
+  const lower = clean.toLowerCase();
+
+  // 1. COMPLETAR TAREA
+  const completeRegex = /(?:^|[\s,.;:])(?:marca(?:r)?\s+(?:como\s+)?(?:completada?|hecha?|lista?)|completa(?:r)?|termin[eé]|ya\s+(?:hice|termin[eé]|complet[eé]))\s+(?:la\s+tarea(?:\s+de)?\s+|el\s+h[aá]bito(?:\s+de)?\s+|mi\s+)?(.+)/i;
+  const completeMatch = lower.match(completeRegex);
+  if (completeMatch && completeMatch[1]) {
+    const rawTarget = completeMatch[1].replace(/[.!?,;]+$/g, '').trim();
+    if (rawTarget.length >= 2) {
+      const match = findBestTaskMatch(rawTarget, existingTasks);
+      return {
+        type: 'complete_task',
+        targetQuery: rawTarget,
+        matchedTaskId: match?.id,
+        matchedTaskTitle: match?.title,
+        confidence: match ? 0.9 : 0.6,
+      };
+    }
+  }
+
+  // 2. BORRAR / ELIMINAR TAREA
+  const deleteRegex = /(?:^|[\s,.;:])(?:elimina(?:r)?|borra(?:r)?|quita(?:r)?|descarta(?:r)?)\s+(?:la\s+tarea(?:\s+de)?\s+|el\s+h[aá]bito(?:\s+de)?\s+|mi\s+)?(.+)/i;
+  const deleteMatch = lower.match(deleteRegex);
+  if (deleteMatch && deleteMatch[1]) {
+    const rawTarget = deleteMatch[1].replace(/[.!?,;]+$/g, '').trim();
+    if (rawTarget.length >= 2) {
+      const match = findBestTaskMatch(rawTarget, existingTasks);
+      return {
+        type: 'delete_task',
+        targetQuery: rawTarget,
+        matchedTaskId: match?.id,
+        matchedTaskTitle: match?.title,
+        confidence: match ? 0.9 : 0.6,
+      };
+    }
+  }
+
+  // 3. REPROGRAMAR / MOVER HORA
+  const moveRegex = /(?:^|[\s,.;:])(?:mueve(?:r)?|cambia(?:r)?(?:\s+la\s+hora\s+de)?|pasa(?:r)?|reprograma(?:r)?)\s+(?:la\s+tarea(?:\s+de)?\s+|mi\s+)?(.+?)\s+(?:para|a|hacia)\s+(?:las?\s+)?(\d{1,2}(?::\d{2})?(?:\s*(?:am|pm))?)/i;
+  const moveMatch = lower.match(moveRegex);
+  if (moveMatch && moveMatch[1] && moveMatch[2]) {
+    const rawTarget = moveMatch[1].replace(/[.!?,;]+$/g, '').trim();
+    const rawTime = moveMatch[2].trim();
+    const match = findBestTaskMatch(rawTarget, existingTasks);
+    return {
+      type: 'reschedule_task',
+      targetQuery: rawTarget,
+      matchedTaskId: match?.id,
+      matchedTaskTitle: match?.title,
+      newTimeBlock: rawTime,
+      confidence: match ? 0.9 : 0.6,
+    };
+  }
+
+  return null;
+}
+
+function findBestTaskMatch(
+  query: string,
+  tasks: Array<{ id: string; title: string; completed?: boolean }>
+): { id: string; title: string } | null {
+  if (!tasks || tasks.length === 0) return null;
+  const q = query.toLowerCase().trim();
+
+  // Coincidencia exacta o contiene
+  const exact = tasks.find((t) => t.title && t.title.toLowerCase().trim() === q);
+  if (exact) return exact;
+
+  const substring = tasks.find((t) => t.title && t.title.toLowerCase().includes(q));
+  if (substring) return substring;
+
+  const reverseSub = tasks.find((t) => t.title && q.includes(t.title.toLowerCase().trim()));
+  if (reverseSub) return reverseSub;
+
+  // Coincidencia por palabras clave
+  const qWords = q.split(/\s+/).filter((w) => w.length > 2);
+  let bestTask: { id: string; title: string } | null = null;
+  let maxMatches = 0;
+
+  for (const t of tasks) {
+    if (!t.title) continue;
+    const tLower = t.title.toLowerCase();
+    const matches = qWords.filter((w) => tLower.includes(w)).length;
+    if (matches > maxMatches) {
+      maxMatches = matches;
+      bestTask = t;
+    }
+  }
+
+  return maxMatches > 0 ? bestTask : null;
 }

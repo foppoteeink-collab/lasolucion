@@ -338,9 +338,9 @@ export class NotificationService {
       }
     };
 
-    // Ejecutar verificación inicial inmediata y luego cada 20 segundos
+    // Ejecutar verificación inicial inmediata y luego cada 45 segundos (garantiza evaluar cada minuto ahorrando ciclos de CPU)
     checkSchedule();
-    this.schedulerIntervalId = setInterval(checkSchedule, 20000);
+    this.schedulerIntervalId = setInterval(checkSchedule, 45000);
   }
 
   /**

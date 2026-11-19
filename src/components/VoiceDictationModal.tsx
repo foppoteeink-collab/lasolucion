@@ -31,7 +31,9 @@ import {
   classifyVoiceIntent,
   createVoiceRecognizer,
   detectVoiceFocusIntent,
+  detectVoiceDirectAction,
   isSpeechRecognitionSupported,
+  ParsedVoiceDirectAction,
   ParsedVoiceFinanceEntry,
   ParsedVoiceFocusIntent,
   ParsedVoiceItem,
@@ -135,15 +137,19 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({
   const customHabits = useTaskStore((s) => s.customHabits);
   const setCustomHabits = useTaskStore((s) => s.setCustomHabits);
   const addTask = useTaskStore((s) => s.addTask);
+  const updateTask = useTaskStore((s) => s.updateTask);
+  const deleteTask = useTaskStore((s) => s.deleteTask);
+  const toggleTaskCompletion = useTaskStore((s) => s.toggleTaskCompletion);
   const ensureTasksForDate = useTaskStore((s) => s.ensureTasksForDate);
 
   const setExpenses = useAppStore((s) => s.setExpenses);
+  const expenses = useAppStore((s) => s.expenses || []);
   const habitMastery = useAppStore((s) => s.habitMastery);
   const reflections = useAppStore((s) => s.reflections);
   const { handleOpenPomodoroForTask } = useTimer();
 
   const todayTasks = tasksByDate[currentViewDate] || [];
-  const kaiName = stats?.kaiCustomForm?.name || 'KAI';
+  const kaiName = stats?.kaiName || stats?.kaiCustomForm?.name || 'KAI';
   const kaiMood = stats?.kaiCustomForm?.mood || 'stoic';
   const archetype = stats?.characterClass || 'sabio';
 
@@ -157,6 +163,7 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({
   // Resultados unificados
   const [parsedItems, setParsedItems] = useState<ParsedVoiceItem[]>([]);
   const [detectedFocus, setDetectedFocus] = useState<ParsedVoiceFocusIntent | null>(null);
+  const [detectedDirectAction, setDetectedDirectAction] = useState<ParsedVoiceDirectAction | null>(null);
   const [detectedFinance, setDetectedFinance] = useState<ParsedVoiceFinanceEntry[]>([]);
   const [diagnosticReport, setDiagnosticReport] = useState<{ text: string; source: 'ai' | 'heuristics' } | null>(null);
   const [showPlannerActions, setShowPlannerActions] = useState(false);
@@ -353,18 +360,53 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({
           return;
         }
 
+        // 3.5. Acción directa sobre tarea existente (completar, borrar, mover) con CONFIRMACIÓN OBLIGATORIA
+        if (intent === 'direct_action') {
+          const directAction = detectVoiceDirectAction(text, todayTasks);
+          if (directAction && directAction.matchedTaskId) {
+            setDetectedDirectAction(directAction);
+            let actionQuestion = '';
+            if (directAction.type === 'complete_task') {
+              actionQuestion = `¿Confirmas marcar como completada "${directAction.matchedTaskTitle}"?`;
+            } else if (directAction.type === 'delete_task') {
+              actionQuestion = `¿Confirmas eliminar la tarea "${directAction.matchedTaskTitle}"?`;
+            } else {
+              actionQuestion = `¿Confirmas mover "${directAction.matchedTaskTitle}" a ${directAction.newTimeBlock}?`;
+            }
+            setKaiReply(actionQuestion);
+            triggerHaptic(25);
+            speakResponse(actionQuestion);
+            return;
+          }
+        }
+
         // 4. Conversación natural / Coach / "¿Por qué tarea empiezo?"
         if (intent === 'conversation') {
+          // Extraer contexto enriquecido para KAI: notas de tareas, memorias, finanzas y reflexiones
+          const recentTaskNotes = todayTasks
+            .filter((t) => t?.notes && t.notes.trim())
+            .map((t) => `[${t.title}]: ${t.notes!.trim()}`);
+          const recentMemories = Array.isArray(stats?.kaiMemoryLog)
+            ? stats.kaiMemoryLog.slice(0, 5).map((m: any) => m.content)
+            : [];
+          const recentFinanceTotal = expenses.slice(-5).reduce((acc: number, curr: any) => acc + (curr.amount || 0), 0);
+          const financeSummary = expenses.length > 0 ? `Últimos gastos suman aprox ${formatMoney(recentFinanceTotal, currencySymbol)}` : undefined;
+          const reflectionToday = reflections[currentViewDate];
+
           const convo = await askKaiConversationAI({
             message: text,
             kaiName,
             stats,
             todayTasks,
             history: conversationHistory,
+            recentNotes: recentTaskNotes,
+            recentMemories,
+            financialSummary: financeSummary,
+            reflectionContext: reflectionToday,
           });
           setKaiReply(convo.reply);
           setConversationHistory((prev) => [
-            ...prev.slice(-4),
+            ...prev.slice(-6),
             { role: 'user', text },
             { role: 'kai', text: convo.reply },
           ]);
@@ -394,13 +436,26 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({
         setParsedItems(foundTasks);
 
         if (foundFinance.length === 0 && foundTasks.length === 0) {
-          // Si no detectó acciones estructuradas, responder conversacionalmente
+          // Si no detectó acciones estructuradas, responder conversacionalmente con contexto
+          const recentTaskNotes = todayTasks
+            .filter((t) => t?.notes && t.notes.trim())
+            .map((t) => `[${t.title}]: ${t.notes!.trim()}`);
+          const recentMemories = Array.isArray(stats?.kaiMemoryLog)
+            ? stats.kaiMemoryLog.slice(0, 5).map((m: any) => m.content)
+            : [];
+          const recentFinanceTotal = expenses.slice(-5).reduce((acc: number, curr: any) => acc + (curr.amount || 0), 0);
+          const financeSummary = expenses.length > 0 ? `Últimos gastos suman aprox ${formatMoney(recentFinanceTotal, currencySymbol)}` : undefined;
+
           const convo = await askKaiConversationAI({
             message: text,
             kaiName,
             stats,
             todayTasks,
             history: conversationHistory,
+            recentNotes: recentTaskNotes,
+            recentMemories,
+            financialSummary: financeSummary,
+            reflectionContext: reflections[currentViewDate],
           });
           setKaiReply(convo.reply);
           speakResponse(convo.reply);
@@ -476,6 +531,41 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({
         };
       })
     );
+  };
+
+  const handleConfirmDirectAction = () => {
+    if (!detectedDirectAction || !detectedDirectAction.matchedTaskId) return;
+    const { type, matchedTaskId, matchedTaskTitle, newTimeBlock } = detectedDirectAction;
+    soundFX.playClick();
+    triggerHaptic([25, 40]);
+
+    if (type === 'complete_task') {
+      toggleTaskCompletion(currentViewDate, matchedTaskId);
+      soundFX.playTaskComplete();
+      const msg = `¡Listo! Marqué como completada "${matchedTaskTitle}".`;
+      setInjectedSuccess(msg);
+      speakResponse(msg);
+    } else if (type === 'delete_task') {
+      deleteTask(currentViewDate, matchedTaskId);
+      const msg = `Eliminé la tarea "${matchedTaskTitle}".`;
+      setInjectedSuccess(msg);
+      speakResponse(msg);
+    } else if (type === 'reschedule_task') {
+      updateTask(currentViewDate, matchedTaskId, { timeBlock: newTimeBlock });
+      soundFX.playLevelUp();
+      const msg = `Reprogramé "${matchedTaskTitle}" para las ${newTimeBlock}.`;
+      setInjectedSuccess(msg);
+      speakResponse(msg);
+    }
+
+    setDetectedDirectAction(null);
+    setTimeout(() => onClose(), 1200);
+  };
+
+  const handleCancelDirectAction = () => {
+    soundFX.playClick();
+    setDetectedDirectAction(null);
+    setKaiReply('Acción cancelada. Seguimos enfocados.');
   };
 
   const handleUpdateTitle = (id: string, title: string) => {
@@ -945,6 +1035,67 @@ export const VoiceDictationModal: React.FC<VoiceDictationModalProps> = ({
                 </button>
               )}
             </div>
+          )}
+
+          {/* ACCIÓN DIRECTA SOBRE TAREA CON CONFIRMACIÓN */}
+          {detectedDirectAction && detectedDirectAction.matchedTaskId && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="w-full max-w-md p-4 rounded-2xl bg-[#040a1a]/[0.96] border border-cyan-400/40 shadow-[0_12px_36px_rgba(0,0,0,0.55),0_0_24px_rgba(0,240,255,0.15)] space-y-3"
+            >
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                <span className="text-[11px] font-mono uppercase tracking-wider text-cyan-300 font-bold">
+                  Confirmación requerida por {kaiName}
+                </span>
+              </div>
+
+              <div className="p-3 rounded-xl bg-white/[0.04] border border-white/10 space-y-1">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-400">Acción:</span>
+                  <span className="font-anton uppercase tracking-wider text-white">
+                    {detectedDirectAction.type === 'complete_task'
+                      ? '✓ Completar Tarea'
+                      : detectedDirectAction.type === 'delete_task'
+                      ? '🗑️ Eliminar Tarea'
+                      : '⏰ Reprogramar Hora'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-400">Objetivo:</span>
+                  <span className="font-semibold text-cyan-200 truncate max-w-[220px]">
+                    {detectedDirectAction.matchedTaskTitle}
+                  </span>
+                </div>
+                {detectedDirectAction.newTimeBlock && (
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-slate-400">Nueva Hora:</span>
+                    <span className="font-mono text-amber-300 font-bold">
+                      {detectedDirectAction.newTimeBlock}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={handleCancelDirectAction}
+                  className="px-3.5 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.12] border border-white/15 text-slate-300 hover:text-white text-xs font-bold cursor-pointer transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmDirectAction}
+                  className="chicle-btn px-4 py-2 rounded-xl aura-btn-gradient optic-active-card text-xs font-anton tracking-wider uppercase cursor-pointer flex items-center gap-1.5 transition-colors"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  <span>Confirmar Acción</span>
+                </button>
+              </div>
+            </motion.div>
           )}
 
           {/* COMANDO DE FOCO / POMODORO */}

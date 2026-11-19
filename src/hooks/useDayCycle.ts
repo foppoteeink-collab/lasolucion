@@ -130,7 +130,8 @@ export const useDayCycle = () => {
       }, msUntilCutoff + 50);
     };
 
-    const interval = setInterval(updateClock, 15000);
+    // Actualización regular del reloj (cada 30s en lugar de 15s para reducir eventos de CPU)
+    const interval = setInterval(updateClock, 30000);
     schedulePrecisionTimer();
 
     const handleFocusOrOnline = () => {

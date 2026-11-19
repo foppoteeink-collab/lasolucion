@@ -159,6 +159,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
     setStats((prev) => ({
       ...prev,
       kaiShape: shapeId,
+      kaiName: shapeId === 'custom' && prev.kaiCustomForm?.name ? prev.kaiCustomForm.name : (shapeId === 'prism' ? 'KAI' : (prev.kaiName || 'KAI')),
     }));
   };
 
@@ -233,6 +234,7 @@ export const KaiWorkshopModal: React.FC<KaiWorkshopModalProps> = ({
       return {
         ...prev,
         kaiCustomForm: entryWithId,
+        kaiName: entryWithId.name || prev.kaiName || 'KAI',
         kaiShape: 'custom',
         kaiVault: currentVault,
       };
